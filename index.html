@@ -162,86 +162,70 @@
   </footer>
 
   <script>
-    (async () => {
-      try {
-        const connectButton = document.getElementById("connect-wallet");
-        const claimButton = document.getElementById("claim-airdrop");
-        const addressDisplay = document.getElementById("wallet-address");
-        const statusDisplay = document.getElementById("airdrop-status");
-        const balanceDisplay = document.getElementById("cbs-balance");
-        const refreshBalance = document.getElementById("refresh-balance");
+    let provider = null;
+    let publicKey = null;
 
-        let userPublicKey = null;
-        const AIRDROP_SENDER = new solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
-        const CBS_MINT = new solanaWeb3.PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
-
-        connectButton.addEventListener("click", async () => {
-          if (!window.solana) return alert("Phantom wallet niet gevonden.");
-          try {
-            const resp = await window.solana.connect();
-            userPublicKey = resp.publicKey;
-            addressDisplay.innerText = `✅ Verbonden: ${userPublicKey}`;
-            await updateBalance();
-          } catch (e) {
-            console.error("Wallet connectie mislukt", e);
-          }
-        });
-
-        claimButton.addEventListener("click", async () => {
-          if (!userPublicKey) return alert("Verbind eerst je wallet.");
-          const claimedKey = `cbs_claimed_${userPublicKey}`;
-          if (localStorage.getItem(claimedKey)) return statusDisplay.innerText = "❌ Je hebt al geclaimd.";
-
-          try {
-            const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl("mainnet-beta"));
-            const senderTokenAccount = await splToken.getAssociatedTokenAddress(CBS_MINT, AIRDROP_SENDER);
-            const receiverTokenAccount = await splToken.getAssociatedTokenAddress(CBS_MINT, userPublicKey);
-
-            const receiverInfo = await connection.getAccountInfo(receiverTokenAccount);
-            const tx = new solanaWeb3.Transaction();
-            if (!receiverInfo) {
-              tx.add(splToken.createAssociatedTokenAccountInstruction(userPublicKey, receiverTokenAccount, userPublicKey, CBS_MINT));
-            }
-
-            tx.add(splToken.createTransferInstruction(
-              senderTokenAccount,
-              receiverTokenAccount,
-              AIRDROP_SENDER,
-              1000000000, // 1000 CBS met 6 decimals
-              [],
-              splToken.TOKEN_PROGRAM_ID
-            ));
-
-            tx.feePayer = userPublicKey;
-            tx.recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
-            const signed = await window.solana.signTransaction(tx);
-            const txid = await connection.sendRawTransaction(signed.serialize());
-            localStorage.setItem(claimedKey, "true");
-            statusDisplay.innerText = `✅ Verzonden (tx: ${txid})`;
-            updateBalance();
-          } catch (e) {
-            console.error("Airdrop error:", e);
-            statusDisplay.innerText = "❌ Fout bij airdrop.";
-          }
-        });
-
-        async function updateBalance() {
-          if (!userPublicKey) return;
-          const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl("mainnet-beta"));
-          const accounts = await connection.getParsedTokenAccountsByOwner(userPublicKey, { mint: CBS_MINT });
-          let balance = 0;
-          if (accounts.value.length > 0) {
-            balance = accounts.value[0].account.data.parsed.info.tokenAmount.uiAmount;
-          }
-          balanceDisplay.innerText = `Balans: ${balance} CBS`;
+    async function connectWallet() {
+      if (window.solana && window.solana.isPhantom) {
+        provider = window.solana;
+        try {
+          const resp = await provider.connect();
+          publicKey = resp.publicKey.toString();
+          document.getElementById("wallet-address").innerText = "Verbonden: " + publicKey;
+        } catch (err) {
+          console.error("Wallet connect error:", err);
         }
-
-        refreshBalance.addEventListener("click", updateBalance);
-      } catch (globalError) {
-        console.error("Fout in script:", globalError);
-        document.body.innerHTML = '<h2 style="color:red">⚠️ Fout bij laden pagina. Probeer later opnieuw.</h2>';
+      } else {
+        alert("Phantom Wallet niet gevonden. Installeer deze eerst.");
       }
-    })();
+    }
+
+    async function claimAirdrop() {
+      if (!publicKey) {
+        alert("Verbind eerst je wallet.");
+        return;
+      }
+      try {
+        const res = await fetch("http://localhost:3000/airdrop", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ recipient: publicKey }),
+        });
+        const data = await res.json();
+        document.getElementById("airdrop-status").innerText = data.message || "✅ Tokens verzonden!";
+      } catch (e) {
+        document.getElementById("airdrop-status").innerText = "❌ Fout bij airdrop.";
+        console.error("Airdrop error:", e);
+      }
+    }
+
+    async function refreshBalance() {
+      if (!publicKey) {
+        alert("Verbind eerst je wallet.");
+        return;
+      }
+      const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl("mainnet-beta"));
+      const tokenMint = new solanaWeb3.PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
+      const owner = new solanaWeb3.PublicKey(publicKey);
+
+      const tokenAccounts = await connection.getParsedTokenAccountsByOwner(owner, {
+        mint: tokenMint,
+      });
+
+      let balance = 0;
+      if (tokenAccounts.value.length > 0) {
+        balance = tokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount;
+      }
+
+      document.getElementById("cbs-balance").innerText = `Balans: ${balance} CBS`;
+    }
+
+    document.getElementById("connect-wallet").addEventListener("click", connectWallet);
+    document.getElementById("claim-airdrop").addEventListener("click", claimAirdrop);
+    document.getElementById("refresh-balance").addEventListener("click", refreshBalance);
   </script>
 </body>
 </html>
+
