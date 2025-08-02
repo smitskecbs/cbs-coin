@@ -106,46 +106,23 @@
     </div>
   </header>
 
-  <!-- Wallet connect section -->
   <div class="section">
     <h3>🔗 Wallet verbinden</h3>
-    <p style="font-size: 0.9rem; color: #999;">Gebruik de Phantom app en open deze pagina via de ingebouwde browser om te verbinden.</p>
     <button id="connect-wallet" class="buy-button">🔗 Connect Wallet</button>
     <p id="wallet-address" style="margin-top: 10px;"></p>
   </div>
 
-  <section class="section">
-    <h3>🌐 Missie & Visie</h3>
-    <p>CBS Coin staat symbool voor vrijheid, transparantie en soevereiniteit. Gebouwd door en voor de gemeenschap, zonder centrale controle of inmenging van overheden.</p>
-  </section>
+  <div class="section">
+    <h3>🎁 Claim Airdrop (1000 CBS)</h3>
+    <button id="claim-airdrop" class="buy-button">🎁 Claim Airdrop</button>
+    <p id="airdrop-status"></p>
+  </div>
 
-  <section class="section">
-    <h3>📦 Token Info</h3>
-    <ul>
-      <li><strong>Tokennaam:</strong> CBS Coin</li>
-      <li><strong>Symbool:</strong> CBS</li>
-      <li><strong>Totale supply:</strong> 100.000.000</li>
-      <li><strong>Mint authority:</strong> <em>uitgeschakeld</em></li>
-      <li><strong>Freeze authority:</strong> <em>uitgeschakeld</em></li>
-      <li><strong>Explorer:</strong> <a href="https://solscan.io/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk" target="_blank">Bekijk op Solscan</a></li>
-    </ul>
-    <div class="button-wrapper">
-      <a href="https://www.geckoterminal.com/nl/solana/pools/7RSeJd8C1cXA95Vfcz6CregUofj4dbmHgsxkF7zdWhVE" class="buy-button" target="_blank">
-        🛒 Koop op GeckoTerminal
-      </a>
-      <a href="https://birdeye.so/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk?chain=solana" class="buy-button" target="_blank">
-        🛒 Koop op Birdeye
-      </a>
-      <a href="https://raydium.io/swap/?inputCurrency=sol&outputCurrency=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk" class="buy-button" target="_blank">
-        🛒 Koop op Raydium
-      </a>
-    </div>
-  </section>
-
-  <section class="section">
-    <h3>📄 Whitepaper & Roadmap</h3>
-    <p>Bekijk onze visie en plannen in de <a href="litepaper.html" target="_blank">litepaper</a>. De roadmap bevat o.a. liquidity pools, DAO integratie en tokenverificatie op grote platforms.</p>
-  </section>
+  <div class="section">
+    <h3>📊 CBS Wallet Balans</h3>
+    <button id="refresh-balance" class="buy-button">🔄 Ververs</button>
+    <p id="cbs-balance">Balans: ...</p>
+  </div>
 
   <footer>
     © 2025 CBS Coin – Sovereignty through community.
@@ -155,25 +132,72 @@
     </div>
   </footer>
 
-  <!-- Wallet connect script -->
   <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.76.0/lib/index.iife.min.js"></script>
   <script>
     const connectButton = document.getElementById("connect-wallet");
+    const claimButton = document.getElementById("claim-airdrop");
     const addressDisplay = document.getElementById("wallet-address");
+    const statusDisplay = document.getElementById("airdrop-status");
+    const balanceDisplay = document.getElementById("cbs-balance");
+    const refreshBalance = document.getElementById("refresh-balance");
+
+    let userPublicKey = null;
 
     connectButton.addEventListener("click", async () => {
       if (!window.solana) {
-        alert("❌ Geen Solana wallet gedetecteerd. Gebruik de Phantom app en open deze pagina via de ingebouwde browser.");
+        alert("Phantom wallet niet gevonden. Gebruik de Phantom app.");
         return;
       }
       try {
         const resp = await window.solana.connect();
-        addressDisplay.innerText = `✅ Verbonden: ${resp.publicKey.toString()}`;
+        userPublicKey = resp.publicKey;
+        addressDisplay.innerText = `✅ Verbonden: ${userPublicKey.toString()}`;
+        statusDisplay.innerText = "";
+        updateBalance();
       } catch (err) {
-        console.error("Wallet connect error:", err);
-        alert("⚠️ Connectie mislukt of geweigerd.");
+        console.error("Connectie mislukt", err);
       }
     });
+
+    claimButton.addEventListener("click", async () => {
+      if (!userPublicKey) {
+        alert("Verbind eerst je wallet.");
+        return;
+      }
+      const claimedKey = `cbs_claimed_${userPublicKey.toString()}`;
+      if (localStorage.getItem(claimedKey)) {
+        statusDisplay.innerText = "❌ Je hebt al geclaimd.";
+        return;
+      }
+      try {
+        const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl("mainnet-beta"));
+        const sender = solanaWeb3.Keypair.generate(); // Vervang later met jouw keypair als je backend bouwt
+        const CBS_MINT = new solanaWeb3.PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
+        alert("Deze functie vereist een backend of manuele goedkeuring. Later in te bouwen.");
+        // Hier zou normaal de sendTransaction-code komen
+        localStorage.setItem(claimedKey, "true");
+        statusDisplay.innerText = "✅ Airdrop aangevraagd (demo).";
+      } catch (err) {
+        console.error("Airdrop mislukt", err);
+        statusDisplay.innerText = "❌ Airdrop mislukt.";
+      }
+    });
+
+    async function updateBalance() {
+      if (!userPublicKey) return;
+      const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl("mainnet-beta"));
+      const CBS_MINT = new solanaWeb3.PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
+      const tokenAccounts = await connection.getParsedTokenAccountsByOwner(userPublicKey, {
+        mint: CBS_MINT
+      });
+      let balance = 0;
+      if (tokenAccounts.value.length > 0) {
+        balance = tokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount;
+      }
+      balanceDisplay.innerText = `Balans: ${balance} CBS`;
+    }
+
+    refreshBalance.addEventListener("click", updateBalance);
   </script>
 </body>
 </html>
