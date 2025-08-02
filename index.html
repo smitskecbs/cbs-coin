@@ -106,9 +106,10 @@
     </div>
   </header>
 
-  <!-- Connect Wallet-knop -->
+  <!-- Wallet connect section -->
   <div class="section">
     <h3>🔗 Wallet verbinden</h3>
+    <p style="font-size: 0.9rem; color: #999;">Gebruik de Phantom app en open deze pagina via de ingebouwde browser om te verbinden.</p>
     <button id="connect-wallet" class="buy-button">🔗 Connect Wallet</button>
     <p id="wallet-address" style="margin-top: 10px;"></p>
   </div>
@@ -154,34 +155,23 @@
     </div>
   </footer>
 
-  <!-- Verbeterde connectiecode -->
+  <!-- Wallet connect script -->
   <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.76.0/lib/index.iife.min.js"></script>
   <script>
-    async function getProvider(timeout = 3000) {
-      return new Promise((resolve, reject) => {
-        const check = () => {
-          if (window.solana) {
-            resolve(window.solana);
-          } else {
-            setTimeout(() => reject("No Solana wallet found."), timeout);
-          }
-        };
-        setTimeout(check, 100);
-      });
-    }
-
     const connectButton = document.getElementById("connect-wallet");
     const addressDisplay = document.getElementById("wallet-address");
 
     connectButton.addEventListener("click", async () => {
+      if (!window.solana) {
+        alert("❌ Geen Solana wallet gedetecteerd. Gebruik de Phantom app en open deze pagina via de ingebouwde browser.");
+        return;
+      }
       try {
-        const provider = await getProvider();
-        const resp = await provider.connect();
-        const publicKey = resp.publicKey.toString();
-        addressDisplay.innerText = `✅ Verbonden: ${publicKey}`;
+        const resp = await window.solana.connect();
+        addressDisplay.innerText = `✅ Verbonden: ${resp.publicKey.toString()}`;
       } catch (err) {
         console.error("Wallet connect error:", err);
-        alert("Wallet niet gevonden of geen toestemming.");
+        alert("⚠️ Connectie mislukt of geweigerd.");
       }
     });
   </script>
