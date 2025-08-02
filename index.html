@@ -6,7 +6,6 @@
   <title>CBS Coin – Community Builds Sovereignty</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.76.0/lib/index.iife.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@solana/spl-token@0.3.5/lib/index.iife.min.js"></script>
   <style>
     body {
       margin: 0;
@@ -111,19 +110,13 @@
   <div class="section">
     <h3>🔗 Wallet verbinden</h3>
     <button id="connect-wallet" class="buy-button">🔗 Connect Wallet</button>
-    <p id="wallet-address" style="margin-top: 10px;"></p>
+    <p id="wallet-address"></p>
   </div>
 
   <div class="section">
     <h3>🎁 Claim Airdrop (1000 CBS)</h3>
     <button id="claim-airdrop" class="buy-button">🎁 Claim Airdrop</button>
     <p id="airdrop-status"></p>
-  </div>
-
-  <div class="section">
-    <h3>📊 CBS Wallet Balans</h3>
-    <button id="refresh-balance" class="buy-button">🔄 Ververs</button>
-    <p id="cbs-balance">Balans: ...</p>
   </div>
 
   <section class="section">
@@ -162,69 +155,51 @@
   </footer>
 
   <script>
-    let provider = null;
-    let publicKey = null;
+    let connectedWallet = null;
 
     async function connectWallet() {
       if (window.solana && window.solana.isPhantom) {
-        provider = window.solana;
         try {
-          const resp = await provider.connect();
-          publicKey = resp.publicKey.toString();
-          document.getElementById("wallet-address").innerText = "Verbonden: " + publicKey;
+          const resp = await window.solana.connect();
+          connectedWallet = resp.publicKey.toString();
+          document.getElementById("wallet-address").innerText = "Verbonden wallet: " + connectedWallet;
         } catch (err) {
-          console.error("Wallet connect error:", err);
+          console.error("Wallet connectie geweigerd:", err);
         }
       } else {
-        alert("Phantom Wallet niet gevonden. Installeer deze eerst.");
+        alert("Phantom wallet niet gevonden. Installeer deze via https://phantom.app");
       }
     }
 
     async function claimAirdrop() {
-      if (!publicKey) {
+      if (!connectedWallet) {
         alert("Verbind eerst je wallet.");
         return;
       }
+
       try {
-        const res = await fetch("http://localhost:3000/airdrop", {
+        const response = await fetch("https://cbs-airdrop-serve.smitskecbs.repl.co/airdrop", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ recipient: publicKey }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ wallet: connectedWallet })
         });
-        const data = await res.json();
-        document.getElementById("airdrop-status").innerText = data.message || "✅ Tokens verzonden!";
-      } catch (e) {
-        document.getElementById("airdrop-status").innerText = "❌ Fout bij airdrop.";
-        console.error("Airdrop error:", e);
+
+        const result = await response.json();
+        if (result.success) {
+          document.getElementById("airdrop-status").innerText = "✅ Airdrop succesvol! Transactie: " + result.tx;
+        } else {
+          document.getElementById("airdrop-status").innerText = "❌ Mislukt: " + (result.message || JSON.stringify(result));
+        }
+      } catch (err) {
+        console.error("Airdrop fout:", err);
+        document.getElementById("airdrop-status").innerText = "❌ Fout bij airdrop";
       }
     }
 
-    async function refreshBalance() {
-      if (!publicKey) {
-        alert("Verbind eerst je wallet.");
-        return;
-      }
-      const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl("mainnet-beta"));
-      const tokenMint = new solanaWeb3.PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
-      const owner = new solanaWeb3.PublicKey(publicKey);
-
-      const tokenAccounts = await connection.getParsedTokenAccountsByOwner(owner, {
-        mint: tokenMint,
-      });
-
-      let balance = 0;
-      if (tokenAccounts.value.length > 0) {
-        balance = tokenAccounts.value[0].account.data.parsed.info.tokenAmount.uiAmount;
-      }
-
-      document.getElementById("cbs-balance").innerText = `Balans: ${balance} CBS`;
-    }
-
-    document.getElementById("connect-wallet").addEventListener("click", connectWallet);
-    document.getElementById("claim-airdrop").addEventListener("click", claimAirdrop);
-    document.getElementById("refresh-balance").addEventListener("click", refreshBalance);
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("connect-wallet").addEventListener("click", connectWallet);
+      document.getElementById("claim-airdrop").addEventListener("click", claimAirdrop);
+    });
   </script>
 </body>
 </html>
