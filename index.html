@@ -69,6 +69,7 @@
       border-radius: 8px;
       text-align: center;
       text-decoration: none;
+      cursor: pointer;
     }
     .social-links {
       display: flex;
@@ -104,6 +105,13 @@
       <a href="https://twitter.com/CBS_Coin" target="_blank">X (Twitter)</a>
     </div>
   </header>
+
+  <!-- Connect Wallet-knop -->
+  <div class="section">
+    <h3>🔗 Wallet verbinden</h3>
+    <button id="connect-wallet" class="buy-button">🔗 Connect Wallet</button>
+    <p id="wallet-address" style="margin-top: 10px;"></p>
+  </div>
 
   <section class="section">
     <h3>🌐 Missie & Visie</h3>
@@ -145,5 +153,29 @@
       <a href="https://twitter.com/CBS_Coin" target="_blank">X (Twitter)</a>
     </div>
   </footer>
+
+  <!-- Connect Wallet script -->
+  <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.76.0/lib/index.iife.min.js"></script>
+  <script>
+    const connectButton = document.getElementById("connect-wallet");
+    const addressDisplay = document.getElementById("wallet-address");
+
+    connectButton.addEventListener("click", async () => {
+      try {
+        const provider = window.solana;
+        if (!provider || !provider.isPhantom) {
+          alert("Phantom wallet niet gevonden. Installeer deze eerst.");
+          return;
+        }
+
+        const resp = await provider.connect();
+        const publicKey = resp.publicKey.toString();
+        addressDisplay.innerText = `✅ Verbonden: ${publicKey}`;
+      } catch (err) {
+        console.error("Wallet connect error:", err);
+        alert("Kon wallet niet verbinden.");
+      }
+    });
+  </script>
 </body>
 </html>
