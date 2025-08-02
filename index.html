@@ -154,26 +154,34 @@
     </div>
   </footer>
 
-  <!-- Connect Wallet script -->
+  <!-- Verbeterde connectiecode -->
   <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.76.0/lib/index.iife.min.js"></script>
   <script>
+    async function getProvider(timeout = 3000) {
+      return new Promise((resolve, reject) => {
+        const check = () => {
+          if (window.solana) {
+            resolve(window.solana);
+          } else {
+            setTimeout(() => reject("No Solana wallet found."), timeout);
+          }
+        };
+        setTimeout(check, 100);
+      });
+    }
+
     const connectButton = document.getElementById("connect-wallet");
     const addressDisplay = document.getElementById("wallet-address");
 
     connectButton.addEventListener("click", async () => {
       try {
-        const provider = window.solana;
-        if (!provider || !provider.isPhantom) {
-          alert("Phantom wallet niet gevonden. Installeer deze eerst.");
-          return;
-        }
-
+        const provider = await getProvider();
         const resp = await provider.connect();
         const publicKey = resp.publicKey.toString();
         addressDisplay.innerText = `✅ Verbonden: ${publicKey}`;
       } catch (err) {
         console.error("Wallet connect error:", err);
-        alert("Kon wallet niet verbinden.");
+        alert("Wallet niet gevonden of geen toestemming.");
       }
     });
   </script>
