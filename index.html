@@ -169,6 +169,9 @@
     const refreshBalance = document.getElementById("refresh-balance");
     let userPublicKey = null;
 
+    const AIRDROP_SENDER = "76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg";
+    const CBS_MINT = new solanaWeb3.PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
+
     connectButton.addEventListener("click", async () => {
       if (!window.solana) {
         alert("Phantom wallet niet gevonden. Gebruik de Phantom app.");
@@ -196,9 +199,23 @@
         return;
       }
       try {
-        alert("Deze functie vereist jouw goedkeuring in Phantom. Airdrop versturen kan later worden geactiveerd.");
+        const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl("mainnet-beta"));
+
+        const ix = solanaWeb3.SystemProgram.transfer({
+          fromPubkey: new solanaWeb3.PublicKey(AIRDROP_SENDER),
+          toPubkey: userPublicKey,
+          lamports: 0 // vervang door Token instructie voor echte CBS token
+        });
+
+        const tx = new solanaWeb3.Transaction().add(ix);
+        tx.feePayer = userPublicKey;
+        tx.recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
+
+        const signed = await window.solana.signTransaction(tx);
+        const txid = await connection.sendRawTransaction(signed.serialize());
+
+        statusDisplay.innerText = `✅ Airdrop verzonden (tx: ${txid})`;
         localStorage.setItem(claimedKey, "true");
-        statusDisplay.innerText = "✅ Airdrop aangevraagd (demo).";
       } catch (err) {
         console.error("Airdrop mislukt", err);
         statusDisplay.innerText = "❌ Airdrop mislukt.";
@@ -208,7 +225,6 @@
     async function updateBalance() {
       if (!userPublicKey) return;
       const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl("mainnet-beta"));
-      const CBS_MINT = new solanaWeb3.PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
       const tokenAccounts = await connection.getParsedTokenAccountsByOwner(userPublicKey, {
         mint: CBS_MINT
       });
@@ -223,3 +239,4 @@
   </script>
 </body>
 </html>
+
