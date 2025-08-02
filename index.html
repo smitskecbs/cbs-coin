@@ -1,11 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CBS Coin – Community Builds Sovereignty</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.76.0/lib/index.iife.min.js"></script>
   <style>
     body {
       margin: 0;
@@ -108,15 +107,8 @@
   </header>
 
   <div class="section">
-    <h3>🔗 Wallet verbinden</h3>
-    <button id="connect-wallet" class="buy-button">🔗 Connect Wallet</button>
-    <p id="wallet-address"></p>
-  </div>
-
-  <div class="section">
-    <h3>🎁 Claim Airdrop (1000 CBS)</h3>
-    <button id="claim-airdrop" class="buy-button">🎁 Claim Airdrop</button>
-    <p id="airdrop-status"></p>
+    <h3>🎁 CBS aanvragen</h3>
+    <p>Wil je CBS Coin ontvangen? Stuur je Solana-walletadres naar ons via Telegram. Airdrops worden handmatig verwerkt.</p>
   </div>
 
   <section class="section">
@@ -153,54 +145,6 @@
       <a href="https://twitter.com/CBS_Coin" target="_blank">X (Twitter)</a>
     </div>
   </footer>
-
-  <script>
-    let connectedWallet = null;
-
-    async function connectWallet() {
-      if (window.solana && window.solana.isPhantom) {
-        try {
-          const resp = await window.solana.connect();
-          connectedWallet = resp.publicKey.toString();
-          document.getElementById("wallet-address").innerText = "Verbonden wallet: " + connectedWallet;
-        } catch (err) {
-          console.error("Wallet connectie geweigerd:", err);
-        }
-      } else {
-        alert("Phantom wallet niet gevonden. Installeer deze via https://phantom.app");
-      }
-    }
-
-    async function claimAirdrop() {
-      if (!connectedWallet) {
-        alert("Verbind eerst je wallet.");
-        return;
-      }
-
-      try {
-        const response = await fetch("https://cbs-airdrop-serve.smitskecbs.repl.co/airdrop", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ wallet: connectedWallet })
-        });
-
-        const result = await response.json();
-        if (result.success) {
-          document.getElementById("airdrop-status").innerText = "✅ Airdrop succesvol! Transactie: " + result.tx;
-        } else {
-          document.getElementById("airdrop-status").innerText = "❌ Mislukt: " + (result.message || JSON.stringify(result));
-        }
-      } catch (err) {
-        console.error("Airdrop fout:", err);
-        document.getElementById("airdrop-status").innerText = "❌ Fout bij airdrop";
-      }
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("connect-wallet").addEventListener("click", connectWallet);
-      document.getElementById("claim-airdrop").addEventListener("click", claimAirdrop);
-    });
-  </script>
 </body>
 </html>
 
