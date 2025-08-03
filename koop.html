@@ -1,21 +1,13 @@
-<!DOCTYPE html>
+
+  <!DOCTYPE html>
 <html lang="nl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Koop CBS Coin v8</title>
+  <title>Koop CBS Coin v9</title>
 
-  <!-- ✅ Eérst web3 library laden -->
-  <script>
-    window.solanaWeb3Ready = false;
-    const script = document.createElement('script');
-    script.src = "https://cdn.jsdelivr.net/npm/@solana/web3.js@1.88.2/lib/index.iife.min.js";
-    script.onload = () => {
-      window.solanaWeb3Ready = true;
-      initCBS();
-    };
-    document.head.appendChild(script);
-  </script>
+  <!-- Web3 script veilig laden -->
+  <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.88.2/lib/index.iife.min.js" defer></script>
 
   <style>
     body {
@@ -48,7 +40,7 @@
   </style>
 </head>
 <body>
-  <h1>Koop CBS Coin v8</h1>
+  <h1>Koop CBS Coin v9</h1>
   <p>Betaal 0.1 SOL en ontvang <strong>100.000 CBS Coin</strong></p>
 
   <button id="connectWallet">🔗 Connect Wallet</button>
@@ -56,24 +48,33 @@
 
   <button id="buyBtn" style="display:none;">💰 Koop 100.000 CBS voor 0.1 SOL</button>
 
-  <script>
+  <!-- Code pas uitvoeren NA alles is geladen -->
+  <script defer>
+    window.addEventListener("DOMContentLoaded", () => {
+      const checkWeb3 = setInterval(() => {
+        if (window.solanaWeb3) {
+          clearInterval(checkWeb3);
+          initCBS();
+        }
+      }, 100);
+    });
+
     function initCBS() {
-      console.log("✅ solanaWeb3 geladen, starten met initCBS()");
+      console.log("✅ Web3 geladen, klaar om te starten");
 
       let walletAddress = null;
-      const receiverWallet = new window.solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
+      const receiverWallet = new solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
 
       async function connectWallet() {
-        console.log("🔌 Connect Wallet klik werkt");
         const provider = window.phantom?.solana;
-        if (provider && provider.isPhantom) {
+        if (provider?.isPhantom) {
           try {
             const resp = await provider.connect();
             walletAddress = resp.publicKey.toString();
             document.getElementById("status").innerText =
               "✅ Verbonden: " + walletAddress.slice(0, 6) + "..." + walletAddress.slice(-4);
             document.getElementById("buyBtn").style.display = "inline-block";
-          } catch (err) {
+          } catch {
             document.getElementById("status").innerText = "❌ Verbinding geweigerd";
           }
         } else {
@@ -83,17 +84,17 @@
 
       async function sendSol() {
         try {
-          const provider = window.phantom?.solana;
-          const connection = new window.solanaWeb3.Connection(
-            window.solanaWeb3.clusterApiUrl("mainnet-beta"),
+          const provider = window.phantom.solana;
+          const connection = new solanaWeb3.Connection(
+            solanaWeb3.clusterApiUrl("mainnet-beta"),
             "confirmed"
           );
 
-          const transaction = new window.solanaWeb3.Transaction().add(
-            window.solanaWeb3.SystemProgram.transfer({
+          const transaction = new solanaWeb3.Transaction().add(
+            solanaWeb3.SystemProgram.transfer({
               fromPubkey: provider.publicKey,
               toPubkey: receiverWallet,
-              lamports: 0.1 * window.solanaWeb3.LAMPORTS_PER_SOL,
+              lamports: 0.1 * solanaWeb3.LAMPORTS_PER_SOL,
             })
           );
 
@@ -101,15 +102,15 @@
           transaction.recentBlockhash = blockhash;
           transaction.feePayer = provider.publicKey;
 
-          const signedTransaction = await provider.signTransaction(transaction);
-          const txid = await connection.sendRawTransaction(signedTransaction.serialize());
+          const signed = await provider.signTransaction(transaction);
+          const txid = await connection.sendRawTransaction(signed.serialize());
 
           document.getElementById("status").innerHTML = `
             ✅ Transactie verzonden:<br>
             <a href="https://solscan.io/tx/${txid}" target="_blank">Bekijk op Solscan</a>
           `;
-        } catch (error) {
-          console.error("Transactiefout:", error);
+        } catch (err) {
+          console.error(err);
           document.getElementById("status").innerText = "❌ Transactie mislukt.";
         }
       }
