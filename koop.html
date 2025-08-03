@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Koop CBS Coin v15</title>
+  <title>Koop CBS Coin v16</title>
 
   <!-- ✅ Buffer polyfill als module -->
   <script type="module">
@@ -55,7 +55,7 @@
   </style>
 </head>
 <body>
-  <h1>Koop CBS Coin v15</h1>
+  <h1>Koop CBS Coin v16</h1>
   <p>Betaal 0.1 SOL en ontvang <strong>100.000 CBS Coin</strong></p>
 
   <button id="connectWallet">🔗 Connect Wallet</button>
@@ -63,7 +63,12 @@
 
   <button id="buyBtn" style="display:none;">💰 Koop 100.000 CBS voor 0.1 SOL</button>
 
-  <script>
+  <script type="module">
+    import {
+      getAssociatedTokenAddressSync,
+      createTransferCheckedInstruction
+    } from "https://cdn.jsdelivr.net/npm/@solana/spl-token@0.3.5/+esm";
+
     const receiverWallet = new solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
     const cbsMint = new solanaWeb3.PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
 
@@ -128,11 +133,11 @@
     }
 
     async function sendCBS(connection) {
-      const senderCBSAccount = window.getAssociatedTokenAddressSync(cbsMint, receiverWallet);
-      const userCBSAccount = window.getAssociatedTokenAddressSync(cbsMint, new solanaWeb3.PublicKey(walletAddress));
+      const senderCBSAccount = getAssociatedTokenAddressSync(cbsMint, receiverWallet);
+      const userCBSAccount = getAssociatedTokenAddressSync(cbsMint, new solanaWeb3.PublicKey(walletAddress));
 
       const transaction = new solanaWeb3.Transaction().add(
-        window.createTransferCheckedInstruction(
+        createTransferCheckedInstruction(
           senderCBSAccount,
           cbsMint,
           userCBSAccount,
