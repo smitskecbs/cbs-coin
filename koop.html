@@ -5,8 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Koop CBS Coin</title>
 
-  <!-- ✅ Gebruik de niet-module versie -->
-  <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.88.2/lib/index.iife.min.js"></script>
+  <!-- ✅ Eérst web3 library laden -->
+  <script>
+    window.solanaWeb3Ready = false;
+    const script = document.createElement('script');
+    script.src = "https://cdn.jsdelivr.net/npm/@solana/web3.js@1.88.2/lib/index.iife.min.js";
+    script.onload = () => {
+      window.solanaWeb3Ready = true;
+      initCBS();
+    };
+    document.head.appendChild(script);
+  </script>
 
   <style>
     body {
@@ -48,8 +57,8 @@
   <button id="buyBtn" style="display:none;">💰 Koop 100.000 CBS voor 0.1 SOL</button>
 
   <script>
-    window.onload = () => {
-      console.log("🌐 Pagina geladen, web3.js beschikbaar?", typeof solanaWeb3);
+    function initCBS() {
+      console.log("✅ solanaWeb3 geladen, starten met initCBS()");
 
       let walletAddress = null;
       const receiverWallet = new solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
@@ -107,8 +116,9 @@
 
       document.getElementById("connectWallet").addEventListener("click", connectWallet);
       document.getElementById("buyBtn").addEventListener("click", sendSol);
-    };
+    }
   </script>
 </body>
 </html>
+
 
