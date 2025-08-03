@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Koop CBS Coin</title>
+  <title>Koop CBS Coin v15</title>
 
   <!-- ✅ Buffer polyfill als module -->
   <script type="module">
@@ -45,7 +45,7 @@
   </style>
 </head>
 <body>
-  <h1>Koop CBS Coin</h1>
+  <h1>Koop CBS Coin v15</h1>
   <p>Betaal 0.1 SOL en ontvang <strong>100.000 CBS Coin</strong></p>
 
   <button id="connectWallet">🔗 Connect Wallet</button>
@@ -54,7 +54,8 @@
   <button id="buyBtn" style="display:none;">💰 Koop 100.000 CBS voor 0.1 SOL</button>
 
   <script>
-    const receiverWallet = new solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
+    const receiverWallet = new solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg"); // ontvang SOL
+    const cbsMint = new solanaWeb3.PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"); // CBS token
 
     let walletAddress = null;
     let provider = null;
@@ -83,7 +84,6 @@
       }
 
       try {
-        // ✅ Gebruik Helius RPC met jouw echte API key
         const connection = new solanaWeb3.Connection(
           "https://rpc.helius.xyz/?api-key=453a64a5-31dd-4c21-9619-6f0c69c74ff9",
           "confirmed"
@@ -106,13 +106,40 @@
         const txid = await connection.sendRawTransaction(signedTransaction.serialize());
 
         document.getElementById("status").innerHTML = `
-          ✅ Transactie verzonden:<br>
-          <a href="https://solscan.io/tx/${txid}" target="_blank">Bekijk op Solscan</a>
+          ✅ SOL verstuurd. Wacht op CBS Coin...<br>
+          <a href="https://solscan.io/tx/${txid}" target="_blank">Bekijk transactie</a>
         `;
+
+        await sendCBS(connection);
       } catch (error) {
         console.error("Transactiefout:", error);
         document.getElementById("status").innerText = "❌ Transactie mislukt.";
       }
+    }
+
+    async function sendCBS(connection) {
+      const senderCBSAccount = await solanaWeb3.getAssociatedTokenAddress(cbsMint, receiverWallet);
+      const userCBSAccount = await solanaWeb3.getAssociatedTokenAddress(cbsMint, new solanaWeb3.PublicKey(walletAddress));
+
+      const transaction = new solanaWeb3.Transaction().add(
+        solanaWeb3.createTransferCheckedInstruction(
+          senderCBSAccount,
+          cbsMint,
+          userCBSAccount,
+          receiverWallet,
+          100000000, // 100.000 CBS met 6 decimalen
+          6
+        )
+      );
+
+      const latest = await connection.getLatestBlockhash();
+      transaction.recentBlockhash = latest.blockhash;
+      transaction.feePayer = receiverWallet;
+
+      const signed = await provider.signTransaction(transaction);
+      const txid = await connection.sendRawTransaction(signed.serialize());
+
+      document.getElementById("status").innerHTML += `<br>✅ CBS Coin verstuurd! <a href="https://solscan.io/tx/${txid}" target="_blank">Bekijk op Solscan</a>`;
     }
 
     document.getElementById("connectWallet").addEventListener("click", connectWallet);
@@ -120,4 +147,3 @@
   </script>
 </body>
 </html>
-
