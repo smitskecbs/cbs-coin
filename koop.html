@@ -1,13 +1,78 @@
-
-  <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="nl">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Koop CBS Coin v9</title>
 
-  <!-- Web3 script veilig laden -->
-  <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.88.2/lib/index.iife.min.js" defer></script>
+  <!-- ✅ Laad Solana web3.js module -->
+  <script type="module">
+    import * as solanaWeb3 from "https://unpkg.com/@solana/web3.js@1.88.2/lib/index.mjs";
+
+    window.solanaWeb3 = solanaWeb3;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      initCBS();
+    });
+
+    function initCBS() {
+      let walletAddress = null;
+      const receiverWallet = new solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
+
+      async function connectWallet() {
+        const provider = window.phantom?.solana;
+        if (provider && provider.isPhantom) {
+          try {
+            const resp = await provider.connect();
+            walletAddress = resp.publicKey.toString();
+            document.getElementById("status").innerText =
+              "✅ Verbonden: " + walletAddress.slice(0, 6) + "..." + walletAddress.slice(-4);
+            document.getElementById("buyBtn").style.display = "inline-block";
+          } catch {
+            document.getElementById("status").innerText = "❌ Verbinding geweigerd";
+          }
+        } else {
+          alert("Phantom wallet niet gevonden. Installeer via https://phantom.app");
+        }
+      }
+
+      async function sendSol() {
+        try {
+          const provider = window.phantom?.solana;
+          const connection = new solanaWeb3.Connection(
+            solanaWeb3.clusterApiUrl("mainnet-beta"),
+            "confirmed"
+          );
+
+          const transaction = new solanaWeb3.Transaction().add(
+            solanaWeb3.SystemProgram.transfer({
+              fromPubkey: provider.publicKey,
+              toPubkey: receiverWallet,
+              lamports: 0.1 * solanaWeb3.LAMPORTS_PER_SOL,
+            })
+          );
+
+          const { blockhash } = await connection.getLatestBlockhash();
+          transaction.recentBlockhash = blockhash;
+          transaction.feePayer = provider.publicKey;
+
+          const signedTransaction = await provider.signTransaction(transaction);
+          const txid = await connection.sendRawTransaction(signedTransaction.serialize());
+
+          document.getElementById("status").innerHTML = `
+            ✅ Transactie verzonden:<br>
+            <a href="https://solscan.io/tx/${txid}" target="_blank">Bekijk op Solscan</a>
+          `;
+        } catch (error) {
+          console.error("Transactiefout:", error);
+          document.getElementById("status").innerText = "❌ Transactie mislukt.";
+        }
+      }
+
+      document.getElementById("connectWallet").addEventListener("click", connectWallet);
+      document.getElementById("buyBtn").addEventListener("click", sendSol);
+    }
+  </script>
 
   <style>
     body {
@@ -34,9 +99,6 @@
       margin-top: 1rem;
       font-size: 1.1rem;
     }
-    a {
-      color: #00ffcc;
-    }
   </style>
 </head>
 <body>
@@ -47,77 +109,5 @@
   <div id="status">Niet verbonden</div>
 
   <button id="buyBtn" style="display:none;">💰 Koop 100.000 CBS voor 0.1 SOL</button>
-
-  <!-- Code pas uitvoeren NA alles is geladen -->
-  <script defer>
-    window.addEventListener("DOMContentLoaded", () => {
-      const checkWeb3 = setInterval(() => {
-        if (window.solanaWeb3) {
-          clearInterval(checkWeb3);
-          initCBS();
-        }
-      }, 100);
-    });
-
-    function initCBS() {
-      console.log("✅ Web3 geladen, klaar om te starten");
-
-      let walletAddress = null;
-      const receiverWallet = new solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
-
-      async function connectWallet() {
-        const provider = window.phantom?.solana;
-        if (provider?.isPhantom) {
-          try {
-            const resp = await provider.connect();
-            walletAddress = resp.publicKey.toString();
-            document.getElementById("status").innerText =
-              "✅ Verbonden: " + walletAddress.slice(0, 6) + "..." + walletAddress.slice(-4);
-            document.getElementById("buyBtn").style.display = "inline-block";
-          } catch {
-            document.getElementById("status").innerText = "❌ Verbinding geweigerd";
-          }
-        } else {
-          alert("Phantom wallet niet gevonden. Installeer via https://phantom.app");
-        }
-      }
-
-      async function sendSol() {
-        try {
-          const provider = window.phantom.solana;
-          const connection = new solanaWeb3.Connection(
-            solanaWeb3.clusterApiUrl("mainnet-beta"),
-            "confirmed"
-          );
-
-          const transaction = new solanaWeb3.Transaction().add(
-            solanaWeb3.SystemProgram.transfer({
-              fromPubkey: provider.publicKey,
-              toPubkey: receiverWallet,
-              lamports: 0.1 * solanaWeb3.LAMPORTS_PER_SOL,
-            })
-          );
-
-          const { blockhash } = await connection.getLatestBlockhash();
-          transaction.recentBlockhash = blockhash;
-          transaction.feePayer = provider.publicKey;
-
-          const signed = await provider.signTransaction(transaction);
-          const txid = await connection.sendRawTransaction(signed.serialize());
-
-          document.getElementById("status").innerHTML = `
-            ✅ Transactie verzonden:<br>
-            <a href="https://solscan.io/tx/${txid}" target="_blank">Bekijk op Solscan</a>
-          `;
-        } catch (err) {
-          console.error(err);
-          document.getElementById("status").innerText = "❌ Transactie mislukt.";
-        }
-      }
-
-      document.getElementById("connectWallet").addEventListener("click", connectWallet);
-      document.getElementById("buyBtn").addEventListener("click", sendSol);
-    }
-  </script>
 </body>
 </html>
