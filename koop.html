@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Koop CBS Coin</title>
+  <title>Koop CBS Coin v15</title>
 
   <!-- ✅ Buffer polyfill als module -->
   <script type="module">
@@ -11,10 +11,14 @@
     window.Buffer = Buffer;
   </script>
 
-  <!-- ✅ Juiste IIFE-versie laden via CDN zonder CORS-problemen -->
+  <!-- ✅ Juiste IIFE-versie laden voor web3.js -->
   <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.73.3/lib/index.iife.min.js"></script>
-  <!-- ✅ SPL Token utils laden -->
-  <script src="https://cdn.jsdelivr.net/npm/@solana/spl-token@0.3.5/lib/index.iife.min.js"></script>
+
+  <!-- ✅ SPL Token als module geladen -->
+  <script type="module">
+    import * as splToken from "https://cdn.jsdelivr.net/npm/@solana/spl-token@0.3.5/+esm";
+    window.splToken = splToken;
+  </script>
 
   <style>
     body {
@@ -47,7 +51,7 @@
   </style>
 </head>
 <body>
-  <h1>Koop CBS Coin</h1>
+  <h1>Koop CBS Coin v15</h1>
   <p>Betaal 0.1 SOL en ontvang <strong>100.000 CBS Coin</strong></p>
 
   <button id="connectWallet">🔗 Connect Wallet</button>
@@ -120,11 +124,11 @@
     }
 
     async function sendCBS(connection) {
-      const senderCBSAccount = await splToken.getAssociatedTokenAddress(cbsMint, receiverWallet);
-      const userCBSAccount = await splToken.getAssociatedTokenAddress(cbsMint, new solanaWeb3.PublicKey(walletAddress));
+      const senderCBSAccount = await window.splToken.getAssociatedTokenAddress(cbsMint, receiverWallet);
+      const userCBSAccount = await window.splToken.getAssociatedTokenAddress(cbsMint, new solanaWeb3.PublicKey(walletAddress));
 
       const transaction = new solanaWeb3.Transaction().add(
-        splToken.createTransferCheckedInstruction(
+        window.splToken.createTransferCheckedInstruction(
           senderCBSAccount,
           cbsMint,
           userCBSAccount,
