@@ -46,10 +46,22 @@
 
   <script>
     let walletAddress = null;
-    const receiverWallet = new solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
+    let provider = null;
+
+    const waitForWeb3 = () => {
+      return new Promise((resolve, reject) => {
+        const interval = setInterval(() => {
+          if (window.solanaWeb3 && window.phantom?.solana?.isPhantom) {
+            clearInterval(interval);
+            resolve();
+          }
+        }, 100);
+        setTimeout(() => reject(new Error("solanaWeb3 niet geladen")), 5000);
+      });
+    };
 
     async function connectWallet() {
-      const provider = window.phantom?.solana;
+      provider = window.phantom?.solana;
 
       if (provider && provider.isPhantom) {
         try {
@@ -67,12 +79,15 @@
     }
 
     async function sendSol() {
+      if (!window.solanaWeb3) {
+        alert("❌ Solana Web3 library niet beschikbaar.");
+        return;
+      }
+
       try {
-        const provider = window.phantom?.solana;
-        const connection = new solanaWeb3.Connection(
-          solanaWeb3.clusterApiUrl("mainnet-beta"),
-          "confirmed"
-        );
+        const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl("mainnet-beta"), "confirmed");
+
+        const receiverWallet = new solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
 
         const transaction = new solanaWeb3.Transaction().add(
           solanaWeb3.SystemProgram.transfer({
@@ -94,13 +109,23 @@
           <a href="https://solscan.io/tx/${txid}" target="_blank">Bekijk op Solscan</a>
         `;
       } catch (error) {
-        console.error("Fout bij verzenden:", error);
+        console.error("Transactiefout:", error);
         document.getElementById("status").innerText = "❌ Transactie mislukt.";
       }
     }
 
-    document.getElementById("connectWallet").addEventListener("click", connectWallet);
-    document.getElementById("buyBtn").addEventListener("click", sendSol);
+    // ⏳ wacht tot de web3 geladen is voor we knoppen activeren
+    waitForWeb3()
+      .then(() => {
+        document.getElementById("connectWallet").addEventListener("click", connectWallet);
+        document.getElementById("buyBtn").addEventListener("click", sendSol);
+        console.log("✅ solanaWeb3 geladen en klaar");
+      })
+      .catch((err) => {
+        console.error("⛔️ Fout:", err);
+        document.getElementById("status").innerText = "❌ Web3 niet geladen.";
+      });
   </script>
 </body>
 </html>
+
