@@ -5,12 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Koop CBS Coin v11</title>
 
-  <!-- ✅ Solana Web3.js IIFE versie -->
+  <!-- ✅ Juiste IIFE-versie laden via CDN zonder CORS-problemen -->
   <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.73.3/lib/index.iife.min.js"></script>
-
-  <!-- ✅ Buffer fix voor browser -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/buffer/6.0.3/index.min.js"></script>
-  <script>window.Buffer = buffer.Buffer;</script>
 
   <style>
     body {
@@ -85,7 +81,7 @@
           solanaWeb3.SystemProgram.transfer({
             fromPubkey: provider.publicKey,
             toPubkey: receiverWallet,
-            lamports: 0.1 * solanaWeb3.LAMPORTS_PER_SOL,
+            lamports: Math.round(0.1 * solanaWeb3.LAMPORTS_PER_SOL),
           })
         );
 
@@ -111,4 +107,3 @@
   </script>
 </body>
 </html>
-
