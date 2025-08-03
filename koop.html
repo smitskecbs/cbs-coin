@@ -61,7 +61,7 @@
       console.log("✅ solanaWeb3 geladen, starten met initCBS()");
 
       let walletAddress = null;
-      const receiverWallet = new solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
+      const receiverWallet = new window.solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
 
       async function connectWallet() {
         console.log("🔌 Connect Wallet klik werkt");
@@ -84,16 +84,16 @@
       async function sendSol() {
         try {
           const provider = window.phantom?.solana;
-          const connection = new solanaWeb3.Connection(
-            solanaWeb3.clusterApiUrl("mainnet-beta"),
+          const connection = new window.solanaWeb3.Connection(
+            window.solanaWeb3.clusterApiUrl("mainnet-beta"),
             "confirmed"
           );
 
-          const transaction = new solanaWeb3.Transaction().add(
-            solanaWeb3.SystemProgram.transfer({
+          const transaction = new window.solanaWeb3.Transaction().add(
+            window.solanaWeb3.SystemProgram.transfer({
               fromPubkey: provider.publicKey,
               toPubkey: receiverWallet,
-              lamports: 0.1 * solanaWeb3.LAMPORTS_PER_SOL,
+              lamports: 0.1 * window.solanaWeb3.LAMPORTS_PER_SOL,
             })
           );
 
@@ -120,5 +120,3 @@
   </script>
 </body>
 </html>
-
-
