@@ -1,1 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Koop CBS Coin</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0d0d0d;
+      color: #00ffcc;
+      text-align: center;
+      padding: 2rem;
+    }
+    button {
+      background-color: #00ffcc;
+      border: none;
+      color: #000;
+      padding: 1rem 2rem;
+      font-size: 1.2rem;
+      border-radius: 10px;
+      cursor: pointer;
+      margin-top: 2rem;
+    }
+    button:hover {
+      background-color: #00d4a8;
+    }
+    #status {
+      margin-top: 1rem;
+      font-size: 1.1rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Koop CBS Coin</h1>
+  <p>Betaal 0.1 SOL en ontvang 10.000 CBS Coin direct.</p>
+
+  <button id="connectWallet">🔗 Connect Wallet</button>
+  <div id="status">Niet verbonden</div>
+
+  <button id="buyBtn" style="display:none;">💰 Koop 10.000 CBS voor 0.1 SOL</button>
+
+  <script>
+    let walletAddress = null;
+
+    async function connectWallet() {
+      const provider = window.phantom?.solana;
+
+      if (provider && provider.isPhantom) {
+        try {
+          const res = await provider.connect();
+          walletAddress = res.publicKey.toString();
+          document.getElementById("status").innerText = "Verbonden: " + walletAddress.slice(0, 6) + "..." + walletAddress.slice(-4);
+          document.getElementById("buyBtn").style.display = "inline-block";
+        } catch (err) {
+          document.getElementById("status").innerText = "Verbinding geweigerd";
+        }
+      } else {
+        alert("Phantom wallet niet gevonden. Installeer via https://phantom.app");
+      }
+    }
+
+    document.getElementById("connectWallet").onclick = connectWallet;
+
+    document.getElementById("buyBtn").onclick = () => {
+      alert("Transactielogica komt in de volgende stap 😉");
+    };
+  </script>
+</body>
+</html>
 
