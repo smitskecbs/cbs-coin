@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Koop CBS Coin</title>
+  <title>Koop CBS Coin v15</title>
 
   <!-- ✅ Buffer polyfill als module -->
   <script type="module">
@@ -17,10 +17,10 @@
   <!-- ✅ SPL Token als module geladen -->
   <script type="module">
     import {
-      getAssociatedTokenAddress,
+      getAssociatedTokenAddressSync,
       createTransferCheckedInstruction
     } from "https://cdn.jsdelivr.net/npm/@solana/spl-token@0.3.5/+esm";
-    window.getAssociatedTokenAddress = getAssociatedTokenAddress;
+    window.getAssociatedTokenAddressSync = getAssociatedTokenAddressSync;
     window.createTransferCheckedInstruction = createTransferCheckedInstruction;
   </script>
 
@@ -55,7 +55,7 @@
   </style>
 </head>
 <body>
-  <h1>Koop CBS Coin</h1>
+  <h1>Koop CBS Coin v15</h1>
   <p>Betaal 0.1 SOL en ontvang <strong>100.000 CBS Coin</strong></p>
 
   <button id="connectWallet">🔗 Connect Wallet</button>
@@ -64,8 +64,8 @@
   <button id="buyBtn" style="display:none;">💰 Koop 100.000 CBS voor 0.1 SOL</button>
 
   <script>
-    const receiverWallet = new solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg"); // ontvang SOL
-    const cbsMint = new solanaWeb3.PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"); // CBS token
+    const receiverWallet = new solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
+    const cbsMint = new solanaWeb3.PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
 
     let walletAddress = null;
     let provider = null;
@@ -128,8 +128,8 @@
     }
 
     async function sendCBS(connection) {
-      const senderCBSAccount = await window.getAssociatedTokenAddress(cbsMint, receiverWallet);
-      const userCBSAccount = await window.getAssociatedTokenAddress(cbsMint, new solanaWeb3.PublicKey(walletAddress));
+      const senderCBSAccount = window.getAssociatedTokenAddressSync(cbsMint, receiverWallet);
+      const userCBSAccount = window.getAssociatedTokenAddressSync(cbsMint, new solanaWeb3.PublicKey(walletAddress));
 
       const transaction = new solanaWeb3.Transaction().add(
         window.createTransferCheckedInstruction(
@@ -137,7 +137,7 @@
           cbsMint,
           userCBSAccount,
           receiverWallet,
-          100000000, // 100.000 CBS met 6 decimalen
+          100000000,
           6
         )
       );
@@ -157,4 +157,5 @@
   </script>
 </body>
 </html>
+
 
