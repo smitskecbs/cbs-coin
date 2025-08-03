@@ -48,62 +48,67 @@
   <button id="buyBtn" style="display:none;">💰 Koop 100.000 CBS voor 0.1 SOL</button>
 
   <script>
-    let walletAddress = null;
-    const receiverWallet = new solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
+    window.onload = () => {
+      console.log("🌐 Pagina geladen, web3.js beschikbaar?", typeof solanaWeb3);
 
-    async function connectWallet() {
-      console.log("🔌 Connect Wallet klik werkt"); // Debug-log toegevoegd
-      const provider = window.phantom?.solana;
-      if (provider && provider.isPhantom) {
-        try {
-          const resp = await provider.connect();
-          walletAddress = resp.publicKey.toString();
-          document.getElementById("status").innerText =
-            "✅ Verbonden: " + walletAddress.slice(0, 6) + "..." + walletAddress.slice(-4);
-          document.getElementById("buyBtn").style.display = "inline-block";
-        } catch (err) {
-          document.getElementById("status").innerText = "❌ Verbinding geweigerd";
-        }
-      } else {
-        alert("Phantom wallet niet gevonden. Installeer via https://phantom.app");
-      }
-    }
+      let walletAddress = null;
+      const receiverWallet = new solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
 
-    async function sendSol() {
-      try {
+      async function connectWallet() {
+        console.log("🔌 Connect Wallet klik werkt");
         const provider = window.phantom?.solana;
-        const connection = new solanaWeb3.Connection(
-          solanaWeb3.clusterApiUrl("mainnet-beta"),
-          "confirmed"
-        );
-
-        const transaction = new solanaWeb3.Transaction().add(
-          solanaWeb3.SystemProgram.transfer({
-            fromPubkey: provider.publicKey,
-            toPubkey: receiverWallet,
-            lamports: 0.1 * solanaWeb3.LAMPORTS_PER_SOL,
-          })
-        );
-
-        const { blockhash } = await connection.getLatestBlockhash();
-        transaction.recentBlockhash = blockhash;
-        transaction.feePayer = provider.publicKey;
-
-        const signedTransaction = await provider.signTransaction(transaction);
-        const txid = await connection.sendRawTransaction(signedTransaction.serialize());
-
-        document.getElementById("status").innerHTML = `
-          ✅ Transactie verzonden:<br>
-          <a href="https://solscan.io/tx/${txid}" target="_blank">Bekijk op Solscan</a>
-        `;
-      } catch (error) {
-        console.error("Transactiefout:", error);
-        document.getElementById("status").innerText = "❌ Transactie mislukt.";
+        if (provider && provider.isPhantom) {
+          try {
+            const resp = await provider.connect();
+            walletAddress = resp.publicKey.toString();
+            document.getElementById("status").innerText =
+              "✅ Verbonden: " + walletAddress.slice(0, 6) + "..." + walletAddress.slice(-4);
+            document.getElementById("buyBtn").style.display = "inline-block";
+          } catch (err) {
+            document.getElementById("status").innerText = "❌ Verbinding geweigerd";
+          }
+        } else {
+          alert("Phantom wallet niet gevonden. Installeer via https://phantom.app");
+        }
       }
-    }
 
-    document.getElementById("connectWallet").addEventListener("click", connectWallet);
-    document.getElementById("buyBtn").addEventListener("click", sendSol);
+      async function sendSol() {
+        try {
+          const provider = window.phantom?.solana;
+          const connection = new solanaWeb3.Connection(
+            solanaWeb3.clusterApiUrl("mainnet-beta"),
+            "confirmed"
+          );
+
+          const transaction = new solanaWeb3.Transaction().add(
+            solanaWeb3.SystemProgram.transfer({
+              fromPubkey: provider.publicKey,
+              toPubkey: receiverWallet,
+              lamports: 0.1 * solanaWeb3.LAMPORTS_PER_SOL,
+            })
+          );
+
+          const { blockhash } = await connection.getLatestBlockhash();
+          transaction.recentBlockhash = blockhash;
+          transaction.feePayer = provider.publicKey;
+
+          const signedTransaction = await provider.signTransaction(transaction);
+          const txid = await connection.sendRawTransaction(signedTransaction.serialize());
+
+          document.getElementById("status").innerHTML = `
+            ✅ Transactie verzonden:<br>
+            <a href="https://solscan.io/tx/${txid}" target="_blank">Bekijk op Solscan</a>
+          `;
+        } catch (error) {
+          console.error("Transactiefout:", error);
+          document.getElementById("status").innerText = "❌ Transactie mislukt.";
+        }
+      }
+
+      document.getElementById("connectWallet").addEventListener("click", connectWallet);
+      document.getElementById("buyBtn").addEventListener("click", sendSol);
+    };
   </script>
 </body>
 </html>
+
