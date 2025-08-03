@@ -1,48 +1,30 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Koop CBS Coin</title>
-  <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.88.2/lib/index.iife.min.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #0d0d0d;
-      color: #00ffcc;
-      text-align: center;
-      padding: 2rem;
-    }
-    button {
-      background-color: #00ffcc;
-      border: none;
-      color: #000;
-      padding: 1rem 2rem;
-      font-size: 1.2rem;
-      border-radius: 10px;
-      cursor: pointer;
-      margin-top: 2rem;
-    }
-    button:hover {
-      background-color: #00d4a8;
-    }
-    #status {
-      margin-top: 1rem;
-      font-size: 1.1rem;
-    }
-  </style>
+  <title>Phantom Connect Test</title>
 </head>
-<body>
-  <h1>Koop CBS Coin</h1>
-  <p>Betaal 0.1 SOL en ontvang <strong>100.000 CBS Coin</strong></p>
-
-  <button id="connectWallet">🔗 Connect Wallet</button>
-  <div id="status">Niet verbonden</div>
-
-  <button id="buyBtn" style="display:none;">💰 Koop 100.000 CBS voor 0.1 SOL</button>
+<body style="background:#0d0d0d;color:#00ffcc;text-align:center;padding:2rem;">
+  <h1>Test Wallet Connectie</h1>
+  <button onclick="connect()">🔗 Connect Phantom</button>
+  <p id="status">Nog niet verbonden</p>
 
   <script>
-    const receiverWallet = new solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
-    let walletAddress = null;
+    async function connect() {
+      const provider = window.phantom?.solana;
+      if (!provider || !provider.isPhantom) {
+        alert("Phantom niet gevonden");
+        return;
+      }
 
-    async function connectWa
+      try {
+        const res = await provider.connect();
+        document.getElementById("status").innerText =
+          "✅ Verbonden: " + res.publicKey.toString();
+      } catch (err) {
+        document.getElementById("status").innerText = "❌ Verbinding geweigerd";
+      }
+    }
+  </script>
+</body>
+</html>
+
