@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Koop CBS Coin</title>
-  <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.88.2/lib/index.iife.min.js"></script>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -44,25 +44,16 @@
 
   <button id="buyBtn" style="display:none;">💰 Koop 100.000 CBS voor 0.1 SOL</button>
 
-  <script>
+  <script type="module">
+    import * as solanaWeb3 from 'https://esm.sh/@solana/web3.js@1.88.2';
+
     let walletAddress = null;
     let provider = null;
 
-    const waitForWeb3 = () => {
-      return new Promise((resolve, reject) => {
-        const interval = setInterval(() => {
-          if (window.solanaWeb3 && window.phantom?.solana?.isPhantom) {
-            clearInterval(interval);
-            resolve();
-          }
-        }, 100);
-        setTimeout(() => reject(new Error("solanaWeb3 niet geladen")), 5000);
-      });
-    };
+    const receiverWallet = new solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
 
     async function connectWallet() {
       provider = window.phantom?.solana;
-
       if (provider && provider.isPhantom) {
         try {
           const resp = await provider.connect();
@@ -79,15 +70,11 @@
     }
 
     async function sendSol() {
-      if (!window.solanaWeb3) {
-        alert("❌ Solana Web3 library niet beschikbaar.");
-        return;
-      }
-
       try {
-        const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl("mainnet-beta"), "confirmed");
-
-        const receiverWallet = new solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
+        const connection = new solanaWeb3.Connection(
+          solanaWeb3.clusterApiUrl("mainnet-beta"),
+          "confirmed"
+        );
 
         const transaction = new solanaWeb3.Transaction().add(
           solanaWeb3.SystemProgram.transfer({
@@ -114,18 +101,8 @@
       }
     }
 
-    // ⏳ wacht tot de web3 geladen is voor we knoppen activeren
-    waitForWeb3()
-      .then(() => {
-        document.getElementById("connectWallet").addEventListener("click", connectWallet);
-        document.getElementById("buyBtn").addEventListener("click", sendSol);
-        console.log("✅ solanaWeb3 geladen en klaar");
-      })
-      .catch((err) => {
-        console.error("⛔️ Fout:", err);
-        document.getElementById("status").innerText = "❌ Web3 niet geladen.";
-      });
+    document.getElementById("connectWallet").addEventListener("click", connectWallet);
+    document.getElementById("buyBtn").addEventListener("click", sendSol);
   </script>
 </body>
 </html>
-
