@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Koop CBS Coin</title>
 
+  <!-- ✅ Web3 library via IIFE (werkt met GitHub Pages) -->
+  <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.88.2/lib/index.iife.min.js"></script>
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -44,16 +47,12 @@
 
   <button id="buyBtn" style="display:none;">💰 Koop 100.000 CBS voor 0.1 SOL</button>
 
-  <script type="module">
-    import * as solanaWeb3 from 'https://esm.sh/@solana/web3.js@1.88.2';
-
+  <script>
     let walletAddress = null;
-    let provider = null;
-
     const receiverWallet = new solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
 
     async function connectWallet() {
-      provider = window.phantom?.solana;
+      const provider = window.phantom?.solana;
       if (provider && provider.isPhantom) {
         try {
           const resp = await provider.connect();
@@ -71,6 +70,7 @@
 
     async function sendSol() {
       try {
+        const provider = window.phantom?.solana;
         const connection = new solanaWeb3.Connection(
           solanaWeb3.clusterApiUrl("mainnet-beta"),
           "confirmed"
