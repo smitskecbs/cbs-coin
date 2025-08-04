@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -137,6 +138,54 @@
     <p id="status"></p>
   </section>
 
+  <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
+  <script>
+    const connection = new solanaWeb3.Connection("https://rpc.helius.xyz/?api-key=453a64a5-31dd-4c21-9619-6f0c69c74ff9");
+
+    async function koopCBS() {
+      const phantom = window.solana;
+
+      if (!phantom || !phantom.isPhantom) {
+        document.getElementById("status").innerText = "❌ Phantom wallet niet gevonden.";
+        return;
+      }
+
+      try {
+        const resp = await phantom.connect();
+        const buyer = resp.publicKey.toString();
+
+        const transaction = new solanaWeb3.Transaction().add(
+          solanaWeb3.SystemProgram.transfer({
+            fromPubkey: phantom.publicKey,
+            toPubkey: new solanaWeb3.PublicKey("76sjWWFoJ1NQEWXWbbqYR8112FAEyWGQT1PS1DeLmEg"),
+            lamports: 0.05 * solanaWeb3.LAMPORTS_PER_SOL
+          })
+        );
+
+        transaction.feePayer = phantom.publicKey;
+        const { blockhash } = await connection.getLatestBlockhash();
+        transaction.recentBlockhash = blockhash.blockhash;
+
+        const signed = await phantom.signTransaction(transaction);
+        const txid = await connection.sendRawTransaction(signed.serialize());
+
+        document.getElementById("status").innerText = "⏳ Betaling verzonden... wacht op CBS Coin...";
+
+        // Contacteer backend om CBS te versturen
+        await fetch("https://cbs-coin.vercel.app/api/koop-cbs", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ buyer })
+        });
+
+        document.getElementById("status").innerText = "✅ CBS Coin verstuurd naar je wallet!";
+      } catch (err) {
+        console.error("Fout bij koopCBS:", err);
+        document.getElementById("status").innerText = "⚠️ Er ging iets mis bij de betaling.";
+      }
+    }
+  </script>
+
   <section class="section">
     <h3>📦 Token Info</h3>
     <ul>
@@ -166,63 +215,5 @@
       <a href="https://twitter.com/CBS_Coin" target="_blank">X (Twitter)</a>
     </div>
   </footer>
-
-  <!-- Solana Web3 -->
-  <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
-  <script>
-    const connection = new solanaWeb3.Connection("https://api.mainnet-beta.solana.com");
-
-    async function koopCBS() {
-      const phantom = window.solana;
-
-      if (!phantom || !phantom.isPhantom) {
-        document.getElementById("status").innerText = "❌ Phantom wallet niet gevonden.";
-        return;
-      }
-
-      try {
-        await phantom.connect();
-        const buyer = phantom.publicKey;
-        const to = new solanaWeb3.PublicKey("76sjWWFoJ1NQEWXWbbqYR8112FAEyWGQT1PS1DeLmEg");
-        const transaction = new solanaWeb3.Transaction();
-
-        const instruction = solanaWeb3.SystemProgram.transfer({
-          fromPubkey: buyer,
-          toPubkey: to,
-          lamports: 0.05 * solanaWeb3.LAMPORTS_PER_SOL
-        });
-
-        transaction.add(instruction);
-        transaction.feePayer = buyer;
-
-        const { blockhash } = await connection.getLatestBlockhash();
-        transaction.recentBlockhash = blockhash;
-
-        const signed = await phantom.signTransaction(transaction);
-        const txid = await connection.sendRawTransaction(signed.serialize());
-        await connection.confirmTransaction(txid);
-
-        document.getElementById("status").innerText = "💸 Betaling succesvol! CBS wordt verstuurd...";
-
-        const res = await fetch("https://cbs-coin.vercel.app/api/koop-cbs", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ buyer: buyer.toBase58() })
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-          document.getElementById("status").innerText = "✅ CBS Coin verstuurd!";
-        } else {
-          document.getElementById("status").innerText = `⚠️ CBS verzenden mislukt: ${data.error || "onbekende fout"}`;
-        }
-      } catch (err) {
-        console.error("Fout bij koopCBS:", err);
-        document.getElementById("status").innerText = "⚠️ Er ging iets mis bij de betaling.";
-      }
-    }
-  </script>
 </body>
 </html>
-
