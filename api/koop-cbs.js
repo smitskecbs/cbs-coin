@@ -1,41 +1,36 @@
 // api/koop-cbs.js
 
-import { Connection, PublicKey, Keypair, clusterApiUrl, sendAndConfirmTransaction } from '@solana/web3.js';
+import { Connection, PublicKey, Keypair, clusterApiUrl, sendAndConfirmTransaction, Transaction } from '@solana/web3.js';
 import { createTransferCheckedInstruction, getOrCreateAssociatedTokenAccount } from '@solana/spl-token';
 import bs58 from 'bs58';
 
-// --------------- CONFIG -------------------
+// -------------------- INSTELLINGEN --------------------
+
+// 👇 Vervang deze sleutel door jouw geheime (private) base58 key
+// NIET PUBLIEK DELEN!
+const SENDER_SECRET_KEY = '3uYAn7JrNqvwWqPQBzvRrVrHFoLEbi3hM2YqpYCVT3DaZtTyfsPuCHs93rFzxJuRyErG7mBDKDsmDhtYHLwNYsT'; // voorbeeld, vervangen!
+
+const CBS_TOKEN_MINT = new PublicKey('B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk'); // CBS Coin
+const CBS_DECIMALS = 9;
+const CBS_AMOUNT = 10000 * 10 ** CBS_DECIMALS; // 10.000 CBS
 const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
 
-// 👇 Voeg hier jouw geheime sleutel (base58 string) in van de sender-wallet
-const SENDER_SECRET_KEY = 'jouw_base58_key_hier'; // <- Vervangen!
-const CBS_TOKEN_MINT = new PublicKey('B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk');
-const CBS_DECIMALS = 9;
-const AMOUNT_TO_SEND = 10000 * 10 ** CBS_DECIMALS;
-// ------------------------------------------
+// -------------------------------------------------------
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Only POST allowed' });
+    return res.status(405).json({ error: 'Alleen POST toegestaan' });
   }
 
   const { buyer } = req.body;
 
   if (!buyer) {
-    return res.status(400).json({ error: 'No buyer wallet address provided' });
+    return res.status(400).json({ error: 'Ontvanger walletadres ontbreekt' });
   }
 
   try {
     const recipient = new PublicKey(buyer);
     const senderKeypair = Keypair.fromSecretKey(bs58.decode(SENDER_SECRET_KEY));
-
-    // 🪙 Zorg dat ontvanger CBS-tokenaccount heeft
-    const buyerTokenAccount = await getOrCreateAssociatedTokenAccount(
-      connection,
-      senderKeypair,
-      CBS_TOKEN_MINT,
-      recipient
-    );
 
     const senderTokenAccount = await getOrCreateAssociatedTokenAccount(
       connection,
@@ -44,30 +39,28 @@ export default async function handler(req, res) {
       senderKeypair.publicKey
     );
 
-    // 🔁 Maak transfer aan
+    const recipientTokenAccount = await getOrCreateAssociatedTokenAccount(
+      connection,
+      senderKeypair,
+      CBS_TOKEN_MINT,
+      recipient
+    );
+
     const instruction = createTransferCheckedInstruction(
       senderTokenAccount.address,
       CBS_TOKEN_MINT,
-      buyerTokenAccount.address,
+      recipientTokenAccount.address,
       senderKeypair.publicKey,
-      AMOUNT_TO_SEND,
+      CBS_AMOUNT,
       CBS_DECIMALS
     );
 
-    const transaction = await sendAndConfirmTransaction(
-      connection,
-      {
-        feePayer: senderKeypair.publicKey,
-        recentBlockhash: (await connection.getLatestBlockhash()).blockhash,
-        instructions: [instruction],
-      },
-      [senderKeypair]
-    );
+    const tx = new Transaction().add(instruction);
+    const signature = await sendAndConfirmTransaction(connection, tx, [senderKeypair]);
 
-    return res.status(200).json({ success: true, signature: transaction });
+    return res.status(200).json({ success: true, signature });
   } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: 'Token transfer failed', details: err.message });
+    console.error('Fout bij verzenden:', err);
+    return res.status(500).json({ error: 'Verzenden mislukt', details: err.message });
   }
 }
-
