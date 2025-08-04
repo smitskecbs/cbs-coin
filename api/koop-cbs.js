@@ -1,65 +1,64 @@
-// api/koop-cbs.js
+// /api/koop-cbs.js
+const bs58 = require("bs58");
+const {
+  Connection,
+  Keypair,
+  PublicKey,
+  clusterApiUrl,
+  sendAndConfirmTransaction,
+  Transaction,
+} = require("@solana/web3.js");
+const {
+  getOrCreateAssociatedTokenAccount,
+  createTransferCheckedInstruction,
+} = require("@solana/spl-token");
 
-import { config } from 'dotenv';
-config();
-
-import { Connection, PublicKey, Keypair, clusterApiUrl, sendAndConfirmTransaction, Transaction } from '@solana/web3.js';
-import { createTransferCheckedInstruction, getOrCreateAssociatedTokenAccount } from '@solana/spl-token';
-import bs58 from 'bs58';
-
-// -------------------- CONFIG --------------------
-
-const SENDER_SECRET_KEY = process.env.PRIVATE_KEY; // uit .env bestand
-const CBS_TOKEN_MINT = new PublicKey('B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk'); // CBS Coin
-const CBS_DECIMALS = 9;
-const CBS_AMOUNT = 10000 * 10 ** CBS_DECIMALS; // 10.000 CBS
-const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
-
-// ------------------------------------------------
-
-export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Alleen POST toegestaan' });
-  }
-
-  const { buyer } = req.body;
-  if (!buyer) {
-    return res.status(400).json({ error: 'Ontvanger walletadres ontbreekt' });
+module.exports = async (req, res) => {
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Alleen POST toegestaan" });
   }
 
   try {
+    const { buyer } = req.body;
+    if (!buyer) return res.status(400).json({ error: "Geen walletadres ontvangen." });
+
+    console.log("✅ Buyer ontvangen:", buyer);
+
+    const secretKey = bs58.decode(process.env.PRIVATE_KEY);
+    const payer = Keypair.fromSecretKey(secretKey);
+    const connection = new Connection("https://api.mainnet-beta.solana.com", "confirmed");
+
+    const mint = new PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
     const recipient = new PublicKey(buyer);
-    const senderKeypair = Keypair.fromSecretKey(bs58.decode(SENDER_SECRET_KEY));
+    const sender = payer.publicKey;
 
-    const senderTokenAccount = await getOrCreateAssociatedTokenAccount(
-      connection,
-      senderKeypair,
-      CBS_TOKEN_MINT,
-      senderKeypair.publicKey
+    const senderTokenAccount = await getOrCreateAssociatedTokenAccount(connection, payer, mint, sender);
+    console.log("✅ Sender token account:", senderTokenAccount.address.toBase58());
+
+    const recipientTokenAccount = await getOrCreateAssociatedTokenAccount(connection, payer, mint, recipient);
+    console.log("✅ Recipient token account:", recipientTokenAccount.address.toBase58());
+
+    const amount = 50000 * Math.pow(10, 5); // CBS heeft 5 decimals
+    console.log("✅ Verstuur bedrag:", amount);
+
+    const tx = new Transaction().add(
+      createTransferCheckedInstruction(
+        senderTokenAccount.address,
+        mint,
+        recipientTokenAccount.address,
+        sender,
+        amount,
+        5
+      )
     );
 
-    const recipientTokenAccount = await getOrCreateAssociatedTokenAccount(
-      connection,
-      senderKeypair,
-      CBS_TOKEN_MINT,
-      recipient
-    );
+    const sig = await sendAndConfirmTransaction(connection, tx, [payer]);
+    console.log("✅ Transactie succesvol:", sig);
 
-    const instruction = createTransferCheckedInstruction(
-      senderTokenAccount.address,
-      CBS_TOKEN_MINT,
-      recipientTokenAccount.address,
-      senderKeypair.publicKey,
-      CBS_AMOUNT,
-      CBS_DECIMALS
-    );
-
-    const tx = new Transaction().add(instruction);
-    const signature = await sendAndConfirmTransaction(connection, tx, [senderKeypair]);
-
-    return res.status(200).json({ success: true, signature });
+    return res.status(200).json({ success: true, signature: sig });
   } catch (err) {
-    console.error('Fout bij verzenden:', err);
-    return res.status(500).json({ error: 'Verzenden mislukt', details: err.message });
+    console.error("❌ Fout in koop-cbs.js:", err);
+    return res.status(500).json({ error: err.message || "Onbekende fout" });
   }
-}
+};
+
