@@ -1,1 +1,31 @@
 
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Test Phantom connect</title>
+  <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
+</head>
+<body>
+  <h1>Wallet test</h1>
+  <button id="connect">Verbind Wallet</button>
+  <p id="status"></p>
+
+  <script>
+    document.getElementById("connect").addEventListener("click", async () => {
+      const phantom = window.solana;
+      if (!phantom || !phantom.isPhantom) {
+        document.getElementById("status").innerText = "❌ Phantom wallet niet gevonden.";
+        return;
+      }
+
+      try {
+        const resp = await phantom.connect();
+        document.getElementById("status").innerText = "✅ Verbonden: " + resp.publicKey.toString();
+      } catch (err) {
+        console.error("Connectie fout:", err);
+        document.getElementById("status").innerText = "❌ Kon geen verbinding maken.";
+      }
+    });
+  </script>
+</body>
+</html>
