@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -134,11 +133,13 @@
   <section style="margin-top: 2rem; text-align: center;">
     <h2>Koop CBS Coin</h2>
     <p>Stuur 0.05 SOL en ontvang 50.000 CBS Coin! 🎁</p>
-    <button onclick="koopCBS()">💸 Koop CBS</button>
+    <button id="koopKnop">💸 Koop CBS</button>
     <p id="status"></p>
   </section>
 
+  <!-- Solana Web3.js library -->
   <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
+
   <script>
     const connection = new solanaWeb3.Connection("https://rpc.helius.xyz/?api-key=453a64a5-31dd-4c21-9619-6f0c69c74ff9");
 
@@ -171,7 +172,6 @@
 
         document.getElementById("status").innerText = "⏳ Betaling verzonden... wacht op CBS Coin...";
 
-        // Contacteer backend om CBS te versturen
         await fetch("https://cbs-coin.vercel.app/api/koop-cbs", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -184,6 +184,11 @@
         document.getElementById("status").innerText = "⚠️ Er ging iets mis bij de betaling.";
       }
     }
+
+    // 👇 Zorg dat knop gekoppeld is aan de functie
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("koopKnop").addEventListener("click", koopCBS);
+    });
   </script>
 
   <section class="section">
@@ -217,3 +222,4 @@
   </footer>
 </body>
 </html>
+
