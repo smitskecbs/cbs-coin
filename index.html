@@ -138,10 +138,19 @@
   </section>
 
   <!-- Solana Web3.js library -->
-  <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
+  <script src="https://unpkg.com/@solana/web3.js@1.80.1/lib/index.iife.js"></script>
 
   <script>
-    const connection = new solanaWeb3.Connection("https://rpc.helius.xyz/?api-key=453a64a5-31dd-4c21-9619-6f0c69c74ff9");
+    let connection;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      connection = new solanaWeb3.Connection("https://rpc.helius.xyz/?api-key=453a64a5-31dd-4c21-9619-6f0c69c74ff9");
+
+      const koopKnop = document.getElementById("koopKnop");
+      if (koopKnop) {
+        koopKnop.addEventListener("click", koopCBS);
+      }
+    });
 
     async function koopCBS() {
       const phantom = window.solana;
@@ -154,41 +163,43 @@
       try {
         const resp = await phantom.connect();
         const buyer = resp.publicKey.toString();
+        const sender = resp.publicKey;
+        const ontvanger = new solanaWeb3.PublicKey("76sjWWFoJ1NQEWXWbbqYR8112FAEyWGQT1PS1DeLmEg");
 
-        const transaction = new solanaWeb3.Transaction().add(
+        const transactie = new solanaWeb3.Transaction().add(
           solanaWeb3.SystemProgram.transfer({
-            fromPubkey: phantom.publicKey,
-            toPubkey: new solanaWeb3.PublicKey("76sjWWFoJ1NQEWXWbbqYR8112FAEyWGQT1PS1DeLmEg"),
+            fromPubkey: sender,
+            toPubkey: ontvanger,
             lamports: 0.05 * solanaWeb3.LAMPORTS_PER_SOL
           })
         );
 
-        transaction.feePayer = phantom.publicKey;
+        transactie.feePayer = sender;
         const { blockhash } = await connection.getLatestBlockhash();
-        transaction.recentBlockhash = blockhash.blockhash;
+        transactie.recentBlockhash = blockhash;
 
-        const signed = await phantom.signTransaction(transaction);
-        const txid = await connection.sendRawTransaction(signed.serialize());
+        const ondertekend = await phantom.signTransaction(transactie);
+        const txid = await connection.sendRawTransaction(ondertekend.serialize());
 
-        document.getElementById("status").innerText = "⏳ Betaling verzonden... wacht op CBS Coin...";
+        document.getElementById("status").innerHTML = `⏳ Betaling verzonden... <a href="https://solscan.io/tx/${txid}" target="_blank">Bekijk transactie</a>`;
 
-        await fetch("https://cbs-coin.vercel.app/api/koop-cbs", {
+        const apiResp = await fetch("https://cbs-coin.vercel.app/api/koop-cbs", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ buyer })
         });
 
-        document.getElementById("status").innerText = "✅ CBS Coin verstuurd naar je wallet!";
+        if (!apiResp.ok) {
+          const fouttekst = await apiResp.text();
+          throw new Error("Backend fout: " + fouttekst);
+        }
+
+        document.getElementById("status").innerHTML += "<br>✅ CBS Coin verstuurd naar je wallet!";
       } catch (err) {
-        console.error("Fout bij koopCBS:", err);
-        document.getElementById("status").innerText = "⚠️ Er ging iets mis bij de betaling.";
+        console.error("❌ Fout bij koopCBS:", err);
+        document.getElementById("status").innerText = "⚠️ Er ging iets mis: " + err.message;
       }
     }
-
-    // 👇 Zorg dat knop gekoppeld is aan de functie
-    document.addEventListener("DOMContentLoaded", () => {
-      document.getElementById("koopKnop").addEventListener("click", koopCBS);
-    });
   </script>
 
   <section class="section">
@@ -222,4 +233,3 @@
   </footer>
 </body>
 </html>
-
