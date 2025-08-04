@@ -1,21 +1,21 @@
 // api/koop-cbs.js
 
+import { config } from 'dotenv';
+config();
+
 import { Connection, PublicKey, Keypair, clusterApiUrl, sendAndConfirmTransaction, Transaction } from '@solana/web3.js';
 import { createTransferCheckedInstruction, getOrCreateAssociatedTokenAccount } from '@solana/spl-token';
 import bs58 from 'bs58';
 
-// -------------------- INSTELLINGEN --------------------
+// -------------------- CONFIG --------------------
 
-// 👇 Vervang deze sleutel door jouw geheime (private) base58 key
-// NIET PUBLIEK DELEN!
-const SENDER_SECRET_KEY = '3uYAn7JrNqvwWqPQBzvRrVrHFoLEbi3hM2YqpYCVT3DaZtTyfsPuCHs93rFzxJuRyErG7mBDKDsmDhtYHLwNYsT'; // voorbeeld, vervangen!
-
+const SENDER_SECRET_KEY = process.env.PRIVATE_KEY; // uit .env bestand
 const CBS_TOKEN_MINT = new PublicKey('B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk'); // CBS Coin
 const CBS_DECIMALS = 9;
 const CBS_AMOUNT = 10000 * 10 ** CBS_DECIMALS; // 10.000 CBS
 const connection = new Connection(clusterApiUrl('mainnet-beta'), 'confirmed');
 
-// -------------------------------------------------------
+// ------------------------------------------------
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -23,7 +23,6 @@ export default async function handler(req, res) {
   }
 
   const { buyer } = req.body;
-
   if (!buyer) {
     return res.status(400).json({ error: 'Ontvanger walletadres ontbreekt' });
   }
