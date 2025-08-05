@@ -3,7 +3,14 @@ import {
   getOrCreateAssociatedTokenAccount,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
-import { Connection, Keypair, PublicKey, clusterApiUrl, sendAndConfirmTransaction } from "@solana/web3.js";
+import {
+  Connection,
+  Keypair,
+  PublicKey,
+  clusterApiUrl,
+  sendAndConfirmTransaction,
+  Transaction,
+} from "@solana/web3.js";
 import bs58 from "bs58";
 
 export default async function handler(req, res) {
@@ -39,14 +46,15 @@ export default async function handler(req, res) {
       TOKEN_PROGRAM_ID
     );
 
-    const transaction = await sendAndConfirmTransaction(connection, {
-      feePayer: sender.publicKey,
-      instructions: [instruction],
-    });
+    const transaction = new Transaction().add(instruction);
+    transaction.feePayer = sender.publicKey;
 
-    return res.status(200).json({ success: true, signature: transaction });
+    const signature = await sendAndConfirmTransaction(connection, transaction, [sender]);
+
+    return res.status(200).json({ success: true, signature });
   } catch (error) {
     console.error("Fout in backend:", error);
     return res.status(500).json({ error: error.message || "Onbekende fout" });
   }
 }
+
