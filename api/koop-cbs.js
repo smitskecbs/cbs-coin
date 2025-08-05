@@ -3,14 +3,16 @@ import {
   getOrCreateAssociatedTokenAccount,
   TOKEN_PROGRAM_ID,
 } from "@solana/spl-token";
+
 import {
   Connection,
   Keypair,
   PublicKey,
   clusterApiUrl,
   sendAndConfirmTransaction,
-  Transaction
+  Transaction,
 } from "@solana/web3.js";
+
 import bs58 from "bs58";
 
 export default async function handler(req, res) {
@@ -19,21 +21,37 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST") return res.status(405).json({ error: "Alleen POST toegestaan" });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Alleen POST toegestaan" });
+  }
 
   const { buyer } = req.body;
 
+  if (!buyer) {
+    return res.status(400).json({ error: "Buyer wallet address ontbreekt" });
+  }
+
   try {
     const connection = new Connection(clusterApiUrl("mainnet-beta"), "confirmed");
-
-    const mint = new PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"); // CBS Coin
+    const mint = new PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"); // CBS Coin mint
     const sender = Keypair.fromSecretKey(bs58.decode(process.env.PRIVATE_KEY));
     const buyerPubkey = new PublicKey(buyer);
 
-    const fromTokenAccount = await getOrCreateAssociatedTokenAccount(connection, sender, mint, sender.publicKey);
-    const toTokenAccount = await getOrCreateAssociatedTokenAccount(connection, sender, mint, buyerPubkey);
+    const fromTokenAccount = await getOrCreateAssociatedTokenAccount(
+      connection,
+      sender,
+      mint,
+      sender.publicKey
+    );
 
-    const amount = 50000 * 10 ** 6;
+    const toTokenAccount = await getOrCreateAssociatedTokenAccount(
+      connection,
+      sender,
+      mint,
+      buyerPubkey
+    );
+
+    const amount = 50000 * 10 ** 6; // 6 decimalen = 50.000 CBS
 
     const instruction = createTransferCheckedInstruction(
       fromTokenAccount.address,
@@ -46,12 +64,13 @@ export default async function handler(req, res) {
       TOKEN_PROGRAM_ID
     );
 
-    const transaction = new Transaction().add(instruction); // ✅ DIT WAS JOUW FOUT
+    const transaction = new Transaction().add(instruction);
+
     const signature = await sendAndConfirmTransaction(connection, transaction, [sender]);
 
     return res.status(200).json({ success: true, signature });
   } catch (error) {
-    console.error("Fout in backend:", error);
+    console.error("Fout in koop-cbs.js backend:", error);
     return res.status(500).json({ error: error.message || "Onbekende fout" });
   }
 }
