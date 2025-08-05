@@ -9,7 +9,7 @@ import {
   PublicKey,
   clusterApiUrl,
   sendAndConfirmTransaction,
-  Transaction,
+  Transaction
 } from "@solana/web3.js";
 import bs58 from "bs58";
 
@@ -33,7 +33,7 @@ export default async function handler(req, res) {
     const fromTokenAccount = await getOrCreateAssociatedTokenAccount(connection, sender, mint, sender.publicKey);
     const toTokenAccount = await getOrCreateAssociatedTokenAccount(connection, sender, mint, buyerPubkey);
 
-    const amount = 50000 * 10 ** 6; // 6 decimalen
+    const amount = 50000 * 10 ** 6;
 
     const instruction = createTransferCheckedInstruction(
       fromTokenAccount.address,
@@ -46,9 +46,7 @@ export default async function handler(req, res) {
       TOKEN_PROGRAM_ID
     );
 
-    const transaction = new Transaction().add(instruction);
-    transaction.feePayer = sender.publicKey;
-
+    const transaction = new Transaction().add(instruction); // ✅ DIT WAS JOUW FOUT
     const signature = await sendAndConfirmTransaction(connection, transaction, [sender]);
 
     return res.status(200).json({ success: true, signature });
@@ -57,4 +55,3 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: error.message || "Onbekende fout" });
   }
 }
-
