@@ -1,1 +1,85 @@
+use borsh::{BorshDeserialize, BorshSerialize};
+use solana_program::{
+    account_info::{next_account_info, AccountInfo},
+    entrypoint,
+    entrypoint::ProgramResult,
+    msg,
+    pubkey::Pubkey,
+    program_error::ProgramError,
+};
+
+#[derive(BorshSerialize, BorshDeserialize, Debug)]
+pub struct Vote {
+    pub voter: Pubkey,
+    pub choice: bool,  // true = ja, false = nee
+}
+
+#[derive(BorshSerialize, BorshDeserialize, Debug, Default)]
+pub struct VoteState {
+    pub votes: Vec<Vote>,
+    pub yes_count: u64,
+    pub no_count: u64,
+}
+
+entrypoint!(process_instruction);
+pub fn process_instruction(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    input: &[u8],
+) -> ProgramResult {
+    msg!("Processing vote instruction");
+
+    let accounts_iter = &mut accounts.iter();
+    let state_account = next_account_info(accounts_iter)?;
+    let voter_account = next_account_info(accounts_iter)?;
+
+    if !voter_account.is_signer {
+        msg!("Voter must sign the transaction");
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    if state_account.owner != program_id {
+        msg!("State account does not have the correct program id");
+        return Err(ProgramError::IncorrectProgramId);
+    }
+
+    let mut vote_state = if state_account.data_len() == 0 {
+        VoteState::default()
+    } else {
+        VoteState::try_from_slice(&state_account.data.borrow())?
+    };
+
+    // Decode input: 1 byte: 1 for yes, 0 for no
+    if input.len() != 1 {
+        msg!("Invalid instruction data");
+        return Err(ProgramError::InvalidInstructionData);
+    }
+    let vote_choice = input[0] == 1;
+
+    // Check if voter already voted
+    if vote_state.votes.iter().any(|v| v.voter == *voter_account.key) {
+        msg!("Voter already voted");
+        return Err(ProgramError::Custom(0)); // Custom error: already voted
+    }
+
+    // Add vote
+    vote_state.votes.push(Vote {
+        voter: *voter_account.key,
+        choice: vote_choice,
+    });
+
+    if vote_choice {
+        vote_state.yes_count += 1;
+    } else {
+        vote_state.no_count += 1;
+    }
+
+    vote_state.serialize(&mut *state_account.data.borrow_mut())?;
+
+    msg!("Vote recorded successfully");
+    msg!("Yes: {}", vote_state.yes_count);
+    msg!("No: {}", vote_state.no_count);
+
+    Ok(())
+}
 
