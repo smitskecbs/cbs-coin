@@ -1,1 +1,87 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CBS DAO – Stem</title>
+  <style>
+    body{font-family:system-ui,Arial,sans-serif;max-width:680px;margin:40px auto;padding:0 16px}
+    button{padding:10px 14px;border-radius:10px;border:1px solid #ccc;cursor:pointer;margin-right:8px}
+    .row{margin:12px 0}
+    code{background:#f5f5f5;padding:2px 6px;border-radius:6px}
+  </style>
+</head>
+<body>
+  <h1>Stem op de proposal</h1>
+  <p>Wallet: <span id="wallet">niet verbonden</span></p>
+  <div class="row">
+    <button id="connect">Connect Phantom</button>
+    <button id="voteYes">Stem YES</button>
+    <button id="voteNo">Stem NO</button>
+  </div>
+  <pre id="log"></pre>
+
+  <script type="module">
+    import { Connection, PublicKey, SystemProgram, Transaction, TransactionInstruction } from "https://esm.sh/@solana/web3.js@1.95.3";
+
+    // Vul hier je huidige waarden in
+    const RPC_URL = "https://api.devnet.solana.com";
+    const PROGRAM_ID = new PublicKey("FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY");
+    const PROPOSAL_PUBKEY = new PublicKey("4kHKf4NrNZy2dnCcqDPhfDzrGuEq5NdRCwnsi489cVB9");
+
+    const VOTE_DISC = Uint8Array.from([227,110,155,23,136,126,172,25]); // 'vote' discriminator
+    const connection = new Connection(RPC_URL, "confirmed");
+
+    const $wallet = document.getElementById("wallet");
+    const $log = document.getElementById("log");
+    const log = (m) => ($log.textContent += m + "\n");
+
+    let wallet;
+
+    document.getElementById("connect").onclick = async () => {
+      if (!window.solana?.isPhantom) {
+        alert("Installeer Phantom wallet.");
+        return;
+      }
+      wallet = window.solana;
+      const res = await wallet.connect();
+      $wallet.textContent = res.publicKey.toBase58();
+      log("✅ Verbonden: " + res.publicKey.toBase58());
+    };
+
+    async function vote(yes) {
+      if (!wallet?.publicKey) return alert("Eerst connecten.");
+
+      // vote_record PDA: ["vote", proposal, voter]
+      const [voteRecord] = await PublicKey.findProgramAddress(
+        [new TextEncoder().encode("vote"), PROPOSAL_PUBKEY.toBuffer(), wallet.publicKey.toBuffer()],
+        PROGRAM_ID
+      );
+
+      // data = discriminator + bool (1/0)
+      const data = new Uint8Array([...VOTE_DISC, yes ? 1 : 0]);
+
+      const keys = [
+        { pubkey: PROPOSAL_PUBKEY, isSigner: false, isWritable: true },
+        { pubkey: voteRecord,      isSigner: false, isWritable: true },
+        { pubkey: wallet.publicKey,isSigner: true,  isWritable: true },
+        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+      ];
+
+      const ix = new TransactionInstruction({ programId: PROGRAM_ID, keys, data });
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("finalized");
+      const tx = new Transaction({ recentBlockhash: blockhash, feePayer: wallet.publicKey }).add(ix);
+
+      const signed = await wallet.signTransaction(tx);
+      const sig = await connection.sendRawTransaction(signed.serialize(), { skipPreflight: false });
+      await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, "finalized");
+
+      log(`✅ Stem ${yes ? "YES" : "NO"} verstuurd: ${sig}`);
+    }
+
+    document.getElementById("voteYes").onclick = () => vote(true);
+    document.getElementById("voteNo").onclick  = () => vote(false);
+  </script>
+</body>
+</html>
 
