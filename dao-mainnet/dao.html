@@ -1,1 +1,252 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CBS DAO – Mainnet</title>
+  <style>
+    :root {
+      --bg: #0b0f14; --panel:#0f1620; --ink:#e6f1ff; --muted:#9fb3c8;
+      --acc1:#00e5ff; --acc2:#00ffa3; --danger:#ff4966; --ok:#00d084;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial;
+         background: radial-gradient(1200px 600px at 20% -10%, #162131 0%, transparent 70%),
+                     radial-gradient(800px 400px at 120% 10%, #132135 0%, transparent 60%),
+                     var(--bg);
+         color:var(--ink);}
+    .wrap{max-width:960px;margin:0 auto;padding:24px}
+    header{display:flex;gap:16px;align-items:center;justify-content:space-between;margin-bottom:20px}
+    .brand{display:flex;gap:12px;align-items:center}
+    .brand .logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--acc1),var(--acc2));box-shadow:0 0 20px #00e5ff44}
+    .tag{font-weight:700;letter-spacing:.5px}
+    .panel{background:linear-gradient(180deg,#0f1620,#0b1119);border:1px solid #1f2a3a;border-radius:16px;padding:18px;box-shadow:0 10px 30px #00000040}
+    .row{display:flex;gap:16px;flex-wrap:wrap}
+    .col{flex:1 1 320px}
+    .muted{color:var(--muted)}
+    button{appearance:none;border:1px solid #263549;background:#121a26;color:var(--ink);padding:10px 14px;border-radius:12px;cursor:pointer;font-weight:600}
+    button:hover{border-color:#34506e}
+    .btn-yes{background:linear-gradient(135deg,#0e2d1f,#092516);border-color:#1a4b31}
+    .btn-yes:hover{box-shadow:0 0 0 2px #0a3c27 inset}
+    .btn-no{background:linear-gradient(135deg,#2d1116,#1f0a0d);border-color:#5b1f2b}
+    .btn-no:hover{box-shadow:0 0 0 2px #44131c inset}
+    .btn-connect{background:linear-gradient(135deg,#0e2134,#0b1a29);border-color:#244462}
+    .progress{height:14px;border-radius:999px;background:#0c131d;border:1px solid #1e2b3d;position:relative;overflow:hidden}
+    .progress>span{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--acc1),var(--acc2));box-shadow:0 0 20px #00ffa355}
+    .kv{display:grid;grid-template-columns:160px 1fr;gap:6px 14px;margin:10px 0}
+    code.inline{padding:2px 6px;background:#0c121a;border:1px solid #1a2636;border-radius:6px}
+    a{color:var(--acc1);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .tx{word-break:break-all}
+  </style>
+  <!-- Solana Web3 (IIFE) -->
+  <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
+  <!-- Anchor browser build (global `anchor`) -->
+  <script src="https://unpkg.com/@coral-xyz/anchor@0.29.0/dist/browser/index.js"></script>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <div class="tag">CBS DAO</div>
+          <div class="muted" style="font-size:12px">Mainnet • trustless voting</div>
+        </div>
+      </div>
+      <div>
+        <button id="btnConnect" class="btn-connect">Connect Wallet</button>
+      </div>
+    </header>
+
+    <section class="panel" id="proposalPanel">
+      <h2 id="q" style="margin:0 0 8px">Voorstel laden…</h2>
+      <div class="muted" id="timer">—</div>
+      <div style="height:12px"></div>
+
+      <div class="row">
+        <div class="col">
+          <div class="progress" title="Ja-stemmen">
+            <span id="barYes" style="width:0%"></span>
+          </div>
+          <div class="kv">
+            <div>Ja</div><div id="yesCnt">0</div>
+            <div>Nee</div><div id="noCnt">0</div>
+            <div>Totaal</div><div id="totCnt">0</div>
+          </div>
+        </div>
+        <div class="col" id="voteCol">
+          <div class="muted" style="margin-bottom:8px">Jij kunt stemmen tot <span id="endsAt">—</span></div>
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+            <button class="btn-yes" id="btnYes">Stem: JA</button>
+            <button class="btn-no" id="btnNo">Stem: NEE</button>
+            <span class="muted" id="status">Niet verbonden</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="height:12px"></div>
+      <div class="muted" style="font-size:13px">
+        <span>Program:</span>
+        <code class="inline" id="pidCode"></code>
+        • <a id="viewProgram" target="_blank" rel="noreferrer">Solana Explorer</a>
+        <br/>
+        <span>Proposal:</span>
+        <code class="inline" id="ppkCode"></code>
+        • <a id="viewProposal" target="_blank" rel="noreferrer">Solana Explorer</a>
+      </div>
+
+      <div id="txWrap" style="margin-top:10px;display:none">
+        Laatste transactie: <a class="tx" id="txLink" target="_blank" rel="noreferrer"></a>
+      </div>
+    </section>
+
+    <div style="height:18px"></div>
+    <section class="panel">
+      <details>
+        <summary>Geavanceerd / foutopsporing</summary>
+        <pre id="log" style="white-space:pre-wrap; margin:10px 0 0; color:#b8cdf2"></pre>
+      </details>
+    </section>
+  </div>
+
+<script>
+(() => {
+  // ======== CONFIG – VERVANG DEZE TWEE WAARDEN ========
+  const RPC_URL = 'https://api.mainnet-beta.solana.com';
+  const PROGRAM_ID = new solanaWeb3.PublicKey('REPLACE_WITH_MAINNET_PROGRAM_ID');
+  const PROPOSAL_PUBKEY = new solanaWeb3.PublicKey('REPLACE_WITH_MAINNET_PROPOSAL_PUBKEY');
+  const CLUSTER = 'mainnet-beta';
+  // ====================================================
+
+  const $ = sel => document.querySelector(sel);
+  const $$ = sel => Array.from(document.querySelectorAll(sel));
+  const log = (...a) => { const el = $('#log'); el.textContent += a.map(x=> typeof x==='string'? x : JSON.stringify(x,null,2)).join(' ') + "\n"; }
+
+  const state = { provider: null, program: null, idl: null };
+
+  // Links tonen
+  $('#pidCode').textContent = PROGRAM_ID.toBase58();
+  $('#ppkCode').textContent = PROPOSAL_PUBKEY.toBase58();
+  $('#viewProgram').href = `https://explorer.solana.com/address/${PROGRAM_ID.toBase58()}?cluster=${CLUSTER}`;
+  $('#viewProposal').href = `https://explorer.solana.com/address/${PROPOSAL_PUBKEY.toBase58()}?cluster=${CLUSTER}`;
+
+  // Helper: formatteer tijd
+  const fmtTs = (sec)=> new Date(sec*1000).toLocaleString();
+
+  // Provider + Program laden (via idl.json in dezelfde map)
+  async function loadProgram() {
+    const connection = new solanaWeb3.Connection(RPC_URL, 'confirmed');
+    if (!window.solana) throw new Error('Geen wallet gevonden. Installeer Phantom.');
+    const provider = new anchor.AnchorProvider(connection, window.solana, {
+      commitment: 'confirmed', preflightCommitment: 'processed'
+    });
+    anchor.setProvider(provider);
+
+    // Haal IDL uit bestand. Zorg dat dao-mainnet/idl.json aanwezig is met juiste metadata.address = PROGRAM_ID
+    const res = await fetch('./idl.json');
+    if (!res.ok) throw new Error('idl.json niet gevonden. Plaats je Anchor IDL naast dit bestand.');
+    const idl = await res.json();
+    if (idl?.metadata?.address && idl.metadata.address !== PROGRAM_ID.toBase58()) {
+      log('⚠️ Waarschuwing: metadata.address in idl.json wijkt af van PROGRAM_ID');
+    }
+    const program = new anchor.Program(idl, PROGRAM_ID, provider);
+    state.provider = provider; state.program = program; state.idl = idl;
+    log('✅ Program geladen', { programId: PROGRAM_ID.toBase58() });
+  }
+
+  async function fetchProposal() {
+    try {
+      const acc = await state.program.account.proposal.fetch(PROPOSAL_PUBKEY);
+      // acc.question (string), yesVotes (bn), noVotes (bn), createdAt (i64), endsAt (i64)
+      $('#q').textContent = acc.question || '—';
+      const yes = Number(acc.yesVotes ?? acc.yes_votes ?? 0);
+      const no  = Number(acc.noVotes  ?? acc.no_votes  ?? 0);
+      const tot = yes + no;
+      $('#yesCnt').textContent = yes.toLocaleString();
+      $('#noCnt').textContent = no.toLocaleString();
+      $('#totCnt').textContent = tot.toLocaleString();
+      const pct = tot>0 ? Math.max(1,(yes/tot*100)) : 0; // laat klein streepje zien bij 1e vote
+      $('#barYes').style.width = pct + '%';
+
+      const ends = Number(acc.endsAt ?? acc.ends_at ?? 0);
+      $('#endsAt').textContent = ends ? fmtTs(ends) : '—';
+      const now = Math.floor(Date.now()/1000);
+      $('#timer').textContent = ends && now < ends ? `Resterend: ${Math.max(0, ends-now)} s` : 'Afgesloten of einde onbekend';
+    } catch (e) {
+      log('❌ Fout bij laden proposal:', e.message || e);
+      $('#q').textContent = 'Kon voorstel niet laden';
+    }
+  }
+
+  // PDA-hulpje voor vote_receipt – PAS AAN indien jouw seeds anders zijn
+  function deriveVoteReceiptPda(proposalPk, voterPk) {
+    // ⚠️ Raad: controleer in je Rust program de seeds. Veelgebruikt: [b"vote", proposal, voter]
+    const [pda] = solanaWeb3.PublicKey.findProgramAddressSync([
+      Buffer.from('vote'), proposalPk.toBuffer(), voterPk.toBuffer()
+    ], PROGRAM_ID);
+    return pda;
+  }
+
+  async function ensureConnected() {
+    if (!window.solana) throw new Error('Phantom niet gevonden');
+    const resp = await window.solana.connect({ onlyIfTrusted:false });
+    $('#status').textContent = `Verbonden: ${resp.publicKey.toBase58().slice(0,4)}…${resp.publicKey.toBase58().slice(-4)}`;
+    return new solanaWeb3.PublicKey(resp.publicKey.toBase58());
+  }
+
+  async function sendVote(yesFlag) {
+    const walletPk = await ensureConnected();
+    await loadProgram();
+
+    // Bouw Anchor-method call
+    try {
+      const voteReceiptPda = deriveVoteReceiptPda(PROPOSAL_PUBKEY, walletPk);
+      const txSig = await state.program.methods
+        .vote(yesFlag)
+        .accounts({
+          proposal: PROPOSAL_PUBKEY,
+          voter: walletPk,
+          voteReceipt: voteReceiptPda,
+          systemProgram: solanaWeb3.SystemProgram.programId,
+        })
+        .rpc();
+
+      $('#txWrap').style.display = 'block';
+      $('#txLink').textContent = txSig;
+      $('#txLink').href = `https://explorer.solana.com/tx/${txSig}?cluster=${CLUSTER}`;
+      $('#status').textContent = 'Stem verstuurd ✔︎';
+      await new Promise(r=>setTimeout(r, 1200));
+      await fetchProposal();
+    } catch (e) {
+      log('❌ Stem mislukt:', e.message || e);
+      $('#status').textContent = 'Stem mislukt';
+    }
+  }
+
+  // UI events
+  $('#btnConnect').addEventListener('click', async () => {
+    try { await ensureConnected(); await loadProgram(); await fetchProposal(); }
+    catch(e){ log(e.message || e); }
+  });
+  $('#btnYes').addEventListener('click', ()=> sendVote(true));
+  $('#btnNo').addEventListener('click',  ()=> sendVote(false));
+
+  // Auto-init: probeer proposal in read-only te laden (zonder wallet)
+  (async () => {
+    try {
+      const connection = new solanaWeb3.Connection(RPC_URL, 'confirmed');
+      const dummyProvider = new anchor.AnchorProvider(connection, { publicKey: null, signAllTransactions: async x=>x, signTransaction: async x=>x }, {});
+      anchor.setProvider(dummyProvider);
+      const idl = await (await fetch('./idl.json')).json();
+      state.program = new anchor.Program(idl, PROGRAM_ID, dummyProvider);
+      await fetchProposal();
+      $('#status').textContent = 'Alleen-lezen. Verbind je wallet om te stemmen.';
+    } catch(_) {/* stil */}
+  })();
+})();
+</script>
+</body>
+</html>
 
