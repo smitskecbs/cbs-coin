@@ -2,141 +2,76 @@
 <html lang="nl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CBS DAO – Stemmen op voorstel</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>CBS DAO – Stemmen (Devnet)</title>
   <style>
-    body {
-      background-color: #000;
-      color: #00ffcc;
-      font-family: 'Orbitron', sans-serif;
-      text-align: center;
-      padding: 20px;
-    }
-    h1, h2 {
-      color: #00ffff;
-    }
-    .question {
-      font-size: 1.5rem;
-      color: #39ff14;
-      margin: 20px 0;
-    }
-    .highlight {
-      color: #ff6600;
-    }
-    button {
-      background-color: #00ffcc;
-      border: none;
-      padding: 10px 20px;
-      margin: 10px;
-      font-size: 1rem;
-      cursor: pointer;
-      border-radius: 8px;
-    }
-    button:hover {
-      background-color: #00ffaa;
-    }
-    pre {
-      background: #0f0f0f;
-      color: #00ffcc;
-      padding: 10px;
-      border-radius: 8px;
-      text-align: left;
-      overflow-x: auto;
-    }
-    .info {
-      margin: 10px 0;
-      font-size: 0.9rem;
-      color: #66ffff;
-    }
+    :root{--bg:#000;--fg:#00ffcc;--cyan:#00ffff;--green:#39ff14;--muted:#66ffff;--panel:#0f0f0f}
+    html,body{height:100%}
+    body{margin:0;background:#000;color:var(--fg);font-family:system-ui,Arial,sans-serif;display:flex;align-items:center;justify-content:center;padding:20px}
+    .wrap{width:min(880px,100%);background:#070707;border:1px solid #111;border-radius:16px;box-shadow:0 10px 40px rgba(0,255,204,.08);padding:22px}
+    h1{margin:0 0 6px;color:var(--cyan);text-align:left}
+    .sub{color:var(--muted);font-size:13px;margin:0 0 16px}
+    .q{display:flex;gap:10px;align-items:center;font-size:18px;margin:10px 0 14px;color:var(--green)}
+    .fl{font-size:20px}
+    .row{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+    button,a.btn{border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer;background:var(--fg);color:#001815}
+    button.secondary{background:#001a17;color:var(--fg);border:1px solid #064e3b}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    code{background:#061016;color:var(--fg);padding:2px 6px;border-radius:6px}
+    .kv{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0;align-items:center}
+    .status.ok{color:#5aff5a}.status.warn{color:#ffd166}.status.err{color:#ff6b6b}
+    pre{background:#0b0f16;color:#b7fff1;border-radius:12px;padding:12px;max-height:320px;overflow:auto;font-size:12px;margin:12px 0 0}
+    a{color:var(--fg);text-decoration:none}
   </style>
 </head>
 <body>
+  <div class="wrap">
+    <h1>CBS DAO – Stemmen op proposal</h1>
+    <div class="sub">Netwerk: <b>Devnet</b> • RPC: <code>https://api.devnet.solana.com</code></div>
 
-  <h1>CBS DAO – Stemmen op voorstel</h1>
-  <div class="info">
-    Network: <strong>Devnet</strong> • RPC: <a href="https://api.devnet.solana.com" target="_blank" style="color:#00ffcc;">https://api.devnet.solana.com</a>
+    <div class="q"><span class="fl">🔥🔥</span><b>Vraag:</b>&nbsp;1 Miljoen CBS burnen — YES of NO? <span class="fl">🔥🔥</span></div>
+
+    <div class="kv">Wallet: <code id="wallet">niet verbonden</code></div>
+    <div class="kv">Program ID: <code>FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY</code></div>
+    <div class="kv">Proposal: <code id="proposal">9ALSSyJxAPCgyEcgJmVLnCTV5yPzbJAhUyeWMRv4kYYe</code></div>
+    <div class="kv">Vote receipt PDA: <code id="receipt">—</code></div>
+    <div class="kv">Status: <span id="status" class="status"></span></div>
+
+    <div class="row">
+      <button id="connect" class="secondary">Connect Phantom</button>
+      <button id="yes" disabled>Stem YES</button>
+      <button id="no"  disabled class="secondary">Stem NO</button>
+      <a class="btn secondary" href="https://faucet.solana.com" target="_blank" rel="noopener">Claim Devnet SOL</a>
+    </div>
+
+    <div class="sub">Zet Phantom op <b>Devnet</b> → Settings → Developer Settings → Change Network → Devnet.
+      • Proposal in Explorer: <a id="plink" target="_blank" rel="noopener">open</a></div>
+
+    <pre id="log"></pre>
   </div>
-
-  <div class="question">🔥 1 Miljoen CBS burnen — YES of NO? 🔥</div>
-
-  <div id="wallet-info">Wallet: niet verbonden</div>
-  <div>Program ID: <span id="program-id">FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY</span></div>
-  <div>Proposal: <span id="proposal-id">9ALSSyJxAPCgyEcgJmVLnCTV5yPzbJAhUyeWMRv4kYYe</span></div>
-  <div>Vote receipt PDA: <span id="vote-receipt">-</span></div>
-
-  <br>
-  <button id="connect-wallet">Connect Phantom</button>
-  <button id="vote-yes" disabled>Stem YES</button>
-  <button id="vote-no" disabled>Stem NO</button>
-
-  <div class="info">
-    Tip: Zet Phantom in <strong>Devnet</strong>.  
-    In Phantom → Settings → Developer Settings → Change Network → Devnet.
-  </div>
-
-  <pre id="log"></pre>
 
   <script type="module">
     import {
-      Connection,
-      PublicKey,
-      Transaction,
-      SystemProgram
-    } from "https://cdn.jsdelivr.net/npm/@solana/web3.js@1.91.4/+esm";
+      Connection, PublicKey, SystemProgram, Transaction, TransactionInstruction
+    } from "https://esm.sh/@solana/web3.js@1.95.3";
 
-    const programId = new PublicKey("FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY");
-    const proposal = new PublicKey("9ALSSyJxAPCgyEcgJmVLnCTV5yPzbJAhUyeWMRv4kYYe");
+    // --- Config (DEVNET) ---
+    const RPC = "https://api.devnet.solana.com";
+    const PROGRAM_ID = new PublicKey("FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY");
+    const PROPOSAL = new PublicKey("9ALSSyJxAPCgyEcgJmVLnCTV5yPzbJAhUyeWMRv4kYYe");
+    const VOTE_DISC = Uint8Array.from([227,110,155,23,136,126,172,25]); // 'vote'
 
-    const connection = new Connection("https://api.devnet.solana.com");
+    const conn = new Connection(RPC, "confirmed");
+    document.getElementById("plink").href =
+      `https://explorer.solana.com/address/${PROPOSAL.toBase58()}?cluster=devnet`;
 
-    let wallet = null;
+    // --- UI helpers ---
+    const $w = document.getElementById("wallet");
+    const $r = document.getElementById("receipt");
+    const $s = document.getElementById("status");
+    const $log = document.getElementById("log");
+    const log = m => { $log.textContent += m + "\n"; $log.scrollTop = $log.scrollHeight; };
+    const setStatus = (t,c) => { $s.textContent = t; $s.className = "status " + (c||""); };
+    const setEnabled = on => { yes.disabled = !
 
-    function log(message) {
-      document.getElementById("log").textContent += message + "\n";
-    }
-
-    document.getElementById("connect-wallet").addEventListener("click", async () => {
-      if (!window.solana || !window.solana.isPhantom) {
-        alert("Phantom Wallet niet gevonden!");
-        return;
-      }
-      const resp = await window.solana.connect();
-      wallet = resp.publicKey;
-      document.getElementById("wallet-info").textContent = "Wallet: " + wallet.toString();
-      document.getElementById("vote-yes").disabled = false;
-      document.getElementById("vote-no").disabled = false;
-      log("✅ Verbonden met: " + wallet.toString());
-    });
-
-    async function vote(yes) {
-      try {
-        const tx = new Transaction().add(
-          SystemProgram.transfer({
-            fromPubkey: wallet,
-            toPubkey: wallet, // Dummy TX voor demo
-            lamports: 0
-          })
-        );
-
-        tx.feePayer = wallet;
-        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-
-        const { signature } = await window.solana.signAndSendTransaction(tx);
-        log(`⏳ Verstuurd, wachten op finalisatie… ${signature}`);
-
-        await connection.confirmTransaction(signature, "finalized");
-        log(`✅ Stem ${yes ? "YES" : "NO"} bevestigd: ${signature}`);
-        log(`🔗 Explorer: https://explorer.solana.com/tx/${signature}?cluster=devnet`);
-      } catch (err) {
-        log(`❌ Fout: ${err.message}`);
-      }
-    }
-
-    document.getElementById("vote-yes").addEventListener("click", () => vote(true));
-    document.getElementById("vote-no").addEventListener("click", () => vote(false));
-
-  </script>
-
-</body>
-</html>
 
