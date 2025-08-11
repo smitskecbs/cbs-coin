@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>CBS DAO – Stemmen (Devnet)</title>
   <style>
     :root{--bg:#000;--fg:#00ffcc;--cyan:#00ffff;--green:#39ff14;--muted:#66ffff;--panel:#0f0f0f}
@@ -59,7 +59,7 @@
     const RPC = "https://api.devnet.solana.com";
     const PROGRAM_ID = new PublicKey("FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY");
     const PROPOSAL = new PublicKey("9ALSSyJxAPCgyEcgJmVLnCTV5yPzbJAhUyeWMRv4kYYe");
-    const VOTE_DISC = Uint8Array.from([227,110,155,23,136,126,172,25]); // 'vote'
+    const VOTE_DISC = Uint8Array.from([227,110,155,23,136,126,172,25]); // 'vote' discriminator
 
     const conn = new Connection(RPC, "confirmed");
     document.getElementById("plink").href =
@@ -72,6 +72,150 @@
     const $log = document.getElementById("log");
     const log = m => { $log.textContent += m + "\n"; $log.scrollTop = $log.scrollHeight; };
     const setStatus = (t,c) => { $s.textContent = t; $s.className = "status " + (c||""); };
-    const setEnabled = on => { yes.disabled = !
+    const setEnabled = on => { yes.disabled = !on; no.disabled = !on; };
 
+    const connectBtn = document.getElementById("connect");
+    const yes = document.getElementById("yes");
+    const no  = document.getElementById("no");
 
+    let provider = null;  // Phantom provider
+    let walletPk = null;
+
+    // --- Robuuste Phantom detectie + wachten op injectie ---
+    function getInjectedProvider(){
+      if ("phantom" in window && window.phantom?.solana?.isPhantom) return window.phantom.solana;
+      if (window.solana?.isPhantom) return window.solana;
+      return null;
+    }
+    async function getProviderReady(timeoutMs = 2000){
+      const existing = getInjectedProvider();
+      if (existing) return existing;
+      // wacht op Phantom injectie event
+      return await new Promise((resolve) => {
+        const t = setTimeout(() => resolve(getInjectedProvider()), timeoutMs);
+        window.addEventListener("solana#initialized", () => {
+          clearTimeout(t);
+          resolve(getInjectedProvider());
+        }, { once: true });
+      });
+    }
+
+    async function deriveReceipt(voterPk){
+      const [pda] = await PublicKey.findProgramAddress(
+        [new TextEncoder().encode("receipt"), PROPOSAL.toBuffer(), voterPk.toBuffer()],
+        PROGRAM_ID
+      );
+      return pda;
+    }
+    async function getSol(pubkey){
+      try { return (await conn.getBalance(pubkey))/1e9; } catch { return 0; }
+    }
+
+    // --- Event handlers (handig op desktop Phantom) ---
+    function wireProviderEvents(p){
+      try {
+        p.on("connect", (pk) => log("🔌 Event: connect " + (pk?.toBase58?.() || "")));
+        p.on("disconnect", () => log("🔌 Event: disconnect"));
+        p.on("accountChanged", (pk) => {
+          log("👤 Account changed: " + (pk?.toBase58?.() || ""));
+          location.reload(); // simpelste: herlaad zodat UI klopt
+        });
+      } catch {}
+    }
+
+    // --- Connect flow ---
+    connectBtn.onclick = async () => {
+      try{
+        provider = await getProviderReady();
+        if(!provider){
+          alert("Phantom Wallet niet gevonden. Installeer Phantom en zet 'm op Devnet.");
+          log("❌ Phantom provider niet gevonden.");
+          return;
+        }
+        wireProviderEvents(provider);
+
+        // Probeer eerst silent reconnect
+        try { await provider.connect({ onlyIfTrusted: true }); } catch {}
+        if (!provider.publicKey) {
+          // Toon popup om toestemming te vragen
+          await provider.connect({ onlyIfTrusted: false });
+        }
+
+        walletPk = provider.publicKey;
+        if(!walletPk){ log("❌ Geen publicKey na connect."); return; }
+
+        $w.textContent = walletPk.toBase58();
+        log("✅ Verbonden met: " + walletPk.toBase58());
+
+        const bal = await getSol(walletPk);
+        if(bal < 0.01) setStatus("Weinig Devnet SOL – gebruik 'Claim Devnet SOL'.", "warn");
+
+        const pda = await deriveReceipt(walletPk);
+        $r.textContent = pda.toBase58();
+
+        const info = await conn.getAccountInfo(pda, "confirmed");
+        if(info){
+          setStatus("Je hebt al gestemd met deze wallet.", "warn");
+          setEnabled(false);
+        }else{
+          setStatus("Je kunt stemmen.", "ok");
+          setEnabled(true);
+        }
+      }catch(e){
+        console.error(e);
+        log("❌ Connect fout: " + (e?.message ?? e));
+      }
+    };
+
+    // --- Stem ---
+    async function vote(yesVote){
+      try{
+        if(!provider || !walletPk){ return alert("Eerst verbinden met Phantom."); }
+
+        const receipt = await deriveReceipt(walletPk);
+        const exists = await conn.getAccountInfo(receipt, "confirmed");
+        if(exists){ setStatus("Je hebt al gestemd met deze wallet.", "warn"); setEnabled(false); return; }
+
+        // Data = discriminator + 1 byte (1=yes, 0=no)
+        const data = new Uint8Array([...VOTE_DISC, yesVote ? 1 : 0]);
+
+        const keys = [
+          { pubkey: PROPOSAL, isSigner:false, isWritable:true },
+          { pubkey: receipt,  isSigner:false, isWritable:true },
+          { pubkey: walletPk, isSigner:true,  isWritable:true },
+          { pubkey: SystemProgram.programId, isSigner:false, isWritable:false },
+        ];
+
+        const { blockhash } = await conn.getLatestBlockhash("finalized");
+        const tx = new Transaction({ feePayer: walletPk, recentBlockhash: blockhash })
+          .add(new TransactionInstruction({ programId: PROGRAM_ID, keys, data }));
+
+        // Phantom verstuurt zelf; pak signature string uit het resultaat
+        const { signature } = await provider.signAndSendTransaction(tx);
+        log("⏳ Verstuurd, wachten op finalisatie… " + signature);
+
+        await conn.confirmTransaction(signature, "finalized");
+        log(`✅ Stem ${yesVote ? "YES" : "NO"} bevestigd: ${signature}`);
+        log(`🔗 Explorer: https://explorer.solana.com/tx/${signature}?cluster=devnet`);
+        setStatus("Stem geregistreerd. Bedankt!", "ok");
+        setEnabled(false);
+      }catch(e){
+        console.error(e);
+        const msg = (e?.message || "").toLowerCase();
+        if(msg.includes("already been processed")){
+          log("⚠️ Oude transactie gebruikt. Ververs de pagina en probeer opnieuw.");
+        }else if(msg.includes("insufficient") || msg.includes("debit")){
+          log("⚠️ Onvoldoende Devnet SOL. Gebruik de faucet-knop.");
+        }else if(msg.includes("custom program error")){
+          log("⚠️ Program-fout: " + e.message);
+        }else{
+          log("❌ Onbekende fout: " + (e?.message ?? e));
+        }
+      }
+    }
+
+    document.getElementById("yes").onclick = () => vote(true);
+    document.getElementById("no").onclick  = () => vote(false);
+  </script>
+</body>
+</html>
