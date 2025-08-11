@@ -4,8 +4,19 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>CBS DAO – Stemmen (Devnet)</title>
+
+  <!-- Import map zodat Anchor @solana/web3.js kan vinden in de browser -->
+  <script type="importmap">
+  {
+    "imports": {
+      "@solana/web3.js": "https://esm.sh/@solana/web3.js@1.95.3",
+      "@coral-xyz/borsh": "https://esm.sh/@coral-xyz/borsh@0.29.0"
+    }
+  }
+  </script>
+
   <style>
-    :root{--bg:#000;--fg:#00ffcc;--cyan:#00ffff;--green:#39ff14;--muted:#66ffff;--panel:#0b0f16;--accent:#16a34a}
+    :root{--bg:#000;--fg:#00ffcc;--cyan:#00ffff;--green:#39ff14;--muted:#66ffff;--panel:#0b0f16}
     html,body{height:100%}
     body{margin:0;background:#000;color:var(--fg);font-family:system-ui,Arial,sans-serif;display:flex;align-items:center;justify-content:center;padding:20px}
     .wrap{width:min(960px,100%);background:#070707;border:1px solid #111;border-radius:16px;box-shadow:0 10px 40px rgba(0,255,204,.08);padding:22px}
@@ -52,7 +63,7 @@
     </div>
 
     <div class="barWrap">
-      <div class="bar" id="bar">
+      <div class="bar">
         <div class="barYes" id="barYes" style="width:0%"></div>
         <div class="barNo"  id="barNo"  style="width:0%"></div>
       </div>
@@ -78,7 +89,7 @@
   <script type="module">
     import {
       Connection, PublicKey, SystemProgram, Transaction, TransactionInstruction
-    } from "https://esm.sh/@solana/web3.js@1.95.3";
+    } from "@solana/web3.js";
 
     // --- Config (DEVNET) ---
     const RPC = "https://api.devnet.solana.com";
@@ -132,20 +143,20 @@
     // --- Teller via Anchor IDL ---
     async function loadCounts(){
       try{
-        // Haal IDL (zet idl.json naast dit bestand)
+        // Laad IDL (zet idl.json naast dit bestand)
         const idl = await fetch("./idl.json", { cache: "no-store" }).then(r => r.json());
-        const anchor = await import("https://esm.sh/@coral-xyz/anchor@0.29.0?external=@solana/web3.js");
+        // Bundled Anchor zodat import-map resolutie werkt in browser
+        const anchor = await import("https://esm.sh/@coral-xyz/anchor@0.29.0?bundle&target=es2022");
         const { AnchorProvider, Program, BN } = anchor;
 
         const prov = new AnchorProvider(conn, provider ?? getProvider(), { commitment: "confirmed" });
         const program = new Program(idl, PROGRAM_ID, prov);
         const acc = await program.account.proposal.fetch(PROPOSAL);
 
-        // pak zowel camelCase als snake_case
-        const yesRaw = acc.yesVotes ?? acc.yes_votes ?? 0;
-        const noRaw  = acc.noVotes  ?? acc.no_votes  ?? 0;
-        const yes = Number(BN.isBN?.(yesRaw) ? yesRaw.toString() : yesRaw);
-        const no  = Number(BN.isBN?.(noRaw)  ? noRaw.toString()  : noRaw);
+        const yesRaw = acc.yes_votes ?? acc.yesVotes ?? 0;
+        const noRaw  = acc.no_votes  ?? acc.noVotes  ?? 0;
+        const yes = Number(BN?.isBN?.(yesRaw) ? yesRaw.toString() : yesRaw);
+        const no  = Number(BN?.isBN?.(noRaw)  ? noRaw.toString()  : noRaw);
 
         $yesN.textContent = String(yes);
         $noN.textContent  = String(no);
@@ -203,7 +214,6 @@
           setEnabled(true);
         }
 
-        // teller verversen
         loadCounts();
       }catch(e){
         console.error(e);
@@ -240,7 +250,6 @@
         setStatus("Stem geregistreerd. Bedankt!", "ok");
         setEnabled(false);
 
-        // teller bijwerken
         loadCounts();
       }catch(e){
         console.error(e);
@@ -260,7 +269,7 @@
     document.getElementById("yes").onclick = () => vote(true);
     document.getElementById("no").onclick  = () => vote(false);
 
-    // laad teller (als idl.json al beschikbaar is)
+    // Teller alvast proberen te laden (werkt ook zonder connect)
     loadCounts();
   </script>
 </body>
