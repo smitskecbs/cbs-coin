@@ -13,17 +13,18 @@
           box-shadow:0 6px 30px rgba(0,0,0,.06);padding:22px 18px}
     h1{margin:6px 0 8px 0;font-size:22px}
     .sub{color:var(--muted);font-size:13px;margin:0 0 16px 0}
-    .question{font-size:18px;margin:10px 0 6px}
+    .question{font-size:18px;margin:10px 0 6px;display:flex;align-items:center;gap:8px}
+    .flames{font-size:20px}
     .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 8px}
     button{padding:10px 14px;border-radius:10px;border:1px solid #d1d5db;background:#fff;cursor:pointer;font-weight:600}
     button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
     button.secondary{background:#fff;border-color:#d1d5db}
-    button.danger{background:var(--danger);border-color:var(--danger);color:#fff}
     button:disabled{opacity:.55;cursor:not-allowed}
     .kv{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}
     .kv code{background:#f3f4f6;padding:2px 6px;border-radius:6px}
     .ok{color:#16a34a;font-weight:600}
     .warn{color:#d97706;font-weight:600}
+    .err{color:#ef4444;font-weight:600}
     pre{margin-top:12px;background:#0b1020;color:#e5e7eb;border-radius:12px;padding:12px;max-height:300px;overflow:auto;font-size:12px}
     a{color:#2563eb;text-decoration:none}
     .hint{font-size:12px;color:#6b7280;margin-top:6px}
@@ -34,22 +35,28 @@
     <h1>CBS DAO – Stemmen op proposal</h1>
     <p class="sub">Netwerk: <b>Devnet</b> • RPC: <code>https://api.devnet.solana.com</code></p>
 
-    <div class="question">🗳️ <b>Vraag:</b> 1 Miljoen CBS burnen — YES of NO?</div>
+    <div class="question">
+      <span class="flames">🔥🔥</span>
+      <b>Vraag:</b> 1 Miljoen CBS burnen — YES of NO?
+      <span class="flames">🔥🔥</span>
+    </div>
 
     <div class="kv">Wallet: <code id="wallet">niet verbonden</code></div>
     <div class="kv">Program ID: <code id="pid">FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY</code></div>
     <div class="kv">Proposal: <code id="proposal">9ALSSyJxAPCgyEcgJmVLnCTV5yPzbJAhUyeWMRv4kYYe</code></div>
     <div class="kv">Vote receipt PDA: <code id="receipt">—</code></div>
-    <div class="kv" id="status"></div>
+    <div class="kv">Status: <span id="status" class=""></span></div>
 
     <div class="row">
       <button id="connect" class="secondary">Connect Phantom</button>
       <button id="voteYes" class="primary" disabled>Stem YES</button>
       <button id="voteNo" class="secondary" disabled>Stem NO</button>
+      <a id="faucet" class="secondary" href="https://faucet.solana.com" target="_blank" rel="noopener"
+         style="padding:10px 12px;border-radius:10px;border:1px solid #d1d5db;text-decoration:none">Claim Devnet SOL</a>
     </div>
 
     <div class="hint">
-      Tip: Zet Phantom in <b>Devnet</b>. In Phantom → Settings → Developer Settings → Change Network → Devnet.
+      Zet Phantom in <b>Devnet</b>. In Phantom → Settings → Developer Settings → Change Network → Devnet.
       • Explorer (proposal): <a id="propLink" target="_blank" rel="noopener">open</a>
     </div>
 
@@ -67,7 +74,7 @@
     const PROGRAM_ID = new PublicKey("FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY");
     const PROPOSAL_PUBKEY = new PublicKey("9ALSSyJxAPCgyEcgJmVLnCTV5yPzbJAhUyeWMRv4kYYe");
 
-    // Discriminator voor "vote" (8 bytes)
+    // Discriminator voor "vote" (8 bytes uit Anchor)
     const VOTE_DISC = Uint8Array.from([227,110,155,23,136,126,172,25]);
 
     const connection = new Connection(RPC_URL, "confirmed");
@@ -83,7 +90,7 @@
     const $propLink = document.getElementById("propLink");
     $propLink.href = `https://explorer.solana.com/address/${PROPOSAL_PUBKEY.toBase58()}?cluster=devnet`;
 
-    const log = (m) => { $log.textContent += m + "\\n"; $log.scrollTop = $log.scrollHeight; };
+    const log = (m) => { $log.textContent += m + "\n"; $log.scrollTop = $log.scrollHeight; };
     const setVotingEnabled = (on) => { $btnYes.disabled = !on; $btnNo.disabled = !on; };
     const setStatus = (txt, cls="") => { $status.textContent = txt; $status.className = cls; };
 
@@ -91,12 +98,17 @@
 
     // ==== Helpers ====
     async function deriveReceiptPDA(voterPk) {
-      // BELANGRIJK: seed = "receipt" (niet "vote")
+      // BELANGRIJK: seed = "receipt" (moet matchen met on-chain)
       const [pda] = await PublicKey.findProgramAddress(
         [new TextEncoder().encode("receipt"), PROPOSAL_PUBKEY.toBuffer(), voterPk.toBuffer()],
         PROGRAM_ID
       );
       return pda;
+    }
+
+    async function getSolBalance(pubkey) {
+      try { return (await connection.getBalance(pubkey, "confirmed")) / 1e9; }
+      catch { return 0; }
     }
 
     async function checkAlreadyVoted(voterPk) {
@@ -118,9 +130,15 @@
         $wallet.textContent = user.toBase58();
         log("✅ Verbonden met: " + user.toBase58());
 
+        // Balance check
+        const bal = await getSolBalance(user);
+        if (bal < 0.01) {
+          setStatus("Saldo te laag op Devnet. Gebruik 'Claim Devnet SOL'.", "err");
+        }
+
+        // Al gestemd?
         const { pda, exists } = await checkAlreadyVoted(user);
         $receipt.textContent = pda.toBase58();
-
         if (exists) {
           setStatus("Je hebt al gestemd met deze wallet.", "warn");
           setVotingEnabled(false);
@@ -142,7 +160,7 @@
         const voter = wallet.publicKey;
         const receiptPda = await deriveReceiptPDA(voter);
 
-        // Als receipt al bestaat: niet nogmaals proberen
+        // Stop als al gestemd
         const info = await connection.getAccountInfo(receiptPda, "confirmed");
         if (info) {
           setStatus("Je hebt al gestemd met deze wallet.", "warn");
@@ -154,21 +172,22 @@
         const data = new Uint8Array([...VOTE_DISC, yes ? 1 : 0]);
 
         const keys = [
-          { pubkey: PROPOSAL_PUBKEY, isSigner: false, isWritable: true },   // proposal
-          { pubkey: receiptPda,      isSigner: false, isWritable: true },   // receipt (PDA)
-          { pubkey: voter,           isSigner: true,  isWritable: true },   // voter
+          { pubkey: PROPOSAL_PUBKEY, isSigner: false, isWritable: true },
+          { pubkey: receiptPda,      isSigner: false, isWritable: true },
+          { pubkey: voter,           isSigner: true,  isWritable: true },
           { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
         ];
 
-        const ix = new TransactionInstruction({ programId: PROGRAM_ID, keys, data });
         const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("finalized");
-        const tx = new Transaction({ recentBlockhash: blockhash, feePayer: voter }).add(ix);
+        const tx = new Transaction({ recentBlockhash: blockhash, feePayer: voter }).add(
+          new TransactionInstruction({ programId: PROGRAM_ID, keys, data })
+        );
 
-        const signed = await wallet.signTransaction(tx);
-        const sig = await connection.sendRawTransaction(signed.serialize(), { skipPreflight: false });
+        // 🔑 Gebruik Phantom's signAndSendTransaction om duplicate/old blockhash issues te voorkomen
+        const sig = await wallet.signAndSendTransaction(tx);
         log(`⏳ Verstuurd, wachten op finalisatie… ${sig}`);
-
         await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, "finalized");
+
         log(`✅ Stem ${yes ? "YES" : "NO"} bevestigd: ${sig}`);
         log(`🔗 Explorer: https://explorer.solana.com/tx/${sig}?cluster=devnet`);
         setStatus("Stem geregistreerd. Bedankt!", "ok");
@@ -177,16 +196,12 @@
         console.error(e);
         const msg = (e?.message || "").toLowerCase();
 
-        if (msg.includes("custom program error") && msg.includes("0x7d6")) {
-          // Vaak Anchor ConstraintSeeds / PDA mismatch (maar we hebben nu 'receipt')
-          log("⚠️ Program-fout (0x7d6). Controleer dat je op het juiste proposal stemt.");
-        } else if (msg.includes("already in use") || msg.includes("account in use")) {
-          log("⚠️ Je hebt waarschijnlijk al gestemd: receipt bestaat al.");
-          setStatus("Je hebt al gestemd met deze wallet.", "warn");
-        } else if (msg.includes("blockhash not found")) {
-          log("⚠️ Blockhash verlopen. Probeer nogmaals te stemmen.");
-        } else if (msg.includes("insufficient")) {
-          log("⚠️ Onvoldoende SOL op Devnet-wallet.");
+        if (msg.includes("already been processed")) {
+          log("⚠️ Phantom hergebruikte een tx. Probeer nogmaals of ververs de pagina.");
+        } else if (msg.includes("custom program error")) {
+          log("⚠️ Program-fout: " + e.message);
+        } else if (msg.includes("insufficient") || msg.includes("debit")) {
+          log("⚠️ Onvoldoende Devnet SOL. Klik 'Claim Devnet SOL' en probeer opnieuw.");
         } else if (msg.includes("ended") || msg.includes("expired")) {
           log("⚠️ Dit proposal lijkt te zijn afgelopen.");
         } else {
@@ -200,3 +215,4 @@
   </script>
 </body>
 </html>
+
