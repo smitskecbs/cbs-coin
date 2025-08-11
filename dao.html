@@ -3,33 +3,28 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CBS DAO – Stem (Devnet)</title>
+  <title>CBS DAO – Stemmen (Devnet)</title>
   <style>
-    :root { --fg:#0a0a0a; --muted:#666; --bg:#f7fafc; --card:#fff; --accent:#16a34a; }
+    :root { --fg:#0b1220; --muted:#667085; --bg:#f7fafc; --card:#fff; --accent:#16a34a; --danger:#ef4444; }
     html,body{height:100%}
-    body{
-      font-family:system-ui,Arial,sans-serif;background:var(--bg);color:var(--fg);
-      margin:0;display:flex;align-items:center;justify-content:center;padding:24px
-    }
-    .card{
-      width:min(760px,100%);background:var(--card);border:1px solid #e5e7eb;border-radius:16px;
-      box-shadow:0 6px 30px rgba(0,0,0,.06);padding:20px 18px
-    }
+    body{font-family:system-ui,Arial,sans-serif;background:var(--bg);color:var(--fg);
+         margin:0;display:flex;align-items:center;justify-content:center;padding:24px}
+    .card{width:min(820px,100%);background:var(--card);border:1px solid #e5e7eb;border-radius:16px;
+          box-shadow:0 6px 30px rgba(0,0,0,.06);padding:22px 18px}
     h1{margin:6px 0 8px 0;font-size:22px}
     .sub{color:var(--muted);font-size:13px;margin:0 0 16px 0}
+    .question{font-size:18px;margin:10px 0 6px}
     .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 8px}
-    button{
-      padding:10px 14px;border-radius:10px;border:1px solid #d1d5db;background:#fff;
-      cursor:pointer;font-weight:600
-    }
+    button{padding:10px 14px;border-radius:10px;border:1px solid #d1d5db;background:#fff;cursor:pointer;font-weight:600}
     button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+    button.secondary{background:#fff;border-color:#d1d5db}
+    button.danger{background:var(--danger);border-color:var(--danger);color:#fff}
     button:disabled{opacity:.55;cursor:not-allowed}
     .kv{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}
     .kv code{background:#f3f4f6;padding:2px 6px;border-radius:6px}
-    pre{
-      margin-top:12px;background:#0b1020;color:#e5e7eb;border-radius:12px;
-      padding:12px;max-height:260px;overflow:auto;font-size:12px
-    }
+    .ok{color:#16a34a;font-weight:600}
+    .warn{color:#d97706;font-weight:600}
+    pre{margin-top:12px;background:#0b1020;color:#e5e7eb;border-radius:12px;padding:12px;max-height:300px;overflow:auto;font-size:12px}
     a{color:#2563eb;text-decoration:none}
     .hint{font-size:12px;color:#6b7280;margin-top:6px}
   </style>
@@ -39,19 +34,23 @@
     <h1>CBS DAO – Stemmen op proposal</h1>
     <p class="sub">Netwerk: <b>Devnet</b> • RPC: <code>https://api.devnet.solana.com</code></p>
 
+    <div class="question">🗳️ <b>Vraag:</b> 1 Miljoen CBS burnen — YES of NO?</div>
+
     <div class="kv">Wallet: <code id="wallet">niet verbonden</code></div>
-    <div class="kv">Program ID: <code>FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY</code></div>
+    <div class="kv">Program ID: <code id="pid">FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY</code></div>
     <div class="kv">Proposal: <code id="proposal">9ALSSyJxAPCgyEcgJmVLnCTV5yPzbJAhUyeWMRv4kYYe</code></div>
     <div class="kv">Vote receipt PDA: <code id="receipt">—</code></div>
+    <div class="kv" id="status"></div>
 
     <div class="row">
-      <button id="connect">Connect Phantom</button>
+      <button id="connect" class="secondary">Connect Phantom</button>
       <button id="voteYes" class="primary" disabled>Stem YES</button>
-      <button id="voteNo" disabled>Stem NO</button>
+      <button id="voteNo" class="secondary" disabled>Stem NO</button>
     </div>
 
     <div class="hint">
-      Tip: Je moet Phantom in <b>Devnet</b> hebben staan. In Phantom → Settings → Developer Settings → Change Network → Devnet.
+      Tip: Zet Phantom in <b>Devnet</b>. In Phantom → Settings → Developer Settings → Change Network → Devnet.
+      • Explorer (proposal): <a id="propLink" target="_blank" rel="noopener">open</a>
     </div>
 
     <pre id="log"></pre>
@@ -67,108 +66,137 @@
     const RPC_URL = "https://api.devnet.solana.com";
     const PROGRAM_ID = new PublicKey("FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY");
     const PROPOSAL_PUBKEY = new PublicKey("9ALSSyJxAPCgyEcgJmVLnCTV5yPzbJAhUyeWMRv4kYYe");
-    // Discriminator voor "vote" (8 bytes, zoals in Anchor IDL)
+
+    // Discriminator voor "vote" (8 bytes)
     const VOTE_DISC = Uint8Array.from([227,110,155,23,136,126,172,25]);
 
     const connection = new Connection(RPC_URL, "confirmed");
 
-    // ==== UI helpers ====
+    // ==== UI refs ====
     const $wallet = document.getElementById("wallet");
-    const $proposal = document.getElementById("proposal");
     const $receipt = document.getElementById("receipt");
     const $log = document.getElementById("log");
+    const $status = document.getElementById("status");
     const $btnConnect = document.getElementById("connect");
     const $btnYes = document.getElementById("voteYes");
     const $btnNo = document.getElementById("voteNo");
+    const $propLink = document.getElementById("propLink");
+    $propLink.href = `https://explorer.solana.com/address/${PROPOSAL_PUBKEY.toBase58()}?cluster=devnet`;
 
     const log = (m) => { $log.textContent += m + "\\n"; $log.scrollTop = $log.scrollHeight; };
     const setVotingEnabled = (on) => { $btnYes.disabled = !on; $btnNo.disabled = !on; };
+    const setStatus = (txt, cls="") => { $status.textContent = txt; $status.className = cls; };
 
     let wallet;
 
-    // Pre-fill proposal (readonly)
-    $proposal.textContent = PROPOSAL_PUBKEY.toBase58();
+    // ==== Helpers ====
+    async function deriveReceiptPDA(voterPk) {
+      // BELANGRIJK: seed = "receipt" (niet "vote")
+      const [pda] = await PublicKey.findProgramAddress(
+        [new TextEncoder().encode("receipt"), PROPOSAL_PUBKEY.toBuffer(), voterPk.toBuffer()],
+        PROGRAM_ID
+      );
+      return pda;
+    }
 
-    // ==== Phantom connect ====
+    async function checkAlreadyVoted(voterPk) {
+      const pda = await deriveReceiptPDA(voterPk);
+      const info = await connection.getAccountInfo(pda, "confirmed");
+      return { pda, exists: !!info };
+    }
+
+    // ==== Connect ====
     $btnConnect.onclick = async () => {
       try {
         if (!window.solana?.isPhantom) {
-          alert("Installeer Phantom Wallet (zet 'm op Devnet).");
+          alert("Installeer Phantom Wallet en zet 'm op Devnet.");
           return;
         }
         wallet = window.solana;
         const res = await wallet.connect();
-        $wallet.textContent = res.publicKey.toBase58();
-        log("✅ Verbonden met: " + res.publicKey.toBase58());
+        const user = res.publicKey;
+        $wallet.textContent = user.toBase58();
+        log("✅ Verbonden met: " + user.toBase58());
 
-        // Toon alvast de vote-receipt PDA
-        const [voteRecord] = await PublicKey.findProgramAddress(
-          [new TextEncoder().encode("vote"), PROPOSAL_PUBKEY.toBuffer(), res.publicKey.toBuffer()],
-          PROGRAM_ID
-        );
-        $receipt.textContent = voteRecord.toBase58();
+        const { pda, exists } = await checkAlreadyVoted(user);
+        $receipt.textContent = pda.toBase58();
 
-        setVotingEnabled(true);
+        if (exists) {
+          setStatus("Je hebt al gestemd met deze wallet.", "warn");
+          setVotingEnabled(false);
+        } else {
+          setStatus("Je kunt stemmen.", "ok");
+          setVotingEnabled(true);
+        }
       } catch (e) {
         console.error(e);
         log("❌ Connect mislukt: " + (e?.message ?? e));
       }
     };
 
-    // ==== Stemfunctie ====
+    // ==== Stem ====
     async function vote(yes) {
       try {
         if (!wallet?.publicKey) return alert("Eerst verbinden met Phantom.");
 
-        // PDA voor stem (receipt)
-        const [voteRecord] = await PublicKey.findProgramAddress(
-          [new TextEncoder().encode("vote"), PROPOSAL_PUBKEY.toBuffer(), wallet.publicKey.toBuffer()],
-          PROGRAM_ID
-        );
+        const voter = wallet.publicKey;
+        const receiptPda = await deriveReceiptPDA(voter);
+
+        // Als receipt al bestaat: niet nogmaals proberen
+        const info = await connection.getAccountInfo(receiptPda, "confirmed");
+        if (info) {
+          setStatus("Je hebt al gestemd met deze wallet.", "warn");
+          setVotingEnabled(false);
+          return;
+        }
 
         // Instructie-data = discriminator + 1 byte (1=yes, 0=no)
         const data = new Uint8Array([...VOTE_DISC, yes ? 1 : 0]);
 
         const keys = [
           { pubkey: PROPOSAL_PUBKEY, isSigner: false, isWritable: true },   // proposal
-          { pubkey: voteRecord,      isSigner: false, isWritable: true },   // receipt (PDA)
-          { pubkey: wallet.publicKey,isSigner: true,  isWritable: true },   // voter
+          { pubkey: receiptPda,      isSigner: false, isWritable: true },   // receipt (PDA)
+          { pubkey: voter,           isSigner: true,  isWritable: true },   // voter
           { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
         ];
 
         const ix = new TransactionInstruction({ programId: PROGRAM_ID, keys, data });
         const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("finalized");
-        const tx = new Transaction({ recentBlockhash: blockhash, feePayer: wallet.publicKey }).add(ix);
+        const tx = new Transaction({ recentBlockhash: blockhash, feePayer: voter }).add(ix);
 
-        // Ondertekenen + verzenden
         const signed = await wallet.signTransaction(tx);
         const sig = await connection.sendRawTransaction(signed.serialize(), { skipPreflight: false });
-        log(`⏳ Verstuurd, wacht op finalisatie… ${sig}`);
+        log(`⏳ Verstuurd, wachten op finalisatie… ${sig}`);
 
         await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, "finalized");
         log(`✅ Stem ${yes ? "YES" : "NO"} bevestigd: ${sig}`);
         log(`🔗 Explorer: https://explorer.solana.com/tx/${sig}?cluster=devnet`);
+        setStatus("Stem geregistreerd. Bedankt!", "ok");
+        setVotingEnabled(false);
       } catch (e) {
         console.error(e);
         const msg = (e?.message || "").toLowerCase();
 
-        // Korte, herkenbare duiding
-        if (msg.includes("already in use") || msg.includes("account in use")) {
+        if (msg.includes("custom program error") && msg.includes("0x7d6")) {
+          // Vaak Anchor ConstraintSeeds / PDA mismatch (maar we hebben nu 'receipt')
+          log("⚠️ Program-fout (0x7d6). Controleer dat je op het juiste proposal stemt.");
+        } else if (msg.includes("already in use") || msg.includes("account in use")) {
           log("⚠️ Je hebt waarschijnlijk al gestemd: receipt bestaat al.");
-        } else if (msg.includes("custom program error")) {
-          log("⚠️ Program-fout: " + e.message);
+          setStatus("Je hebt al gestemd met deze wallet.", "warn");
         } else if (msg.includes("blockhash not found")) {
           log("⚠️ Blockhash verlopen. Probeer nogmaals te stemmen.");
         } else if (msg.includes("insufficient")) {
           log("⚠️ Onvoldoende SOL op Devnet-wallet.");
+        } else if (msg.includes("ended") || msg.includes("expired")) {
+          log("⚠️ Dit proposal lijkt te zijn afgelopen.");
         } else {
           log("❌ Onbekende fout: " + (e?.message ?? e));
         }
       }
     }
 
-    $btnYes.onclick = () => vote(true);
-    $btnNo.onclick  = () => vote(false);
+    document.getElementById("voteYes").onclick = () => vote(true);
+    document.getElementById("voteNo").onclick  = () => vote(false);
   </script>
 </body>
 </html>
