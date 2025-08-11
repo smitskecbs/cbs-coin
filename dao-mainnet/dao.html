@@ -1,342 +1,254 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>CBS DAO – Stemmen (Mainnet)</title>
-  <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
   <style>
-    :root { --bg:#0b0f14; --card:#121822; --txt:#e6eef8; --muted:#9cb3c9; --acc:#5cc8ff; --bad:#ff6b6b; --good:#22c55e; }
-    *{ box-sizing:border-box; }
-    body{ margin:0; font-family:system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif; background:linear-gradient(180deg,#0b0f14,#0a0d13); color:var(--txt); }
-    .wrap{ max-width:900px; margin:40px auto; padding:16px; }
-    .card{ background:var(--card); border:1px solid #1f2a37; border-radius:16px; padding:20px; box-shadow:0 10px 40px rgba(0,0,0,.2); }
-    h1{ margin:0 0 8px; font-weight:700; letter-spacing:.3px; }
-    .sub{ color:var(--muted); margin:0 0 24px; }
-    .row{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
-    button{ appearance:none; border:none; padding:12px 16px; border-radius:12px; background:#1c2533; color:var(--txt); cursor:pointer; font-weight:600; }
-    button:hover{ filter:brightness(1.1); }
-    .primary{ background:var(--acc); color:#00121f; }
-    .yes{ background:rgba(34,197,94,.15); border:1px solid rgba(34,197,94,.3); color:#c6f6d5; }
-    .no{ background:rgba(255,107,107,.15); border:1px solid rgba(255,107,107,.3); color:#ffd6d6; }
-    .muted{ background:#111723; color:var(--muted); }
-    .grid{ display:grid; gap:16px; grid-template-columns:1fr; }
-    @media (min-width: 860px){ .grid{ grid-template-columns: 1.6fr .9fr; } }
-    .kvs{ display:grid; gap:10px; }
-    .kv{ display:flex; justify-content:space-between; gap:8px; padding:10px 12px; background:#0f1520; border:1px solid #1f2a37; border-radius:12px; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
-    .pill{ display:inline-flex; gap:8px; align-items:center; padding:6px 10px; background:#0f1520; border:1px solid #1f2a37; border-radius:999px; color:var(--muted); }
-    .status{ margin-top:12px; min-height:24px; color:var(--muted); }
-    a { color:var(--acc); text-decoration:none; }
-    .counts{ display:flex; gap:10px; }
-    .count{ flex:1; padding:12px; border-radius:12px; background:#0f1520; border:1px solid #1f2a37; text-align:center; }
-    .count .n{ font-weight:800; font-size:22px; }
-    .warn{ color:#ffd166; }
-    .ok{ color:#a7f3d0; }
-    .err{ color:#ffb4b4; }
-    .foot{ margin-top:20px; font-size:12px; color:#7f93a8; }
-    .sep{ height:1px; background:#1f2a37; margin:16px 0; }
+    :root{--bg:#000;--fg:#00ffcc;--cyan:#00ffff;--green:#39ff14;--muted:#66ffff;--panel:#0b0f16;--accent:#16a34a}
+    html,body{height:100%}
+    body{margin:0;background:#000;color:var(--fg);font-family:system-ui,Arial,sans-serif;display:flex;align-items:center;justify-content:center;padding:20px}
+    .wrap{width:min(960px,100%);background:#070707;border:1px solid #111;border-radius:16px;box-shadow:0 10px 40px rgba(0,255,204,.08);padding:22px}
+    h1{margin:0 0 6px;color:var(--cyan);text-align:left}
+    .sub{color:var(--muted);font-size:13px;margin:0 0 16px}
+    .q{display:flex;gap:10px;align-items:center;font-size:18px;margin:10px 0 14px;color:var(--green)}
+    .fl{font-size:20px}
+    .row{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
+    button,a.btn{border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer;background:var(--fg);color:#001815}
+    button.secondary{background:#001a17;color:var(--fg);border:1px solid #064e3b}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    code{background:#061016;color:var(--fg);padding:2px 6px;border-radius:6px}
+    .kv{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0;align-items:center}
+    .status.ok{color:#5aff5a}.status.warn{color:#ffd166}.status.err{color:#ff6b6b}
+    pre{background:var(--panel);color:#b7fff1;border-radius:12px;padding:12px;max-height:320px;overflow:auto;font-size:12px;margin:12px 0 0}
+    a{color:var(--fg);text-decoration:none}
+    .meter{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0}
+    .bar{height:10px;border-radius:8px;background:#041a17;border:1px solid #064e3b;overflow:hidden;flex:1}
+    .fill{height:100%;background:linear-gradient(90deg,#00ffcc,#39ff14)}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="card">
-      <h1>CBS DAO – Stemmen</h1>
-      <p class="sub">Mainnet-beta • Program en proposal staan vast ingesteld. Verbind je wallet om te stemmen.</p>
+    <h1>CBS DAO – Stemmen op proposal</h1>
+    <p class="sub">Netwerk: <b>Mainnet-beta</b> • RPC: <code>https://api.mainnet-beta.solana.com</code></p>
 
-      <div class="row" style="margin-bottom:16px;">
-        <button id="connect" class="primary">Wallet verbinden</button>
-        <button id="refresh" class="muted">Vernieuwen</button>
-        <span class="pill" id="walletPill">Niet verbonden</span>
-      </div>
-
-      <div class="grid">
-        <!-- LEFT: Proposal -->
-        <div>
-          <div class="kv">
-            <span>Program</span>
-            <span id="programId"></span>
-          </div>
-          <div class="kv">
-            <span>Proposal</span>
-            <span id="proposalPk"></span>
-          </div>
-
-          <div id="qwrap" style="margin-top:16px;">
-            <h2 id="q">Vraag…</h2>
-            <div class="counts">
-              <div class="count"><div>JA</div><div class="n" id="yesN">0</div></div>
-              <div class="count"><div>NEE</div><div class="n" id="noN">0</div></div>
-            </div>
-            <div class="kvs" style="margin-top:12px;">
-              <div class="kv"><span>Gemaakt op</span><span id="createdAt">–</span></div>
-              <div class="kv"><span>Eindigt op</span><span id="endsAt">–</span></div>
-              <div class="kv"><span>Status</span><span id="statusBadge">Laden…</span></div>
-            </div>
-          </div>
-
-          <div class="row" style="margin-top:14px;">
-            <button id="voteYes" class="yes">Stem JA</button>
-            <button id="voteNo" class="no">Stem NEE</button>
-          </div>
-
-          <div class="status" id="status"></div>
-          <div class="sep"></div>
-          <div class="foot">Tip: als je stem al is geregistreerd, wordt je stemknop uitgeschakeld.</div>
-        </div>
-
-        <!-- RIGHT: Extra -->
-        <div>
-          <div class="kvs">
-            <div class="kv"><span>Cluster</span><span>mainnet-beta</span></div>
-            <div class="kv"><span>Wallet</span><span id="walletAddr">–</span></div>
-            <div class="kv"><span>Receipt PDA</span><span id="receiptPda">–</span></div>
-            <div class="kv"><span>Laatst TX</span><span id="lastTx">–</span></div>
-          </div>
-        </div>
-      </div>
-
+    <div class="q">
+      <span class="fl">🔥</span><b>Vraag:</b>
+      <span id="question">—</span>
+      <span class="fl">🔥</span>
     </div>
+
+    <div class="kv">
+      <b>Wallet:</b> <code id="wallet">niet verbonden</code>
+    </div>
+    <div class="kv">
+      <b>Program ID:</b> <code id="prog"></code>
+    </div>
+    <div class="kv">
+      <b>Proposal:</b> <code id="prop"></code>
+    </div>
+    <div class="kv">
+      <b>Vote receipt PDA:</b> <code id="receipt">-</code>
+    </div>
+    <div class="kv">
+      <b>Status:</b> <span id="status" class="status warn">laden…</span>
+    </div>
+
+    <div class="row">
+      <button id="btnYes" class="secondary" disabled>Stem YES</button>
+      <button id="btnNo" class="secondary" disabled>Stem NO</button>
+      <button id="btnRefresh" class="secondary">Ververs teller</button>
+      <button id="btnConnect">Connect Phantom</button>
+    </div>
+
+    <div class="meter">
+      <div class="bar"><div class="fill" id="fill" style="width:0%"></div></div>
+      <div><b>YES</b> <span id="yesPct">0%</span></div>
+      <div style="margin-left:auto"><b>NO</b> <span id="noPct">0%</span></div>
+    </div>
+
+    <pre id="log"></pre>
   </div>
 
+  <!-- Web3 IIFE (géén modules/bundler nodig) -->
+  <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
   <script>
-    // ====== CONSTS (mainnet) ======
+    // ---- Config (JOUW adressen) ----
     const CLUSTER_URL = 'https://api.mainnet-beta.solana.com';
     const PROGRAM_ID = new solanaWeb3.PublicKey('FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY');
     const PROPOSAL_PUBKEY = new solanaWeb3.PublicKey('FUpzQRQfu35NEmqp9pjqnkad3R2K1p5XzM6sLDfXcizx');
 
-    // Instruction discriminators uit IDL
-    const DISC_VOTE = Uint8Array.from([227,110,155,23,136,126,172,25]); // "vote"
-    const DISC_PROPOSAL = Uint8Array.from([26,94,189,187,116,136,53,33]); // account discriminator Proposal
+    // Anchor discriminator voor `vote(bool yes)`
+    const VOTE_DISCRIM = Uint8Array.of(227,110,155,23,136,126,172,25);
 
-    // ====== DOM ======
-    const $ = (id) => document.getElementById(id);
-    const els = {
-      programId: $('programId'),
-      proposalPk: $('proposalPk'),
-      walletPill: $('walletPill'),
-      walletAddr: $('walletAddr'),
-      receiptPda: $('receiptPda'),
-      lastTx: $('lastTx'),
-      q: $('q'),
-      yesN: $('yesN'),
-      noN: $('noN'),
-      createdAt: $('createdAt'),
-      endsAt: $('endsAt'),
-      status: $('status'),
-      statusBadge: $('statusBadge'),
-      connect: $('connect'),
-      refresh: $('refresh'),
-      voteYes: $('voteYes'),
-      voteNo: $('voteNo'),
-    };
+    // ---- UI refs ----
+    const $ = sel => document.querySelector(sel);
+    const log = (m) => { const p = $('#log'); p.textContent += (typeof m === 'string' ? m : JSON.stringify(m,null,2)) + '\n'; p.scrollTop = p.scrollHeight; };
+    $('#prog').textContent = PROGRAM_ID.toBase58();
+    $('#prop').textContent = PROPOSAL_PUBKEY.toBase58();
 
+    // ---- Solana connection ----
     const conn = new solanaWeb3.Connection(CLUSTER_URL, 'confirmed');
-    let walletPubkey = null;
-    let hasVoted = false;
-    let votingClosed = false;
+    let wallet = null; // Phantom provider
+    let walletPk = null;
 
-    // ====== Helpers ======
-    const fmtTs = (ts) => {
-      try {
-        const d = new Date(Number(ts)*1000);
-        return d.toLocaleString();
-      } catch { return '–'; }
-    };
-    const u64 = (buf, off) => {
-      // little-endian u64 -> BigInt
-      const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
-      return dv.getBigUint64(off, true);
-    };
-    const i64 = (buf, off) => {
-      const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
-      return dv.getBigInt64(off, true);
-    };
-    const u32 = (buf, off) => {
-      const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
-      return dv.getUint32(off, true);
-    };
-
-    function setStatus(txt, cls='') {
-      els.status.className = `status ${cls}`;
-      els.status.textContent = txt;
-    }
-    function setBadge(txt, cls='') {
-      els.statusBadge.className = cls;
-      els.statusBadge.textContent = txt;
-    }
-    function disableVotes(disabled) {
-      els.voteYes.disabled = disabled;
-      els.voteNo.disabled = disabled;
-      els.voteYes.style.opacity = disabled ? .6 : 1;
-      els.voteNo.style.opacity = disabled ? .6 : 1;
-      els.voteYes.style.cursor = disabled ? 'not-allowed' : 'pointer';
-      els.voteNo.style.cursor = disabled ? 'not-allowed' : 'pointer';
-    }
-
-    // ====== Decode Proposal account (Anchor/Borsh) ======
-    function decodeProposal(dataU8) {
-      // layout:
-      // [0..8) discriminator
-      // [8..40) creator pubkey
-      // [40..)  string: u32 len + bytes
-      // then    u64 yes, u64 no, i64 created_at, i64 ends_at
-      const d = dataU8;
-      if (d.length < 8) throw new Error('Proposal account te kort');
-      // optional: check discriminator
-      let ok = true;
-      for (let i=0;i<8;i++){ if (d[i]!==DISC_PROPOSAL[i]) { ok=false; break; } }
-      if (!ok) throw new Error('Geen Proposal-account (discriminator mismatch)');
-
-      let off = 8;
-      const creator = new solanaWeb3.PublicKey(d.slice(off, off+32)); off += 32;
-
-      const qLen = u32(d, off); off += 4;
-      const qEnd = off + Number(qLen);
-      const question = new TextDecoder().decode(d.slice(off, qEnd)); off = qEnd;
-
-      const yes = u64(d, off); off += 8n ? 8 : 8; // (visueel – blijft 8 bytes)
-      const yesN = u64(d, Number(off-8)); // correcte lees (bovende regel is stylistisch)
-      off = Number(off - 8) + 8; // normalize
-      const noN = u64(d, off); off += 8;
-      const createdAt = i64(d, off); off += 8;
-      const endsAt = i64(d, off); off += 8;
-
-      return { creator, question, yes: yesN, no: noN, createdAt, endsAt };
-    }
-
-    async function fetchProposal() {
-      setStatus('Laden van proposal…');
-      try {
-        const info = await conn.getAccountInfo(PROPOSAL_PUBKEY, 'confirmed');
-        if (!info || !info.data) {
-          setStatus('Proposal account niet gevonden op chain.', 'warn');
-          disableVotes(true);
-          return;
-        }
-        const data = new Uint8Array(info.data); // BufferSource -> Uint8Array
-        const p = decodeProposal(data);
-
-        els.q.textContent = p.question || '(geen vraag)';
-        els.yesN.textContent = p.yes.toString();
-        els.noN.textContent = p.no.toString();
-        els.createdAt.textContent = fmtTs(p.createdAt.toString());
-        els.endsAt.textContent = fmtTs(p.endsAt.toString());
-
-        const now = Math.floor(Date.now()/1000);
-        votingClosed = now >= Number(p.endsAt);
-        if (votingClosed) {
-          setBadge('Gestopt', 'warn');
-          disableVotes(true);
-        } else {
-          setBadge('Open', 'ok');
-          // disable pas na check of je al gestemd hebt
-          await checkReceipt();
-        }
-        setStatus('Klaar.');
-      } catch (e) {
-        console.error(e);
-        setStatus('Fout bij ophalen/decoderen proposal.', 'err');
-      }
-    }
-
-    async function checkReceipt() {
-      if (!walletPubkey) { disableVotes(true); return; }
-      // PDA: ["vote", proposal, voter]
-      const [pda, bump] = await solanaWeb3.PublicKey.findProgramAddress(
-        [Buffer.from('vote'), PROPOSAL_PUBKEY.toBuffer(), walletPubkey.toBuffer()],
-        PROGRAM_ID
-      );
-      els.receiptPda.textContent = pda.toBase58();
-      const info = await conn.getAccountInfo(pda, 'confirmed');
-      hasVoted = !!(info && info.data && info.data.length > 0);
-      disableVotes(votingClosed || hasVoted ? true : false);
-      if (hasVoted) setStatus('Je hebt al gestemd met dit adres.', 'ok');
-    }
-
-    async function ensureWallet() {
-      const prov = window.solana;
-      if (!prov || !prov.isPhantom) {
-        setStatus('Wallet (Phantom) niet gevonden. Installeer Phantom.', 'warn');
-        window.open('https://phantom.app/', '_blank');
-        throw new Error('No wallet');
-      }
-      return prov;
+    function getProvider() {
+      const p = window.solana;
+      if (!p || !p.isPhantom) throw new Error('Phantom wallet niet gevonden');
+      return p;
     }
 
     async function connectWallet() {
-      const prov = await ensureWallet();
-      const res = await prov.connect({ onlyIfTrusted:false });
-      walletPubkey = new solanaWeb3.PublicKey(res.publicKey.toString());
-      els.walletPill.textContent = 'Verbonden';
-      els.walletAddr.textContent = walletPubkey.toBase58();
-      setStatus('Wallet verbonden.');
-      await checkReceipt();
-    }
-
-    async function sendVote(yesBool) {
       try {
-        if (!walletPubkey) await connectWallet();
-        if (votingClosed) { setStatus('Stemmen gesloten.', 'warn'); return; }
-        if (hasVoted) { setStatus('Je hebt al gestemd.', 'ok'); return; }
-
-        // Derive receipt PDA
-        const [receiptPda] = await solanaWeb3.PublicKey.findProgramAddress(
-          [Buffer.from('vote'), PROPOSAL_PUBKEY.toBuffer(), walletPubkey.toBuffer()],
-          PROGRAM_ID
-        );
-
-        // Build instruction data: [8-byte discriminator] + [1 byte bool]
-        const data = new Uint8Array(8 + 1);
-        data.set(DISC_VOTE, 0);
-        data[8] = yesBool ? 1 : 0;
-
-        const keys = [
-          { pubkey: PROPOSAL_PUBKEY, isSigner:false, isWritable:true },
-          { pubkey: walletPubkey,    isSigner:true,  isWritable:true },
-          { pubkey: receiptPda,      isSigner:false, isWritable:true },
-          { pubkey: solanaWeb3.SystemProgram.programId, isSigner:false, isWritable:false },
-        ];
-
-        const ix = new solanaWeb3.TransactionInstruction({
-          programId: PROGRAM_ID, keys, data
-        });
-
-        const tx = new solanaWeb3.Transaction().add(ix);
-        tx.feePayer = walletPubkey;
-        const latest = await conn.getLatestBlockhash('finalized');
-        tx.recentBlockhash = latest.blockhash;
-
-        const prov = await ensureWallet();
-        const signed = await prov.signTransaction(tx);
-        const sig = await conn.sendRawTransaction(signed.serialize(), { skipPreflight:false });
-        await conn.confirmTransaction({ signature:sig, ...latest }, 'confirmed');
-
-        els.lastTx.innerHTML = `<a target="_blank" href="https://explorer.solana.com/tx/${sig}?cluster=mainnet-beta">${sig.slice(0,12)}…</a>`;
-        setStatus(`Stem verstuurd ✔`, 'ok');
-
-        // Refresh data
-        await fetchProposal();
-        await checkReceipt();
+        const prov = getProvider();
+        const resp = await prov.connect();
+        wallet = prov;
+        walletPk = new solanaWeb3.PublicKey(resp.publicKey.toString());
+        $('#wallet').textContent = walletPk.toBase58();
+        $('#btnYes').disabled = false;
+        $('#btnNo').disabled = false;
+        $('#status').textContent = 'wallet verbonden';
+        await deriveVoteReceiptPda(); // toont PDA
       } catch (e) {
-        console.error(e);
-        setStatus(`Stemmen faalde: ${e?.message || e}`, 'err');
+        $('#status').textContent = 'wallet connect geannuleerd';
+        log(e.message || e);
       }
     }
 
-    // ====== Init ======
-    (async function init(){
-      els.programId.textContent = PROGRAM_ID.toBase58();
-      els.proposalPk.textContent = PROPOSAL_PUBKEY.toBase58();
-      disableVotes(true);
+    // seeds = ["vote", proposal, voter]
+    let voteReceiptPda = null;
+    async function deriveVoteReceiptPda() {
+      if (!walletPk) { $('#receipt').textContent = '-'; return; }
+      const [pda] = await solanaWeb3.PublicKey.findProgramAddress(
+        [
+          Buffer.from('vote'),
+          PROPOSAL_PUBKEY.toBuffer(),
+          walletPk.toBuffer(),
+        ],
+        PROGRAM_ID
+      );
+      voteReceiptPda = pda;
+      $('#receipt').textContent = pda.toBase58();
+    }
 
-      els.connect.onclick = connectWallet;
-      els.refresh.onclick = fetchProposal;
-      els.voteYes.onclick = () => sendVote(true);
-      els.voteNo.onclick = () => sendVote(false);
+    // ---- Borsh helpers to lezen proposal account ----
+    const td = new TextDecoder();
+    function readU32LE(d, o){ return new DataView(d.buffer, d.byteOffset, d.byteLength).getUint32(o,true); }
+    function readU64LE(d, o){ const v = new DataView(d.buffer, d.byteOffset, d.byteLength).getBigUint64(o,true); return Number(v); }
+    function readI64LE(d, o){ const v = new DataView(d.buffer, d.byteOffset, d.byteLength).getBigInt64(o,true); return Number(v); }
 
-      await fetchProposal();
+    async function loadProposal() {
+      const info = await conn.getAccountInfo(PROPOSAL_PUBKEY);
+      if (!info) { $('#status').textContent = 'proposal niet gevonden'; return; }
+      const data = new Uint8Array(info.data);
+      let off = 0;
+
+      // creator (32)
+      off += 32;
+
+      // question (borsh string)
+      const sl = readU32LE(data, off); off += 4;
+      const q = td.decode(data.slice(off, off + sl)); off += sl;
+      $('#question').textContent = q || '(onbekend)';
+
+      const yes = readU64LE(data, off); off += 8;
+      const no  = readU64LE(data, off); off += 8;
+      const createdAt = readI64LE(data, off); off += 8;
+      const endsAt    = readI64LE(data, off); off += 8;
+
+      const total = Math.max(1, yes + no);
+      const yesPct = Math.round(yes * 100 / total);
+      const noPct  = 100 - yesPct;
+
+      $('#yesPct').textContent = yesPct + '%';
+      $('#noPct').textContent = noPct + '%';
+      $('#fill').style.width = yesPct + '%';
+
+      const now = Math.floor(Date.now()/1000);
+      if (now > endsAt) {
+        $('#status').className = 'status warn';
+        $('#status').textContent = 'gesloten';
+        $('#btnYes').disabled = true;
+        $('#btnNo').disabled = true;
+      } else {
+        $('#status').className = 'status ok';
+        $('#status').textContent = 'open tot ' + new Date(endsAt*1000).toLocaleString();
+      }
+    }
+
+    async function sendVote(yesFlag) {
+      if (!walletPk) { await connectWallet(); if (!walletPk) return; }
+      await deriveVoteReceiptPda();
+
+      const keys = [
+        { pubkey: PROPOSAL_PUBKEY, isSigner: false, isWritable: true },
+        { pubkey: walletPk,        isSigner: true,  isWritable: true },
+        { pubkey: voteReceiptPda,  isSigner: false, isWritable: true },
+        { pubkey: solanaWeb3.SystemProgram.programId, isSigner:false, isWritable:false },
+      ];
+
+      // Anchor data: 8-byte discriminator + 1 byte voor bool
+      const data = new Uint8Array(9);
+      data.set(VOTE_DISCRIM, 0);
+      data[8] = yesFlag ? 1 : 0;
+
+      const ix = new solanaWeb3.TransactionInstruction({
+        programId: PROGRAM_ID,
+        keys,
+        data,
+      });
+
+      // Standaard Phantom flow (signTransaction)
+      const { blockhash, lastValidBlockHeight } = await conn.getLatestBlockhash('finalized');
+      const tx = new solanaWeb3.Transaction().add(ix);
+      tx.recentBlockhash = blockhash;
+      tx.feePayer = walletPk;
+
+      try {
+        const signed = await wallet.signTransaction(tx);
+        const sig = await conn.sendRawTransaction(signed.serialize(), { skipPreflight:false });
+        log('✅ TX: ' + sig);
+        await conn.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, 'confirmed');
+        $('#status').className = 'status ok';
+        $('#status').textContent = 'Stem geregistreerd';
+        await loadProposal();
+      } catch (e) {
+        $('#status').className = 'status err';
+        $('#status').textContent = 'Stemmen mislukt';
+        log(e.message || e);
+      }
+    }
+
+    // UI events
+    $('#btnConnect').onclick = connectWallet;
+    $('#btnYes').onclick = () => sendVote(true);
+    $('#btnNo').onclick  = () => sendVote(false);
+    $('#btnRefresh').onclick = loadProposal;
+
+    // init
+    (async () => {
+      try {
+        await loadProposal();
+        // auto-connect als toegestaan
+        if (window.solana?.isPhantom) {
+          try {
+            const resp = await window.solana.connect({ onlyIfTrusted:true });
+            if (resp?.publicKey) {
+              wallet = window.solana; walletPk = new solanaWeb3.PublicKey(resp.publicKey.toString());
+              $('#wallet').textContent = walletPk.toBase58();
+              $('#btnYes').disabled = false; $('#btnNo').disabled = false;
+              await deriveVoteReceiptPda();
+            }
+          } catch {}
+        } else {
+          log('Installeer Phantom om te stemmen: https://phantom.app');
+        }
+      } catch (e) {
+        $('#status').className = 'status err';
+        $('#status').textContent = 'Fout bij laden';
+        log(e.message || e);
+      }
     })();
   </script>
 </body>
 </html>
-
