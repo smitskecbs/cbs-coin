@@ -1,1 +1,64 @@
+{
+  "version": "0.1.0",
+  "name": "cbs_dao",
+  "instructions": [
+    {
+      "name": "createProposal",
+      "accounts": [
+        { "name": "proposal", "isMut": true, "isSigner": false },
+        { "name": "creator",  "isMut": true, "isSigner": true },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "question", "type": "string" },
+        { "name": "endsAt",   "type": "i64" }
+      ]
+    },
+    {
+      "name": "vote",
+      "accounts": [
+        { "name": "proposal", "isMut": true, "isSigner": false },
+        { "name": "receipt",  "isMut": true, "isSigner": false },
+        { "name": "voter",    "isMut": true, "isSigner": true },
+        { "name": "systemProgram", "isMut": false, "isSigner": false }
+      ],
+      "args": [
+        { "name": "yes", "type": "bool" }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "proposal",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "creator",    "type": "publicKey" },
+          { "name": "question",   "type": "string"    },
+          { "name": "yes_votes",  "type": "u64"       },
+          { "name": "no_votes",   "type": "u64"       },
+          { "name": "created_at", "type": "i64"       },
+          { "name": "ends_at",    "type": "i64"       }
+        ]
+      }
+    },
+    {
+      "name": "voteReceipt",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "proposal", "type": "publicKey" },
+          { "name": "voter",    "type": "publicKey" }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    { "code": 6000, "name": "VotingEnded",  "msg": "Voting has already ended." },
+    { "code": 6001, "name": "AlreadyVoted", "msg": "You have already voted on this proposal." }
+  ],
+  "metadata": {
+    "address": "FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY"
+  }
+}
 
