@@ -8,7 +8,7 @@
     :root{--bg:#000;--fg:#00ffcc;--cyan:#00ffff;--green:#39ff14;--muted:#66ffff;--panel:#0b0f16;--accent:#16a34a}
     html,body{height:100%}
     body{margin:0;background:#000;color:var(--fg);font-family:system-ui,Arial,sans-serif;display:flex;align-items:center;justify-content:center;padding:20px}
-    .wrap{width:min(920px,100%);background:#070707;border:1px solid #111;border-radius:16px;box-shadow:0 10px 40px rgba(0,255,204,.08);padding:22px}
+    .wrap{width:min(960px,100%);background:#070707;border:1px solid #111;border-radius:16px;box-shadow:0 10px 40px rgba(0,255,204,.08);padding:22px}
     h1{margin:0 0 6px;color:var(--cyan);text-align:left}
     .sub{color:var(--muted);font-size:13px;margin:0 0 16px}
     .q{display:flex;gap:10px;align-items:center;font-size:18px;margin:10px 0 14px;color:var(--green)}
@@ -25,6 +25,11 @@
     .meter{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0}
     .pill{display:inline-flex;gap:6px;align-items:center;background:#061016;border:1px solid #063b34;border-radius:999px;padding:6px 10px}
     .num{font-weight:800;color:#7fffd4}
+    .barWrap{width:100%;background:#061016;border:1px solid #063b34;border-radius:10px;overflow:hidden;height:16px}
+    .bar{height:100%;display:flex}
+    .barYes{background:#00ffcc}
+    .barNo{background:#00776b}
+    .barLabels{display:flex;justify-content:space-between;font-size:12px;color:#7fffd4;margin-top:6px}
   </style>
 </head>
 <body>
@@ -44,6 +49,17 @@
       <span class="pill">YES: <span id="yesCount" class="num">—</span></span>
       <span class="pill">NO: <span id="noCount" class="num">—</span></span>
       <button id="refresh" class="secondary">Ververs teller</button>
+    </div>
+
+    <div class="barWrap">
+      <div class="bar" id="bar">
+        <div class="barYes" id="barYes" style="width:0%"></div>
+        <div class="barNo"  id="barNo"  style="width:0%"></div>
+      </div>
+    </div>
+    <div class="barLabels">
+      <div id="pYes">YES 0%</div>
+      <div id="pNo">NO 0%</div>
     </div>
 
     <div class="row">
@@ -68,8 +84,7 @@
     const RPC = "https://api.devnet.solana.com";
     const PROGRAM_ID = new PublicKey("FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY");
     const PROPOSAL = new PublicKey("9ALSSyJxAPCgyEcgJmVLnCTV5yPzbJAhUyeWMRv4kYYe");
-    // vote discriminator (Anchor): 8 bytes
-    const VOTE_DISC = Uint8Array.from([227,110,155,23,136,126,172,25]);
+    const VOTE_DISC = Uint8Array.from([227,110,155,23,136,126,172,25]); // 'vote' discriminator
 
     const conn = new Connection(RPC, "confirmed");
     document.getElementById("plink").href =
@@ -82,6 +97,10 @@
     const $log = document.getElementById("log");
     const $yesN = document.getElementById("yesCount");
     const $noN  = document.getElementById("noCount");
+    const $barYes = document.getElementById("barYes");
+    const $barNo  = document.getElementById("barNo");
+    const $pYes = document.getElementById("pYes");
+    const $pNo  = document.getElementById("pNo");
     const log = m => { $log.textContent += m + "\n"; $log.scrollTop = $log.scrollHeight; };
     const setStatus = (t,c) => { $s.textContent = t; $s.className = "status " + (c||""); };
     const setEnabled = on => { yesBtn.disabled = !on; noBtn.disabled = !on; };
@@ -113,26 +132,40 @@
     // --- Teller via Anchor IDL ---
     async function loadCounts(){
       try{
-        // Haal IDL op van /idl.json (zet die file daar neer)
-        const idl = await fetch("/idl.json").then(r => r.json());
+        // Haal IDL (zet idl.json naast dit bestand)
+        const idl = await fetch("./idl.json", { cache: "no-store" }).then(r => r.json());
         const anchor = await import("https://esm.sh/@coral-xyz/anchor@0.29.0?external=@solana/web3.js");
-        const { AnchorProvider, Program, utils } = anchor;
+        const { AnchorProvider, Program, BN } = anchor;
 
         const prov = new AnchorProvider(conn, provider ?? getProvider(), { commitment: "confirmed" });
         const program = new Program(idl, PROGRAM_ID, prov);
         const acc = await program.account.proposal.fetch(PROPOSAL);
 
-        // yes/no zijn BN's; naar number (let op big numbers)
-        const yes = Number(acc.yesVotes ?? acc.yes_votes ?? 0);
-        const no  = Number(acc.noVotes  ?? acc.no_votes  ?? 0);
+        // pak zowel camelCase als snake_case
+        const yesRaw = acc.yesVotes ?? acc.yes_votes ?? 0;
+        const noRaw  = acc.noVotes  ?? acc.no_votes  ?? 0;
+        const yes = Number(BN.isBN?.(yesRaw) ? yesRaw.toString() : yesRaw);
+        const no  = Number(BN.isBN?.(noRaw)  ? noRaw.toString()  : noRaw);
 
-        $yesN.textContent = yes.toString();
-        $noN.textContent  = no.toString();
+        $yesN.textContent = String(yes);
+        $noN.textContent  = String(no);
+
+        const total = Math.max(yes + no, 0);
+        const pYes = total ? Math.round((yes / total) * 100) : 0;
+        const pNo  = total ? 100 - pYes : 0;
+
+        $barYes.style.width = pYes + "%";
+        $barNo.style.width  = pNo + "%";
+        $pYes.textContent = `YES ${pYes}%`;
+        $pNo.textContent  = `NO ${pNo}%`;
       }catch(e){
-        // IDL niet gevonden of andere fout: toon streepjes
         $yesN.textContent = "—";
         $noN.textContent  = "—";
-        log("ℹ️ Teller niet geladen (zet idl.json naast deze pagina). " + (e?.message ?? e));
+        $barYes.style.width = "0%";
+        $barNo.style.width  = "0%";
+        $pYes.textContent = "YES 0%";
+        $pNo.textContent  = "NO 0%";
+        log("ℹ️ Teller niet geladen (controleer idl.json). " + (e?.message ?? e));
       }
     }
 
@@ -148,7 +181,6 @@
           return;
         }
         try { await provider.disconnect(); } catch {}
-        // Probeersel: silent connect
         try { await provider.connect({ onlyIfTrusted: true }); } catch {}
         if (!provider.publicKey) await provider.connect({ onlyIfTrusted: false });
 
@@ -171,7 +203,7 @@
           setEnabled(true);
         }
 
-        // laad teller (werkt alleen als idl.json beschikbaar is)
+        // teller verversen
         loadCounts();
       }catch(e){
         console.error(e);
@@ -183,7 +215,6 @@
     async function vote(yesVote){
       try{
         if(!provider || !walletPk){ return alert("Eerst verbinden met Phantom."); }
-
         const receipt = await deriveReceipt(walletPk);
         const exists = await conn.getAccountInfo(receipt, "confirmed");
         if(exists){ setStatus("Je hebt al gestemd met deze wallet.", "warn"); setEnabled(false); return; }
@@ -209,7 +240,7 @@
         setStatus("Stem geregistreerd. Bedankt!", "ok");
         setEnabled(false);
 
-        // Teller bijwerken na succesvolle stem
+        // teller bijwerken
         loadCounts();
       }catch(e){
         console.error(e);
@@ -226,12 +257,11 @@
       }
     }
 
-    yesBtn.onclick = () => vote(true);
-    noBtn.onclick  = () => vote(false);
+    document.getElementById("yes").onclick = () => vote(true);
+    document.getElementById("no").onclick  = () => vote(false);
 
-    // Probeer teller alvast te laden (als idl.json al staat)
+    // laad teller (als idl.json al beschikbaar is)
     loadCounts();
   </script>
 </body>
 </html>
-
