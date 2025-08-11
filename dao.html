@@ -3,85 +3,172 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CBS DAO – Stem</title>
+  <title>CBS DAO – Stem (Devnet)</title>
   <style>
-    body{font-family:system-ui,Arial,sans-serif;max-width:680px;margin:40px auto;padding:0 16px}
-    button{padding:10px 14px;border-radius:10px;border:1px solid #ccc;cursor:pointer;margin-right:8px}
-    .row{margin:12px 0}
-    code{background:#f5f5f5;padding:2px 6px;border-radius:6px}
+    :root { --fg:#0a0a0a; --muted:#666; --bg:#f7fafc; --card:#fff; --accent:#16a34a; }
+    html,body{height:100%}
+    body{
+      font-family:system-ui,Arial,sans-serif;background:var(--bg);color:var(--fg);
+      margin:0;display:flex;align-items:center;justify-content:center;padding:24px
+    }
+    .card{
+      width:min(760px,100%);background:var(--card);border:1px solid #e5e7eb;border-radius:16px;
+      box-shadow:0 6px 30px rgba(0,0,0,.06);padding:20px 18px
+    }
+    h1{margin:6px 0 8px 0;font-size:22px}
+    .sub{color:var(--muted);font-size:13px;margin:0 0 16px 0}
+    .row{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 8px}
+    button{
+      padding:10px 14px;border-radius:10px;border:1px solid #d1d5db;background:#fff;
+      cursor:pointer;font-weight:600
+    }
+    button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    .kv{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:6px 0}
+    .kv code{background:#f3f4f6;padding:2px 6px;border-radius:6px}
+    pre{
+      margin-top:12px;background:#0b1020;color:#e5e7eb;border-radius:12px;
+      padding:12px;max-height:260px;overflow:auto;font-size:12px
+    }
+    a{color:#2563eb;text-decoration:none}
+    .hint{font-size:12px;color:#6b7280;margin-top:6px}
   </style>
 </head>
 <body>
-  <h1>Stem op de proposal</h1>
-  <p>Wallet: <span id="wallet">niet verbonden</span></p>
-  <div class="row">
-    <button id="connect">Connect Phantom</button>
-    <button id="voteYes">Stem YES</button>
-    <button id="voteNo">Stem NO</button>
+  <div class="card">
+    <h1>CBS DAO – Stemmen op proposal</h1>
+    <p class="sub">Netwerk: <b>Devnet</b> • RPC: <code>https://api.devnet.solana.com</code></p>
+
+    <div class="kv">Wallet: <code id="wallet">niet verbonden</code></div>
+    <div class="kv">Program ID: <code>FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY</code></div>
+    <div class="kv">Proposal: <code id="proposal">9ALSSyJxAPCgyEcgJmVLnCTV5yPzbJAhUyeWMRv4kYYe</code></div>
+    <div class="kv">Vote receipt PDA: <code id="receipt">—</code></div>
+
+    <div class="row">
+      <button id="connect">Connect Phantom</button>
+      <button id="voteYes" class="primary" disabled>Stem YES</button>
+      <button id="voteNo" disabled>Stem NO</button>
+    </div>
+
+    <div class="hint">
+      Tip: Je moet Phantom in <b>Devnet</b> hebben staan. In Phantom → Settings → Developer Settings → Change Network → Devnet.
+    </div>
+
+    <pre id="log"></pre>
   </div>
-  <pre id="log"></pre>
 
   <script type="module">
-    import { Connection, PublicKey, SystemProgram, Transaction, TransactionInstruction } from "https://esm.sh/@solana/web3.js@1.95.3";
+    import {
+      Connection, PublicKey, SystemProgram,
+      Transaction, TransactionInstruction
+    } from "https://esm.sh/@solana/web3.js@1.95.3";
 
-    // Vul hier je huidige waarden in
+    // ==== Config (DEVNET) ====
     const RPC_URL = "https://api.devnet.solana.com";
     const PROGRAM_ID = new PublicKey("FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY");
-    const PROPOSAL_PUBKEY = new PublicKey("4kHKf4NrNZy2dnCcqDPhfDzrGuEq5NdRCwnsi489cVB9");
+    const PROPOSAL_PUBKEY = new PublicKey("9ALSSyJxAPCgyEcgJmVLnCTV5yPzbJAhUyeWMRv4kYYe");
+    // Discriminator voor "vote" (8 bytes, zoals in Anchor IDL)
+    const VOTE_DISC = Uint8Array.from([227,110,155,23,136,126,172,25]);
 
-    const VOTE_DISC = Uint8Array.from([227,110,155,23,136,126,172,25]); // 'vote' discriminator
     const connection = new Connection(RPC_URL, "confirmed");
 
+    // ==== UI helpers ====
     const $wallet = document.getElementById("wallet");
+    const $proposal = document.getElementById("proposal");
+    const $receipt = document.getElementById("receipt");
     const $log = document.getElementById("log");
-    const log = (m) => ($log.textContent += m + "\n");
+    const $btnConnect = document.getElementById("connect");
+    const $btnYes = document.getElementById("voteYes");
+    const $btnNo = document.getElementById("voteNo");
+
+    const log = (m) => { $log.textContent += m + "\\n"; $log.scrollTop = $log.scrollHeight; };
+    const setVotingEnabled = (on) => { $btnYes.disabled = !on; $btnNo.disabled = !on; };
 
     let wallet;
 
-    document.getElementById("connect").onclick = async () => {
-      if (!window.solana?.isPhantom) {
-        alert("Installeer Phantom wallet.");
-        return;
+    // Pre-fill proposal (readonly)
+    $proposal.textContent = PROPOSAL_PUBKEY.toBase58();
+
+    // ==== Phantom connect ====
+    $btnConnect.onclick = async () => {
+      try {
+        if (!window.solana?.isPhantom) {
+          alert("Installeer Phantom Wallet (zet 'm op Devnet).");
+          return;
+        }
+        wallet = window.solana;
+        const res = await wallet.connect();
+        $wallet.textContent = res.publicKey.toBase58();
+        log("✅ Verbonden met: " + res.publicKey.toBase58());
+
+        // Toon alvast de vote-receipt PDA
+        const [voteRecord] = await PublicKey.findProgramAddress(
+          [new TextEncoder().encode("vote"), PROPOSAL_PUBKEY.toBuffer(), res.publicKey.toBuffer()],
+          PROGRAM_ID
+        );
+        $receipt.textContent = voteRecord.toBase58();
+
+        setVotingEnabled(true);
+      } catch (e) {
+        console.error(e);
+        log("❌ Connect mislukt: " + (e?.message ?? e));
       }
-      wallet = window.solana;
-      const res = await wallet.connect();
-      $wallet.textContent = res.publicKey.toBase58();
-      log("✅ Verbonden: " + res.publicKey.toBase58());
     };
 
+    // ==== Stemfunctie ====
     async function vote(yes) {
-      if (!wallet?.publicKey) return alert("Eerst connecten.");
+      try {
+        if (!wallet?.publicKey) return alert("Eerst verbinden met Phantom.");
 
-      // vote_record PDA: ["vote", proposal, voter]
-      const [voteRecord] = await PublicKey.findProgramAddress(
-        [new TextEncoder().encode("vote"), PROPOSAL_PUBKEY.toBuffer(), wallet.publicKey.toBuffer()],
-        PROGRAM_ID
-      );
+        // PDA voor stem (receipt)
+        const [voteRecord] = await PublicKey.findProgramAddress(
+          [new TextEncoder().encode("vote"), PROPOSAL_PUBKEY.toBuffer(), wallet.publicKey.toBuffer()],
+          PROGRAM_ID
+        );
 
-      // data = discriminator + bool (1/0)
-      const data = new Uint8Array([...VOTE_DISC, yes ? 1 : 0]);
+        // Instructie-data = discriminator + 1 byte (1=yes, 0=no)
+        const data = new Uint8Array([...VOTE_DISC, yes ? 1 : 0]);
 
-      const keys = [
-        { pubkey: PROPOSAL_PUBKEY, isSigner: false, isWritable: true },
-        { pubkey: voteRecord,      isSigner: false, isWritable: true },
-        { pubkey: wallet.publicKey,isSigner: true,  isWritable: true },
-        { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
-      ];
+        const keys = [
+          { pubkey: PROPOSAL_PUBKEY, isSigner: false, isWritable: true },   // proposal
+          { pubkey: voteRecord,      isSigner: false, isWritable: true },   // receipt (PDA)
+          { pubkey: wallet.publicKey,isSigner: true,  isWritable: true },   // voter
+          { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+        ];
 
-      const ix = new TransactionInstruction({ programId: PROGRAM_ID, keys, data });
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("finalized");
-      const tx = new Transaction({ recentBlockhash: blockhash, feePayer: wallet.publicKey }).add(ix);
+        const ix = new TransactionInstruction({ programId: PROGRAM_ID, keys, data });
+        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("finalized");
+        const tx = new Transaction({ recentBlockhash: blockhash, feePayer: wallet.publicKey }).add(ix);
 
-      const signed = await wallet.signTransaction(tx);
-      const sig = await connection.sendRawTransaction(signed.serialize(), { skipPreflight: false });
-      await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, "finalized");
+        // Ondertekenen + verzenden
+        const signed = await wallet.signTransaction(tx);
+        const sig = await connection.sendRawTransaction(signed.serialize(), { skipPreflight: false });
+        log(`⏳ Verstuurd, wacht op finalisatie… ${sig}`);
 
-      log(`✅ Stem ${yes ? "YES" : "NO"} verstuurd: ${sig}`);
+        await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, "finalized");
+        log(`✅ Stem ${yes ? "YES" : "NO"} bevestigd: ${sig}`);
+        log(`🔗 Explorer: https://explorer.solana.com/tx/${sig}?cluster=devnet`);
+      } catch (e) {
+        console.error(e);
+        const msg = (e?.message || "").toLowerCase();
+
+        // Korte, herkenbare duiding
+        if (msg.includes("already in use") || msg.includes("account in use")) {
+          log("⚠️ Je hebt waarschijnlijk al gestemd: receipt bestaat al.");
+        } else if (msg.includes("custom program error")) {
+          log("⚠️ Program-fout: " + e.message);
+        } else if (msg.includes("blockhash not found")) {
+          log("⚠️ Blockhash verlopen. Probeer nogmaals te stemmen.");
+        } else if (msg.includes("insufficient")) {
+          log("⚠️ Onvoldoende SOL op Devnet-wallet.");
+        } else {
+          log("❌ Onbekende fout: " + (e?.message ?? e));
+        }
+      }
     }
 
-    document.getElementById("voteYes").onclick = () => vote(true);
-    document.getElementById("voteNo").onclick  = () => vote(false);
+    $btnYes.onclick = () => vote(true);
+    $btnNo.onclick  = () => vote(false);
   </script>
 </body>
 </html>
-
