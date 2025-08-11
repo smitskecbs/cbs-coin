@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>CBS DAO – Stemmen (Devnet)</title>
   <style>
-    :root{--bg:#000;--fg:#00ffcc;--cyan:#00ffff;--green:#39ff14;--muted:#66ffff;--panel:#0f0f0f}
+    :root{--bg:#000;--fg:#00ffcc;--cyan:#00ffff;--green:#39ff14;--muted:#66ffff;--panel:#0b0f16;--accent:#16a34a}
     html,body{height:100%}
     body{margin:0;background:#000;color:var(--fg);font-family:system-ui,Arial,sans-serif;display:flex;align-items:center;justify-content:center;padding:20px}
-    .wrap{width:min(880px,100%);background:#070707;border:1px solid #111;border-radius:16px;box-shadow:0 10px 40px rgba(0,255,204,.08);padding:22px}
+    .wrap{width:min(920px,100%);background:#070707;border:1px solid #111;border-radius:16px;box-shadow:0 10px 40px rgba(0,255,204,.08);padding:22px}
     h1{margin:0 0 6px;color:var(--cyan);text-align:left}
     .sub{color:var(--muted);font-size:13px;margin:0 0 16px}
     .q{display:flex;gap:10px;align-items:center;font-size:18px;margin:10px 0 14px;color:var(--green)}
@@ -20,8 +20,11 @@
     code{background:#061016;color:var(--fg);padding:2px 6px;border-radius:6px}
     .kv{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0;align-items:center}
     .status.ok{color:#5aff5a}.status.warn{color:#ffd166}.status.err{color:#ff6b6b}
-    pre{background:#0b0f16;color:#b7fff1;border-radius:12px;padding:12px;max-height:320px;overflow:auto;font-size:12px;margin:12px 0 0}
+    pre{background:var(--panel);color:#b7fff1;border-radius:12px;padding:12px;max-height:320px;overflow:auto;font-size:12px;margin:12px 0 0}
     a{color:var(--fg);text-decoration:none}
+    .meter{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0}
+    .pill{display:inline-flex;gap:6px;align-items:center;background:#061016;border:1px solid #063b34;border-radius:999px;padding:6px 10px}
+    .num{font-weight:800;color:#7fffd4}
   </style>
 </head>
 <body>
@@ -36,6 +39,12 @@
     <div class="kv">Proposal: <code id="proposal">9ALSSyJxAPCgyEcgJmVLnCTV5yPzbJAhUyeWMRv4kYYe</code></div>
     <div class="kv">Vote receipt PDA: <code id="receipt">—</code></div>
     <div class="kv">Status: <span id="status" class="status"></span></div>
+
+    <div class="meter">
+      <span class="pill">YES: <span id="yesCount" class="num">—</span></span>
+      <span class="pill">NO: <span id="noCount" class="num">—</span></span>
+      <button id="refresh" class="secondary">Ververs teller</button>
+    </div>
 
     <div class="row">
       <button id="connect" class="secondary">Connect Phantom</button>
@@ -59,7 +68,8 @@
     const RPC = "https://api.devnet.solana.com";
     const PROGRAM_ID = new PublicKey("FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY");
     const PROPOSAL = new PublicKey("9ALSSyJxAPCgyEcgJmVLnCTV5yPzbJAhUyeWMRv4kYYe");
-    const VOTE_DISC = Uint8Array.from([227,110,155,23,136,126,172,25]); // 'vote' discriminator
+    // vote discriminator (Anchor): 8 bytes
+    const VOTE_DISC = Uint8Array.from([227,110,155,23,136,126,172,25]);
 
     const conn = new Connection(RPC, "confirmed");
     document.getElementById("plink").href =
@@ -70,35 +80,24 @@
     const $r = document.getElementById("receipt");
     const $s = document.getElementById("status");
     const $log = document.getElementById("log");
+    const $yesN = document.getElementById("yesCount");
+    const $noN  = document.getElementById("noCount");
     const log = m => { $log.textContent += m + "\n"; $log.scrollTop = $log.scrollHeight; };
     const setStatus = (t,c) => { $s.textContent = t; $s.className = "status " + (c||""); };
-    const setEnabled = on => { yes.disabled = !on; no.disabled = !on; };
+    const setEnabled = on => { yesBtn.disabled = !on; noBtn.disabled = !on; };
 
     const connectBtn = document.getElementById("connect");
-    const yes = document.getElementById("yes");
-    const no  = document.getElementById("no");
+    const yesBtn = document.getElementById("yes");
+    const noBtn  = document.getElementById("no");
+    const refreshBtn = document.getElementById("refresh");
 
-    let provider = null;  // Phantom provider
+    // --- Phantom provider ---
+    function getProvider(){
+      const p = window.phantom?.solana ?? window.solana ?? null;
+      return (p && p.isPhantom) ? p : null;
+    }
+    let provider = null;
     let walletPk = null;
-
-    // --- Robuuste Phantom detectie + wachten op injectie ---
-    function getInjectedProvider(){
-      if ("phantom" in window && window.phantom?.solana?.isPhantom) return window.phantom.solana;
-      if (window.solana?.isPhantom) return window.solana;
-      return null;
-    }
-    async function getProviderReady(timeoutMs = 2000){
-      const existing = getInjectedProvider();
-      if (existing) return existing;
-      // wacht op Phantom injectie event
-      return await new Promise((resolve) => {
-        const t = setTimeout(() => resolve(getInjectedProvider()), timeoutMs);
-        window.addEventListener("solana#initialized", () => {
-          clearTimeout(t);
-          resolve(getInjectedProvider());
-        }, { once: true });
-      });
-    }
 
     async function deriveReceipt(voterPk){
       const [pda] = await PublicKey.findProgramAddress(
@@ -111,39 +110,49 @@
       try { return (await conn.getBalance(pubkey))/1e9; } catch { return 0; }
     }
 
-    // --- Event handlers (handig op desktop Phantom) ---
-    function wireProviderEvents(p){
-      try {
-        p.on("connect", (pk) => log("🔌 Event: connect " + (pk?.toBase58?.() || "")));
-        p.on("disconnect", () => log("🔌 Event: disconnect"));
-        p.on("accountChanged", (pk) => {
-          log("👤 Account changed: " + (pk?.toBase58?.() || ""));
-          location.reload(); // simpelste: herlaad zodat UI klopt
-        });
-      } catch {}
+    // --- Teller via Anchor IDL ---
+    async function loadCounts(){
+      try{
+        // Haal IDL op van /idl.json (zet die file daar neer)
+        const idl = await fetch("/idl.json").then(r => r.json());
+        const anchor = await import("https://esm.sh/@coral-xyz/anchor@0.29.0?external=@solana/web3.js");
+        const { AnchorProvider, Program, utils } = anchor;
+
+        const prov = new AnchorProvider(conn, provider ?? getProvider(), { commitment: "confirmed" });
+        const program = new Program(idl, PROGRAM_ID, prov);
+        const acc = await program.account.proposal.fetch(PROPOSAL);
+
+        // yes/no zijn BN's; naar number (let op big numbers)
+        const yes = Number(acc.yesVotes ?? acc.yes_votes ?? 0);
+        const no  = Number(acc.noVotes  ?? acc.no_votes  ?? 0);
+
+        $yesN.textContent = yes.toString();
+        $noN.textContent  = no.toString();
+      }catch(e){
+        // IDL niet gevonden of andere fout: toon streepjes
+        $yesN.textContent = "—";
+        $noN.textContent  = "—";
+        log("ℹ️ Teller niet geladen (zet idl.json naast deze pagina). " + (e?.message ?? e));
+      }
     }
 
-    // --- Connect flow ---
+    refreshBtn.onclick = loadCounts;
+
+    // --- Connect ---
     connectBtn.onclick = async () => {
       try{
-        provider = await getProviderReady();
+        provider = getProvider();
         if(!provider){
           alert("Phantom Wallet niet gevonden. Installeer Phantom en zet 'm op Devnet.");
           log("❌ Phantom provider niet gevonden.");
           return;
         }
-        wireProviderEvents(provider);
-
-        // Probeer eerst silent reconnect
+        try { await provider.disconnect(); } catch {}
+        // Probeersel: silent connect
         try { await provider.connect({ onlyIfTrusted: true }); } catch {}
-        if (!provider.publicKey) {
-          // Toon popup om toestemming te vragen
-          await provider.connect({ onlyIfTrusted: false });
-        }
+        if (!provider.publicKey) await provider.connect({ onlyIfTrusted: false });
 
         walletPk = provider.publicKey;
-        if(!walletPk){ log("❌ Geen publicKey na connect."); return; }
-
         $w.textContent = walletPk.toBase58();
         log("✅ Verbonden met: " + walletPk.toBase58());
 
@@ -161,13 +170,16 @@
           setStatus("Je kunt stemmen.", "ok");
           setEnabled(true);
         }
+
+        // laad teller (werkt alleen als idl.json beschikbaar is)
+        loadCounts();
       }catch(e){
         console.error(e);
         log("❌ Connect fout: " + (e?.message ?? e));
       }
     };
 
-    // --- Stem ---
+    // --- Stemmen ---
     async function vote(yesVote){
       try{
         if(!provider || !walletPk){ return alert("Eerst verbinden met Phantom."); }
@@ -176,9 +188,7 @@
         const exists = await conn.getAccountInfo(receipt, "confirmed");
         if(exists){ setStatus("Je hebt al gestemd met deze wallet.", "warn"); setEnabled(false); return; }
 
-        // Data = discriminator + 1 byte (1=yes, 0=no)
         const data = new Uint8Array([...VOTE_DISC, yesVote ? 1 : 0]);
-
         const keys = [
           { pubkey: PROPOSAL, isSigner:false, isWritable:true },
           { pubkey: receipt,  isSigner:false, isWritable:true },
@@ -190,15 +200,17 @@
         const tx = new Transaction({ feePayer: walletPk, recentBlockhash: blockhash })
           .add(new TransactionInstruction({ programId: PROGRAM_ID, keys, data }));
 
-        // Phantom verstuurt zelf; pak signature string uit het resultaat
         const { signature } = await provider.signAndSendTransaction(tx);
         log("⏳ Verstuurd, wachten op finalisatie… " + signature);
-
         await conn.confirmTransaction(signature, "finalized");
+
         log(`✅ Stem ${yesVote ? "YES" : "NO"} bevestigd: ${signature}`);
         log(`🔗 Explorer: https://explorer.solana.com/tx/${signature}?cluster=devnet`);
         setStatus("Stem geregistreerd. Bedankt!", "ok");
         setEnabled(false);
+
+        // Teller bijwerken na succesvolle stem
+        loadCounts();
       }catch(e){
         console.error(e);
         const msg = (e?.message || "").toLowerCase();
@@ -214,8 +226,12 @@
       }
     }
 
-    document.getElementById("yes").onclick = () => vote(true);
-    document.getElementById("no").onclick  = () => vote(false);
+    yesBtn.onclick = () => vote(true);
+    noBtn.onclick  = () => vote(false);
+
+    // Probeer teller alvast te laden (als idl.json al staat)
+    loadCounts();
   </script>
 </body>
 </html>
+
