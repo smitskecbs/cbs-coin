@@ -21,10 +21,7 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  // OPTIONS request for CORS preflight
   if (req.method === "OPTIONS") return res.status(200).end();
-
-  // Alleen POST toegestaan
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Alleen POST toegestaan" });
   }
@@ -55,17 +52,19 @@ export default async function handler(req, res) {
       buyerPubkey
     );
 
-    // ✅ Bedrag in CBS (50.000 CBS met 9 decimals)
-    const amount = 50000 * 10 ** 9;
+    // ✅ Bedrag in CBS (250 CBS met 9 decimals)
+    const DECIMALS = 9;
+    const AIRDROP_AMOUNT_CBS = 250; // <- hier stel je het aantal CBS in
+    const amount = AIRDROP_AMOUNT_CBS * 10 ** DECIMALS;
 
     // Transactie opbouwen
     const instruction = createTransferCheckedInstruction(
       fromTokenAccount.address, // source
       mint,                     // mint
-      toTokenAccount.address,  // destination
-      sender.publicKey,        // authority
-      amount,                  // amount
-      9                        // ✅ decimals
+      toTokenAccount.address,   // destination
+      sender.publicKey,         // authority
+      amount,                   // amount (in smallest units)
+      DECIMALS                  // decimals
     );
 
     const transaction = new Transaction().add(instruction);
