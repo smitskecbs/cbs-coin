@@ -71,24 +71,22 @@
       Connection,
       PublicKey,
       SystemProgram,
-      Transaction,
-      TransactionInstruction
-    } from "https://esm.sh/@solana/web3.js@1.95.3?bundle";
+    } from "https://esm.sh/@solana/web3.js@1.95.3";
 
-    // Alleen borsh-coders; GEEN Program/Provider meer
     import {
-      BN,
-      BorshAccountsCoder,
-      BorshInstructionCoder,
-    } from "https://esm.sh/@coral-xyz/anchor@0.31.1?bundle";
+      AnchorProvider,
+      Program,
+      BN
+    } from "https://esm.sh/@coral-xyz/anchor@0.31.1?external=@solana/web3.js";
 
-    // ====== 1) CONFIG  ======
-    const HELIUS_KEY = "3d335769-1880-4497-8fd0-ac7ed0701a7c";
+    // ====== 1) CONFIG ======
+    const HELIUS_KEY = "3d335769-1880-4497-8fd0-ac7ed0701a7c"; // jouw key
     const RPC_URL = `https://rpc.helius.xyz/?api-key=${HELIUS_KEY}`;
 
+    // Vast mainnet voorstel (jouw ID)
     const PROPOSAL_PUBKEY = new PublicKey("FUpzQRQfu35NEmqp9Pjqnkad3R2K1p5XzM6sLDFXcizx");
 
-    // ====== 2) DOM helpers ======
+    // ====== DOM helpers ======
     const $ = (s) => document.querySelector(s);
     const logEl = $("#log");
     const walletEl = $("#wallet");
@@ -102,49 +100,57 @@
     const noPctEl = $("#noPct");
     const explorerLink = $("#explorerLink");
     const rpcLink = $("#rpcLink");
+    const enc = new TextEncoder();
+
     function log(m){ logEl.textContent += (typeof m==="string"?m:JSON.stringify(m,null,2)) + "\n"; logEl.scrollTop = logEl.scrollHeight; }
     function setStatus(t, cls=""){ statusEl.className="status "+cls; statusEl.textContent=t; }
 
-    // ====== 3) Phantom ======
+    // ====== Phantom detectie ======
     function getPhantomProvider() {
       const w = window;
       if (w?.solana?.isPhantom) return w.solana;
       if (w?.phantom?.solana?.isPhantom) return w.phantom.solana;
       return null;
     }
+    function anchorWalletFromPhantom(w) {
+      return {
+        publicKey: w.publicKey,
+        signTransaction: (tx) => w.signTransaction(tx),
+        signAllTransactions: (txs) => w.signAllTransactions(txs),
+      };
+    }
 
-    // ====== 4) State ======
+    // ====== App state ======
     const connection = new Connection(RPC_URL, "confirmed");
     let wallet = null;
+    let provider = null;
+    let program = null;
     let idl = null;
     let PROGRAM_ID = null;
-    let accountsCoder = null;
-    let ixCoder = null;
     let myReceiptPda = null;
 
-    // ====== 5) PDA ======
+    // ====== PDA helpers (zonder Buffer) ======
     function voteReceiptPDA(proposal, voter) {
       const [pda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("vote"), proposal.toBuffer(), voter.toBuffer()],
+        [enc.encode("vote"), proposal.toBuffer(), voter.toBuffer()],
         PROGRAM_ID
       );
       return pda;
     }
 
-    // ====== 6) Init ======
+    // ====== Init basis UI ======
     rpcLink.href = RPC_URL;
     rpcLink.textContent = RPC_URL;
     proposalPkEl.textContent = PROPOSAL_PUBKEY.toString();
     explorerLink.href = "https://solscan.io/account/" + PROPOSAL_PUBKEY.toString();
 
+    // ====== IDL laden ======
     async function loadIdl() {
       try {
         const res = await fetch("./idl.json", { cache: "no-cache" });
         idl = await res.json();
         PROGRAM_ID = new PublicKey(idl.address);
         programIdEl.textContent = PROGRAM_ID.toString();
-        accountsCoder = new BorshAccountsCoder(idl);
-        ixCoder       = new BorshInstructionCoder(idl);
         log("IDL geladen ✔");
         return true;
       } catch (e) {
@@ -153,9 +159,34 @@
       }
     }
 
+    // Maak (of hergebruik) een Program, read-only indien nodig
+    function ensureProgram(readOnly=false) {
+      if (program) return program;
+      if (!idl || !PROGRAM_ID) return null;
+
+      if (readOnly) {
+        const dummyWallet = {
+          publicKey: new PublicKey("11111111111111111111111111111111"),
+          signTransaction: async (tx)=>tx,
+          signAllTransactions: async (txs)=>txs,
+        };
+        const roProv = new AnchorProvider(connection, dummyWallet, { preflightCommitment: "confirmed" });
+        program = new Program(idl, PROGRAM_ID, roProv);
+      } else if (wallet?.publicKey) {
+        const aWallet = anchorWalletFromPhantom(wallet);
+        provider = new AnchorProvider(connection, aWallet, { preflightCommitment: "confirmed" });
+        program = new Program(idl, PROGRAM_ID, provider);
+      }
+      return program;
+    }
+
+    // ====== Connect ======
     async function connectPhantom() {
       const prov = getPhantomProvider();
-      if (!prov) { alert("Phantom wallet niet gevonden."); return; }
+      if (!prov) {
+        alert("Phantom wallet niet gevonden. Installeer de Phantom extensie.");
+        return;
+      }
       try {
         await prov.connect({ onlyIfTrusted: false });
       } catch (e) {
@@ -163,6 +194,7 @@
         setStatus("Connect geannuleerd of mislukt.", "err");
         return;
       }
+
       wallet = prov;
       walletEl.textContent = wallet.publicKey.toString();
       setStatus("Verbonden.", "ok");
@@ -172,16 +204,24 @@
         receiptPkEl.textContent = myReceiptPda.toString();
       } catch {}
 
+      // opnieuw Program opbouwen nu met echte wallet
+      program = null;
+      ensureProgram(false);
+
       wallet.on?.("disconnect", () => {
         wallet = null;
         walletEl.textContent = "niet verbonden";
         setStatus("Wallet losgekoppeld.", "warn");
+        program = null;
       });
       wallet.on?.("accountChanged", async () => {
         walletEl.textContent = wallet.publicKey ? wallet.publicKey.toString() : "niet verbonden";
+        program = null;
         if (wallet?.publicKey) {
           myReceiptPda = voteReceiptPDA(PROPOSAL_PUBKEY, wallet.publicKey);
           receiptPkEl.textContent = myReceiptPda.toString();
+        } else {
+          receiptPkEl.textContent = "-";
         }
         await refreshTeller();
       });
@@ -189,20 +229,13 @@
       await refreshTeller();
     }
 
-    // ====== 7) Teller (lezen zonder Program) ======
+    // ====== Teller + fetch proposal ======
     async function fetchProposal() {
+      const p = ensureProgram(true); // read-only genoeg
+      if (!p) return null;
       try {
-        const info = await connection.getAccountInfo(PROPOSAL_PUBKEY, "confirmed");
-        if (!info) return null;
-        const decoded = accountsCoder.decode("Proposal", info.data);
-        // Anchor geeft BN’s terug; map naar plain
-        return {
-          question: decoded.question,
-          yesVotes: decoded.yesVotes ?? decoded.yes_votes,
-          noVotes:  decoded.noVotes  ?? decoded.no_votes,
-          createdAt: decoded.createdAt ?? decoded.created_at,
-          endsAt:    decoded.endsAt    ?? decoded.ends_at,
-        };
+        const acc = await p.account.proposal.fetch(PROPOSAL_PUBKEY);
+        return acc;
       } catch (e) {
         log("fetchProposal error: " + (e?.message || e));
         return null;
@@ -212,77 +245,72 @@
     async function refreshTeller() {
       setStatus("Verversen…");
       const p = await fetchProposal();
-      if (!p) { setStatus("Fout bij verbinden.", "err"); return; }
+      if (!p) {
+        setStatus("Fout bij verbinden.", "err");
+        return;
+      }
       try { questionEl.textContent = p.question || "—"; } catch {}
-      const yes = Number(new BN(p.yesVotes || 0));
-      const no  = Number(new BN(p.noVotes  || 0));
+
+      const yes = Number(new BN(p.yesVotes ?? p.yes_votes ?? 0));
+      const no  = Number(new BN(p.noVotes  ?? p.no_votes  ?? 0));
       const tot = Math.max(yes + no, 1);
       const pctYes = Math.round((yes / tot) * 100);
       const pctNo  = 100 - pctYes;
+
       yesBarEl.style.width = pctYes + "%";
       yesPctEl.textContent = `YES ${pctYes}%`;
       noPctEl.textContent  = `NO ${pctNo}%`;
       setStatus("Klaar.", "ok");
     }
 
-    // ====== 8) Stemmen (encode instructie met BorshInstructionCoder) ======
+    // ====== Stemmen ======
     async function vote(yesFlag) {
-      if (!wallet?.publicKey) { alert("Verbind eerst je Phantom wallet."); return; }
-
-      const voteReceipt = voteReceiptPDA(PROPOSAL_PUBKEY, wallet.publicKey);
-      const keys = [
-        { pubkey: PROPOSAL_PUBKEY,     isSigner:false, isWritable:true  },
-        { pubkey: wallet.publicKey,    isSigner:true,  isWritable:true  },
-        { pubkey: voteReceipt,         isSigner:false, isWritable:true  },
-        { pubkey: SystemProgram.programId, isSigner:false, isWritable:false },
-      ];
-
-      let data;
-      try {
-        data = ixCoder.encode("vote", { yes: yesFlag });
-      } catch (e) {
-        log("encode vote error: " + (e?.message || e));
-        setStatus("Stemmen mislukt (encode).", "err");
+      if (!wallet?.publicKey) {
+        alert("Verbind eerst je Phantom wallet.");
         return;
       }
+      ensureProgram(false);
 
-      const ix = new TransactionInstruction({ programId: PROGRAM_ID, keys, data });
-      const tx = new Transaction().add(ix);
-      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("finalized");
-      tx.recentBlockhash = blockhash;
-      tx.feePayer = wallet.publicKey;
-
+      const voteReceipt = voteReceiptPDA(PROPOSAL_PUBKEY, wallet.publicKey);
+      log("Stem tx… (yes=" + yesFlag + ")");
       setStatus("Stem versturen…");
+
       try {
-        // Phantom heeft signAndSendTransaction; fallback naar sign + send
-        let sig;
-        if (wallet.signAndSendTransaction) {
-          const resp = await wallet.signAndSendTransaction(tx);
-          sig = resp.signature;
-        } else {
-          const signed = await wallet.signTransaction(tx);
-          sig = await connection.sendRawTransaction(signed.serialize(), { skipPreflight:false });
-        }
-        await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, "finalized");
+        const sig = await program.methods
+          .vote(yesFlag)
+          .accounts({
+            proposal: PROPOSAL_PUBKEY,
+            voter: wallet.publicKey,
+            voteReceipt,
+            systemProgram: SystemProgram.programId,
+          })
+          .rpc();
+
         log("✅ Tx: " + sig);
         setStatus("Stem geregistreerd.", "ok");
         await refreshTeller();
       } catch (e) {
         const msg = (e?.message || e).toString();
         log("❌ vote error: " + msg);
-        if (msg.includes("AlreadyVoted")) setStatus("Je hebt al gestemd met deze wallet.", "warn");
-        else if (msg.includes("AlreadyEnded")) setStatus("De stemperiode is voorbij.", "warn");
-        else setStatus("Stemmen mislukt.", "err");
+        if (msg.includes("AlreadyVoted")) {
+          setStatus("Je hebt al gestemd met deze wallet.", "warn");
+        } else if (msg.includes("AlreadyEnded")) {
+          setStatus("De stemperiode is voorbij.", "warn");
+        } else if (msg.includes("0x1771") || msg.toLowerCase().includes("constraintseeds")) {
+          setStatus("Seeds/PDA mismatch: controleer Program ID & proposal ID.", "err");
+        } else {
+          setStatus("Stemmen mislukt.", "err");
+        }
       }
     }
 
-    // ====== 9) Events ======
+    // ====== Events ======
     $("#btnConnect").addEventListener("click", connectPhantom);
     $("#btnRefresh").addEventListener("click", refreshTeller);
     $("#btnYes").addEventListener("click", () => vote(true));
     $("#btnNo").addEventListener("click",  () => vote(false));
 
-    // ====== 10) Boot ======
+    // ====== Boot ======
     (async () => {
       setStatus("Start…");
       const ok = await loadIdl();
