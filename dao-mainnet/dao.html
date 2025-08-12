@@ -1,8 +1,3 @@
-# backup
-cp dao.html dao.html.bak.$(date +%s) 2>/dev/null || true
-
-# overschrijf met mainnet-versie
-cat > dao.html <<'HTML'
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -12,7 +7,7 @@ cat > dao.html <<'HTML'
   <style>
     :root{--bg:#000;--fg:#00ffcc;--cyan:#00ffff;--green:#39ff14;--muted:#66ffff;--panel:#0b0f16;--accent:#16a34a}
     html,body{height:100%}
-    body{margin:0;background:#000;color:var(--fg);font-family:system-ui,Arial,sans-serif;display:flex;align-items:center;justify-content:center;padding:20px}
+    body{margin:0;background:#000;color:var(--fg);font-family:system-ui,Arial,sans-serif;display:flex;align-items:flex-start;justify-content:center;padding:20px}
     .wrap{width:min(960px,100%);background:#070707;border:1px solid #111;border-radius:16px;box-shadow:0 10px 40px rgba(0,255,204,.08);padding:22px}
     h1{margin:0 0 6px;color:var(--cyan);text-align:left}
     .sub{color:var(--muted);font-size:13px;margin:0 0 16px}
@@ -21,6 +16,7 @@ cat > dao.html <<'HTML'
     .row{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}
     button,a.btn{border:0;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer;background:var(--fg);color:#001815}
     button.secondary{background:#001a17;color:var(--fg);border:1px solid #064e3b}
+    button.warn{background:#332000;color:#ffd166;border:1px solid #775500}
     button:disabled{opacity:.55;cursor:not-allowed}
     code{background:#061016;color:var(--fg);padding:2px 6px;border-radius:6px}
     .kv{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0;align-items:center}
@@ -28,165 +24,265 @@ cat > dao.html <<'HTML'
     pre{background:var(--panel);color:#b7fff1;border-radius:12px;padding:12px;max-height:320px;overflow:auto;font-size:12px;margin:12px 0 0}
     a{color:var(--fg);text-decoration:none}
     .meter{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:12px 0}
-    .bar{flex:1;height:10px;background:#0a1f1a;border-radius:8px;overflow:hidden;border:1px solid #064e3b}
-    .bar>span{display:block;height:100%;background:var(--fg)}
+    .bar{height:10px;background:#061a17;border:1px solid #064e3b;border-radius:12px;overflow:hidden;flex:1}
+    .yes{height:100%;background:#17cf7a;width:0%}
+    .badge{background:#061016;border:1px solid #0b3b33;border-radius:8px;padding:3px 7px}
+    input[type=text]{background:#061016;border:1px solid #0b3b33;color:var(--fg);padding:8px 10px;border-radius:8px;min-width:340px}
+    small.muted{color:#79ffe1;opacity:.7}
   </style>
 </head>
 <body>
   <div class="wrap">
     <h1>CBS DAO – Stemmen op voorstel</h1>
-    <div class="sub">Netwerk: <b>Mainnet</b> • RPC: <code>https://api.mainnet-beta.solana.com</code></div>
+    <div class="sub">Netwerk: <b>Mainnet</b> • RPC: <code id="rpcLbl"></code></div>
 
-    <div class="q"><span class="fl">🔥</span><b>Vraag:</b><span id="vraag">laden…</span><span class="fl">🔥</span></div>
+    <div class="q"><span class="fl">🔥</span> <b>Vraag:</b>&nbsp;<span id="question">laden…</span> <span class="fl">🔥</span></div>
 
-    <div class="kv">Wallet: <code id="wallet">niet verbonden</code></div>
-    <div class="kv">Program ID: <code id="pid">—</code></div>
-    <div class="kv">Proposal: <code id="prop">—</code></div>
-    <div class="kv">Vote receipt PDA: <code id="vr">—</code></div>
-    <div class="kv">Status: <span id="status" class="status warn">wachten…</span></div>
+    <div class="kv"><b>Wallet:</b> <span id="wallet" class="badge">niet verbonden</span></div>
+    <div class="kv"><b>Program ID:</b> <code id="pid"></code></div>
+    <div class="kv"><b>Proposal:</b> <code id="prop"></code></div>
+    <div class="kv"><b>Vote receipt PDA:</b> <code id="vr">-</code></div>
+    <div class="kv"><b>Status:</b> <span id="status" class="status warn">wachten…</span></div>
 
     <div class="row">
-      <button id="btnYes" disabled>YES: ➕</button>
-      <button id="btnNo" class="secondary" disabled>NO: ➖</button>
-      <button id="btnRefresh" class="secondary">Ververs teller</button>
+      <button id="bYes" class="secondary" disabled>YES: ➕</button>
+      <button id="bNo"  class="secondary" disabled>NO: ➖</button>
+      <button id="bRefresh" class="secondary">Ververs teller</button>
     </div>
 
     <div class="meter">
-      <div>YES <span id="tYes">0</span>%</div>
-      <div class="bar"><span id="barYes" style="width:0%"></span></div>
-      <div>NO <span id="tNo">0</span>%</div>
+      <div class="bar"><div id="barYes" class="yes"></div></div>
+      <div><b>YES <span id="yesPct">0%</span></b></div>
+      <div style="margin-left:auto">NO <span id="noPct">0%</span></div>
     </div>
 
     <div class="row">
-      <button id="btnConnect">Connect Phantom</button>
+      <button id="bConnect">Connect Phantom</button>
+      <button id="bDisconnect" class="warn" style="display:none">Disconnect</button>
     </div>
 
-    <pre id="log"></pre>
+    <details style="margin-top:8px">
+      <summary>Geavanceerd (RPC of Proposal overschrijven)</summary>
+      <div class="row">
+        <input id="rpcIn" type="text" placeholder="https://rpc.helius.xyz/?api-key=..." />
+        <button id="bUseRpc" class="secondary">Gebruik RPC</button>
+      </div>
+      <div class="row">
+        <input id="propIn" type="text" placeholder="Proposal pubkey" />
+        <button id="bUseProp" class="secondary">Gebruik proposal</button>
+      </div>
+      <small class="muted">Tip: je kunt ook query-params gebruiken:
+        <code>?proposal=&lt;PUBKEY&gt;&amp;rpc=&lt;URL&gt;</code>
+      </small>
+    </details>
+
+    <pre id="log">init…</pre>
   </div>
 
-  <!-- Browser ESM import – géén bare specifier -->
   <script type="module">
+    // --- imports (browser via esm) ---
     import {
-      Connection, PublicKey, Transaction, TransactionInstruction, SystemProgram
+      Connection, PublicKey, SystemProgram, Transaction,
+      TransactionInstruction
     } from "https://esm.sh/@solana/web3.js@1.95.3";
+    import * as anchor from "https://esm.sh/@coral-xyz/anchor@0.31.1";
+    import { Buffer } from "https://esm.sh/buffer@6.0.3";
+    window.Buffer = Buffer;
 
-    // ==== CONFIG ====
-    const RPC_URL   = "https://api.mainnet-beta.solana.com";
+    // --- constants (jouw gegevens) ---
     const PROGRAM_ID = new PublicKey("FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY");
-    // Laat deze op jouw laatst gemaakte proposal
-    const PROPOSAL   = new PublicKey("FUpzQRQfu35NEmqp9pjqnkad3R2K1p5XzM6sLDfXcizx");
+    // Default proposal uit jouw succesvolle creatie:
+    const DEFAULT_PROPOSAL = new PublicKey("FUpzQRQfu35NEmqp9pjqnkad3R2K1p5XzM6sLDfXcizx");
+    // Jouw Helius key:
+    const DEFAULT_RPC = "https://rpc.helius.xyz/?api-key=3d335769-1880-4497-8fd0-ac7ed0701a7c";
 
-    // UI refs
-    const el = (id)=>document.getElementById(id);
-    const log = (...a)=>{ el('log').textContent += a.join(' ') + "\\n"; el('log').scrollTop = el('log').scrollHeight; };
+    // --- UI refs ---
+    const els = {
+      rpcLbl:    document.getElementById("rpcLbl"),
+      pid:       document.getElementById("pid"),
+      prop:      document.getElementById("prop"),
+      wallet:    document.getElementById("wallet"),
+      question:  document.getElementById("question"),
+      status:    document.getElementById("status"),
+      vr:        document.getElementById("vr"),
+      bYes:      document.getElementById("bYes"),
+      bNo:       document.getElementById("bNo"),
+      bRefresh:  document.getElementById("bRefresh"),
+      bConnect:  document.getElementById("bConnect"),
+      bDisconnect:document.getElementById("bDisconnect"),
+      yesPct:    document.getElementById("yesPct"),
+      noPct:     document.getElementById("noPct"),
+      barYes:    document.getElementById("barYes"),
+      rpcIn:     document.getElementById("rpcIn"),
+      bUseRpc:   document.getElementById("bUseRpc"),
+      propIn:    document.getElementById("propIn"),
+      bUseProp:  document.getElementById("bUseProp"),
+      log:       document.getElementById("log"),
+    };
 
-    const conn = new Connection(RPC_URL, "confirmed");
-    el('pid').textContent  = PROGRAM_ID.toBase58();
-    el('prop').textContent = PROPOSAL.toBase58();
+    const qs = new URLSearchParams(location.search);
+    let RPC_URL = qs.get("rpc") || DEFAULT_RPC;
+    let PROPOSAL_PK = new PublicKey(qs.get("proposal") || DEFAULT_PROPOSAL);
 
-    // ===== Helpers =====
-    async function anchorDisc(name){ // 8-byte discriminator
-      const h = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(name));
-      return new Uint8Array(h).slice(0,8);
+    els.rpcLbl.textContent = RPC_URL;
+    els.pid.textContent = PROGRAM_ID.toBase58();
+    els.prop.textContent = PROPOSAL_PK.toBase58();
+
+    const connection = new Connection(RPC_URL, { commitment: "confirmed" });
+
+    // load IDL (moet naast deze html staan als 'idl.json')
+    let idl;
+    try {
+      idl = await (await fetch("./idl.json", { cache: "no-store" })).json();
+    } catch (e) {
+      log(`⚠️ kon idl.json niet laden: ${e}`);
     }
-    function u32le(d,off){ return new DataView(d.buffer,d.byteOffset,d.byteLength).getUint32(off,true); }
-    function u64le(d,off){ const v=new DataView(d.buffer,d.byteOffset,d.byteLength); const lo=v.getUint32(off,true), hi=v.getUint32(off+4,true); return hi*2**32+lo; }
+    const coder = idl ? new anchor.BorshAccountsCoder(idl) : null;
+    const ixCoder = idl ? new anchor.BorshInstructionCoder(idl) : null;
 
-    async function loadProposal() {
-      const acc = await conn.getAccountInfo(PROPOSAL);
-      if (!acc){ el('status').textContent="proposal bestaat niet"; el('status').className="status err"; return; }
-      const d = new Uint8Array(acc.data); // Anchor account lay-out:
-      // [8 disc][32 creator][4 strlen][str][8 yes][8 no][8 created][8 ends]
-      let off = 8 + 32;
-      const slen = u32le(d, off); off += 4;
-      const vraag = new TextDecoder().decode(d.slice(off, off+slen)); off += slen;
-      const yes = u64le(d, off); off += 8;
-      const no  = u64le(d, off);
-      el('vraag').textContent = vraag || "—";
-      updateMeter(yes, no);
-      el('status').textContent = "geladen";
-      el('status').className = "status ok";
-    }
+    // logging helper
+    function log(msg){ els.log.textContent += (typeof msg === "string" ? msg : JSON.stringify(msg,null,2)) + "\n"; }
 
-    function updateMeter(yes,no){
-      const tot = yes+no || 1;
-      const py  = Math.round(yes*100/tot);
-      const pn  = 100-py;
-      el('tYes').textContent = py;
-      el('tNo').textContent  = pn;
-      el('barYes').style.width = py + "%";
-    }
-
-    function getProvider(){
+    // Phantom helpers
+    function getWalletAdapter(){
       const p = window.solana;
-      if (p?.isPhantom) return p;
-      alert("Phantom niet gevonden. Installeer Phantom en zet netwerk op Mainnet.");
-      throw new Error("Phantom missing");
+      if (!p || !p.isPhantom) throw new Error("Phantom niet gevonden");
+      return p;
     }
 
-    async function connectWallet(){
-      const provider = getProvider();
-      const r = await provider.connect();
-      const pub = new PublicKey(r.publicKey.toString());
-      el('wallet').textContent = pub.toBase58();
-      // derive vote_receipt PDA: ["vote", proposal, voter]
-      const [vr] = PublicKey.findProgramAddressSync(
-        [ new TextEncoder().encode("vote"), PROPOSAL.toBuffer(), pub.toBuffer() ],
+    async function connect(){
+      const p = getWalletAdapter();
+      const res = await p.connect();
+      els.wallet.textContent = res.publicKey.toBase58();
+      els.bConnect.style.display = "none";
+      els.bDisconnect.style.display = "inline-block";
+      await refreshAll();
+      await computeVoteReceiptPda();
+      els.bYes.disabled = els.bNo.disabled = false;
+    }
+
+    async function disconnect(){
+      try{ await getWalletAdapter().disconnect(); }catch{}
+      els.wallet.textContent = "niet verbonden";
+      els.bConnect.style.display = "inline-block";
+      els.bDisconnect.style.display = "none";
+      els.vr.textContent = "-";
+      els.bYes.disabled = els.bNo.disabled = true;
+    }
+
+    // PDA vote_receipt = ["vote", proposal, voter]
+    async function computeVoteReceiptPda(){
+      const p = getWalletAdapter();
+      const [pda] = PublicKey.findProgramAddressSync(
+        [Buffer.from("vote"), PROPOSAL_PK.toBuffer(), p.publicKey.toBuffer()],
         PROGRAM_ID
       );
-      el('vr').textContent = vr.toBase58();
-      el('btnYes').disabled = false;
-      el('btnNo').disabled  = false;
-      log("Wallet verbonden:", pub.toBase58());
+      els.vr.textContent = pda.toBase58();
+      return pda;
     }
 
-    async function sendVote(yes){
+    // decode Proposal via IDL coder
+    async function getProposal(){
+      const ai = await connection.getAccountInfo(PROPOSAL_PK);
+      if (!ai){ throw new Error("Proposal account niet gevonden"); }
+      if (!coder) throw new Error("IDL coder niet beschikbaar (idl.json?)");
+      const acc = coder.decode("Proposal", ai.data);
+      return acc;
+    }
+
+    function pct(a,b){
+      const t = Number(a)+Number(b);
+      if (t===0) return { y:0, n:0 };
+      const y = Math.round((Number(a)*10000)/t)/100;
+      return { y, n: Math.round(10000 - y*100)/100 };
+    }
+
+    async function refreshAll(){
       try{
-        const provider = getProvider();
-        const kp = new PublicKey(provider.publicKey.toString());
+        els.status.textContent = "laden…";
+        const p = await getProposal();
+        els.question.textContent = p.question;
+        const { y, n } = pct(p.yesVotes, p.noVotes);
+        els.yesPct.textContent = y + "%";
+        els.noPct.textContent  = n + "%";
+        els.barYes.style.width = y + "%";
 
-        const [voteReceiptPda] = PublicKey.findProgramAddressSync(
-          [ new TextEncoder().encode("vote"), PROPOSAL.toBuffer(), kp.toBuffer() ],
-          PROGRAM_ID
-        );
-
-        // Anchor ix data: discriminator("global:vote") + bool
-        const disc = await anchorDisc("global:vote");
-        const data = new Uint8Array(9); data.set(disc,0); data[8] = yes ? 1 : 0;
-
-        const keys = [
-          { pubkey: PROPOSAL,        isSigner:false, isWritable:true  },
-          { pubkey: kp,              isSigner:true,  isWritable:true  },
-          { pubkey: voteReceiptPda,  isSigner:false, isWritable:true  },
-          { pubkey: SystemProgram.programId, isSigner:false, isWritable:false },
-        ];
-
-        const ix  = new TransactionInstruction({ programId: PROGRAM_ID, keys, data });
-        const tx  = new Transaction().add(ix);
-        tx.feePayer = kp;
-        tx.recentBlockhash = (await conn.getLatestBlockhash()).blockhash;
-
-        const signed = await provider.signTransaction(tx);
-        const sig = await conn.sendRawTransaction(signed.serialize());
-        await conn.confirmTransaction(sig, "confirmed");
-        log("✅ Vote tx:", sig);
-        await loadProposal();
-      } catch(e){
-        console.error(e); log("❌ Fout:", e.message || e);
-        alert("Stemmen mislukt: " + (e.message || e));
+        const now = Math.floor(Date.now()/1000);
+        const ended = Number(p.endsAt) <= now;
+        const msg = ended ? "stemperiode is voorbij" :
+          `loopt tot ${new Date(Number(p.endsAt)*1000).toLocaleString()}`;
+        els.status.textContent = msg;
+        els.status.className = "status " + (ended ? "err":"ok");
+        els.bYes.disabled = els.bNo.disabled = ended || (els.wallet.textContent==="niet verbonden");
+      }catch(e){
+        els.status.textContent = "fout";
+        els.status.className = "status err";
+        log("init: " + (e?.message || e));
       }
     }
 
-    // UI wiring
-    el('btnConnect').onclick = connectWallet;
-    el('btnYes').onclick = () => sendVote(true);
-    el('btnNo').onclick  = () => sendVote(false);
-    el('btnRefresh').onclick = loadProposal;
+    async function vote(yes){
+      const p = getWalletAdapter();
+      const walletPk = p.publicKey;
+      const voteReceipt = await computeVoteReceiptPda();
 
-    // start
-    loadProposal().catch(e=>log("init:",e));
+      // instr data via IDL coder (vote(bool))
+      if (!ixCoder) throw new Error("IDL instruction coder ontbreekt");
+      const data = ixCoder.encode("vote", { yes });
+
+      const keys = [
+        { pubkey: PROPOSAL_PK, isSigner:false, isWritable:true },
+        { pubkey: walletPk,    isSigner:true,  isWritable:true },
+        { pubkey: voteReceipt, isSigner:false, isWritable:true },
+        { pubkey: SystemProgram.programId, isSigner:false, isWritable:false },
+      ];
+      const ix = new TransactionInstruction({ programId: PROGRAM_ID, keys, data });
+
+      const { blockhash, lastValidBlockHeight } =
+        await connection.getLatestBlockhash("confirmed");
+      const tx = new Transaction({ feePayer: walletPk, recentBlockhash: blockhash })
+        .add(ix);
+
+      let sig;
+      if (p.signAndSendTransaction){
+        const res = await p.signAndSendTransaction(tx);
+        sig = res.signature;
+      }else{
+        const signed = await p.signTransaction(tx);
+        sig = await connection.sendRawTransaction(signed.serialize());
+      }
+      await connection.confirmTransaction({ signature:sig, blockhash, lastValidBlockHeight }, "confirmed");
+      log("✅ vote tx: " + sig);
+      await refreshAll();
+    }
+
+    // Events
+    els.bConnect.onclick    = connect;
+    els.bDisconnect.onclick = disconnect;
+    els.bRefresh.onclick    = refreshAll;
+    els.bYes.onclick        = () => vote(true);
+    els.bNo.onclick         = () => vote(false);
+    els.bUseRpc.onclick     = () => {
+      const u = els.rpcIn.value.trim();
+      if (!u) return;
+      location.search = new URLSearchParams({
+        proposal: PROPOSAL_PK.toBase58(),
+        rpc: u
+      }).toString();
+    };
+    els.bUseProp.onclick    = () => {
+      const p = els.propIn.value.trim();
+      if (!p) return;
+      location.search = new URLSearchParams({
+        proposal: p,
+        rpc: RPC_URL
+      }).toString();
+    };
+
+    // init
+    await refreshAll();
+    log("init: klaar");
   </script>
 </body>
 </html>
-HTML
 
