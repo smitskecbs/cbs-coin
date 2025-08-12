@@ -21,7 +21,7 @@
     .meter{height:10px;background:#09151a;border:1px solid #0e2b2a;border-radius:8px;overflow:hidden}
     .yes{height:100%;background:#00ffc3}
     .no{height:100%;background:#ff7b7b}
-    pre{background:var(--panel);color:#b7fff1;border-radius:12px;padding:12px;max-height:260px;overflow:auto;font-size:12px;margin:12px 0 0}
+    pre{background:var(--panel);color:#b7fff1;border-radius:12px;padding:12px;max-height:280px;overflow:auto;font-size:12px;margin:12px 0 0}
     a{color:var(--fg);text-decoration:none}
   </style>
 </head>
@@ -71,7 +71,6 @@
       Connection,
       PublicKey,
       SystemProgram,
-      TransactionInstruction
     } from "https://esm.sh/@solana/web3.js@1.95.3";
 
     import {
@@ -80,15 +79,14 @@
       BN
     } from "https://esm.sh/@coral-xyz/anchor@0.31.1?external=@solana/web3.js";
 
-    // ====== 1) CONFIG  ======
-    // Helius RPC – eventueel vervangen of beperken op je Helius dashboard
-    const HELIUS_KEY = "3d335769-1880-4497-8fd0-ac7ed0701a7c";  // <— jouw key
+    // ====== 1) CONFIG ======
+    const HELIUS_KEY = "3d335769-1880-4497-8fd0-ac7ed0701a7c"; // <- jouw key
     const RPC_URL = `https://rpc.helius.xyz/?api-key=${HELIUS_KEY}`;
 
-    // Vast proposal (die je net op mainnet hebt aangemaakt)
+    // Vast proposal (mainnet)
     const PROPOSAL_PUBKEY = new PublicKey("FUpzQRQfu35NEmqp9Pjqnkad3R2K1p5XzM6sLDFXcizx");
 
-    // ====== 2) DOM helpers ======
+    // ====== 2) DOM ======
     const $ = (s) => document.querySelector(s);
     const logEl = $("#log");
     const walletEl = $("#wallet");
@@ -99,14 +97,14 @@
     const statusEl = $("#status");
     const yesBarEl = $("#yesBar");
     const yesPctEl = $("#yesPct");
-    const noPctEl = $("#noPct");
+    const noPctEl  = $("#noPct");
     const explorerLink = $("#explorerLink");
     const rpcLink = $("#rpcLink");
 
     function log(m){ logEl.textContent += (typeof m==="string"?m:JSON.stringify(m,null,2)) + "\n"; logEl.scrollTop = logEl.scrollHeight; }
     function setStatus(t, cls=""){ statusEl.className="status "+cls; statusEl.textContent=t; }
 
-    // ====== 3) Phantom detectie ======
+    // ====== 3) Phantom helpers ======
     function getPhantomProvider() {
       const w = window;
       if (w?.solana?.isPhantom) return w.solana;
@@ -120,17 +118,23 @@
         signAllTransactions: (txs) => w.signAllTransactions(txs),
       };
     }
+    // Dummy wallet voor read-only Program (voorkomt Anchor errors)
+    const dummyWallet = {
+      publicKey: null,
+      signTransaction: async (tx)=>tx,
+      signAllTransactions: async (txs)=>txs,
+    };
 
     // ====== 4) App state ======
     const connection = new Connection(RPC_URL, "confirmed");
-    let wallet = null;
+    let wallet  = null;
     let provider = null;
-    let program = null;
-    let idl = null;
+    let program  = null;
+    let idl      = null;
     let PROGRAM_ID = null;
     let myReceiptPda = null;
 
-    // ====== 5) PDA helpers ======
+    // ====== 5) PDA helper ======
     function voteReceiptPDA(proposal, voter) {
       const [pda] = PublicKey.findProgramAddressSync(
         [Buffer.from("vote"), proposal.toBuffer(), voter.toBuffer()],
@@ -139,12 +143,13 @@
       return pda;
     }
 
-    // ====== 6) Init ======
+    // ====== 6) Init statische UI ======
     rpcLink.href = RPC_URL;
     rpcLink.textContent = RPC_URL;
     proposalPkEl.textContent = PROPOSAL_PUBKEY.toString();
     explorerLink.href = "https://solscan.io/account/" + PROPOSAL_PUBKEY.toString();
 
+    // ====== 7) IDL laden ======
     async function loadIdl() {
       try {
         const res = await fetch("./idl.json", { cache: "no-cache" });
@@ -152,6 +157,10 @@
         PROGRAM_ID = new PublicKey(idl.address);
         programIdEl.textContent = PROGRAM_ID.toString();
         log("IDL geladen ✔");
+
+        // maak alvast een read-only Program
+        const roProv = new AnchorProvider(connection, dummyWallet, { preflightCommitment: "confirmed" });
+        program = new Program(idl, PROGRAM_ID, roProv);
         return true;
       } catch (e) {
         log("IDL laden mislukt: " + (e?.message || e));
@@ -159,14 +168,15 @@
       }
     }
 
+    // ====== 8) Verbinden ======
     async function connectPhantom() {
       const prov = getPhantomProvider();
       if (!prov) {
-        alert("Phantom wallet niet gevonden. Installeer de Phantom extensie en probeer opnieuw.");
+        alert("Phantom niet gevonden. Installeer de Phantom extensie en probeer opnieuw.");
         return;
       }
       try {
-        await prov.connect({ onlyIfTrusted: false }); // forceer prompt
+        await prov.connect(); // opent Phantom prompt
       } catch (e) {
         log("wallet.connect error: " + (e?.message || e));
         setStatus("Connect geannuleerd of mislukt.", "err");
@@ -177,22 +187,21 @@
       walletEl.textContent = wallet.publicKey.toString();
       setStatus("Verbonden.", "ok");
 
-      // Bepaal PDA van je vote-receipt en toon
+      // PDA tonen
       try {
         myReceiptPda = voteReceiptPDA(PROPOSAL_PUBKEY, wallet.publicKey);
         receiptPkEl.textContent = myReceiptPda.toString();
       } catch {}
 
-      // Maak nu pas Anchor provider en program (aparte error-afhandeling)
+      // Anchor provider met echte wallet (voor stemmen)
       try {
         const aWallet = getAnchorWalletAdapter(wallet);
         provider = new AnchorProvider(connection, aWallet, { preflightCommitment: "confirmed" });
-        program = new Program(idl, PROGRAM_ID, provider);
+        program  = new Program(idl, PROGRAM_ID, provider);
       } catch (e) {
         log("Anchor Program build error: " + (e?.message || e));
       }
 
-      // events
       wallet.on?.("disconnect", () => {
         wallet = null;
         walletEl.textContent = "niet verbonden";
@@ -210,58 +219,55 @@
       await refreshTeller();
     }
 
-    // ====== 7) Teller + fetch proposal ======
+    // ====== 9) Teller ======
     async function fetchProposal() {
-      if (!program) {
-        // maak een read-only Program zonder wallet (alleen connection)
-        if (!idl || !PROGRAM_ID) return null;
-        const dummyProv = new AnchorProvider(connection, {} , { preflightCommitment: "confirmed" });
-        program = new Program(idl, PROGRAM_ID, dummyProv);
-      }
       try {
+        // program bestaat altijd (read-only aangemaakt bij IDL laden)
         const acc = await program.account.proposal.fetch(PROPOSAL_PUBKEY);
-        return acc; // {creator, question, yesVotes: BN, noVotes: BN, createdAt: BN, endsAt: BN}
+        return acc;
       } catch (e) {
         log("fetchProposal error: " + (e?.message || e));
         return null;
       }
     }
 
+    function asNumMaybeBN(x){
+      if (x?.toNumber) return x.toNumber();
+      if (x instanceof BN) return x.toNumber();
+      return Number(x || 0);
+    }
+
     async function refreshTeller() {
       setStatus("Verversen…");
       const p = await fetchProposal();
-      if (!p) {
-        setStatus("Fout bij verbinden.", "err");
-        return;
-      }
-      try {
-        questionEl.textContent = p.question || "—";
-      } catch {}
-      const yes = Number(new BN(p.yesVotes || p.yes_votes || 0));
-      const no  = Number(new BN(p.noVotes  || p.no_votes  || 0));
+      if (!p) { setStatus("Fout bij verbinden.", "err"); return; }
+
+      try { questionEl.textContent = p.question || "—"; } catch {}
+
+      const yes = asNumMaybeBN(p.yesVotes ?? p.yes_votes);
+      const no  = asNumMaybeBN(p.noVotes  ?? p.no_votes);
       const tot = Math.max(yes + no, 1);
       const pctYes = Math.round((yes / tot) * 100);
       const pctNo  = 100 - pctYes;
+
       yesBarEl.style.width = pctYes + "%";
       yesPctEl.textContent = `YES ${pctYes}%`;
       noPctEl.textContent  = `NO ${pctNo}%`;
       setStatus("Klaar.", "ok");
     }
 
-    // ====== 8) Stemmen ======
+    // ====== 10) Stemmen ======
     async function vote(yesFlag) {
-      if (!wallet?.publicKey) {
-        alert("Verbind eerst je Phantom wallet.");
-        return;
-      }
-      if (!program) {
+      if (!wallet?.publicKey) { alert("Verbind eerst je Phantom wallet."); return; }
+
+      if (!provider || !program?.provider?.wallet?.publicKey) {
         const aWallet = getAnchorWalletAdapter(wallet);
         provider = new AnchorProvider(connection, aWallet, { preflightCommitment: "confirmed" });
-        program = new Program(idl, PROGRAM_ID, provider);
+        program  = new Program(idl, PROGRAM_ID, provider);
       }
 
       const voteReceipt = voteReceiptPDA(PROPOSAL_PUBKEY, wallet.publicKey);
-      log("Stem tx… (yes=" + yesFlag + ")");
+      log(`Stem tx… (yes=${yesFlag})`);
       setStatus("Stem versturen…");
 
       try {
@@ -291,20 +297,17 @@
       }
     }
 
-    // ====== 9) Events ======
+    // ====== 11) Events ======
     $("#btnConnect").addEventListener("click", connectPhantom);
     $("#btnRefresh").addEventListener("click", refreshTeller);
-    $("#btnYes").addEventListener("click", () => vote(true));
-    $("#btnNo").addEventListener("click",  () => vote(false));
+    $("#btnYes").addEventListener("click",  () => vote(true));
+    $("#btnNo").addEventListener("click",   () => vote(false));
 
-    // ====== 10) Boot ======
+    // ====== 12) Boot ======
     (async () => {
       setStatus("Start…");
       const ok = await loadIdl();
-      if (!ok) {
-        setStatus("IDL niet gevonden/laden mislukt.", "err");
-        return;
-      }
+      if (!ok) { setStatus("IDL niet gevonden/laden mislukt.", "err"); return; }
       await refreshTeller();
       setStatus("Klaar.", "ok");
       log("Init klaar.");
@@ -312,3 +315,4 @@
   </script>
 </body>
 </html>
+
