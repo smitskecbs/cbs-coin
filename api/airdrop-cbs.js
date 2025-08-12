@@ -1,8 +1,4 @@
-// api/airdrop-cbs.js
-// Vercel Node.js function (ESM)
-
-export const config = { runtime: "nodejs18.x" };
-
+// api/airdrop-cbs.js  (Node.js serverless, ESM)
 import {
   Connection,
   Keypair,
@@ -17,7 +13,8 @@ import {
 } from "@solana/spl-token";
 import bs58 from "bs58";
 
-const ALLOW_ORIGIN = "https://smitskecbs.github.io"; // jouw site
+// CORS
+const ALLOW_ORIGIN = "https://smitskecbs.github.io";
 function setCors(res) {
   res.setHeader("Access-Control-Allow-Origin", ALLOW_ORIGIN);
   res.setHeader("Vary", "Origin");
@@ -27,74 +24,63 @@ function setCors(res) {
   res.setHeader("Cache-Control", "no-store");
 }
 
+// simpele memory-limiter (reset bij cold start)
+if (!globalThis.__claimedSet) globalThis.__claimedSet = new Set();
+
 export default async function handler(req, res) {
+  setCors(res);
+
+  if (req.method === "OPTIONS") return res.status(204).end();
+
+  // Health-check
+  if (req.method === "GET") {
+    return res.status(200).json({ ok: true, route: "airdrop-cbs" });
+  }
+
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Alleen POST toegestaan" });
+  }
+
   try {
-    setCors(res);
-    if (req.method === "OPTIONS") return res.status(204).end();
-
-    if (req.method === "GET") {
-      return res.status(200).json({ ok: true, route: "airdrop-cbs" });
-    }
-
-    if (req.method !== "POST") {
-      return res.status(405).json({ error: "Alleen POST toegestaan" });
-    }
-
-    const { buyer, message, signatureBase64 } = req.body || {};
+    const { buyer } = req.body || {};
     if (!buyer) return res.status(400).json({ error: "buyer ontbreekt" });
-    if (!message) return res.status(400).json({ error: "message ontbreekt" });
-    if (!signatureBase64) return res.status(400).json({ error: "signatureBase64 ontbreekt" });
+
+    // 1× per wallet (in-memory)
+    if (globalThis.__claimedSet.has(buyer)) {
+      return res.status(409).json({ error: "already_claimed" });
+    }
 
     if (!process.env.PRIVATE_KEY) {
-      console.error("ENV PRIVATE_KEY ontbreekt");
-      return res.status(500).json({ error: "Server misconfiguratie (PRIVATE_KEY)" });
+      return res.status(500).json({ error: "Server misconfiguratie: PRIVATE_KEY ontbreekt" });
     }
 
-    // RPC
+    // RPC (optioneel Helius via env)
     const rpcUrl = process.env.RPC_URL || clusterApiUrl("mainnet-beta");
     const connection = new Connection(rpcUrl, "confirmed");
 
-    // Wallet
+    // Airdrop-wallet
     let sender;
     try {
-      const secret = bs58.decode(process.env.PRIVATE_KEY.trim());
+      const secret = bs58.decode(process.env.PRIVATE_KEY);   // base58 secret
       sender = Keypair.fromSecretKey(secret);
-    } catch (e) {
-      console.error("PRIVATE_KEY decode error:", e);
+    } catch {
       return res.status(500).json({ error: "PRIVATE_KEY ongeldig (verwacht base58)" });
-    }
-
-    console.log("Sender pubkey:", sender.publicKey.toBase58());
-
-    // Check SOL balance (handig voor 500's)
-    const balLamports = await connection.getBalance(sender.publicKey);
-    console.log("Sender balance (lamports):", balLamports);
-    if (balLamports < 2000000) { // ~0.002 SOL minimum voor ATA + fee
-      return res.status(500).json({ error: "Onvoldoende SOL in airdrop wallet" });
     }
 
     const mint = new PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
     const buyerPubkey = new PublicKey(buyer);
 
-    // --- (optioneel) sign/verificatie anti-replay ---
-    // Hier zou je message + signatureBase64 kunnen verifiëren.
-    // Voor nu laten we dat achterwege.
+    // Associated Token Accounts
+    const fromATA = await getOrCreateAssociatedTokenAccount(connection, sender, mint, sender.publicKey);
+    const toATA   = await getOrCreateAssociatedTokenAccount(connection, sender, mint, buyerPubkey);
 
-    // Token accounts
-    const fromTokenAccount = await getOrCreateAssociatedTokenAccount(
-      connection, sender, mint, sender.publicKey
-    );
-    const toTokenAccount = await getOrCreateAssociatedTokenAccount(
-      connection, sender, mint, buyerPubkey
-    );
-
-    // 250 CBS (9 decimals) → bigint
+    // 250 CBS (9 decimals) met BigInt
     const amount = 250n * 10n ** 9n;
 
     const ix = createTransferCheckedInstruction(
-      fromTokenAccount.address,
+      fromATA.address,
       mint,
-      toTokenAccount.address,
+      toATA.address,
       sender.publicKey,
       amount,
       9
@@ -103,11 +89,12 @@ export default async function handler(req, res) {
     const tx = new Transaction().add(ix);
     const sig = await sendAndConfirmTransaction(connection, tx, [sender]);
 
-    console.log("Airdrop OK:", sig);
+    // markeer als geclaimd
+    globalThis.__claimedSet.add(buyer);
+
     return res.status(200).json({ success: true, txid: sig });
   } catch (err) {
-    console.error("airdrop-cbs UNCAUGHT:", err);
-    const msg = typeof err?.message === "string" ? err.message : String(err);
-    return res.status(500).json({ error: "Transactie mislukt", details: msg });
+    console.error("airdrop-cbs error:", err);
+    return res.status(500).json({ error: "Transactie mislukt", details: String(err?.message || err) });
   }
 }
