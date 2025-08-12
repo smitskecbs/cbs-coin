@@ -1,9 +1,5 @@
-import { kv } from "@vercel/kv";
+// api/airdrop-cbs.js  (Vercel Node.js runtime, ESM)
 
-import {
-  createTransferCheckedInstruction,
-  getOrCreateAssociatedTokenAccount,
-} from "@solana/spl-token";
 import {
   Connection,
   Keypair,
@@ -12,83 +8,131 @@ import {
   sendAndConfirmTransaction,
   Transaction,
 } from "@solana/web3.js";
+import {
+  getOrCreateAssociatedTokenAccount,
+  createTransferCheckedInstruction,
+} from "@solana/spl-token";
 import bs58 from "bs58";
+import { kv } from "@vercel/kv"; // ✅ Vercel KV voor 1x-per-wallet
+
+const ALLOW_ORIGIN = "https://smitskecbs.github.io"; // tijdens testen mag "*"
+function setCors(res) {
+  res.setHeader("Access-Control-Allow-Origin", ALLOW_ORIGIN);
+  res.setHeader("Vary", "Origin");
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS, GET");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader("Access-Control-Max-Age", "86400");
+  res.setHeader("Cache-Control", "no-store");
+}
+
+function assertKvConfigured() {
+  if (!process.env.KV_REST_API_URL || !process.env.KV_REST_API_TOKEN) {
+    throw new Error(
+      "Vercel KV niet geconfigureerd (KV_REST_API_URL / KV_REST_API_TOKEN ontbreken)."
+    );
+  }
+}
 
 export default async function handler(req, res) {
-  // CORS
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST") return res.status(405).json({ error: "Alleen POST toegestaan" });
+  setCors(res);
+
+  if (req.method === "OPTIONS") return res.status(204).end();
+
+  // Simpele health-check
+  if (req.method === "GET") {
+    return res.status(200).json({ ok: true, route: "airdrop-cbs" });
+  }
+
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Alleen POST toegestaan" });
+  }
 
   try {
-    const { buyer } = req.body || {};
-    if (!buyer) return res.status(400).json({ error: "buyer is verplicht" });
+    // --- input ---
+    const { buyer, message, signatureBase64 } = req.body || {};
+    if (!buyer) return res.status(400).json({ error: "buyer ontbreekt" });
+    if (!message) return res.status(400).json({ error: "message ontbreekt" });
+    if (!signatureBase64) return res.status(400).json({ error: "signatureBase64 ontbreekt" });
 
-    const connection = new Connection(clusterApiUrl("mainnet-beta"), "confirmed");
-    const mint = new PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
+    if (!process.env.PRIVATE_KEY) {
+      return res
+        .status(500)
+        .json({ error: "Server misconfiguratie: PRIVATE_KEY ontbreekt" });
+    }
 
-    const pk = process.env.PRIVATE_KEY;
-    if (!pk) return res.status(500).json({ error: "PRIVATE_KEY ontbreekt in Vercel env" });
+    // --- RPC ---
+    const rpcUrl = process.env.RPC_URL || clusterApiUrl("mainnet-beta");
+    const connection = new Connection(rpcUrl, "confirmed");
 
-    const sender = Keypair.fromSecretKey(bs58.decode(pk));
+    // --- afzender ---
+    let sender;
+    try {
+      const secret = bs58.decode(process.env.PRIVATE_KEY);
+      sender = Keypair.fromSecretKey(secret);
+    } catch {
+      return res.status(500).json({ error: "PRIVATE_KEY ongeldig (verwacht base58)" });
+    }
+
+    const mint = new PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"); // CBS
     const buyerPubkey = new PublicKey(buyer);
 
-    // === Wallet-lock: één keer per wallet ===
+    // === 1×-per-wallet met Vercel KV ===
+    assertKvConfigured();
     const claimKey = `airdrop:cbs:${buyerPubkey.toBase58()}`;
 
-    // Probeer lock te zetten voor 10 minuten (race-condition safe).
-    // Als er al een waarde is, dan heeft deze wallet al geclaimd.
-    const lock = await kv.set(claimKey, "locked", { nx: true, ex: 10 * 60 });
+    // Zet key als hij nog niet bestaat (NX). Als hij wél bestaat → al geclaimd.
+    // Wil je het permanent maken? laat EX weg of zet bv. ex: 365*24*3600
+    const lock = await kv.set(claimKey, JSON.stringify({ ts: Date.now() }), {
+      nx: true,
+      // ex: 60 * 60 * 24 * 365, // (optioneel) verval na 1 jaar
+    });
     if (lock === null) {
-      // bestond al
       return res.status(409).json({ error: "already_claimed" });
     }
 
-    // Token accounts
-    const fromTokenAccount = await getOrCreateAssociatedTokenAccount(
-      connection,
-      sender,
-      mint,
-      sender.publicKey
-    );
-    const toTokenAccount = await getOrCreateAssociatedTokenAccount(
-      connection,
-      sender,
-      mint,
-      buyerPubkey
-    );
+    try {
+      // --- token accounts ---
+      const fromTokenAccount = await getOrCreateAssociatedTokenAccount(
+        connection,
+        sender,
+        mint,
+        sender.publicKey
+      );
+      const toTokenAccount = await getOrCreateAssociatedTokenAccount(
+        connection,
+        sender,
+        mint,
+        buyerPubkey
+      );
 
-    // 250 CBS (9 decimals)
-    const amount = BigInt(250) * BigInt(10 ** 9);
+      // --- 250 CBS (9 decimals) ---
+      const amount = 250n * 10n ** 9n;
 
-    const ix = createTransferCheckedInstruction(
-      fromTokenAccount.address,
-      mint,
-      toTokenAccount.address,
-      sender.publicKey,
-      amount,
-      9
-    );
-    const tx = new Transaction().add(ix);
+      const ix = createTransferCheckedInstruction(
+        fromTokenAccount.address,
+        mint,
+        toTokenAccount.address,
+        sender.publicKey,
+        amount,
+        9
+      );
 
-    const signature = await sendAndConfirmTransaction(connection, tx, [sender]);
+      const tx = new Transaction().add(ix);
+      const signature = await sendAndConfirmTransaction(connection, tx, [sender]);
 
-    // Lock definitief maken (geen TTL meer) + tx opslaan
-    await kv.set(claimKey, JSON.stringify({ ts: Date.now(), txid: signature }));
+      // sla eventueel de tx-id op
+      await kv.set(claimKey, JSON.stringify({ ts: Date.now(), txid: signature }));
 
-    return res.status(200).json({ success: true, txid: signature });
+      return res.status(200).json({ success: true, txid: signature });
+    } catch (txErr) {
+      // bij echte fout: lock weer vrijgeven
+      try { await kv.del(claimKey); } catch {}
+      throw txErr;
+    }
   } catch (err) {
     console.error("airdrop-cbs error:", err);
-    // Als iets faalt, lock weer vrijgeven om vastlopers te voorkomen
-    try {
-      const buyer = req.body?.buyer;
-      if (buyer) {
-        const claimKey = `airdrop:cbs:${new PublicKey(buyer).toBase58()}`;
-        await kv.del(claimKey);
-      }
-    } catch (_) {}
-    return res.status(500).json({ error: "Transactie mislukt", details: String(err?.message || err) });
+    return res
+      .status(500)
+      .json({ error: "Transactie mislukt", details: String(err?.message || err) });
   }
 }
