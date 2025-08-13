@@ -1,236 +1,91 @@
 {
+  "version": "0.1.0",
+  "name": "cbs_dao",
   "address": "FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY",
   "metadata": {
-    "name": "cbs_dao",
-    "version": "0.1.0",
     "spec": "0.1.0"
   },
   "instructions": [
     {
       "name": "create_proposal",
-      "discriminator": [
-        132,
-        116,
-        68,
-        174,
-        216,
-        160,
-        198,
-        22
-      ],
+      "discriminator": [132,116,68,174,216,160,198,22],
       "accounts": [
         {
           "name": "proposal",
           "writable": true,
           "pda": {
             "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  112,
-                  114,
-                  111,
-                  112,
-                  111,
-                  115,
-                  97,
-                  108
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "creator"
-              },
-              {
-                "kind": "account",
-                "path": "creator"
-              }
+              { "kind": "const", "value": [112,114,111,112,111,115,97,108] },  // "proposal"
+              { "kind": "account", "path": "creator" },
+              { "kind": "account", "path": "creator" }
             ]
           }
         },
-        {
-          "name": "creator",
-          "writable": true,
-          "signer": true
-        },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
+        { "name": "creator", "writable": true, "signer": true },
+        { "name": "system_program", "address": "11111111111111111111111111111111" }
       ],
       "args": [
-        {
-          "name": "question",
-          "type": "string"
-        },
-        {
-          "name": "ends_at",
-          "type": "i64"
-        }
+        { "name": "question", "type": "string" },
+        { "name": "ends_at",  "type": "i64" }
       ]
     },
     {
       "name": "vote",
-      "discriminator": [
-        227,
-        110,
-        155,
-        23,
-        136,
-        126,
-        172,
-        25
-      ],
+      "discriminator": [227,110,155,23,136,126,172,25],
       "accounts": [
-        {
-          "name": "proposal",
-          "writable": true
-        },
-        {
-          "name": "voter",
-          "writable": true,
-          "signer": true
-        },
+        { "name": "proposal", "writable": true },
+        { "name": "voter", "writable": true, "signer": true },
         {
           "name": "vote_receipt",
           "writable": true,
           "pda": {
             "seeds": [
-              {
-                "kind": "const",
-                "value": [
-                  118,
-                  111,
-                  116,
-                  101
-                ]
-              },
-              {
-                "kind": "account",
-                "path": "proposal"
-              },
-              {
-                "kind": "account",
-                "path": "voter"
-              }
+              { "kind": "const", "value": [118,111,116,101] },                // "vote"
+              { "kind": "account", "path": "proposal" },
+              { "kind": "account", "path": "voter" }
             ]
           }
         },
-        {
-          "name": "system_program",
-          "address": "11111111111111111111111111111111"
-        }
+        { "name": "system_program", "address": "11111111111111111111111111111111" }
       ],
       "args": [
-        {
-          "name": "yes",
-          "type": "bool"
-        }
+        { "name": "yes", "type": "bool" }
       ]
     }
   ],
   "accounts": [
     {
-      "name": "Proposal",
-      "discriminator": [
-        26,
-        94,
-        189,
-        187,
-        116,
-        136,
-        53,
-        33
-      ]
+      "name": "proposal",
+      "discriminator": [26,94,189,187,116,136,53,33],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "creator",    "type": "pubkey" },
+          { "name": "question",   "type": "string" },
+          { "name": "yes_votes",  "type": "u64" },
+          { "name": "no_votes",   "type": "u64" },
+          { "name": "created_at", "type": "i64" },
+          { "name": "ends_at",    "type": "i64" }
+        ]
+      }
     },
     {
-      "name": "VoteReceipt",
-      "discriminator": [
-        104,
-        20,
-        204,
-        252,
-        45,
-        84,
-        37,
-        195
-      ]
+      "name": "voteReceipt",
+      "discriminator": [104,20,204,252,45,84,37,195],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "proposal",  "type": "pubkey" },
+          { "name": "voter",     "type": "pubkey" },
+          { "name": "has_voted", "type": "bool" }
+        ]
+      }
     }
   ],
   "errors": [
-    {
-      "code": 6000,
-      "name": "QuestionTooLong",
-      "msg": "Vraag is te lang"
-    },
-    {
-      "code": 6001,
-      "name": "AlreadyEnded",
-      "msg": "Stemperiode is voorbij"
-    },
-    {
-      "code": 6002,
-      "name": "AlreadyVoted",
-      "msg": "Je hebt al gestemd"
-    },
-    {
-      "code": 6003,
-      "name": "Overflow",
-      "msg": "Overflow"
-    }
-  ],
-  "types": [
-    {
-      "name": "Proposal",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "creator",
-            "type": "pubkey"
-          },
-          {
-            "name": "question",
-            "type": "string"
-          },
-          {
-            "name": "yes_votes",
-            "type": "u64"
-          },
-          {
-            "name": "no_votes",
-            "type": "u64"
-          },
-          {
-            "name": "created_at",
-            "type": "i64"
-          },
-          {
-            "name": "ends_at",
-            "type": "i64"
-          }
-        ]
-      }
-    },
-    {
-      "name": "VoteReceipt",
-      "type": {
-        "kind": "struct",
-        "fields": [
-          {
-            "name": "proposal",
-            "type": "pubkey"
-          },
-          {
-            "name": "voter",
-            "type": "pubkey"
-          },
-          {
-            "name": "has_voted",
-            "type": "bool"
-          }
-        ]
-      }
-    }
+    { "code": 6000, "name": "QuestionTooLong", "msg": "Vraag is te lang" },
+    { "code": 6001, "name": "AlreadyEnded",    "msg": "Stemperiode is voorbij" },
+    { "code": 6002, "name": "AlreadyVoted",    "msg": "Je hebt al gestemd" },
+    { "code": 6003, "name": "Overflow",        "msg": "Overflow" }
   ]
 }
