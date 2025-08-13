@@ -65,9 +65,18 @@
     </details>
   </div>
 
+  <!-- 1) mini Buffer-polyfill (veilig; sommige libs verwachten Buffer globaal) -->
+  <script type="module">
+    import { Buffer } from "https://esm.sh/buffer@6.0.3";
+    // @ts-ignore
+    window.Buffer = Buffer;
+  </script>
+
+  <!-- hoofdscript -->
   <script type="module">
     import { Connection, PublicKey, SystemProgram } from "https://esm.sh/@solana/web3.js@1.95.3";
-    import { AnchorProvider, Program, BN } from "https://esm.sh/@coral-xyz/anchor@0.31.1?external=@solana/web3.js";
+    /* 2) Anchor import gefixed: gebruik ?deps= i.p.v. ?external= */
+    import { AnchorProvider, Program, BN } from "https://esm.sh/@coral-xyz/anchor@0.31.1?deps=@solana/web3.js@1.95.3";
 
     // ===== 1) CONFIG =====
     const HELIUS_KEY = "3d335769-1880-4497-8fd0-ac7ed0701a7c";
