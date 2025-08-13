@@ -10,7 +10,7 @@
     body{margin:0;background:#000;color:var(--fg);font-family:system-ui,Arial,sans-serif;display:flex;align-items:center;justify-content:center;padding:20px}
     .wrap{width:min(980px,100%);background:#070707;border:1px solid #111;border-radius:16px;box-shadow:0 10px 40px rgba(0,255,204,.08);padding:22px}
     h1{margin:0 0 6px;color:var(--cyan);text-align:left}
-    .sub{color:var(--muted);font-size:13px;margin:0 0 16px}
+    .sub{color:var(--muted);font-size:13px;margin:0 0 16px;word-break:break-all}
     .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
     code{background:#061016;color:var(--fg);padding:2px 6px;border-radius:6px}
     .tag{background:#031a18;border:1px solid #064e3b;color:var(--fg);padding:3px 8px;border-radius:999px;font-size:12px}
@@ -21,7 +21,7 @@
     .meter{height:10px;background:#09151a;border:1px solid #0e2b2a;border-radius:8px;overflow:hidden}
     .yes{height:100%;background:#00ffc3}
     .no{height:100%;background:#ff7b7b}
-    pre{background:var(--panel);color:#b7fff1;border-radius:12px;padding:12px;max-height:260px;overflow:auto;font-size:12px;margin:12px 0 0}
+    pre{background:var(--panel);color:#b7fff1;border-radius:12px;padding:12px;max-height:260px;overflow:auto;font-size:12px;margin:12px 0 0;white-space:pre-wrap}
     a{color:var(--fg);text-decoration:none}
   </style>
 </head>
@@ -67,6 +67,11 @@
   </div>
 
   <script type="module">
+    // ---- Polyfills / CDN imports ----
+    import { Buffer as _Buffer } from "https://esm.sh/buffer@6.0.3";
+    // sommige libs verwachten global Buffer
+    window.Buffer ??= _Buffer;
+
     import {
       Connection,
       PublicKey,
@@ -76,7 +81,6 @@
     import {
       AnchorProvider,
       Program,
-      BN
     } from "https://esm.sh/@coral-xyz/anchor@0.31.1?external=@solana/web3.js";
 
     // ====== 1) CONFIG ======
@@ -104,6 +108,15 @@
 
     function log(m){ logEl.textContent += (typeof m==="string"?m:JSON.stringify(m,null,2)) + "\n"; logEl.scrollTop = logEl.scrollHeight; }
     function setStatus(t, cls=""){ statusEl.className="status "+cls; statusEl.textContent=t; }
+    function bnToNumber(x){
+      if (x == null) return 0;
+      if (typeof x === "number") return x;
+      if (typeof x === "bigint") return Number(x);
+      if (typeof x === "string") return Number(x);
+      if (x.toNumber) return x.toNumber();
+      if (x.toString) return Number(x.toString());
+      return Number(x);
+    }
 
     // ====== Phantom detectie ======
     function getPhantomProvider() {
@@ -129,7 +142,7 @@
     let PROGRAM_ID = null;
     let myReceiptPda = null;
 
-    // ====== PDA helpers (zonder Buffer) ======
+    // ====== PDA helpers (zonder Node Buffer) ======
     function voteReceiptPDA(proposal, voter) {
       const [pda] = PublicKey.findProgramAddressSync(
         [enc.encode("vote"), proposal.toBuffer(), voter.toBuffer()],
@@ -149,6 +162,7 @@
       try {
         const res = await fetch("./idl.json", { cache: "no-cache" });
         idl = await res.json();
+        if (!idl?.address) throw new Error("idl.address ontbreekt");
         PROGRAM_ID = new PublicKey(idl.address);
         programIdEl.textContent = PROGRAM_ID.toString();
         log("IDL geladen ✔");
@@ -234,6 +248,7 @@
       const p = ensureProgram(true); // read-only genoeg
       if (!p) return null;
       try {
+        // verwacht Anchor account "proposal" in je IDL
         const acc = await p.account.proposal.fetch(PROPOSAL_PUBKEY);
         return acc;
       } catch (e) {
@@ -249,10 +264,11 @@
         setStatus("Fout bij verbinden.", "err");
         return;
       }
+
       try { questionEl.textContent = p.question || "—"; } catch {}
 
-      const yes = Number(new BN(p.yesVotes ?? p.yes_votes ?? 0));
-      const no  = Number(new BN(p.noVotes  ?? p.no_votes  ?? 0));
+      const yes = bnToNumber(p.yesVotes ?? p.yes_votes);
+      const no  = bnToNumber(p.noVotes  ?? p.no_votes);
       const tot = Math.max(yes + no, 1);
       const pctYes = Math.round((yes / tot) * 100);
       const pctNo  = 100 - pctYes;
@@ -322,4 +338,3 @@
   </script>
 </body>
 </html>
-
