@@ -44,9 +44,33 @@
       font-size: 0.9rem;
       color: #666;
     }
+
+    /* --- Translate knop (NL/EN) --- */
+    #gt-fab{
+      position: fixed; top: 12px; right: 12px; z-index: 9999;
+      display: inline-flex; gap: .5rem;
+    }
+    #gt-fab button{
+      padding: .35rem .6rem; border:1px solid #00ffff; background:#111; color:#00ffff;
+      font-weight:700; border-radius:6px; cursor:pointer
+    }
+    #gt-fab button.active{ background:#00ffff; color:#001a17 }
+
+    /* Google banner/tooltip verbergen */
+    .goog-te-banner-frame.skiptranslate{display:none!important;}
+    #goog-gt-tt{display:none!important;}
+    body{top:0!important;}
   </style>
 </head>
 <body>
+
+  <!-- Vertaal-knop (NL/EN) -->
+  <div id="gt-fab">
+    <span id="google_translate_element" style="display:none"></span>
+    <button id="gt-nl" type="button">NL</button>
+    <button id="gt-en" type="button">EN</button>
+  </div>
+
   <div class="container">
     <h1>📘 CBS Coin – Litepaper</h1>
 
@@ -133,5 +157,36 @@
       © 2025 CBS Coin – Sovereignty through community.
     </footer>
   </div>
+
+  <!-- Google Translate initialisatie + laden -->
+  <script>
+    window.googleTranslateElementInit = function () {
+      new google.translate.TranslateElement({
+        pageLanguage: "nl",
+        includedLanguages: "nl,en",
+        autoDisplay: false
+      }, "google_translate_element");
+
+      function markActive(code){
+        document.getElementById("gt-nl").classList.toggle("active", code==="nl");
+        document.getElementById("gt-en").classList.toggle("active", code==="en");
+      }
+      function setLang(code){
+        const sel = document.querySelector(".goog-te-combo");
+        if (!sel) return;
+        sel.value = code;
+        sel.dispatchEvent(new Event("change"));
+        localStorage.setItem("gt-lang", code);
+        markActive(code);
+      }
+
+      document.getElementById("gt-nl").onclick = () => setLang("nl");
+      document.getElementById("gt-en").onclick = () => setLang("en");
+
+      const saved = localStorage.getItem("gt-lang") || "nl";
+      setTimeout(() => setLang(saved), 100);
+    };
+  </script>
+  <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
 </html>
