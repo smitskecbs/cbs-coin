@@ -87,11 +87,18 @@
     const HELIUS_KEY = "3d335769-1880-4497-8fd0-ac7ed0701a7c";
     const RPC_URL = `https://rpc.helius.xyz/?api-key=${HELIUS_KEY}`;
 
-    // ✅ Juiste proposal op mainnet:
-    const PROPOSAL_PUBKEY = new PublicKey("FUpzQRQfu35NEmqp9Pjqnkad3R2K1p5XzM6sLDFXcizx");
-
     // ✅ Juiste Program ID (matcht idl.json.address exact)
     const PROGRAM_ID_CORRECT = new PublicKey("FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY");
+
+    // ✅ Creator wallet die het proposal op mainnet heeft aangemaakt
+    const CREATOR_PUBKEY = new PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
+
+    // ✅ Proposal-PDA afleiden uit seeds ["proposal", creator, creator]
+    const [DERIVED_PROPOSAL] = PublicKey.findProgramAddressSync(
+      [new TextEncoder().encode("proposal"), CREATOR_PUBKEY.toBuffer(), CREATOR_PUBKEY.toBuffer()],
+      PROGRAM_ID_CORRECT
+    );
+    const PROPOSAL_PUBKEY = DERIVED_PROPOSAL;
 
     // ===== DOM =====
     const $  = (s)=>document.querySelector(s);
@@ -111,39 +118,35 @@
     // ===== State =====
     const connection = new Connection(RPC_URL,"confirmed");
     rpcLink.href = RPC_URL; rpcLink.textContent = RPC_URL;
+    programIdEl.textContent = PROGRAM_ID_CORRECT.toBase58();
     proposalPkEl.textContent = PROPOSAL_PUBKEY.toString();
-    explorerLink.href = "https://solscan.io/account/"+PROPOSAL_PUBKEY.toString();
+    let explorerBase = "https://solscan.io/account/";
+    explorerLink.href = explorerBase + PROPOSAL_PUBKEY.toString();
 
     let wallet=null, program=null, idl=null, PROGRAM_ID=PROGRAM_ID_CORRECT;
     let myReceiptPda=null;
 
-    // ===== PDA helper =====
+    // ===== PDA helpers =====
     function voteReceiptPDA(proposal,voter, programId){
       const [pda]=PublicKey.findProgramAddressSync([enc.encode("vote"),proposal.toBuffer(),voter.toBuffer()], programId);
       return pda;
     }
 
-    // ===== IDL laden (lokaal) =====
+    // ===== IDL laden =====
     async function loadIdlFromFile(){
       try{
         const res=await fetch("./idl.json",{cache:"no-cache"});
         const j=await res.json();
         idl=j;
-
-        // ✅ forceer PROGRAM_ID uit IDL.address als die er staat
         const addr = j.address || j.metadata?.address;
-        if(addr){
-          PROGRAM_ID = new PublicKey(addr);
-        } else {
-          PROGRAM_ID = PROGRAM_ID_CORRECT;
-        }
-        programIdEl.textContent=PROGRAM_ID.toString();
-
+        if(addr) PROGRAM_ID = new PublicKey(addr);
+        // Toon voor de zekerheid
+        programIdEl.textContent = PROGRAM_ID.toBase58();
         log("IDL geladen ✔ ("+PROGRAM_ID.toBase58()+")");
         return true;
       }catch(e){
         PROGRAM_ID = PROGRAM_ID_CORRECT;
-        programIdEl.textContent=PROGRAM_ID.toString();
+        programIdEl.textContent = PROGRAM_ID.toBase58();
         log("IDL laden mislukt, gebruik vast Program ID: "+PROGRAM_ID.toBase58());
         return false;
       }
@@ -186,7 +189,7 @@
     async function proposalAccountDisc(){ const pre=new TextEncoder().encode("account:Proposal"); return (await sha256U8(pre)).slice(0,8); }
     async function checkProposalAccount(){
       const info = await connection.getAccountInfo(PROPOSAL_PUBKEY, "confirmed");
-      if(!info){ log("❌ Proposal account niet gevonden."); return { ok:false, why:"not_found" }; }
+      if(!info){ log("❌ Proposal account niet gevonden op RPC."); return { ok:false, why:"not_found" }; }
       const ownerOK = PROGRAM_ID.equals(info.owner);
       const disc = await proposalAccountDisc();
       const discOK = info.data?.length>=8 && disc.every((b,i)=>info.data[i]===b);
@@ -207,7 +210,7 @@
 
     // ===== Discriminator & raw vote =====
     async function anchorDiscriminator(name){
-      const pre = enc.encode("global:"+name);
+      const pre = new TextEncoder().encode("global:"+name);
       const hash = await crypto.subtle.digest("SHA-256", pre);
       return new Uint8Array(hash).slice(0,8);
     }
@@ -345,7 +348,9 @@
     (async()=>{
       setStatus("Start…");
       await loadIdlFromFile(); // stemmen kan desnoods via raw
-      programIdEl.textContent = PROGRAM_ID.toBase58();
+      // Toon afgeleid proposal + explorer link
+      proposalPkEl.textContent = PROPOSAL_PUBKEY.toBase58();
+      document.getElementById("explorerLink").href = "https://solscan.io/account/"+PROPOSAL_PUBKEY.toBase58();
       await refreshTeller();
       setStatus("Klaar.","ok");
       log("Init klaar.");
@@ -353,3 +358,4 @@
   </script>
 </body>
 </html>
+
