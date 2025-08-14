@@ -9,7 +9,7 @@
     html,body{height:100%}
     body{margin:0;background:#000;color:var(--fg);font-family:system-ui,Arial,sans-serif;display:flex;align-items:center;justify-content:center;padding:20px}
     .wrap{width:min(980px,100%);background:#070707;border:1px solid #111;border-radius:16px;box-shadow:0 10px 40px rgba(0,255,204,.08);padding:22px}
-    h1{margin:0 0 6px;color:var(--cyan);text-align:left}
+    h1{margin:0 0 6px;color:var(--cyan)}
     .sub{color:var(--muted);font-size:13px;margin:0 0 16px}
     .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
     code{background:#061016;color:var(--fg);padding:2px 6px;border-radius:6px}
@@ -75,27 +75,65 @@
 
   <script type="module">
     import {
-      Connection,
-      PublicKey,
-      SystemProgram,
-      Transaction,
-      TransactionInstruction
+      Connection, PublicKey, SystemProgram,
+      Transaction, TransactionInstruction
     } from "https://esm.sh/@solana/web3.js@1.95.3";
-
     import { AnchorProvider, Program, BN } from "https://esm.sh/@coral-xyz/anchor@0.31.1?deps=@solana/web3.js@1.95.3";
+
+    // ===== Inline IDL (geen fetch meer) =====
+    const IDL = {
+      "version":"0.1.0","name":"cbs_dao",
+      "address":"FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY",
+      "metadata":{"spec":"0.1.0"},
+      "instructions":[
+        {"name":"create_proposal","discriminator":[132,116,68,174,216,160,198,22],
+         "accounts":[
+           {"name":"proposal","writable":true,"pda":{"seeds":[
+             {"kind":"const","value":[112,114,111,112,111,115,97,108]},
+             {"kind":"account","path":"creator"},
+             {"kind":"account","path":"creator"}]}},
+           {"name":"creator","writable":true,"signer":true},
+           {"name":"system_program","address":"11111111111111111111111111111111"}],
+         "args":[{"name":"question","type":"string"},{"name":"ends_at","type":"i64"}]},
+        {"name":"vote","discriminator":[227,110,155,23,136,126,172,25],
+         "accounts":[
+           {"name":"proposal","writable":true},
+           {"name":"voter","writable":true,"signer":true},
+           {"name":"vote_receipt","writable":true,"pda":{"seeds":[
+             {"kind":"const","value":[118,111,116,101]},
+             {"kind":"account","path":"proposal"},
+             {"kind":"account","path":"voter"}]}},
+           {"name":"system_program","address":"11111111111111111111111111111111"}],
+         "args":[{"name":"yes","type":"bool"}]}],
+      "accounts":[
+        {"name":"proposal","discriminator":[26,94,189,187,116,136,53,33],
+         "type":{"kind":"struct","fields":[
+           {"name":"creator","type":"pubkey"},
+           {"name":"question","type":"string"},
+           {"name":"yes_votes","type":"u64"},
+           {"name":"no_votes","type":"u64"},
+           {"name":"created_at","type":"i64"},
+           {"name":"ends_at","type":"i64"}]}},
+        {"name":"voteReceipt","discriminator":[104,20,204,252,45,84,37,195],
+         "type":{"kind":"struct","fields":[
+           {"name":"proposal","type":"pubkey"},
+           {"name":"voter","type":"pubkey"},
+           {"name":"has_voted","type":"bool"}]}}],
+      "errors":[
+        {"code":6000,"name":"QuestionTooLong","msg":"Vraag is te lang"},
+        {"code":6001,"name":"AlreadyEnded","msg":"Stemperiode is voorbij"},
+        {"code":6002,"name":"AlreadyVoted","msg":"Je hebt al gestemd"},
+        {"code":6003,"name":"Overflow","msg":"Overflow"}]
+    };
 
     // ===== Config =====
     const HELIUS_KEY = "3d335769-1880-4497-8fd0-ac7ed0701a7c";
     const RPC_URL = `https://rpc.helius.xyz/?api-key=${HELIUS_KEY}`;
-
-    // ✅ Program ID (MOET exact gelijk zijn aan idl.json.address)
-    const PROGRAM_ID = new PublicKey("FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY");
-
-    // ✅ Creator wallet die het mainnet-proposal “bezit”
+    const PROGRAM_ID = new PublicKey(IDL.address);
     const CREATOR_PUBKEY = new PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
 
-    // ===== DOM =====
-    const $  = (s)=>document.querySelector(s);
+    // ===== DOM / utils =====
+    const $=(s)=>document.querySelector(s);
     const logEl=$("#log"), walletEl=$("#wallet"), programIdEl=$("#programId");
     const proposalPkEl=$("#proposalPk"), receiptPkEl=$("#receiptPk");
     const statusEl=$("#status"), questionEl=$("#question");
@@ -103,64 +141,46 @@
     const explorerLink=$("#explorerLink"), rpcLink=$("#rpcLink");
     const btnAdminCreate=$("#btnAdminCreate");
     const enc=new TextEncoder();
-    function log(m){ logEl.textContent += (typeof m==="string"?m:JSON.stringify(m,null,2))+"\n"; logEl.scrollTop=logEl.scrollHeight; }
+    function log(m){ logEl.textContent+=(typeof m==="string"?m:JSON.stringify(m,null,2))+"\n"; logEl.scrollTop=logEl.scrollHeight; }
     function setStatus(t,cls=""){ statusEl.className="status "+cls; statusEl.textContent=t; }
 
-    // ===== Helpers =====
+    // ===== Web3 state =====
+    const connection = new Connection(RPC_URL,"confirmed");
+    rpcLink.href=RPC_URL; rpcLink.textContent=RPC_URL;
+    programIdEl.textContent = PROGRAM_ID.toBase58();
+
     function deriveProposalPDA(creator){
-      const [pda] = PublicKey.findProgramAddressSync(
+      const [pda]=PublicKey.findProgramAddressSync(
         [enc.encode("proposal"), creator.toBuffer(), creator.toBuffer()],
         PROGRAM_ID
       );
       return pda;
     }
+    const PROPOSAL_PUBKEY = deriveProposalPDA(CREATOR_PUBKEY);
+    proposalPkEl.textContent = PROPOSAL_PUBKEY.toBase58();
+    explorerLink.href = "https://solscan.io/account/"+PROPOSAL_PUBKEY.toBase58();
+
     function voteReceiptPDA(proposal,voter){
       const [pda]=PublicKey.findProgramAddressSync([enc.encode("vote"),proposal.toBuffer(),voter.toBuffer()], PROGRAM_ID);
       return pda;
     }
 
-    // ===== Phantom =====
     function getPhantom(){ const w=window; return w?.solana?.isPhantom?w.solana:(w?.phantom?.solana?.isPhantom?w.phantom.solana:null); }
     function anchorWalletFromPhantom(w){ return { publicKey:w.publicKey, signTransaction:(tx)=>w.signTransaction(tx), signAllTransactions:(txs)=>w.signAllTransactions(txs) }; }
 
-    // ===== State =====
-    const connection = new Connection(RPC_URL,"confirmed");
-    rpcLink.href = RPC_URL; rpcLink.textContent = RPC_URL;
-    programIdEl.textContent = PROGRAM_ID.toBase58();
-
-    // Proposal PDA uit CREATOR afleiden
-    const PROPOSAL_PUBKEY = deriveProposalPDA(CREATOR_PUBKEY);
-    proposalPkEl.textContent = PROPOSAL_PUBKEY.toBase58();
-    explorerLink.href = "https://solscan.io/account/"+PROPOSAL_PUBKEY.toBase58();
-
-    let wallet=null, program=null, idl=null;
-    let myReceiptPda=null;
-
-    // ===== IDL laden =====
-    async function loadIdl(){
-      try{
-        const res=await fetch("./idl.json",{cache:"no-cache"});
-        idl=await res.json();
-        if((idl.address||idl.metadata?.address) !== PROGRAM_ID.toBase58()){
-          log("⚠️ Waarschuwing: idl.address != PROGRAM_ID. Gebruik frontend PROGRAM_ID.");
-        } else {
-          log("IDL geladen ✔");
-        }
-      }catch(e){
-        log("IDL laden mislukt, Anchor-reads kunnen falen. ("+(e?.message||e)+")");
-      }
-    }
+    let wallet=null, program=null;
 
     async function buildProgram(readOnly=false){
-      const w=readOnly?{
-        publicKey:new PublicKey("11111111111111111111111111111111"),
-        signTransaction:async(tx)=>tx, signAllTransactions:async(txs)=>txs
-      } : (wallet?anchorWalletFromPhantom(wallet):null);
-      if(!w) return null;
-      const prov=new AnchorProvider(connection,w,{preflightCommitment:"confirmed"});
-      if(!idl) await loadIdl();
-      try{ return new Program(idl, PROGRAM_ID, prov); }
-      catch(e){ log("Program ctor error: "+(e?.message||e)); return null; }
+      try{
+        const w=readOnly?{
+          publicKey:new PublicKey("11111111111111111111111111111111"),
+          signTransaction:async(tx)=>tx, signAllTransactions:async(txs)=>txs
+        }:(wallet?anchorWalletFromPhantom(wallet):null);
+        if(!w) return null;
+        const prov=new AnchorProvider(connection,w,{preflightCommitment:"confirmed"});
+        program=new Program(IDL, PROGRAM_ID, prov);
+        return program;
+      }catch(e){ log("Program ctor error: "+(e?.message||e)); return null; }
     }
 
     // ===== Diagnose =====
@@ -199,34 +219,28 @@
       const data = new Uint8Array(9);
       data.set(disc,0);
       data[8] = yesFlag ? 1 : 0;
-
       const keys = [
         { pubkey: PROPOSAL_PUBKEY, isSigner:false, isWritable:true },
         { pubkey: voterPk,         isSigner:true,  isWritable:true },
         { pubkey: voteReceipt,     isSigner:false, isWritable:true },
         { pubkey: SystemProgram.programId, isSigner:false, isWritable:false },
       ];
-
       return new TransactionInstruction({ programId: PROGRAM_ID, keys, data });
     }
 
     // ===== Connect =====
-    async function connectPhantom(){
+    $("#btnConnect").addEventListener("click", async ()=>{
       const prov=getPhantom();
       if(!prov){ alert("Phantom wallet niet gevonden."); return; }
-      try{ await prov.connect({onlyIfTrusted:false}); }
-      catch(e){ setStatus("Connect geannuleerd of mislukt.","err"); log(e); return; }
+      try{ await prov.connect({onlyIfTrusted:false}); }catch(e){ setStatus("Connect geannuleerd of mislukt.","err"); log(e); return; }
       wallet=prov;
       walletEl.textContent=wallet.publicKey.toString();
-      myReceiptPda=voteReceiptPDA(PROPOSAL_PUBKEY, wallet.publicKey);
-      receiptPkEl.textContent=myReceiptPda.toString();
+      const receiptPda = voteReceiptPDA(PROPOSAL_PUBKEY, wallet.publicKey);
+      $("#receiptPk").textContent = receiptPda.toBase58();
       setStatus("Verbonden.","ok");
-
-      // admin-knop tonen alleen als de creator is verbonden
-      btnAdminCreate.style.display = wallet.publicKey.equals(CREATOR_PUBKEY) ? "inline-block" : "none";
-
+      $("#btnAdminCreate").style.display = wallet.publicKey.equals(CREATOR_PUBKEY) ? "inline-block" : "none";
       await refreshTeller();
-    }
+    });
 
     // ===== Teller =====
     async function fetchProposal(){
@@ -242,16 +256,15 @@
       if(!sanity.ok){
         let msg = "Proposal onjuist: ";
         if(sanity.why==="not_found") msg += "account bestaat niet op deze RPC/cluster.";
-        if(sanity.why==="owner_mismatch") msg += "owner ≠ PROGRAM_ID (verkeerde Program ID of verkeerde proposal).";
-        if(sanity.why==="disc_mismatch") msg += "discriminator klopt niet (geen Proposal-account).";
+        if(sanity.why==="owner_mismatch") msg += "owner ≠ PROGRAM_ID.";
+        if(sanity.why==="disc_mismatch") msg += "discriminator klopt niet.";
         setStatus(msg, "err");
         questionEl.textContent = "—";
         yesBarEl.style.width = "0%";
         yesPctEl.textContent = "YES 0%";
-        noPctEl.textContent  = `NO 0%`;
+        noPctEl.textContent  = "NO 0%";
         return;
       }
-
       const prop = await fetchProposal();
       if(!prop){
         questionEl.textContent = "niet beschikbaar (IDL probleem)";
@@ -273,34 +286,30 @@
     }
 
     // ===== Stemmen =====
+    $("#btnYes").addEventListener("click", ()=>vote(true));
+    $("#btnNo").addEventListener("click",  ()=>vote(false));
+    $("#btnRefresh").addEventListener("click", refreshTeller);
+
     async function vote(yesFlag){
       if(!wallet?.publicKey){ alert("Verbind eerst je Phantom wallet."); return; }
-
-      // Probeer Anchor
       const p = await buildProgram(false);
       if(p){
-        const voteReceipt = voteReceiptPDA(PROPOSAL_PUBKEY, wallet.publicKey);
-        setStatus("Stem versturen…");
         try{
+          setStatus("Stem versturen…");
           const sig = await p.methods
             .vote(yesFlag)
             .accounts({
               proposal: PROPOSAL_PUBKEY,
               voter: wallet.publicKey,
-              voteReceipt,
+              voteReceipt: voteReceiptPDA(PROPOSAL_PUBKEY, wallet.publicKey),
               systemProgram: SystemProgram.programId,
-            })
-            .rpc();
+            }).rpc();
           log("✅ Tx: "+sig);
           setStatus("Stem geregistreerd.","ok");
           await refreshTeller();
           return;
-        }catch(e){
-          log("Anchor vote mislukte, probeer raw… ("+(e?.message||e)+")");
-        }
+        }catch(e){ log("Anchor vote mislukte, probeer raw… ("+(e?.message||e)+")"); }
       }
-
-      // Raw fallback met simulatie
       try{
         const ix = await buildRawVoteIx(yesFlag, wallet.publicKey);
         const tx = new Transaction().add(ix);
@@ -320,46 +329,76 @@
       }
     }
 
-    // ===== Admin: maak proposal als het nog niet bestaat =====
+    // ===== Admin: proposal aanmaken (Anchor → raw fallback) =====
+    $("#btnAdminCreate").addEventListener("click", adminCreateProposal);
+
     async function adminCreateProposal(){
       if(!wallet?.publicKey || !wallet.publicKey.equals(CREATOR_PUBKEY)){
         alert("Verbind met de creator-wallet om een proposal aan te maken.");
         return;
       }
       const p = await buildProgram(false);
-      if(!p){ alert("Program/IDL niet beschikbaar."); return; }
+      const ENDS_AT = Math.floor(Date.now()/1000) + 7*24*3600; // 7 dagen
+      const QUESTION = "Vraag 1 miljoen tokens verbranden ja of nee";
 
+      // 1) Probeer Anchor
+      if(p){
+        try{
+          setStatus("Proposal aanmaken…");
+          const sig = await p.methods
+            .createProposal(QUESTION, new BN(ENDS_AT))
+            .accounts({
+              proposal: PROPOSAL_PUBKEY,
+              creator: wallet.publicKey,
+              systemProgram: SystemProgram.programId
+            }).rpc();
+          log("✅ create_proposal (anchor) tx: "+sig);
+          setStatus("Proposal aangemaakt.","ok");
+          await refreshTeller();
+          return;
+        }catch(e){ log("create_proposal via Anchor faalde: "+(e?.message||e)); }
+      }
+
+      // 2) Raw fallback (zonder Anchor)
       try{
-        setStatus("Proposal aanmaken…");
-        const ENDS_AT = Math.floor(Date.now()/1000) + 7*24*3600; // 7 dagen
-        const sig = await p.methods
-          .createProposal("Vraag 1 miljoen tokens verbranden ja of nee", new BN(ENDS_AT))
-          .accounts({
-            proposal: PROPOSAL_PUBKEY,
-            creator: wallet.publicKey,
-            systemProgram: SystemProgram.programId
-          })
-          .rpc();
-        log("✅ create_proposal tx: "+sig+" proposal: "+PROPOSAL_PUBKEY.toBase58());
+        const disc = Uint8Array.from([132,116,68,174,216,160,198,22]); // create_proposal
+        const qBytes = new TextEncoder().encode(QUESTION);
+        const qLen = new Uint8Array(4); new DataView(qLen.buffer).setUint32(0, qBytes.length, true);
+        const ends = new Uint8Array(8); new DataView(ends.buffer).setBigInt64(0, BigInt(ENDS_AT), true);
+
+        const data = new Uint8Array(disc.length + qLen.length + qBytes.length + ends.length);
+        data.set(disc,0); data.set(qLen,disc.length); data.set(qBytes,disc.length+qLen.length); data.set(ends,disc.length+qLen.length+qBytes.length);
+
+        const keys = [
+          { pubkey: PROPOSAL_PUBKEY,       isSigner:false, isWritable:true },
+          { pubkey: wallet.publicKey,      isSigner:true,  isWritable:true },
+          { pubkey: SystemProgram.programId, isSigner:false, isWritable:false },
+        ];
+        const ix = new TransactionInstruction({ programId: PROGRAM_ID, keys, data });
+        const tx = new Transaction().add(ix);
+        tx.feePayer = wallet.publicKey;
+        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+        const signed = await wallet.signTransaction(tx);
+
+        // Simuleer eerst
+        const sim = await connection.simulateTransaction(signed, { sigVerify:false, commitment:"confirmed" });
+        if(sim?.value?.logs) log("🧪 Simulation logs:\n"+sim.value.logs.join("\n"));
+        if(sim?.value?.err){ log("❌ Simulation error: "+JSON.stringify(sim.value.err)); throw new Error("Simulation failed"); }
+
+        const sig = await connection.sendRawTransaction(signed.serialize(), { skipPreflight:false, maxRetries:3 });
+        await connection.confirmTransaction(sig, "confirmed");
+        log("✅ create_proposal (raw) tx: "+sig);
         setStatus("Proposal aangemaakt.","ok");
         await refreshTeller();
       }catch(e){
-        log("❌ create_proposal error: "+(e?.message||e));
+        log("❌ create_proposal (raw) error: "+(e?.message||e));
         setStatus("Aanmaken mislukt.","err");
       }
     }
 
-    // ===== Events =====
-    $("#btnConnect").addEventListener("click", connectPhantom);
-    $("#btnRefresh").addEventListener("click", refreshTeller);
-    $("#btnYes").addEventListener("click", ()=>vote(true));
-    $("#btnNo").addEventListener("click",  ()=>vote(false));
-    btnAdminCreate.addEventListener("click", adminCreateProposal);
-
     // ===== Boot =====
     (async()=>{
       setStatus("Start…");
-      await loadIdl();
       await refreshTeller();
       setStatus("Klaar.","ok");
       log("Init klaar. Program: "+PROGRAM_ID.toBase58()+", Proposal: "+PROPOSAL_PUBKEY.toBase58());
