@@ -28,7 +28,8 @@
   <div class="wrap">
     <h1>CBS DAO – Stemmen op voorstel</h1>
     <div class="sub">Netwerk: <b>Mainnet</b> • RPC:
-      <a id="rpcLink" href="#" target="_blank" rel="noreferrer"></a>
+      <!-- alleen host tonen, niet de api key -->
+      <a id="rpcLink" href="https://rpc.helius.xyz" target="_blank" rel="noreferrer">https://rpc.helius.xyz</a>
     </div>
 
     <div class="row"><b>🔥 Vraag 1 miljoen tokens verbranden ja of nee:</b> <span id="question">laden…</span></div>
@@ -80,7 +81,7 @@
     } from "https://esm.sh/@solana/web3.js@1.95.3";
     import { AnchorProvider, Program, BN } from "https://esm.sh/@coral-xyz/anchor@0.31.1?deps=@solana/web3.js@1.95.3";
 
-    // ===== Inline IDL =====
+    // ===== Inline IDL (met correcte Program ID: vswS) =====
     const IDL = {
       "version":"0.1.0","name":"cbs_dao",
       "address":"FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY",
@@ -126,27 +127,27 @@
         {"code":6003,"name":"Overflow","msg":"Overflow"}]
     };
 
-    // ===== Config =====
+    // ===== RPC config =====
+    // LET OP: key wordt NIET getoond in de UI.
     const HELIUS_KEY = "3d335769-1880-4497-8fd0-ac7ed0701a7c";
     const RPC_URL = `https://rpc.helius.xyz/?api-key=${HELIUS_KEY}`;
+    // Als je later een proxy gebruikt: const RPC_URL = "/api/rpc";
+
+    // ===== Ketting / DOM =====
+    const connection = new Connection(RPC_URL,"confirmed");
     const PROGRAM_ID = new PublicKey(IDL.address);
     const CREATOR_PUBKEY = new PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
 
-    // ===== DOM / utils =====
     const $=(s)=>document.querySelector(s);
     const logEl=$("#log"), walletEl=$("#wallet"), programIdEl=$("#programId");
     const proposalPkEl=$("#proposalPk"), receiptPkEl=$("#receiptPk");
     const statusEl=$("#status"), questionEl=$("#question");
     const yesBarEl=$("#yesBar"), yesPctEl=$("#yesPct"), noPctEl=$("#noPct");
-    const explorerLink=$("#explorerLink"), rpcLink=$("#rpcLink");
-    const btnAdminCreate=$("#btnAdminCreate");
+    const explorerLink=$("#explorerLink"), btnAdminCreate=$("#btnAdminCreate");
     const enc=new TextEncoder();
     function log(m){ logEl.textContent+=(typeof m==="string"?m:JSON.stringify(m,null,2))+"\n"; logEl.scrollTop=logEl.scrollHeight; }
     function setStatus(t,cls=""){ statusEl.className="status "+cls; statusEl.textContent=t; }
 
-    // ===== Web3 state =====
-    const connection = new Connection(RPC_URL,"confirmed");
-    rpcLink.href=RPC_URL; rpcLink.textContent=RPC_URL;
     programIdEl.textContent = PROGRAM_ID.toBase58();
 
     function deriveProposalPDA(creator){
@@ -182,7 +183,7 @@
       }catch(e){ log("Program ctor error: "+(e?.message||e)); return null; }
     }
 
-    // ===== Verzenden (stabiel, zonder simulatie) =====
+    // Stabiel verzenden via Phantom
     async function sendWithPhantom(tx){
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
       tx.recentBlockhash = blockhash;
@@ -193,7 +194,6 @@
       return sig;
     }
 
-    // ===== Diagnose (optioneel) =====
     async function checkProposalAccount(){
       const info = await connection.getAccountInfo(PROPOSAL_PUBKEY, "confirmed");
       if(!info){ log("❌ Proposal account niet gevonden op RPC."); return { ok:false, why:"not_found" }; }
@@ -207,7 +207,7 @@
       return { ok:true };
     }
 
-    // ===== Connect =====
+    // Connect
     $("#btnConnect").addEventListener("click", async ()=>{
       const prov=getPhantom();
       if(!prov){ alert("Phantom wallet niet gevonden."); return; }
@@ -221,7 +221,7 @@
       await refreshTeller();
     });
 
-    // ===== Teller =====
+    // Teller
     async function fetchProposal(){
       const p = await buildProgram(true);
       if(!p || !p.account?.proposal) return null;
@@ -264,7 +264,7 @@
       setStatus("Klaar.","ok");
     }
 
-    // ===== Stemmen =====
+    // Stemmen
     $("#btnYes").addEventListener("click", ()=>vote(true));
     $("#btnNo").addEventListener("click",  ()=>vote(false));
     $("#btnRefresh").addEventListener("click", refreshTeller);
@@ -293,7 +293,7 @@
         }catch(e){ log("Anchor vote mislukte, probeer raw… ("+(e?.message||e)+")"); }
       }
 
-      // Raw fallback (met signAndSendTransaction)
+      // Raw fallback
       try{
         const disc = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode("global:vote"))).slice(0,8);
         const data = new Uint8Array(9); data.set(disc,0); data[8] = yesFlag ? 1 : 0;
@@ -324,7 +324,7 @@
       }
     }
 
-    // ===== Admin: proposal aanmaken =====
+    // Admin: proposal aanmaken (Anchor → raw)
     $("#btnAdminCreate").addEventListener("click", adminCreateProposal);
 
     async function adminCreateProposal(){
@@ -332,11 +332,11 @@
         alert("Verbind met de creator-wallet om een proposal aan te maken.");
         return;
       }
-      // Probeer Anchor eerst
       const p = await buildProgram(false);
       const ENDS_AT = Math.floor(Date.now()/1000) + 7*24*3600;
       const QUESTION = "Vraag 1 miljoen tokens verbranden ja of nee";
 
+      // Anchor
       if(p){
         try{
           setStatus("Proposal aanmaken…");
@@ -355,7 +355,7 @@
         }catch(e){ log("create_proposal via Anchor faalde: "+(e?.message||e)); }
       }
 
-      // Raw fallback met signAndSendTransaction
+      // Raw
       try{
         const disc=Uint8Array.from([132,116,68,174,216,160,198,22]);
         const qBytes=new TextEncoder().encode(QUESTION);
@@ -389,7 +389,7 @@
       }
     }
 
-    // ===== Boot =====
+    // Boot
     (async()=>{
       setStatus("Start…");
       await refreshTeller();
@@ -399,4 +399,3 @@
   </script>
 </body>
 </html>
-
