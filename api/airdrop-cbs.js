@@ -1,4 +1,4 @@
-// /api/airdrop-cbs.js  — ontvanger betaalt fee (zonder anti-bot verificatie)
+// /api/airdrop-cbs.js — ontvanger betaalt fee
 
 // CORS
 const ALLOW_ORIGINS = [
@@ -19,7 +19,7 @@ function cors(origin) {
 export default async function handler(req, res) {
   const origin = req.headers.origin || "";
   if (req.method === "OPTIONS") { res.writeHead(204, cors(origin)); return res.end(); }
-  if (req.method !== "POST") { res.writeHead(405, cors(origin)); return res.end("Method Not Allowed"); }
+  if (req.method !== "POST")   { res.writeHead(405, cors(origin)); return res.end("Method Not Allowed"); }
 
   try {
     const { Connection, PublicKey, Transaction, ComputeBudgetProgram, Keypair } =
@@ -54,11 +54,11 @@ export default async function handler(req, res) {
       return res.end("Missing buyer");
     }
 
-    const recipient = new PublicKey(buyerBase58);
-    const MINT = new PublicKey(AIRDROP_MINT);
-    const TREASURY_OWNER = new PublicKey(AIRDROP_TREASURY);
+    const recipient     = new PublicKey(buyerBase58);
+    const MINT          = new PublicKey(AIRDROP_MINT);
+    const TREASURY_OWNER= new PublicKey(AIRDROP_TREASURY);
 
-    // Decode jouw secret
+    // Decode secret
     let secretKey;
     if (PRIVATE_KEY.trim().startsWith("[")) secretKey = Uint8Array.from(JSON.parse(PRIVATE_KEY));
     else secretKey = bs58.decode(PRIVATE_KEY.trim());
@@ -67,7 +67,9 @@ export default async function handler(req, res) {
     // Mint info (decimals)
     const mintInfo = await getMint(conn, MINT);
     const decimals = mintInfo.decimals;
-    const amountU64 = BigInt(Math.round(AIRDROP_AMOUNT * 10 ** decimals));
+
+    // 250 * 10^decimals (integer safe)
+    const amountU64 = BigInt(Math.trunc(AIRDROP_AMOUNT)) * (10n ** BigInt(decimals));
 
     // ATA’s
     const srcAta = await getAssociatedTokenAddress(MINT, TREASURY_OWNER, true);
@@ -80,7 +82,7 @@ export default async function handler(req, res) {
     if (!dstInfo) {
       ixs.push(
         createAssociatedTokenAccountInstruction(
-          recipient,  // payer (tekent aan client)
+          recipient,  // payer (tekent client-side)
           dstAta,
           recipient,  // owner
           MINT
@@ -88,14 +90,14 @@ export default async function handler(req, res) {
       );
     }
 
-    // Transfer vanuit jouw treasury → ontvanger
+    // Transfer vanuit treasury → ontvanger
     ixs.push(
       createTransferCheckedInstruction(
-        srcAta,         // bron ATA
+        srcAta,            // bron ATA
         MINT,
         dstAta,
-        TREASURY_OWNER, // owner bron-ATA (jij)
-        Number(amountU64),
+        TREASURY_OWNER,    // owner bron-ATA (jij)
+        Number(amountU64), // amount (fits safely in JS number for 10^9 * 250)
         decimals
       )
     );
@@ -105,11 +107,12 @@ export default async function handler(req, res) {
       ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1000 }),
       ...ixs
     );
+
     // >>> ontvanger betaalt fee:
     tx.feePayer = recipient;
     tx.recentBlockhash = blockhash;
 
-    // Jij tekent; ontvanger tekent en verstuurt
+    // Jij tekent; ontvanger tekent & verstuurt
     tx.partialSign(owner);
 
     const serialized = tx.serialize({ requireAllSignatures: false });
