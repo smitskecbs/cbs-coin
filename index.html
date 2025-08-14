@@ -110,80 +110,89 @@
     </div>
   </footer>
 
-  <script>
-    // === Instellingen ===
-    const ENDPOINT = "https://cbs-coin.vercel.app/api/airdrop-cbs"; // jouw Vercel API
+  <!-- Airdrop front-end: gebruiker tekent & betaalt fee -->
+  <script type="module">
+    const ENDPOINT   = "https://cbs-coin.vercel.app/api/airdrop-cbs";
+    // Fallback voor raw send via je Vercel RPC-proxy (optioneel; laat staan)
+    const RPC_PROXY  = "https://cbs-coin.vercel.app/api/rpc";
 
-    // === Helpers UI ===
     const statusEl = document.getElementById("status");
-    function setStatus(msg, cls=""){ statusEl.className = cls; statusEl.innerHTML = msg; }
-    function link(href, text){ return `<a href="${href}" target="_blank" rel="noreferrer">${text}</a>`; }
+    const btn = document.getElementById("airdropBtn");
+    const setOK  = (html)=>{ statusEl.className="ok";  statusEl.innerHTML = html; };
+    const setERR = (html)=>{ statusEl.className="err"; statusEl.innerHTML = html; };
+    const link = (href, text)=>`<a href="${href}" target="_blank" rel="noreferrer">${text}</a>`;
 
-    // Base64 van bytes (werkt overal)
-    function base64FromBytes(u8){
+    // Robuuste base64 helpers
+    function u8ToB64(u8){
       let s = ""; for (let i=0;i<u8.length;i++) s += String.fromCharCode(u8[i]);
       return btoa(s);
     }
+    function b64ToU8(b64){
+      b64 = (b64||"").trim().replace(/[\r\n\s]/g,"").replace(/-/g,"+").replace(/_/g,"/");
+      const pad = b64.length % 4; if (pad) b64 += "=".repeat(4 - pad);
+      const bin = atob(b64);
+      const u8  = new Uint8Array(bin.length);
+      for (let i=0;i<bin.length;i++) u8[i] = bin.charCodeAt(i);
+      return u8;
+    }
 
-    // === Flow ===
-    document.getElementById("airdropBtn").addEventListener("click", async () => {
+    btn.addEventListener("click", async () => {
       try {
         const phantom = window.solana || window.phantom?.solana;
-        if (!phantom || !phantom.isPhantom){
-          setStatus("❌ Phantom wallet niet gevonden. Installeer de extensie en probeer opnieuw.", "err");
-          return;
-        }
+        if (!phantom?.isPhantom) return setERR("❌ Phantom wallet niet gevonden.");
 
-        // Verbind (toon prompt)
         const { publicKey } = await phantom.connect({ onlyIfTrusted:false });
-        const buyer = publicKey.toString();
+        statusEl.className = ""; statusEl.textContent = "⏳ Claim voorbereiden…";
 
-        // Controle signMessage support
-        if (typeof phantom.signMessage !== "function"){
-          setStatus("❌ Je Phantom ondersteunt geen 'signMessage'. Update Phantom en probeer opnieuw.", "err");
-          return;
-        }
-
-        // Uniek bericht tegen replay
-        const message = `CBS_AIRDROP_250:${buyer}:${Date.now()}`;
-        const msgBytes = new TextEncoder().encode(message);
-        const signed = await phantom.signMessage(msgBytes, "utf8");
-        // sommige wallets geven {signature}, anderen direct Uint8Array
-        const sigBytes = signed?.signature ? new Uint8Array(signed.signature) : new Uint8Array(signed);
-        const signatureBase64 = base64FromBytes(sigBytes);
-
-        setStatus("⏳ Claim wordt verwerkt…");
-
-        // API call
+        // Vraag gedeeltelijk getekende tx op
         const resp = await fetch(ENDPOINT, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ buyer, message, signatureBase64 })
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ buyer: publicKey.toString() })
         });
+        const data = await resp.json().catch(()=>null);
+        if (!resp.ok || !data?.tx) {
+          return setERR("❌ Server-fout: " + (data?.error || await resp.text()));
+        }
 
-        // Verwerk antwoord
-        const text = await resp.text();
-        let data = null; try { data = JSON.parse(text); } catch(_){}
+        // Decode & verstuur
+        const { Transaction, Connection } = await import("https://esm.sh/@solana/web3.js@1.95.3");
+        const tx = Transaction.from(b64ToU8(data.tx));
 
-        if (!resp.ok){
-          // server kan {error:"..."} of plain text geven
-          const msg = data?.error || text || "Onbekende fout";
-          if (msg.includes("already")) setStatus("⚠️ Deze wallet heeft al geclaimd.", "warn");
-          else setStatus("❌ Fout: " + msg, "err");
+        if (typeof phantom.signAndSendTransaction === "function") {
+          const res = await phantom.signAndSendTransaction(tx);
+          const sig = res?.signature ?? res;
+          setOK(`✅ 250 CBS verstuurd! ${link("https://solscan.io/tx/"+sig, "Bekijk transactie")}`);
+          confetti({ particleCount: 160, spread: 70, origin: { y: 0.6 } });
           return;
         }
 
-        const txid = data?.txid || data?.signature || "";
-        if (!txid){ setStatus("✅ 250 CBS verstuurd! (tx id niet ontvangen)", "ok"); return; }
+        // Fallback: signTransaction + sendRawTransaction via je proxy
+        const signed = await phantom.signTransaction(tx);
+        const rawB64 = u8ToB64(signed.serialize());
+        const rpcResp = await fetch(RPC_PROXY, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            jsonrpc: "2.0",
+            id: 1,
+            method: "sendRawTransaction",
+            params: [ rawB64, { skipPreflight: false } ]
+          })
+        }).then(r => r.json());
 
-        setStatus(`✅ 250 CBS verstuurd! ${link("https://solscan.io/tx/"+txid, "Bekijk transactie")}`, "ok");
-        confetti({ particleCount: 140, spread: 70, origin: { y: 0.6 } });
-
-      } catch (e){
+        if (rpcResp?.result) {
+          setOK(`✅ 250 CBS verstuurd! ${link("https://solscan.io/tx/"+rpcResp.result, "Bekijk transactie")}`);
+          confetti({ particleCount: 160, spread: 70, origin: { y: 0.6 } });
+        } else {
+          setERR("❌ Verzend-fout: " + (rpcResp?.error?.message || "onbekend"));
+        }
+      } catch (e) {
         console.error(e);
-        setStatus("❌ Er ging iets mis: " + (e?.message || e), "err");
+        setERR("❌ " + (e?.message || e));
       }
     });
   </script>
 </body>
 </html>
+
