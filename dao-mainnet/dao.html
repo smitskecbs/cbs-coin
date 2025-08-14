@@ -127,11 +127,8 @@
         {"code":6003,"name":"Overflow","msg":"Overflow"}]
     };
 
-    // ===== RPC config =====
-    // LET OP: key wordt NIET getoond in de UI.
-    const HELIUS_KEY = "3d335769-1880-4497-8fd0-ac7ed0701a7c";
-    const RPC_URL = `https://rpc.helius.xyz/?api-key=${HELIUS_KEY}`;
-    // Als je later een proxy gebruikt: const RPC_URL = "/api/rpc";
+    // ===== RPC via jouw Vercel proxy (key blijft server-side) =====
+    const RPC_URL = "https://cbs-coin.vercel.app/api/rpc";
 
     // ===== Ketting / DOM =====
     const connection = new Connection(RPC_URL,"confirmed");
@@ -198,7 +195,7 @@
       const info = await connection.getAccountInfo(PROPOSAL_PUBKEY, "confirmed");
       if(!info){ log("❌ Proposal account niet gevonden op RPC."); return { ok:false, why:"not_found" }; }
       const ownerOK = PROGRAM_ID.equals(info.owner);
-      const discPre=new TextEncoder().encode("account:Proposal");
+      const discPre=new TextEncoder().encode("account:proposal"); // lowercase!
       const discHash=new Uint8Array(await crypto.subtle.digest("SHA-256",discPre)).slice(0,8);
       const discOK = info.data?.length>=8 && discHash.every((b,i)=>info.data[i]===b);
       log({proposal_exists:true, owner:info.owner.toBase58(), expected:PROGRAM_ID.toBase58(), owner_match:ownerOK, disc_match:discOK, data_len:info.data?.length ?? 0});
@@ -399,3 +396,4 @@
   </script>
 </body>
 </html>
+
