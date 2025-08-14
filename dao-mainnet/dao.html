@@ -76,11 +76,11 @@
   <script type="module">
     import {
       Connection, PublicKey, SystemProgram,
-      Transaction, TransactionInstruction
+      Transaction, TransactionInstruction, ComputeBudgetProgram
     } from "https://esm.sh/@solana/web3.js@1.95.3";
     import { AnchorProvider, Program, BN } from "https://esm.sh/@coral-xyz/anchor@0.31.1?deps=@solana/web3.js@1.95.3";
 
-    // ===== Inline IDL (geen fetch meer) =====
+    // ===== Inline IDL =====
     const IDL = {
       "version":"0.1.0","name":"cbs_dao",
       "address":"FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY",
@@ -153,8 +153,7 @@
       const [pda]=PublicKey.findProgramAddressSync(
         [enc.encode("proposal"), creator.toBuffer(), creator.toBuffer()],
         PROGRAM_ID
-      );
-      return pda;
+      ); return pda;
     }
     const PROPOSAL_PUBKEY = deriveProposalPDA(CREATOR_PUBKEY);
     proposalPkEl.textContent = PROPOSAL_PUBKEY.toBase58();
@@ -183,49 +182,29 @@
       }catch(e){ log("Program ctor error: "+(e?.message||e)); return null; }
     }
 
-    // ===== Diagnose =====
-    async function sha256U8(bytes){ const h=await crypto.subtle.digest("SHA-256",bytes); return new Uint8Array(h); }
-    async function proposalAccountDisc(){ const pre=new TextEncoder().encode("account:Proposal"); return (await sha256U8(pre)).slice(0,8); }
+    // ===== Verzenden (stabiel, zonder simulatie) =====
+    async function sendWithPhantom(tx){
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+      tx.recentBlockhash = blockhash;
+      tx.feePayer = wallet.publicKey;
+      const res = await wallet.signAndSendTransaction(tx);
+      const sig = res.signature ?? res;
+      await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, "confirmed");
+      return sig;
+    }
+
+    // ===== Diagnose (optioneel) =====
     async function checkProposalAccount(){
       const info = await connection.getAccountInfo(PROPOSAL_PUBKEY, "confirmed");
       if(!info){ log("❌ Proposal account niet gevonden op RPC."); return { ok:false, why:"not_found" }; }
       const ownerOK = PROGRAM_ID.equals(info.owner);
-      const disc = await proposalAccountDisc();
-      const discOK = info.data?.length>=8 && disc.every((b,i)=>info.data[i]===b);
+      const discPre=new TextEncoder().encode("account:Proposal");
+      const discHash=new Uint8Array(await crypto.subtle.digest("SHA-256",discPre)).slice(0,8);
+      const discOK = info.data?.length>=8 && discHash.every((b,i)=>info.data[i]===b);
       log({proposal_exists:true, owner:info.owner.toBase58(), expected:PROGRAM_ID.toBase58(), owner_match:ownerOK, disc_match:discOK, data_len:info.data?.length ?? 0});
       if(!ownerOK) return { ok:false, why:"owner_mismatch" };
       if(!discOK)  return { ok:false, why:"disc_mismatch" };
       return { ok:true };
-    }
-
-    async function simulateAndSend(signedTx){
-      const sim = await connection.simulateTransaction(signedTx, { sigVerify:false, commitment:"confirmed" });
-      if(sim?.value?.logs){ log("🧪 Simulation logs:\n"+sim.value.logs.join("\n")); }
-      if(sim?.value?.err){ log("❌ Simulation error: "+JSON.stringify(sim.value.err)); throw new Error("Simulation failed"); }
-      const sig = await connection.sendRawTransaction(signedTx.serialize(), { skipPreflight:false, maxRetries:3 });
-      await connection.confirmTransaction(sig, "confirmed");
-      return sig;
-    }
-
-    async function anchorDiscriminator(name){
-      const pre = new TextEncoder().encode("global:"+name);
-      const hash = await crypto.subtle.digest("SHA-256", pre);
-      return new Uint8Array(hash).slice(0,8);
-    }
-
-    async function buildRawVoteIx(yesFlag, voterPk){
-      const voteReceipt = voteReceiptPDA(PROPOSAL_PUBKEY, voterPk);
-      const disc = await anchorDiscriminator("vote");
-      const data = new Uint8Array(9);
-      data.set(disc,0);
-      data[8] = yesFlag ? 1 : 0;
-      const keys = [
-        { pubkey: PROPOSAL_PUBKEY, isSigner:false, isWritable:true },
-        { pubkey: voterPk,         isSigner:true,  isWritable:true },
-        { pubkey: voteReceipt,     isSigner:false, isWritable:true },
-        { pubkey: SystemProgram.programId, isSigner:false, isWritable:false },
-      ];
-      return new TransactionInstruction({ programId: PROGRAM_ID, keys, data });
     }
 
     // ===== Connect =====
@@ -238,7 +217,7 @@
       const receiptPda = voteReceiptPDA(PROPOSAL_PUBKEY, wallet.publicKey);
       $("#receiptPk").textContent = receiptPda.toBase58();
       setStatus("Verbonden.","ok");
-      $("#btnAdminCreate").style.display = wallet.publicKey.equals(CREATOR_PUBKEY) ? "inline-block" : "none";
+      btnAdminCreate.style.display = wallet.publicKey.equals(CREATOR_PUBKEY) ? "inline-block" : "none";
       await refreshTeller();
     });
 
@@ -292,6 +271,8 @@
 
     async function vote(yesFlag){
       if(!wallet?.publicKey){ alert("Verbind eerst je Phantom wallet."); return; }
+
+      // Probeer Anchor
       const p = await buildProgram(false);
       if(p){
         try{
@@ -303,20 +284,34 @@
               voter: wallet.publicKey,
               voteReceipt: voteReceiptPDA(PROPOSAL_PUBKEY, wallet.publicKey),
               systemProgram: SystemProgram.programId,
-            }).rpc();
-          log("✅ Tx: "+sig);
+            })
+            .rpc();
+          log("✅ Tx (anchor): "+sig);
           setStatus("Stem geregistreerd.","ok");
           await refreshTeller();
           return;
         }catch(e){ log("Anchor vote mislukte, probeer raw… ("+(e?.message||e)+")"); }
       }
+
+      // Raw fallback (met signAndSendTransaction)
       try{
-        const ix = await buildRawVoteIx(yesFlag, wallet.publicKey);
-        const tx = new Transaction().add(ix);
-        tx.feePayer = wallet.publicKey;
-        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-        const signed = await wallet.signTransaction(tx);
-        const sig = await simulateAndSend(signed);
+        const disc = new Uint8Array(await crypto.subtle.digest("SHA-256", new TextEncoder().encode("global:vote"))).slice(0,8);
+        const data = new Uint8Array(9); data.set(disc,0); data[8] = yesFlag ? 1 : 0;
+        const ix = new TransactionInstruction({
+          programId: PROGRAM_ID,
+          keys: [
+            { pubkey: PROPOSAL_PUBKEY, isSigner:false, isWritable:true },
+            { pubkey: wallet.publicKey, isSigner:true, isWritable:true },
+            { pubkey: voteReceiptPDA(PROPOSAL_PUBKEY, wallet.publicKey), isSigner:false, isWritable:true },
+            { pubkey: SystemProgram.programId, isSigner:false, isWritable:false },
+          ],
+          data
+        });
+        const tx = new Transaction()
+          .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 200000 }))
+          .add(ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1000 }))
+          .add(ix);
+        const sig = await sendWithPhantom(tx);
         log("✅ Tx (raw): "+sig);
         setStatus("Stem geregistreerd (raw).","ok");
         await refreshTeller();
@@ -329,7 +324,7 @@
       }
     }
 
-    // ===== Admin: proposal aanmaken (Anchor → raw fallback) =====
+    // ===== Admin: proposal aanmaken =====
     $("#btnAdminCreate").addEventListener("click", adminCreateProposal);
 
     async function adminCreateProposal(){
@@ -337,11 +332,11 @@
         alert("Verbind met de creator-wallet om een proposal aan te maken.");
         return;
       }
+      // Probeer Anchor eerst
       const p = await buildProgram(false);
-      const ENDS_AT = Math.floor(Date.now()/1000) + 7*24*3600; // 7 dagen
+      const ENDS_AT = Math.floor(Date.now()/1000) + 7*24*3600;
       const QUESTION = "Vraag 1 miljoen tokens verbranden ja of nee";
 
-      // 1) Probeer Anchor
       if(p){
         try{
           setStatus("Proposal aanmaken…");
@@ -351,43 +346,41 @@
               proposal: PROPOSAL_PUBKEY,
               creator: wallet.publicKey,
               systemProgram: SystemProgram.programId
-            }).rpc();
-          log("✅ create_proposal (anchor) tx: "+sig);
+            })
+            .rpc();
+          log("✅ create_proposal (anchor): "+sig);
           setStatus("Proposal aangemaakt.","ok");
           await refreshTeller();
           return;
         }catch(e){ log("create_proposal via Anchor faalde: "+(e?.message||e)); }
       }
 
-      // 2) Raw fallback (zonder Anchor)
+      // Raw fallback met signAndSendTransaction
       try{
-        const disc = Uint8Array.from([132,116,68,174,216,160,198,22]); // create_proposal
-        const qBytes = new TextEncoder().encode(QUESTION);
-        const qLen = new Uint8Array(4); new DataView(qLen.buffer).setUint32(0, qBytes.length, true);
-        const ends = new Uint8Array(8); new DataView(ends.buffer).setBigInt64(0, BigInt(ENDS_AT), true);
+        const disc=Uint8Array.from([132,116,68,174,216,160,198,22]);
+        const qBytes=new TextEncoder().encode(QUESTION);
+        const qLen=new Uint8Array(4); new DataView(qLen.buffer).setUint32(0,qBytes.length,true);
+        const ends=new Uint8Array(8); new DataView(ends.buffer).setBigInt64(0, BigInt(ENDS_AT), true);
 
-        const data = new Uint8Array(disc.length + qLen.length + qBytes.length + ends.length);
+        const data=new Uint8Array(disc.length+qLen.length+qBytes.length+ends.length);
         data.set(disc,0); data.set(qLen,disc.length); data.set(qBytes,disc.length+qLen.length); data.set(ends,disc.length+qLen.length+qBytes.length);
 
-        const keys = [
-          { pubkey: PROPOSAL_PUBKEY,       isSigner:false, isWritable:true },
-          { pubkey: wallet.publicKey,      isSigner:true,  isWritable:true },
-          { pubkey: SystemProgram.programId, isSigner:false, isWritable:false },
-        ];
-        const ix = new TransactionInstruction({ programId: PROGRAM_ID, keys, data });
-        const tx = new Transaction().add(ix);
-        tx.feePayer = wallet.publicKey;
-        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-        const signed = await wallet.signTransaction(tx);
+        const ix=new TransactionInstruction({
+          programId: PROGRAM_ID,
+          keys: [
+            { pubkey: PROPOSAL_PUBKEY, isSigner:false, isWritable:true },
+            { pubkey: wallet.publicKey, isSigner:true, isWritable:true },
+            { pubkey: SystemProgram.programId, isSigner:false, isWritable:false },
+          ],
+          data
+        });
+        const tx=new Transaction()
+          .add(ComputeBudgetProgram.setComputeUnitLimit({ units: 200000 }))
+          .add(ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1000 }))
+          .add(ix);
 
-        // Simuleer eerst
-        const sim = await connection.simulateTransaction(signed, { sigVerify:false, commitment:"confirmed" });
-        if(sim?.value?.logs) log("🧪 Simulation logs:\n"+sim.value.logs.join("\n"));
-        if(sim?.value?.err){ log("❌ Simulation error: "+JSON.stringify(sim.value.err)); throw new Error("Simulation failed"); }
-
-        const sig = await connection.sendRawTransaction(signed.serialize(), { skipPreflight:false, maxRetries:3 });
-        await connection.confirmTransaction(sig, "confirmed");
-        log("✅ create_proposal (raw) tx: "+sig);
+        const sig = await sendWithPhantom(tx);
+        log("✅ create_proposal (raw): "+sig);
         setStatus("Proposal aangemaakt.","ok");
         await refreshTeller();
       }catch(e){
