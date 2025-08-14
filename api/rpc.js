@@ -1,9 +1,9 @@
 export const config = { runtime: "edge" };
 
+// Sta alleen jouw sites toe (CORS)
 const ALLOW_ORIGINS = [
-  "https://smitskecbs.github.io", // GitHub Pages
-  // Voeg je Vercel domein toe als je de HTML daar ook host:
-  // "https://<jouw-vercel-project>.vercel.app",
+  "https://smitskecbs.github.io",        // jouw GitHub Pages
+  "https://cbs-coin.vercel.app",         // jouw Vercel domein
   "http://localhost:3000",
   "http://127.0.0.1:5500",
 ];
@@ -29,14 +29,14 @@ export default async function handler(req) {
 
   const body = req.method === "GET" ? undefined : await req.text();
 
-  const upstream = await fetch(
-    `https://rpc.helius.xyz/?api-key=${process.env.HELIUS_KEY}`,
-    {
-      method: req.method,
-      headers: { "content-type": "application/json" },
-      body,
-    }
-  );
+  // Belangrijk: zet in Vercel een env var HELIUS_KEY met je Helius API key
+  const url = `https://rpc.helius.xyz/?api-key=${process.env.HELIUS_KEY}`;
+
+  const upstream = await fetch(url, {
+    method: req.method,
+    headers: { "content-type": "application/json" },
+    body,
+  });
 
   return new Response(upstream.body, {
     status: upstream.status,
