@@ -80,7 +80,6 @@
       </div>
       <div class="row" style="margin-top:10px">
         <button id="btnCreate">Create Proposal</button>
-        <!-- simulatieknop voor create -->
         <button id="btnSimCreate">Simulate Create</button>
       </div>
     </div>
@@ -91,7 +90,6 @@
         <button id="btnFetch">Fetch Proposal</button>
         <button id="btnVoteYes">Vote YES</button>
         <button id="btnVoteNo">Vote NO</button>
-        <!-- simulatieknoppen voor votes -->
         <button id="btnSimYes">Sim YES</button>
         <button id="btnSimNo">Sim NO</button>
       </div>
@@ -112,7 +110,7 @@
       </div>
       <div style="margin-top:12px">
         <label class="muted">RPC endpoint</label>
-        <input id="inpRpc" type="text" placeholder="https://api.mainnet-beta.solana.com" />
+        <input id="inpRpc" type="text" placeholder="https://mainnet.helius-rpc.com/?api-key=YOUR_KEY_HERE" />
       </div>
       <div class="row" style="margin-top:10px">
         <button id="btnApply">Apply & re-init</button>
@@ -156,9 +154,10 @@
     const enc = (s) => new TextEncoder().encode(s);
 
     const qs = new URLSearchParams(location.search);
+    const DEFAULT_RPC = "https://mainnet.helius-rpc.com/?api-key=dee593c7-e01e-42da-9419-bcf7b585b67e"; // ✅ nieuwe default
     let PROGRAM_ID = (qs.get("program") || "FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY").trim();
     let PROPOSAL_PUBKEY = (qs.get("proposal") || "").trim();
-    let RPC_URL = (qs.get("rpc") || "https://api.mainnet-beta.solana.com").trim();
+    let RPC_URL = (qs.get("rpc") || DEFAULT_RPC).trim();
 
     inpProgram.value = PROGRAM_ID;
     inpProposal.value = PROPOSAL_PUBKEY;
@@ -244,7 +243,7 @@
     $("btnApply").onclick = async () => {
       PROGRAM_ID = inpProgram.value.trim();
       PROPOSAL_PUBKEY = inpProposal.value.trim();
-      RPC_URL = inpRpc.value.trim() || "https://api.mainnet-beta.solana.com";
+      RPC_URL = inpRpc.value.trim() || DEFAULT_RPC;
       networkEl.innerHTML = "RPC: <code>" + RPC_URL + "</code>";
       programInfoEl.innerHTML = "Program: <code>" + (PROGRAM_ID || "—") + "</code>";
       proposalInfoEl.innerHTML = "Proposal: <code>" + (PROPOSAL_PUBKEY || "—") + "</code>";
