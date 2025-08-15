@@ -1,394 +1,96 @@
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CBS DAO – Mainnet</title>
-  <style>
-    :root { color-scheme: dark; }
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#0b0b0f; color:#eaeaea; margin:0; }
-    .wrap { max-width: 980px; margin: 28px auto; padding: 0 16px; }
-    .card { background:#13131a; border:1px solid #23232b; border-radius:16px; padding:20px; margin-bottom:16px; }
-    h1, h2 { margin: 0 0 12px; }
-    button { cursor:pointer; border:none; padding:12px 16px; border-radius:12px; background:#1f2430; color:#eaeaea; }
-    button:hover { filter: brightness(1.1); }
-    .row { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
-    .muted { color:#a6a6b3; font-size:14px; }
-    code { background:#1a1a22; padding:2px 6px; border-radius:6px; }
-    input[type="text"], input[type="number"], input[type="datetime-local"]{
-      width:100%; padding:10px; border-radius:10px; border:1px solid #2a2a33; background:#0f0f14; color:#eaeaea;
+{
+  "version": "0.1.0",
+  "name": "cbs_dao",
+  "address": "FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY",
+  "metadata": {
+    "spec": "0.1.0",
+    "address": "FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY",
+    "name": "cbs_dao",
+    "description": "CBS DAO voting program (proposal + vote with receipt PDA)",
+    "language": "rust",
+    "anchor": ">=0.28.0"
+  },
+  "instructions": [
+    {
+      "name": "create_proposal",
+      "discriminator": [132, 116, 68, 174, 216, 160, 198, 22],
+      "accounts": [
+        {
+          "name": "proposal",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              { "kind": "const", "value": [112, 114, 111, 112, 111, 115, 97, 108] },
+              { "kind": "account", "path": "creator" },
+              { "kind": "account", "path": "creator" }
+            ]
+          }
+        },
+        { "name": "creator", "writable": true, "signer": true },
+        { "name": "systemProgram", "address": "11111111111111111111111111111111" }
+      ],
+      "args": [
+        { "name": "question", "type": "string" },
+        { "name": "ends_at",  "type": "i64" }
+      ]
+    },
+    {
+      "name": "vote",
+      "discriminator": [227, 110, 155, 23, 136, 126, 172, 25],
+      "accounts": [
+        { "name": "proposal", "writable": true },
+        { "name": "voter", "writable": true, "signer": true },
+        {
+          "name": "voteReceipt",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              { "kind": "const", "value": [118, 111, 116, 101] },
+              { "kind": "account", "path": "proposal" },
+              { "kind": "account", "path": "voter" }
+            ]
+          }
+        },
+        { "name": "systemProgram", "address": "11111111111111111111111111111111" }
+      ],
+      "args": [
+        { "name": "yes", "type": "bool" }
+      ]
     }
-    .ok { color:#79e07f; } .warn { color:#ffd75e; } .err { color:#ff7575; }
-    .grid { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
-    .grid3 { display:grid; grid-template-columns: 2fr 1fr 1fr; gap:12px; }
-    @media (max-width: 900px){ .grid, .grid3{ grid-template-columns: 1fr; } }
-    a { color: #8ab4ff; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <h1>CBS DAO – Mainnet</h1>
-
-    <div class="card">
-      <div class="row" style="justify-content: space-between;">
-        <div class="row">
-          <button id="btnConnect">Connect Phantom</button>
-          <button id="btnDisconnect">Disconnect</button>
-        </div>
-        <div>
-          <span class="muted">Queryparams: </span>
-          <code>?program=...&proposal=...&rpc=...</code>
-        </div>
-      </div>
-      <p id="wallet" class="muted">Wallet: <em>niet verbonden</em></p>
-      <p id="network" class="muted">RPC: <code>(niet ingesteld)</code></p>
-      <p id="programInfo" class="muted">Program: <code>—</code></p>
-      <p id="proposalInfo" class="muted">Proposal: <code>—</code></p>
-    </div>
-
-    <div class="card">
-      <h2>Status</h2>
-      <div id="status">Pagina geladen. Verbind je wallet.</div>
-    </div>
-
-    <div class="card">
-      <h2>Proposal aanmaken</h2>
-      <div class="grid3">
-        <div>
-          <label class="muted">Vraag (question)</label>
-          <input id="inpQuestion" type="text" placeholder="Bijv. 'Steun je CBS DAO?'" />
-        </div>
-        <div>
-          <label class="muted">Duur (minuten)</label>
-          <input id="inpMinutes" type="number" min="1" value="60" />
-        </div>
-        <div>
-          <label class="muted">of Eindtijd</label>
-          <input id="inpEndsAtDT" type="datetime-local" />
-        </div>
-      </div>
-      <div class="row" style="margin-top:10px">
-        <button id="btnCreate">Create Proposal</button>
-      </div>
-      <p class="muted">De PDA voor <code>proposal</code> wordt automatisch afgeleid met seeds <code>["proposal", creator, creator]</code>.</p>
-    </div>
-
-    <div class="card">
-      <h2>Acties op proposal</h2>
-      <div class="row">
-        <button id="btnFetch">Fetch Proposal</button>
-        <button id="btnVoteYes">Vote YES</button>
-        <button id="btnVoteNo">Vote NO</button>
-      </div>
-      <p id="result" class="muted">Resultaat: —</p>
-    </div>
-
-    <div class="card">
-      <h2>Instellingen</h2>
-      <div class="grid">
-        <div>
-          <label class="muted">Program ID</label>
-          <input id="inpProgram" type="text" placeholder="Program ID (Pubkey)" />
-        </div>
-        <div>
-          <label class="muted">Proposal Pubkey</label>
-          <input id="inpProposal" type="text" placeholder="Proposal account pubkey (optioneel voor create)" />
-        </div>
-      </div>
-      <div style="margin-top:12px">
-        <label class="muted">RPC endpoint</label>
-        <input id="inpRpc" type="text" placeholder="https://api.mainnet-beta.solana.com" />
-      </div>
-      <div class="row" style="margin-top:10px">
-        <button id="btnApply">Apply & re-init</button>
-      </div>
-      <p class="muted" style="margin-top:8px">
-        Zet <code>idl.json</code> naast deze pagina in <code>dao-mainnet/</code>.<br>
-        Deze pagina gebruikt exact jouw IDL (snake_case instructies, PDA-seeds) en zet automatisch <code>system_program</code>.
-      </p>
-    </div>
-
-    <div class="card">
-      <h2>Laatste fetch</h2>
-      <pre id="lastFetch" class="muted" style="white-space:pre-wrap;word-break:break-word;">—</pre>
-    </div>
-  </div>
-
-  <script type="module">
-    // ===== Imports =====
-    const [{ Connection, PublicKey, SystemProgram }, anchor] = await Promise.all([
-      import("https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js").then(m => window.solanaWeb3 || m.default),
-      import("https://unpkg.com/@coral-xyz/anchor@0.29.0/dist/esm/index.js"),
-    ]);
-
-    // ===== Helpers & UI =====
-    const $ = (id) => document.getElementById(id);
-    const statusEl = $("status");
-    const walletEl = $("wallet");
-    const networkEl = $("network");
-    const programInfoEl = $("programInfo");
-    const proposalInfoEl = $("proposalInfo");
-    const resultEl = $("result");
-    const lastFetchEl = $("lastFetch");
-
-    const inpProgram = $("inpProgram");
-    const inpProposal = $("inpProposal");
-    const inpRpc = $("inpRpc");
-    const inpQuestion = $("inpQuestion");
-    const inpMinutes = $("inpMinutes");
-    const inpEndsAtDT = $("inpEndsAtDT");
-
-    function setStatus(msg, cls = "") {
-      statusEl.innerHTML = cls ? `<span class="${cls}">${msg}</span>` : msg;
-    }
-    function setWallet(pk) {
-      walletEl.innerHTML = pk ? `Wallet: <code>${pk}</code>` : "Wallet: <em>niet verbonden</em>";
-    }
-    function log(...args){ console.log("[DAO]", ...args); }
-
-    // ===== Defaults (overridable via query/inputs) =====
-    const qs = new URLSearchParams(location.search);
-    let PROGRAM_ID = (qs.get("program") || "FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY").trim();
-    let PROPOSAL_PUBKEY = (qs.get("proposal") || "").trim();
-    let RPC_URL = (qs.get("rpc") || "https://api.mainnet-beta.solana.com").trim();
-
-    inpProgram.value = PROGRAM_ID;
-    inpProposal.value = PROPOSAL_PUBKEY;
-    inpRpc.value = RPC_URL;
-    programInfoEl.innerHTML = "Program: <code>" + (PROGRAM_ID || "—") + "</code>";
-    proposalInfoEl.innerHTML = "Proposal: <code>" + (PROPOSAL_PUBKEY || "—") + "</code>";
-    networkEl.innerHTML = "RPC: <code>" + RPC_URL + "</code>";
-
-    // ===== Phantom detect =====
-    function getPhantomProvider() {
-      if (window?.solana?.isPhantom) return window.solana;
-      if (window?.phantom?.solana?.isPhantom) return window.phantom.solana;
-      return null;
-    }
-
-    // ===== Anchor state =====
-    let connection = null;
-    let wallet = null;
-    let provider = null;
-    let program = null;
-    let idl = null;
-
-    async function initAnchor() {
-      if (!wallet?.publicKey) throw new Error("Wallet niet verbonden.");
-      connection = new Connection(RPC_URL, "confirmed");
-      provider = new anchor.AnchorProvider(connection, wallet, { commitment: "confirmed" });
-      anchor.setProvider(provider);
-
-      const res = await fetch("./idl.json");
-      if (!res.ok) throw new Error("idl.json niet gevonden (404). Zet idl.json naast dao.html in dao-mainnet/.");
-      idl = await res.json();
-
-      if (!PROGRAM_ID) throw new Error("Geen Program ID opgegeven.");
-      const programId = new PublicKey(PROGRAM_ID);
-      program = new anchor.Program(idl, programId, provider);
-
-      setStatus("Anchor klaar.", "ok");
-      programInfoEl.innerHTML = "Program: <code>" + PROGRAM_ID + "</code>";
-      log("Anchor init ok", { RPC_URL, PROGRAM_ID });
-    }
-
-    // ===== PDAs (volgens jouw IDL) =====
-    function pdaProposal(creatorPk) {
-      // seeds: ["proposal", creator, creator]
-      return PublicKey.findProgramAddressSync(
-        [Buffer.from("proposal"), creatorPk.toBytes(), creatorPk.toBytes()],
-        new PublicKey(PROGRAM_ID)
-      )[0];
-    }
-    function pdaVoteReceipt(proposalPk, voterPk) {
-      // seeds: ["vote", proposal, voter]
-      return PublicKey.findProgramAddressSync(
-        [Buffer.from("vote"), proposalPk.toBytes(), voterPk.toBytes()],
-        new PublicKey(PROGRAM_ID)
-      )[0];
-    }
-
-    // ===== Connect / Disconnect =====
-    $("btnConnect").onclick = async () => {
-      try {
-        const phantom = getPhantomProvider();
-        if (!phantom) {
-          setStatus("Phantom niet gevonden. Installeer de extensie en herlaad de pagina.", "err");
-          alert("Phantom niet gevonden.\n\nInstalleer: https://phantom.app/");
-          return;
-        }
-        if (!phantom._cbsListenersAdded) {
-          phantom.on?.("connect", (pubkey) => {
-            try { setWallet(pubkey?.toBase58?.() || String(pubkey)); } catch { setWallet(String(pubkey)); }
-            log("Phantom connected", pubkey?.toBase58?.() || pubkey);
-          });
-          phantom.on?.("disconnect", () => { setWallet(null); log("Phantom disconnected"); });
-          phantom._cbsListenersAdded = true;
-        }
-        setStatus("Verbinding maken…");
-        const resp = await phantom.connect({ onlyIfTrusted: false });
-        const pubkey = resp?.publicKey?.toBase58?.() || phantom.publicKey?.toBase58?.() || String(resp?.publicKey || "");
-        if (!pubkey) throw new Error("Geen public key terug van Phantom.");
-        setWallet(pubkey);
-
-        wallet = {
-          publicKey: phantom.publicKey,
-          signTransaction: phantom.signTransaction?.bind(phantom),
-          signAllTransactions: phantom.signAllTransactions?.bind(phantom),
-          signMessage: phantom.signMessage?.bind(phantom),
-        };
-        setStatus("Anchor initialiseren…");
-        await initAnchor();
-        setStatus("Verbonden en klaar.", "ok");
-      } catch (e) {
-        console.error(e);
-        setStatus("Connect mislukt: " + (e.message || e), "err");
-        alert("Wallet connect mislukte.\n\nTips:\n• Sta pop-ups toe\n• Controleer dat Phantom is ingelogd\n• Gebruik Chrome/Edge (geen incognito)\n• Herlaad de pagina");
+  ],
+  "accounts": [
+    {
+      "name": "proposal",
+      "discriminator": [26, 94, 189, 187, 116, 136, 53, 33],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "creator",    "type": "pubkey" },
+          { "name": "question",   "type": "string" },
+          { "name": "yes_votes",  "type": "u64" },
+          { "name": "no_votes",   "type": "u64" },
+          { "name": "created_at", "type": "i64" },
+          { "name": "ends_at",    "type": "i64" }
+        ]
       }
-    };
-
-    $("btnDisconnect").onclick = async () => {
-      try { await getPhantomProvider()?.disconnect?.(); } catch {}
-      wallet = null; program = null; provider = null;
-      setWallet(null);
-      setStatus("Losgekoppeld.");
-    };
-
-    // ===== Apply / re-init =====
-    $("btnApply").onclick = async () => {
-      PROGRAM_ID = inpProgram.value.trim();
-      PROPOSAL_PUBKEY = inpProposal.value.trim();
-      RPC_URL = inpRpc.value.trim() || "https://api.mainnet-beta.solana.com";
-      networkEl.innerHTML = "RPC: <code>" + RPC_URL + "</code>";
-      programInfoEl.innerHTML = "Program: <code>" + (PROGRAM_ID || "—") + "</code>";
-      proposalInfoEl.innerHTML = "Proposal: <code>" + (PROPOSAL_PUBKEY || "—") + "</code>";
-      setStatus("Herinitialiseren…");
-      try {
-        if (!wallet) { setStatus("Verbind eerst je wallet.", "warn"); return; }
-        await initAnchor();
-      } catch (e) {
-        console.error(e);
-        setStatus(e.message, "err");
-      }
-    };
-
-    // ===== Create Proposal =====
-    $("btnCreate").onclick = async () => {
-      try {
-        if (!program) throw new Error("Program niet geïnitialiseerd.");
-        const creator = wallet.publicKey;
-        const proposalPda = pdaProposal(creator);
-
-        // bepaal ends_at (epoch sec)
-        let endsAt = 0;
-        const dtVal = inpEndsAtDT.value?.trim();
-        if (dtVal) {
-          endsAt = Math.floor(new Date(dtVal).getTime() / 1000);
-        } else {
-          const mins = Math.max(1, parseInt(inpMinutes.value || "60", 10));
-          endsAt = Math.floor(Date.now()/1000) + mins * 60;
-        }
-        const question = (inpQuestion.value || "").trim();
-        if (!question) throw new Error("Vul een vraag (question) in.");
-        // Anchor call: create_proposal(question: string, ends_at: i64)
-        const builder = program.methods.createProposal(question, endsAt);
-        const txSig = await builder
-          .accounts({
-            proposal: proposalPda,
-            creator,
-            systemProgram: SystemProgram.programId,
-          })
-          .rpc();
-
-        PROPOSAL_PUBKEY = proposalPda.toBase58();
-        inpProposal.value = PROPOSAL_PUBKEY;
-        proposalInfoEl.innerHTML = "Proposal: <code>" + PROPOSAL_PUBKEY + "</code>";
-        resultEl.innerHTML = `<span class="ok">✅ Proposal aangemaakt: <code>${PROPOSAL_PUBKEY}</code><br/>TX: <code>${txSig}</code></span>`;
-        log("Create proposal", { proposalPda: PROPOSAL_PUBKEY, txSig });
-      } catch (e) {
-        console.error(e);
-        resultEl.innerHTML = `<span class="err">❌ ${e.message}</span>`;
-      }
-    };
-
-    // ===== Fetch Proposal =====
-    $("btnFetch").onclick = async () => {
-      try {
-        if (!program) throw new Error("Program niet geïnitialiseerd.");
-        if (!PROPOSAL_PUBKEY) throw new Error("Geen proposal pubkey ingevuld.");
-        const pub = new PublicKey(PROPOSAL_PUBKEY);
-
-        // Probeer IDL-based fetch (account type: "proposal")
-        try {
-          const data = await program.account.proposal.fetch(pub);
-          const view = {
-            creator: data.creator?.toBase58?.() || String(data.creator),
-            question: data.question,
-            yes_votes: data.yesVotes?.toString?.() ?? data.yes_votes?.toString?.() ?? String(data.yes_votes),
-            no_votes: data.noVotes?.toString?.() ?? data.no_votes?.toString?.() ?? String(data.no_votes),
-            created_at: Number(data.createdAt ?? data.created_at),
-            ends_at: Number(data.endsAt ?? data.ends_at),
-          };
-          lastFetchEl.textContent = JSON.stringify(view, null, 2);
-          resultEl.innerHTML = `<span class="ok">✅ Proposal gelezen.</span>`;
-          return;
-        } catch (e) {
-          console.warn("IDL fetch mislukte, val terug op getAccountInfo", e);
-        }
-
-        // Fallback: raw account
-        const acc = await connection.getAccountInfo(pub);
-        if (!acc) { resultEl.innerHTML = `<span class="warn">Proposal account niet gevonden.</span>`; return; }
-        lastFetchEl.textContent = `Owner: ${acc.owner.toBase58()}, data len: ${acc.data?.length ?? 0}`;
-        resultEl.innerHTML = `Account gevonden (raw).`;
-      } catch (e) {
-        console.error(e);
-        resultEl.innerHTML = `<span class="err">${e.message}</span>`;
-      }
-    };
-
-    // ===== Vote =====
-    async function vote(yes) {
-      try {
-        if (!program) throw new Error("Program niet geïnitialiseerd.");
-        if (!PROPOSAL_PUBKEY) throw new Error("Geen proposal pubkey ingesteld.");
-        const proposalPk = new PublicKey(PROPOSAL_PUBKEY);
-        const voter = wallet.publicKey;
-        const voteReceiptPda = pdaVoteReceipt(proposalPk, voter);
-
-        // Anchor call: vote(yes: bool)
-        const builder = program.methods.vote(yes);
-        const txSig = await builder
-          .accounts({
-            proposal: proposalPk,
-            voter,
-            voteReceipt: voteReceiptPda,
-            systemProgram: SystemProgram.programId,
-          })
-          .rpc();
-
-        resultEl.innerHTML = `<span class="ok">✅ Vote TX: ${txSig}</span>`;
-        log("Vote TX", txSig);
-      } catch (e) {
-        console.error(e);
-        // Toon bekende on-chain fouten netjes
-        const msg = e?.error?.errorMessage || e?.message || String(e);
-        resultEl.innerHTML = `<span class="err">❌ ${msg}</span>`;
+    },
+    {
+      "name": "voteReceipt",
+      "discriminator": [104, 20, 204, 252, 45, 84, 37, 195],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "proposal",  "type": "pubkey" },
+          { "name": "voter",     "type": "pubkey" },
+          { "name": "has_voted", "type": "bool" }
+        ]
       }
     }
-
-    $("btnVoteYes").onclick = () => vote(true);
-    $("btnVoteNo").onclick = () => vote(false);
-
-    // ===== Init status =====
-    setStatus("Pagina geladen. Verbind je wallet en controleer Program/Proposal/RPC.");
-    log("Start", { PROGRAM_ID, PROPOSAL_PUBKEY, RPC_URL });
-
-    // Reflecteer init-values
-    (function reflectInit(){
-      // Niets extra nodig, maar handig om te visualiseren
-    })();
-  </script>
-</body>
-</html>
+  ],
+  "errors": [
+    { "code": 6000, "name": "QuestionTooLong", "msg": "Vraag is te lang" },
+    { "code": 6001, "name": "AlreadyEnded",    "msg": "Stemperiode is voorbij" },
+    { "code": 6002, "name": "AlreadyVoted",    "msg": "Je hebt al gestemd" },
+    { "code": 6003, "name": "Overflow",        "msg": "Overflow" }
+  ]
+}
