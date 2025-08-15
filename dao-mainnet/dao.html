@@ -80,6 +80,8 @@
       </div>
       <div class="row" style="margin-top:10px">
         <button id="btnCreate">Create Proposal</button>
+        <!-- simulatieknop voor create -->
+        <button id="btnSimCreate">Simulate Create</button>
       </div>
     </div>
 
@@ -89,6 +91,9 @@
         <button id="btnFetch">Fetch Proposal</button>
         <button id="btnVoteYes">Vote YES</button>
         <button id="btnVoteNo">Vote NO</button>
+        <!-- simulatieknoppen voor votes -->
+        <button id="btnSimYes">Sim YES</button>
+        <button id="btnSimNo">Sim NO</button>
       </div>
       <p id="result" class="muted">Resultaat: —</p>
     </div>
@@ -147,7 +152,7 @@
       walletEl.innerHTML = pk ? `Wallet: <code>${pk}</code>` : "Wallet: <em>niet verbonden</em>";
     }
 
-    // ✅ helper om strings naar bytes te encoden (vervangt Buffer.from)
+    // strings -> bytes (vervangt Buffer.from)
     const enc = (s) => new TextEncoder().encode(s);
 
     const qs = new URLSearchParams(location.search);
@@ -191,7 +196,6 @@
       setStatus("Anchor klaar.", "ok");
     }
 
-    // ✅ PDA helpers gebruiken nu TextEncoder i.p.v. Buffer
     function pdaProposal(creatorPk) {
       return PublicKey.findProgramAddressSync(
         [enc("proposal"), creatorPk.toBytes(), creatorPk.toBytes()],
@@ -318,11 +322,57 @@
         resultEl.innerHTML = `<span class="err">❌ ${e.message}</span>`;
       }
     }
-
     $("btnVoteYes").onclick = () => vote(true);
     $("btnVoteNo").onclick = () => vote(false);
+
+    // ---------- Simulaties (kosten 0 SOL) ----------
+    $("btnSimCreate").onclick = async () => {
+      try {
+        if (!program) throw new Error("Program niet geïnitialiseerd.");
+        const creator = wallet.publicKey;
+        const proposalPda = pdaProposal(creator);
+
+        let endsAt = 0;
+        if (inpEndsAtDT.value) endsAt = Math.floor(new Date(inpEndsAtDT.value).getTime() / 1000);
+        else endsAt = Math.floor(Date.now()/1000) + (parseInt(inpMinutes.value) || 60) * 60;
+
+        const question = inpQuestion.value.trim();
+        if (!question) throw new Error("Vul een vraag in.");
+
+        const sim = await program.methods.createProposal(question, endsAt)
+          .accounts({ proposal: proposalPda, creator, systemProgram: SystemProgram.programId })
+          .simulate();
+
+        resultEl.innerHTML = `<span class="ok">✅ Simulate(create) OK</span>`;
+        lastFetchEl.textContent = (sim?.logs || []).join("\n") || "—";
+      } catch (e) {
+        resultEl.innerHTML = `<span class="err">❌ Simulate(create) fail: ${e.message}</span>`;
+      }
+    };
+
+    async function simulateVote(yes) {
+      try {
+        if (!program) throw new Error("Program niet geïnitialiseerd.");
+        if (!PROPOSAL_PUBKEY) throw new Error("Geen proposal pubkey ingesteld.");
+        const proposalPk = new PublicKey(PROPOSAL_PUBKEY);
+        const voter = wallet.publicKey;
+        const voteReceiptPda = pdaVoteReceipt(proposalPk, voter);
+
+        const sim = await program.methods.vote(yes)
+          .accounts({ proposal: proposalPk, voter, voteReceipt: voteReceiptPda, systemProgram: SystemProgram.programId })
+          .simulate();
+
+        resultEl.innerHTML = `<span class="ok">✅ Simulate(vote ${yes?"YES":"NO"}) OK</span>`;
+        lastFetchEl.textContent = (sim?.logs || []).join("\n") || "—";
+      } catch (e) {
+        resultEl.innerHTML = `<span class="err">❌ Simulate(vote) fail: ${e.message}</span>`;
+      }
+    }
+    $("btnSimYes").onclick = () => simulateVote(true);
+    $("btnSimNo").onclick  = () => simulateVote(false);
 
     setStatus("Pagina geladen. Verbind je wallet.");
   </script>
 </body>
 </html>
+
