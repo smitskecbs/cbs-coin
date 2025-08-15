@@ -147,6 +147,9 @@
       walletEl.innerHTML = pk ? `Wallet: <code>${pk}</code>` : "Wallet: <em>niet verbonden</em>";
     }
 
+    // ✅ helper om strings naar bytes te encoden (vervangt Buffer.from)
+    const enc = (s) => new TextEncoder().encode(s);
+
     const qs = new URLSearchParams(location.search);
     let PROGRAM_ID = (qs.get("program") || "FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY").trim();
     let PROPOSAL_PUBKEY = (qs.get("proposal") || "").trim();
@@ -188,15 +191,16 @@
       setStatus("Anchor klaar.", "ok");
     }
 
+    // ✅ PDA helpers gebruiken nu TextEncoder i.p.v. Buffer
     function pdaProposal(creatorPk) {
       return PublicKey.findProgramAddressSync(
-        [Buffer.from("proposal"), creatorPk.toBytes(), creatorPk.toBytes()],
+        [enc("proposal"), creatorPk.toBytes(), creatorPk.toBytes()],
         new PublicKey(PROGRAM_ID)
       )[0];
     }
     function pdaVoteReceipt(proposalPk, voterPk) {
       return PublicKey.findProgramAddressSync(
-        [Buffer.from("vote"), proposalPk.toBytes(), voterPk.toBytes()],
+        [enc("vote"), proposalPk.toBytes(), voterPk.toBytes()],
         new PublicKey(PROGRAM_ID)
       )[0];
     }
@@ -322,4 +326,3 @@
   </script>
 </body>
 </html>
-
