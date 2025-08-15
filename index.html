@@ -7,107 +7,365 @@
 
   <!-- Font -->
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
-  <!-- Confetti -->
+  <!-- Confetti (optioneel, voor success) -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
   <style>
-    :root {
-      --bg1: #0f0f0f; --bg2: #1a1a1a; --accent: #00aaff;
-      --text1: #ffffff; --text2: #cccccc;
-    }
-    body {
-      margin: 0; font-family: 'Orbitron', sans-serif;
-      background: var(--bg1); color: var(--text1);
-    }
-    header {
-      background: var(--bg2);
-      padding: 1rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    nav a {
-      color: var(--text1);
-      margin: 0 1rem;
-      text-decoration: none;
-    }
-    nav a:hover { color: var(--accent); }
-    main { padding: 2rem; }
-    button {
-      background: var(--accent);
-      border: none;
-      padding: 0.75rem 1.5rem;
-      color: var(--text1);
-      font-size: 1rem;
-      cursor: pointer;
-      border-radius: 5px;
-    }
-    button:hover { opacity: 0.9; }
-    footer {
-      text-align: center;
-      padding: 1rem;
-      background: var(--bg2);
-      color: var(--text2);
-      margin-top: 2rem;
-    }
+    :root{--bg1:#0f0f0f;--bg2:#1a1a1a;--fg:#00ffcc;--cyan:#00ffff;--panel:#111;--muted:#9aa;--border:#00ffcc}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Orbitron',sans-serif;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:var(--fg);display:flex;flex-direction:column;align-items:center;padding:2rem}
+    nav{width:100%;background:#111;padding:1rem;text-align:center;margin-bottom:2rem;border-bottom:1px solid #0c2020}
+    nav a{margin:0 .8rem;color:var(--cyan);text-decoration:none;font-weight:700}
+    nav a:hover{text-decoration:underline}
+    header{text-align:center;width:100%}
+    h1{font-size:3rem;margin:.5rem 0 .2rem}
+    h2{font-size:1.35rem;font-weight:400;color:var(--muted);margin:.4rem 0 1rem}
+    .logo{margin:1rem 0;max-width:180px}
+    .section{max-width:1100px;background:#111;padding:1.4rem;margin:1rem 0;border:1px solid var(--border);border-radius:12px}
+    a{color:var(--cyan);text-decoration:none}
+    a:hover{text-decoration:underline}
+    footer{margin-top:2rem;font-size:.9rem;color:#aaa;text-align:center}
+    .social-links{display:flex;justify-content:center;gap:1rem;flex-wrap:wrap;margin:1rem 0}
+    .social-links a,.btn{display:inline-flex;align-items:center}
+    .social-links a{padding:.5rem 1rem;background:#1a1a1a;border:1px solid var(--cyan);border-radius:6px;font-weight:700;color:var(--cyan)}
+    .social-links a:hover{background:var(--cyan);color:#000}
+
+    .toolbar{display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap;margin:1rem 0}
+    .btn{padding:.9rem 1.4rem;font-weight:800;border-radius:12px;border:1px solid var(--cyan);background:#141414;color:var(--cyan);cursor:pointer;transition:transform .15s ease, box-shadow .2s ease}
+    .btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,255,204,.15)}
+    .btn-primary{background:var(--fg);color:#001c1a;border:none;box-shadow:0 0 10px var(--fg),0 0 40px var(--fg),0 0 80px var(--fg)}
+    .btn-primary:hover{box-shadow:0 0 20px var(--cyan),0 0 60px var(--cyan),0 0 100px var(--cyan)}
+    .btn[disabled]{opacity:.6;cursor:not-allowed}
+
+    #status{min-height:1.5rem;margin-top:.6rem}
+    .ok{color:#5aff86}.warn{color:#ffd166}.err{color:#ff6b6b}
+    #walletAddr{font-size:.95rem;color:#9fffe3}
+
+    .countdown{margin-top:.4rem;color:#9fffe3;font-size:.95rem}
+    .closed{color:#ffd166}
   </style>
 </head>
 <body>
+  <nav>
+    <a id="navHome" href="index.html" data-i18n="navHome">Home</a>
+    <a id="navRoadmap" href="roadmap.html" data-i18n="navRoadmap">Roadmap</a>
+    <a id="navTokenomics" href="tokenomics.html" data-i18n="navTokenomics">Tokenomics</a>
+    <a id="navLitepaper" href="litepaper.html" data-i18n="navLitepaper">Litepaper</a>
+    <!-- DAO link verwijderd -->
+    <a id="navContact" href="mailto:smitskecbs@gmail.com" data-i18n="navContact">Contact</a>
+  </nav>
+
   <header>
-    <div class="logo">
-      <img src="1000020566.png" alt="CBS Coin Logo" style="height:50px;">
+    <img class="logo" alt="CBS Coin Logo" src="https://cyan-persistent-stork-902.mypinata.cloud/ipfs/bafybeia7qejzloll6teyt4o4orvd7bnvkg4thrfajv4rgb3fmm2odeweoa/logo.png" />
+    <h1>CBS Coin</h1>
+    <h2 id="subtitle" data-i18n="subtitle">Community Builds Sovereignty</h2>
+
+    <div class="social-links">
+      <a id="linkTelegram" href="https://t.me/CBS_Coin" target="_blank" rel="noreferrer" data-i18n="telegram">Telegram</a>
+      <a id="linkX" href="https://twitter.com/CBS_Coin" target="_blank" rel="noreferrer" data-i18n="xTwitter">X (Twitter)</a>
+      <button id="langBtn" class="btn" data-i18n="langSwitch">🌐 English</button>
     </div>
-    <nav>
-      <a id="navHome" href="index.html" data-i18n="navHome">Home</a>
-      <a id="navRoadmap" href="roadmap.html" data-i18n="navRoadmap">Roadmap</a>
-      <a id="navTokenomics" href="tokenomics.html" data-i18n="navTokenomics">Tokenomics</a>
-      <a id="navLitepaper" href="litepaper.html" data-i18n="navLitepaper">Litepaper</a>
-      <!-- DAO link verwijderd -->
-      <a id="navContact" href="mailto:smitskecbs@gmail.com" data-i18n="navContact">Contact</a>
-    </nav>
   </header>
 
-  <main>
-    <h1 data-i18n="title">Welkom bij CBS Coin</h1>
-    <p data-i18n="subtitle">Community Builds Sovereignty – Een community-gedreven token op Solana</p>
+  <section class="section" style="text-align:center">
+    <h2 id="buyTitle" data-i18n="buyTitle">💰 Koop CBS – Actie</h2>
+    <p id="buyIntro" data-i18n="buyIntro" data-i18n-html><b>0.020 SOL</b> → <b>25.000 CBS</b> (direct via onze site).</p>
 
-    <button id="buyBtn" onclick="koopCBS()" data-i18n="buyBtn">Koop CBS Coin</button>
-  </main>
+    <div class="toolbar">
+      <button id="connectBtn" class="btn" data-i18n="connect">🔌 Connect Wallet</button>
+      <button id="disconnectBtn" class="btn" style="display:none" data-i18n="disconnect">🔒 Disconnect</button>
+      <span id="walletAddr"></span>
+    </div>
+
+    <div class="toolbar">
+      <button id="buyBtn" class="btn btn-primary" data-i18n="buyButton">💳 Koop 25.000 CBS (0.020 SOL)</button>
+      <button id="retryBtn" class="btn" style="display:none" data-i18n="retry">🔁 Herprobeer uitbetaling</button>
+    </div>
+
+    <p id="status"></p>
+  </section>
+
+  <section class="section" style="text-align:center">
+    <h2 id="airdropTitle" data-i18n="airdropTitle">🎁 Airdrop – Aanvraag</h2>
+    <p id="airdropIntro" data-i18n="airdropIntro" data-i18n-html>
+      Vraag de airdrop aan via het formulier. <br><em>Inschrijving stopt op 1 september 2025.</em>
+    </p>
+    <div class="toolbar">
+      <a id="airdropBtn" class="btn btn-primary" target="_blank" rel="noreferrer"
+         href="https://docs.google.com/forms/d/e/1FAIpQLSfIPCTbVFXfGqESxofzjzUwO60hu89DId5T-EmV6ax6hOplSg/viewform?usp=sharing&ouid=105309397487176943057"
+         data-i18n="airdropButton">🎁 Aanvraag Airdrop</a>
+    </div>
+    <div id="airdropCountdown" class="countdown"></div>
+  </section>
+
+  <section class="section">
+    <h3 id="tokenInfoTitle" data-i18n="tokenInfoTitle">📦 Token Info</h3>
+    <ul>
+      <li><strong data-i18n="tokenNameLabel">Tokennaam:</strong> <span data-i18n="tokenName">CBS Coin</span></li>
+      <li><strong data-i18n="symbolLabel">Symbool:</strong> CBS</li>
+      <li><strong data-i18n="supplyLabel">Totale supply:</strong> 100.000.000</li>
+      <li><strong data-i18n="mintAuthLabel">Mint authority:</strong> <em data-i18n="disabled">uitgeschakeld</em></li>
+      <li><strong data-i18n="freezeAuthLabel">Freeze authority:</strong> <em data-i18n="disabled">uitgeschakeld</em></li>
+      <li><strong data-i18n="explorerLabel">Explorer:</strong>
+        <a id="explorerLink" href="https://solscan.io/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk" target="_blank" rel="noreferrer" data-i18n="viewOnSolscan">Bekijk op Solscan</a>
+      </li>
+    </ul>
+  </section>
+
+  <section class="section">
+    <h3 id="roadmapTitle" data-i18n="roadmapTitle">📄 Whitepaper & Roadmap</h3>
+    <p id="roadmapText" data-i18n="roadmapText" data-i18n-html>
+      Bekijk onze visie en plannen in de <a href="litepaper.html" target="_blank" rel="noreferrer">litepaper</a>.
+      De roadmap bevat o.a. liquidity pools, DAO integratie en tokenverificatie op grote platforms.
+    </p>
+  </section>
 
   <footer>
-    <p>&copy; 2025 CBS Coin</p>
+    © 2025 CBS Coin – <span data-i18n="footerTag">Sovereignty through community.</span>
+    <div class="social-links" style="justify-content:center;margin-top:.6rem">
+      <a href="https://t.me/CBS_Coin" target="_blank" rel="noreferrer" data-i18n="telegram">Telegram</a>
+      <a href="https://twitter.com/CBS_Coin" target="_blank" rel="noreferrer" data-i18n="xTwitter">X (Twitter)</a>
+    </div>
   </footer>
 
-  <script>
-    async function koopCBS() {
-      if (!window.solana || !window.solana.isPhantom) {
-        alert("Phantom Wallet niet gevonden!");
-        return;
-      }
-      try {
-        await window.solana.connect();
-        const provider = window.solana;
-        const transaction = new solanaWeb3.Transaction().add(
-          solanaWeb3.SystemProgram.transfer({
-            fromPubkey: provider.publicKey,
-            toPubkey: new solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg"),
-            lamports: 0.05 * solanaWeb3.LAMPORTS_PER_SOL
-          })
-        );
-        transaction.feePayer = provider.publicKey;
-        let blockhashObj = await (new solanaWeb3.Connection("https://api.mainnet-beta.solana.com")).getRecentBlockhash();
-        transaction.recentBlockhash = blockhashObj.blockhash;
-        const signed = await provider.signTransaction(transaction);
-        const txid = await (new solanaWeb3.Connection("https://api.mainnet-beta.solana.com")).sendRawTransaction(signed.serialize());
-        console.log("Transactie ID:", txid);
-        alert("Betaling succesvol! Je ontvangt binnenkort CBS Coin.");
-        confetti();
-      } catch (err) {
-        console.error(err);
-        alert("Er ging iets mis bij de betaling.");
+  <script type="module">
+    // ===== Config =====
+    const CREATOR_WALLET = "76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg";
+    const CBS_MINT       = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
+    const PRICE_SOL      = 0.020;
+    const CBS_PER_BUY    = 25000;
+    const HELIUS_RPC     = "https://mainnet.helius-rpc.com/?api-key=dee593c7-e01e-42da-9419-bcf7b585b67e";
+    const FULFILL_ENDPOINT = "https://cbs-coin.vercel.app/api/koop-cbs";
+    const AIRDROP_DEADLINE_ISO = "2025-09-01T00:00:00Z";
+
+    // ===== i18n =====
+    const i18n = {
+      nl:{navHome:"Home",navRoadmap:"Roadmap",navTokenomics:"Tokenomics",navLitepaper:"Litepaper",navDao:"DAO",navContact:"Contact",
+          subtitle:"Community Builds Sovereignty",telegram:"Telegram",xTwitter:"X (Twitter)",langSwitch:"🌐 English",
+          buyTitle:"💰 Koop CBS – Actie",buyIntro:"<b>{price} SOL</b> → <b>{amount} CBS</b> (direct via onze site).",
+          connect:"🔌 Connect Wallet",disconnect:"🔒 Disconnect",walletLabel:"Wallet:",
+          buyButton:"💳 Koop {amount} CBS ({price} SOL)",retry:"🔁 Herprobeer uitbetaling",
+          airdropTitle:"🎁 Airdrop – Aanvraag",
+          airdropIntro:"Vraag de airdrop aan via het formulier. <br><em>Inschrijving stopt op 1 september 2025.</em>",
+          airdropButton:"🎁 Aanvraag Airdrop",countdownLeft:"Inschrijving sluit over {d}d {h}u {m}m {s}s",
+          airdropClosedBtn:"🎁 Inschrijving gesloten",airdropClosedText:"De airdrop-inschrijving is gesloten.",
+          tokenInfoTitle:"📦 Token Info",tokenNameLabel:"Tokennaam:",tokenName:"CBS Coin",symbolLabel:"Symbool:",supplyLabel:"Totale supply:",
+          mintAuthLabel:"Mint authority:",freezeAuthLabel:"Freeze authority:",disabled:"uitgeschakeld",
+          explorerLabel:"Explorer:",viewOnSolscan:"Bekijk op Solscan",roadmapTitle:"📄 Whitepaper & Roadmap",
+          roadmapText:'Bekijk onze visie en plannen in de <a href="litepaper.html" target="_blank" rel="noreferrer">litepaper</a>. De roadmap bevat o.a. liquidity pools, DAO integratie en tokenverificatie op grote platforms.',
+          footerTag:"Sovereignty through community.",
+          notFoundPhantom:"❌ Phantom wallet niet gevonden. Installeer Phantom.",
+          pleaseWait:"Even geduld… je kunt over een paar minuten opnieuw kopen.",
+          preparing:"⏳ Voorbereiden van betaling…",
+          sentWaiting:'⏳ Betaling verstuurd, wachten op confirm… {link}',
+          viewOnSolscan:"Bekijk op Solscan",startingPayout:"⏳ Uitbetaling {amount} CBS wordt gestart…",
+          successPayout:'✅ Koop geslaagd! {price} SOL ontvangen. {amount} CBS is onderweg. {link}',
+          receivedButPending:'✅ Betaling ontvangen. De uitbetaling kon niet direct worden bevestigd ({error}). Je kunt zo meteen op <b>Herprobeer uitbetaling</b> klikken. Bewaar je TX: <code>{sig}</code>.',
+          cancelled:"Je hebt de betaling in Phantom geannuleerd.",
+          insufficient:"Onvoldoende SOL voor deze aankoop ({price} SOL + netwerkfee vereist).",
+          genericError:"❌ Er ging iets mis bij het kopen: {err}",
+          retryNone:"Geen uitbetaling om te herproberen.",
+          retrying:"⏳ Opnieuw proberen te uitbetalen…",
+          retryOk:'✅ Uitbetaling gelukt! {link}',
+          retryErr:"Nog niet gelukt: {err}",
+          retryFetchErr:"❌ Fout bij herproberen: {err}"},
+      en:{navHome:"Home",navRoadmap:"Roadmap",navTokenomics:"Tokenomics",navLitepaper:"Litepaper",navDao:"DAO",navContact:"Contact",
+          subtitle:"Community Builds Sovereignty",telegram:"Telegram",xTwitter:"X (Twitter)",langSwitch:"🌐 Nederlands",
+          buyTitle:"💰 Buy CBS – Offer",buyIntro:"<b>{price} SOL</b> → <b>{amount} CBS</b> (direct on our site).",
+          connect:"🔌 Connect Wallet",disconnect:"🔒 Disconnect",walletLabel:"Wallet:",
+          buyButton:"💳 Buy {amount} CBS ({price} SOL)",retry:"🔁 Retry payout",
+          airdropTitle:"🎁 Airdrop – Apply",
+          airdropIntro:"Apply for the airdrop via the form. <br><em>Registration closes on 1 September 2025.</em>",
+          airdropButton:"🎁 Apply for Airdrop",countdownLeft:"Registration closes in {d}d {h}h {m}m {s}s",
+          airdropClosedBtn:"🎁 Registration closed",airdropClosedText:"Airdrop registration is closed.",
+          tokenInfoTitle:"📦 Token Info",tokenNameLabel:"Token name:",tokenName:"CBS Coin",symbolLabel:"Symbol:",supplyLabel:"Total supply:",
+          mintAuthLabel:"Mint authority:",freezeAuthLabel:"Freeze authority:",disabled:"disabled",
+          explorerLabel:"Explorer:",viewOnSolscan:"View on Solscan",roadmapTitle:"📄 Whitepaper & Roadmap",
+          roadmapText:'See our vision and plans in the <a href="litepaper.html" target="_blank" rel="noreferrer">litepaper</a>. The roadmap includes liquidity pools, DAO integration, and token verification on major platforms.',
+          footerTag:"Sovereignty through community.",
+          notFoundPhantom:"❌ Phantom wallet not found. Please install Phantom.",
+          pleaseWait:"Please wait… you can buy again in a few minutes.",
+          preparing:"⏳ Preparing payment…",
+          sentWaiting:'⏳ Payment sent, waiting for confirm… {link}',
+          viewOnSolscan:"View on Solscan",startingPayout:"⏳ Payout of {amount} CBS is starting…",
+          successPayout:'✅ Purchase successful! {price} SOL received. {amount} CBS is on the way. {link}',
+          receivedButPending:'✅ Payment received. Payout could not be confirmed yet ({error}). You can click <b>Retry payout</b> shortly. Save your TX: <code>{sig}</code>.',
+          cancelled:"You cancelled the payment in Phantom.",
+          insufficient:"Insufficient SOL for this purchase ({price} SOL + network fee required).",
+          genericError:"❌ Something went wrong while buying: {err}",
+          retryNone:"No payout to retry.",
+          retrying:"⏳ Retrying payout…",
+          retryOk:'✅ Payout successful! {link}',
+          retryErr:"Still not successful: {err}",
+          retryFetchErr:"❌ Error while retrying: {err}"}
+    };
+
+    let currentLang = localStorage.getItem("cbs_lang") || "nl";
+    document.documentElement.setAttribute("lang", currentLang);
+    document.documentElement.setAttribute("data-lang", currentLang);
+
+    const $ = (id)=>document.getElementById(id);
+    let lastWalletPub = ""; // onthoud connected adres voor label-update
+
+    function fmtAmount(n){
+      const locale = currentLang === "nl" ? "nl-NL" : "en-US";
+      return new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(n);
+    }
+    function t(key, params={}){
+      const dict = i18n[currentLang] || i18n.nl;
+      let str = dict[key] || key;
+      const merged = { amount: fmtAmount(CBS_PER_BUY), price: PRICE_SOL.toFixed(3), ...params };
+      return str.replace(/\{(\w+)\}/g, (_,k)=> (merged[k] ?? `{${k}}`));
+    }
+
+    // ✅ Generieke i18n: update ALLE elementen met data-i18n
+    function applyI18n(){
+      document.querySelectorAll("[data-i18n]").forEach(el=>{
+        const key = el.getAttribute("data-i18n");
+        const html = el.hasAttribute("data-i18n-html");
+        const content = t(key);
+        if (html) el.innerHTML = content; else el.textContent = content;
+      });
+      // Wallet label herstellen als we verbonden zijn
+      if (lastWalletPub){
+        $("walletAddr").textContent = `${t("walletLabel")} ${shortKey(lastWalletPub)}`;
       }
     }
+
+    // taal-knop
+    $("langBtn").addEventListener("click", () => {
+      currentLang = currentLang === "nl" ? "en" : "nl";
+      localStorage.setItem("cbs_lang", currentLang);
+      document.documentElement.setAttribute("lang", currentLang);
+      document.documentElement.setAttribute("data-lang", currentLang);
+      applyI18n();
+    });
+
+    // ===== UI / wallet helpers =====
+    const connectBtn    = $("connectBtn");
+    const disconnectBtn = $("disconnectBtn");
+    const walletAddrEl  = $("walletAddr");
+    const buyBtn        = $("buyBtn");
+    const retryBtn      = $("retryBtn");
+    const statusEl      = $("status");
+    const airdropBtn    = $("airdropBtn");
+    const airdropCountdown = $("airdropCountdown");
+
+    const setOK  = (h)=>{ statusEl.className="ok";  statusEl.innerHTML=h; };
+    const setERR = (h)=>{ statusEl.className="err"; statusEl.innerHTML=h; };
+    const setWARN= (h)=>{ statusEl.className="warn";statusEl.innerHTML=h; };
+    const link  = (href, key)=>`<a href="${href}" target="_blank" rel="noreferrer">${t(key)}</a>`;
+
+    function getProvider(){ if (window.solana?.isPhantom) return window.solana; if (window.phantom?.solana?.isPhantom) return window.phantom.solana; return null; }
+    function shortKey(pk){ const s = pk?.toString()||""; return s.length>10 ? s.slice(0,4)+"…"+s.slice(-4) : s; }
+    function setConnected(pk){ lastWalletPub = pk; walletAddrEl.textContent = t("walletLabel")+" "+shortKey(pk); connectBtn.style.display="none"; disconnectBtn.style.display="inline-block"; }
+    function setDisconnected(){ lastWalletPub = ""; walletAddrEl.textContent = ""; connectBtn.style.display="inline-block"; disconnectBtn.style.display="none"; }
+
+    async function connectWallet(){ const p=getProvider(); if(!p){ alert(t("notFoundPhantom")); return null; }
+      try{ const res=await p.connect({onlyIfTrusted:false}); const pub=(res.publicKey||p.publicKey).toString(); setConnected(pub); return pub; }catch{ return null; } }
+    async function disconnectWallet(){ const p=getProvider(); try{ await p?.disconnect?.(); }catch{} setDisconnected(); }
+    connectBtn.addEventListener("click", connectWallet);
+    disconnectBtn.addEventListener("click", disconnectWallet);
+
+    // Init na load
+    window.addEventListener("load", async () => {
+      applyI18n(); // zet alle teksten gelijk bij start
+      const p = getProvider();
+      if (p){ try{ const res=await p.connect({onlyIfTrusted:true}); if (res?.publicKey || p.publicKey) setConnected((res.publicKey||p.publicKey).toString()); }catch{} }
+      const pending = getPending(); if (pending) retryBtn.style.display = "inline-block";
+      initAirdropTimer();
+    });
+
+    import { Connection, PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.95.3";
+
+    // Cooldown
+    const COOLDOWN_MS = 5 * 60 * 1000;
+    function tooSoon(){ try{ const t0=Number(localStorage.getItem("cbs_last_buy_ts")||"0"); return (Date.now()-t0)<COOLDOWN_MS; }catch{ return false; } }
+    function markBuy(){ try{ localStorage.setItem("cbs_last_buy_ts", String(Date.now())); }catch{} }
+
+    // pending storage
+    function setPending(obj){ try{ localStorage.setItem("cbs_pending_fulfill", JSON.stringify(obj)); }catch{} }
+    function getPending(){ try{ const raw=localStorage.getItem("cbs_pending_fulfill"); return raw?JSON.parse(raw):null; }catch{ return null; } }
+    function clearPending(){ try{ localStorage.removeItem("cbs_pending_fulfill"); }catch{} }
+
+    async function fulfill({ buyer, signature }){
+      try{
+        const resp = await fetch(FULFILL_ENDPOINT, {
+          method:"POST", headers:{ "content-type":"application/json" },
+          body: JSON.stringify({ buyer, signature, cbsAmount: CBS_PER_BUY, priceSol: PRICE_SOL, mint: CBS_MINT })
+        });
+        let data=null; try{ data=await resp.json(); }catch{}
+        if (resp.ok && (data?.ok || data?.tx || data?.signature)) return { ok:true, tx:data.tx||data.signature };
+        return { ok:false, error:data?.error||"Fulfill failed" };
+      }catch(err){ return { ok:false, error:"Network/CORS error: "+(err?.message||err) }; }
+    }
+
+    buyBtn.addEventListener("click", async () => {
+      try{
+        let provider=getProvider(); if(!provider){ setERR(t("notFoundPhantom")); return; }
+        let buyerPub=provider.publicKey?.toString(); if(!buyerPub) buyerPub=await connectWallet(); if(!buyerPub) return;
+        if (tooSoon()) return setWARN(t("pleaseWait"));
+        setWARN(t("preparing"));
+
+        const connection=new Connection(HELIUS_RPC,"confirmed");
+        const buyerPk=new PublicKey(buyerPub); const toPk=new PublicKey(CREATOR_WALLET);
+        const tx=new Transaction(); tx.feePayer=buyerPk; const {blockhash}=await connection.getLatestBlockhash("finalized"); tx.recentBlockhash=blockhash;
+        tx.add(SystemProgram.transfer({ fromPubkey:buyerPk, toPubkey:toPk, lamports: Math.round(PRICE_SOL*LAMPORTS_PER_SOL) }));
+
+        let signature; if (typeof provider.signAndSendTransaction==="function"){ const res=await provider.signAndSendTransaction(tx); signature=res?.signature??res; }
+        else { const signed=await provider.signTransaction(tx); signature=await connection.sendRawTransaction(signed.serialize(),{skipPreflight:false}); }
+
+        setWARN(t("sentWaiting",{ link: link("https://solscan.io/tx/"+signature,"viewOnSolscan") }));
+        await connection.confirmTransaction(signature,"confirmed");
+
+        setWARN(t("startingPayout",{ amount: fmtAmount(CBS_PER_BUY) }));
+        const result=await fulfill({ buyer: buyerPk.toString(), signature });
+
+        if (result.ok){
+          clearPending(); markBuy();
+          setOK(t("successPayout",{ price: PRICE_SOL.toFixed(3), amount: fmtAmount(CBS_PER_BUY), link: link("https://solscan.io/tx/"+result.tx, "viewOnSolscan") }));
+          retryBtn.style.display="none";
+          confetti({ particleCount:150, spread:70, origin:{ y:.6 } });
+        } else {
+          setPending({ buyer: buyerPk.toString(), signature }); retryBtn.style.display="inline-block";
+          setOK(t("receivedButPending",{ error: result.error, sig: signature }));
+        }
+      }catch(e){
+        const msg=(e?.message||e||"").toString().toLowerCase();
+        if (msg.includes("reject")||msg.includes("decline")) setERR(t("cancelled"));
+        else if (msg.includes("insufficient")||msg.includes("not enough")) setERR(t("insufficient",{ price: PRICE_SOL.toFixed(3) }));
+        else setERR(t("genericError",{ err:(e?.message||e) }));
+      }
+    });
+
+    retryBtn.addEventListener("click", async () => {
+      const pending=getPending(); if(!pending){ setERR(t("retryNone")); return; }
+      try{
+        setWARN(t("retrying")); const result=await fulfill(pending);
+        if (result.ok){ clearPending(); setOK(t("retryOk",{ link: link("https://solscan.io/tx/"+result.tx,"viewOnSolscan") })); retryBtn.style.display="none"; confetti({ particleCount:120, spread:60, origin:{ y:.6 } }); }
+        else setERR(t("retryErr",{ err: result.error||"unknown error" }));
+      }catch(e){ setERR(t("retryFetchErr",{ err:(e?.message||e) })); }
+    });
+
+    function initAirdropTimer(){
+      const end=new Date(AIRDROP_DEADLINE_ISO).getTime();
+      function tick(){
+        const now=Date.now();
+        if (now>=end){
+          airdropBtn.setAttribute("disabled","disabled");
+          airdropBtn.textContent=t("airdropClosedBtn");
+          airdropBtn.removeAttribute("href");
+          airdropCountdown.classList.add("closed");
+          airdropCountdown.textContent=t("airdropClosedText");
+          return;
+        }
+        const diff=end-now, d=Math.floor(diff/86400000), h=Math.floor(diff%86400000/3600000), m=Math.floor(diff%3600000/60000), s=Math.floor(diff%60000/1000);
+        airdropCountdown.textContent=t("countdownLeft",{d,h,m,s});
+        requestAnimationFrame(()=>setTimeout(tick,1000));
+      }
+      tick();
+    }
   </script>
-  <script src="https://unpkg.com/@solana/web3.js@1.87.6/lib/index.iife.min.js"></script>
 </body>
 </html>
+
