@@ -49,11 +49,16 @@
       box-shadow:0 0 10px var(--fg),0 0 40px var(--fg),0 0 80px var(--fg);
     }
     .btn-primary:hover{box-shadow:0 0 20px var(--cyan),0 0 60px var(--cyan),0 0 100px var(--cyan)}
+    .btn[disabled]{opacity:.6;cursor:not-allowed}
 
     /* Status */
     #status{min-height:1.5rem;margin-top:.6rem}
     .ok{color:#5aff86} .warn{color:#ffd166} .err{color:#ff6b6b}
     #walletAddr{font-size:.95rem;color:#9fffe3}
+
+    /* Airdrop teller */
+    .countdown{margin-top:.4rem;color:#9fffe3;font-size:.95rem}
+    .closed{color:#ffd166}
   </style>
 </head>
 <body>
@@ -96,6 +101,19 @@
     </div>
 
     <p id="status"></p>
+  </section>
+
+  <!-- AIRDROP (via Google Form) -->
+  <section class="section" style="text-align:center">
+    <h2>🎁 Airdrop – Aanvraag</h2>
+    <p>Vraag de airdrop aan via het formulier. <br><em>Inschrijving stopt op 1 september 2025.</em></p>
+    <div class="toolbar">
+      <a id="airdropBtn" class="btn btn-primary" target="_blank" rel="noreferrer"
+         href="https://docs.google.com/forms/d/e/1FAIpQLSfIPCTbVFXfGqESxofzjzUwO60hu89DId5T-EmV6ax6hOplSg/viewform?usp=sharing&ouid=105309397487176943057">
+         🎁 Aanvraag Airdrop
+      </a>
+    </div>
+    <div id="airdropCountdown" class="countdown"></div>
   </section>
 
   <!-- INFO -->
@@ -143,6 +161,9 @@
     // Backend die CBS uitkeert na betaling:
     const FULFILL_ENDPOINT = "https://cbs-coin.vercel.app/api/koop-cbs";
 
+    // Airdrop deadline (na deze datum wordt de knop uitgeschakeld)
+    const AIRDROP_DEADLINE_ISO = "2025-09-01T00:00:00Z";
+
     // ===== UI helpers =====
     const $ = (id)=>document.getElementById(id);
     const connectBtn    = $("connectBtn");
@@ -151,6 +172,8 @@
     const buyBtn        = $("buyBtn");
     const retryBtn      = $("retryBtn");
     const statusEl      = $("status");
+    const airdropBtn    = $("airdropBtn");
+    const airdropCountdown = $("airdropCountdown");
     const setOK  = (h)=>{ statusEl.className="ok";  statusEl.innerHTML=h; };
     const setERR = (h)=>{ statusEl.className="err"; statusEl.innerHTML=h; };
     const setWARN= (h)=>{ statusEl.className="warn";statusEl.innerHTML=h; };
@@ -194,6 +217,7 @@
       // Toon retry-knop als er een pending uitbetaling in storage staat
       const pending = getPending();
       if (pending) retryBtn.style.display = "inline-block";
+      initAirdropTimer();
     });
 
     import { Connection, PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.95.3";
@@ -223,23 +247,28 @@
       try{ localStorage.removeItem("cbs_pending_fulfill"); }catch{}
     }
 
+    // Fulfill met nette fout bij CORS/netwerk
     async function fulfill({ buyer, signature }){
-      const resp = await fetch(FULFILL_ENDPOINT, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          buyer, signature,
-          cbsAmount: CBS_PER_BUY,
-          priceSol: PRICE_SOL,
-          mint: CBS_MINT
-        })
-      });
-      let data = null;
-      try{ data = await resp.json(); }catch(_){}
-      if (resp.ok && (data?.ok || data?.tx || data?.signature)) {
-        return { ok:true, tx: data.tx || data.signature };
+      try{
+        const resp = await fetch(FULFILL_ENDPOINT, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            buyer, signature,
+            cbsAmount: CBS_PER_BUY,
+            priceSol: PRICE_SOL,
+            mint: CBS_MINT
+          })
+        });
+        let data = null;
+        try{ data = await resp.json(); }catch(_){}
+        if (resp.ok && (data?.ok || data?.tx || data?.signature)) {
+          return { ok:true, tx: data.tx || data.signature };
+        }
+        return { ok:false, error: data?.error || "Fulfill failed" };
+      }catch(err){
+        return { ok:false, error: "Network/CORS error: " + (err?.message || err) };
       }
-      return { ok:false, error: data?.error || "Fulfill failed" };
     }
 
     // Koop flow
@@ -301,7 +330,6 @@
           retryBtn.style.display = "none";
           confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
         } else {
-          // Bewaar pending en toon retry
           setPending({ buyer: buyerPk.toString(), signature });
           retryBtn.style.display = "inline-block";
           setOK(
@@ -345,6 +373,30 @@
         setERR("❌ Fout bij herproberen: " + (e?.message || e));
       }
     });
+
+    // ===== Airdrop countdown / disable na deadline =====
+    function initAirdropTimer(){
+      const end = new Date(AIRDROP_DEADLINE_ISO).getTime();
+      function tick(){
+        const now = Date.now();
+        if (now >= end){
+          airdropBtn.setAttribute("disabled","disabled");
+          airdropBtn.textContent = "🎁 Inschrijving gesloten";
+          airdropBtn.removeAttribute("href");
+          airdropCountdown.classList.add("closed");
+          airdropCountdown.textContent = "De airdrop-inschrijving is gesloten.";
+          return; // stop
+        }
+        const diff = end - now;
+        const d = Math.floor(diff / (1000*60*60*24));
+        const h = Math.floor((diff % (1000*60*60*24)) / (1000*60*60));
+        const m = Math.floor((diff % (1000*60*60)) / (1000*60));
+        const s = Math.floor((diff % (1000*60)) / 1000);
+        airdropCountdown.textContent = `Inschrijving sluit over ${d}d ${h}u ${m}m ${s}s`;
+        requestAnimationFrame(()=>setTimeout(tick, 1000));
+      }
+      tick();
+    }
   </script>
 </body>
 </html>
