@@ -4,6 +4,16 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>CBS DAO – Mainnet</title>
+
+  <!-- Import map voor bn.js -->
+  <script type="importmap">
+  {
+    "imports": {
+      "bn.js": "https://esm.sh/bn.js@5.2.1"
+    }
+  }
+  </script>
+
   <style>
     :root { color-scheme: dark; }
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#0b0b0f; color:#eaeaea; margin:0; }
@@ -71,7 +81,6 @@
       <div class="row" style="margin-top:10px">
         <button id="btnCreate">Create Proposal</button>
       </div>
-      <p class="muted">De PDA voor <code>proposal</code> wordt automatisch afgeleid met seeds <code>["proposal", creator, creator]</code>.</p>
     </div>
 
     <div class="card">
@@ -93,7 +102,7 @@
         </div>
         <div>
           <label class="muted">Proposal Pubkey</label>
-          <input id="inpProposal" type="text" placeholder="Proposal account pubkey (optioneel voor create)" />
+          <input id="inpProposal" type="text" placeholder="Proposal account pubkey" />
         </div>
       </div>
       <div style="margin-top:12px">
@@ -103,10 +112,6 @@
       <div class="row" style="margin-top:10px">
         <button id="btnApply">Apply & re-init</button>
       </div>
-      <p class="muted" style="margin-top:8px">
-        Zet <code>idl.json</code> naast deze pagina in <code>dao-mainnet/</code>.<br>
-        Deze pagina gebruikt exact jouw IDL (snake_case instructies, PDA-seeds) en zet automatisch <code>system_program</code>.
-      </p>
     </div>
 
     <div class="card">
@@ -116,13 +121,9 @@
   </div>
 
   <script type="module">
-    // ===== Imports =====
-    const [{ Connection, PublicKey, SystemProgram }, anchor] = await Promise.all([
-      import("https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js").then(m => window.solanaWeb3 || m.default),
-      import("https://unpkg.com/@coral-xyz/anchor@0.29.0/dist/esm/index.js"),
-    ]);
+    import { Connection, PublicKey, SystemProgram } from "https://esm.sh/@solana/web3.js@1.95.3?bundle&target=es2020";
+    import * as anchor from "https://esm.sh/@coral-xyz/anchor@0.29.0?bundle&target=es2020";
 
-    // ===== Helpers & UI =====
     const $ = (id) => document.getElementById(id);
     const statusEl = $("status");
     const walletEl = $("wallet");
@@ -145,9 +146,7 @@
     function setWallet(pk) {
       walletEl.innerHTML = pk ? `Wallet: <code>${pk}</code>` : "Wallet: <em>niet verbonden</em>";
     }
-    function log(...args){ console.log("[DAO]", ...args); }
 
-    // ===== Defaults (overridable via query/inputs) =====
     const qs = new URLSearchParams(location.search);
     let PROGRAM_ID = (qs.get("program") || "FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY").trim();
     let PROPOSAL_PUBKEY = (qs.get("proposal") || "").trim();
@@ -160,14 +159,12 @@
     proposalInfoEl.innerHTML = "Proposal: <code>" + (PROPOSAL_PUBKEY || "—") + "</code>";
     networkEl.innerHTML = "RPC: <code>" + RPC_URL + "</code>";
 
-    // ===== Phantom detect =====
     function getPhantomProvider() {
       if (window?.solana?.isPhantom) return window.solana;
       if (window?.phantom?.solana?.isPhantom) return window.phantom.solana;
       return null;
     }
 
-    // ===== Anchor state =====
     let connection = null;
     let wallet = null;
     let provider = null;
@@ -189,62 +186,43 @@
       program = new anchor.Program(idl, programId, provider);
 
       setStatus("Anchor klaar.", "ok");
-      programInfoEl.innerHTML = "Program: <code>" + PROGRAM_ID + "</code>";
-      log("Anchor init ok", { RPC_URL, PROGRAM_ID });
     }
 
-    // ===== PDAs (volgens jouw IDL) =====
     function pdaProposal(creatorPk) {
-      // seeds: ["proposal", creator, creator]
       return PublicKey.findProgramAddressSync(
         [Buffer.from("proposal"), creatorPk.toBytes(), creatorPk.toBytes()],
         new PublicKey(PROGRAM_ID)
       )[0];
     }
     function pdaVoteReceipt(proposalPk, voterPk) {
-      // seeds: ["vote", proposal, voter]
       return PublicKey.findProgramAddressSync(
         [Buffer.from("vote"), proposalPk.toBytes(), voterPk.toBytes()],
         new PublicKey(PROGRAM_ID)
       )[0];
     }
 
-    // ===== Connect / Disconnect =====
     $("btnConnect").onclick = async () => {
       try {
         const phantom = getPhantomProvider();
         if (!phantom) {
-          setStatus("Phantom niet gevonden. Installeer de extensie en herlaad de pagina.", "err");
-          alert("Phantom niet gevonden.\n\nInstalleer: https://phantom.app/");
+          setStatus("Phantom niet gevonden.", "err");
+          alert("Installeer Phantom: https://phantom.app/");
           return;
         }
-        if (!phantom._cbsListenersAdded) {
-          phantom.on?.("connect", (pubkey) => {
-            try { setWallet(pubkey?.toBase58?.() || String(pubkey)); } catch { setWallet(String(pubkey)); }
-            log("Phantom connected", pubkey?.toBase58?.() || pubkey);
-          });
-          phantom.on?.("disconnect", () => { setWallet(null); log("Phantom disconnected"); });
-          phantom._cbsListenersAdded = true;
-        }
-        setStatus("Verbinding maken…");
         const resp = await phantom.connect({ onlyIfTrusted: false });
-        const pubkey = resp?.publicKey?.toBase58?.() || phantom.publicKey?.toBase58?.() || String(resp?.publicKey || "");
-        if (!pubkey) throw new Error("Geen public key terug van Phantom.");
+        const pubkey = resp?.publicKey?.toBase58?.() || phantom.publicKey?.toBase58?.();
         setWallet(pubkey);
-
         wallet = {
           publicKey: phantom.publicKey,
           signTransaction: phantom.signTransaction?.bind(phantom),
           signAllTransactions: phantom.signAllTransactions?.bind(phantom),
           signMessage: phantom.signMessage?.bind(phantom),
         };
-        setStatus("Anchor initialiseren…");
         await initAnchor();
         setStatus("Verbonden en klaar.", "ok");
       } catch (e) {
         console.error(e);
-        setStatus("Connect mislukt: " + (e.message || e), "err");
-        alert("Wallet connect mislukte.\n\nTips:\n• Sta pop-ups toe\n• Controleer dat Phantom is ingelogd\n• Gebruik Chrome/Edge (geen incognito)\n• Herlaad de pagina");
+        setStatus("Connect mislukt: " + e.message, "err");
       }
     };
 
@@ -255,7 +233,6 @@
       setStatus("Losgekoppeld.");
     };
 
-    // ===== Apply / re-init =====
     $("btnApply").onclick = async () => {
       PROGRAM_ID = inpProgram.value.trim();
       PROPOSAL_PUBKEY = inpProposal.value.trim();
@@ -263,92 +240,60 @@
       networkEl.innerHTML = "RPC: <code>" + RPC_URL + "</code>";
       programInfoEl.innerHTML = "Program: <code>" + (PROGRAM_ID || "—") + "</code>";
       proposalInfoEl.innerHTML = "Proposal: <code>" + (PROPOSAL_PUBKEY || "—") + "</code>";
-      setStatus("Herinitialiseren…");
-      try {
-        if (!wallet) { setStatus("Verbind eerst je wallet.", "warn"); return; }
-        await initAnchor();
-      } catch (e) {
-        console.error(e);
-        setStatus(e.message, "err");
-      }
+      if (!wallet) { setStatus("Verbind eerst je wallet.", "warn"); return; }
+      await initAnchor();
     };
 
-    // ===== Create Proposal =====
     $("btnCreate").onclick = async () => {
       try {
         if (!program) throw new Error("Program niet geïnitialiseerd.");
         const creator = wallet.publicKey;
         const proposalPda = pdaProposal(creator);
 
-        // bepaal ends_at (epoch sec)
         let endsAt = 0;
-        const dtVal = inpEndsAtDT.value?.trim();
-        if (dtVal) {
-          endsAt = Math.floor(new Date(dtVal).getTime() / 1000);
+        if (inpEndsAtDT.value) {
+          endsAt = Math.floor(new Date(inpEndsAtDT.value).getTime() / 1000);
         } else {
-          const mins = Math.max(1, parseInt(inpMinutes.value || "60", 10));
-          endsAt = Math.floor(Date.now()/1000) + mins * 60;
+          endsAt = Math.floor(Date.now()/1000) + (parseInt(inpMinutes.value) || 60) * 60;
         }
-        const question = (inpQuestion.value || "").trim();
-        if (!question) throw new Error("Vul een vraag (question) in.");
-        // Anchor call: create_proposal(question: string, ends_at: i64)
-        const builder = program.methods.createProposal(question, endsAt);
-        const txSig = await builder
+        const question = inpQuestion.value.trim();
+        if (!question) throw new Error("Vraag invullen.");
+        const txSig = await program.methods.createProposal(question, endsAt)
           .accounts({
             proposal: proposalPda,
             creator,
-            systemProgram: SystemProgram.programId,
+            systemProgram: SystemProgram.programId
           })
           .rpc();
 
         PROPOSAL_PUBKEY = proposalPda.toBase58();
         inpProposal.value = PROPOSAL_PUBKEY;
         proposalInfoEl.innerHTML = "Proposal: <code>" + PROPOSAL_PUBKEY + "</code>";
-        resultEl.innerHTML = `<span class="ok">✅ Proposal aangemaakt: <code>${PROPOSAL_PUBKEY}</code><br/>TX: <code>${txSig}</code></span>`;
-        log("Create proposal", { proposalPda: PROPOSAL_PUBKEY, txSig });
+        resultEl.innerHTML = `<span class="ok">✅ Proposal aangemaakt: ${PROPOSAL_PUBKEY}<br/>TX: ${txSig}</span>`;
       } catch (e) {
-        console.error(e);
         resultEl.innerHTML = `<span class="err">❌ ${e.message}</span>`;
       }
     };
 
-    // ===== Fetch Proposal =====
     $("btnFetch").onclick = async () => {
       try {
         if (!program) throw new Error("Program niet geïnitialiseerd.");
         if (!PROPOSAL_PUBKEY) throw new Error("Geen proposal pubkey ingevuld.");
-        const pub = new PublicKey(PROPOSAL_PUBKEY);
-
-        // Probeer IDL-based fetch (account type: "proposal")
-        try {
-          const data = await program.account.proposal.fetch(pub);
-          const view = {
-            creator: data.creator?.toBase58?.() || String(data.creator),
-            question: data.question,
-            yes_votes: data.yesVotes?.toString?.() ?? data.yes_votes?.toString?.() ?? String(data.yes_votes),
-            no_votes: data.noVotes?.toString?.() ?? data.no_votes?.toString?.() ?? String(data.no_votes),
-            created_at: Number(data.createdAt ?? data.created_at),
-            ends_at: Number(data.endsAt ?? data.ends_at),
-          };
-          lastFetchEl.textContent = JSON.stringify(view, null, 2);
-          resultEl.innerHTML = `<span class="ok">✅ Proposal gelezen.</span>`;
-          return;
-        } catch (e) {
-          console.warn("IDL fetch mislukte, val terug op getAccountInfo", e);
-        }
-
-        // Fallback: raw account
-        const acc = await connection.getAccountInfo(pub);
-        if (!acc) { resultEl.innerHTML = `<span class="warn">Proposal account niet gevonden.</span>`; return; }
-        lastFetchEl.textContent = `Owner: ${acc.owner.toBase58()}, data len: ${acc.data?.length ?? 0}`;
-        resultEl.innerHTML = `Account gevonden (raw).`;
+        const data = await program.account.proposal.fetch(new PublicKey(PROPOSAL_PUBKEY));
+        lastFetchEl.textContent = JSON.stringify({
+          creator: data.creator.toBase58(),
+          question: data.question,
+          yes_votes: data.yesVotes.toString(),
+          no_votes: data.noVotes.toString(),
+          created_at: Number(data.createdAt),
+          ends_at: Number(data.endsAt)
+        }, null, 2);
+        resultEl.innerHTML = `<span class="ok">✅ Proposal gelezen.</span>`;
       } catch (e) {
-        console.error(e);
         resultEl.innerHTML = `<span class="err">${e.message}</span>`;
       }
     };
 
-    // ===== Vote =====
     async function vote(yes) {
       try {
         if (!program) throw new Error("Program niet geïnitialiseerd.");
@@ -356,39 +301,24 @@
         const proposalPk = new PublicKey(PROPOSAL_PUBKEY);
         const voter = wallet.publicKey;
         const voteReceiptPda = pdaVoteReceipt(proposalPk, voter);
-
-        // Anchor call: vote(yes: bool)
-        const builder = program.methods.vote(yes);
-        const txSig = await builder
+        const txSig = await program.methods.vote(yes)
           .accounts({
             proposal: proposalPk,
             voter,
             voteReceipt: voteReceiptPda,
-            systemProgram: SystemProgram.programId,
+            systemProgram: SystemProgram.programId
           })
           .rpc();
-
         resultEl.innerHTML = `<span class="ok">✅ Vote TX: ${txSig}</span>`;
-        log("Vote TX", txSig);
       } catch (e) {
-        console.error(e);
-        // Toon bekende on-chain fouten netjes
-        const msg = e?.error?.errorMessage || e?.message || String(e);
-        resultEl.innerHTML = `<span class="err">❌ ${msg}</span>`;
+        resultEl.innerHTML = `<span class="err">❌ ${e.message}</span>`;
       }
     }
 
     $("btnVoteYes").onclick = () => vote(true);
     $("btnVoteNo").onclick = () => vote(false);
 
-    // ===== Init status =====
-    setStatus("Pagina geladen. Verbind je wallet en controleer Program/Proposal/RPC.");
-    log("Start", { PROGRAM_ID, PROPOSAL_PUBKEY, RPC_URL });
-
-    // Reflecteer init-values
-    (function reflectInit(){
-      // Niets extra nodig, maar handig om te visualiseren
-    })();
+    setStatus("Pagina geladen. Verbind je wallet.");
   </script>
 </body>
 </html>
