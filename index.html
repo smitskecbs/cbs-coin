@@ -36,7 +36,7 @@
     .social-links a{display:inline-flex;align-items:center;padding:.5rem 1rem;background:#1a1a1a;border:1px solid var(--cyan);border-radius:6px;font-weight:700;color:var(--cyan)}
     .social-links a:hover{background:var(--cyan);color:#000}
 
-    /* Toolbar + knoppen */
+    /* Knoppen */
     .toolbar{display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap;margin:1rem 0}
     .btn{
       padding:.9rem 1.4rem;font-weight:800;border-radius:12px;border:1px solid var(--cyan);
@@ -54,9 +54,6 @@
     #status{min-height:1.5rem;margin-top:.6rem}
     .ok{color:#5aff86} .warn{color:#ffd166} .err{color:#ff6b6b}
     #walletAddr{font-size:.95rem;color:#9fffe3}
-
-    /* Lijstjes */
-    ul{margin-top:.4rem}
   </style>
 </head>
 <body>
@@ -75,13 +72,6 @@
     <h1>CBS Coin</h1>
     <h2>Community Builds Sovereignty</h2>
 
-    <!-- Wallet toolbar -->
-    <div class="toolbar">
-      <button id="connectBtn" class="btn">🔌 Connect Wallet</button>
-      <button id="disconnectBtn" class="btn" style="display:none">🔒 Disconnect</button>
-      <span id="walletAddr"></span>
-    </div>
-
     <div class="social-links">
       <a href="https://t.me/CBS_Coin" target="_blank" rel="noreferrer">Telegram</a>
       <a href="https://twitter.com/CBS_Coin" target="_blank" rel="noreferrer">X (Twitter)</a>
@@ -92,9 +82,19 @@
   <section class="section" style="text-align:center">
     <h2>💰 Koop CBS – Actie</h2>
     <p><b>0.020 SOL</b> → <b>25.000 CBS</b> (direct via onze site).</p>
+
+    <!-- Wallet in het koopvak -->
+    <div class="toolbar">
+      <button id="connectBtn" class="btn">🔌 Connect Wallet</button>
+      <button id="disconnectBtn" class="btn" style="display:none">🔒 Disconnect</button>
+      <span id="walletAddr"></span>
+    </div>
+
     <div class="toolbar">
       <button id="buyBtn" class="btn btn-primary">💳 Koop 25.000 CBS (0.020 SOL)</button>
+      <button id="retryBtn" class="btn" style="display:none">🔁 Herprobeer uitbetaling</button>
     </div>
+
     <p id="status"></p>
   </section>
 
@@ -140,7 +140,7 @@
     const CBS_PER_BUY    = 25000;        // 25.000 CBS
     const HELIUS_RPC     = "https://mainnet.helius-rpc.com/?api-key=dee593c7-e01e-42da-9419-bcf7b585b67e";
 
-    // (optioneel) backend die CBS uitkeert na betaling:
+    // Backend die CBS uitkeert na betaling:
     const FULFILL_ENDPOINT = "https://cbs-coin.vercel.app/api/koop-cbs";
 
     // ===== UI helpers =====
@@ -149,6 +149,7 @@
     const disconnectBtn = $("disconnectBtn");
     const walletAddrEl  = $("walletAddr");
     const buyBtn        = $("buyBtn");
+    const retryBtn      = $("retryBtn");
     const statusEl      = $("status");
     const setOK  = (h)=>{ statusEl.className="ok";  statusEl.innerHTML=h; };
     const setERR = (h)=>{ statusEl.className="err"; statusEl.innerHTML=h; };
@@ -167,11 +168,13 @@
 
     async function connectWallet(){
       const p = getProvider();
-      if(!p){ alert("Phantom wallet niet gevonden."); return; }
+      if(!p){ alert("Phantom wallet niet gevonden."); return null; }
       try{
         const res = await p.connect({ onlyIfTrusted:false });
-        setConnected((res.publicKey||p.publicKey).toString());
-      }catch(e){ console.warn(e); }
+        const pub = (res.publicKey||p.publicKey).toString();
+        setConnected(pub);
+        return pub;
+      }catch(e){ console.warn(e); return null; }
     }
     async function disconnectWallet(){
       const p = getProvider(); try{ await p?.disconnect?.(); }catch(_){}
@@ -188,12 +191,14 @@
         const res = await p.connect({ onlyIfTrusted:true });
         if (res?.publicKey || p.publicKey) setConnected((res.publicKey||p.publicKey).toString());
       }catch(_){}
+      // Toon retry-knop als er een pending uitbetaling in storage staat
+      const pending = getPending();
+      if (pending) retryBtn.style.display = "inline-block";
     });
 
-    // ===== Koop flow =====
     import { Connection, PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.95.3";
 
-    // simpele client-side ratelimit (lokaal): 1 koop per 5 minuten
+    // eenvoudige client-side cooldown: 1 koop per 5 minuten
     const COOLDOWN_MS = 5 * 60 * 1000;
     function tooSoon(){
       try{
@@ -203,17 +208,57 @@
     }
     function markBuy(){ try{ localStorage.setItem("cbs_last_buy_ts", String(Date.now())); }catch{} }
 
+    // pending storage (voor retry)
+    function setPending(obj){
+      try{ localStorage.setItem("cbs_pending_fulfill", JSON.stringify(obj)); }catch{}
+    }
+    function getPending(){
+      try{
+        const raw = localStorage.getItem("cbs_pending_fulfill");
+        if (!raw) return null;
+        return JSON.parse(raw);
+      }catch{ return null; }
+    }
+    function clearPending(){
+      try{ localStorage.removeItem("cbs_pending_fulfill"); }catch{}
+    }
+
+    async function fulfill({ buyer, signature }){
+      const resp = await fetch(FULFILL_ENDPOINT, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          buyer, signature,
+          cbsAmount: CBS_PER_BUY,
+          priceSol: PRICE_SOL,
+          mint: CBS_MINT
+        })
+      });
+      let data = null;
+      try{ data = await resp.json(); }catch(_){}
+      if (resp.ok && (data?.ok || data?.tx || data?.signature)) {
+        return { ok:true, tx: data.tx || data.signature };
+      }
+      return { ok:false, error: data?.error || "Fulfill failed" };
+    }
+
+    // Koop flow
     buyBtn.addEventListener("click", async () => {
       try{
-        const provider = getProvider();
-        if (!provider) return setERR("❌ Phantom wallet niet gevonden. Installeer Phantom.");
-        const { publicKey } = await provider.connect({ onlyIfTrusted:false });
+        let provider = getProvider();
+        if (!provider){ setERR("❌ Phantom wallet niet gevonden. Installeer Phantom."); return; }
+
+        // Connect als nog niet connected
+        let buyerPub = provider.publicKey?.toString();
+        if (!buyerPub) buyerPub = await connectWallet();
+        if (!buyerPub) return;
+
         if (tooSoon()) return setWARN("Even geduld… je kunt over een paar minuten opnieuw kopen.");
 
         setWARN("⏳ Voorbereiden van betaling…");
 
         const connection = new Connection(HELIUS_RPC, "confirmed");
-        const buyerPk    = new PublicKey(publicKey.toString());
+        const buyerPk    = new PublicKey(buyerPub);
         const toPk       = new PublicKey(CREATOR_WALLET);
 
         // Maak SOL transfer tx
@@ -242,35 +287,29 @@
         setWARN(`⏳ Betaling verstuurd, wachten op confirm… ${link("https://solscan.io/tx/"+signature, "Bekijk op Solscan")}`);
         await connection.confirmTransaction(signature, "confirmed");
 
-        // Optioneel: backend call om CBS uit te keren
-        let fulfillOk = false;
-        try{
-          const resp = await fetch(FULFILL_ENDPOINT, {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({
-              buyer: buyerPk.toString(),
-              signature,
-              cbsAmount: CBS_PER_BUY,
-              priceSol: PRICE_SOL,
-              mint: CBS_MINT
-            })
-          });
-          const data = await resp.json().catch(()=>null);
-          if (resp.ok && (data?.ok || data?.tx || data?.signature)) {
-            fulfillOk = true;
-          }
-        }catch(_){ /* backend optioneel */ }
+        // Backend uitbetaling
+        setWARN("⏳ Uitbetaling 25.000 CBS wordt gestart…");
+        const result = await fulfill({ buyer: buyerPk.toString(), signature });
 
-        markBuy();
-        setOK(
-          `✅ Koop geslaagd! ${PRICE_SOL} SOL ontvangen. ` +
-          (fulfillOk
-            ? `25.000 CBS wordt zo geleverd (zie je wallet). 🎉`
-            : `De uitbetaling van 25.000 CBS volgt direct; zo niet, neem contact op met de admin met je TX: <code>${signature}</code>.`)
-          + `<br>${link("https://solscan.io/tx/"+signature, "Transactie op Solscan")}`
-        );
-        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+        if (result.ok){
+          clearPending();
+          markBuy();
+          setOK(
+            `✅ Koop geslaagd! ${PRICE_SOL} SOL ontvangen. 25.000 CBS is onderweg. ` +
+            `${link("https://solscan.io/tx/"+result.tx, "Uitbetaling op Solscan")}`
+          );
+          retryBtn.style.display = "none";
+          confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+        } else {
+          // Bewaar pending en toon retry
+          setPending({ buyer: buyerPk.toString(), signature });
+          retryBtn.style.display = "inline-block";
+          setOK(
+            `✅ Betaling ontvangen. De uitbetaling kon niet direct worden bevestigd (` +
+            `${result.error}). Je kunt zo meteen op <b>Herprobeer uitbetaling</b> klikken. ` +
+            `Bewaar je TX: <code>${signature}</code>.`
+          );
+        }
 
       }catch(e){
         console.error(e);
@@ -284,8 +323,29 @@
         }
       }
     });
+
+    // Herprobeer uitbetaling
+    retryBtn.addEventListener("click", async () => {
+      const pending = getPending();
+      if (!pending){ setERR("Geen uitbetaling om te herproberen."); return; }
+
+      try{
+        setWARN("⏳ Opnieuw proberen te uitbetalen…");
+        const result = await fulfill(pending);
+        if (result.ok){
+          clearPending();
+          setOK(`✅ Uitbetaling gelukt! ${link("https://solscan.io/tx/"+result.tx, "Bekijk op Solscan")}`);
+          retryBtn.style.display = "none";
+          confetti({ particleCount: 120, spread: 60, origin: { y: 0.6 } });
+        } else {
+          setERR("Nog niet gelukt: " + (result.error || "onbekende fout"));
+        }
+      }catch(e){
+        console.error(e);
+        setERR("❌ Fout bij herproberen: " + (e?.message || e));
+      }
+    });
   </script>
 </body>
 </html>
-
 
