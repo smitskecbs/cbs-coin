@@ -7,16 +7,20 @@
 
   <!-- Font -->
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
-  <!-- (optioneel) confetti lib, voor later gebruik -->
+  <!-- Confetti (optioneel, voor success) -->
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
   <style>
     :root{
       --bg1:#0f0f0f;--bg2:#1a1a1a;--fg:#00ffcc;--cyan:#00ffff;
-      --panel:#111;--muted:#999;--border:#00ffcc;
+      --panel:#111;--muted:#9aa;--border:#00ffcc;
     }
     *{box-sizing:border-box}
-    body{margin:0;font-family:'Orbitron',sans-serif;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:var(--fg);display:flex;flex-direction:column;align-items:center;padding:2rem}
+    body{
+      margin:0;font-family:'Orbitron',sans-serif;
+      background:linear-gradient(135deg,var(--bg1),var(--bg2));
+      color:var(--fg);display:flex;flex-direction:column;align-items:center;padding:2rem
+    }
     nav{width:100%;background:#111;padding:1rem;text-align:center;margin-bottom:2rem;border-bottom:1px solid #0c2020}
     nav a{margin:0 .8rem;color:var(--cyan);text-decoration:none;font-weight:700}
     nav a:hover{text-decoration:underline}
@@ -32,10 +36,10 @@
     .social-links a{display:inline-flex;align-items:center;padding:.5rem 1rem;background:#1a1a1a;border:1px solid var(--cyan);border-radius:6px;font-weight:700;color:var(--cyan)}
     .social-links a:hover{background:var(--cyan);color:#000}
 
-    /* Toolbar knoppen */
+    /* Toolbar + knoppen */
     .toolbar{display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap;margin:1rem 0}
     .btn{
-      padding:.8rem 1.2rem;font-weight:800;border-radius:12px;border:1px solid var(--cyan);
+      padding:.9rem 1.4rem;font-weight:800;border-radius:12px;border:1px solid var(--cyan);
       background:#141414;color:var(--cyan);cursor:pointer;
       transition:transform .15s ease, box-shadow .2s ease;
     }
@@ -45,18 +49,14 @@
       box-shadow:0 0 10px var(--fg),0 0 40px var(--fg),0 0 80px var(--fg);
     }
     .btn-primary:hover{box-shadow:0 0 20px var(--cyan),0 0 60px var(--cyan),0 0 100px var(--cyan)}
-    #walletAddr{font-size:.95rem;color:#9fffe3}
-    #buyStatus{min-height:1.5rem;margin-top:.5rem}
+
+    /* Status */
+    #status{min-height:1.5rem;margin-top:.6rem}
     .ok{color:#5aff86} .warn{color:#ffd166} .err{color:#ff6b6b}
+    #walletAddr{font-size:.95rem;color:#9fffe3}
 
-    /* Inline Jupiter container */
-    #jup-wrap{margin-top:1rem;display:flex;justify-content:center}
-    #jup-container{width:100%;max-width:980px;height:680px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#0f0f0f}
-
-    /* Responsive chart embed */
-    .chart-wrap{position:relative;width:100%;max-width:1100px}
-    .chart-box{position:relative;width:100%;padding-top:56.25%; /* 16:9 */ border:1px solid var(--border);border-radius:12px;overflow:hidden;background:#0f0f0f}
-    .chart-box iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:0}
+    /* Lijstjes */
+    ul{margin-top:.4rem}
   </style>
 </head>
 <body>
@@ -88,19 +88,14 @@
     </div>
   </header>
 
-  <!-- KOOP CBS (inline Jupiter) -->
+  <!-- KOOP CBS (on-site deal) -->
   <section class="section" style="text-align:center">
-    <h2>💰 Koop CBS</h2>
-    <p>Koop direct CBS Coin tegen de beste prijs via Raydium/Orca (Jupiter router).</p>
-    <div class="toolbar" style="margin-top:1rem">
-      <button id="buyCBSBtn" class="btn btn-primary">💰 Open swap (0.05 SOL)</button>
+    <h2>💰 Koop CBS – Actie</h2>
+    <p><b>0.020 SOL</b> → <b>25.000 CBS</b> (direct via onze site).</p>
+    <div class="toolbar">
+      <button id="buyBtn" class="btn btn-primary">💳 Koop 25.000 CBS (0.020 SOL)</button>
     </div>
-    <p id="buyStatus"></p>
-
-    <!-- Hier renderen we de inline swap -->
-    <div id="jup-wrap">
-      <div id="jup-container"></div>
-    </div>
+    <p id="status"></p>
   </section>
 
   <!-- INFO -->
@@ -120,22 +115,6 @@
     </ul>
   </section>
 
-  <!-- Live prijs-grafiek -->
-  <section class="section" style="text-align:center">
-    <h3>📈 Live prijs</h3>
-    <p>Realtime koers en liquiditeit van de CBS pool.</p>
-    <div class="chart-wrap">
-      <div class="chart-box">
-        <!-- GeckoTerminal embed van je pool -->
-        <iframe
-          src="https://www.geckoterminal.com/solana/pools/7RSeJd8C1cXA95Vfcz6CregUofj4dbmHgsxkF7zdWhVE?embed=1&info=0&swaps=0"
-          loading="lazy"
-          allowtransparency="true">
-        </iframe>
-      </div>
-    </div>
-  </section>
-
   <section class="section">
     <h3>📄 Whitepaper & Roadmap</h3>
     <p>
@@ -152,36 +131,47 @@
     </div>
   </footer>
 
-  <!-- Jupiter Terminal -->
-  <script src="https://terminal.jup.ag/main-v2.js"></script>
+  <!-- Web3.js (ESM) -->
+  <script type="module">
+    // ===== Config =====
+    const CREATOR_WALLET = "76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg"; // ontvanger SOL
+    const CBS_MINT       = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
+    const PRICE_SOL      = 0.020;        // 0.020 SOL
+    const CBS_PER_BUY    = 25000;        // 25.000 CBS
+    const HELIUS_RPC     = "https://mainnet.helius-rpc.com/?api-key=dee593c7-e01e-42da-9419-bcf7b585b67e";
 
-  <script>
-    // ====== Config ======
-    const CBS_MINT = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
-    const SOL_MINT = "So11111111111111111111111111111111111111112"; // Wrapped SOL
-    const HELIUS_MAINNET = "https://mainnet.helius-rpc.com/?api-key=dee593c7-e01e-42da-9419-bcf7b585b67e";
+    // (optioneel) backend die CBS uitkeert na betaling:
+    const FULFILL_ENDPOINT = "https://cbs-coin.vercel.app/api/koop-cbs";
 
-    // ====== Wallet helpers ======
+    // ===== UI helpers =====
     const $ = (id)=>document.getElementById(id);
-    const connectBtn   = $("connectBtn");
-    const disconnectBtn= $("disconnectBtn");
-    const walletAddrEl = $("walletAddr");
-    const buyBtn       = $("buyCBSBtn");
-    const buyStatus    = $("buyStatus");
+    const connectBtn    = $("connectBtn");
+    const disconnectBtn = $("disconnectBtn");
+    const walletAddrEl  = $("walletAddr");
+    const buyBtn        = $("buyBtn");
+    const statusEl      = $("status");
+    const setOK  = (h)=>{ statusEl.className="ok";  statusEl.innerHTML=h; };
+    const setERR = (h)=>{ statusEl.className="err"; statusEl.innerHTML=h; };
+    const setWARN= (h)=>{ statusEl.className="warn";statusEl.innerHTML=h; };
+    const link  = (href, text)=>`<a href="${href}" target="_blank" rel="noreferrer">${text}</a>`;
 
+    // ===== Wallet detect =====
     function getProvider(){
       if (window.solana?.isPhantom) return window.solana;
       if (window.phantom?.solana?.isPhantom) return window.phantom.solana;
       return null;
     }
     function shortKey(pk){ const s = pk?.toString()||""; return s.length>10 ? s.slice(0,4)+"…"+s.slice(-4) : s; }
-    function setConnected(pk){ walletAddrEl.textContent = "Wallet: " + shortKey(pk); connectBtn.style.display="none"; disconnectBtn.style.display="inline-block"; }
+    function setConnected(pk){ walletAddrEl.textContent = "Wallet: "+shortKey(pk); connectBtn.style.display="none"; disconnectBtn.style.display="inline-block"; }
     function setDisconnected(){ walletAddrEl.textContent = ""; connectBtn.style.display="inline-block"; disconnectBtn.style.display="none"; }
 
     async function connectWallet(){
-      const provider = getProvider();
-      if (!provider){ alert("Phantom wallet niet gevonden."); return; }
-      try{ const res = await provider.connect({ onlyIfTrusted:false }); setConnected((res.publicKey||provider.publicKey).toString()); }catch(e){ console.warn(e); }
+      const p = getProvider();
+      if(!p){ alert("Phantom wallet niet gevonden."); return; }
+      try{
+        const res = await p.connect({ onlyIfTrusted:false });
+        setConnected((res.publicKey||p.publicKey).toString());
+      }catch(e){ console.warn(e); }
     }
     async function disconnectWallet(){
       const p = getProvider(); try{ await p?.disconnect?.(); }catch(_){}
@@ -190,52 +180,108 @@
     connectBtn.addEventListener("click", connectWallet);
     disconnectBtn.addEventListener("click", disconnectWallet);
 
-    // ====== Jupiter init: INTEGRATED (inline) + Helius RPC ======
+    // Probeer silent connect
     window.addEventListener("load", async () => {
-      try {
-        await window.Jupiter.init({
-          displayMode: "integrated",
-          integratedTargetId: "jup-container",
-          defaultInputMint: SOL_MINT,
-          defaultOutputMint: CBS_MINT,
-          defaultSwapMode: "ExactIn",
-          defaultExplorer: "Solscan",
-          strictTokenList: false,
-          enableWalletPassthrough: true,
-          endpoint: HELIUS_MAINNET
-        });
-
-        // Probeer silent connect
-        const provider = getProvider();
-        if (provider && provider.isConnected && provider.publicKey){
-          setConnected(provider.publicKey.toString());
-        } else if (provider?.connect){
-          try{
-            const res = await provider.connect({ onlyIfTrusted:true });
-            if (res?.publicKey || provider.publicKey){
-              setConnected((res.publicKey || provider.publicKey).toString());
-            }
-          }catch(_){}
-        }
-      } catch (e) {
-        console.error("Jupiter init fout:", e);
-        buyStatus.className = "err";
-        buyStatus.textContent = "Kon swap-module niet initialiseren. Vernieuw de pagina en probeer opnieuw.";
-      }
+      const p = getProvider();
+      if (!p) return;
+      try{
+        const res = await p.connect({ onlyIfTrusted:true });
+        if (res?.publicKey || p.publicKey) setConnected((res.publicKey||p.publicKey).toString());
+      }catch(_){}
     });
 
-    // ====== Koop-knop: scroll naar swap ======
+    // ===== Koop flow =====
+    import { Connection, PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.95.3";
+
+    // simpele client-side ratelimit (lokaal): 1 koop per 5 minuten
+    const COOLDOWN_MS = 5 * 60 * 1000;
+    function tooSoon(){
+      try{
+        const t = Number(localStorage.getItem("cbs_last_buy_ts")||"0");
+        return (Date.now() - t) < COOLDOWN_MS;
+      }catch{ return false; }
+    }
+    function markBuy(){ try{ localStorage.setItem("cbs_last_buy_ts", String(Date.now())); }catch{} }
+
     buyBtn.addEventListener("click", async () => {
-      const amountStr = prompt("Hoeveel SOL wil je omruilen naar CBS?", "0.05");
-      if (!amountStr) return;
-      try {
-        document.querySelector("#jup-container")?.scrollIntoView({ behavior:"smooth", block:"start" });
-        buyStatus.className = "ok";
-        buyStatus.textContent = "Vul het bedrag in de swap in en bevestig de transactie in je wallet.";
-      } catch (e) {
-        console.error("Open integrated fout:", e);
-        buyStatus.className = "err";
-        buyStatus.textContent = "Kon swap niet tonen.";
+      try{
+        const provider = getProvider();
+        if (!provider) return setERR("❌ Phantom wallet niet gevonden. Installeer Phantom.");
+        const { publicKey } = await provider.connect({ onlyIfTrusted:false });
+        if (tooSoon()) return setWARN("Even geduld… je kunt over een paar minuten opnieuw kopen.");
+
+        setWARN("⏳ Voorbereiden van betaling…");
+
+        const connection = new Connection(HELIUS_RPC, "confirmed");
+        const buyerPk    = new PublicKey(publicKey.toString());
+        const toPk       = new PublicKey(CREATOR_WALLET);
+
+        // Maak SOL transfer tx
+        const tx = new Transaction();
+        tx.feePayer = buyerPk;
+        const { blockhash } = await connection.getLatestBlockhash("finalized");
+        tx.recentBlockhash = blockhash;
+
+        const lamports = Math.round(PRICE_SOL * LAMPORTS_PER_SOL);
+        tx.add(SystemProgram.transfer({
+          fromPubkey: buyerPk,
+          toPubkey: toPk,
+          lamports
+        }));
+
+        // Ondertekenen & verzenden
+        let signature;
+        if (typeof provider.signAndSendTransaction === "function") {
+          const res = await provider.signAndSendTransaction(tx);
+          signature = res?.signature ?? res;
+        } else {
+          const signed = await provider.signTransaction(tx);
+          signature = await connection.sendRawTransaction(signed.serialize(), { skipPreflight:false });
+        }
+
+        setWARN(`⏳ Betaling verstuurd, wachten op confirm… ${link("https://solscan.io/tx/"+signature, "Bekijk op Solscan")}`);
+        await connection.confirmTransaction(signature, "confirmed");
+
+        // Optioneel: backend call om CBS uit te keren
+        let fulfillOk = false;
+        try{
+          const resp = await fetch(FULFILL_ENDPOINT, {
+            method: "POST",
+            headers: { "content-type": "application/json" },
+            body: JSON.stringify({
+              buyer: buyerPk.toString(),
+              signature,
+              cbsAmount: CBS_PER_BUY,
+              priceSol: PRICE_SOL,
+              mint: CBS_MINT
+            })
+          });
+          const data = await resp.json().catch(()=>null);
+          if (resp.ok && (data?.ok || data?.tx || data?.signature)) {
+            fulfillOk = true;
+          }
+        }catch(_){ /* backend optioneel */ }
+
+        markBuy();
+        setOK(
+          `✅ Koop geslaagd! ${PRICE_SOL} SOL ontvangen. ` +
+          (fulfillOk
+            ? `25.000 CBS wordt zo geleverd (zie je wallet). 🎉`
+            : `De uitbetaling van 25.000 CBS volgt direct; zo niet, neem contact op met de admin met je TX: <code>${signature}</code>.`)
+          + `<br>${link("https://solscan.io/tx/"+signature, "Transactie op Solscan")}`
+        );
+        confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+
+      }catch(e){
+        console.error(e);
+        const msg = (e?.message || e || "").toString().toLowerCase();
+        if (msg.includes("reject") || msg.includes("decline")){
+          setERR("Je hebt de betaling in Phantom geannuleerd.");
+        } else if (msg.includes("insufficient") || msg.includes("not enough")){
+          setERR("Onvoldoende SOL voor deze aankoop (0.020 SOL + netwerkfee vereist).");
+        } else {
+          setERR("❌ Er ging iets mis bij het kopen: " + (e?.message || e));
+        }
       }
     });
   </script>
