@@ -1,1 +1,256 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CBS Coin – Community Builds Sovereignty</title>
 
+  <!-- Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+  <!-- (optioneel) confetti lib, voor later gebruik -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <style>
+    :root{
+      --bg1:#0f0f0f;--bg2:#1a1a1a;--fg:#00ffcc;--cyan:#00ffff;
+      --panel:#111;--muted:#999;--border:#00ffcc;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Orbitron',sans-serif;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:var(--fg);display:flex;flex-direction:column;align-items:center;padding:2rem}
+    nav{width:100%;background:#111;padding:1rem;text-align:center;margin-bottom:2rem;border-bottom:1px solid #0c2020}
+    nav a{margin:0 .8rem;color:var(--cyan);text-decoration:none;font-weight:700}
+    nav a:hover{text-decoration:underline}
+    header{text-align:center;width:100%}
+    h1{font-size:3rem;margin:.5rem 0 .2rem}
+    h2{font-size:1.35rem;font-weight:400;color:var(--muted);margin:.4rem 0 1rem}
+    .logo{margin:1rem 0;max-width:180px}
+    .section{max-width:900px;background:#111;padding:1.4rem;margin:1rem 0;border:1px solid var(--border);border-radius:12px}
+    a{color:var(--cyan);text-decoration:none}
+    a:hover{text-decoration:underline}
+    footer{margin-top:2rem;font-size:.9rem;color:#aaa;text-align:center}
+    .social-links{display:flex;justify-content:center;gap:1rem;flex-wrap:wrap;margin:1rem 0}
+    .social-links a{display:inline-flex;align-items:center;padding:.5rem 1rem;background:#1a1a1a;border:1px solid var(--cyan);border-radius:6px;font-weight:700;color:var(--cyan)}
+    .social-links a:hover{background:var(--cyan);color:#000}
+
+    /* Wallet + Koop knoppen */
+    .toolbar{display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap;margin:1rem 0}
+    .btn{
+      padding:.8rem 1.2rem;font-weight:800;border-radius:12px;border:1px solid var(--cyan);
+      background:#141414;color:var(--cyan);cursor:pointer;
+      transition:transform .15s ease, box-shadow .2s ease;
+    }
+    .btn:hover{transform:translateY(-1px);box-shadow:0 8px 24px rgba(0,255,204,.15)}
+    .btn-primary{
+      background:var(--fg);color:#001c1a;border:none;
+      box-shadow:0 0 10px var(--fg),0 0 40px var(--fg),0 0 80px var(--fg);
+    }
+    .btn-primary:hover{box-shadow:0 0 20px var(--cyan),0 0 60px var(--cyan),0 0 100px var(--cyan)}
+    #walletAddr{font-size:.95rem;color:#9fffe3}
+    #buyStatus{min-height:1.5rem;margin-top:.5rem}
+    .ok{color:#5aff86} .warn{color:#ffd166} .err{color:#ff6b6b}
+  </style>
+</head>
+<body>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="roadmap.html">Roadmap</a>
+    <a href="tokenomics.html">Tokenomics</a>
+    <a href="litepaper.html">Litepaper</a>
+    <a href="dao-mainnet/dao.html">DAO</a>
+    <a href="mailto:smitskecbs@gmail.com">Contact</a>
+  </nav>
+
+  <header>
+    <img class="logo" alt="CBS Coin Logo"
+         src="https://cyan-persistent-stork-902.mypinata.cloud/ipfs/bafybeia7qejzloll6teyt4o4orvd7bnvkg4thrfajv4rgb3fmm2odeweoa/logo.png" />
+    <h1>CBS Coin</h1>
+    <h2>Community Builds Sovereignty</h2>
+
+    <!-- Wallet toolbar -->
+    <div class="toolbar">
+      <button id="connectBtn" class="btn">🔌 Connect Wallet</button>
+      <button id="disconnectBtn" class="btn" style="display:none">🔒 Disconnect</button>
+      <span id="walletAddr"></span>
+    </div>
+
+    <div class="social-links">
+      <a href="https://t.me/CBS_Coin" target="_blank" rel="noreferrer">Telegram</a>
+      <a href="https://twitter.com/CBS_Coin" target="_blank" rel="noreferrer">X (Twitter)</a>
+    </div>
+  </header>
+
+  <!-- KOOP CBS (via Jupiter Terminal) -->
+  <section class="section" style="text-align:center">
+    <h2>💰 Koop CBS</h2>
+    <p>Koop direct CBS Coin tegen de beste prijs via Raydium/Orca (Jupiter router).</p>
+    <div class="toolbar" style="margin-top:1rem">
+      <button id="buyCBSBtn" class="btn btn-primary">💰 Koop CBS (0.05 SOL)</button>
+    </div>
+    <p id="buyStatus"></p>
+  </section>
+
+  <!-- INFO -->
+  <section class="section">
+    <h3>📦 Token Info</h3>
+    <ul>
+      <li><strong>Tokennaam:</strong> CBS Coin</li>
+      <li><strong>Symbool:</strong> CBS</li>
+      <li><strong>Totale supply:</strong> 100.000.000</li>
+      <li><strong>Mint authority:</strong> <em>uitgeschakeld</em></li>
+      <li><strong>Freeze authority:</strong> <em>uitgeschakeld</em></li>
+      <li><strong>Explorer:</strong>
+        <a href="https://solscan.io/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk" target="_blank" rel="noreferrer">
+          Bekijk op Solscan
+        </a>
+      </li>
+    </ul>
+    <div class="social-links" style="justify-content:flex-start;gap:.6rem;flex-wrap:wrap">
+      <a href="https://www.geckoterminal.com/nl/solana/pools/7RSeJd8C1cXA95Vfcz6CregUofj4dbmHgsxkF7zdWhVE" target="_blank" rel="noreferrer">Koop op GeckoTerminal</a>
+      <a href="https://birdeye.so/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk?chain=solana" target="_blank" rel="noreferrer">Koop op Birdeye</a>
+      <a href="https://raydium.io/swap/?inputCurrency=sol&outputCurrency=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk" target="_blank" rel="noreferrer">Koop op Raydium</a>
+    </div>
+  </section>
+
+  <section class="section">
+    <h3>📄 Whitepaper & Roadmap</h3>
+    <p>
+      Bekijk onze visie en plannen in de <a href="litepaper.html" target="_blank" rel="noreferrer">litepaper</a>.
+      De roadmap bevat o.a. liquidity pools, DAO integratie en tokenverificatie op grote platforms.
+    </p>
+  </section>
+
+  <footer>
+    © 2025 CBS Coin – Sovereignty through community.
+    <div class="social-links" style="justify-content:center;margin-top:.6rem">
+      <a href="https://t.me/CBS_Coin" target="_blank" rel="noreferrer">Telegram</a>
+      <a href="https://twitter.com/CBS_Coin" target="_blank" rel="noreferrer">X (Twitter)</a>
+    </div>
+  </footer>
+
+  <!-- Jupiter Terminal -->
+  <script src="https://terminal.jup.ag/main-v2.js"></script>
+
+  <script>
+    // ====== Config ======
+    const CBS_MINT = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
+    const SOL_MINT = "So11111111111111111111111111111111111111112"; // Wrapped SOL
+
+    // ====== Wallet helpers ======
+    const $ = (id)=>document.getElementById(id);
+    const connectBtn   = $("connectBtn");
+    const disconnectBtn= $("disconnectBtn");
+    const walletAddrEl = $("walletAddr");
+    const buyBtn       = $("buyCBSBtn");
+    const buyStatus    = $("buyStatus");
+
+    function getProvider(){
+      // Ondersteun Phantom injecties op meerdere manieren
+      if (window.solana?.isPhantom) return window.solana;
+      if (window.phantom?.solana?.isPhantom) return window.phantom.solana;
+      return null;
+    }
+
+    function shortKey(pk){
+      const s = pk?.toString() || "";
+      return s.length > 10 ? s.slice(0,4)+"…"+s.slice(-4) : s;
+    }
+
+    function setConnected(pubkey){
+      walletAddrEl.textContent = "Wallet: " + shortKey(pubkey?.toString());
+      connectBtn.style.display = "none";
+      disconnectBtn.style.display = "inline-block";
+    }
+    function setDisconnected(){
+      walletAddrEl.textContent = "";
+      connectBtn.style.display = "inline-block";
+      disconnectBtn.style.display = "none";
+    }
+
+    // ====== Wallet events ======
+    async function connectWallet(){
+      const provider = getProvider();
+      if (!provider){
+        alert("Phantom wallet niet gevonden. Installeer Phantom of open in een browser met Phantom.");
+        return;
+      }
+      try{
+        const res = await provider.connect({ onlyIfTrusted:false });
+        setConnected(res.publicKey || provider.publicKey);
+      }catch(e){
+        console.error("connect error:", e);
+      }
+    }
+
+    async function disconnectWallet(){
+      const provider = getProvider();
+      if (provider?.disconnect){
+        try{ await provider.disconnect(); }catch(e){ console.warn(e); }
+      }
+      setDisconnected();
+    }
+
+    connectBtn.addEventListener("click", connectWallet);
+    disconnectBtn.addEventListener("click", disconnectWallet);
+
+    // Reageer op account-wissel
+    (function listenAccountChanges(){
+      const provider = getProvider();
+      if (!provider) return;
+      provider.on?.("accountChanged", (pubkey)=>{
+        if (pubkey){ setConnected(pubkey); }
+        else { setDisconnected(); }
+      });
+    })();
+
+    // ====== Jupiter init (met passthrough) ======
+    window.addEventListener("load", async () => {
+      try {
+        await window.Jupiter.init({
+          displayMode: "modal",
+          defaultInputMint: SOL_MINT,
+          defaultOutputMint: CBS_MINT,
+          defaultExplorer: "Solscan",
+          strictTokenList: false,
+          enableWalletPassthrough: true, // gebruikt reeds verbonden wallet (Phantom e.d.)
+        });
+
+        // Als de gebruiker al "trusted" is, toon meteen connected staat
+        const provider = getProvider();
+        if (provider && provider.isConnected && provider.publicKey){
+          setConnected(provider.publicKey);
+        } else if (provider && provider.connect){
+          // Probeer silent connect (some wallets ondersteunen dit)
+          try{
+            const res = await provider.connect({ onlyIfTrusted:true });
+            if (res?.publicKey || provider.publicKey){
+              setConnected(res.publicKey || provider.publicKey);
+            }
+          }catch(_){}
+        }
+      } catch (e) {
+        console.error("Jupiter init fout:", e);
+        buyStatus.className = "err";
+        buyStatus.textContent = "Kon koopmodule niet initialiseren. Vernieuw de pagina en probeer opnieuw.";
+      }
+    });
+
+    // ====== Koop-knop ======
+    buyBtn.addEventListener("click", async () => {
+      const amountStr = prompt("Hoeveel SOL wil je omruilen naar CBS?", "0.05");
+      if (!amountStr) return;
+      try {
+        await window.Jupiter.open({
+          defaultInputMint: SOL_MINT,
+          defaultOutputMint: CBS_MINT,
+          defaultSwapMode: "ExactIn",
+          amount: amountStr
+        });
+      } catch (e) {
+        console.error("Jupiter open fout:", e);
+        buyStatus.className = "err";
+        buyStatus.textContent = "Kon koopvenster niet openen.";
+      }
+    });
+  </script>
+</body>
+</html>
