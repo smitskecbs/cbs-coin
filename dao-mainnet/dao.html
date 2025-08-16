@@ -205,18 +205,55 @@
       return sig;
     }
 
-    // ✅ Simulatie: eerst gesigneerd (sigVerify:true), zo niet: unsigned fallback
+    // --- helpers voor base64 ---
+    function u8ToBase64(u8){
+      let s = "";
+      for (let i=0;i<u8.length;i++) s += String.fromCharCode(u8[i]);
+      return btoa(s);
+    }
+
+    // ✅ Simulatie: 1) gesigneerd, 2) unsigned, 3) raw RPC met base64 (fallback)
     async function simulateTx(connection, wallet, tx){
+      // Altijd verse blockhash & fee payer
       tx.feePayer = wallet.publicKey;
       tx.recentBlockhash = (await connection.getLatestBlockhash('confirmed')).blockhash;
+
+      // 1) Gesigneerd pad (werkt bij de meeste RPC’s incl. Helius)
       try {
         const signed = await wallet.signTransaction(tx);
-        return await connection.simulateTransaction(signed, { sigVerify: true });
-      } catch (e) {
-        console.warn("simulateTx signed path failed, retrying unsigned:", e?.message || e);
+        return await connection.simulateTransaction(signed, { sigVerify: true, replaceRecentBlockhash: true });
+      } catch (e1) {
+        console.warn("simulateTx signed path failed:", e1?.message || e1);
+      }
+
+      // 2) Unsigned pad (sommige RPC’s accepteren dit)
+      try {
         tx.feePayer = wallet.publicKey;
         tx.recentBlockhash = (await connection.getLatestBlockhash('confirmed')).blockhash;
-        return await connection.simulateTransaction(tx, { sigVerify: false });
+        return await connection.simulateTransaction(tx, { sigVerify: false, replaceRecentBlockhash: true });
+      } catch (e2) {
+        console.warn("simulateTx unsigned path failed:", e2?.message || e2);
+      }
+
+      // 3) Raw RPC fallback met base64
+      try {
+        tx.feePayer = wallet.publicKey;
+        tx.recentBlockhash = (await connection.getLatestBlockhash('confirmed')).blockhash;
+        // Let op: requireAllSignatures=false, verifySignatures=false voor unsigned simulatie
+        const raw = tx.serialize({ requireAllSignatures: false, verifySignatures: false });
+        const encoded = u8ToBase64(raw);
+        const args = [
+          encoded,
+          { encoding: 'base64', sigVerify: false, replaceRecentBlockhash: true, commitment: 'confirmed' }
+        ];
+        // _rpcRequest is "private", maar bestaat op Connection
+        const res = await connection._rpcRequest('simulateTransaction', args);
+        if (res?.error) throw new Error(res.error.message || 'simulateTransaction RPC error');
+        // Zorg dat we hetzelfde "shape" teruggeven als web3.js doet
+        return { value: res.result };
+      } catch (e3) {
+        console.error("simulateTx raw RPC fallback failed:", e3?.message || e3);
+        throw e3;
       }
     }
 
@@ -443,3 +480,4 @@
   </script>
 </body>
 </html>
+
