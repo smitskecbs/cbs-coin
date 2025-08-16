@@ -46,7 +46,7 @@
     .toolbar{display:flex; gap:.8rem; justify-content:center; flex-wrap:wrap; margin:1rem 0}
     .btn{
       padding:.9rem 1.4rem; font-weight:800; border-radius:12px;
-      border:1px solid var(--cyan); background:#141414; color:var(--cyan);
+      border:1px solid var(--cyan); background:#141414; color:#var(--cyan);
       cursor:pointer; transition:transform .15s ease, box-shadow .2s ease
     }
     .btn:hover{transform:translateY(-1px); box-shadow:0 8px 24px rgba(0,255,204,.15)}
@@ -99,17 +99,13 @@
     </div>
   </section>
 
-  <!-- AIRDROP -->
+  <!-- AIRDROP (knop verwijderd, rest blijft) -->
   <section class="section" style="text-align:center">
     <h2 id="airdropTitle" data-i18n="airdropTitle">🎁 Airdrop – Aanvraag</h2>
     <p id="airdropIntro" data-i18n="airdropIntro" data-i18n-html>
       Vraag de airdrop aan via het formulier. <br><em>Inschrijving stopt op 1 september 2025.</em>
     </p>
-    <div class="toolbar">
-      <a id="airdropBtn" class="btn btn-primary" target="_blank" rel="noreferrer"
-         href="https://docs.google.com/forms/d/e/1FAIpQLSfIPCTbVFXfGqESxofzjzUwO60hu89DId5T-EmV6ax6hOplSg/viewform?usp=sharing&ouid=105309397487176943057"
-         data-i18n="airdropButton">🎁 Aanvraag Airdrop</a>
-    </div>
+    <!-- Knop verwijderd -->
     <div id="airdropCountdown" class="countdown"></div>
   </section>
 
@@ -223,20 +219,24 @@
       applyI18n();
     });
 
-    // Airdrop timer
+    // Airdrop timer (werkt ook zonder knop)
     function initAirdropTimer(){
-      const airdropBtn = $("airdropBtn");
+      const airdropBtn = $("airdropBtn"); // kan ontbreken
       const airdropCountdown = $("airdropCountdown");
       const end = new Date(AIRDROP_DEADLINE_ISO).getTime();
 
       function tick(){
         const now = Date.now();
         if (now >= end){
-          airdropBtn.setAttribute("disabled","disabled");
-          airdropBtn.textContent = t("airdropClosedBtn");
-          airdropBtn.removeAttribute("href");
-          airdropCountdown.classList.add("closed");
-          airdropCountdown.textContent = t("airdropClosedText");
+          if (airdropBtn){
+            airdropBtn.setAttribute("disabled","disabled");
+            airdropBtn.textContent = t("airdropClosedBtn");
+            airdropBtn.removeAttribute("href");
+          }
+          if (airdropCountdown){
+            airdropCountdown.classList.add("closed");
+            airdropCountdown.textContent = t("airdropClosedText");
+          }
           return;
         }
         const diff = end - now;
@@ -244,7 +244,9 @@
         const h = Math.floor(diff%86400000/3600000);
         const m = Math.floor(diff%3600000/60000);
         const s = Math.floor(diff%60000/1000);
-        airdropCountdown.textContent = t("countdownLeft",{d,h,m,s});
+        if (airdropCountdown){
+          airdropCountdown.textContent = t("countdownLeft",{d,h,m,s});
+        }
         requestAnimationFrame(()=>setTimeout(tick,1000));
       }
       tick();
@@ -258,5 +260,3 @@
   </script>
 </body>
 </html>
-
-
