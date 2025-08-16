@@ -25,7 +25,7 @@
     a { color: #8ab4ff; text-decoration: none; }
     a:hover { text-decoration: underline; }
   </style>
-  <!-- UMD web3.js – werkt met GitHub Pages CSP -->
+  <!-- UMD web3.js — werkt met GitHub Pages CSP -->
   <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
 </head>
 <body>
@@ -128,7 +128,7 @@
 
     const enc = (s) => new TextEncoder().encode(s);
     const dec = (b) => new TextDecoder().decode(b);
-    const EXPLORER_TX = "https://solscan.io/tx/"; // of helius explorer etc.
+    const EXPLORER_TX = "https://solscan.io/tx/";
 
     function setStatus(msg, cls = "") { statusEl.innerHTML = cls ? `<span class="${cls}">${msg}</span>` : msg; }
     function setWallet(pk) { walletEl.innerHTML = pk ? `Wallet: <code>${pk}</code>` : "Wallet: <em>niet verbonden</em>"; }
@@ -141,9 +141,9 @@
     // ===== DISCRIMINATORS (uit jouw IDL) =====
     const DISC_CREATE = Uint8Array.from([132,116,68,174,216,160,198,22]);
     const DISC_VOTE   = Uint8Array.from([227,110,155,23,136,126,172,25]);
-    const DISC_ACC_PROPOSAL = Uint8Array.from([26,94,189,187,116,136,53,33]); // account header
+    const DISC_ACC_PROPOSAL = Uint8Array.from([26,94,189,187,116,136,53,33]);
 
-    // ===== Borsh-achtige encoders =====
+    // ===== Borsh helpers =====
     function u32le(n){ const b=new Uint8Array(4); new DataView(b.buffer).setUint32(0,n>>>0,true); return b; }
     function i64le(n){ let x=BigInt(n); if (x<0n) x=(1n<<64n)+x; const b=new Uint8Array(8); for(let i=0;i<8;i++) b[i]=Number((x>>BigInt(8*i))&0xffn); return b; }
     function encodeString(str){ const s=enc(str); const out=new Uint8Array(4+s.length); out.set(u32le(s.length),0); out.set(s,4); return out; }
@@ -159,7 +159,7 @@
         programId,
         keys: [
           { pubkey: proposalPda, isSigner:false, isWritable:true },
-          { pubkey: creator, isSigner:true, isWritable:true },
+          { pubkey: creator,     isSigner:true,  isWritable:true },
           { pubkey: SystemProgram.programId, isSigner:false, isWritable:false },
         ],
         data
@@ -171,8 +171,8 @@
       return new TransactionInstruction({
         programId,
         keys: [
-          { pubkey: proposalPk, isSigner:false, isWritable:true },
-          { pubkey: voter, isSigner:true, isWritable:true },
+          { pubkey: proposalPk,     isSigner:false, isWritable:true },
+          { pubkey: voter,          isSigner:true,  isWritable:true },
           { pubkey: voteReceiptPda, isSigner:false, isWritable:true },
           { pubkey: SystemProgram.programId, isSigner:false, isWritable:false },
         ],
@@ -204,17 +204,18 @@
       await connection.confirmTransaction({ signature:sig, blockhash, lastValidBlockHeight }, 'confirmed');
       return sig;
     }
+
+    // ✅ Simulatie zonder signen (verhelpt “numRequiredSignatures” error)
     async function simulateTx(connection, wallet, tx){
       tx.feePayer = wallet.publicKey;
-      tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-      const signed = await wallet.signTransaction(tx);
-      return await connection.simulateTransaction(signed, { sigVerify:true });
+      tx.recentBlockhash = (await connection.getLatestBlockhash('confirmed')).blockhash;
+      return await connection.simulateTransaction(tx, { sigVerify:false }); // niet signen
     }
 
-    // ===== Default config (JOUW KEY INGEBouwd) =====
+    // ===== Defaults =====
     const qs = new URLSearchParams(location.search);
     const DEFAULT_RPC = qs.get("rpc")
-      || "https://rpc.helius.xyz/?api-key=3d335769-1880-4497-8fd0-ac7ed0701a7c"; // <- jouw Helius key
+      || "https://rpc.helius.xyz/?api-key=3d335769-1880-4497-8fd0-ac7ed0701a7c"; // <-- jouw Helius key
     let PROGRAM_ID = new PublicKey((qs.get("program") || "FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY").trim());
     let PROPOSAL_PUBKEY = (qs.get("proposal") || "").trim();
     let RPC_URL = DEFAULT_RPC;
@@ -305,7 +306,7 @@
         inpProposal.value = PROPOSAL_PUBKEY;
         proposalInfoEl.innerHTML = "Proposal: <code>" + PROPOSAL_PUBKEY + "</code>";
         resultEl.innerHTML = `<span class="ok">✅ Proposal aangemaakt: ${PROPOSAL_PUBKEY}<br/>
-          TX: <a href="${EXPLORER_TX}${sig}" target="_blank">${sig}</a></span>`;
+          TX: <a href="${EXPLORER_TX}${sig}" target="_blank" rel="noopener">${sig}</a></span>`;
       }catch(e){
         console.error("❌ Create proposal error", e);
         resultEl.innerHTML = `<span class="err">❌ ${e.message}</span>`;
@@ -321,7 +322,7 @@
         if (!info) throw new Error("Account niet gevonden.");
         const data = new Uint8Array(info.data);
 
-        // Parse Proposal account (skip 8-byte account discriminator)
+        // Parse Proposal account
         let o = 0;
         const discOk = data.slice(0,8).every((v,i)=> v===DISC_ACC_PROPOSAL[i]);
         if (!discOk) console.warn("⚠️ Account discriminator mismatch (verwacht Proposal).");
@@ -363,7 +364,7 @@
 
         console.log("➡️ Vote", { proposal: proposalPk.toBase58(), voter: wallet.publicKey.toBase58(), receipt: receiptPda.toBase58(), yes });
         const sig = await sendTx(connection, wallet, tx);
-        resultEl.innerHTML = `<span class="ok">✅ Vote TX: <a href="${EXPLORER_TX}${sig}" target="_blank">${sig}</a></span>`;
+        resultEl.innerHTML = `<span class="ok">✅ Vote TX: <a href="${EXPLORER_TX}${sig}" target="_blank" rel="noopener">${sig}</a></span>`;
       }catch(e){
         console.error("❌ Vote error", e);
         resultEl.innerHTML = `<span class="err">❌ ${e.message}</span>`;
@@ -388,7 +389,6 @@
         const sim = await simulateTx(connection, wallet, tx);
         lastFetchEl.textContent = (sim?.value?.logs || []).join("\n") || "—";
         resultEl.innerHTML = `<span class="ok">✅ Simulate(create) OK</span>`;
-        console.log("✅ Simulate logs", sim?.value);
       }catch(e){
         console.error("❌ Simulate(create) error", e);
         resultEl.innerHTML = `<span class="err">❌ Simulate(create) fail: ${e.message}</span>`;
@@ -435,4 +435,3 @@
   </script>
 </body>
 </html>
-
