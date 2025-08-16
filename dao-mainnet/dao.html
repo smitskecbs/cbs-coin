@@ -26,9 +26,8 @@
     a:hover { text-decoration: underline; }
   </style>
 
-  <!-- ✅ UMD/IIFE builds (geen ES modules, geen eval) -->
+  <!-- Web3.js UMD (geen modules/eval) -->
   <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
-  <script src="https://unpkg.com/@coral-xyz/anchor@0.29.0/dist/browser/index.js"></script>
 </head>
 <body>
   <div class="wrap">
@@ -118,22 +117,43 @@
   </div>
 
   <script>
-    // Globals uit UMD builds
+    // ---------- helpers ----------
     const { Connection, PublicKey, SystemProgram } = solanaWeb3;
-    const anchor = window.anchor;
-
     const $ = (id) => document.getElementById(id);
     const statusEl = $("status"), walletEl = $("wallet"), networkEl = $("network");
     const programInfoEl = $("programInfo"), proposalInfoEl = $("proposalInfo");
     const resultEl = $("result"), lastFetchEl = $("lastFetch");
-
     const inpProgram = $("inpProgram"), inpProposal = $("inpProposal"), inpRpc = $("inpRpc");
     const inpQuestion = $("inpQuestion"), inpMinutes = $("inpMinutes"), inpEndsAtDT = $("inpEndsAtDT");
-
+    const enc = (s) => new TextEncoder().encode(s);
     function setStatus(msg, cls = "") { statusEl.innerHTML = cls ? `<span class="${cls}">${msg}</span>` : msg; }
     function setWallet(pk) { walletEl.innerHTML = pk ? `Wallet: <code>${pk}</code>` : "Wallet: <em>niet verbonden</em>"; }
-    const enc = (s) => new TextEncoder().encode(s);
+    function getPhantomProvider() {
+      if (window?.solana?.isPhantom) return window.solana;
+      if (window?.phantom?.solana?.isPhantom) return window.phantom.solana;
+      return null;
+    }
+    function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=()=>rej(new Error('Script load fail: '+src)); document.head.appendChild(s); }); }
 
+    // Laad Anchor met fallbacks
+    async function ensureAnchor() {
+      if (window.anchor) return window.anchor;
+      try {
+        await loadScript("https://unpkg.com/@coral-xyz/anchor@0.29.0/dist/browser/index.js");
+        if (window.anchor) return window.anchor;
+      } catch(_) {}
+      try {
+        await loadScript("https://unpkg.com/@coral-xyz/anchor@0.28.1/dist/browser/index.js");
+        if (window.anchor) return window.anchor;
+      } catch(_) {}
+      try {
+        await loadScript("https://unpkg.com/@project-serum/anchor@0.26.0/dist/browser/anchor.min.js");
+        if (window.anchor) return window.anchor;
+      } catch(_) {}
+      throw new Error("Anchor library kon niet geladen worden (CSP/CDN).");
+    }
+
+    // ---------- state ----------
     const qs = new URLSearchParams(location.search);
     const DEFAULT_RPC = "https://api.mainnet-beta.solana.com";
     let PROGRAM_ID = (qs.get("program") || "FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY").trim();
@@ -145,27 +165,22 @@
     proposalInfoEl.innerHTML = "Proposal: <code>" + (PROPOSAL_PUBKEY || "—") + "</code>";
     networkEl.innerHTML = "RPC: <code>" + RPC_URL + "</code>";
 
-    function getPhantomProvider() {
-      if (window?.solana?.isPhantom) return window.solana;
-      if (window?.phantom?.solana?.isPhantom) return window.phantom.solana;
-      return null;
-    }
-
-    let connection = null, wallet = null, provider = null, program = null, idl = null;
+    let connection = null, wallet = null, provider = null, program = null, idl = null, anchorNS = null;
 
     async function initAnchor() {
       if (!wallet?.publicKey) throw new Error("Wallet niet verbonden.");
+      anchorNS = await ensureAnchor(); // <- hier ging het fout
       connection = new Connection(RPC_URL, "confirmed");
-      provider = new anchor.AnchorProvider(connection, wallet, { commitment: "confirmed" });
-      anchor.setProvider(provider);
+      provider  = new anchorNS.AnchorProvider(connection, wallet, { commitment: "confirmed" });
+      anchorNS.setProvider(provider);
 
       const res = await fetch("./idl.json", { cache: "no-store" });
-      if (!res.ok) throw new Error("idl.json niet gevonden (404).");
+      if (!res.ok) throw new Error("idl.json niet gevonden (404) in dezelfde map.");
       idl = await res.json();
 
       if (!PROGRAM_ID) throw new Error("Geen Program ID opgegeven.");
       const programId = new PublicKey(PROGRAM_ID);
-      program = new anchor.Program(idl, programId, provider);
+      program  = new anchorNS.Program(idl, programId, provider);
 
       console.log("✅ Anchor init", { RPC_URL, PROGRAM_ID });
       setStatus("Anchor klaar.", "ok");
@@ -184,6 +199,7 @@
       )[0];
     }
 
+    // ---------- handlers ----------
     $("btnConnect").onclick = async () => {
       try {
         const phantom = getPhantomProvider();
@@ -275,7 +291,7 @@
       }
     };
 
-    async function vote(yes) {
+    function doVote(yes){ return async () => {
       try {
         if (!program) throw new Error("Program niet geïnitialiseerd.");
         if (!PROPOSAL_PUBKEY) throw new Error("Geen proposal pubkey ingesteld.");
@@ -295,9 +311,9 @@
         console.error("❌ Vote error", e);
         resultEl.innerHTML = `<span class="err">❌ ${e.message}</span>`;
       }
-    }
-    $("btnVoteYes").onclick = () => vote(true);
-    $("btnVoteNo").onclick = () => vote(false);
+    } }
+    $("btnVoteYes").onclick = doVote(true);
+    $("btnVoteNo").onclick  = doVote(false);
 
     $("btnSimCreate").onclick = async () => {
       try {
@@ -312,8 +328,6 @@
         const question = inpQuestion.value.trim();
         if (!question) throw new Error("Vul een vraag in.");
 
-        console.log("➡️ Simulate create", { question, endsAt, creator: creator.toBase58(), proposalPda: proposalPda.toBase58() });
-
         const sim = await program.methods.create_proposal(question, endsAt)
           .accounts({ proposal: proposalPda, creator, systemProgram: SystemProgram.programId })
           .simulate();
@@ -327,34 +341,8 @@
       }
     };
 
-    function simulateVoteHandler(yes) {
-      return async () => {
-        try {
-          if (!program) throw new Error("Program niet geïnitialiseerd.");
-          if (!PROPOSAL_PUBKEY) throw new Error("Geen proposal pubkey ingesteld.");
-          const proposalPk = new PublicKey(PROPOSAL_PUBKEY);
-          const voter = wallet.publicKey;
-          const voteReceiptPda = pdaVoteReceipt(proposalPk, voter);
-
-          console.log("➡️ Simulate vote", { yes, proposal: proposalPk.toBase58(), voter: voter.toBase58(), voteReceipt: voteReceiptPda.toBase58() });
-
-          const sim = await program.methods.vote(yes)
-            .accounts({ proposal: proposalPk, voter, voteReceipt: voteReceiptPda, systemProgram: SystemProgram.programId })
-            .simulate();
-
-          console.log("✅ Sim logs", sim?.logs);
-          resultEl.innerHTML = `<span class="ok">✅ Simulate(vote ${yes?"YES":"NO"}) OK</span>`;
-          lastFetchEl.textContent = (sim?.logs || []).join("\n") || "—";
-        } catch (e) {
-          console.error("❌ Simulate(vote) error", e);
-          resultEl.innerHTML = `<span class="err">❌ Simulate(vote) fail: ${e.message}</span>`;
-        }
-      };
-    }
-    $("btnSimYes").onclick = simulateVoteHandler(true);
-    $("btnSimNo").onclick  = simulateVoteHandler(false);
-
     setStatus("Pagina geladen. Verbind je wallet.");
   </script>
 </body>
 </html>
+
