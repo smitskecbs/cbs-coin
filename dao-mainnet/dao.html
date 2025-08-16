@@ -205,17 +205,25 @@
       return sig;
     }
 
-    // ✅ Simulatie zonder signen (verhelpt “numRequiredSignatures” error)
+    // ✅ Simulatie: eerst gesigneerd (sigVerify:true), zo niet: unsigned fallback
     async function simulateTx(connection, wallet, tx){
       tx.feePayer = wallet.publicKey;
       tx.recentBlockhash = (await connection.getLatestBlockhash('confirmed')).blockhash;
-      return await connection.simulateTransaction(tx, { sigVerify:false }); // niet signen
+      try {
+        const signed = await wallet.signTransaction(tx);
+        return await connection.simulateTransaction(signed, { sigVerify: true });
+      } catch (e) {
+        console.warn("simulateTx signed path failed, retrying unsigned:", e?.message || e);
+        tx.feePayer = wallet.publicKey;
+        tx.recentBlockhash = (await connection.getLatestBlockhash('confirmed')).blockhash;
+        return await connection.simulateTransaction(tx, { sigVerify: false });
+      }
     }
 
     // ===== Defaults =====
     const qs = new URLSearchParams(location.search);
     const DEFAULT_RPC = qs.get("rpc")
-      || "https://rpc.helius.xyz/?api-key=3d335769-1880-4497-8fd0-ac7ed0701a7c"; // <-- jouw Helius key
+      || "https://rpc.helius.xyz/?api-key=3d335769-1880-4497-8fd0-ac7ed0701a7c";
     let PROGRAM_ID = new PublicKey((qs.get("program") || "FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY").trim());
     let PROPOSAL_PUBKEY = (qs.get("proposal") || "").trim();
     let RPC_URL = DEFAULT_RPC;
@@ -435,3 +443,4 @@
   </script>
 </body>
 </html>
+
