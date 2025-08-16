@@ -4,13 +4,6 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>CBS DAO – Mainnet</title>
-  <script type="importmap">
-  {
-    "imports": {
-      "bn.js": "https://esm.sh/bn.js@5.2.1"
-    }
-  }
-  </script>
   <style>
     :root { color-scheme: dark; }
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#0b0b0f; color:#eaeaea; margin:0; }
@@ -32,6 +25,10 @@
     a { color: #8ab4ff; text-decoration: none; }
     a:hover { text-decoration: underline; }
   </style>
+
+  <!-- ✅ UMD/IIFE builds (geen ES modules, geen eval) -->
+  <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
+  <script src="https://unpkg.com/@coral-xyz/anchor@0.29.0/dist/browser/index.js"></script>
 </head>
 <body>
   <div class="wrap">
@@ -107,7 +104,7 @@
       </div>
       <div style="margin-top:12px">
         <label class="muted">RPC endpoint</label>
-        <input id="inpRpc" type="text" placeholder="https://mainnet.helius-rpc.com/?api-key=YOUR_KEY_HERE" />
+        <input id="inpRpc" type="text" placeholder="https://api.mainnet-beta.solana.com" />
       </div>
       <div class="row" style="margin-top:10px">
         <button id="btnApply">Apply & re-init</button>
@@ -120,9 +117,10 @@
     </div>
   </div>
 
-  <script type="module">
-    import { Connection, PublicKey, SystemProgram } from "https://esm.sh/@solana/web3.js@1.95.3?bundle&target=es2020";
-    import * as anchor from "https://esm.sh/@coral-xyz/anchor@0.29.0?bundle&target=es2020";
+  <script>
+    // Globals uit UMD builds
+    const { Connection, PublicKey, SystemProgram } = solanaWeb3;
+    const anchor = window.anchor;
 
     const $ = (id) => document.getElementById(id);
     const statusEl = $("status"), walletEl = $("wallet"), networkEl = $("network");
@@ -134,10 +132,10 @@
 
     function setStatus(msg, cls = "") { statusEl.innerHTML = cls ? `<span class="${cls}">${msg}</span>` : msg; }
     function setWallet(pk) { walletEl.innerHTML = pk ? `Wallet: <code>${pk}</code>` : "Wallet: <em>niet verbonden</em>"; }
-
     const enc = (s) => new TextEncoder().encode(s);
+
     const qs = new URLSearchParams(location.search);
-    const DEFAULT_RPC = "https://api.mainnet-beta.solana.com"; 
+    const DEFAULT_RPC = "https://api.mainnet-beta.solana.com";
     let PROGRAM_ID = (qs.get("program") || "FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY").trim();
     let PROPOSAL_PUBKEY = (qs.get("proposal") || "").trim();
     let RPC_URL = (qs.get("rpc") || DEFAULT_RPC).trim();
@@ -161,7 +159,7 @@
       provider = new anchor.AnchorProvider(connection, wallet, { commitment: "confirmed" });
       anchor.setProvider(provider);
 
-      const res = await fetch("./idl.json");
+      const res = await fetch("./idl.json", { cache: "no-store" });
       if (!res.ok) throw new Error("idl.json niet gevonden (404).");
       idl = await res.json();
 
@@ -169,7 +167,7 @@
       const programId = new PublicKey(PROGRAM_ID);
       program = new anchor.Program(idl, programId, provider);
 
-      console.log("✅ Anchor init gelukt", { RPC_URL, PROGRAM_ID, idl });
+      console.log("✅ Anchor init", { RPC_URL, PROGRAM_ID });
       setStatus("Anchor klaar.", "ok");
     }
 
@@ -199,6 +197,7 @@
           signAllTransactions: phantom.signAllTransactions?.bind(phantom),
           signMessage: phantom.signMessage?.bind(phantom),
         };
+        console.log("✅ Wallet verbonden:", pubkey);
         await initAnchor();
         setStatus("Verbonden en klaar.", "ok");
       } catch (e) {
@@ -300,7 +299,6 @@
     $("btnVoteYes").onclick = () => vote(true);
     $("btnVoteNo").onclick = () => vote(false);
 
-    // ---------- Simulaties ----------
     $("btnSimCreate").onclick = async () => {
       try {
         if (!program) throw new Error("Program niet geïnitialiseerd.");
@@ -329,21 +327,34 @@
       }
     };
 
-    async function simulateVote(yes) {
-      try {
-        if (!program) throw new Error("Program niet geïnitialiseerd.");
-        if (!PROPOSAL_PUBKEY) throw new Error("Geen proposal pubkey ingesteld.");
-        const proposalPk = new PublicKey(PROPOSAL_PUBKEY);
-        const voter = wallet.publicKey;
-        const voteReceiptPda = pdaVoteReceipt(proposalPk, voter);
+    function simulateVoteHandler(yes) {
+      return async () => {
+        try {
+          if (!program) throw new Error("Program niet geïnitialiseerd.");
+          if (!PROPOSAL_PUBKEY) throw new Error("Geen proposal pubkey ingesteld.");
+          const proposalPk = new PublicKey(PROPOSAL_PUBKEY);
+          const voter = wallet.publicKey;
+          const voteReceiptPda = pdaVoteReceipt(proposalPk, voter);
 
-        console.log("➡️ Simulate vote", { yes, proposal: proposalPk.toBase58(), voter: voter.toBase58(), voteReceipt: voteReceiptPda.toBase58() });
+          console.log("➡️ Simulate vote", { yes, proposal: proposalPk.toBase58(), voter: voter.toBase58(), voteReceipt: voteReceiptPda.toBase58() });
 
-        const sim = await program.methods.vote(yes)
-          .accounts({ proposal: proposalPk, voter, voteReceipt: voteReceiptPda, systemProgram: SystemProgram.programId })
-          .simulate();
+          const sim = await program.methods.vote(yes)
+            .accounts({ proposal: proposalPk, voter, voteReceipt: voteReceiptPda, systemProgram: SystemProgram.programId })
+            .simulate();
 
-        console.log("✅ Sim logs", sim?.logs);
-        resultEl.innerHTML = `<span class="ok">✅ Simulate(vote ${yes?"YES":"NO"}) OK</span>`;
-        lastFetchEl.textContent =
+          console.log("✅ Sim logs", sim?.logs);
+          resultEl.innerHTML = `<span class="ok">✅ Simulate(vote ${yes?"YES":"NO"}) OK</span>`;
+          lastFetchEl.textContent = (sim?.logs || []).join("\n") || "—";
+        } catch (e) {
+          console.error("❌ Simulate(vote) error", e);
+          resultEl.innerHTML = `<span class="err">❌ Simulate(vote) fail: ${e.message}</span>`;
+        }
+      };
+    }
+    $("btnSimYes").onclick = simulateVoteHandler(true);
+    $("btnSimNo").onclick  = simulateVoteHandler(false);
 
+    setStatus("Pagina geladen. Verbind je wallet.");
+  </script>
+</body>
+</html>
