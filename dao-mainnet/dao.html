@@ -4,8 +4,6 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>CBS DAO – Mainnet</title>
-
-  <!-- Import map voor bn.js -->
   <script type="importmap">
   {
     "imports": {
@@ -13,7 +11,6 @@
     }
   }
   </script>
-
   <style>
     :root { color-scheme: dark; }
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#0b0b0f; color:#eaeaea; margin:0; }
@@ -128,27 +125,15 @@
     import * as anchor from "https://esm.sh/@coral-xyz/anchor@0.29.0?bundle&target=es2020";
 
     const $ = (id) => document.getElementById(id);
-    const statusEl = $("status");
-    const walletEl = $("wallet");
-    const networkEl = $("network");
-    const programInfoEl = $("programInfo");
-    const proposalInfoEl = $("proposalInfo");
-    const resultEl = $("result");
-    const lastFetchEl = $("lastFetch");
+    const statusEl = $("status"), walletEl = $("wallet"), networkEl = $("network");
+    const programInfoEl = $("programInfo"), proposalInfoEl = $("proposalInfo");
+    const resultEl = $("result"), lastFetchEl = $("lastFetch");
 
-    const inpProgram = $("inpProgram");
-    const inpProposal = $("inpProposal");
-    const inpRpc = $("inpRpc");
-    const inpQuestion = $("inpQuestion");
-    const inpMinutes = $("inpMinutes");
-    const inpEndsAtDT = $("inpEndsAtDT");
+    const inpProgram = $("inpProgram"), inpProposal = $("inpProposal"), inpRpc = $("inpRpc");
+    const inpQuestion = $("inpQuestion"), inpMinutes = $("inpMinutes"), inpEndsAtDT = $("inpEndsAtDT");
 
-    function setStatus(msg, cls = "") {
-      statusEl.innerHTML = cls ? `<span class="${cls}">${msg}</span>` : msg;
-    }
-    function setWallet(pk) {
-      walletEl.innerHTML = pk ? `Wallet: <code>${pk}</code>` : "Wallet: <em>niet verbonden</em>";
-    }
+    function setStatus(msg, cls = "") { statusEl.innerHTML = cls ? `<span class="${cls}">${msg}</span>` : msg; }
+    function setWallet(pk) { walletEl.innerHTML = pk ? `Wallet: <code>${pk}</code>` : "Wallet: <em>niet verbonden</em>"; }
 
     const enc = (s) => new TextEncoder().encode(s);
     const qs = new URLSearchParams(location.search);
@@ -157,9 +142,7 @@
     let PROPOSAL_PUBKEY = (qs.get("proposal") || "").trim();
     let RPC_URL = (qs.get("rpc") || DEFAULT_RPC).trim();
 
-    inpProgram.value = PROGRAM_ID;
-    inpProposal.value = PROPOSAL_PUBKEY;
-    inpRpc.value = RPC_URL;
+    inpProgram.value = PROGRAM_ID; inpProposal.value = PROPOSAL_PUBKEY; inpRpc.value = RPC_URL;
     programInfoEl.innerHTML = "Program: <code>" + (PROGRAM_ID || "—") + "</code>";
     proposalInfoEl.innerHTML = "Proposal: <code>" + (PROPOSAL_PUBKEY || "—") + "</code>";
     networkEl.innerHTML = "RPC: <code>" + RPC_URL + "</code>";
@@ -170,11 +153,7 @@
       return null;
     }
 
-    let connection = null;
-    let wallet = null;
-    let provider = null;
-    let program = null;
-    let idl = null;
+    let connection = null, wallet = null, provider = null, program = null, idl = null;
 
     async function initAnchor() {
       if (!wallet?.publicKey) throw new Error("Wallet niet verbonden.");
@@ -190,6 +169,7 @@
       const programId = new PublicKey(PROGRAM_ID);
       program = new anchor.Program(idl, programId, provider);
 
+      console.log("✅ Anchor init gelukt", { RPC_URL, PROGRAM_ID, idl });
       setStatus("Anchor klaar.", "ok");
     }
 
@@ -209,11 +189,7 @@
     $("btnConnect").onclick = async () => {
       try {
         const phantom = getPhantomProvider();
-        if (!phantom) {
-          setStatus("Phantom niet gevonden.", "err");
-          alert("Installeer Phantom: https://phantom.app/");
-          return;
-        }
+        if (!phantom) { alert("Installeer Phantom: https://phantom.app/"); return; }
         const resp = await phantom.connect({ onlyIfTrusted: false });
         const pubkey = resp?.publicKey?.toBase58?.() || phantom.publicKey?.toBase58?.();
         setWallet(pubkey);
@@ -226,7 +202,7 @@
         await initAnchor();
         setStatus("Verbonden en klaar.", "ok");
       } catch (e) {
-        console.error(e);
+        console.error("❌ Connect error", e);
         setStatus("Connect mislukt: " + e.message, "err");
       }
     };
@@ -234,8 +210,7 @@
     $("btnDisconnect").onclick = async () => {
       try { await getPhantomProvider()?.disconnect?.(); } catch {}
       wallet = null; program = null; provider = null;
-      setWallet(null);
-      setStatus("Losgekoppeld.");
+      setWallet(null); setStatus("Losgekoppeld.");
     };
 
     $("btnApply").onclick = async () => {
@@ -261,15 +236,21 @@
 
         const question = inpQuestion.value.trim();
         if (!question) throw new Error("Vraag invullen.");
+
+        console.log("➡️ Create Proposal", { creator: creator.toBase58(), proposalPda: proposalPda.toBase58(), question, endsAt });
+
         const txSig = await program.methods.create_proposal(question, endsAt)
           .accounts({ proposal: proposalPda, creator, systemProgram: SystemProgram.programId })
           .rpc();
+
+        console.log("✅ TX success", txSig);
 
         PROPOSAL_PUBKEY = proposalPda.toBase58();
         inpProposal.value = PROPOSAL_PUBKEY;
         proposalInfoEl.innerHTML = "Proposal: <code>" + PROPOSAL_PUBKEY + "</code>";
         resultEl.innerHTML = `<span class="ok">✅ Proposal aangemaakt: ${PROPOSAL_PUBKEY}<br/>TX: ${txSig}</span>`;
       } catch (e) {
+        console.error("❌ Create proposal error", e);
         resultEl.innerHTML = `<span class="err">❌ ${e.message}</span>`;
       }
     };
@@ -279,6 +260,7 @@
         if (!program) throw new Error("Program niet geïnitialiseerd.");
         if (!PROPOSAL_PUBKEY) throw new Error("Geen proposal pubkey ingevuld.");
         const data = await program.account.proposal.fetch(new PublicKey(PROPOSAL_PUBKEY));
+        console.log("✅ Proposal data", data);
         lastFetchEl.textContent = JSON.stringify({
           creator: data.creator.toBase58(),
           question: data.question,
@@ -289,6 +271,7 @@
         }, null, 2);
         resultEl.innerHTML = `<span class="ok">✅ Proposal gelezen.</span>`;
       } catch (e) {
+        console.error("❌ Fetch error", e);
         resultEl.innerHTML = `<span class="err">${e.message}</span>`;
       }
     };
@@ -300,23 +283,24 @@
         const proposalPk = new PublicKey(PROPOSAL_PUBKEY);
         const voter = wallet.publicKey;
         const voteReceiptPda = pdaVoteReceipt(proposalPk, voter);
+
+        console.log("➡️ Vote", { proposal: proposalPk.toBase58(), voter: voter.toBase58(), voteReceipt: voteReceiptPda.toBase58(), yes });
+
         const txSig = await program.methods.vote(yes)
-          .accounts({
-            proposal: proposalPk,
-            voter,
-            voteReceipt: voteReceiptPda,
-            systemProgram: SystemProgram.programId
-          })
+          .accounts({ proposal: proposalPk, voter, voteReceipt: voteReceiptPda, systemProgram: SystemProgram.programId })
           .rpc();
+
+        console.log("✅ Vote TX success", txSig);
         resultEl.innerHTML = `<span class="ok">✅ Vote TX: ${txSig}</span>`;
       } catch (e) {
+        console.error("❌ Vote error", e);
         resultEl.innerHTML = `<span class="err">❌ ${e.message}</span>`;
       }
     }
     $("btnVoteYes").onclick = () => vote(true);
     $("btnVoteNo").onclick = () => vote(false);
 
-    // ---------- Simulaties (gratis) ----------
+    // ---------- Simulaties ----------
     $("btnSimCreate").onclick = async () => {
       try {
         if (!program) throw new Error("Program niet geïnitialiseerd.");
@@ -330,13 +314,17 @@
         const question = inpQuestion.value.trim();
         if (!question) throw new Error("Vul een vraag in.");
 
+        console.log("➡️ Simulate create", { question, endsAt, creator: creator.toBase58(), proposalPda: proposalPda.toBase58() });
+
         const sim = await program.methods.create_proposal(question, endsAt)
           .accounts({ proposal: proposalPda, creator, systemProgram: SystemProgram.programId })
           .simulate();
 
+        console.log("✅ Sim logs", sim?.logs);
         resultEl.innerHTML = `<span class="ok">✅ Simulate(create) OK</span>`;
         lastFetchEl.textContent = (sim?.logs || []).join("\n") || "—";
       } catch (e) {
+        console.error("❌ Simulate(create) error", e);
         resultEl.innerHTML = `<span class="err">❌ Simulate(create) fail: ${e.message}</span>`;
       }
     };
@@ -349,21 +337,13 @@
         const voter = wallet.publicKey;
         const voteReceiptPda = pdaVoteReceipt(proposalPk, voter);
 
+        console.log("➡️ Simulate vote", { yes, proposal: proposalPk.toBase58(), voter: voter.toBase58(), voteReceipt: voteReceiptPda.toBase58() });
+
         const sim = await program.methods.vote(yes)
           .accounts({ proposal: proposalPk, voter, voteReceipt: voteReceiptPda, systemProgram: SystemProgram.programId })
           .simulate();
 
+        console.log("✅ Sim logs", sim?.logs);
         resultEl.innerHTML = `<span class="ok">✅ Simulate(vote ${yes?"YES":"NO"}) OK</span>`;
-        lastFetchEl.textContent = (sim?.logs || []).join("\n") || "—";
-      } catch (e) {
-        resultEl.innerHTML = `<span class="err">❌ Simulate(vote) fail: ${e.message}</span>`;
-      }
-    }
-    $("btnSimYes").onclick = () => simulateVote(true);
-    $("btnSimNo").onclick  = () => simulateVote(false);
-
-    setStatus("Pagina geladen. Verbind je wallet.");
-  </script>
-</body>
-</html>
+        lastFetchEl.textContent =
 
