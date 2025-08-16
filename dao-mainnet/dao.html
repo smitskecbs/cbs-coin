@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CBS DAO – Mainnet</title>
+  <title>CBS DAO – Mainnet (no-Anchor)</title>
   <style>
     :root { color-scheme: dark; }
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#0b0b0f; color:#eaeaea; margin:0; }
@@ -25,8 +25,7 @@
     a { color: #8ab4ff; text-decoration: none; }
     a:hover { text-decoration: underline; }
   </style>
-
-  <!-- Web3.js UMD (geen modules/eval) -->
+  <!-- Alleen web3.js UMD; werkt met GitHub Pages CSP -->
   <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
 </head>
 <body>
@@ -39,10 +38,7 @@
           <button id="btnConnect">Connect Phantom</button>
           <button id="btnDisconnect">Disconnect</button>
         </div>
-        <div>
-          <span class="muted">Queryparams: </span>
-          <code>?program=...&proposal=...&rpc=...</code>
-        </div>
+        <div><span class="muted">Queryparams: </span><code>?program=...&proposal=...&rpc=...</code></div>
       </div>
       <p id="wallet" class="muted">Wallet: <em>niet verbonden</em></p>
       <p id="network" class="muted">RPC: <code>(niet ingesteld)</code></p>
@@ -52,7 +48,7 @@
 
     <div class="card">
       <h2>Status</h2>
-      <div id="status">Pagina geladen. Verbind je wallet.</div>
+      <div id="status">Pagina geladen. Verbind je wallet. (No-Anchor mode)</div>
     </div>
 
     <div class="card">
@@ -92,22 +88,14 @@
     <div class="card">
       <h2>Instellingen</h2>
       <div class="grid">
-        <div>
-          <label class="muted">Program ID</label>
-          <input id="inpProgram" type="text" placeholder="Program ID (Pubkey)" />
-        </div>
-        <div>
-          <label class="muted">Proposal Pubkey</label>
-          <input id="inpProposal" type="text" placeholder="Proposal account pubkey" />
-        </div>
+        <div><label class="muted">Program ID</label><input id="inpProgram" type="text" placeholder="Program ID (Pubkey)" /></div>
+        <div><label class="muted">Proposal Pubkey</label><input id="inpProposal" type="text" placeholder="Proposal account pubkey" /></div>
       </div>
       <div style="margin-top:12px">
         <label class="muted">RPC endpoint</label>
         <input id="inpRpc" type="text" placeholder="https://api.mainnet-beta.solana.com" />
       </div>
-      <div class="row" style="margin-top:10px">
-        <button id="btnApply">Apply & re-init</button>
-      </div>
+      <div class="row" style="margin-top:10px"><button id="btnApply">Apply & re-init</button></div>
     </div>
 
     <div class="card">
@@ -117,8 +105,8 @@
   </div>
 
   <script>
-    // ---------- helpers ----------
-    const { Connection, PublicKey, SystemProgram } = solanaWeb3;
+    // ===== Helpers / state =====
+    const { Connection, PublicKey, SystemProgram, Transaction, TransactionInstruction } = solanaWeb3;
     const $ = (id) => document.getElementById(id);
     const statusEl = $("status"), walletEl = $("wallet"), networkEl = $("network");
     const programInfoEl = $("programInfo"), proposalInfoEl = $("proposalInfo");
@@ -126,222 +114,309 @@
     const inpProgram = $("inpProgram"), inpProposal = $("inpProposal"), inpRpc = $("inpRpc");
     const inpQuestion = $("inpQuestion"), inpMinutes = $("inpMinutes"), inpEndsAtDT = $("inpEndsAtDT");
     const enc = (s) => new TextEncoder().encode(s);
+    const dec = (b) => new TextDecoder().decode(b);
+
     function setStatus(msg, cls = "") { statusEl.innerHTML = cls ? `<span class="${cls}">${msg}</span>` : msg; }
     function setWallet(pk) { walletEl.innerHTML = pk ? `Wallet: <code>${pk}</code>` : "Wallet: <em>niet verbonden</em>"; }
-    function getPhantomProvider() {
+    function getPhantom() {
       if (window?.solana?.isPhantom) return window.solana;
       if (window?.phantom?.solana?.isPhantom) return window.phantom.solana;
       return null;
     }
-    function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement('script'); s.src=src; s.onload=res; s.onerror=()=>rej(new Error('Script load fail: '+src)); document.head.appendChild(s); }); }
 
-    // Laad Anchor met fallbacks
-    async function ensureAnchor() {
-      if (window.anchor) return window.anchor;
-      try {
-        await loadScript("https://unpkg.com/@coral-xyz/anchor@0.29.0/dist/browser/index.js");
-        if (window.anchor) return window.anchor;
-      } catch(_) {}
-      try {
-        await loadScript("https://unpkg.com/@coral-xyz/anchor@0.28.1/dist/browser/index.js");
-        if (window.anchor) return window.anchor;
-      } catch(_) {}
-      try {
-        await loadScript("https://unpkg.com/@project-serum/anchor@0.26.0/dist/browser/anchor.min.js");
-        if (window.anchor) return window.anchor;
-      } catch(_) {}
-      throw new Error("Anchor library kon niet geladen worden (CSP/CDN).");
+    // Discriminators uit jouw IDL (instructions / account)
+    const DISC_CREATE = Uint8Array.from([132,116,68,174,216,160,198,22]);
+    const DISC_VOTE   = Uint8Array.from([227,110,155,23,136,126,172,25]);
+    const DISC_ACC_PROPOSAL = Uint8Array.from([26,94,189,187,116,136,53,33]); // eerste 8 bytes in account data
+
+    // Encode utilities (borsh-compatible)
+    function u32le(n){ const b=new Uint8Array(4); new DataView(b.buffer).setUint32(0,n>>>0,true); return b; }
+    function i64le(n){
+      let x = BigInt(n);
+      if (x < 0n) x = (1n<<64n) + x;
+      const b = new Uint8Array(8);
+      for (let i=0;i<8;i++) b[i] = Number((x >> BigInt(8*i)) & 0xffn);
+      return b;
+    }
+    function encodeString(str){ const s=enc(str); const out=new Uint8Array(4+s.length); out.set(u32le(s.length),0); out.set(s,4); return out; }
+
+    function readU64LE(view, o){ // returns BigInt
+      let v=0n; for (let i=0n;i<8n;i++) v |= BigInt(view[o+Number(i)]) << (8n*i); return v;
+    }
+    function readI64LE(view, o){
+      let u=readU64LE(view,o);
+      return (u >= (1n<<63n)) ? u - (1n<<64n) : u;
     }
 
-    // ---------- state ----------
+    // Build instructions (zonder Anchor)
+    function ixCreateProposal(programId, creator, proposalPda, question, endsAt){
+      const q = encodeString(question);
+      const data = new Uint8Array(DISC_CREATE.length + q.length + 8);
+      let off=0; data.set(DISC_CREATE,off); off+=DISC_CREATE.length; data.set(q,off); off+=q.length; data.set(i64le(endsAt),off);
+      return new TransactionInstruction({
+        programId,
+        keys: [
+          { pubkey: proposalPda, isSigner:false, isWritable:true },
+          { pubkey: creator,     isSigner:true,  isWritable:true },
+          { pubkey: SystemProgram.programId, isSigner:false, isWritable:false },
+        ],
+        data
+      });
+    }
+
+    function ixVote(programId, proposalPk, voter, voteReceiptPda, yes){
+      const data = new Uint8Array(DISC_VOTE.length + 1);
+      data.set(DISC_VOTE,0); data[DISC_VOTE.length] = yes ? 1 : 0;
+      return new TransactionInstruction({
+        programId,
+        keys: [
+          { pubkey: proposalPk,   isSigner:false, isWritable:true },
+          { pubkey: voter,        isSigner:true,  isWritable:true },
+          { pubkey: voteReceiptPda, isSigner:false, isWritable:true },
+          { pubkey: SystemProgram.programId, isSigner:false, isWritable:false },
+        ],
+        data
+      });
+    }
+
+    function pdaProposal(programId, creatorPk){
+      return PublicKey.findProgramAddressSync(
+        [enc("proposal"), creatorPk.toBytes(), creatorPk.toBytes()],
+        programId
+      )[0];
+    }
+    function pdaVoteReceipt(programId, proposalPk, voterPk){
+      return PublicKey.findProgramAddressSync(
+        [enc("vote"), proposalPk.toBytes(), voterPk.toBytes()],
+        programId
+      )[0];
+    }
+
+    async function sendTx(connection, wallet, tx){
+      tx.feePayer = wallet.publicKey;
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('finalized');
+      tx.recentBlockhash = blockhash;
+      const signed = await wallet.signTransaction(tx);
+      const sig = await connection.sendRawTransaction(signed.serialize(), { skipPreflight:false });
+      await connection.confirmTransaction({ signature:sig, blockhash, lastValidBlockHeight }, 'confirmed');
+      return sig;
+    }
+
+    async function simulateTx(connection, wallet, tx){
+      tx.feePayer = wallet.publicKey;
+      tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+      const signed = await wallet.signTransaction(tx); // signen kost geen SOL
+      const sim = await connection.simulateTransaction(signed, { sigVerify:true });
+      return sim;
+    }
+
+    // ===== UI / init =====
     const qs = new URLSearchParams(location.search);
     const DEFAULT_RPC = "https://api.mainnet-beta.solana.com";
-    let PROGRAM_ID = (qs.get("program") || "FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY").trim();
+    let PROGRAM_ID = new PublicKey((qs.get("program") || "FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY").trim());
     let PROPOSAL_PUBKEY = (qs.get("proposal") || "").trim();
     let RPC_URL = (qs.get("rpc") || DEFAULT_RPC).trim();
 
-    inpProgram.value = PROGRAM_ID; inpProposal.value = PROPOSAL_PUBKEY; inpRpc.value = RPC_URL;
-    programInfoEl.innerHTML = "Program: <code>" + (PROGRAM_ID || "—") + "</code>";
+    let connection = null, wallet = null;
+
+    inpProgram.value = PROGRAM_ID.toBase58(); inpProposal.value = PROPOSAL_PUBKEY; inpRpc.value = RPC_URL;
+    programInfoEl.innerHTML = "Program: <code>" + PROGRAM_ID.toBase58() + "</code>";
     proposalInfoEl.innerHTML = "Proposal: <code>" + (PROPOSAL_PUBKEY || "—") + "</code>";
     networkEl.innerHTML = "RPC: <code>" + RPC_URL + "</code>";
 
-    let connection = null, wallet = null, provider = null, program = null, idl = null, anchorNS = null;
-
-    async function initAnchor() {
-      if (!wallet?.publicKey) throw new Error("Wallet niet verbonden.");
-      anchorNS = await ensureAnchor(); // <- hier ging het fout
-      connection = new Connection(RPC_URL, "confirmed");
-      provider  = new anchorNS.AnchorProvider(connection, wallet, { commitment: "confirmed" });
-      anchorNS.setProvider(provider);
-
-      const res = await fetch("./idl.json", { cache: "no-store" });
-      if (!res.ok) throw new Error("idl.json niet gevonden (404) in dezelfde map.");
-      idl = await res.json();
-
-      if (!PROGRAM_ID) throw new Error("Geen Program ID opgegeven.");
-      const programId = new PublicKey(PROGRAM_ID);
-      program  = new anchorNS.Program(idl, programId, provider);
-
-      console.log("✅ Anchor init", { RPC_URL, PROGRAM_ID });
-      setStatus("Anchor klaar.", "ok");
-    }
-
-    function pdaProposal(creatorPk) {
-      return PublicKey.findProgramAddressSync(
-        [enc("proposal"), creatorPk.toBytes(), creatorPk.toBytes()],
-        new PublicKey(PROGRAM_ID)
-      )[0];
-    }
-    function pdaVoteReceipt(proposalPk, voterPk) {
-      return PublicKey.findProgramAddressSync(
-        [enc("vote"), proposalPk.toBytes(), voterPk.toBytes()],
-        new PublicKey(PROGRAM_ID)
-      )[0];
-    }
-
-    // ---------- handlers ----------
     $("btnConnect").onclick = async () => {
       try {
-        const phantom = getPhantomProvider();
+        const phantom = getPhantom();
         if (!phantom) { alert("Installeer Phantom: https://phantom.app/"); return; }
-        const resp = await phantom.connect({ onlyIfTrusted: false });
+        const resp = await phantom.connect({ onlyIfTrusted:false });
         const pubkey = resp?.publicKey?.toBase58?.() || phantom.publicKey?.toBase58?.();
-        setWallet(pubkey);
         wallet = {
           publicKey: phantom.publicKey,
           signTransaction: phantom.signTransaction?.bind(phantom),
           signAllTransactions: phantom.signAllTransactions?.bind(phantom),
           signMessage: phantom.signMessage?.bind(phantom),
         };
+        setWallet(pubkey);
+        connection = new Connection(RPC_URL, "confirmed");
+        setStatus("Verbonden (no-Anchor mode).", "ok");
         console.log("✅ Wallet verbonden:", pubkey);
-        await initAnchor();
-        setStatus("Verbonden en klaar.", "ok");
-      } catch (e) {
-        console.error("❌ Connect error", e);
+      } catch(e){
+        console.error(e);
         setStatus("Connect mislukt: " + e.message, "err");
       }
     };
 
     $("btnDisconnect").onclick = async () => {
-      try { await getPhantomProvider()?.disconnect?.(); } catch {}
-      wallet = null; program = null; provider = null;
-      setWallet(null); setStatus("Losgekoppeld.");
+      try { await getPhantom()?.disconnect?.(); } catch {}
+      wallet = null; setWallet(null);
+      setStatus("Losgekoppeld.");
     };
 
     $("btnApply").onclick = async () => {
-      PROGRAM_ID = inpProgram.value.trim();
-      PROPOSAL_PUBKEY = inpProposal.value.trim();
-      RPC_URL = inpRpc.value.trim() || DEFAULT_RPC;
-      networkEl.innerHTML = "RPC: <code>" + RPC_URL + "</code>";
-      programInfoEl.innerHTML = "Program: <code>" + (PROGRAM_ID || "—") + "</code>";
-      proposalInfoEl.innerHTML = "Proposal: <code>" + (PROPOSAL_PUBKEY || "—") + "</code>";
-      if (!wallet) { setStatus("Verbind eerst je wallet.", "warn"); return; }
-      await initAnchor();
+      try{
+        PROGRAM_ID = new PublicKey(inpProgram.value.trim());
+        PROPOSAL_PUBKEY = inpProposal.value.trim();
+        RPC_URL = inpRpc.value.trim() || DEFAULT_RPC;
+        networkEl.innerHTML = "RPC: <code>" + RPC_URL + "</code>";
+        programInfoEl.innerHTML = "Program: <code>" + PROGRAM_ID.toBase58() + "</code>";
+        proposalInfoEl.innerHTML = "Proposal: <code>" + (PROPOSAL_PUBKEY || "—") + "</code>";
+        if (wallet) connection = new Connection(RPC_URL, "confirmed");
+        setStatus("Instellingen toegepast.", "ok");
+      }catch(e){
+        setStatus("Fout in instellingen: "+e.message, "err");
+      }
     };
 
     $("btnCreate").onclick = async () => {
-      try {
-        if (!program) throw new Error("Program niet geïnitialiseerd.");
+      try{
+        if (!wallet) throw new Error("Wallet niet verbonden.");
+        if (!connection) connection = new Connection(RPC_URL, "confirmed");
         const creator = wallet.publicKey;
-        const proposalPda = pdaProposal(creator);
+        const proposalPda = pdaProposal(PROGRAM_ID, creator);
 
-        let endsAt = inpEndsAtDT.value
+        const endsAt = inpEndsAtDT.value
           ? Math.floor(new Date(inpEndsAtDT.value).getTime() / 1000)
-          : Math.floor(Date.now()/1000) + (parseInt(inpMinutes.value) || 60) * 60;
+          : Math.floor(Date.now()/1000) + (parseInt(inpMinutes.value)||60)*60;
 
-        const question = inpQuestion.value.trim();
+        const question = (inpQuestion.value||"").trim();
         if (!question) throw new Error("Vraag invullen.");
 
-        console.log("➡️ Create Proposal", { creator: creator.toBase58(), proposalPda: proposalPda.toBase58(), question, endsAt });
+        const ix = ixCreateProposal(PROGRAM_ID, creator, proposalPda, question, endsAt);
+        const tx = new Transaction().add(ix);
 
-        const txSig = await program.methods.create_proposal(question, endsAt)
-          .accounts({ proposal: proposalPda, creator, systemProgram: SystemProgram.programId })
-          .rpc();
-
-        console.log("✅ TX success", txSig);
+        console.log("➡️ Create Proposal", { program: PROGRAM_ID.toBase58(), proposalPda: proposalPda.toBase58(), question, endsAt });
+        const sig = await sendTx(connection, wallet, tx);
 
         PROPOSAL_PUBKEY = proposalPda.toBase58();
         inpProposal.value = PROPOSAL_PUBKEY;
         proposalInfoEl.innerHTML = "Proposal: <code>" + PROPOSAL_PUBKEY + "</code>";
-        resultEl.innerHTML = `<span class="ok">✅ Proposal aangemaakt: ${PROPOSAL_PUBKEY}<br/>TX: ${txSig}</span>`;
-      } catch (e) {
+        resultEl.innerHTML = `<span class="ok">✅ Proposal aangemaakt: ${PROPOSAL_PUBKEY}<br/>TX: ${sig}</span>`;
+      }catch(e){
         console.error("❌ Create proposal error", e);
         resultEl.innerHTML = `<span class="err">❌ ${e.message}</span>`;
       }
     };
 
     $("btnFetch").onclick = async () => {
-      try {
-        if (!program) throw new Error("Program niet geïnitialiseerd.");
+      try{
         if (!PROPOSAL_PUBKEY) throw new Error("Geen proposal pubkey ingevuld.");
-        const data = await program.account.proposal.fetch(new PublicKey(PROPOSAL_PUBKEY));
-        console.log("✅ Proposal data", data);
+        if (!connection) connection = new Connection(RPC_URL, "confirmed");
+        const pk = new PublicKey(PROPOSAL_PUBKEY);
+        const info = await connection.getAccountInfo(pk, "confirmed");
+        if (!info) throw new Error("Account niet gevonden.");
+        const data = new Uint8Array(info.data);
+
+        // Parse Proposal account (skip 8-byte account discriminator)
+        let o = 0;
+        const discOk = data.slice(0,8).every((v,i)=> v===DISC_ACC_PROPOSAL[i]);
+        if (!discOk) console.warn("⚠️ Account discriminator mismatch (verwacht Proposal).");
+        o += 8;
+        const creator = new PublicKey(data.slice(o,o+32)); o+=32;
+        const strlen = new DataView(data.buffer, data.byteOffset+o, 4).getUint32(0,true); o+=4;
+        const question = dec(data.slice(o,o+strlen)); o+=strlen;
+        const yesVotes = readU64LE(data,o); o+=8;
+        const noVotes  = readU64LE(data,o); o+=8;
+        const createdAt = readI64LE(data,o); o+=8;
+        const endsAt    = readI64LE(data,o); o+=8;
+
         lastFetchEl.textContent = JSON.stringify({
-          creator: data.creator.toBase58(),
-          question: data.question,
-          yes_votes: data.yesVotes.toString(),
-          no_votes: data.noVotes.toString(),
-          created_at: Number(data.createdAt),
-          ends_at: Number(data.endsAt)
+          creator: creator.toBase58(),
+          question,
+          yes_votes: yesVotes.toString(),
+          no_votes:  noVotes.toString(),
+          created_at: Number(createdAt),
+          ends_at: Number(endsAt)
         }, null, 2);
         resultEl.innerHTML = `<span class="ok">✅ Proposal gelezen.</span>`;
-      } catch (e) {
+      }catch(e){
         console.error("❌ Fetch error", e);
         resultEl.innerHTML = `<span class="err">${e.message}</span>`;
       }
     };
 
     function doVote(yes){ return async () => {
-      try {
-        if (!program) throw new Error("Program niet geïnitialiseerd.");
-        if (!PROPOSAL_PUBKEY) throw new Error("Geen proposal pubkey ingesteld.");
+      try{
+        if (!wallet) throw new Error("Wallet niet verbonden.");
+        if (!PROPOSAL_PUBKEY) throw new Error("Geen proposal pubkey.");
+        if (!connection) connection = new Connection(RPC_URL, "confirmed");
+
         const proposalPk = new PublicKey(PROPOSAL_PUBKEY);
-        const voter = wallet.publicKey;
-        const voteReceiptPda = pdaVoteReceipt(proposalPk, voter);
+        const receiptPda = pdaVoteReceipt(PROGRAM_ID, proposalPk, wallet.publicKey);
 
-        console.log("➡️ Vote", { proposal: proposalPk.toBase58(), voter: voter.toBase58(), voteReceipt: voteReceiptPda.toBase58(), yes });
+        const ix = ixVote(PROGRAM_ID, proposalPk, wallet.publicKey, receiptPda, yes);
+        const tx = new Transaction().add(ix);
 
-        const txSig = await program.methods.vote(yes)
-          .accounts({ proposal: proposalPk, voter, voteReceipt: voteReceiptPda, systemProgram: SystemProgram.programId })
-          .rpc();
-
-        console.log("✅ Vote TX success", txSig);
-        resultEl.innerHTML = `<span class="ok">✅ Vote TX: ${txSig}</span>`;
-      } catch (e) {
+        console.log("➡️ Vote", { proposal: proposalPk.toBase58(), voter: wallet.publicKey.toBase58(), receipt: receiptPda.toBase58(), yes });
+        const sig = await sendTx(connection, wallet, tx);
+        resultEl.innerHTML = `<span class="ok">✅ Vote TX: ${sig}</span>`;
+      }catch(e){
         console.error("❌ Vote error", e);
         resultEl.innerHTML = `<span class="err">❌ ${e.message}</span>`;
       }
-    } }
+    }}
     $("btnVoteYes").onclick = doVote(true);
     $("btnVoteNo").onclick  = doVote(false);
 
     $("btnSimCreate").onclick = async () => {
-      try {
-        if (!program) throw new Error("Program niet geïnitialiseerd.");
+      try{
+        if (!wallet) throw new Error("Wallet niet verbonden.");
+        if (!connection) connection = new Connection(RPC_URL, "confirmed");
         const creator = wallet.publicKey;
-        const proposalPda = pdaProposal(creator);
-
-        let endsAt = inpEndsAtDT.value
+        const proposalPda = pdaProposal(PROGRAM_ID, creator);
+        const endsAt = inpEndsAtDT.value
           ? Math.floor(new Date(inpEndsAtDT.value).getTime() / 1000)
-          : Math.floor(Date.now()/1000) + (parseInt(inpMinutes.value) || 60) * 60;
-
-        const question = inpQuestion.value.trim();
+          : Math.floor(Date.now()/1000) + (parseInt(inpMinutes.value)||60)*60;
+        const question = (inpQuestion.value||"").trim();
         if (!question) throw new Error("Vul een vraag in.");
-
-        const sim = await program.methods.create_proposal(question, endsAt)
-          .accounts({ proposal: proposalPda, creator, systemProgram: SystemProgram.programId })
-          .simulate();
-
-        console.log("✅ Sim logs", sim?.logs);
+        const ix = ixCreateProposal(PROGRAM_ID, creator, proposalPda, question, endsAt);
+        const tx = new Transaction().add(ix);
+        const sim = await simulateTx(connection, wallet, tx);
+        lastFetchEl.textContent = (sim?.value?.logs || []).join("\n") || "—";
         resultEl.innerHTML = `<span class="ok">✅ Simulate(create) OK</span>`;
-        lastFetchEl.textContent = (sim?.logs || []).join("\n") || "—";
-      } catch (e) {
+        console.log("✅ Simulate logs", sim?.value);
+      }catch(e){
         console.error("❌ Simulate(create) error", e);
         resultEl.innerHTML = `<span class="err">❌ Simulate(create) fail: ${e.message}</span>`;
       }
     };
 
-    setStatus("Pagina geladen. Verbind je wallet.");
+    $("btnSimYes").onclick = async () => {
+      try{
+        if (!wallet) throw new Error("Wallet niet verbonden.");
+        if (!PROPOSAL_PUBKEY) throw new Error("Geen proposal pubkey.");
+        if (!connection) connection = new Connection(RPC_URL, "confirmed");
+        const proposalPk = new PublicKey(PROPOSAL_PUBKEY);
+        const receiptPda = pdaVoteReceipt(PROGRAM_ID, proposalPk, wallet.publicKey);
+        const ix = ixVote(PROGRAM_ID, proposalPk, wallet.publicKey, receiptPda, true);
+        const tx = new Transaction().add(ix);
+        const sim = await simulateTx(connection, wallet, tx);
+        lastFetchEl.textContent = (sim?.value?.logs || []).join("\n") || "—";
+        resultEl.innerHTML = `<span class="ok">✅ Simulate(vote YES) OK</span>`;
+      }catch(e){
+        console.error("❌ Simulate(vote) error", e);
+        resultEl.innerHTML = `<span class="err">❌ Simulate(vote) fail: ${e.message}</span>`;
+      }
+    };
+
+    $("btnSimNo").onclick = async () => {
+      try{
+        if (!wallet) throw new Error("Wallet niet verbonden.");
+        if (!PROPOSAL_PUBKEY) throw new Error("Geen proposal pubkey.");
+        if (!connection) connection = new Connection(RPC_URL, "confirmed");
+        const proposalPk = new PublicKey(PROPOSAL_PUBKEY);
+        const receiptPda = pdaVoteReceipt(PROGRAM_ID, proposalPk, wallet.publicKey);
+        const ix = ixVote(PROGRAM_ID, proposalPk, wallet.publicKey, receiptPda, false);
+        const tx = new Transaction().add(ix);
+        const sim = await simulateTx(connection, wallet, tx);
+        lastFetchEl.textContent = (sim?.value?.logs || []).join("\n") || "—";
+        resultEl.innerHTML = `<span class="ok">✅ Simulate(vote NO) OK</span>`;
+      }catch(e){
+        console.error("❌ Simulate(vote) error", e);
+        resultEl.innerHTML = `<span class="err">❌ Simulate(vote) fail: ${e.message}</span>`;
+      }
+    };
+
+    setStatus("Pagina geladen. Verbind je wallet. (No-Anchor mode)");
   </script>
 </body>
 </html>
