@@ -25,7 +25,7 @@
     a { color: #8ab4ff; text-decoration: none; }
     a:hover { text-decoration: underline; }
   </style>
-  <!-- Alleen web3.js UMD; werkt met GitHub Pages CSP -->
+  <!-- UMD web3.js – werkt met GitHub Pages CSP -->
   <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
 </head>
 <body>
@@ -35,10 +35,13 @@
     <div class="card">
       <div class="row" style="justify-content: space-between;">
         <div class="row">
-          <button id="btnConnect">Connect Phantom</button>
-          <button id="btnDisconnect">Disconnect</button>
+          <button id="btnConnect" title="Verbind Phantom wallet">Connect Phantom</button>
+          <button id="btnDisconnect" title="Wallet loskoppelen">Disconnect</button>
         </div>
-        <div><span class="muted">Queryparams: </span><code>?program=...&proposal=...&rpc=...</code></div>
+        <div>
+          <span class="muted">Queryparams: </span>
+          <code>?program=...&proposal=...&rpc=...</code>
+        </div>
       </div>
       <p id="wallet" class="muted">Wallet: <em>niet verbonden</em></p>
       <p id="network" class="muted">RPC: <code>(niet ingesteld)</code></p>
@@ -55,32 +58,32 @@
       <h2>Proposal aanmaken</h2>
       <div class="grid3">
         <div>
-          <label class="muted">Vraag (question)</label>
-          <input id="inpQuestion" type="text" placeholder="Bijv. 'Steun je CBS DAO?'" />
+          <label class="muted" for="inpQuestion">Vraag (question)</label>
+          <input id="inpQuestion" type="text" placeholder="Bijv. 'Steun je CBS DAO?'" title="De vraag die gestemd wordt" />
         </div>
         <div>
-          <label class="muted">Duur (minuten)</label>
-          <input id="inpMinutes" type="number" min="1" value="60" />
+          <label class="muted" for="inpMinutes">Duur (minuten)</label>
+          <input id="inpMinutes" type="number" min="1" value="60" title="Duur van de stemming in minuten" />
         </div>
         <div>
-          <label class="muted">of Eindtijd</label>
-          <input id="inpEndsAtDT" type="datetime-local" />
+          <label class="muted" for="inpEndsAtDT">of Eindtijd</label>
+          <input id="inpEndsAtDT" type="datetime-local" title="Specifieke eindtijd (optioneel)" />
         </div>
       </div>
       <div class="row" style="margin-top:10px">
-        <button id="btnCreate">Create Proposal</button>
-        <button id="btnSimCreate">Simulate Create</button>
+        <button id="btnCreate" title="Echte transactie versturen (kost SOL fees)">Create Proposal</button>
+        <button id="btnSimCreate" title="Simuleren zonder te verzenden">Simulate Create</button>
       </div>
     </div>
 
     <div class="card">
       <h2>Acties op proposal</h2>
       <div class="row">
-        <button id="btnFetch">Fetch Proposal</button>
-        <button id="btnVoteYes">Vote YES</button>
-        <button id="btnVoteNo">Vote NO</button>
-        <button id="btnSimYes">Sim YES</button>
-        <button id="btnSimNo">Sim NO</button>
+        <button id="btnFetch" title="Lees proposal account">Fetch Proposal</button>
+        <button id="btnVoteYes" title="Stem JA">Vote YES</button>
+        <button id="btnVoteNo"  title="Stem NEE">Vote NO</button>
+        <button id="btnSimYes"  title="Simuleer JA">Sim YES</button>
+        <button id="btnSimNo"   title="Simuleer NEE">Sim NO</button>
       </div>
       <p id="result" class="muted">Resultaat: —</p>
     </div>
@@ -88,24 +91,33 @@
     <div class="card">
       <h2>Instellingen</h2>
       <div class="grid">
-        <div><label class="muted">Program ID</label><input id="inpProgram" type="text" placeholder="Program ID (Pubkey)" /></div>
-        <div><label class="muted">Proposal Pubkey</label><input id="inpProposal" type="text" placeholder="Proposal account pubkey" /></div>
+        <div>
+          <label class="muted" for="inpProgram">Program ID</label>
+          <input id="inpProgram" type="text" placeholder="Program ID (Pubkey)" title="CBS DAO Program ID" />
+        </div>
+        <div>
+          <label class="muted" for="inpProposal">Proposal Pubkey</label>
+          <input id="inpProposal" type="text" placeholder="Proposal account pubkey" title="Bestaande proposal om te lezen/stemmen" />
+        </div>
       </div>
       <div style="margin-top:12px">
-        <label class="muted">RPC endpoint</label>
-        <input id="inpRpc" type="text" placeholder="https://api.mainnet-beta.solana.com" />
+        <label class="muted" for="inpRpc">RPC endpoint</label>
+        <input id="inpRpc" type="text" placeholder="https://rpc.helius.xyz/?api-key=..." title="Solana RPC URL" />
       </div>
-      <div class="row" style="margin-top:10px"><button id="btnApply">Apply & re-init</button></div>
+      <div class="row" style="margin-top:10px">
+        <button id="btnApply">Apply & re-init</button>
+        <button id="btnDefaults" title="Herstel standaardwaarden">Reset defaults</button>
+      </div>
     </div>
 
     <div class="card">
-      <h2>Laatste fetch</h2>
-      <pre id="lastFetch" class="muted" style="white-space:pre-wrap;word-break:break-word;">—</pre>
+      <h2>Laatste fetch / logs</h2>
+      <pre id="lastFetch" class="muted" style="white-space:pre-wrap;word-break:break-word;max-height:360px;overflow:auto;">—</pre>
     </div>
   </div>
 
   <script>
-    // ===== Helpers / state =====
+    // ===== Web3 helpers =====
     const { Connection, PublicKey, SystemProgram, Transaction, TransactionInstruction } = solanaWeb3;
     const $ = (id) => document.getElementById(id);
     const statusEl = $("status"), walletEl = $("wallet"), networkEl = $("network");
@@ -113,8 +125,10 @@
     const resultEl = $("result"), lastFetchEl = $("lastFetch");
     const inpProgram = $("inpProgram"), inpProposal = $("inpProposal"), inpRpc = $("inpRpc");
     const inpQuestion = $("inpQuestion"), inpMinutes = $("inpMinutes"), inpEndsAtDT = $("inpEndsAtDT");
+
     const enc = (s) => new TextEncoder().encode(s);
     const dec = (b) => new TextDecoder().decode(b);
+    const EXPLORER_TX = "https://solscan.io/tx/"; // of helius explorer etc.
 
     function setStatus(msg, cls = "") { statusEl.innerHTML = cls ? `<span class="${cls}">${msg}</span>` : msg; }
     function setWallet(pk) { walletEl.innerHTML = pk ? `Wallet: <code>${pk}</code>` : "Wallet: <em>niet verbonden</em>"; }
@@ -124,31 +138,19 @@
       return null;
     }
 
-    // Discriminators uit jouw IDL (instructions / account)
+    // ===== DISCRIMINATORS (uit jouw IDL) =====
     const DISC_CREATE = Uint8Array.from([132,116,68,174,216,160,198,22]);
     const DISC_VOTE   = Uint8Array.from([227,110,155,23,136,126,172,25]);
-    const DISC_ACC_PROPOSAL = Uint8Array.from([26,94,189,187,116,136,53,33]); // eerste 8 bytes in account data
+    const DISC_ACC_PROPOSAL = Uint8Array.from([26,94,189,187,116,136,53,33]); // account header
 
-    // Encode utilities (borsh-compatible)
+    // ===== Borsh-achtige encoders =====
     function u32le(n){ const b=new Uint8Array(4); new DataView(b.buffer).setUint32(0,n>>>0,true); return b; }
-    function i64le(n){
-      let x = BigInt(n);
-      if (x < 0n) x = (1n<<64n) + x;
-      const b = new Uint8Array(8);
-      for (let i=0;i<8;i++) b[i] = Number((x >> BigInt(8*i)) & 0xffn);
-      return b;
-    }
+    function i64le(n){ let x=BigInt(n); if (x<0n) x=(1n<<64n)+x; const b=new Uint8Array(8); for(let i=0;i<8;i++) b[i]=Number((x>>BigInt(8*i))&0xffn); return b; }
     function encodeString(str){ const s=enc(str); const out=new Uint8Array(4+s.length); out.set(u32le(s.length),0); out.set(s,4); return out; }
+    function readU64LE(view, o){ let v=0n; for (let i=0n;i<8n;i++) v |= BigInt(view[o+Number(i)]) << (8n*i); return v; }
+    function readI64LE(view, o){ let u=readU64LE(view,o); return (u >= (1n<<63n)) ? u - (1n<<64n) : u; }
 
-    function readU64LE(view, o){ // returns BigInt
-      let v=0n; for (let i=0n;i<8n;i++) v |= BigInt(view[o+Number(i)]) << (8n*i); return v;
-    }
-    function readI64LE(view, o){
-      let u=readU64LE(view,o);
-      return (u >= (1n<<63n)) ? u - (1n<<64n) : u;
-    }
-
-    // Build instructions (zonder Anchor)
+    // ===== Instruction builders =====
     function ixCreateProposal(programId, creator, proposalPda, question, endsAt){
       const q = encodeString(question);
       const data = new Uint8Array(DISC_CREATE.length + q.length + 8);
@@ -157,21 +159,20 @@
         programId,
         keys: [
           { pubkey: proposalPda, isSigner:false, isWritable:true },
-          { pubkey: creator,     isSigner:true,  isWritable:true },
+          { pubkey: creator, isSigner:true, isWritable:true },
           { pubkey: SystemProgram.programId, isSigner:false, isWritable:false },
         ],
         data
       });
     }
-
     function ixVote(programId, proposalPk, voter, voteReceiptPda, yes){
       const data = new Uint8Array(DISC_VOTE.length + 1);
       data.set(DISC_VOTE,0); data[DISC_VOTE.length] = yes ? 1 : 0;
       return new TransactionInstruction({
         programId,
         keys: [
-          { pubkey: proposalPk,   isSigner:false, isWritable:true },
-          { pubkey: voter,        isSigner:true,  isWritable:true },
+          { pubkey: proposalPk, isSigner:false, isWritable:true },
+          { pubkey: voter, isSigner:true, isWritable:true },
           { pubkey: voteReceiptPda, isSigner:false, isWritable:true },
           { pubkey: SystemProgram.programId, isSigner:false, isWritable:false },
         ],
@@ -179,6 +180,7 @@
       });
     }
 
+    // ===== PDA helpers =====
     function pdaProposal(programId, creatorPk){
       return PublicKey.findProgramAddressSync(
         [enc("proposal"), creatorPk.toBytes(), creatorPk.toBytes()],
@@ -192,6 +194,7 @@
       )[0];
     }
 
+    // ===== TX helpers =====
     async function sendTx(connection, wallet, tx){
       tx.feePayer = wallet.publicKey;
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('finalized');
@@ -201,29 +204,32 @@
       await connection.confirmTransaction({ signature:sig, blockhash, lastValidBlockHeight }, 'confirmed');
       return sig;
     }
-
     async function simulateTx(connection, wallet, tx){
       tx.feePayer = wallet.publicKey;
       tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
-      const signed = await wallet.signTransaction(tx); // signen kost geen SOL
-      const sim = await connection.simulateTransaction(signed, { sigVerify:true });
-      return sim;
+      const signed = await wallet.signTransaction(tx);
+      return await connection.simulateTransaction(signed, { sigVerify:true });
     }
 
-    // ===== UI / init =====
+    // ===== Default config (JOUW KEY INGEBouwd) =====
     const qs = new URLSearchParams(location.search);
-    const DEFAULT_RPC = "https://api.mainnet-beta.solana.com";
+    const DEFAULT_RPC = qs.get("rpc")
+      || "https://rpc.helius.xyz/?api-key=3d335769-1880-4497-8fd0-ac7ed0701a7c"; // <- jouw Helius key
     let PROGRAM_ID = new PublicKey((qs.get("program") || "FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY").trim());
     let PROPOSAL_PUBKEY = (qs.get("proposal") || "").trim();
-    let RPC_URL = (qs.get("rpc") || DEFAULT_RPC).trim();
+    let RPC_URL = DEFAULT_RPC;
 
     let connection = null, wallet = null;
 
-    inpProgram.value = PROGRAM_ID.toBase58(); inpProposal.value = PROPOSAL_PUBKEY; inpRpc.value = RPC_URL;
+    // UI init
+    inpProgram.value = PROGRAM_ID.toBase58();
+    inpProposal.value = PROPOSAL_PUBKEY;
+    inpRpc.value = RPC_URL;
     programInfoEl.innerHTML = "Program: <code>" + PROGRAM_ID.toBase58() + "</code>";
     proposalInfoEl.innerHTML = "Proposal: <code>" + (PROPOSAL_PUBKEY || "—") + "</code>";
     networkEl.innerHTML = "RPC: <code>" + RPC_URL + "</code>";
 
+    // ===== Handlers =====
     $("btnConnect").onclick = async () => {
       try {
         const phantom = getPhantom();
@@ -240,7 +246,7 @@
         connection = new Connection(RPC_URL, "confirmed");
         setStatus("Verbonden (no-Anchor mode).", "ok");
         console.log("✅ Wallet verbonden:", pubkey);
-      } catch(e){
+      } catch (e) {
         console.error(e);
         setStatus("Connect mislukt: " + e.message, "err");
       }
@@ -257,14 +263,21 @@
         PROGRAM_ID = new PublicKey(inpProgram.value.trim());
         PROPOSAL_PUBKEY = inpProposal.value.trim();
         RPC_URL = inpRpc.value.trim() || DEFAULT_RPC;
-        networkEl.innerHTML = "RPC: <code>" + RPC_URL + "</code>";
         programInfoEl.innerHTML = "Program: <code>" + PROGRAM_ID.toBase58() + "</code>";
         proposalInfoEl.innerHTML = "Proposal: <code>" + (PROPOSAL_PUBKEY || "—") + "</code>";
+        networkEl.innerHTML = "RPC: <code>" + RPC_URL + "</code>";
         if (wallet) connection = new Connection(RPC_URL, "confirmed");
         setStatus("Instellingen toegepast.", "ok");
       }catch(e){
         setStatus("Fout in instellingen: "+e.message, "err");
       }
+    };
+
+    $("btnDefaults").onclick = () => {
+      inpProgram.value = "FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY";
+      inpRpc.value = "https://rpc.helius.xyz/?api-key=3d335769-1880-4497-8fd0-ac7ed0701a7c";
+      inpProposal.value = "";
+      $("btnApply").click();
     };
 
     $("btnCreate").onclick = async () => {
@@ -275,7 +288,7 @@
         const proposalPda = pdaProposal(PROGRAM_ID, creator);
 
         const endsAt = inpEndsAtDT.value
-          ? Math.floor(new Date(inpEndsAtDT.value).getTime() / 1000)
+          ? Math.floor(new Date(inpEndsAtDT.value).getTime()/1000)
           : Math.floor(Date.now()/1000) + (parseInt(inpMinutes.value)||60)*60;
 
         const question = (inpQuestion.value||"").trim();
@@ -285,12 +298,14 @@
         const tx = new Transaction().add(ix);
 
         console.log("➡️ Create Proposal", { program: PROGRAM_ID.toBase58(), proposalPda: proposalPda.toBase58(), question, endsAt });
+
         const sig = await sendTx(connection, wallet, tx);
 
         PROPOSAL_PUBKEY = proposalPda.toBase58();
         inpProposal.value = PROPOSAL_PUBKEY;
         proposalInfoEl.innerHTML = "Proposal: <code>" + PROPOSAL_PUBKEY + "</code>";
-        resultEl.innerHTML = `<span class="ok">✅ Proposal aangemaakt: ${PROPOSAL_PUBKEY}<br/>TX: ${sig}</span>`;
+        resultEl.innerHTML = `<span class="ok">✅ Proposal aangemaakt: ${PROPOSAL_PUBKEY}<br/>
+          TX: <a href="${EXPLORER_TX}${sig}" target="_blank">${sig}</a></span>`;
       }catch(e){
         console.error("❌ Create proposal error", e);
         resultEl.innerHTML = `<span class="err">❌ ${e.message}</span>`;
@@ -348,12 +363,12 @@
 
         console.log("➡️ Vote", { proposal: proposalPk.toBase58(), voter: wallet.publicKey.toBase58(), receipt: receiptPda.toBase58(), yes });
         const sig = await sendTx(connection, wallet, tx);
-        resultEl.innerHTML = `<span class="ok">✅ Vote TX: ${sig}</span>`;
+        resultEl.innerHTML = `<span class="ok">✅ Vote TX: <a href="${EXPLORER_TX}${sig}" target="_blank">${sig}</a></span>`;
       }catch(e){
         console.error("❌ Vote error", e);
         resultEl.innerHTML = `<span class="err">❌ ${e.message}</span>`;
       }
-    }}
+    } }
     $("btnVoteYes").onclick = doVote(true);
     $("btnVoteNo").onclick  = doVote(false);
 
@@ -420,3 +435,4 @@
   </script>
 </body>
 </html>
+
