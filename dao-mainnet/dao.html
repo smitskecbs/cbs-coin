@@ -150,11 +150,9 @@
       walletEl.innerHTML = pk ? `Wallet: <code>${pk}</code>` : "Wallet: <em>niet verbonden</em>";
     }
 
-    // strings -> bytes (vervangt Buffer.from)
     const enc = (s) => new TextEncoder().encode(s);
-
     const qs = new URLSearchParams(location.search);
-    const DEFAULT_RPC = "https://mainnet.helius-rpc.com/?api-key=dee593c7-e01e-42da-9419-bcf7b585b67e"; // ✅ nieuwe default
+    const DEFAULT_RPC = "https://api.mainnet-beta.solana.com"; 
     let PROGRAM_ID = (qs.get("program") || "FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY").trim();
     let PROPOSAL_PUBKEY = (qs.get("proposal") || "").trim();
     let RPC_URL = (qs.get("rpc") || DEFAULT_RPC).trim();
@@ -185,7 +183,7 @@
       anchor.setProvider(provider);
 
       const res = await fetch("./idl.json");
-      if (!res.ok) throw new Error("idl.json niet gevonden (404). Zet idl.json naast dao.html in dao-mainnet/.");
+      if (!res.ok) throw new Error("idl.json niet gevonden (404).");
       idl = await res.json();
 
       if (!PROGRAM_ID) throw new Error("Geen Program ID opgegeven.");
@@ -257,20 +255,14 @@
         const creator = wallet.publicKey;
         const proposalPda = pdaProposal(creator);
 
-        let endsAt = 0;
-        if (inpEndsAtDT.value) {
-          endsAt = Math.floor(new Date(inpEndsAtDT.value).getTime() / 1000);
-        } else {
-          endsAt = Math.floor(Date.now()/1000) + (parseInt(inpMinutes.value) || 60) * 60;
-        }
+        let endsAt = inpEndsAtDT.value
+          ? Math.floor(new Date(inpEndsAtDT.value).getTime() / 1000)
+          : Math.floor(Date.now()/1000) + (parseInt(inpMinutes.value) || 60) * 60;
+
         const question = inpQuestion.value.trim();
         if (!question) throw new Error("Vraag invullen.");
-        const txSig = await program.methods.createProposal(question, endsAt)
-          .accounts({
-            proposal: proposalPda,
-            creator,
-            systemProgram: SystemProgram.programId
-          })
+        const txSig = await program.methods.create_proposal(question, endsAt)
+          .accounts({ proposal: proposalPda, creator, systemProgram: SystemProgram.programId })
           .rpc();
 
         PROPOSAL_PUBKEY = proposalPda.toBase58();
@@ -324,21 +316,21 @@
     $("btnVoteYes").onclick = () => vote(true);
     $("btnVoteNo").onclick = () => vote(false);
 
-    // ---------- Simulaties (kosten 0 SOL) ----------
+    // ---------- Simulaties (gratis) ----------
     $("btnSimCreate").onclick = async () => {
       try {
         if (!program) throw new Error("Program niet geïnitialiseerd.");
         const creator = wallet.publicKey;
         const proposalPda = pdaProposal(creator);
 
-        let endsAt = 0;
-        if (inpEndsAtDT.value) endsAt = Math.floor(new Date(inpEndsAtDT.value).getTime() / 1000);
-        else endsAt = Math.floor(Date.now()/1000) + (parseInt(inpMinutes.value) || 60) * 60;
+        let endsAt = inpEndsAtDT.value
+          ? Math.floor(new Date(inpEndsAtDT.value).getTime() / 1000)
+          : Math.floor(Date.now()/1000) + (parseInt(inpMinutes.value) || 60) * 60;
 
         const question = inpQuestion.value.trim();
         if (!question) throw new Error("Vul een vraag in.");
 
-        const sim = await program.methods.createProposal(question, endsAt)
+        const sim = await program.methods.create_proposal(question, endsAt)
           .accounts({ proposal: proposalPda, creator, systemProgram: SystemProgram.programId })
           .simulate();
 
