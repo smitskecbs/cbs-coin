@@ -24,7 +24,7 @@
     nav a:hover{text-decoration:underline}
     header{text-align:center; width:100%}
     h1{font-size:3rem; margin:.5rem 0 .2rem}
-    h2{font-size:1.35rem; font-weight:400; color:var(--muted); margin:.4rem 0 1rem}
+    h2{font-size:1.35rem; font-weight:400; color:#9aa; margin:.4rem 0 1rem}
     .logo{margin:1rem 0; max-width:180px}
 
     .section{
@@ -46,7 +46,7 @@
     .toolbar{display:flex; gap:.8rem; justify-content:center; flex-wrap:wrap; margin:1rem 0}
     .btn{
       padding:.9rem 1.4rem; font-weight:800; border-radius:12px;
-      border:1px solid var(--cyan); background:#141414; color:#var(--cyan);
+      border:1px solid var(--cyan); background:#141414; color:#00ffff;
       cursor:pointer; transition:transform .15s ease, box-shadow .2s ease
     }
     .btn:hover{transform:translateY(-1px); box-shadow:0 8px 24px rgba(0,255,204,.15)}
@@ -54,9 +54,6 @@
       box-shadow:0 0 10px var(--fg),0 0 40px var(--fg),0 0 80px var(--fg)}
     .btn-primary:hover{box-shadow:0 0 20px var(--cyan),0 0 60px var(--cyan),0 0 100px var(--cyan)}
     .btn[disabled]{opacity:.6; cursor:not-allowed}
-
-    .countdown{margin-top:.4rem; color:#9fffe3; font-size:.95rem}
-    .closed{color:#ffd166}
   </style>
 </head>
 <body>
@@ -99,16 +96,6 @@
     </div>
   </section>
 
-  <!-- AIRDROP (knop verwijderd, rest blijft) -->
-  <section class="section" style="text-align:center">
-    <h2 id="airdropTitle" data-i18n="airdropTitle">🎁 Airdrop – Aanvraag</h2>
-    <p id="airdropIntro" data-i18n="airdropIntro" data-i18n-html>
-      Vraag de airdrop aan via het formulier. <br><em>Inschrijving stopt op 1 september 2025.</em>
-    </p>
-    <!-- Knop verwijderd -->
-    <div id="airdropCountdown" class="countdown"></div>
-  </section>
-
   <!-- TOKEN INFO -->
   <section class="section">
     <h3 id="tokenInfoTitle" data-i18n="tokenInfoTitle">📦 Token Info</h3>
@@ -144,9 +131,6 @@
   </footer>
 
   <script type="module">
-    // === Config ===
-    const AIRDROP_DEADLINE_ISO = "2025-09-01T00:00:00Z";
-
     // === i18n ===
     const i18n = {
       nl:{
@@ -155,12 +139,6 @@
         telegram:"Telegram", xTwitter:"X (Twitter)", langSwitch:"🌐 English",
         buyCbsTitle:"💳 Koop CBS",
         buyOnBirdeye:"Koop op Birdeye",
-        airdropTitle:"🎁 Airdrop – Aanvraag",
-        airdropIntro:"Vraag de airdrop aan via het formulier. <br><em>Inschrijving stopt op 1 september 2025.</em>",
-        airdropButton:"🎁 Aanvraag Airdrop",
-        countdownLeft:"Inschrijving sluit over {d}d {h}u {m}m {s}s",
-        airdropClosedBtn:"🎁 Inschrijving gesloten",
-        airdropClosedText:"De airdrop-inschrijving is gesloten.",
         tokenInfoTitle:"📦 Token Info", tokenNameLabel:"Tokennaam:", tokenName:"CBS Coin",
         symbolLabel:"Symbool:", supplyLabel:"Totale supply:", mintAuthLabel:"Mint authority:", freezeAuthLabel:"Freeze authority:", disabled:"uitgeschakeld",
         explorerLabel:"Explorer:", viewOnSolscan:"Bekijk op Solscan",
@@ -174,12 +152,6 @@
         telegram:"Telegram", xTwitter:"X (Twitter)", langSwitch:"🌐 Nederlands",
         buyCbsTitle:"💳 Buy CBS",
         buyOnBirdeye:"Buy on Birdeye",
-        airdropTitle:"🎁 Airdrop – Apply",
-        airdropIntro:"Apply for the airdrop via the form. <br><em>Registration closes on 1 September 2025.</em>",
-        airdropButton:"🎁 Apply for Airdrop",
-        countdownLeft:"Registration closes in {d}d {h}h {m}m {s}s",
-        airdropClosedBtn:"🎁 Registration closed",
-        airdropClosedText:"Airdrop registration is closed.",
         tokenInfoTitle:"📦 Token Info", tokenNameLabel:"Token name:", tokenName:"CBS Coin",
         symbolLabel:"Symbol:", supplyLabel:"Total supply:", mintAuthLabel:"Mint authority:", freezeAuthLabel:"Freeze authority:", disabled:"disabled",
         explorerLabel:"Explorer:", viewOnSolscan:"View on Solscan",
@@ -219,43 +191,9 @@
       applyI18n();
     });
 
-    // Airdrop timer (werkt ook zonder knop)
-    function initAirdropTimer(){
-      const airdropBtn = $("airdropBtn"); // kan ontbreken
-      const airdropCountdown = $("airdropCountdown");
-      const end = new Date(AIRDROP_DEADLINE_ISO).getTime();
-
-      function tick(){
-        const now = Date.now();
-        if (now >= end){
-          if (airdropBtn){
-            airdropBtn.setAttribute("disabled","disabled");
-            airdropBtn.textContent = t("airdropClosedBtn");
-            airdropBtn.removeAttribute("href");
-          }
-          if (airdropCountdown){
-            airdropCountdown.classList.add("closed");
-            airdropCountdown.textContent = t("airdropClosedText");
-          }
-          return;
-        }
-        const diff = end - now;
-        const d = Math.floor(diff/86400000);
-        const h = Math.floor(diff%86400000/3600000);
-        const m = Math.floor(diff%3600000/60000);
-        const s = Math.floor(diff%60000/1000);
-        if (airdropCountdown){
-          airdropCountdown.textContent = t("countdownLeft",{d,h,m,s});
-        }
-        requestAnimationFrame(()=>setTimeout(tick,1000));
-      }
-      tick();
-    }
-
     // Init
     window.addEventListener("load", () => {
       applyI18n();
-      initAirdropTimer();
     });
   </script>
 </body>
