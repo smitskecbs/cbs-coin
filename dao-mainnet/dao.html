@@ -214,11 +214,9 @@
 
     // ✅ Simulatie: 1) gesigneerd, 2) unsigned, 3) raw RPC met base64 (fallback)
     async function simulateTx(connection, wallet, tx){
-      // Altijd verse blockhash & fee payer
       tx.feePayer = wallet.publicKey;
       tx.recentBlockhash = (await connection.getLatestBlockhash('confirmed')).blockhash;
 
-      // 1) Gesigneerd pad (werkt bij de meeste RPC’s incl. Helius)
       try {
         const signed = await wallet.signTransaction(tx);
         return await connection.simulateTransaction(signed, { sigVerify: true, replaceRecentBlockhash: true });
@@ -226,7 +224,6 @@
         console.warn("simulateTx signed path failed:", e1?.message || e1);
       }
 
-      // 2) Unsigned pad (sommige RPC’s accepteren dit)
       try {
         tx.feePayer = wallet.publicKey;
         tx.recentBlockhash = (await connection.getLatestBlockhash('confirmed')).blockhash;
@@ -235,21 +232,17 @@
         console.warn("simulateTx unsigned path failed:", e2?.message || e2);
       }
 
-      // 3) Raw RPC fallback met base64
       try {
         tx.feePayer = wallet.publicKey;
         tx.recentBlockhash = (await connection.getLatestBlockhash('confirmed')).blockhash;
-        // Let op: requireAllSignatures=false, verifySignatures=false voor unsigned simulatie
         const raw = tx.serialize({ requireAllSignatures: false, verifySignatures: false });
         const encoded = u8ToBase64(raw);
         const args = [
           encoded,
           { encoding: 'base64', sigVerify: false, replaceRecentBlockhash: true, commitment: 'confirmed' }
         ];
-        // _rpcRequest is "private", maar bestaat op Connection
         const res = await connection._rpcRequest('simulateTransaction', args);
         if (res?.error) throw new Error(res.error.message || 'simulateTransaction RPC error');
-        // Zorg dat we hetzelfde "shape" teruggeven als web3.js doet
         return { value: res.result };
       } catch (e3) {
         console.error("simulateTx raw RPC fallback failed:", e3?.message || e3);
@@ -326,10 +319,12 @@
       $("btnApply").click();
     };
 
+    // ---- Create (met ConstraintSeeds log-fix) ----
     $("btnCreate").onclick = async () => {
       try{
         if (!wallet) throw new Error("Wallet niet verbonden.");
         if (!connection) connection = new Connection(RPC_URL, "confirmed");
+
         const creator = wallet.publicKey;
         const proposalPda = pdaProposal(PROGRAM_ID, creator);
 
@@ -343,7 +338,11 @@
         const ix = ixCreateProposal(PROGRAM_ID, creator, proposalPda, question, endsAt);
         const tx = new Transaction().add(ix);
 
-        console.log("➡️ Create Proposal", { program: PROGRAM_ID.toBase58(), proposalPda: proposalPda.toBase58(), question, endsAt });
+        console.log("➡️ Create Proposal", {
+          program: PROGRAM_ID.toBase58(),
+          proposalPda: proposalPda.toBase58(),
+          question, endsAt
+        });
 
         const sig = await sendTx(connection, wallet, tx);
 
@@ -352,9 +351,60 @@
         proposalInfoEl.innerHTML = "Proposal: <code>" + PROPOSAL_PUBKEY + "</code>";
         resultEl.innerHTML = `<span class="ok">✅ Proposal aangemaakt: ${PROPOSAL_PUBKEY}<br/>
           TX: <a href="${EXPLORER_TX}${sig}" target="_blank" rel="noopener">${sig}</a></span>`;
-      }catch(e){
+      } catch (e) {
         console.error("❌ Create proposal error", e);
+
+        // Probeer 'Right:' PDA uit logs te halen bij ConstraintSeeds
+        try {
+          const logs = (e.getLogs ? await e.getLogs() : null) || e?.logs || [];
+          const text = Array.isArray(logs) ? logs.join("\n") : String(logs || "");
+          const match = text.match(/Right:\s+'([1-9A-HJ-NP-Za-km-z]{32,44})'/);
+          if (match && match[1]) {
+            PROPOSAL_PUBKEY = match[1];
+            inpProposal.value = PROPOSAL_PUBKEY;
+            proposalInfoEl.innerHTML =
+              `Proposal: <code>${PROPOSAL_PUBKEY}</code> <span class="muted">(gevonden in logs – klik nogmaals <b>Create Proposal</b>)</span>`;
+            resultEl.innerHTML = `<span class="warn">⚠️ Seeds mismatch. Ik heb de verwachte PDA uit de logs ingevuld. Probeer Create nogmaals.</span>`;
+            return;
+          }
+        } catch {}
+
         resultEl.innerHTML = `<span class="err">❌ ${e.message}</span>`;
+      }
+    };
+
+    // ---- Simulate Create (vult predicted PDA in) ----
+    $("btnSimCreate").onclick = async () => {
+      try {
+        if (!wallet) throw new Error("Wallet niet verbonden.");
+        if (!connection) connection = new Connection(RPC_URL, "confirmed");
+
+        const creator = wallet.publicKey;
+        const proposalPda = pdaProposal(PROGRAM_ID, creator);
+
+        const endsAt = inpEndsAtDT.value
+          ? Math.floor(new Date(inpEndsAtDT.value).getTime() / 1000)
+          : Math.floor(Date.now()/1000) + (parseInt(inpMinutes.value)||60)*60;
+
+        const question = (inpQuestion.value||"").trim();
+        if (!question) throw new Error("Vul een vraag in.");
+
+        const ix = ixCreateProposal(PROGRAM_ID, creator, proposalPda, question, endsAt);
+        const tx = new Transaction().add(ix);
+
+        const sim = await simulateTx(connection, wallet, tx);
+        lastFetchEl.textContent = (sim?.value?.logs || []).join("\n") || "—";
+
+        // Vul predicted PDA in UI (handig voor stemmen/2e poging)
+        PROPOSAL_PUBKEY = proposalPda.toBase58();
+        inpProposal.value = PROPOSAL_PUBKEY;
+        proposalInfoEl.innerHTML =
+          `Proposal: <code>${PROPOSAL_PUBKEY}</code> <span class="muted">(voorspeld – klik Create om on-chain te zetten)</span>`;
+
+        resultEl.innerHTML = `<span class="ok">✅ Simulate(create) OK</span>`;
+      } catch (e) {
+        console.error("❌ Simulate(create) error", e);
+        resultEl.innerHTML = `<span class="err">❌ Simulate(create) fail: ${e.message}</span>`;
       }
     };
 
@@ -367,7 +417,6 @@
         if (!info) throw new Error("Account niet gevonden.");
         const data = new Uint8Array(info.data);
 
-        // Parse Proposal account
         let o = 0;
         const discOk = data.slice(0,8).every((v,i)=> v===DISC_ACC_PROPOSAL[i]);
         if (!discOk) console.warn("⚠️ Account discriminator mismatch (verwacht Proposal).");
@@ -417,28 +466,6 @@
     } }
     $("btnVoteYes").onclick = doVote(true);
     $("btnVoteNo").onclick  = doVote(false);
-
-    $("btnSimCreate").onclick = async () => {
-      try{
-        if (!wallet) throw new Error("Wallet niet verbonden.");
-        if (!connection) connection = new Connection(RPC_URL, "confirmed");
-        const creator = wallet.publicKey;
-        const proposalPda = pdaProposal(PROGRAM_ID, creator);
-        const endsAt = inpEndsAtDT.value
-          ? Math.floor(new Date(inpEndsAtDT.value).getTime() / 1000)
-          : Math.floor(Date.now()/1000) + (parseInt(inpMinutes.value)||60)*60;
-        const question = (inpQuestion.value||"").trim();
-        if (!question) throw new Error("Vul een vraag in.");
-        const ix = ixCreateProposal(PROGRAM_ID, creator, proposalPda, question, endsAt);
-        const tx = new Transaction().add(ix);
-        const sim = await simulateTx(connection, wallet, tx);
-        lastFetchEl.textContent = (sim?.value?.logs || []).join("\n") || "—";
-        resultEl.innerHTML = `<span class="ok">✅ Simulate(create) OK</span>`;
-      }catch(e){
-        console.error("❌ Simulate(create) error", e);
-        resultEl.innerHTML = `<span class="err">❌ Simulate(create) fail: ${e.message}</span>`;
-      }
-    };
 
     $("btnSimYes").onclick = async () => {
       try{
