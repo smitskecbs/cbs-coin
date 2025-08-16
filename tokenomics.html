@@ -30,42 +30,99 @@
     th {
       background-color: #111;
     }
+    .lang-btn {
+      display: block;
+      margin: 1rem auto;
+      padding: 0.5rem 1rem;
+      background: #00ffcc;
+      color: #111;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-family: 'Orbitron', sans-serif;
+    }
   </style>
 </head>
 <body>
-  <h1>📊 CBS Coin Tokenomics</h1>
-  <p>CBS Coin is 100% community-driven zonder teamallocaties, VC's of presales. Alle coins zijn volledig op-chain en transparant te volgen.</p>
+  <h1 id="title">📊 CBS Coin Tokenomics</h1>
+  <button class="lang-btn" onclick="toggleLanguage()">🌐 Switch to English</button>
+
+  <p id="intro">
+    CBS Coin is 100% community-driven zonder teamallocaties, VC's of presales. 
+    Alle coins zijn volledig on-chain en transparant te volgen.
+  </p>
 
   <table>
     <tr>
-      <th>Categorie</th>
-      <th>Aantal CBS</th>
-      <th>Percentage</th>
+      <th id="col1">Categorie</th>
+      <th id="col2">Aantal CBS</th>
+      <th id="col3">Percentage</th>
     </tr>
     <tr>
-      <td>Totale supply</td>
+      <td id="row1">Totale supply</td>
       <td>100.000.000</td>
       <td>100%</td>
     </tr>
     <tr>
-      <td>Geburned</td>
-      <td>2.000.000</td>
-      <td>2%</td>
+      <td id="row2">Creator wallet</td>
+      <td>40.633.082</td>
+      <td>40,63%</td>
     </tr>
     <tr>
-      <td>In omloop (holders)</td>
-      <td>~1.035.000</td>
-      <td>1%</td>
+      <td id="row3">Liquidity pool (Raydium)</td>
+      <td>7.270.779</td>
+      <td>7,27%</td>
     </tr>
     <tr>
-      <td>Creator wallet</td>
-      <td>~94.000.000</td>
-      <td>94%</td>
+      <td id="row4">In omloop (holders)</td>
+      <td>52.096.139</td>
+      <td>52,10%</td>
     </tr>
   </table>
 
-  <p style="margin-top: 2rem;">Mint authority en freeze authority zijn uitgeschakeld.<br>
-  Bekijk <a href="https://solscan.io/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk" target="_blank">CBS Coin op Solscan</a> voor live cijfers.</p>
+  <p id="footer" style="margin-top: 2rem;">
+    Mint authority en freeze authority zijn uitgeschakeld.<br>
+    Bekijk 
+    <a href="https://solscan.io/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk" target="_blank">
+      CBS Coin op Solscan
+    </a> voor live cijfers.
+  </p>
+
+  <script>
+    let lang = "nl";
+    function toggleLanguage() {
+      if (lang === "nl") {
+        document.getElementById("title").innerText = "📊 CBS Coin Tokenomics";
+        document.getElementById("intro").innerText =
+          "CBS Coin is 100% community-driven without team allocations, VCs or presales. All coins are fully on-chain and transparently trackable.";
+        document.getElementById("col1").innerText = "Category";
+        document.getElementById("col2").innerText = "Amount CBS";
+        document.getElementById("col3").innerText = "Percentage";
+        document.getElementById("row1").innerText = "Total supply";
+        document.getElementById("row2").innerText = "Creator wallet";
+        document.getElementById("row3").innerText = "Liquidity pool (Raydium)";
+        document.getElementById("row4").innerText = "In circulation (holders)";
+        document.getElementById("footer").innerHTML =
+          'Mint authority and freeze authority are disabled.<br>See <a href="https://solscan.io/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk" target="_blank">CBS Coin on Solscan</a> for live figures.';
+        document.querySelector(".lang-btn").innerText = "🌐 Wissel naar Nederlands";
+        lang = "en";
+      } else {
+        document.getElementById("title").innerText = "📊 CBS Coin Tokenomics";
+        document.getElementById("intro").innerText =
+          "CBS Coin is 100% community-driven zonder teamallocaties, VC's of presales. Alle coins zijn volledig on-chain en transparant te volgen.";
+        document.getElementById("col1").innerText = "Categorie";
+        document.getElementById("col2").innerText = "Aantal CBS";
+        document.getElementById("col3").innerText = "Percentage";
+        document.getElementById("row1").innerText = "Totale supply";
+        document.getElementById("row2").innerText = "Creator wallet";
+        document.getElementById("row3").innerText = "Liquidity pool (Raydium)";
+        document.getElementById("row4").innerText = "In omloop (holders)";
+        document.getElementById("footer").innerHTML =
+          'Mint authority en freeze authority zijn uitgeschakeld.<br>Bekijk <a href="https://solscan.io/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk" target="_blank">CBS Coin op Solscan</a> voor live cijfers.';
+        document.querySelector(".lang-btn").innerText = "🌐 Switch to English";
+        lang = "nl";
+      }
+    }
+  </script>
 </body>
 </html>
-
