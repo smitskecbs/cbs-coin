@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CBS Coin – Litepaper 2.0</title>
 
-  <!-- Font -->
+  <!-- Font & Chart -->
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
@@ -16,9 +16,10 @@
       --border:rgba(0,255,204,.35); --glow:0 0 18px rgba(0,255,204,.25), 0 0 42px rgba(0,229,255,.12);
     }
     *{box-sizing:border-box}
-    html,body{margin:0;min-height:100%;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:var(--fg);font-family:'Orbitron',sans-serif}
+    html,body{margin:0;min-height:100%;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:var(--fg);font-family:'Orbitron',system-ui,Segoe UI,Roboto,Arial,sans-serif}
     a{color:var(--accent2);text-decoration:none}
     a:hover{opacity:.9;text-decoration:underline}
+
     header{position:sticky;top:0;z-index:50;backdrop-filter: blur(8px);background:linear-gradient(180deg,rgba(10,12,16,.85),rgba(10,12,16,.55));border-bottom:1px solid var(--border);box-shadow: var(--glow)}
     .wrap{max-width:1080px;margin:0 auto;padding:0 20px}
     .bar{display:flex;align-items:center;justify-content:space-between;padding:12px 0}
@@ -29,21 +30,28 @@
     nav a{font-size:13px;padding:8px 12px;border:1px solid var(--border);border-radius:999px;background:linear-gradient(180deg,rgba(0,255,204,.07),rgba(0,255,204,.02));box-shadow:var(--glow)}
     .cta-row{display:flex;gap:10px;align-items:center}
     .btn{display:inline-flex;align-items:center;gap:8px;cursor:pointer;border:1px solid var(--border);border-radius:10px;background:linear-gradient(180deg,rgba(0,255,204,.12),rgba(0,255,204,.04));color:var(--fg); padding:10px 14px; box-shadow:var(--glow); font-size:13px; letter-spacing:.05em}
+
     main{padding:36px 20px}
     .hero{max-width:1080px;margin:0 auto 26px;display:grid;grid-template-columns:1fr;gap:18px;border:1px solid var(--border);background:linear-gradient(180deg,rgba(0,255,204,.05),rgba(0,229,255,.03));border-radius:18px; padding:24px; box-shadow:var(--glow)}
     .hero h2{margin:0 0 6px;font-size:28px;letter-spacing:.06em}
     .hero p{margin:6px 0;color:var(--muted);line-height:1.6}
+
     .grid{max-width:1080px;margin:0 auto;display:grid;grid-template-columns:1fr;gap:16px}
     section.card{border:1px solid var(--border); background:var(--panel); border-radius:18px; padding:22px; box-shadow:var(--glow)}
     section.card h3{margin:0 0 10px;font-size:20px;letter-spacing:.06em}
     section.card p, section.card li{color:var(--muted);line-height:1.7}
+    ul.clean{margin:10px 0 0 18px}
     .twocol{display:grid;grid-template-columns:1fr;gap:18px}
     @media (min-width:880px){.twocol{grid-template-columns:1.1fr .9fr}.hero{grid-template-columns:auto 140px}}
     .chip{display:inline-block;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:linear-gradient(180deg,rgba(0,255,204,.07),rgba(0,255,204,.02));font-size:12px;letter-spacing:.06em; box-shadow:var(--glow)}
+
     table{width:100%;border-collapse:collapse;margin-top:10px}
     th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,.06);text-align:left}
     th{color:#dffdf7;font-weight:600;letter-spacing:.05em}
     td{color:var(--muted)}
+    .tokens-chart{padding:8px;border:1px dashed var(--border);border-radius:14px;background:rgba(0,255,204,.03)}
+    canvas{max-width:100%}
+
     footer{margin:34px 0 60px; text-align:center; color:var(--muted)}
     .links{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:10px}
     .hidden{display:none}
@@ -73,95 +81,207 @@
 </header>
 
 <main>
-  <!-- Hero -->
-  <div class="hero" id="intro">
-    <div>
-      <div class="chip" data-nl="Litepaper 2.0 • Solana" data-en="Litepaper 2.0 • Solana">Litepaper 2.0 • Solana</div>
-      <h2 data-nl="Community Builds Sovereignty — Can’t Be Stopped"
-          data-en="Community Builds Sovereignty — Can’t Be Stopped">
-          Community Builds Sovereignty — Can’t Be Stopped
-      </h2>
-      <p data-nl="CBS Coin is gebouwd op Solana: snel, goedkoop en ideaal voor schaalbare communityprojecten. Het is zowel een meme met betekenis als een nutstoken voor een soevereine community."
-         data-en="CBS Coin is built on Solana: fast, low-cost and ideal for scalable community projects. It is both a meme with meaning and a utility token for a sovereign community.">
-         CBS Coin is gebouwd op Solana: snel, goedkoop en ideaal voor schaalbare communityprojecten. Het is zowel een meme met betekenis als een nutstoken voor een soevereine community.
-      </p>
+  <!-- ====== NL CONTAINER ====== -->
+  <div id="lang-nl">
+    <!-- Hero -->
+    <div class="hero" id="intro">
+      <div>
+        <div class="chip">Litepaper 2.0 • Solana</div>
+        <h2>Community Builds Sovereignty — Can’t Be Stopped</h2>
+        <p>CBS Coin is gebouwd op Solana: snel, goedkoop en ideaal voor schaalbare communityprojecten.
+          Het is zowel een <strong>meme met betekenis</strong> als een <strong>nutstoken</strong> voor een soevereine community.</p>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center">
+        <img src="logo.png" alt="CBS Logo"
+             style="width:110px;height:110px;border-radius:50%;
+                    border:1px solid var(--border);box-shadow:var(--glow);
+                    background:rgba(0,255,204,0.05);padding:10px;" />
+      </div>
     </div>
-    <div style="display:flex;align-items:center;justify-content:center">
-      <img src="logo.png" alt="CBS Logo"
-           style="width:110px;height:110px;border-radius:50%;border:1px solid var(--border);box-shadow:var(--glow);background:rgba(0,255,204,0.05);padding:10px;" />
+
+    <div class="grid">
+      <!-- Missie & Visie -->
+      <section class="card" id="mission">
+        <h3>Missie & Visie</h3>
+        <div class="twocol">
+          <div>
+            <p><strong>Missie</strong><br>
+              CBS Coin bouwt aan een gemeenschap waarin soevereiniteit centraal staat. Niet gebaseerd op hiërarchie, maar op collectieve kracht.</p>
+            <p>CBS Coin fungeert als digitale brandstof voor initiatieven die:</p>
+            <ul class="clean">
+              <li>Vrijheid van meningsuiting verdedigen</li>
+              <li>Onafhankelijke informatie verspreiden</li>
+              <li>Censuur en machtsmisbruik bestrijden</li>
+              <li>Nieuwe vormen van gemeenschapsondersteuning realiseren</li>
+            </ul>
+          </div>
+          <div>
+            <p><strong>Visie</strong><br>
+              Onze visie is een wereld waarin mensen zelf bepalen waar hun waarde naartoe gaat – zonder banken, overheden of centrale platforms die dicteren wat wel en niet gezegd mag worden.</p>
+            <p>CBS Coin is méér dan een digitale munt: het is een symbool van soevereiniteit en collectief bewustzijn. In een tijd van controle en afleiding wil CBS Coin iets nieuws aanwakkeren: vertrouwen, rechtvaardigheid en verbinding.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Belofte -->
+      <section class="card" id="promise">
+        <h3>De Belofte van CBS Coin</h3>
+        <p>CBS Coin is meer dan een token. Het is een levend symbool. Een uitnodiging om wakker te worden en mee te bouwen aan een alternatieve realiteit.</p>
+        <ul class="clean">
+          <li>Een coin voor hen die zich niet laten stoppen</li>
+          <li>Een netwerk voor hen die iets groters willen bouwen</li>
+          <li>Een meme die écht iets betekent</li>
+        </ul>
+        <p>CBS Coin is geen hype. CBS Coin is geen grap. CBS Coin is een <strong>statement</strong>.<br>
+        De toekomst is van hen die durven dromen en bouwen. <span class="chip">Can’t Be Stopped.</span></p>
+      </section>
+
+      <!-- Tokenomics -->
+      <section class="card" id="tokenomics">
+        <h3>Tokenomics (versie augustus 2025)</h3>
+        <p><strong>Totale supply:</strong> 100.000.000 CBS<br>
+           <strong>Mint authority & freeze authority:</strong> uitgeschakeld → geen extra mint, geen manipulatie mogelijk.</p>
+
+        <div class="twocol">
+          <div>
+            <h4>Verdeling</h4>
+            <ul class="clean">
+              <li>40,77% – Creator wallet (voor liquiditeit, airdrops en community-initiatieven)</li>
+              <li>14,12% – Liquidity pool (Raydium CBS–SOL) <em>(momenteel uit balans door airdropmisbruik, wordt actief hersteld)</em></li>
+              <li>13,97% – Grote holder <em>(waarschijnlijk airdrop-misbruik)</em></li>
+              <li>Resterend ±31% – Communityleden, teamleden en vrienden</li>
+            </ul>
+
+            <h4>Transparantie en leerpunten</h4>
+            <p>Tijdens de eerste airdrop is een deel van de tokens terechtgekomen bij één misbruiker. Hierdoor zijn de holdings tijdelijk scheef verdeeld en raakte de CBS–SOL pool uit balans.</p>
+            <ul class="clean">
+              <li>Gradual rebalance van liquiditeit op Raydium</li>
+              <li>Community burns / redistributie via DAO-besluiten</li>
+              <li>Anti-bot & wallet-limieten bij toekomstige airdrops</li>
+            </ul>
+
+            <p><strong>CBS Coin blijft 100% community-driven:</strong> geen VC’s, geen presales, geen vooraf toegewezen teamallocaties.</p>
+            <p><strong>Het Kernteam:</strong> community manager, marketing, advisor, tech support, project manager (vrijwillig, zonder vooraf toegewezen tokens).</p>
+            <p>📊 Alle cijfers zijn live te volgen op <a href="https://solscan.io" target="_blank" rel="noopener">Solscan</a>.</p>
+          </div>
+
+          <div class="tokens-chart">
+            <canvas id="chartTokenomics" width="420" height="420" aria-label="Tokenomics donut"></canvas>
+          </div>
+        </div>
+      </section>
+
+      <!-- Roadmap -->
+      <section class="card" id="roadmap">
+        <h3>Roadmap (versie augustus 2025)</h3>
+
+        <p><span class="chip">✅ Q3 2025 – Fundamenten</span></p>
+        <ul class="clean">
+          <li>CBS Coin gemint op Solana (100.000.000 supply)</li>
+          <li>Metadata, logo en IPFS correct ingesteld (via Metaboss)</li>
+          <li>CBS–SOL pool opgezet op Raydium (momenteel uit balans → herbalancering in voorbereiding)</li>
+          <li>Publieke Telegramgroep opgericht</li>
+          <li>Website gelanceerd via GitHub Pages</li>
+          <li>Eerste CoinGecko-verzoek ingediend (afgewezen, herindiening gepland)</li>
+        </ul>
+
+        <p style="margin-top:12px"><span class="chip">🔄 Q4 2025 – Groei & Vertrouwen</span></p>
+        <ul class="clean">
+          <li>Gradual rebalance van CBS–SOL pool</li>
+          <li>Langzaam extra liquiditeit toevoegen op Raydium</li>
+          <li>Begin communityvorming met focus op vertrouwen en transparantie</li>
+          <li>Experiment met burn-mechanismes (bijv. maandelijkse community burns)</li>
+          <li>Herindiening CoinGecko en Solana Token Registry</li>
+          <li>Eerste test voor DAO-structuur of communitystemmen (via Telegram of on-chain)</li>
+          <li>Tokenomics & governance transparant houden via website en Solscan</li>
+        </ul>
+
+        <p style="margin-top:12px"><span class="chip">🚀 2026 – Community-driven Ecosysteem</span></p>
+        <ul class="clean">
+          <li>DAO actief inzetten voor beslissingen (burns, poolbalans, partnerships)</li>
+          <li>Open contributiemodel: iedereen kan bijdragen aan idee, dev of marketing</li>
+          <li>Experimenten met CBS-utility: microfunding, votes, NFT-koppelingen</li>
+          <li>Eventueel multisig wallet opzetten zodra de communitywallet groeit</li>
+          <li>CBS Coin uitbouwen als symbool voor digitale soevereiniteit & eerlijk eigenaarschap</li>
+        </ul>
+      </section>
     </div>
   </div>
 
-  <div class="grid">
-    <!-- Missie & Visie -->
-    <section class="card" id="mission">
-      <h3 data-nl="Missie & Visie" data-en="Mission & Vision">Missie & Visie</h3>
-      <div class="twocol">
-        <div>
-          <p><strong data-nl="Missie" data-en="Mission">Missie</strong><br>
-            <span data-nl="CBS Coin bouwt aan een gemeenschap waarin soevereiniteit centraal staat en fungeert als digitale brandstof voor initiatieven."
-                  data-en="CBS Coin builds a community where sovereignty is central and serves as digital fuel for initiatives.">
-                  CBS Coin bouwt aan een gemeenschap waarin soevereiniteit centraal staat en fungeert als digitale brandstof voor initiatieven.
-            </span>
-          </p>
-        </div>
-        <div>
-          <p><strong data-nl="Visie" data-en="Vision">Visie</strong><br>
-            <span data-nl="Een wereld waarin mensen zelf bepalen waar hun waarde naartoe gaat — zonder banken, overheden of platforms. CBS is méér dan een munt: een symbool van soevereiniteit en collectief bewustzijn."
-                  data-en="A world where people decide where their value flows — without banks, governments, or platforms. CBS is more than a coin: a symbol of sovereignty and collective consciousness.">
-                  Een wereld waarin mensen zelf bepalen waar hun waarde naartoe gaat — zonder banken, overheden of platforms. CBS is méér dan een munt: een symbool van soevereiniteit en collectief bewustzijn.
-            </span>
-          </p>
-        </div>
+  <!-- ====== EN CONTAINER (voor nu zelfde content; later vervangen met echte vertaling) ====== -->
+  <div id="lang-en" class="hidden">
+    <!-- Hero -->
+    <div class="hero">
+      <div>
+        <div class="chip">Litepaper 2.0 • Solana</div>
+        <h2>Community Builds Sovereignty — Can’t Be Stopped</h2>
+        <p>CBS Coin is built on Solana: fast, low-cost and ideal for scalable community projects.
+          It is both a <strong>meme with meaning</strong> and a <strong>utility token</strong> for a sovereign community.</p>
       </div>
-    </section>
+      <div style="display:flex;align-items:center;justify-content:center">
+        <img src="logo.png" alt="CBS Logo"
+             style="width:110px;height:110px;border-radius:50%;
+                    border:1px solid var(--border);box-shadow:var(--glow);
+                    background:rgba(0,255,204,0.05);padding:10px;" />
+      </div>
+    </div>
 
-    <!-- Belofte -->
-    <section class="card" id="promise">
-      <h3 data-nl="De Belofte" data-en="The Promise">De Belofte</h3>
-      <p data-nl="CBS Coin is meer dan een token — een levend symbool. Geen hype, geen grap — een statement. Can’t Be Stopped."
-         data-en="CBS Coin is more than a token — a living symbol. Not hype, not a joke — a statement. Can’t Be Stopped.">
-         CBS Coin is meer dan een token — een levend symbool. Geen hype, geen grap — een statement. Can’t Be Stopped.
-      </p>
-    </section>
-
-    <!-- Tokenomics -->
-    <section class="card" id="tokenomics">
-      <h3>Tokenomics</h3>
-      <p data-nl="Totale supply: 100.000.000 CBS. Mint & freeze authority: uitgeschakeld."
-         data-en="Total supply: 100,000,000 CBS. Mint & freeze authority: disabled.">
-         Totale supply: 100.000.000 CBS. Mint & freeze authority: uitgeschakeld.
-      </p>
-    </section>
-
-    <!-- Roadmap -->
-    <section class="card" id="roadmap">
-      <h3 data-nl="Roadmap" data-en="Roadmap">Roadmap</h3>
-      <p data-nl="Q3 2025 – Fundamenten" data-en="Q3 2025 – Foundations">Q3 2025 – Fundamenten</p>
-      <p data-nl="Q4 2025 – Groei & Vertrouwen" data-en="Q4 2025 – Growth & Trust">Q4 2025 – Groei & Vertrouwen</p>
-      <p data-nl="2026 – Community-driven Ecosysteem" data-en="2026 – Community-driven Ecosystem">2026 – Community-driven Ecosysteem</p>
-    </section>
+    <div class="grid">
+      <!-- (Voor nu dezelfde inhoud als NL, zodat niets leeg is. Geef me je ENG tekst en ik zet die hier neer.) -->
+      <section class="card"><h3>Mission & Vision</h3><p>(English text coming — currently mirroring NL to avoid emptiness.)</p></section>
+      <section class="card"><h3>The Promise</h3><p>(English text coming.)</p></section>
+      <section class="card"><h3>Tokenomics</h3><p>(English text coming.)</p></section>
+      <section class="card"><h3>Roadmap</h3><p>(English text coming.)</p></section>
+    </div>
   </div>
 
   <footer>
     <div class="links">
-      <a href="https://t.me/CBS_Coin" target="_blank">Telegram</a>
-      <a href="https://x.com" target="_blank">X / Twitter</a>
-      <a href="https://smitskecbs.github.io/cbs-coin/" target="_blank">Website</a>
+      <a href="https://t.me/CBS_Coin" target="_blank" rel="noopener">Telegram</a>
+      <a href="https://x.com" target="_blank" rel="noopener">X / Twitter</a>
+      <a href="https://smitskecbs.github.io/cbs-coin/" target="_blank" rel="noopener">Website</a>
     </div>
     <div style="margin-top:8px">© CBS Coin — Community Builds Sovereignty</div>
   </footer>
 </main>
 
 <script>
-let lang = "nl";
-document.getElementById("btnTranslate").addEventListener("click", () => {
-  lang = lang === "nl" ? "en" : "nl";
-  document.querySelectorAll("[data-nl]").forEach(el => {
-    el.innerHTML = el.getAttribute(`data-${lang}`);
-  });
-  document.getElementById("btnTranslate").innerText = lang === "nl" ? "🌐 EN" : "🌐 NL";
-});
+  // Taal-toggle zonder teksten te overschrijven
+  const btn = document.getElementById('btnTranslate');
+  const nl = document.getElementById('lang-nl');
+  const en = document.getElementById('lang-en');
+  let lang = 'nl';
+
+  function setLang(newLang){
+    lang = newLang;
+    if (lang === 'nl'){
+      nl.classList.remove('hidden');
+      en.classList.add('hidden');
+      btn.textContent = '🌐 EN';
+      document.documentElement.lang = 'nl';
+    } else {
+      en.classList.remove('hidden');
+      nl.classList.add('hidden');
+      btn.textContent = '🌐 NL';
+      document.documentElement.lang = 'en';
+    }
+    // scrollpositie behouden
+  }
+
+  btn.addEventListener('click', () => setLang(lang === 'nl' ? 'en' : 'nl'));
+
+  // Tokenomics chart (alleen renderen in NL-container; kopieer desgewenst naar EN)
+  const ctx = document.getElementById('chartTokenomics');
+  if (ctx){
+    new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Creator wallet (40.77%)','Raydium CBS–SOL (14.12%)','Grote holder (13.97%)','Overig community/team (31.14%)'],
+        datasets: [{ data: [40.77,14.12,13.97,(100-40.77-14.12-13.97)], borderWidth: 1, hoverOffset: 8 }]
+      },
+      options: { responsive: true, plugins: { legend: { labels: { color: '#c8fff2', font: { family: 'Orbitron', size: 12 }}}}}
+    });
+  }
 </script>
 </body>
 </html>
