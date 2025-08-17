@@ -129,10 +129,12 @@
     let direction;
     let food;
     let score;
-    let leaderboard = [];
     let game;
     const logo = new Image();
     logo.src = "logo.png"; // CBS logo voor slang en eten
+
+    // ✅ Load leaderboard from localStorage
+    let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
 
     function initGame() {
       snake = [{x: 9*box, y:10*box}];
@@ -238,6 +240,8 @@
       if(player) {
         leaderboard.push({player, score});
         leaderboard.sort((a,b) => b.score - a.score);
+        leaderboard = leaderboard.slice(0,10); // top 10 only
+        localStorage.setItem("leaderboard", JSON.stringify(leaderboard)); // ✅ save
         updateLeaderboard();
       }
     }
@@ -245,7 +249,7 @@
     function updateLeaderboard() {
       const tbody = document.getElementById("leaderboardBody");
       tbody.innerHTML = "";
-      leaderboard.slice(0,10).forEach((entry,index) => {
+      leaderboard.forEach((entry,index) => {
         let row = `<tr><td>${index+1}</td><td>${entry.player}</td><td>${entry.score}</td></tr>`;
         tbody.innerHTML += row;
       });
@@ -264,7 +268,9 @@
         alert("Phantom Wallet not found. Please install it!");
       }
     }
+
+    // ✅ Load leaderboard on page load
+    updateLeaderboard();
   </script>
 </body>
 </html>
-
