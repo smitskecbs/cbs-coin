@@ -82,6 +82,12 @@
       background: rgba(0,255,204,0.1);
       outline: none;
     }
+    .info-text {
+      font-size: 0.9rem;
+      color: var(--accent);
+      text-align: center;
+      margin-bottom: 0.5rem;
+    }
   </style>
 </head>
 <body>
@@ -104,6 +110,7 @@
 
   <div class="panel" id="leaderboard">
     <h2 style="text-align:center;">🏆 Wall of Fame</h2>
+    <p class="info-text">Enter your name after the game ends → press <strong>Enter</strong> to save.</p>
     <table>
       <thead>
         <tr><th>Rank</th><th>Player</th><th>Score</th></tr>
@@ -117,7 +124,7 @@
     const ctx = canvas.getContext("2d");
     let box = 20, snake, direction, food, score, game;
     const logo = new Image();
-    logo.src = "logo.png";
+    logo.src = "logo.png"; // CBS-logo = slang + eten
 
     let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
 
@@ -222,9 +229,19 @@
           <td contenteditable="true">${entry.player}</td>
           <td>${entry.score}</td>
         `;
-        // Save edits instantly
-        row.cells[1].addEventListener("blur", e => {
-          leaderboard[index].player = e.target.innerText.trim() || "Unnamed";
+        let cell = row.cells[1];
+        // Save with Enter key
+        cell.addEventListener("keydown", e => {
+          if(e.key === "Enter") {
+            e.preventDefault();
+            leaderboard[index].player = cell.innerText.trim() || "Unnamed";
+            localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
+            cell.blur(); // focus weghalen
+          }
+        });
+        // Save also when losing focus
+        cell.addEventListener("blur", e => {
+          leaderboard[index].player = cell.innerText.trim() || "Unnamed";
           localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
         });
         tbody.appendChild(row);
@@ -244,3 +261,4 @@
   </script>
 </body>
 </html>
+
