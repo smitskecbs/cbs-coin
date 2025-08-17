@@ -16,24 +16,17 @@
     canvas{display:block;margin:0 auto;border:2px solid var(--accent);width:100%;max-width:400px;height:auto;background:#000;touch-action:none}
     button{background:var(--fg);color:#000;border:none;padding:0.8rem 1.5rem;border-radius:0.5rem;cursor:pointer;font-weight:bold;margin:0.5rem;font-size:1rem}
     button:hover{background:var(--accent)}
+    button[disabled]{opacity:.6;cursor:not-allowed}
     #boardWrap{margin-top:1rem;overflow-x:auto}
     table{width:100%;border-collapse:collapse;font-size:clamp(0.8rem,2vw,1rem)}
     th,td{padding:0.5rem;border-bottom:1px solid var(--border);text-align:center}
     .muted{color:#9aa}
     /* Name overlay */
-    #nameOverlay{
-      position:fixed;inset:0;background:rgba(0,0,0,.6);
-      display:none;align-items:center;justify-content:center;z-index:50;
-    }
-    #nameCard{
-      background:#111;border:2px solid var(--border);border-radius:12px;
-      padding:1rem 1.25rem;box-shadow:0 0 18px rgba(0,255,204,.35);width:min(92vw,420px);
-    }
-    #nameInput{
-      width:100%;padding:.75rem 1rem;border:2px solid var(--border);
-      border-radius:.6rem;background:#000;color:#fff;font-family:inherit;font-size:1rem;
-    }
+    #nameOverlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50;}
+    #nameCard{background:#111;border:2px solid var(--border);border-radius:12px;padding:1rem 1.25rem;box-shadow:0 0 18px rgba(0,255,204,.35);width:min(92vw,420px);}
+    #nameInput{width:100%;padding:.75rem 1rem;border:2px solid var(--border);border-radius:.6rem;background:#000;color:#fff;font-family:inherit;font-size:1rem;}
     #error{color:#ff5d7a;font-size:.85rem;margin-top:.35rem;display:none}
+    #saveBtn{min-width:6rem}
   </style>
 </head>
 <body>
@@ -50,7 +43,7 @@
     <p style="text-align:center;"><strong>Entry fee:</strong> 100 CBS <span class="muted">(demo mode, free play)</span></p>
     <canvas id="gameCanvas" width="400" height="400"></canvas>
     <div style="text-align:center;">
-      <button onclick="startGame()">▶️ Play Snake</button>
+      <button id="playBtn" onclick="startGame()">▶️ Play Snake</button>
     </div>
   </div>
 
@@ -61,6 +54,7 @@
       <thead><tr><th>Rank</th><th>Player</th><th>Score</th></tr></thead>
       <tbody id="leaderboardBody"></tbody>
     </table>
+    <p id="lbNote" class="muted" style="display:none;margin-top:.5rem;text-align:center">Showing local scores (cloud unavailable).</p>
   </div>
 
   <!-- Name input overlay (shown after game over) -->
@@ -71,7 +65,7 @@
       <input id="nameInput" maxlength="30" placeholder="Your name or wallet…" autocomplete="off" />
       <div id="error">Name is required.</div>
       <div style="margin-top:.8rem;text-align:right">
-        <button onclick="submitName()">Save</button>
+        <button id="saveBtn" onclick="submitName()">Save</button>
         <button onclick="cancelName()" style="background:#333;color:#ddd">Cancel</button>
       </div>
     </div>
@@ -80,23 +74,38 @@
   <!-- Supabase client -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script>
-    // ===== Supabase config (your values) =====
+    // ===== Supabase config =====
     const SUPABASE_URL = "https://aiawteejixsgsunmefpi.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpYXd0ZWVqaXhzZ3N1bm1lZnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NDExODIsImV4cCI6MjA3MTAxNzE4Mn0.aMbRUM0YebNMfZhSLb9PFdSHAZ-D5WpACPefCfjSLqI";
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const TABLE = "leaderboard"; // jouw tabelnaam
+    const TABLE = "leaderboard"; // tabel met kolommen: id (uuid, default), name (text), score (int), created_at (timestamptz default now())
 
     // ===== Game state =====
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
-    const logo = new Image(); logo.src = "logo.png"; // CBS-logo = snake & food
-    let box=20, snake, direction, food, score, game;
+    const box = 20;
+    let snake, direction, food, score, game;
     let pendingScore = null; // score waiting to be saved
+    let saving = false;
 
-    function randFood(){ return { x:Math.floor(Math.random()*19+1)*box, y:Math.floor(Math.random()*19+1)*box }; }
+    // Fallback lokale scores als cloud niet werkt
+    function getLocalScores(){
+      try { return JSON.parse(localStorage.getItem("cbs_snake_scores") || "[]"); }
+      catch { return []; }
+    }
+    function putLocalScore(name, score){
+      const arr = getLocalScores();
+      arr.push({ name, score, created_at: new Date().toISOString() });
+      arr.sort((a,b)=> b.score - a.score || new Date(a.created_at)-new Date(b.created_at));
+      localStorage.setItem("cbs_snake_scores", JSON.stringify(arr.slice(0,50)));
+    }
+
+    function randFood(){
+      return { x: Math.floor(Math.random()*20)*box, y: Math.floor(Math.random()*20)*box };
+    }
 
     function initGame(){
-      snake=[{x:9*box,y:10*box}];
+      snake=[{x:10*box,y:10*box}];
       direction=null;
       food=randFood();
       score=0;
@@ -124,44 +133,157 @@
       }
     }, {passive:false});
 
+    // ===== Rendering helpers (neon snake + coin) =====
+    function drawRoundedRect(x,y,w,h,r){
+      const rr = Math.min(r, w/2, h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+rr,y);
+      ctx.arcTo(x+w,y,x+w,y+h,rr);
+      ctx.arcTo(x+w,y+h,x,y+h,rr);
+      ctx.arcTo(x,y+h,x,y,rr);
+      ctx.arcTo(x,y,x+w,y,rr);
+      ctx.closePath();
+    }
+
+    function drawNeonSegment(x, y, size, isHead=false){
+      // Glow
+      ctx.save();
+      const grad = ctx.createLinearGradient(x, y, x+size, y+size);
+      grad.addColorStop(0, "#35d0ff");
+      grad.addColorStop(1, "#00e5ff");
+      ctx.shadowColor = "#00d5ff";
+      ctx.shadowBlur = 18;
+      drawRoundedRect(x+2, y+2, size-4, size-4, 6);
+      ctx.fillStyle = grad;
+      ctx.fill();
+      // Inner highlight
+      ctx.shadowBlur = 0;
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "rgba(255,255,255,.25)";
+      ctx.stroke();
+
+      if(isHead){
+        // kleine “eye” stip
+        ctx.beginPath();
+        ctx.arc(x+size*0.7, y+size*0.35, 2, 0, Math.PI*2);
+        ctx.fillStyle = "#fff";
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    function drawCoin(x, y, size){
+      ctx.save();
+      const r = size/2;
+      const cx = x + r, cy = y + r;
+
+      // Outer glow
+      ctx.shadowColor = "#ffd54d";
+      ctx.shadowBlur = 14;
+
+      // Base coin
+      const g = ctx.createRadialGradient(cx, cy, r*0.2, cx, cy, r);
+      g.addColorStop(0, "#ffe27a");
+      g.addColorStop(0.6, "#ffca28");
+      g.addColorStop(1, "#ffb300");
+      ctx.beginPath();
+      ctx.arc(cx, cy, r-2, 0, Math.PI*2);
+      ctx.fillStyle = g;
+      ctx.fill();
+
+      // Rim
+      ctx.shadowBlur = 0;
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = "rgba(255,255,255,.35)";
+      ctx.stroke();
+
+      // Subtle shine
+      ctx.beginPath();
+      ctx.arc(cx - r*0.3, cy - r*0.3, r*0.5, Math.PI*1.1, Math.PI*1.8);
+      ctx.strokeStyle = "rgba(255,255,255,.5)";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
     function draw(){
-      ctx.fillStyle="#000"; ctx.fillRect(0,0,canvas.width,canvas.height);
+      // background
+      ctx.fillStyle="#000";
+      ctx.fillRect(0,0,canvas.width,canvas.height);
 
-      for(const seg of snake) ctx.drawImage(logo, seg.x, seg.y, box, box);
-      ctx.drawImage(logo, food.x, food.y, box, box);
-
+      // move
       let x=snake[0].x, y=snake[0].y;
       if(direction==="LEFT") x-=box;
       if(direction==="UP")   y-=box;
       if(direction==="RIGHT")x+=box;
       if(direction==="DOWN") y+=box;
 
-      if(x===food.x && y===food.y){ score++; food=randFood(); } else { snake.pop(); }
+      // eat
+      if(x===food.x && y===food.y){
+        score++;
+        food=randFood();
+      }else{
+        snake.pop();
+      }
 
       const head={x,y};
-      if(x<0||y<0||x>=canvas.width||y>=canvas.height|| snake.slice(1).some(s=>s.x===x&&s.y===y)){
+
+      // collisions
+      const hitWall = x<0||y<0||x>=canvas.width||y>=canvas.height;
+      const hitSelf = snake.some(s=>s.x===x&&s.y===y);
+      if(hitWall || hitSelf){
         clearInterval(game);
         onGameOver(score);
+        renderFrame(); // final frame
         return;
       }
       snake.unshift(head);
 
-      ctx.fillStyle="#fff"; ctx.font="18px Orbitron";
+      renderFrame();
+    }
+
+    function renderFrame(){
+      // board
+      ctx.fillStyle="#000";
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+
+      // draw coin
+      drawCoin(food.x, food.y, box);
+
+      // draw snake (head first for highlight)
+      for(let i=snake.length-1;i>=0;i--){
+        const seg = snake[i];
+        const isHead = i===0;
+        drawNeonSegment(seg.x, seg.y, box, isHead);
+      }
+
+      // score
+      ctx.fillStyle="#fff";
+      ctx.font="18px Orbitron";
       ctx.fillText("Score: "+score, box, 20);
     }
 
-    function startGame(){ initGame(); clearInterval(game); game=setInterval(draw,100); }
+    function startGame(){
+      initGame();
+      clearInterval(game);
+      game=setInterval(draw,100);
+      document.getElementById("playBtn").blur();
+    }
 
     // ===== Name overlay & save to Supabase =====
     const overlay = document.getElementById("nameOverlay");
     const nameInput = document.getElementById("nameInput");
     const err = document.getElementById("error");
+    const saveBtn = document.getElementById("saveBtn");
+    const lbNote = document.getElementById("lbNote");
 
     function onGameOver(sc){
-      pendingScore = sc;
+      pendingScore = Number.isFinite(sc) ? sc : 0;
       overlay.style.display = "flex";
       nameInput.value = "";
-      nameInput.focus();
+      err.style.display = "none";
+      setTimeout(()=>nameInput.focus(), 50);
     }
 
     function cancelName(){
@@ -169,15 +291,40 @@
       pendingScore = null;
     }
 
+    let savingTimeout = null;
     async function submitName(){
+      if(saving) return;
       const name = (nameInput.value || "").trim();
-      if(!name){ err.style.display="block"; return; }
+      if(!name){ err.textContent="Name is required."; err.style.display="block"; return; }
+      if(name.length>30){ err.textContent="Max 30 characters."; err.style.display="block"; return; }
+
       err.style.display="none";
+      saveBtn.disabled = true;
+      saving = true;
+
+      // safety timeout zodat UI nooit “hangt”
+      clearTimeout(savingTimeout);
+      savingTimeout = setTimeout(()=>{ saving=false; saveBtn.disabled=false; }, 8000);
+
+      const sc = pendingScore ?? 0;
       overlay.style.display="none";
-      const ok = await saveScoreToCloud(name, pendingScore ?? 0);
-      pendingScore = null;
-      if(!ok) alert("Saving failed. Please try again.");
-      await renderCloudBoard(); // refresh table
+      try{
+        const ok = await saveScoreToCloud(name, sc);
+        if(!ok){
+          // fallback local
+          putLocalScore(name, sc);
+          alert("Cloud save failed. Saved locally instead.");
+        }
+      }catch{
+        putLocalScore(name, sc);
+        alert("Save failed unexpectedly. Saved locally instead.");
+      }finally{
+        pendingScore = null;
+        await renderCloudBoard();
+        saving=false;
+        saveBtn.disabled=false;
+        clearTimeout(savingTimeout);
+      }
     }
 
     nameInput.addEventListener("keydown", (e)=>{
@@ -185,27 +332,54 @@
     });
 
     async function saveScoreToCloud(name, score){
+      // Guard tegen ongeldige waarden
+      if(!Number.isFinite(score) || score<0) score = 0;
       try{
         const { error } = await sb.from(TABLE).insert([{ name, score }]);
-        if(error){ console.error(error); return false; }
+        if(error){
+          console.error("Supabase insert error:", error);
+          return false;
+        }
         return true;
-      }catch(e){ console.error(e); return false; }
+      }catch(e){
+        console.error("Supabase insert threw:", e);
+        return false;
+      }
     }
 
     async function renderCloudBoard(){
       const tbody=document.getElementById("leaderboardBody");
       tbody.innerHTML = "<tr><td colspan='3' class='muted'>Loading…</td></tr>";
-      const { data, error } = await sb
-        .from(TABLE)
-        .select("*")
-        .order("score", { ascending:false })
-        .order("created_at", { ascending:true })
-        .limit(10);
-      if(error){ console.error(error); tbody.innerHTML="<tr><td colspan='3'>Error loading leaderboard</td></tr>"; return; }
+      lbNote.style.display = "none";
+
+      // Probeer cloud
+      let rows=null;
+      try{
+        const { data, error } = await sb
+          .from(TABLE)
+          .select("*")
+          .order("score", { ascending:false })
+          .order("created_at", { ascending:true })
+          .limit(10);
+        if(error) throw error;
+        rows = data || [];
+      }catch(e){
+        console.warn("Cloud leaderboard failed, using local:", e);
+      }
+
+      if(!rows || rows.length===0){
+        // fallback lokaal
+        const local = getLocalScores().slice(0,10);
+        rows = local;
+        lbNote.style.display = "block";
+      }
+
       tbody.innerHTML="";
-      data.forEach((r,i)=>{
+      rows.forEach((r,i)=>{
         const tr=document.createElement("tr");
-        tr.innerHTML = `<td>${i+1}</td><td>${escapeHtml(r.name)}</td><td>${r.score}</td>`;
+        const safeName = escapeHtml((r.name||"").toString().slice(0,30) || "Anonymous");
+        const safeScore = Number.isFinite(r.score)? r.score : 0;
+        tr.innerHTML = `<td>${i+1}</td><td>${safeName}</td><td>${safeScore}</td>`;
         tbody.appendChild(tr);
       });
     }
@@ -217,13 +391,21 @@
     // Wallet connect (demo)
     async function connectWallet(){
       if(window.solana && window.solana.isPhantom){
-        try{ const r=await window.solana.connect(); alert("Connected: "+r.publicKey.toString()); }
-        catch(e){ console.error(e); }
+        try{
+          const r=await window.solana.connect();
+          alert("Connected: "+r.publicKey.toString());
+        }catch(e){ console.error(e); }
       } else { alert("Phantom Wallet not found."); }
     }
 
     // Initial load
-    renderCloudBoard();
+    (async ()=>{ 
+      try{ await renderCloudBoard(); } 
+      catch(e){ console.error(e); }
+      // Initial static frame so canvas toont direct de coin + head
+      initGame(); renderFrame();
+    })();
   </script>
 </body>
 </html>
+
