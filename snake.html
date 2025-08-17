@@ -6,94 +6,34 @@
   <title>CBS Snake Game</title>
   <link rel="icon" href="logo.png" type="image/png">
   <style>
-    :root {
-      --bg1: #0f0f0f;
-      --bg2: #1a1a1a;
-      --fg: #00ffcc;
-      --accent: #00ffff;
-      --panel: #111;
-      --border: #00ffcc;
+    :root { --bg1:#0f0f0f; --bg2:#1a1a1a; --fg:#00ffcc; --accent:#00ffff; --panel:#111; --border:#00ffcc; }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:'Orbitron',sans-serif;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:var(--fg);display:flex;flex-direction:column;align-items:center;padding:1rem;min-height:100vh}
+    header{display:flex;align-items:center;gap:1rem;margin-bottom:1rem;flex-wrap:wrap;text-align:center;justify-content:center}
+    header img{height:50px}
+    h1{font-size:clamp(1.5rem,4vw,2rem);color:var(--accent)}
+    .panel{background:var(--panel);border:2px solid var(--border);border-radius:1rem;padding:1rem;margin:0.5rem;box-shadow:0 0 20px rgba(0,255,204,0.3);max-width:95vw}
+    canvas{display:block;margin:0 auto;border:2px solid var(--accent);width:100%;max-width:400px;height:auto;background:#000;touch-action:none}
+    button{background:var(--fg);color:#000;border:none;padding:0.8rem 1.5rem;border-radius:0.5rem;cursor:pointer;font-weight:bold;margin:0.5rem;font-size:1rem}
+    button:hover{background:var(--accent)}
+    #leaderboard{margin-top:1rem;overflow-x:auto}
+    #leaderboard table{width:100%;border-collapse:collapse;font-size:clamp(0.8rem,2vw,1rem)}
+    #leaderboard th,#leaderboard td{padding:0.5rem;border-bottom:1px solid var(--border);text-align:center}
+    td.locked{user-select:none;pointer-events:none;opacity:.9}
+    td.name-cell[contenteditable="true"]{background:rgba(0,255,204,.12);outline:none;cursor:text;position:relative}
+    td.name-cell[contenteditable="true"]::after{
+      content:"⟵ click to enter name"; position:absolute; left:50%; transform:translateX(-50%);
+      bottom:-1.6rem; font-size:.75rem; color:var(--accent); opacity:.9; white-space:nowrap;
+      animation:pulse 1.2s infinite ease-in-out;
     }
-    body {
-      margin: 0;
-      font-family: 'Orbitron', sans-serif;
-      background: linear-gradient(135deg, var(--bg1), var(--bg2));
-      color: var(--fg);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 1rem;
-      min-height: 100vh;
-    }
-    header {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-bottom: 1rem;
-      flex-wrap: wrap;
-      text-align: center;
-      justify-content: center;
-    }
-    header img { height: 50px; }
-    h1 { font-size: clamp(1.5rem, 4vw, 2rem); color: var(--accent); }
-    .panel {
-      background: var(--panel);
-      border: 2px solid var(--border);
-      border-radius: 1rem;
-      padding: 1rem;
-      margin: 0.5rem;
-      box-shadow: 0 0 20px rgba(0,255,204,0.3);
-      max-width: 95vw;
-    }
-    canvas {
-      display: block;
-      margin: 0 auto;
-      border: 2px solid var(--accent);
-      width: 100%;
-      max-width: 400px;
-      height: auto;
-      background: #000;
-      touch-action: none;
-    }
-    button {
-      background: var(--fg);
-      color: #000;
-      border: none;
-      padding: 0.8rem 1.5rem;
-      border-radius: 0.5rem;
-      cursor: pointer;
-      font-weight: bold;
-      margin: 0.5rem;
-      font-size: 1rem;
-    }
-    button:hover { background: var(--accent); }
-    #leaderboard { margin-top: 1rem; overflow-x: auto; }
-    #leaderboard table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: clamp(0.8rem, 2vw, 1rem);
-    }
-    #leaderboard th, #leaderboard td {
-      padding: 0.5rem;
-      border-bottom: 1px solid var(--border);
-      text-align: center;
-    }
-    #leaderboard td[contenteditable="true"] {
-      background: rgba(0,255,204,0.1);
-      outline: none;
-    }
-    .info-text {
-      font-size: 0.9rem;
-      color: var(--accent);
-      text-align: center;
-      margin-bottom: 0.5rem;
-    }
+    @keyframes pulse { 0%,100%{opacity:.35} 50%{opacity:1} }
+    .info-text{font-size:.9rem;color:var(--accent);text-align:center;margin:0 0 .5rem}
   </style>
 </head>
 <body>
   <header>
     <img src="logo.png" alt="CBS Logo">
-    <h1>🐍 CBS Snake Game</h1>
+    <h1>CBS Snake Game</h1>
   </header>
 
   <div style="margin-bottom:1rem;">
@@ -110,7 +50,7 @@
 
   <div class="panel" id="leaderboard">
     <h2 style="text-align:center;">🏆 Wall of Fame</h2>
-    <p class="info-text">Enter your name after the game ends → press <strong>Enter</strong> to save.</p>
+    <p class="info-text">After the game ends, click your name cell (highlighted) and press <strong>Enter</strong> to save.</p>
     <table>
       <thead>
         <tr><th>Rank</th><th>Player</th><th>Score</th></tr>
@@ -120,144 +60,150 @@
   </div>
 
   <script>
+    // ------- Game setup -------
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
-    let box = 20, snake, direction, food, score, game;
-    const logo = new Image();
-    logo.src = "logo.png"; // CBS-logo = slang + eten
+    const logo = new Image(); logo.src = "logo.png"; // CBS logo for snake + food
+    let box=20, snake, direction, food, score, game;
 
-    let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
+    // ------- Leaderboard persistent with "pending" flag -------
+    // Each entry: { id:number, player:string, score:number, pending:boolean }
+    let leaderboard = JSON.parse(localStorage.getItem("leaderboard_v2") || "[]");
 
-    function initGame() {
-      snake = [{x: 9*box, y:10*box}];
-      direction = null;
-      food = {
-        x: Math.floor(Math.random()*19+1) * box,
-        y: Math.floor(Math.random()*19+1) * box
-      };
-      score = 0;
+    function saveLB(){ localStorage.setItem("leaderboard_v2", JSON.stringify(leaderboard)); }
+
+    function initGame(){
+      snake=[{x:9*box,y:10*box}];
+      direction=null;
+      food = randFood();
+      score=0;
     }
 
-    document.addEventListener("keydown", e => {
-      if(e.keyCode == 37 && direction != "RIGHT") direction = "LEFT";
-      else if(e.keyCode == 38 && direction != "DOWN") direction = "UP";
-      else if(e.keyCode == 39 && direction != "LEFT") direction = "RIGHT";
-      else if(e.keyCode == 40 && direction != "UP") direction = "DOWN";
+    function randFood(){
+      return { x:Math.floor(Math.random()*19+1)*box, y:Math.floor(Math.random()*19+1)*box };
+    }
+
+    document.addEventListener("keydown", e=>{
+      if(e.key==="ArrowLeft" && direction!=="RIGHT") direction="LEFT";
+      else if(e.key==="ArrowUp" && direction!=="DOWN") direction="UP";
+      else if(e.key==="ArrowRight" && direction!=="LEFT") direction="RIGHT";
+      else if(e.key==="ArrowDown" && direction!=="UP") direction="DOWN";
     });
 
-    canvas.addEventListener("touchstart", e => {
+    // Tap controls (no scroll)
+    canvas.addEventListener("touchstart", e=>{
       e.preventDefault();
-      let rect = canvas.getBoundingClientRect();
-      let cx = rect.left + rect.width/2;
-      let cy = rect.top + rect.height/2;
-      let dx = e.changedTouches[0].clientX - cx;
-      let dy = e.changedTouches[0].clientY - cy;
-      if(Math.abs(dx) > Math.abs(dy)) {
-        if(dx > 0 && direction != "LEFT") direction = "RIGHT";
-        else if(dx < 0 && direction != "RIGHT") direction = "LEFT";
-      } else {
-        if(dy > 0 && direction != "UP") direction = "DOWN";
-        else if(dy < 0 && direction != "DOWN") direction = "UP";
+      const r=canvas.getBoundingClientRect();
+      const cx=r.left+r.width/2, cy=r.top+r.height/2;
+      const dx=e.changedTouches[0].clientX-cx, dy=e.changedTouches[0].clientY-cy;
+      if(Math.abs(dx)>Math.abs(dy)){
+        if(dx>0 && direction!=="LEFT") direction="RIGHT";
+        else if(dx<0 && direction!=="RIGHT") direction="LEFT";
+      }else{
+        if(dy>0 && direction!=="UP") direction="DOWN";
+        else if(dy<0 && direction!=="DOWN") direction="UP";
       }
     }, {passive:false});
 
-    function draw() {
-      ctx.fillStyle = "#000";
-      ctx.fillRect(0,0,canvas.width,canvas.height);
+    function draw(){
+      ctx.fillStyle="#000"; ctx.fillRect(0,0,canvas.width,canvas.height);
 
-      for(let i=0; i<snake.length; i++) {
-        ctx.drawImage(logo, snake[i].x, snake[i].y, box, box);
-      }
+      // snake segments as CBS logos
+      for(const seg of snake) ctx.drawImage(logo, seg.x, seg.y, box, box);
+      // food as CBS logo
       ctx.drawImage(logo, food.x, food.y, box, box);
 
-      let snakeX = snake[0].x;
-      let snakeY = snake[0].y;
+      let x=snake[0].x, y=snake[0].y;
+      if(direction==="LEFT") x-=box;
+      if(direction==="UP")   y-=box;
+      if(direction==="RIGHT")x+=box;
+      if(direction==="DOWN") y+=box;
 
-      if(direction == "LEFT") snakeX -= box;
-      if(direction == "UP") snakeY -= box;
-      if(direction == "RIGHT") snakeX += box;
-      if(direction == "DOWN") snakeY += box;
+      if(x===food.x && y===food.y){ score++; food = randFood(); }
+      else { snake.pop(); }
 
-      if(snakeX == food.x && snakeY == food.y) {
-        score++;
-        food = {
-          x: Math.floor(Math.random()*19+1) * box,
-          y: Math.floor(Math.random()*19+1) * box
-        };
-      } else snake.pop();
-
-      let newHead = { x: snakeX, y: snakeY };
-
-      if(snakeX < 0 || snakeY < 0 || snakeX >= canvas.width || snakeY >= canvas.height || collision(newHead,snake)) {
+      const head={x,y};
+      if(x<0||y<0||x>=canvas.width||y>=canvas.height|| snake.some(s=>s.x===x&&s.y===y)){
         clearInterval(game);
-        saveScore(score);
+        onGameOver(score);
         return;
       }
+      snake.unshift(head);
 
-      snake.unshift(newHead);
-
-      ctx.fillStyle = "#fff";
-      ctx.font = "18px Orbitron";
-      ctx.fillText("Score: " + score, box, 20);
+      ctx.fillStyle="#fff"; ctx.font="18px Orbitron";
+      ctx.fillText("Score: "+score, box, 20);
     }
 
-    function collision(head,array) {
-      return array.some(seg => seg.x == head.x && seg.y == head.y);
+    function startGame(){ initGame(); clearInterval(game); game=setInterval(draw,100); }
+
+    // ------- Game over -> add pending row only for this new score -------
+    function onGameOver(sc){
+      const entry = { id:Date.now(), player:"Click to enter name", score:sc, pending:true };
+      leaderboard.push(entry);
+      leaderboard.sort((a,b)=>b.score-a.score);
+      leaderboard = leaderboard.slice(0,10); // keep top 10
+      // If our pending entry got pushed out by top10, unset pending everywhere
+      if (!leaderboard.some(e => e.pending)) { /* no-op if pushed out */ }
+      saveLB();
+      renderLeaderboard();
     }
 
-    function startGame() {
-      initGame();
-      clearInterval(game);
-      game = setInterval(draw,100);
-    }
+    // ------- Leaderboard render with only one editable cell (pending) -------
+    function renderLeaderboard(){
+      const tbody=document.getElementById("leaderboardBody");
+      tbody.innerHTML="";
+      leaderboard.forEach((e,idx)=>{
+        const tr=document.createElement("tr");
+        const rank=document.createElement("td");
+        const name=document.createElement("td");
+        const score=document.createElement("td");
 
-    function saveScore(score) {
-      leaderboard.push({player: "Unnamed", score});
-      leaderboard.sort((a,b) => b.score - a.score);
-      leaderboard = leaderboard.slice(0,10);
-      localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
-      updateLeaderboard();
-    }
+        rank.textContent = idx+1; rank.className="locked";
+        score.textContent = e.score; score.className="locked";
 
-    function updateLeaderboard() {
-      const tbody = document.getElementById("leaderboardBody");
-      tbody.innerHTML = "";
-      leaderboard.forEach((entry,index) => {
-        let row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${index+1}</td>
-          <td contenteditable="true">${entry.player}</td>
-          <td>${entry.score}</td>
-        `;
-        let cell = row.cells[1];
-        // Save with Enter key
-        cell.addEventListener("keydown", e => {
-          if(e.key === "Enter") {
-            e.preventDefault();
-            leaderboard[index].player = cell.innerText.trim() || "Unnamed";
-            localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
-            cell.blur(); // focus weghalen
-          }
-        });
-        // Save also when losing focus
-        cell.addEventListener("blur", e => {
-          leaderboard[index].player = cell.innerText.trim() || "Unnamed";
-          localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
-        });
-        tbody.appendChild(row);
+        if(e.pending){
+          name.textContent = e.player;
+          name.setAttribute("contenteditable","true");
+          name.className="name-cell";
+          name.addEventListener("keydown", ev=>{
+            if(ev.key==="Enter"){
+              ev.preventDefault();
+              e.player = name.innerText.trim() || "Unnamed";
+              e.pending = false;
+              saveLB();
+              renderLeaderboard(); // re-render to lock the cell
+            }
+          });
+          name.addEventListener("blur", ()=>{
+            e.player = name.innerText.trim() || "Unnamed";
+            e.pending = false;
+            saveLB();
+            renderLeaderboard();
+          });
+        } else {
+          name.textContent = e.player;
+          name.className="locked";
+        }
+
+        tr.append(rank,name,score);
+        tbody.appendChild(tr);
       });
     }
 
-    async function connectWallet() {
-      if (window.solana && window.solana.isPhantom) {
-        try {
-          const resp = await window.solana.connect();
-          alert("Connected: " + resp.publicKey.toString());
-        } catch (err) { console.error("Connection failed:", err); }
-      } else alert("Phantom Wallet not found.");
+    // ------- Wallet connect (demo only) -------
+    async function connectWallet(){
+      if(window.solana && window.solana.isPhantom){
+        try{
+          const r=await window.solana.connect();
+          alert("Connected: "+r.publicKey.toString());
+        }catch(e){ console.error(e); }
+      }else{
+        alert("Phantom Wallet not found.");
+      }
     }
 
-    updateLeaderboard();
+    // Initial render
+    renderLeaderboard();
   </script>
 </body>
 </html>
