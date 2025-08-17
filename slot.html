@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CBS Coin — Slot Machine</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
+<script defer src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
+<style>
+  :root{
+    --bg1:#0b0b0f; --bg2:#14161c; --panel:#0f1117;
+    --fg:#c8fff2; --muted:#98a5b3; --accent:#00ffcc; --accent2:#00e5ff;
+    --border:rgba(0,255,204,.35); --glow:0 0 18px rgba(0,255,204,.25), 0 0 42px rgba(0,229,255,.12);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:var(--fg);font-family:'Orbitron',system-ui,Segoe UI,Roboto,Arial,sans-serif}
+  a{color:var(--accent2);text-decoration:none}
+  a:hover{opacity:.9;text-decoration:underline}
+
+  header{position:sticky;top:0;z-index:50;backdrop-filter: blur(8px);background:linear-gradient(180deg,rgba(10,12,16,.85),rgba(10,12,16,.55));border-bottom:1px solid var(--border);box-shadow: var(--glow)}
+  .wrap{max-width:1080px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .brand{display:flex;gap:10px;align-items:center}
+  .brand img{width:36px;height:36px;filter:drop-shadow(0 0 14px rgba(255,215,0,.45))}
+  .brand h1{font-size:18px;letter-spacing:.08em;margin:0}
+  .row{display:flex;gap:10px;align-items:center}
+  .btn{display:inline-flex;align-items:center;gap:8px;cursor:pointer;border:1px solid var(--border);border-radius:10px;background:linear-gradient(180deg,rgba(0,255,204,.12),rgba(0,255,204,.04));color:var(--fg); padding:8px 12px; box-shadow:var(--glow); font-size:13px; letter-spacing:.05em}
+
+  main{max-width:1080px;margin:22px auto;padding:0 16px;display:grid;grid-template-columns:1fr;gap:18px}
+  .panel{border:1px solid var(--border); background:var(--panel); border-radius:18px; padding:18px; box-shadow:var(--glow)}
+  .grid{display:grid;grid-template-columns:1fr;gap:18px}
+  @media (min-width:980px){ .grid{grid-template-columns:1.2fr .8fr} }
+
+  /* Machine */
+  .machine{display:grid;grid-template-rows:auto auto auto;gap:14px;justify-items:center}
+  .reels{display:grid;grid-template-columns:repeat(3, 110px);gap:12px;padding:14px;border:1px solid var(--border);border-radius:16px;background:linear-gradient(180deg,rgba(0,255,204,.06),rgba(0,229,255,.03));box-shadow:var(--glow)}
+  .col{width:110px;height:150px;overflow:hidden;border-radius:12px;border:1px solid var(--border);background:rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;position:relative}
+  .slot{font-size:64px;line-height:1;filter:drop-shadow(0 0 8px rgba(0,255,204,.35));}
+  .spinline{position:absolute;left:0;right:0;top:50%;height:2px;background:rgba(0,255,204,.55);box-shadow:0 0 10px rgba(0,255,204,.6)}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center}
+  input[type=number]{width:110px;background:rgba(0,0,0,.35);border:1px solid var(--border);border-radius:8px;color:var(--fg);padding:8px 10px;font-family:inherit}
+  .pill{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--border);border-radius:999px;padding:6px 10px;background:linear-gradient(180deg,rgba(0,255,204,.07),rgba(0,255,204,.02));box-shadow:var(--glow);font-size:12px}
+  .win{font-weight:800;color:#00ffcc}
+  .lose{color:#98a5b3}
+
+  /* Right column */
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,.06);text-align:left}
+  th{color:#dffdf7;letter-spacing:.05em}
+  td{color:var(--muted)}
+  .muted{color:var(--muted)}
+  .note{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <img src="logo.png" alt="CBS logo">
+      <h1>CBS Coin — Slot Machine</h1>
+    </div>
+    <div class="row">
+      <span id="walletShort" class="pill">Wallet: <em>not connected</em></span>
+      <button id="btnConnect" class="btn">🔌 Connect Phantom</button>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="grid">
+    <!-- LEFT: Machine -->
+    <section class="panel">
+      <div class="machine">
+        <div class="reels" id="reels">
+          <div class="col"><div class="slot">🍒</div><div class="spinline"></div></div>
+          <div class="col"><div class="slot">🍋</div><div class="spinline"></div></div>
+          <div class="col"><div class="slot">⭐</div><div class="spinline"></div></div>
+        </div>
+
+        <div class="controls">
+          <label class="pill">Inzet (CBS)
+            <input id="bet" type="number" min="1" step="1" value="10"/>
+          </label>
+          <button id="btnSpin" class="btn">🎰 Spin</button>
+          <button id="btnAddDemo" class="btn" title="Voeg 1000 test-CBS toe aan je demo-saldo">➕ Demo CBS</button>
+        </div>
+
+        <div class="row" style="justify-content:center;gap:14px;flex-wrap:wrap">
+          <span class="pill">Demo-saldo: <strong id="demoBal">0</strong> CBS</span>
+          <span class="pill">On-chain balans: <strong id="chainBal">—</strong> CBS</span>
+          <span class="pill">Laatste resultaat: <strong id="result" class="lose">—</strong></span>
+        </div>
+
+        <p class="note" style="text-align:center;margin:6px 0 0">
+          Demo-modus: spins gebruiken géén echte transacties. On-chain integratie (VRF + uitbetaling) kan later worden aangesloten.
+        </p>
+      </div>
+    </section>
+
+    <!-- RIGHT: Info / Payouts -->
+    <aside class="panel">
+      <h3 style="margin-top:0">Uitbetalingen (middellijn)</h3>
+      <table>
+        <thead><tr><th>3 op rij</th><th>Multiplier</th><th>Kans</th></tr></thead>
+        <tbody>
+          <tr><td>🍒 🍒 🍒</td><td>x2</td><td class="muted">algemeen</td></tr>
+          <tr><td>🍋 🍋 🍋</td><td>x3</td><td class="muted">normaal</td></tr>
+          <tr><td>⭐ ⭐ ⭐</td><td>x5</td><td class="muted">minder vaak</td></tr>
+          <tr><td>💎 💎 💎</td><td>x12</td><td class="muted">zeldzaam</td></tr>
+          <tr><td>🟡 CBS 🟡 CBS 🟡 CBS</td><td>x40</td><td class="muted">zeer zeldzaam</td></tr>
+        </tbody>
+      </table>
+
+      <h3>Spelregels</h3>
+      <ul class="muted" style="margin-top:8px">
+        <li>Gebruik <b>Inzet</b> om het aantal CBS per spin in te stellen.</li>
+        <li>Winst = inzet × multiplier (alleen de <b>middellijn</b> telt).</li>
+        <li>RNG gebruikt <code>window.crypto.getRandomValues</code> voor eerlijke randomness.</li>
+        <li>Dit is een <b>demo</b>. Voor live uitbetalingen → smart contract + VRF.</li>
+      </ul>
+
+      <h3 style="margin-top:18px">Project notities</h3>
+      <p class="muted">Vul je <b>CBS mint</b> hieronder in om je echte CBS-balans te tonen. Transacties zijn nog uitgeschakeld.</p>
+      <code style="font-size:12px;word-break:break-all;display:block;background:rgba(0,0,0,.35);padding:8px;border:1px solid var(--border);border-radius:8px">
+        const CBS_MINT = "REPLACE_WITH_CBS_MINT_ADDRESS";
+      </code>
+    </aside>
+  </div>
+</main>
+
+<footer style="text-align:center;margin:30px 0 50px;color:#98a5b3">
+  © CBS Coin — Community Builds Sovereignty • Demo game (entertainment only)
+</footer>
+
+<script>
+(() => {
+  // === Config ===
+  const RPC_URL = "https://api.mainnet-beta.solana.com";  // of devnet: https://api.devnet.solana.com
+  const CBS_MINT = "REPLACE_WITH_CBS_MINT_ADDRESS"; // <- VUL IN
+  const DEV_STORAGE_KEY = "cbs-slot-demo-balance";
+  const DEFAULT_DEMO = 1000;
+
+  // Symbolen met gewichten (bepalen kans) en multipliers
+  const SYMBOLS = [
+    {icon:"🍒", weight:38, mult:2},
+    {icon:"🍋", weight:28, mult:3},
+    {icon:"⭐", weight:18, mult:5},
+    {icon:"💎", weight:12, mult:12},
+    {icon:"🟡 CBS", weight:4, mult:40}, // super zeldzaam
+  ];
+
+  // === UI refs ===
+  const reelsEl = document.getElementById("reels");
+  const betEl = document.getElementById("bet");
+  const resultEl = document.getElementById("result");
+  const demoBalEl = document.getElementById("demoBal");
+  const chainBalEl = document.getElementById("chainBal");
+  const btnSpin = document.getElementById("btnSpin");
+  const btnAddDemo = document.getElementById("btnAddDemo");
+  const btnConnect = document.getElementById("btnConnect");
+  const walletShort = document.getElementById("walletShort");
+
+  // Demo balance
+  function getDemo(){ return parseInt(localStorage.getItem(DEV_STORAGE_KEY) || DEFAULT_DEMO, 10); }
+  function setDemo(v){ localStorage.setItem(DEV_STORAGE_KEY, String(v)); demoBalEl.textContent = v; }
+  setDemo(getDemo());
+
+  // Weighted random pick using crypto RNG
+  function pickSymbol(){
+    const total = SYMBOLS.reduce((s,x)=>s+x.weight,0);
+    const rand = crypto.getRandomValues(new Uint32Array(1))[0] / 2**32 * total;
+    let acc = 0;
+    for(const s of SYMBOLS){ acc += s.weight; if(rand <= acc) return s; }
+    return SYMBOLS[0];
+  }
+
+  // Render one reel frame
+  function renderReels(a,b,c){
+    const cols = reelsEl.querySelectorAll(".col .slot");
+    cols[0].textContent = a.icon.replace(" CBS","");
+    cols[1].textContent = b.icon.replace(" CBS","");
+    cols[2].textContent = c.icon.replace(" CBS","");
+  }
+
+  // Spin animation
+  let spinning = false;
+  async function spin(){
+    if(spinning) return;
+    const bet = Math.max(1, Math.floor(+betEl.value || 0));
+    const bal = getDemo();
+    if(bet > bal){ flash("Onvoldoende demo-saldo", false); return; }
+
+    // Deduct upfront (zoals on-chain escrow)
+    setDemo(bal - bet);
+    spinning = true; btnSpin.disabled = true; resultEl.textContent = "—"; resultEl.className = "lose";
+
+    // simple tween animation
+    const start = performance.now();
+    function frame(t){
+      const elapsed = t - start;
+      // spin snel – langzamer – stoppen
+      const speed = Math.max(40, 320 - elapsed/2);
+      if(elapsed < 1500){
+        renderReels(pickSymbol(), pickSymbol(), pickSymbol());
+        setTimeout(()=>requestAnimationFrame(frame), speed);
+      } else {
+        // final outcome
+        const s1 = pickSymbol(), s2 = pickSymbol(), s3 = pickSymbol();
+        renderReels(s1,s2,s3);
+        const winMult = (s1.icon===s2.icon && s2.icon===s3.icon) ? s1.mult : 0;
+        const win = winMult * bet;
+        if(win>0){
+          setDemo(getDemo()+win);
+          resultEl.textContent = `GEWONNEN +${win} CBS (x${winMult})`;
+          resultEl.className = "win";
+        } else {
+          resultEl.textContent = "Helaas, geen prijs";
+          resultEl.className = "lose";
+        }
+        spinning = false; btnSpin.disabled = false;
+      }
+    }
+    requestAnimationFrame(frame);
+  }
+
+  function flash(msg, ok=true){
+    resultEl.textContent = msg;
+    resultEl.className = ok ? "win" : "lose";
+  }
+
+  // Demo top-up
+  btnAddDemo.addEventListener("click", ()=> setDemo(getDemo()+1000));
+  btnSpin.addEventListener("click", spin);
+
+  // === Phantom connect & on-chain balance (read-only) ===
+  let walletPubkey = null;
+  async function connectPhantom(){
+    try{
+      if(!window.solana || !window.solana.isPhantom){
+        alert("Phantom Wallet niet gevonden. Installeer de extensie of gebruik de Phantom in-app browser.");
+        return;
+      }
+      const resp = await window.solana.connect();
+      walletPubkey = resp.publicKey.toBase58();
+      walletShort.innerHTML = `Wallet: <strong>${walletPubkey.slice(0,4)}…${walletPubkey.slice(-4)}</strong>`;
+      btnConnect.textContent = "🔌 Disconnect";
+      fetchCbsBalance().catch(()=>{});
+    }catch(e){
+      console.warn(e);
+    }
+  }
+  async function disconnectPhantom(){
+    try{
+      await window.solana.disconnect();
+    }catch(_){}
+    walletPubkey=null;
+    walletShort.innerHTML = 'Wallet: <em>not connected</em>';
+    chainBalEl.textContent = "—";
+    btnConnect.textContent = "🔌 Connect Phantom";
+  }
+  btnConnect.addEventListener("click", ()=> walletPubkey?disconnectPhantom():connectPhantom());
+
+  async function fetchCbsBalance(){
+    if(!walletPubkey || !CBS_MINT || CBS_MINT.includes("REPLACE")){ chainBalEl.textContent="(mint ontbreekt)"; return; }
+    const connection = new solanaWeb3.Connection(RPC_URL, "confirmed");
+    // Query SPL token accounts by owner with mint filter (no spl-token lib needed)
+    const res = await connection.getTokenAccountsByOwner(new solanaWeb3.PublicKey(walletPubkey), { mint: new solanaWeb3.PublicKey(CBS_MINT) }, { commitment:"confirmed" });
+    let amount = 0;
+    for(const it of res.value){
+      const info = solanaWeb3.AccountLayout ? null : null; // not used
+      const data = solanaWeb3.SPL_ACCOUNT_LAYOUT ? null : null;
+      // Easier: fetch parsed balance for each account
+    }
+    // Better: use parsed accounts in one call
+    const parsed = await connection.getParsedTokenAccountsByOwner(new solanaWeb3.PublicKey(walletPubkey), { mint: new solanaWeb3.PublicKey(CBS_MINT) });
+    for(const it of parsed.value){
+      const amt = it.account.data.parsed.info.tokenAmount;
+      amount += Number(amt.uiAmount || 0);
+    }
+    chainBalEl.textContent = amount.toLocaleString("nl-NL");
+  }
+
+  // Auto-connect if already trusted
+  if(window.solana && window.solana.isPhantom){
+    window.solana.connect({ onlyIfTrusted:true })
+      .then(r => { if(r?.publicKey){ walletPubkey=r.publicKey.toBase58(); walletShort.innerHTML = `Wallet: <strong>${walletPubkey.slice(0,4)}…${walletPubkey.slice(-4)}</strong>`; btnConnect.textContent="🔌 Disconnect"; fetchCbsBalance().catch(()=>{});} })
+      .catch(()=>{});
+  }
+})();
+</script>
+</body>
+</html>
