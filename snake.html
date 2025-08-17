@@ -1,322 +1,139 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CBS Snake — 100 CBS Entry</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet" />
-  <script defer src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
+  <meta charset="UTF-8">
+  <title>CBS Snake – Play with 100 CBS</title>
   <style>
-    :root{
-      --bg1:#0b0b0f; --bg2:#14161c; --panel:#0f1117;
-      --fg:#c8fff2; --muted:#98a5b3; --accent:#00ffcc; --accent2:#00e5ff;
-      --border:rgba(0,255,204,.35); --glow:0 0 18px rgba(0,255,204,.25), 0 0 42px rgba(0,229,255,.12);
+    body {
+      margin:0;
+      font-family:'Orbitron',sans-serif;
+      background:linear-gradient(135deg,#0f0f0f,#1a1a1a);
+      color:#00ffcc;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      padding:1rem;
     }
-    *{box-sizing:border-box}
-    html,body{margin:0;min-height:100%;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:var(--fg);font-family:'Orbitron',system-ui,Segoe UI,Roboto,Arial,sans-serif}
-    a{color:var(--accent2)}
-    header{position:sticky;top:0;z-index:50;backdrop-filter: blur(8px);background:linear-gradient(180deg,rgba(10,12,16,.85),rgba(10,12,16,.55));border-bottom:1px solid var(--border);box-shadow: var(--glow)}
-    .wrap{max-width:1080px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .brand{display:flex;gap:10px;align-items:center}
-    .brand img{width:36px;height:36px;filter:drop-shadow(0 0 14px rgba(255,215,0,.45))}
-    .brand h1{font-size:18px;letter-spacing:.08em;margin:0}
-    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .pill{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--border);border-radius:999px;padding:6px 10px;background:linear-gradient(180deg,rgba(0,255,204,.07),rgba(0,255,204,.02));box-shadow:var(--glow);font-size:12px}
-    .btn{display:inline-flex;align-items:center;gap:8px;cursor:pointer;border:1px solid var(--border);border-radius:10px;background:linear-gradient(180deg,rgba(0,255,204,.12),rgba(0,255,204,.04));color:var(--fg); padding:8px 12px; box-shadow:var(--glow); font-size:13px; letter-spacing:.05em}
-
-    main{max-width:1080px;margin:22px auto;padding:0 16px;display:grid;grid-template-columns:1fr;gap:18px}
-    .panel{border:1px solid var(--border); background:var(--panel); border-radius:18px; padding:18px; box-shadow:var(--glow)}
-    .grid{display:grid;grid-template-columns:1fr;gap:18px}
-    @media (min-width:980px){ .grid{grid-template-columns:1.2fr .8fr} }
-
-    canvas{border:2px solid var(--border);background:#111;box-shadow:var(--glow);border-radius:12px}
-    h2{margin:0 0 10px 0}
-    .muted{color:var(--muted)}
-    .note{font-size:12px;color:var(--muted)}
-    table{width:100%;border-collapse:collapse}
-    th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,.06);text-align:left}
-    th{color:#dffdf7;letter-spacing:.05em}
-    td{color:var(--muted)}
-    ol{margin:0 0 0 20px}
+    h1 { color:#00ffff; text-shadow:0 0 10px #00ffff; }
+    canvas { background:#111; border:2px solid #00ffcc; }
+    button {
+      margin:10px; padding:10px 20px;
+      border:none; border-radius:8px;
+      background:#00ffcc; color:#000;
+      font-size:16px; font-weight:bold;
+      cursor:pointer; box-shadow:0 0 10px #00ffcc;
+      transition:0.2s;
+    }
+    button:hover { background:#00ffff; }
+    #leaderboard {
+      margin-top:20px; padding:15px;
+      background:#111; border-radius:12px;
+      width:300px; box-shadow:0 0 12px #00ffcc;
+    }
+    #leaderboard h2 {
+      margin-top:0; text-align:center; color:#00ffff;
+    }
+    #leaderboard ol {
+      padding-left:20px;
+    }
+    #status { margin:10px; font-size:14px; color:#9aa; }
   </style>
 </head>
 <body>
-<header>
-  <div class="wrap">
-    <div class="brand">
-      <img src="logo.png" alt="CBS logo" />
-      <h1>CBS Snake — Entry 100 CBS</h1>
-    </div>
-    <div class="row">
-      <span id="walletShort" class="pill">Wallet: <em>not connected</em></span>
-      <span class="pill">CBS Balance: <strong id="cbsBal">—</strong></span>
-      <button id="btnConnect" class="btn">🔌 Connect Phantom</button>
-    </div>
+  <h1>🐍 CBS Snake</h1>
+  <p>Entry Fee: <b>100 CBS</b> | No rewards, just glory on the <b>Wall of Fame</b>!</p>
+
+  <button onclick="connectWallet()">Connect Phantom</button>
+  <button onclick="startGame()">▶️ Pay & Play (100 CBS)</button>
+  <div id="status">Status: idle</div>
+
+  <canvas id="gameCanvas" width="400" height="400"></canvas>
+
+  <div id="leaderboard">
+    <h2>🏆 Wall of Fame</h2>
+    <ol id="scoresList"></ol>
   </div>
-</header>
-
-<main>
-  <div class="grid">
-    <!-- LEFT: Game -->
-    <section class="panel">
-      <h2>🐍 Speel Snake</h2>
-      <p class="muted">Om te spelen is de entry-fee <b>100 CBS</b>. In de demo wordt nog niets echt verstuurd.</p>
-
-      <div class="row" style="gap:10px;flex-wrap:wrap;margin:8px 0 12px">
-        <button id="btnPayPlay" class="btn">▶️ Betaal & Start (100 CBS)</button>
-        <button id="btnRestart" class="btn" disabled>🔁 Opnieuw</button>
-        <span id="status" class="pill">Status: <em>idle</em></span>
-      </div>
-
-      <canvas id="gameCanvas" width="420" height="420"></canvas>
-      <p class="note">Demo-modus: entry-fee wordt nog niet on-chain afgeschreven. Leaderboard is lokaal (browser).</p>
-    </section>
-
-    <!-- RIGHT: Leaderboard & Info -->
-    <aside class="panel">
-      <h3 style="margin-top:0">🏆 Wall of Fame (Top 10)</h3>
-      <ol id="scoresList"></ol>
-
-      <h3 style="margin-top:16px">📋 Regels</h3>
-      <ul class="muted" style="margin-top:8px">
-        <li>Entry fee: <b>100 CBS</b> per game (demo: geen echte transfer).</li>
-        <li>Er is <b>geen uitbetaling</b> — het gaat om skill & eer op de Wall of Fame.</li>
-        <li>Je walletadres wordt gebruikt als naam als je verbonden bent.</li>
-      </ul>
-
-      <h3 style="margin-top:16px">🔧 Roadmap naar live</h3>
-      <ul class="muted">
-        <li>On-chain entry (SPL transfer 100 CBS → treasury)</li>
-        <li>Server-verified scores + anti-cheat</li>
-        <li>Publieke on-chain / API leaderboard</li>
-      </ul>
-    </aside>
-  </div>
-</main>
-
-<footer style="text-align:center;margin:30px 0 50px;color:#98a5b3">
-  © CBS Coin — Community Builds Sovereignty • Skill game (no payouts)
-</footer>
 
 <script>
-(() => {
-  // ====== Config ======
-  const RPC_URL = "https://api.mainnet-beta.solana.com"; // of devnet
-  const CBS_MINT = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
-  const ENTRY_FEE = 100; // 100 CBS per game (demo)
-  const LEADERBOARD_KEY = "cbs-snake-leaderboard-v1";
+  let wallet = null;
+  let snake, food, dx, dy, score, gameInterval;
 
-  // ====== Wallet state ======
-  let walletPubkey = null;
-
-  // UI refs
-  const walletShort = document.getElementById("walletShort");
-  const connectBtn = document.getElementById("btnConnect");
-  const cbsBalEl = document.getElementById("cbsBal");
-  const payPlayBtn = document.getElementById("btnPayPlay");
-  const restartBtn = document.getElementById("btnRestart");
-  const statusEl = document.getElementById("status");
-
-  // ====== Leaderboard (local demo) ======
-  let leaderboard = JSON.parse(localStorage.getItem(LEADERBOARD_KEY) || "[]");
-  function saveLeaderboard() {
-    leaderboard.sort((a,b)=> b.score - a.score);
-    leaderboard = leaderboard.slice(0,10);
-    localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(leaderboard));
-    renderLeaderboard();
-  }
-  function renderLeaderboard(){
-    const list = document.getElementById("scoresList");
-    list.innerHTML = "";
-    leaderboard.forEach((e,i) => {
-      const li = document.createElement("li");
-      li.textContent = `${e.wallet}: ${e.score}`;
-      list.appendChild(li);
-    });
-  }
-  renderLeaderboard();
-
-  // ====== Phantom connect ======
-  connectBtn.addEventListener("click", () => walletPubkey ? disconnectPhantom() : connectPhantom());
-
-  async function connectPhantom(){
-    try{
-      if(!window.solana || !window.solana.isPhantom){
-        alert("Phantom Wallet niet gevonden. Installeer Phantom of open in de Phantom in-app browser.");
-        return;
-      }
-      const resp = await window.solana.connect();
-      walletPubkey = resp.publicKey.toBase58();
-      walletShort.innerHTML = `Wallet: <strong>${walletPubkey.slice(0,4)}…${walletPubkey.slice(-4)}</strong>`;
-      connectBtn.textContent = "🔌 Disconnect";
-      fetchCbsBalance().catch(()=>{});
-    }catch(e){ console.warn(e); }
-  }
-  async function disconnectPhantom(){
-    try{ await window.solana.disconnect(); }catch(_){}
-    walletPubkey = null;
-    walletShort.innerHTML = 'Wallet: <em>not connected</em>';
-    connectBtn.textContent = "🔌 Connect Phantom";
-    cbsBalEl.textContent = "—";
+  // Demo wallet connect
+  function connectWallet() {
+    wallet = "DemoWallet_" + Math.floor(Math.random()*1000);
+    document.getElementById("status").innerText = "Connected: " + wallet;
   }
 
-  if(window.solana && window.solana.isPhantom){
-    window.solana.connect({ onlyIfTrusted:true })
-      .then(r => {
-        if(r?.publicKey){
-          walletPubkey = r.publicKey.toBase58();
-          walletShort.innerHTML = `Wallet: <strong>${walletPubkey.slice(0,4)}…${walletPubkey.slice(-4)}</strong>`;
-          connectBtn.textContent="🔌 Disconnect";
-          fetchCbsBalance().catch(()=>{});
-        }
-      }).catch(()=>{});
-  }
-
-  async function fetchCbsBalance(){
-    if(!walletPubkey){ cbsBalEl.textContent = "—"; return; }
-    const connection = new solanaWeb3.Connection(RPC_URL, "confirmed");
-    const parsed = await connection.getParsedTokenAccountsByOwner(new solanaWeb3.PublicKey(walletPubkey), { mint: new solanaWeb3.PublicKey(CBS_MINT) });
-    let amount = 0;
-    for(const it of parsed.value){
-      const amt = it.account.data.parsed.info.tokenAmount;
-      amount += Number(amt.uiAmount || 0);
-    }
-    cbsBalEl.textContent = amount.toLocaleString("nl-NL");
-  }
-
-  // ====== Entry fee (DEMO) ======
-  payPlayBtn.addEventListener("click", async () => {
-    // DEMO: hier simuleren we de betaling. Later vervangen we dit met echte SPL-transfer.
-    // --- LIVE (later):
-    // 1) Maak via backend een transactie die 100 CBS (SPL) van speler -> treasury verstuurt
-    // 2) Laat speler signeren via Phantom
-    // 3) Verifieer confirmatie, start game
-    if(!walletPubkey){
-      alert("Verbind eerst je Phantom wallet om te spelen.");
+  // Start game after "payment"
+  function startGame() {
+    if(!wallet){
+      alert("Please connect Phantom first.");
       return;
     }
-    setStatus("Bezig met (demo) betaling...");
-    // Demo delay
-    await sleep(600);
-    setStatus("Entry fee (demo) geaccepteerd — veel succes!");
-    startGame();
-  });
-
-  function setStatus(text){ statusEl.innerHTML = `Status: <strong>${text}</strong>`; }
-
-  function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
-
-  // ====== Snake game ======
-  const canvas = document.getElementById("gameCanvas");
-  const ctx = canvas.getContext("2d");
-  const box = 20;
-  let snake, direction, food, score, loop;
-
-  function initGame(){
-    snake = [{ x: 10*box, y: 10*box }];
-    direction = null;
-    food = randFood();
-    score = 0;
+    document.getElementById("status").innerText = "Payment of 100 CBS simulated... Game starting!";
+    snake = [{x:200, y:200}];
+    dx = 20; dy = 0; score = 0;
+    food = {x: Math.floor(Math.random()*20)*20, y: Math.floor(Math.random()*20)*20};
+    clearInterval(gameInterval);
+    gameInterval = setInterval(drawGame, 120);
   }
 
-  function startGame(){
-    initGame();
-    if(loop) clearInterval(loop);
-    loop = setInterval(tick, 110);
-    payPlayBtn.disabled = true;
-    restartBtn.disabled = false;
-    setStatus("Game running");
-  }
-
-  restartBtn.addEventListener("click", ()=> {
-    if(loop) clearInterval(loop);
-    initGame();
-    loop = setInterval(tick, 110);
-    setStatus("Opnieuw gestart");
-  });
-
-  document.addEventListener("keydown", (e) => {
-    if(e.key==="ArrowLeft" && direction!=="RIGHT") direction="LEFT";
-    else if(e.key==="ArrowUp" && direction!=="DOWN") direction="UP";
-    else if(e.key==="ArrowRight" && direction!=="LEFT") direction="RIGHT";
-    else if(e.key==="ArrowDown" && direction!=="UP") direction="DOWN";
-  });
-
-  function randFood(){
-    return {
-      x: Math.floor(Math.random() * (canvas.width/box)) * box,
-      y: Math.floor(Math.random() * (canvas.height/box)) * box
-    };
-  }
-
-  function tick(){
-    // achtergrond
+  function drawGame() {
+    let canvas = document.getElementById("gameCanvas");
+    let ctx = canvas.getContext("2d");
     ctx.fillStyle = "#000";
-    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillRect(0,0,400,400);
 
-    // slang
-    for(let i=0;i<snake.length;i++){
-      ctx.fillStyle = i===0 ? "#00ffcc" : "#00b3aa";
-      ctx.fillRect(snake[i].x, snake[i].y, box, box);
-    }
+    // draw snake
+    ctx.fillStyle = "#00ffcc";
+    snake.forEach(part => ctx.fillRect(part.x, part.y, 20,20));
 
-    // food
-    ctx.fillStyle = "#ff4080";
-    ctx.fillRect(food.x, food.y, box, box);
+    // move snake
+    let head = {x: snake[0].x+dx, y: snake[0].y+dy};
+    snake.unshift(head);
 
-    // beweging
-    let headX = snake[0].x;
-    let headY = snake[0].y;
-    if(direction==="LEFT") headX -= box;
-    if(direction==="UP") headY -= box;
-    if(direction==="RIGHT") headX += box;
-    if(direction==="DOWN") headY += box;
-
-    // eten
-    if(headX===food.x && headY===food.y){
+    // check food
+    if(head.x===food.x && head.y===food.y){
       score++;
-      food = randFood();
+      food = {x: Math.floor(Math.random()*20)*20, y: Math.floor(Math.random()*20)*20};
     } else {
       snake.pop();
     }
 
-    const newHead = { x: headX, y: headY };
+    // draw food
+    ctx.fillStyle = "#ff0066";
+    ctx.fillRect(food.x, food.y, 20, 20);
 
-    // botsingen (muur of eigen lijf)
-    if(headX<0 || headY<0 || headX>=canvas.width || headY>=canvas.height || collide(newHead, snake)){
-      gameOver();
-      return;
+    // game over
+    if(head.x<0||head.y<0||head.x>=400||head.y>=400||
+       snake.slice(1).some(p=>p.x===head.x && p.y===head.y)){
+      clearInterval(gameInterval);
+      document.getElementById("status").innerText = "Game Over! Score: "+score;
+      saveScore(wallet, score);
     }
-
-    snake.unshift(newHead);
-
-    // score
-    ctx.fillStyle = "#c8fff2";
-    ctx.font = "16px Orbitron";
-    ctx.fillText("Score: "+score, 10, canvas.height - 10);
   }
 
-  function collide(h, arr){
-    for(let i=0;i<arr.length;i++){ if(h.x===arr[i].x && h.y===arr[i].y) return true; }
-    return false;
-  }
+  document.addEventListener("keydown", e=>{
+    if(e.key==="ArrowUp" && dy===0){dx=0;dy=-20;}
+    else if(e.key==="ArrowDown" && dy===0){dx=0;dy=20;}
+    else if(e.key==="ArrowLeft" && dx===0){dx=-20;dy=0;}
+    else if(e.key==="ArrowRight" && dx===0){dx=20;dy=0;}
+  });
 
-  function gameOver(){
-    clearInterval(loop);
-    setStatus("Game over");
-    saveScore(score);
-    payPlayBtn.disabled = false;
-    restartBtn.disabled = true;
+  // Leaderboard demo
+  let scores = [];
+  function saveScore(wallet, score){
+    scores.push({wallet, score});
+    scores.sort((a,b)=>b.score-a.score);
+    scores = scores.slice(0,10);
+    let list = document.getElementById("scoresList");
+    list.innerHTML = "";
+    scores.forEach(s=>{
+      let li = document.createElement("li");
+      li.textContent = s.wallet+" — "+s.score;
+      list.appendChild(li);
+    });
   }
-
-  function saveScore(score){
-    const name = walletPubkey ? (walletPubkey.slice(0,4)+"…"+walletPubkey.slice(-4)) : prompt("Naam/wallet (demo) voor leaderboard?");
-    if(!name) return;
-    leaderboard.push({ wallet: name, score });
-    saveLeaderboard();
-  }
-
-})();
 </script>
 </body>
 </html>
