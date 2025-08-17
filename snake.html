@@ -48,8 +48,8 @@
   </div>
 
   <div class="panel" id="boardWrap">
-    <h2 style="text-align:center;">🏆 Wall of Fame</h2>
-    <p class="muted" style="text-align:center;margin-top:-.25rem">High scores are shared for everyone.</p>
+    <h2 style="text-align:center;">🏆 Top 3</h2>
+    <p class="muted" style="text-align:center;margin-top:-.25rem">Only the three highest scores are shown.</p>
     <table>
       <thead><tr><th>Rank</th><th>Player</th><th>Score</th></tr></thead>
       <tbody id="leaderboardBody"></tbody>
@@ -78,17 +78,17 @@
     const SUPABASE_URL = "https://aiawteejixsgsunmefpi.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpYXd0ZWVqaXhzZ3N1bm1lZnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NDExODIsImV4cCI6MjA3MTAxNzE4Mn0.aMbRUM0YebNMfZhSLb9PFdSHAZ-D5WpACPefCfjSLqI";
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const TABLE = "leaderboard"; // tabel met kolommen: id (uuid, default), name (text), score (int), created_at (timestamptz default now())
+    const TABLE = "leaderboard"; // kolommen: id uuid, name text, score int/int8, created_at timestamptz default now()
 
     // ===== Game state =====
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
     const box = 20;
     let snake, direction, food, score, game;
-    let pendingScore = null; // score waiting to be saved
+    let pendingScore = null;
     let saving = false;
 
-    // Fallback lokale scores als cloud niet werkt
+    // Fallback lokale scores
     function getLocalScores(){
       try { return JSON.parse(localStorage.getItem("cbs_snake_scores") || "[]"); }
       catch { return []; }
@@ -146,7 +146,6 @@
     }
 
     function drawNeonSegment(x, y, size, isHead=false){
-      // Glow
       ctx.save();
       const grad = ctx.createLinearGradient(x, y, x+size, y+size);
       grad.addColorStop(0, "#35d0ff");
@@ -156,14 +155,12 @@
       drawRoundedRect(x+2, y+2, size-4, size-4, 6);
       ctx.fillStyle = grad;
       ctx.fill();
-      // Inner highlight
       ctx.shadowBlur = 0;
       ctx.lineWidth = 2;
       ctx.strokeStyle = "rgba(255,255,255,.25)";
       ctx.stroke();
 
       if(isHead){
-        // kleine “eye” stip
         ctx.beginPath();
         ctx.arc(x+size*0.7, y+size*0.35, 2, 0, Math.PI*2);
         ctx.fillStyle = "#fff";
@@ -176,12 +173,8 @@
       ctx.save();
       const r = size/2;
       const cx = x + r, cy = y + r;
-
-      // Outer glow
       ctx.shadowColor = "#ffd54d";
       ctx.shadowBlur = 14;
-
-      // Base coin
       const g = ctx.createRadialGradient(cx, cy, r*0.2, cx, cy, r);
       g.addColorStop(0, "#ffe27a");
       g.addColorStop(0.6, "#ffca28");
@@ -190,20 +183,15 @@
       ctx.arc(cx, cy, r-2, 0, Math.PI*2);
       ctx.fillStyle = g;
       ctx.fill();
-
-      // Rim
       ctx.shadowBlur = 0;
       ctx.lineWidth = 2;
       ctx.strokeStyle = "rgba(255,255,255,.35)";
       ctx.stroke();
-
-      // Subtle shine
       ctx.beginPath();
       ctx.arc(cx - r*0.3, cy - r*0.3, r*0.5, Math.PI*1.1, Math.PI*1.8);
       ctx.strokeStyle = "rgba(255,255,255,.5)";
       ctx.lineWidth = 1;
       ctx.stroke();
-
       ctx.restore();
     }
 
@@ -244,21 +232,16 @@
     }
 
     function renderFrame(){
-      // board
       ctx.fillStyle="#000";
       ctx.fillRect(0,0,canvas.width,canvas.height);
 
-      // draw coin
       drawCoin(food.x, food.y, box);
 
-      // draw snake (head first for highlight)
       for(let i=snake.length-1;i>=0;i--){
         const seg = snake[i];
-        const isHead = i===0;
-        drawNeonSegment(seg.x, seg.y, box, isHead);
+        drawNeonSegment(seg.x, seg.y, box, i===0);
       }
 
-      // score
       ctx.fillStyle="#fff";
       ctx.font="18px Orbitron";
       ctx.fillText("Score: "+score, box, 20);
@@ -271,7 +254,7 @@
       document.getElementById("playBtn").blur();
     }
 
-    // ===== Name overlay & save to Supabase =====
+    // ===== Name overlay & saving =====
     const overlay = document.getElementById("nameOverlay");
     const nameInput = document.getElementById("nameInput");
     const err = document.getElementById("error");
@@ -302,7 +285,6 @@
       saveBtn.disabled = true;
       saving = true;
 
-      // safety timeout zodat UI nooit “hangt”
       clearTimeout(savingTimeout);
       savingTimeout = setTimeout(()=>{ saving=false; saveBtn.disabled=false; }, 8000);
 
@@ -311,7 +293,6 @@
       try{
         const ok = await saveScoreToCloud(name, sc);
         if(!ok){
-          // fallback local
           putLocalScore(name, sc);
           alert("Cloud save failed. Saved locally instead.");
         }
@@ -332,7 +313,6 @@
     });
 
     async function saveScoreToCloud(name, score){
-      // Guard tegen ongeldige waarden
       if(!Number.isFinite(score) || score<0) score = 0;
       try{
         const { error } = await sb.from(TABLE).insert([{ name, score }]);
@@ -347,12 +327,12 @@
       }
     }
 
+    // ===== Leaderboard: ONLY TOP-3 =====
     async function renderCloudBoard(){
       const tbody=document.getElementById("leaderboardBody");
       tbody.innerHTML = "<tr><td colspan='3' class='muted'>Loading…</td></tr>";
       lbNote.style.display = "none";
 
-      // Probeer cloud
       let rows=null;
       try{
         const { data, error } = await sb
@@ -360,7 +340,7 @@
           .select("*")
           .order("score", { ascending:false })
           .order("created_at", { ascending:true })
-          .limit(10);
+          .limit(3); // <-- alleen top 3
         if(error) throw error;
         rows = data || [];
       }catch(e){
@@ -368,8 +348,9 @@
       }
 
       if(!rows || rows.length===0){
-        // fallback lokaal
-        const local = getLocalScores().slice(0,10);
+        const local = getLocalScores()
+          .sort((a,b)=> b.score - a.score || new Date(a.created_at)-new Date(b.created_at))
+          .slice(0,3); // lokaal ook top-3
         rows = local;
         lbNote.style.display = "block";
       }
@@ -402,8 +383,7 @@
     (async ()=>{ 
       try{ await renderCloudBoard(); } 
       catch(e){ console.error(e); }
-      // Initial static frame so canvas toont direct de coin + head
-      initGame(); renderFrame();
+      initGame(); renderFrame(); // toon direct een frame
     })();
   </script>
 </body>
