@@ -2,138 +2,203 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>CBS Snake – Play with 100 CBS</title>
+  <title>CBS Snake – Play & Compete</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
+    :root {
+      --bg1: #0f0f0f;
+      --bg2: #1a1a1a;
+      --fg: #00ffcc;
+      --cyan: #00ffff;
+      --panel: #111;
+      --muted: #9aa;
+      --border: #00ffcc;
+    }
     body {
-      margin:0;
-      font-family:'Orbitron',sans-serif;
-      background:linear-gradient(135deg,#0f0f0f,#1a1a1a);
-      color:#00ffcc;
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      padding:1rem;
+      margin: 0;
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(135deg, var(--bg1), var(--bg2));
+      color: var(--fg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem;
     }
-    h1 { color:#00ffff; text-shadow:0 0 10px #00ffff; }
-    canvas { background:#111; border:2px solid #00ffcc; }
+    h1 {
+      color: var(--cyan);
+      text-shadow: 0 0 10px var(--cyan);
+    }
+    .panel {
+      background: var(--panel);
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem;
+      margin: 1rem;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 0 20px rgba(0, 255, 204, 0.3);
+    }
     button {
-      margin:10px; padding:10px 20px;
-      border:none; border-radius:8px;
-      background:#00ffcc; color:#000;
-      font-size:16px; font-weight:bold;
-      cursor:pointer; box-shadow:0 0 10px #00ffcc;
-      transition:0.2s;
+      background: none;
+      border: 2px solid var(--border);
+      color: var(--fg);
+      font-size: 1rem;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: 0.3s;
     }
-    button:hover { background:#00ffff; }
-    #leaderboard {
-      margin-top:20px; padding:15px;
-      background:#111; border-radius:12px;
-      width:300px; box-shadow:0 0 12px #00ffcc;
+    button:hover {
+      background: var(--border);
+      color: #000;
     }
-    #leaderboard h2 {
-      margin-top:0; text-align:center; color:#00ffff;
+    canvas {
+      background: #000;
+      display: block;
+      margin: auto;
+      border: 2px solid var(--border);
     }
-    #leaderboard ol {
-      padding-left:20px;
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
     }
-    #status { margin:10px; font-size:14px; color:#9aa; }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.5rem;
+      text-align: center;
+    }
+    th {
+      background: #222;
+    }
   </style>
 </head>
 <body>
-  <h1>🐍 CBS Snake</h1>
-  <p>Entry Fee: <b>100 CBS</b> | No rewards, just glory on the <b>Wall of Fame</b>!</p>
+  <h1>🐍 CBS Snake Game</h1>
 
-  <button onclick="connectWallet()">Connect Phantom</button>
-  <button onclick="startGame()">▶️ Pay & Play (100 CBS)</button>
-  <div id="status">Status: idle</div>
-
-  <canvas id="gameCanvas" width="400" height="400"></canvas>
-
-  <div id="leaderboard">
-    <h2>🏆 Wall of Fame</h2>
-    <ol id="scoresList"></ol>
+  <div class="panel" style="text-align:center;">
+    <button id="connectBtn">🔗 Connect Phantom</button>
+    <button id="playBtn">▶️ Pay & Play (100 CBS)</button>
+    <p id="status">Status: idle</p>
   </div>
 
-<script>
-  let wallet = null;
-  let snake, food, dx, dy, score, gameInterval;
+  <div class="panel">
+    <canvas id="gameCanvas" width="400" height="400"></canvas>
+    <p style="text-align:center;">Score: <span id="score">0</span></p>
+  </div>
 
-  // Demo wallet connect
-  function connectWallet() {
-    wallet = "DemoWallet_" + Math.floor(Math.random()*1000);
-    document.getElementById("status").innerText = "Connected: " + wallet;
-  }
+  <div class="panel">
+    <h2>🏆 Wall of Fame</h2>
+    <table id="leaderboard">
+      <thead>
+        <tr><th>Rank</th><th>Player</th><th>Score</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-  // Start game after "payment"
-  function startGame() {
-    if(!wallet){
-      alert("Please connect Phantom first.");
-      return;
-    }
-    document.getElementById("status").innerText = "Payment of 100 CBS simulated... Game starting!";
-    snake = [{x:200, y:200}];
-    dx = 20; dy = 0; score = 0;
-    food = {x: Math.floor(Math.random()*20)*20, y: Math.floor(Math.random()*20)*20};
-    clearInterval(gameInterval);
-    gameInterval = setInterval(drawGame, 120);
-  }
+  <script>
+    // Placeholder wallet connect (demo only)
+    let walletConnected = false;
+    document.getElementById("connectBtn").onclick = () => {
+      walletConnected = true;
+      document.getElementById("status").innerText = "Wallet connected (demo)";
+    };
 
-  function drawGame() {
-    let canvas = document.getElementById("gameCanvas");
-    let ctx = canvas.getContext("2d");
-    ctx.fillStyle = "#000";
-    ctx.fillRect(0,0,400,400);
+    // Snake game logic
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+    const box = 20;
+    let snake, food, score, d, game;
 
-    // draw snake
-    ctx.fillStyle = "#00ffcc";
-    snake.forEach(part => ctx.fillRect(part.x, part.y, 20,20));
-
-    // move snake
-    let head = {x: snake[0].x+dx, y: snake[0].y+dy};
-    snake.unshift(head);
-
-    // check food
-    if(head.x===food.x && head.y===food.y){
-      score++;
-      food = {x: Math.floor(Math.random()*20)*20, y: Math.floor(Math.random()*20)*20};
-    } else {
-      snake.pop();
+    function initGame() {
+      snake = [{x: 9*box, y: 10*box}];
+      food = {
+        x: Math.floor(Math.random()*19+1)*box,
+        y: Math.floor(Math.random()*19+1)*box
+      };
+      score = 0;
+      d = null;
     }
 
-    // draw food
-    ctx.fillStyle = "#ff0066";
-    ctx.fillRect(food.x, food.y, 20, 20);
-
-    // game over
-    if(head.x<0||head.y<0||head.x>=400||head.y>=400||
-       snake.slice(1).some(p=>p.x===head.x && p.y===head.y)){
-      clearInterval(gameInterval);
-      document.getElementById("status").innerText = "Game Over! Score: "+score;
-      saveScore(wallet, score);
+    document.addEventListener("keydown", direction);
+    function direction(event){
+      if(event.keyCode == 37 && d != "RIGHT"){ d = "LEFT"; }
+      else if(event.keyCode == 38 && d != "DOWN"){ d = "UP"; }
+      else if(event.keyCode == 39 && d != "LEFT"){ d = "RIGHT"; }
+      else if(event.keyCode == 40 && d != "UP"){ d = "DOWN"; }
     }
-  }
 
-  document.addEventListener("keydown", e=>{
-    if(e.key==="ArrowUp" && dy===0){dx=0;dy=-20;}
-    else if(e.key==="ArrowDown" && dy===0){dx=0;dy=20;}
-    else if(e.key==="ArrowLeft" && dx===0){dx=-20;dy=0;}
-    else if(e.key==="ArrowRight" && dx===0){dx=20;dy=0;}
-  });
+    function draw(){
+      ctx.fillStyle = "#000";
+      ctx.fillRect(0,0,canvas.width,canvas.height);
 
-  // Leaderboard demo
-  let scores = [];
-  function saveScore(wallet, score){
-    scores.push({wallet, score});
-    scores.sort((a,b)=>b.score-a.score);
-    scores = scores.slice(0,10);
-    let list = document.getElementById("scoresList");
-    list.innerHTML = "";
-    scores.forEach(s=>{
-      let li = document.createElement("li");
-      li.textContent = s.wallet+" — "+s.score;
-      list.appendChild(li);
-    });
-  }
-</script>
+      for(let i=0; i<snake.length; i++){
+        ctx.fillStyle = (i==0)? "#00ffcc":"#009999";
+        ctx.fillRect(snake[i].x, snake[i].y, box, box);
+        ctx.strokeStyle = "#000";
+        ctx.strokeRect(snake[i].x, snake[i].y, box, box);
+      }
+
+      ctx.fillStyle = "red";
+      ctx.fillRect(food.x, food.y, box, box);
+
+      let snakeX = snake[0].x;
+      let snakeY = snake[0].y;
+      if(d=="LEFT") snakeX -= box;
+      if(d=="UP") snakeY -= box;
+      if(d=="RIGHT") snakeX += box;
+      if(d=="DOWN") snakeY += box;
+
+      if(snakeX == food.x && snakeY == food.y){
+        score++;
+        food = {
+          x: Math.floor(Math.random()*19+1)*box,
+          y: Math.floor(Math.random()*19+1)*box
+        };
+      } else {
+        snake.pop();
+      }
+
+      let newHead = { x:snakeX, y:snakeY };
+
+      // Game over
+      if(snakeX < 0 || snakeY < 0 || snakeX >= canvas.width || snakeY >= canvas.height ||
+         collision(newHead, snake)){
+        clearInterval(game);
+        addScore("Player", score); // Add to leaderboard
+        return;
+      }
+
+      snake.unshift(newHead);
+      document.getElementById("score").innerText = score;
+    }
+
+    function collision(head, array){
+      for(let i=0; i<array.length; i++){
+        if(head.x == array[i].x && head.y == array[i].y){ return true; }
+      }
+      return false;
+    }
+
+    // Leaderboard handling
+    function addScore(player, score){
+      const tbody = document.querySelector("#leaderboard tbody");
+      const row = document.createElement("tr");
+      row.innerHTML = `<td>${tbody.children.length+1}</td><td>${player}</td><td>${score}</td>`;
+      tbody.appendChild(row);
+    }
+
+    // Pay & Play
+    document.getElementById("playBtn").onclick = () => {
+      if(!walletConnected){
+        alert("Please connect your wallet first!");
+        return;
+      }
+      document.getElementById("status").innerText = "Paid 100 CBS (demo) – Game started!";
+      initGame();
+      game = setInterval(draw,100);
+    };
+  </script>
 </body>
 </html>
