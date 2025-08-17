@@ -14,7 +14,6 @@
       --panel: #111;
       --border: #00ffcc;
     }
-    * { box-sizing: border-box; }
     body {
       margin: 0;
       font-family: 'Orbitron', sans-serif;
@@ -35,13 +34,8 @@
       text-align: center;
       justify-content: center;
     }
-    header img {
-      height: 50px;
-    }
-    h1 {
-      font-size: clamp(1.5rem, 4vw, 2rem);
-      color: var(--accent);
-    }
+    header img { height: 50px; }
+    h1 { font-size: clamp(1.5rem, 4vw, 2rem); color: var(--accent); }
     .panel {
       background: var(--panel);
       border: 2px solid var(--border);
@@ -72,13 +66,8 @@
       margin: 0.5rem;
       font-size: 1rem;
     }
-    button:hover {
-      background: var(--accent);
-    }
-    #leaderboard {
-      margin-top: 1rem;
-      overflow-x: auto;
-    }
+    button:hover { background: var(--accent); }
+    #leaderboard { margin-top: 1rem; overflow-x: auto; }
     #leaderboard table {
       width: 100%;
       border-collapse: collapse;
@@ -88,6 +77,10 @@
       padding: 0.5rem;
       border-bottom: 1px solid var(--border);
       text-align: center;
+    }
+    #leaderboard td[contenteditable="true"] {
+      background: rgba(0,255,204,0.1);
+      outline: none;
     }
   </style>
 </head>
@@ -115,25 +108,17 @@
       <thead>
         <tr><th>Rank</th><th>Player</th><th>Score</th></tr>
       </thead>
-      <tbody id="leaderboardBody">
-        <!-- Scores injected here -->
-      </tbody>
+      <tbody id="leaderboardBody"></tbody>
     </table>
   </div>
 
   <script>
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
-    let box = 20;
-    let snake;
-    let direction;
-    let food;
-    let score;
-    let game;
+    let box = 20, snake, direction, food, score, game;
     const logo = new Image();
-    logo.src = "logo.png"; // CBS logo voor slang en eten
+    logo.src = "logo.png";
 
-    // ✅ Load leaderboard from localStorage
     let leaderboard = JSON.parse(localStorage.getItem("leaderboard")) || [];
 
     function initGame() {
@@ -146,26 +131,20 @@
       score = 0;
     }
 
-    document.addEventListener("keydown", directionHandler);
-    function directionHandler(event) {
-      if(event.keyCode == 37 && direction != "RIGHT") direction = "LEFT";
-      else if(event.keyCode == 38 && direction != "DOWN") direction = "UP";
-      else if(event.keyCode == 39 && direction != "LEFT") direction = "RIGHT";
-      else if(event.keyCode == 40 && direction != "UP") direction = "DOWN";
-    }
+    document.addEventListener("keydown", e => {
+      if(e.keyCode == 37 && direction != "RIGHT") direction = "LEFT";
+      else if(e.keyCode == 38 && direction != "DOWN") direction = "UP";
+      else if(e.keyCode == 39 && direction != "LEFT") direction = "RIGHT";
+      else if(e.keyCode == 40 && direction != "UP") direction = "DOWN";
+    });
 
-    // 📱 Tap controls
     canvas.addEventListener("touchstart", e => {
       e.preventDefault();
-      let touchX = e.changedTouches[0].clientX;
-      let touchY = e.changedTouches[0].clientY;
       let rect = canvas.getBoundingClientRect();
       let cx = rect.left + rect.width/2;
       let cy = rect.top + rect.height/2;
-
-      let dx = touchX - cx;
-      let dy = touchY - cy;
-
+      let dx = e.changedTouches[0].clientX - cx;
+      let dy = e.changedTouches[0].clientY - cy;
       if(Math.abs(dx) > Math.abs(dy)) {
         if(dx > 0 && direction != "LEFT") direction = "RIGHT";
         else if(dx < 0 && direction != "RIGHT") direction = "LEFT";
@@ -179,12 +158,9 @@
       ctx.fillStyle = "#000";
       ctx.fillRect(0,0,canvas.width,canvas.height);
 
-      // 🐍 Draw snake as CBS logos
       for(let i=0; i<snake.length; i++) {
         ctx.drawImage(logo, snake[i].x, snake[i].y, box, box);
       }
-
-      // 🍎 Draw food also as CBS logo
       ctx.drawImage(logo, food.x, food.y, box, box);
 
       let snakeX = snake[0].x;
@@ -201,9 +177,7 @@
           x: Math.floor(Math.random()*19+1) * box,
           y: Math.floor(Math.random()*19+1) * box
         };
-      } else {
-        snake.pop();
-      }
+      } else snake.pop();
 
       let newHead = { x: snakeX, y: snakeY };
 
@@ -221,12 +195,7 @@
     }
 
     function collision(head,array) {
-      for(let i=0; i<array.length; i++) {
-        if(head.x == array[i].x && head.y == array[i].y) {
-          return true;
-        }
-      }
-      return false;
+      return array.some(seg => seg.x == head.x && seg.y == head.y);
     }
 
     function startGame() {
@@ -236,40 +205,41 @@
     }
 
     function saveScore(score) {
-      let player = prompt("Game Over! Enter your name/wallet:");
-      if(player) {
-        leaderboard.push({player, score});
-        leaderboard.sort((a,b) => b.score - a.score);
-        leaderboard = leaderboard.slice(0,10); // top 10 only
-        localStorage.setItem("leaderboard", JSON.stringify(leaderboard)); // ✅ save
-        updateLeaderboard();
-      }
+      leaderboard.push({player: "Unnamed", score});
+      leaderboard.sort((a,b) => b.score - a.score);
+      leaderboard = leaderboard.slice(0,10);
+      localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
+      updateLeaderboard();
     }
 
     function updateLeaderboard() {
       const tbody = document.getElementById("leaderboardBody");
       tbody.innerHTML = "";
       leaderboard.forEach((entry,index) => {
-        let row = `<tr><td>${index+1}</td><td>${entry.player}</td><td>${entry.score}</td></tr>`;
-        tbody.innerHTML += row;
+        let row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${index+1}</td>
+          <td contenteditable="true">${entry.player}</td>
+          <td>${entry.score}</td>
+        `;
+        // Save edits instantly
+        row.cells[1].addEventListener("blur", e => {
+          leaderboard[index].player = e.target.innerText.trim() || "Unnamed";
+          localStorage.setItem("leaderboard", JSON.stringify(leaderboard));
+        });
+        tbody.appendChild(row);
       });
     }
 
-    // 🔗 Phantom wallet connect
     async function connectWallet() {
       if (window.solana && window.solana.isPhantom) {
         try {
           const resp = await window.solana.connect();
           alert("Connected: " + resp.publicKey.toString());
-        } catch (err) {
-          console.error("Connection failed:", err);
-        }
-      } else {
-        alert("Phantom Wallet not found. Please install it!");
-      }
+        } catch (err) { console.error("Connection failed:", err); }
+      } else alert("Phantom Wallet not found.");
     }
 
-    // ✅ Load leaderboard on page load
     updateLeaderboard();
   </script>
 </body>
