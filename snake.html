@@ -58,8 +58,8 @@
       width: 100%;
       max-width: 400px;
       height: auto;
-      background: #000 url('logo.png') center center no-repeat;
-      background-size: 100px;
+      background: #000;
+      touch-action: none; /* voorkom scrollen */
     }
     button {
       background: var(--fg);
@@ -69,7 +69,7 @@
       border-radius: 0.5rem;
       cursor: pointer;
       font-weight: bold;
-      margin-top: 1rem;
+      margin: 0.5rem;
       font-size: 1rem;
     }
     button:hover {
@@ -96,6 +96,10 @@
     <img src="logo.png" alt="CBS Logo">
     <h1>🐍 CBS Snake Game</h1>
   </header>
+
+  <div style="margin-bottom:1rem;">
+    <button onclick="connectWallet()">🔗 Connect Wallet</button>
+  </div>
 
   <div class="panel">
     <p style="text-align:center;"><strong>Entry fee:</strong> 100 CBS (demo mode, free play)</p>
@@ -149,10 +153,12 @@
     let touchStartX = 0;
     let touchStartY = 0;
     canvas.addEventListener("touchstart", e => {
+      e.preventDefault();
       touchStartX = e.changedTouches[0].screenX;
       touchStartY = e.changedTouches[0].screenY;
-    });
+    }, {passive:false});
     canvas.addEventListener("touchend", e => {
+      e.preventDefault();
       let dx = e.changedTouches[0].screenX - touchStartX;
       let dy = e.changedTouches[0].screenY - touchStartY;
 
@@ -163,21 +169,31 @@
         if(dy > 0 && direction != "UP") direction = "DOWN";
         else if(dy < 0 && direction != "DOWN") direction = "UP";
       }
-    });
+    }, {passive:false});
 
     function draw() {
       ctx.fillStyle = "#000";
       ctx.fillRect(0,0,canvas.width,canvas.height);
 
+      // 🐍 Snake with round glow style
       for(let i=0; i<snake.length; i++) {
         ctx.fillStyle = (i==0)? "#00ffcc" : "#00ffff";
-        ctx.fillRect(snake[i].x, snake[i].y, box, box);
-        ctx.strokeStyle = "#111";
-        ctx.strokeRect(snake[i].x, snake[i].y, box, box);
+        ctx.shadowColor = "#00ffff";
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(snake[i].x + box/2, snake[i].y + box/2, box/2 - 2, 0, Math.PI*2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
       }
 
-      ctx.fillStyle = "#ff0000";
-      ctx.fillRect(food.x, food.y, box, box);
+      // 🍎 Food
+      ctx.fillStyle = "#ff0044";
+      ctx.shadowColor = "#ff0044";
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.arc(food.x + box/2, food.y + box/2, box/2 - 2, 0, Math.PI*2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
 
       let snakeX = snake[0].x;
       let snakeY = snake[0].y;
@@ -244,6 +260,20 @@
         let row = `<tr><td>${index+1}</td><td>${entry.player}</td><td>${entry.score}</td></tr>`;
         tbody.innerHTML += row;
       });
+    }
+
+    // 🔗 Phantom wallet connect
+    async function connectWallet() {
+      if (window.solana && window.solana.isPhantom) {
+        try {
+          const resp = await window.solana.connect();
+          alert("Connected: " + resp.publicKey.toString());
+        } catch (err) {
+          console.error("Connection failed:", err);
+        }
+      } else {
+        alert("Phantom Wallet not found. Please install it!");
+      }
     }
   </script>
 </body>
