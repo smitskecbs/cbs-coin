@@ -1,66 +1,55 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>CBS Coin — Slot Machine</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet">
-<script defer src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
-<style>
-  :root{
-    --bg1:#0b0b0f; --bg2:#14161c; --panel:#0f1117;
-    --fg:#c8fff2; --muted:#98a5b3; --accent:#00ffcc; --accent2:#00e5ff;
-    --border:rgba(0,255,204,.35); --glow:0 0 18px rgba(0,255,204,.25), 0 0 42px rgba(0,229,255,.12);
-  }
-  *{box-sizing:border-box}
-  html,body{margin:0;min-height:100%;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:var(--fg);font-family:'Orbitron',system-ui,Segoe UI,Roboto,Arial,sans-serif}
-  a{color:var(--accent2);text-decoration:none}
-  a:hover{opacity:.9;text-decoration:underline}
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CBS Snake — 100 CBS Entry</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;800&display=swap" rel="stylesheet" />
+  <script defer src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
+  <style>
+    :root{
+      --bg1:#0b0b0f; --bg2:#14161c; --panel:#0f1117;
+      --fg:#c8fff2; --muted:#98a5b3; --accent:#00ffcc; --accent2:#00e5ff;
+      --border:rgba(0,255,204,.35); --glow:0 0 18px rgba(0,255,204,.25), 0 0 42px rgba(0,229,255,.12);
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;min-height:100%;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:var(--fg);font-family:'Orbitron',system-ui,Segoe UI,Roboto,Arial,sans-serif}
+    a{color:var(--accent2)}
+    header{position:sticky;top:0;z-index:50;backdrop-filter: blur(8px);background:linear-gradient(180deg,rgba(10,12,16,.85),rgba(10,12,16,.55));border-bottom:1px solid var(--border);box-shadow: var(--glow)}
+    .wrap{max-width:1080px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .brand{display:flex;gap:10px;align-items:center}
+    .brand img{width:36px;height:36px;filter:drop-shadow(0 0 14px rgba(255,215,0,.45))}
+    .brand h1{font-size:18px;letter-spacing:.08em;margin:0}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .pill{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--border);border-radius:999px;padding:6px 10px;background:linear-gradient(180deg,rgba(0,255,204,.07),rgba(0,255,204,.02));box-shadow:var(--glow);font-size:12px}
+    .btn{display:inline-flex;align-items:center;gap:8px;cursor:pointer;border:1px solid var(--border);border-radius:10px;background:linear-gradient(180deg,rgba(0,255,204,.12),rgba(0,255,204,.04));color:var(--fg); padding:8px 12px; box-shadow:var(--glow); font-size:13px; letter-spacing:.05em}
 
-  header{position:sticky;top:0;z-index:50;backdrop-filter: blur(8px);background:linear-gradient(180deg,rgba(10,12,16,.85),rgba(10,12,16,.55));border-bottom:1px solid var(--border);box-shadow: var(--glow)}
-  .wrap{max-width:1080px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-  .brand{display:flex;gap:10px;align-items:center}
-  .brand img{width:36px;height:36px;filter:drop-shadow(0 0 14px rgba(255,215,0,.45))}
-  .brand h1{font-size:18px;letter-spacing:.08em;margin:0}
-  .row{display:flex;gap:10px;align-items:center}
-  .btn{display:inline-flex;align-items:center;gap:8px;cursor:pointer;border:1px solid var(--border);border-radius:10px;background:linear-gradient(180deg,rgba(0,255,204,.12),rgba(0,255,204,.04));color:var(--fg); padding:8px 12px; box-shadow:var(--glow); font-size:13px; letter-spacing:.05em}
+    main{max-width:1080px;margin:22px auto;padding:0 16px;display:grid;grid-template-columns:1fr;gap:18px}
+    .panel{border:1px solid var(--border); background:var(--panel); border-radius:18px; padding:18px; box-shadow:var(--glow)}
+    .grid{display:grid;grid-template-columns:1fr;gap:18px}
+    @media (min-width:980px){ .grid{grid-template-columns:1.2fr .8fr} }
 
-  main{max-width:1080px;margin:22px auto;padding:0 16px;display:grid;grid-template-columns:1fr;gap:18px}
-  .panel{border:1px solid var(--border); background:var(--panel); border-radius:18px; padding:18px; box-shadow:var(--glow)}
-  .grid{display:grid;grid-template-columns:1fr;gap:18px}
-  @media (min-width:980px){ .grid{grid-template-columns:1.2fr .8fr} }
-
-  /* Machine */
-  .machine{display:grid;grid-template-rows:auto auto auto;gap:14px;justify-items:center}
-  .reels{display:grid;grid-template-columns:repeat(3, 110px);gap:12px;padding:14px;border:1px solid var(--border);border-radius:16px;background:linear-gradient(180deg,rgba(0,255,204,.06),rgba(0,229,255,.03));box-shadow:var(--glow)}
-  .col{width:110px;height:150px;overflow:hidden;border-radius:12px;border:1px solid var(--border);background:rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;position:relative}
-  .slot{font-size:64px;line-height:1;filter:drop-shadow(0 0 8px rgba(0,255,204,.35));}
-  .spinline{position:absolute;left:0;right:0;top:50%;height:2px;background:rgba(0,255,204,.55);box-shadow:0 0 10px rgba(0,255,204,.6)}
-  .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center}
-  input[type=number]{width:110px;background:rgba(0,0,0,.35);border:1px solid var(--border);border-radius:8px;color:var(--fg);padding:8px 10px;font-family:inherit}
-  .pill{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--border);border-radius:999px;padding:6px 10px;background:linear-gradient(180deg,rgba(0,255,204,.07),rgba(0,255,204,.02));box-shadow:var(--glow);font-size:12px}
-  .win{font-weight:800;color:#00ffcc}
-  .lose{color:#98a5b3}
-
-  /* Right column */
-  table{width:100%;border-collapse:collapse}
-  th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,.06);text-align:left}
-  th{color:#dffdf7;letter-spacing:.05em}
-  td{color:var(--muted)}
-  .muted{color:var(--muted)}
-  .note{font-size:12px;color:var(--muted)}
-</style>
+    canvas{border:2px solid var(--border);background:#111;box-shadow:var(--glow);border-radius:12px}
+    h2{margin:0 0 10px 0}
+    .muted{color:var(--muted)}
+    .note{font-size:12px;color:var(--muted)}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,.06);text-align:left}
+    th{color:#dffdf7;letter-spacing:.05em}
+    td{color:var(--muted)}
+    ol{margin:0 0 0 20px}
+  </style>
 </head>
 <body>
-
 <header>
   <div class="wrap">
     <div class="brand">
-      <img src="logo.png" alt="CBS logo">
-      <h1>CBS Coin — Slot Machine</h1>
+      <img src="logo.png" alt="CBS logo" />
+      <h1>CBS Snake — Entry 100 CBS</h1>
     </div>
     <div class="row">
       <span id="walletShort" class="pill">Wallet: <em>not connected</em></span>
+      <span class="pill">CBS Balance: <strong id="cbsBal">—</strong></span>
       <button id="btnConnect" class="btn">🔌 Connect Phantom</button>
     </div>
   </div>
@@ -68,224 +57,265 @@
 
 <main>
   <div class="grid">
-    <!-- LEFT: Machine -->
+    <!-- LEFT: Game -->
     <section class="panel">
-      <div class="machine">
-        <div class="reels" id="reels">
-          <div class="col"><div class="slot">🍒</div><div class="spinline"></div></div>
-          <div class="col"><div class="slot">🍋</div><div class="spinline"></div></div>
-          <div class="col"><div class="slot">⭐</div><div class="spinline"></div></div>
-        </div>
+      <h2>🐍 Speel Snake</h2>
+      <p class="muted">Om te spelen is de entry-fee <b>100 CBS</b>. In de demo wordt nog niets echt verstuurd.</p>
 
-        <div class="controls">
-          <label class="pill">Inzet (CBS)
-            <input id="bet" type="number" min="1" step="1" value="10"/>
-          </label>
-          <button id="btnSpin" class="btn">🎰 Spin</button>
-          <button id="btnAddDemo" class="btn" title="Voeg 1000 test-CBS toe aan je demo-saldo">➕ Demo CBS</button>
-        </div>
-
-        <div class="row" style="justify-content:center;gap:14px;flex-wrap:wrap">
-          <span class="pill">Demo-saldo: <strong id="demoBal">0</strong> CBS</span>
-          <span class="pill">On-chain balans: <strong id="chainBal">—</strong> CBS</span>
-          <span class="pill">Laatste resultaat: <strong id="result" class="lose">—</strong></span>
-        </div>
-
-        <p class="note" style="text-align:center;margin:6px 0 0">
-          Demo-modus: spins gebruiken géén echte transacties. On-chain integratie (VRF + uitbetaling) kan later worden aangesloten.
-        </p>
+      <div class="row" style="gap:10px;flex-wrap:wrap;margin:8px 0 12px">
+        <button id="btnPayPlay" class="btn">▶️ Betaal & Start (100 CBS)</button>
+        <button id="btnRestart" class="btn" disabled>🔁 Opnieuw</button>
+        <span id="status" class="pill">Status: <em>idle</em></span>
       </div>
+
+      <canvas id="gameCanvas" width="420" height="420"></canvas>
+      <p class="note">Demo-modus: entry-fee wordt nog niet on-chain afgeschreven. Leaderboard is lokaal (browser).</p>
     </section>
 
-    <!-- RIGHT: Info / Payouts -->
+    <!-- RIGHT: Leaderboard & Info -->
     <aside class="panel">
-      <h3 style="margin-top:0">Uitbetalingen (middellijn)</h3>
-      <table>
-        <thead><tr><th>3 op rij</th><th>Multiplier</th><th>Kans</th></tr></thead>
-        <tbody>
-          <tr><td>🍒 🍒 🍒</td><td>x2</td><td class="muted">algemeen</td></tr>
-          <tr><td>🍋 🍋 🍋</td><td>x3</td><td class="muted">normaal</td></tr>
-          <tr><td>⭐ ⭐ ⭐</td><td>x5</td><td class="muted">minder vaak</td></tr>
-          <tr><td>💎 💎 💎</td><td>x12</td><td class="muted">zeldzaam</td></tr>
-          <tr><td>🟡 CBS 🟡 CBS 🟡 CBS</td><td>x40</td><td class="muted">zeer zeldzaam</td></tr>
-        </tbody>
-      </table>
+      <h3 style="margin-top:0">🏆 Wall of Fame (Top 10)</h3>
+      <ol id="scoresList"></ol>
 
-      <h3>Spelregels</h3>
+      <h3 style="margin-top:16px">📋 Regels</h3>
       <ul class="muted" style="margin-top:8px">
-        <li>Gebruik <b>Inzet</b> om het aantal CBS per spin in te stellen.</li>
-        <li>Winst = inzet × multiplier (alleen de <b>middellijn</b> telt).</li>
-        <li>RNG gebruikt <code>window.crypto.getRandomValues</code> voor eerlijke randomness.</li>
-        <li>Dit is een <b>demo</b>. Voor live uitbetalingen → smart contract + VRF.</li>
+        <li>Entry fee: <b>100 CBS</b> per game (demo: geen echte transfer).</li>
+        <li>Er is <b>geen uitbetaling</b> — het gaat om skill & eer op de Wall of Fame.</li>
+        <li>Je walletadres wordt gebruikt als naam als je verbonden bent.</li>
       </ul>
 
-      <h3 style="margin-top:18px">Project notities</h3>
-      <p class="muted">Vul je <b>CBS mint</b> hieronder in om je echte CBS-balans te tonen. Transacties zijn nog uitgeschakeld.</p>
-      <code style="font-size:12px;word-break:break-all;display:block;background:rgba(0,0,0,.35);padding:8px;border:1px solid var(--border);border-radius:8px">
-        const CBS_MINT = "REPLACE_WITH_CBS_MINT_ADDRESS";
-      </code>
+      <h3 style="margin-top:16px">🔧 Roadmap naar live</h3>
+      <ul class="muted">
+        <li>On-chain entry (SPL transfer 100 CBS → treasury)</li>
+        <li>Server-verified scores + anti-cheat</li>
+        <li>Publieke on-chain / API leaderboard</li>
+      </ul>
     </aside>
   </div>
 </main>
 
 <footer style="text-align:center;margin:30px 0 50px;color:#98a5b3">
-  © CBS Coin — Community Builds Sovereignty • Demo game (entertainment only)
+  © CBS Coin — Community Builds Sovereignty • Skill game (no payouts)
 </footer>
 
 <script>
 (() => {
-  // === Config ===
-  const RPC_URL = "https://api.mainnet-beta.solana.com";  // of devnet: https://api.devnet.solana.com
-  const CBS_MINT = "REPLACE_WITH_CBS_MINT_ADDRESS"; // <- VUL IN
-  const DEV_STORAGE_KEY = "cbs-slot-demo-balance";
-  const DEFAULT_DEMO = 1000;
+  // ====== Config ======
+  const RPC_URL = "https://api.mainnet-beta.solana.com"; // of devnet
+  const CBS_MINT = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
+  const ENTRY_FEE = 100; // 100 CBS per game (demo)
+  const LEADERBOARD_KEY = "cbs-snake-leaderboard-v1";
 
-  // Symbolen met gewichten (bepalen kans) en multipliers
-  const SYMBOLS = [
-    {icon:"🍒", weight:38, mult:2},
-    {icon:"🍋", weight:28, mult:3},
-    {icon:"⭐", weight:18, mult:5},
-    {icon:"💎", weight:12, mult:12},
-    {icon:"🟡 CBS", weight:4, mult:40}, // super zeldzaam
-  ];
-
-  // === UI refs ===
-  const reelsEl = document.getElementById("reels");
-  const betEl = document.getElementById("bet");
-  const resultEl = document.getElementById("result");
-  const demoBalEl = document.getElementById("demoBal");
-  const chainBalEl = document.getElementById("chainBal");
-  const btnSpin = document.getElementById("btnSpin");
-  const btnAddDemo = document.getElementById("btnAddDemo");
-  const btnConnect = document.getElementById("btnConnect");
-  const walletShort = document.getElementById("walletShort");
-
-  // Demo balance
-  function getDemo(){ return parseInt(localStorage.getItem(DEV_STORAGE_KEY) || DEFAULT_DEMO, 10); }
-  function setDemo(v){ localStorage.setItem(DEV_STORAGE_KEY, String(v)); demoBalEl.textContent = v; }
-  setDemo(getDemo());
-
-  // Weighted random pick using crypto RNG
-  function pickSymbol(){
-    const total = SYMBOLS.reduce((s,x)=>s+x.weight,0);
-    const rand = crypto.getRandomValues(new Uint32Array(1))[0] / 2**32 * total;
-    let acc = 0;
-    for(const s of SYMBOLS){ acc += s.weight; if(rand <= acc) return s; }
-    return SYMBOLS[0];
-  }
-
-  // Render one reel frame
-  function renderReels(a,b,c){
-    const cols = reelsEl.querySelectorAll(".col .slot");
-    cols[0].textContent = a.icon.replace(" CBS","");
-    cols[1].textContent = b.icon.replace(" CBS","");
-    cols[2].textContent = c.icon.replace(" CBS","");
-  }
-
-  // Spin animation
-  let spinning = false;
-  async function spin(){
-    if(spinning) return;
-    const bet = Math.max(1, Math.floor(+betEl.value || 0));
-    const bal = getDemo();
-    if(bet > bal){ flash("Onvoldoende demo-saldo", false); return; }
-
-    // Deduct upfront (zoals on-chain escrow)
-    setDemo(bal - bet);
-    spinning = true; btnSpin.disabled = true; resultEl.textContent = "—"; resultEl.className = "lose";
-
-    // simple tween animation
-    const start = performance.now();
-    function frame(t){
-      const elapsed = t - start;
-      // spin snel – langzamer – stoppen
-      const speed = Math.max(40, 320 - elapsed/2);
-      if(elapsed < 1500){
-        renderReels(pickSymbol(), pickSymbol(), pickSymbol());
-        setTimeout(()=>requestAnimationFrame(frame), speed);
-      } else {
-        // final outcome
-        const s1 = pickSymbol(), s2 = pickSymbol(), s3 = pickSymbol();
-        renderReels(s1,s2,s3);
-        const winMult = (s1.icon===s2.icon && s2.icon===s3.icon) ? s1.mult : 0;
-        const win = winMult * bet;
-        if(win>0){
-          setDemo(getDemo()+win);
-          resultEl.textContent = `GEWONNEN +${win} CBS (x${winMult})`;
-          resultEl.className = "win";
-        } else {
-          resultEl.textContent = "Helaas, geen prijs";
-          resultEl.className = "lose";
-        }
-        spinning = false; btnSpin.disabled = false;
-      }
-    }
-    requestAnimationFrame(frame);
-  }
-
-  function flash(msg, ok=true){
-    resultEl.textContent = msg;
-    resultEl.className = ok ? "win" : "lose";
-  }
-
-  // Demo top-up
-  btnAddDemo.addEventListener("click", ()=> setDemo(getDemo()+1000));
-  btnSpin.addEventListener("click", spin);
-
-  // === Phantom connect & on-chain balance (read-only) ===
+  // ====== Wallet state ======
   let walletPubkey = null;
+
+  // UI refs
+  const walletShort = document.getElementById("walletShort");
+  const connectBtn = document.getElementById("btnConnect");
+  const cbsBalEl = document.getElementById("cbsBal");
+  const payPlayBtn = document.getElementById("btnPayPlay");
+  const restartBtn = document.getElementById("btnRestart");
+  const statusEl = document.getElementById("status");
+
+  // ====== Leaderboard (local demo) ======
+  let leaderboard = JSON.parse(localStorage.getItem(LEADERBOARD_KEY) || "[]");
+  function saveLeaderboard() {
+    leaderboard.sort((a,b)=> b.score - a.score);
+    leaderboard = leaderboard.slice(0,10);
+    localStorage.setItem(LEADERBOARD_KEY, JSON.stringify(leaderboard));
+    renderLeaderboard();
+  }
+  function renderLeaderboard(){
+    const list = document.getElementById("scoresList");
+    list.innerHTML = "";
+    leaderboard.forEach((e,i) => {
+      const li = document.createElement("li");
+      li.textContent = `${e.wallet}: ${e.score}`;
+      list.appendChild(li);
+    });
+  }
+  renderLeaderboard();
+
+  // ====== Phantom connect ======
+  connectBtn.addEventListener("click", () => walletPubkey ? disconnectPhantom() : connectPhantom());
+
   async function connectPhantom(){
     try{
       if(!window.solana || !window.solana.isPhantom){
-        alert("Phantom Wallet niet gevonden. Installeer de extensie of gebruik de Phantom in-app browser.");
+        alert("Phantom Wallet niet gevonden. Installeer Phantom of open in de Phantom in-app browser.");
         return;
       }
       const resp = await window.solana.connect();
       walletPubkey = resp.publicKey.toBase58();
       walletShort.innerHTML = `Wallet: <strong>${walletPubkey.slice(0,4)}…${walletPubkey.slice(-4)}</strong>`;
-      btnConnect.textContent = "🔌 Disconnect";
+      connectBtn.textContent = "🔌 Disconnect";
       fetchCbsBalance().catch(()=>{});
-    }catch(e){
-      console.warn(e);
-    }
+    }catch(e){ console.warn(e); }
   }
   async function disconnectPhantom(){
-    try{
-      await window.solana.disconnect();
-    }catch(_){}
-    walletPubkey=null;
+    try{ await window.solana.disconnect(); }catch(_){}
+    walletPubkey = null;
     walletShort.innerHTML = 'Wallet: <em>not connected</em>';
-    chainBalEl.textContent = "—";
-    btnConnect.textContent = "🔌 Connect Phantom";
+    connectBtn.textContent = "🔌 Connect Phantom";
+    cbsBalEl.textContent = "—";
   }
-  btnConnect.addEventListener("click", ()=> walletPubkey?disconnectPhantom():connectPhantom());
+
+  if(window.solana && window.solana.isPhantom){
+    window.solana.connect({ onlyIfTrusted:true })
+      .then(r => {
+        if(r?.publicKey){
+          walletPubkey = r.publicKey.toBase58();
+          walletShort.innerHTML = `Wallet: <strong>${walletPubkey.slice(0,4)}…${walletPubkey.slice(-4)}</strong>`;
+          connectBtn.textContent="🔌 Disconnect";
+          fetchCbsBalance().catch(()=>{});
+        }
+      }).catch(()=>{});
+  }
 
   async function fetchCbsBalance(){
-    if(!walletPubkey || !CBS_MINT || CBS_MINT.includes("REPLACE")){ chainBalEl.textContent="(mint ontbreekt)"; return; }
+    if(!walletPubkey){ cbsBalEl.textContent = "—"; return; }
     const connection = new solanaWeb3.Connection(RPC_URL, "confirmed");
-    // Query SPL token accounts by owner with mint filter (no spl-token lib needed)
-    const res = await connection.getTokenAccountsByOwner(new solanaWeb3.PublicKey(walletPubkey), { mint: new solanaWeb3.PublicKey(CBS_MINT) }, { commitment:"confirmed" });
-    let amount = 0;
-    for(const it of res.value){
-      const info = solanaWeb3.AccountLayout ? null : null; // not used
-      const data = solanaWeb3.SPL_ACCOUNT_LAYOUT ? null : null;
-      // Easier: fetch parsed balance for each account
-    }
-    // Better: use parsed accounts in one call
     const parsed = await connection.getParsedTokenAccountsByOwner(new solanaWeb3.PublicKey(walletPubkey), { mint: new solanaWeb3.PublicKey(CBS_MINT) });
+    let amount = 0;
     for(const it of parsed.value){
       const amt = it.account.data.parsed.info.tokenAmount;
       amount += Number(amt.uiAmount || 0);
     }
-    chainBalEl.textContent = amount.toLocaleString("nl-NL");
+    cbsBalEl.textContent = amount.toLocaleString("nl-NL");
   }
 
-  // Auto-connect if already trusted
-  if(window.solana && window.solana.isPhantom){
-    window.solana.connect({ onlyIfTrusted:true })
-      .then(r => { if(r?.publicKey){ walletPubkey=r.publicKey.toBase58(); walletShort.innerHTML = `Wallet: <strong>${walletPubkey.slice(0,4)}…${walletPubkey.slice(-4)}</strong>`; btnConnect.textContent="🔌 Disconnect"; fetchCbsBalance().catch(()=>{});} })
-      .catch(()=>{});
+  // ====== Entry fee (DEMO) ======
+  payPlayBtn.addEventListener("click", async () => {
+    // DEMO: hier simuleren we de betaling. Later vervangen we dit met echte SPL-transfer.
+    // --- LIVE (later):
+    // 1) Maak via backend een transactie die 100 CBS (SPL) van speler -> treasury verstuurt
+    // 2) Laat speler signeren via Phantom
+    // 3) Verifieer confirmatie, start game
+    if(!walletPubkey){
+      alert("Verbind eerst je Phantom wallet om te spelen.");
+      return;
+    }
+    setStatus("Bezig met (demo) betaling...");
+    // Demo delay
+    await sleep(600);
+    setStatus("Entry fee (demo) geaccepteerd — veel succes!");
+    startGame();
+  });
+
+  function setStatus(text){ statusEl.innerHTML = `Status: <strong>${text}</strong>`; }
+
+  function sleep(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+  // ====== Snake game ======
+  const canvas = document.getElementById("gameCanvas");
+  const ctx = canvas.getContext("2d");
+  const box = 20;
+  let snake, direction, food, score, loop;
+
+  function initGame(){
+    snake = [{ x: 10*box, y: 10*box }];
+    direction = null;
+    food = randFood();
+    score = 0;
   }
+
+  function startGame(){
+    initGame();
+    if(loop) clearInterval(loop);
+    loop = setInterval(tick, 110);
+    payPlayBtn.disabled = true;
+    restartBtn.disabled = false;
+    setStatus("Game running");
+  }
+
+  restartBtn.addEventListener("click", ()=> {
+    if(loop) clearInterval(loop);
+    initGame();
+    loop = setInterval(tick, 110);
+    setStatus("Opnieuw gestart");
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if(e.key==="ArrowLeft" && direction!=="RIGHT") direction="LEFT";
+    else if(e.key==="ArrowUp" && direction!=="DOWN") direction="UP";
+    else if(e.key==="ArrowRight" && direction!=="LEFT") direction="RIGHT";
+    else if(e.key==="ArrowDown" && direction!=="UP") direction="DOWN";
+  });
+
+  function randFood(){
+    return {
+      x: Math.floor(Math.random() * (canvas.width/box)) * box,
+      y: Math.floor(Math.random() * (canvas.height/box)) * box
+    };
+  }
+
+  function tick(){
+    // achtergrond
+    ctx.fillStyle = "#000";
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    // slang
+    for(let i=0;i<snake.length;i++){
+      ctx.fillStyle = i===0 ? "#00ffcc" : "#00b3aa";
+      ctx.fillRect(snake[i].x, snake[i].y, box, box);
+    }
+
+    // food
+    ctx.fillStyle = "#ff4080";
+    ctx.fillRect(food.x, food.y, box, box);
+
+    // beweging
+    let headX = snake[0].x;
+    let headY = snake[0].y;
+    if(direction==="LEFT") headX -= box;
+    if(direction==="UP") headY -= box;
+    if(direction==="RIGHT") headX += box;
+    if(direction==="DOWN") headY += box;
+
+    // eten
+    if(headX===food.x && headY===food.y){
+      score++;
+      food = randFood();
+    } else {
+      snake.pop();
+    }
+
+    const newHead = { x: headX, y: headY };
+
+    // botsingen (muur of eigen lijf)
+    if(headX<0 || headY<0 || headX>=canvas.width || headY>=canvas.height || collide(newHead, snake)){
+      gameOver();
+      return;
+    }
+
+    snake.unshift(newHead);
+
+    // score
+    ctx.fillStyle = "#c8fff2";
+    ctx.font = "16px Orbitron";
+    ctx.fillText("Score: "+score, 10, canvas.height - 10);
+  }
+
+  function collide(h, arr){
+    for(let i=0;i<arr.length;i++){ if(h.x===arr[i].x && h.y===arr[i].y) return true; }
+    return false;
+  }
+
+  function gameOver(){
+    clearInterval(loop);
+    setStatus("Game over");
+    saveScore(score);
+    payPlayBtn.disabled = false;
+    restartBtn.disabled = true;
+  }
+
+  function saveScore(score){
+    const name = walletPubkey ? (walletPubkey.slice(0,4)+"…"+walletPubkey.slice(-4)) : prompt("Naam/wallet (demo) voor leaderboard?");
+    if(!name) return;
+    leaderboard.push({ wallet: name, score });
+    saveLeaderboard();
+  }
+
 })();
 </script>
 </body>
