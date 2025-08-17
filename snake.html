@@ -59,7 +59,7 @@
       max-width: 400px;
       height: auto;
       background: #000;
-      touch-action: none; /* voorkom scrollen */
+      touch-action: none;
     }
     button {
       background: var(--fg);
@@ -130,6 +130,9 @@
     let food;
     let score;
     let leaderboard = [];
+    let game;
+    const logo = new Image();
+    logo.src = "logo.png"; // CBS logo voor slang en eten
 
     function initGame() {
       snake = [{x: 9*box, y:10*box}];
@@ -149,18 +152,17 @@
       else if(event.keyCode == 40 && direction != "UP") direction = "DOWN";
     }
 
-    // 🎮 Swipe controls for mobile
-    let touchStartX = 0;
-    let touchStartY = 0;
+    // 📱 Tap controls
     canvas.addEventListener("touchstart", e => {
       e.preventDefault();
-      touchStartX = e.changedTouches[0].screenX;
-      touchStartY = e.changedTouches[0].screenY;
-    }, {passive:false});
-    canvas.addEventListener("touchend", e => {
-      e.preventDefault();
-      let dx = e.changedTouches[0].screenX - touchStartX;
-      let dy = e.changedTouches[0].screenY - touchStartY;
+      let touchX = e.changedTouches[0].clientX;
+      let touchY = e.changedTouches[0].clientY;
+      let rect = canvas.getBoundingClientRect();
+      let cx = rect.left + rect.width/2;
+      let cy = rect.top + rect.height/2;
+
+      let dx = touchX - cx;
+      let dy = touchY - cy;
 
       if(Math.abs(dx) > Math.abs(dy)) {
         if(dx > 0 && direction != "LEFT") direction = "RIGHT";
@@ -175,25 +177,13 @@
       ctx.fillStyle = "#000";
       ctx.fillRect(0,0,canvas.width,canvas.height);
 
-      // 🐍 Snake with round glow style
+      // 🐍 Draw snake as CBS logos
       for(let i=0; i<snake.length; i++) {
-        ctx.fillStyle = (i==0)? "#00ffcc" : "#00ffff";
-        ctx.shadowColor = "#00ffff";
-        ctx.shadowBlur = 10;
-        ctx.beginPath();
-        ctx.arc(snake[i].x + box/2, snake[i].y + box/2, box/2 - 2, 0, Math.PI*2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
+        ctx.drawImage(logo, snake[i].x, snake[i].y, box, box);
       }
 
-      // 🍎 Food
-      ctx.fillStyle = "#ff0044";
-      ctx.shadowColor = "#ff0044";
-      ctx.shadowBlur = 10;
-      ctx.beginPath();
-      ctx.arc(food.x + box/2, food.y + box/2, box/2 - 2, 0, Math.PI*2);
-      ctx.fill();
-      ctx.shadowBlur = 0;
+      // 🍎 Draw food also as CBS logo
+      ctx.drawImage(logo, food.x, food.y, box, box);
 
       let snakeX = snake[0].x;
       let snakeY = snake[0].y;
@@ -237,7 +227,6 @@
       return false;
     }
 
-    let game;
     function startGame() {
       initGame();
       clearInterval(game);
@@ -278,3 +267,4 @@
   </script>
 </body>
 </html>
+
