@@ -3,58 +3,29 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
-  <title>CBS Snake Game</title>
+  <title>CBS Snake </title>
   <link rel="icon" href="logo.png" type="image/png">
   <style>
-    :root{
-      --bg1:#0b0b0b; --bg2:#141414; --fg:#eafffb; --accent:#00ffff;
-      --panel:#0e0f12; --border:#00ffcc; --muted:#9aa; --glow:0 0 22px rgba(0,255,204,.35);
-    }
+    :root{--bg1:#0b0b0b;--bg2:#141414;--fg:#eafffb;--accent:#00ffff;--panel:#0e0f12;--border:#00ffcc;--muted:#9aa;--glow:0 0 22px rgba(0,255,204,.35)}
     *{box-sizing:border-box}
-    body{
-      margin:0;font-family:'Orbitron',system-ui,Segoe UI,Roboto,Arial,sans-serif;
-      background:
-        radial-gradient(1200px 600px at 10% 0%, #07222620 0%, transparent 50%),
-        radial-gradient(1200px 600px at 90% 100%, #004c4c20 0%, transparent 50%),
-        linear-gradient(135deg,var(--bg1),var(--bg2));
-      color:var(--fg);display:flex;flex-direction:column;align-items:center;
-      padding:clamp(.75rem,2vw,1.25rem);min-height:100vh
-    }
+    body{margin:0;font-family:'Orbitron',system-ui,Segoe UI,Roboto,Arial,sans-serif;background:
+      radial-gradient(1200px 600px at 10% 0%, #07222620 0%, transparent 50%),
+      radial-gradient(1200px 600px at 90% 100%, #004c4c20 0%, transparent 50%),
+      linear-gradient(135deg,var(--bg1),var(--bg2));color:var(--fg);display:flex;flex-direction:column;align-items:center;padding:clamp(.75rem,2vw,1.25rem);min-height:100vh}
     header{display:flex;align-items:center;gap:.8rem;margin:.4rem 0 1rem;flex-wrap:wrap;justify-content:center;text-align:center}
     header img{height:48px;filter:drop-shadow(0 0 8px rgba(0,255,255,.25))}
     h1{font-size:clamp(1.4rem,4.5vw,2rem);color:var(--accent);letter-spacing:.5px;text-shadow:0 0 10px rgba(0,255,255,.25)}
-    .panel{
-      background:linear-gradient(180deg,#0e1114,#0b0c0f);
-      border:1.5px solid var(--border);border-radius:16px;padding:1rem;margin:.6rem;
-      box-shadow:var(--glow);width:100%;max-width:780px
-    }
-    .btn{
-      background:linear-gradient(180deg,#00ffe0,#00c8ff);
-      color:#001014;border:none;padding:.7rem 1.2rem;border-radius:.9rem;cursor:pointer;font-weight:800;
-      font-size:1rem;box-shadow:0 6px 22px rgba(0,255,224,.25), inset 0 0 0 2px rgba(0,0,0,.1)
-    }
+    .panel{background:linear-gradient(180deg,#0e1114,#0b0c0f);border:1.5px solid var(--border);border-radius:16px;padding:1rem;margin:.6rem;box-shadow:var(--glow);width:100%;max-width:780px}
+    .btn{background:linear-gradient(180deg,#00ffe0,#00c8ff);color:#001014;border:none;padding:.7rem 1.2rem;border-radius:.9rem;cursor:pointer;font-weight:800;font-size:1rem;box-shadow:0 6px 22px rgba(0,255,224,.25), inset 0 0 0 2px rgba(0,0,0,.1)}
     .btn.secondary{background:linear-gradient(180deg,#1aefee,#00d5ff)}
     .btn.small{padding:.45rem .8rem;border-radius:.7rem;font-weight:700}
-    .btn:hover{filter:brightness(1.05)}
-    .btn[disabled]{opacity:.6;cursor:not-allowed}
-    .pill{
-      display:inline-flex;align-items:center;gap:.5rem;background:#0b0f12;border:1px solid #1c2e2e;border-radius:999px;
-      padding:.45rem .7rem;font-size:.9rem; box-shadow: inset 0 0 10px rgba(0,255,224,.1)
-    }
+    .btn:hover{filter:brightness(1.05)} .btn[disabled]{opacity:.6;cursor:not-allowed}
+    .pill{display:inline-flex;align-items:center;gap:.5rem;background:#0b0f12;border:1px solid #1c2e2e;border-radius:999px;padding:.45rem .7rem;font-size:.9rem; box-shadow: inset 0 0 10px rgba(0,255,224,.1)}
     .row{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;align-items:center;margin:.2rem 0 .6rem}
-    .rpc-panel{display:none;margin-top:.5rem;padding:.7rem;border-radius:12px;border:1px dashed #1c2e2e;background:#0b0e11}
-    .rpc-panel input{width:min(520px,95%);padding:.6rem .8rem;border-radius:.6rem;border:1.5px solid var(--border);background:#000;color:#fff}
-    canvas{
-      display:block;margin:.6rem auto;border:2px solid var(--accent);border-radius:12px;
-      width:100%;max-width:480px;height:auto;background:#000;touch-action:none;
-      box-shadow: 0 0 18px rgba(0,255,255,.25)
-    }
+    canvas{display:block;margin:.6rem auto;border:2px solid var(--accent);border-radius:12px;width:100%;max-width:480px;height:auto;background:#000;touch-action:none;box-shadow: 0 0 18px rgba(0,255,255,.25)}
     .dpad{display:none;position:sticky;bottom:env(safe-area-inset-bottom,10px);margin:.3rem auto 0;max-width:480px;padding:.4rem 0}
     .dgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;justify-items:center;align-items:center}
-    .dirbtn{
-      width:80px;height:80px;border-radius:16px;border:1px solid #1c2e2e;background:#0a0e11;color:#dff;
-      font-size:1.3rem;font-weight:700;cursor:pointer;box-shadow: inset 0 0 18px rgba(0,255,224,.12), 0 0 14px rgba(0,255,224,.12)
-    }
+    .dirbtn{width:80px;height:80px;border-radius:16px;border:1px solid #1c2e2e;background:#0a0e11;color:#dff;font-size:1.3rem;font-weight:700;cursor:pointer;box-shadow: inset 0 0 18px rgba(0,255,224,.12), 0 0 14px rgba(0,255,224,.12)}
     .dirbtn:active{transform:scale(.97);filter:brightness(1.15)} .dirbtn.empty{visibility:hidden}
     table{width:100%;border-collapse:collapse;font-size:clamp(.9rem,2.2vw,1rem)} th,td{padding:.55rem;border-bottom:1px solid #1c2e2e;text-align:center}
     .muted{color:var(--muted)}
@@ -67,26 +38,14 @@
 <body>
   <header>
     <img src="logo.png" alt="CBS Logo">
-    <h1>CBS Snake Game</h1>
+    <h1>CBS Snake </h1>
   </header>
 
   <div class="panel">
-    <!-- STATUS / WALLET / RPC -->
+    <!-- WALLET -->
     <div class="row">
       <button id="connectBtn" class="btn secondary">🔗 Connect Phantom</button>
       <span id="walletPill" class="pill" hidden>Wallet: <b id="walletShort">—</b> <button id="copyPk" class="btn small">copy</button></span>
-      <span id="rpcPill" class="pill">RPC: default</span>
-      <button id="rpcToggle" class="btn small">⚙️ RPC settings</button>
-    </div>
-    <div id="rpcPanel" class="rpc-panel">
-      <div class="muted" style="margin-bottom:.35rem">
-        Tip: gebruik Helius/QuickNode. We bewaren de URL alleen in je browser.
-      </div>
-      <input id="rpcInput" placeholder="https://rpc.helius.xyz/?api-key=YOUR_KEY" />
-      <div class="row" style="margin-top:.5rem">
-        <button id="saveRpc" class="btn small">💾 Save RPC</button>
-        <button id="clearRpc" class="btn small">♻️ Use default</button>
-      </div>
     </div>
 
     <!-- PAY & PLAY -->
@@ -100,7 +59,7 @@
     <!-- GAME -->
     <canvas id="gameCanvas" width="400" height="400" aria-label="Snake game board"></canvas>
 
-    <!-- D-PAD (auto op touch) -->
+    <!-- D-PAD -->
     <div id="dpad" class="dpad" aria-label="On-screen controls">
       <div class="dgrid">
         <button class="dirbtn empty" tabindex="-1" aria-hidden="true">•</button>
@@ -144,79 +103,31 @@
     // ====== CONFIG ======
     const CBS_MINT = new solanaWeb3.PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
     const TREASURY_WALLET = new solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
-    const ENTRY_CBS = 10n;                  // <-- 10 CBS per spel
-    const DECIMALS_OVERRIDE = null;         // laat null voor automatisch
+    const ENTRY_CBS = 10n;
+    const DECIMALS_OVERRIDE = null;
 
-    // RPC: default / localStorage / ?rpc + optioneel ?api-key
-    const RPC_URL_DEFAULT = "https://api.mainnet-beta.solana.com";
-    const qs = new URLSearchParams(location.search);
-    const fromQS = qs.get("rpc");
-    const savedRpc = localStorage.getItem("cbs_rpc");
-    let RPC_URL = fromQS || savedRpc || RPC_URL_DEFAULT;
-    const qpKey = qs.get("api-key");
-    if (fromQS && qpKey && !RPC_URL.includes("api-key")) {
-      RPC_URL = `${fromQS}${fromQS.includes("?") ? "&" : "?"}api-key=${qpKey}`;
-    }
+    // 🔐 Hardcoded RPC (toon niet in UI)
+    const RPC_URL = "https://rpc.helius.xyz/?api-key=453a64a5-31dd-4c21-9619-6f0c69c74ff9";
 
-    // ===== Wallet / RPC UI =====
-    const connectBtn = document.getElementById("connectBtn");
-    const walletPill = document.getElementById("walletPill");
-    const walletShort = document.getElementById("walletShort");
-    const copyPkBtn = document.getElementById("copyPk");
-    const rpcPill = document.getElementById("rpcPill");
-    const rpcPanel = document.getElementById("rpcPanel");
-    const rpcToggle = document.getElementById("rpcToggle");
-    const rpcInput = document.getElementById("rpcInput");
-    const saveRpcBtn = document.getElementById("saveRpc");
-    const clearRpcBtn = document.getElementById("clearRpc");
-
-    function abbr(pk){ const s=pk.toString(); return s.slice(0,4)+"…"+s.slice(-4); }
-    function setRpcLabel(url){
-      try { rpcPill.textContent = "RPC: " + new URL(url).hostname; }
-      catch { rpcPill.textContent = "RPC: custom"; }
-    }
-
-    rpcInput.value = RPC_URL;
-    setRpcLabel(RPC_URL);
-
-    rpcToggle.addEventListener("click", ()=> rpcPanel.style.display = rpcPanel.style.display==="block"?"none":"block");
-    saveRpcBtn.addEventListener("click", ()=>{
-      const val = (rpcInput.value||"").trim();
-      if(!val) return;
-      try{ new URL(val); }catch{ alert("Invalid URL"); return; }
-      localStorage.setItem("cbs_rpc", val);
-      RPC_URL = val;
-      initConnection(); setRpcLabel(RPC_URL);
-      alert("RPC saved for this browser.");
-    });
-    clearRpcBtn.addEventListener("click", ()=>{
-      localStorage.removeItem("cbs_rpc");
-      RPC_URL = RPC_URL_DEFAULT;
-      rpcInput.value = RPC_URL;
-      initConnection(); setRpcLabel(RPC_URL);
-      alert("Using default RPC.");
-    });
 
     // ===== Web3 setup =====
     const web3 = solanaWeb3;
     const TOKEN_PROGRAM_ID = new web3.PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
     const ASSOCIATED_TOKEN_PROGRAM_ID = new web3.PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
-    let connection = null;
-    function initConnection(){ connection = new web3.Connection(RPC_URL, "confirmed"); }
-    initConnection();
+    const connection = new web3.Connection(RPC_URL, "confirmed");
 
+    // ===== Wallet UI =====
+    const connectBtn = document.getElementById("connectBtn");
+    const walletPill = document.getElementById("walletPill");
+    const walletShort = document.getElementById("walletShort");
+    const copyPkBtn = document.getElementById("copyPk");
+
+    function abbr(pk){ const s=pk.toString(); return s.slice(0,4)+"…"+s.slice(-4); }
     function updateWalletUI(){
       const pk = window.solana?.publicKey;
-      if(pk){
-        walletPill.hidden = false;
-        walletShort.textContent = abbr(pk);
-        connectBtn.textContent = "🔌 Disconnect";
-      }else{
-        walletPill.hidden = true;
-        connectBtn.textContent = "🔗 Connect Phantom";
-      }
+      if(pk){ walletPill.hidden=false; walletShort.textContent=abbr(pk); connectBtn.textContent="🔌 Disconnect"; }
+      else { walletPill.hidden=true; connectBtn.textContent="🔗 Connect Phantom"; }
     }
-
     connectBtn.addEventListener("click", async ()=>{
       try{
         if(!(window.solana && window.solana.isPhantom)){ alert("Phantom Wallet not found."); return; }
@@ -286,7 +197,7 @@
     async function payEntry(){
       const owner = await ensureWallet();
 
-      // Kleine SOL-check (fee)
+      // Fee check (SOL)
       try{
         const lamports = await connection.getBalance(owner);
         if(lamports < 300000){ alert("You need a little SOL for fees (~0.001 SOL)."); return {ok:false}; }
@@ -297,22 +208,19 @@
       const feeRaw = ENTRY_CBS * (10n ** BigInt(decimals));
       if(balanceRaw < feeRaw){ alert("Not enough CBS to play. Need 10 CBS."); return {ok:false}; }
 
-      // Treasury ATA moet bestaan (anders zou speler de ATA aanmaken & betalen)
+      // Treasury ATA moet bestaan (anders betaalt speler de aanmaak)
       const treasuryAta = getAtaAddress(CBS_MINT, TREASURY_WALLET);
       const destInfo = await connection.getAccountInfo(treasuryAta);
       if(!destInfo){ alert("Treasury CBS account not initialized yet. Send a tiny amount of CBS to the treasury once."); return {ok:false}; }
 
       const ownerAta = getAtaAddress(CBS_MINT, owner);
 
-      let blockhashInfo;
-      try { blockhashInfo = await connection.getLatestBlockhash("finalized"); }
-      catch(e){ alert("RPC blocked. Set your own RPC in settings."); throw e; }
-
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("finalized");
       const tx = new web3.Transaction().add(
         transferCheckedIx(ownerAta, CBS_MINT, treasuryAta, owner, feeRaw, decimals)
       );
       tx.feePayer = owner;
-      tx.recentBlockhash = blockhashInfo.blockhash;
+      tx.recentBlockhash = blockhash;
 
       let sig;
       try{
@@ -328,12 +236,12 @@
       }
 
       try{
-        await connection.confirmTransaction({ signature:sig, blockhash:blockhashInfo.blockhash, lastValidBlockHeight:blockhashInfo.lastValidBlockHeight }, "confirmed");
+        await connection.confirmTransaction({ signature:sig, blockhash, lastValidBlockHeight }, "confirmed");
       }catch(e){ console.warn("Confirm failed (RPC?) — continuing:", e); }
       return {ok:true, sig};
     }
 
-    // ====== Game (wrap walls, fixed speed) ======
+    // ====== Game ======
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
     const box = 20;
@@ -425,7 +333,6 @@
 
     function renderFrame(){
       ctx.fillStyle="#000"; ctx.fillRect(0,0,canvas.width,canvas.height);
-      // Watermark
       if(wmLogo.complete){
         const s = Math.min(canvas.width, canvas.height) * 0.75;
         const x = (canvas.width - s)/2, y = (canvas.height - s)/2;
@@ -446,8 +353,8 @@
 
     let pendingScore = null, saving = false, savingTimeout = null;
 
-    function onGameOver(sc){ pendingScore = Number.isFinite(sc) ? sc : 0; overlay.style.display = "flex"; nameInput.value=""; err.style.display="none"; setTimeout(()=>nameInput.focus(),30); }
-    function cancelName(){ overlay.style.display = "none"; pendingScore = null; }
+    function onGameOver(sc){ pendingScore = Number.isFinite(sc) ? sc : 0; overlay.style.display="flex"; nameInput.value=""; err.style.display="none"; setTimeout(()=>nameInput.focus(),30); }
+    function cancelName(){ overlay.style.display="none"; pendingScore = null; }
 
     saveBtn.addEventListener("click", submitName);
     cancelBtn.addEventListener("click", cancelName);
@@ -507,14 +414,13 @@
       arr.sort((a,b)=> b.score - a.score || new Date(a.created_at)-new Date(b.created_at));
       localStorage.setItem("cbs_snake_scores", JSON.stringify(arr.slice(0,50)));
     }
-    function escapeHtml(s){ return s.replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;","&gt;":"&gt;",'"':"&quot;","'":"&#39;" }[m])); }
+    function escapeHtml(s){ return s.replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m])); }
 
-    // Pay & Play flow
+    // Pay & Play
     const payPlayBtn = document.getElementById("payPlayBtn");
     payPlayBtn.addEventListener("click", async ()=>{
       payPlayBtn.disabled = true; payPlayBtn.textContent = "Processing…";
       try{
-        if(window.solana?.isConnected){ payPlayBtn.textContent = "Processing… (wallet connected)"; }
         const res = await payEntry();
         if(!res?.ok){
           payPlayBtn.disabled = false; payPlayBtn.textContent = "💳 Pay 10 CBS & Play"; return;
@@ -524,7 +430,7 @@
         payPlayBtn.disabled = false;
       }catch(e){
         console.error(e);
-        alert("Payment failed or RPC blocked. Set your own RPC in settings.");
+        alert("Payment failed or RPC issue.");
         payPlayBtn.disabled = false; payPlayBtn.textContent = "💳 Pay 10 CBS & Play";
       }
     });
@@ -534,4 +440,3 @@
   </script>
 </body>
 </html>
-
