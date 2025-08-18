@@ -7,27 +7,59 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet" />
   <style>
     :root{--bg1:#0f0f0f;--bg2:#1a1a1a;--fg:#00ffcc;--accent:#00ffff;--panel:#111;--border:#0ff}
-    *{box-sizing:border-box} body{margin:0;font-family:'Orbitron',sans-serif;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:var(--fg);display:flex;flex-direction:column;align-items:center;padding:16px}
+    *{box-sizing:border-box}
+    body{
+      margin:0;font-family:'Orbitron',sans-serif;
+      background:linear-gradient(135deg,var(--bg1),var(--bg2));
+      color:var(--fg);display:flex;flex-direction:column;align-items:center;padding:16px
+    }
     header{display:flex;align-items:center;gap:.75rem;margin:10px auto 14px auto}
-    header img{height:48px} h1{margin:0;font-size:clamp(1.6rem,3.3vw,2.3rem);color:var(--accent);text-shadow:0 0 6px #0ff5}
+    header img{height:48px}
+    h1{margin:0;font-size:clamp(1.6rem,3.3vw,2.3rem);color:var(--accent);text-shadow:0 0 6px #0ff5}
     .panel{background:var(--panel);border:2px solid var(--border);border-radius:16px;padding:16px;margin:10px auto;max-width:680px;width:100%;box-shadow:0 0 22px #0ff3}
     .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
     .btn{background:var(--fg);color:#012;cursor:pointer;border:none;border-radius:12px;padding:.85rem 1.35rem;font-weight:800}
-    .btn:hover{background:var(--accent)} .btn[disabled]{opacity:.6;cursor:not-allowed}
+    .btn:hover{background:var(--accent)}
+    .btn[disabled]{opacity:.6;cursor:not-allowed}
     #payBtn{box-shadow:0 0 10px var(--fg),0 0 35px var(--fg),0 0 60px var(--fg)}
-    #gameWrap{position:relative;max-width:440px;margin:10px auto}
-    canvas{display:block;margin:0 auto;border:2px solid var(--accent);width:100%;max-width:440px;height:auto;background:#000;touch-action:none;border-radius:12px}
+
+    #gameWrap{max-width:440px;margin:10px auto}
+    canvas{
+      display:block;margin:0 auto;border:2px solid var(--accent);
+      width:100%;max-width:440px;height:auto;background:#000;touch-action:none;border-radius:12px
+    }
+
     .muted{color:#9aa} table{width:100%;border-collapse:collapse}
-    th,td{padding:.55rem;border-bottom:1px solid #0ff3;text-align:center} h2{margin:.2rem 0 .6rem}
+    th,td{padding:.55rem;border-bottom:1px solid #0ff3;text-align:center}
+    h2{margin:.2rem 0 .6rem}
+
     /* Name overlay */
     #nameOverlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50}
     #nameCard{background:#111;border:2px solid var(--border);border-radius:12px;padding:16px 18px;box-shadow:0 0 18px #0ff6;width:min(92vw,420px)}
     #nameInput{width:100%;padding:.75rem 1rem;border:2px solid var(--border);border-radius:.6rem;background:#000;color:#fff;font-family:inherit;font-size:1rem}
     #error{color:#ff6b7a;font-size:.85rem;margin-top:.35rem;display:none}
-    /* Mobile D-pad (transparent) */
-    #dpad{position:absolute;inset:auto 0 10px 0;display:none;justify-content:center;pointer-events:none}
-    #dpad .pad{display:grid;grid-template-columns:64px 64px 64px;grid-template-rows:64px 64px 64px;gap:12px;opacity:.45;filter:drop-shadow(0 0 6px #0ff6)}
-    #dpad button{pointer-events:auto;background:rgba(0,255,255,.10);border:1px solid #0ff7;color:#cff;border-radius:15px;backdrop-filter:blur(2px);font-weight:800}
+
+    /* Mobile D-pad (transparant, onder het canvas) */
+    #dpad{
+      position:static;              /* geen overlay */
+      display:none;                 /* alleen mobiel */
+      justify-content:center;
+      margin-top:12px;
+    }
+    #dpad .pad{
+      display:grid;
+      grid-template-columns:64px 64px 64px;
+      grid-template-rows:64px 64px 64px;
+      gap:12px;
+      opacity:.45;
+      filter:drop-shadow(0 0 6px #0ff6)
+    }
+    #dpad button{
+      pointer-events:auto;
+      background:rgba(0,255,255,.10);
+      border:1px solid #0ff7;color:#cff;border-radius:15px;
+      backdrop-filter:blur(2px);font-weight:800
+    }
     #dpad button:active{background:rgba(0,255,255,.22)}
     @media (max-width:680px){ #dpad{display:flex} }
   </style>
@@ -41,7 +73,8 @@
   <div class="panel">
     <div class="row" style="justify-content:center;margin-bottom:.3rem">
       <button id="connectBtn" class="btn">🔗 Connect Wallet</button>
-      <button id="payBtn" class="btn">💳 Pay 10 CBS & Play</button>
+      <button id="payBtn" class="btn" disabled>💳 Pay 10 CBS</button>
+      <button id="startBtn" class="btn" disabled>▶️ Start</button>
     </div>
     <p class="muted" style="text-align:center;margin:.2rem 0 0 0">
       Entry fee: <b>10 CBS</b> • Monthly prize for best score
@@ -51,17 +84,14 @@
   <div class="panel" id="gamePanel">
     <div id="gameWrap">
       <canvas id="gameCanvas" width="420" height="420"></canvas>
-      <!-- Transparent mobile D-pad -->
-      <div id="dpad">
+      <!-- Transparent mobile D-pad (onder het canvas) -->
+      <div id="dpad" aria-label="On-screen controls">
         <div class="pad">
           <div></div>     <button data-dir="UP">▲</button>     <div></div>
           <button data-dir="LEFT">◄</button> <div></div> <button data-dir="RIGHT">►</button>
           <div></div>     <button data-dir="DOWN">▼</button>   <div></div>
         </div>
       </div>
-    </div>
-    <div class="row" style="justify-content:center">
-      <button id="startBtn" class="btn">▶️ Start</button>
     </div>
   </div>
 
@@ -92,18 +122,17 @@
   <!-- Supabase client -->
   <script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 
-  <!-- Game + Wallet (ESM so no eval, CSP-friendly) -->
+  <!-- Game + Wallet -->
   <script type="module">
-    /***********************
-     *  CONFIG
-     ***********************/
+    /******** CONFIG ********/
     const SUPABASE_URL = "https://aiawteejixsgsunmefpi.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpYXd0ZWVqaXhzZ3N1bm1lZnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NDExODIsImV4cCI6MjA3MTAxNzE4Mn0.aMbRUM0YebNMfZhSLb9PFdSHAZ-D5WpACPefCfjSLqI";
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const TABLE = "leaderboard";
-    const EDGE_FN_URL = "https://aiawteejixsgsunmefpi.supabase.co/functions/v1/quick-service"; // jouw Edge Function
+    // JOUW Edge Function (naam: quick-service)
+    const EDGE_FN_URL = "https://aiawteejixsgsunmefpi.supabase.co/functions/v1/quick-service";
 
-    // Solana / CBS
+    // Solana
     import { Connection, PublicKey, Transaction } from "https://esm.sh/@solana/web3.js@1.95.8";
     import {
       getAssociatedTokenAddress,
@@ -115,30 +144,34 @@
     const connection = new Connection(RPC_URL, "confirmed");
     const CBS_MINT = new PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
     const TREASURY = new PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
-    const CBS_DECIMALS = 9n;
-    const ENTRY_CBS = 10n; // 10 CBS
+    const CBS_DECIMALS = 9;           // number
+    const ENTRY_CBS = 10;             // number of CBS
     let walletPK = null;
-    let lastPaymentSig = null;
+    // Payment/run state
+    let paidSig  = null; // vers betaalbewijs, nog niet gebruikt
+    let roundSig = null; // geconsumeerd voor huidige run
 
-    /***********************
-     *  UI ELEMENTS
-     ***********************/
+    /******** UI ********/
     const $ = (id)=>document.getElementById(id);
     const connectBtn = $("connectBtn"), payBtn = $("payBtn"), startBtn = $("startBtn");
     const overlay = $("nameOverlay"), nameInput = $("nameInput"), err = $("error"), saveBtn = $("saveBtn"), cancelBtn = $("cancelBtn");
     const tbody = $("leaderboardBody"), lbNote = $("lbNote");
 
-    /***********************
-     *  GAME (neon blue snake, wrap walls, gold coin, watermark)
-     ***********************/
+    // Init button states
+    payBtn.disabled = true;   // pas na connect
+    startBtn.disabled = true; // pas na betaling
+
+    /******** GAME ********/
     const canvas = $("gameCanvas"), ctx = canvas.getContext("2d");
     const box = 20;
-    let snake, direction, food, score, game;
+    let snake, direction, food, score, loopId;
     const watermark = new Image();
     watermark.src = "https://cyan-persistent-stork-902.mypinata.cloud/ipfs/bafybeia7qejzloll6teyt4o4orvd7bnvkg4thrfajv4rgb3fmm2odeweoa/logo.png";
 
     function randCell(){ return {x: Math.floor(Math.random()* (canvas.width/box)) * box, y: Math.floor(Math.random()* (canvas.height/box)) * box }; }
     function initGame(){ snake=[{x:10*box,y:10*box}]; direction=null; food=randCell(); score=0; drawFrame(); }
+    function start(){ clearInterval(loopId); initGame(); loopId=setInterval(tick,100); }
+    function stop(){ clearInterval(loopId); }
 
     function drawRoundedRect(x,y,w,h,r){ const rr=Math.min(r,w/2,h/2); ctx.beginPath(); ctx.moveTo(x+rr,y); ctx.arcTo(x+w,y,x+w,y+h,rr); ctx.arcTo(x+w,y+h,x,y+h,rr); ctx.arcTo(x,y+h,x,y,rr); ctx.arcTo(x,y,x+w,y,rr); ctx.closePath(); }
     function neonSegment(x,y,s,head=false){ ctx.save(); const g=ctx.createLinearGradient(x,y,x+s,y+s); g.addColorStop(0,"#35d0ff"); g.addColorStop(1,"#00e5ff"); ctx.shadowColor="#00d5ff"; ctx.shadowBlur=18; drawRoundedRect(x+2,y+2,s-4,s-4,6); ctx.fillStyle=g; ctx.fill(); ctx.shadowBlur=0; ctx.strokeStyle="rgba(255,255,255,.25)"; ctx.lineWidth=2; ctx.stroke(); if(head){ctx.beginPath(); ctx.arc(x+s*0.7, y+s*0.35, 2, 0, Math.PI*2); ctx.fillStyle="#fff"; ctx.fill();} ctx.restore(); }
@@ -146,12 +179,12 @@
 
     function drawFrame(){
       ctx.fillStyle="#000"; ctx.fillRect(0,0,canvas.width,canvas.height);
-      // watermark faint
+      // Watermark
       if (watermark.complete){
         const w=canvas.width*0.75, h=w; ctx.save(); ctx.globalAlpha=0.08; ctx.drawImage(watermark,(canvas.width-w)/2,(canvas.height-h)/2,w,h); ctx.restore();
       }
       drawCoin(food.x, food.y, box);
-      for(let i=snake.length-1;i>=0;i--){ const seg=snake[i]; neonSegment(seg.x,seg.y,box,i===0); }
+      for(let i=snake.length-1;i>=0;i--){ neonSegment(snake[i].x,snake[i].y,box,i===0); }
       ctx.fillStyle="#fff"; ctx.font="18px Orbitron"; ctx.fillText("Score: "+score, box, 22);
     }
 
@@ -163,19 +196,17 @@
       if(direction==="DOWN") y+=box;
 
       // wrap walls
-      const maxX = canvas.width, maxY = canvas.height;
-      if (x<0) x = maxX - box; if (x>=maxX) x = 0;
-      if (y<0) y = maxY - box; if (y>=maxY) y = 0;
+      const W=canvas.width, H=canvas.height;
+      if(x<0) x=W-box; else if(x>=W) x=0;
+      if(y<0) y=H-box; else if(y>=H) y=0;
 
       if(x===food.x && y===food.y){ score++; food=randCell(); }
       else snake.pop();
 
-      if(snake.some(s=>s.x===x && s.y===y)){ gameOver(); return; }
+      if(snake.some(s=>s.x===x&&s.y===y)){ stop(); drawFrame(); openNameModal(score); return; }
       snake.unshift({x,y});
       drawFrame();
     }
-    function start(){ clearInterval(game); initGame(); game=setInterval(tick,100); }
-    function gameOver(){ clearInterval(game); drawFrame(); openNameModal(score); }
 
     document.addEventListener("keydown", e=>{
       if(e.key==="ArrowLeft" && direction!=="RIGHT") direction="LEFT";
@@ -184,15 +215,19 @@
       else if(e.key==="ArrowDown" && direction!=="UP") direction="DOWN";
     });
 
-    // Mobile D-pad
+    // Mobile D-pad (click/touch)
     document.querySelectorAll('#dpad button').forEach(b=>{
-      b.addEventListener('touchstart',e=>{ e.preventDefault(); const d=b.getAttribute('data-dir'); if(d==="LEFT"&&direction!=="RIGHT")direction="LEFT"; if(d==="RIGHT"&&direction!=="LEFT")direction="RIGHT"; if(d==="UP"&&direction!=="DOWN")direction="UP"; if(d==="DOWN"&&direction!=="UP")direction="DOWN"; },{passive:false});
-      b.addEventListener('click',()=>{ const d=b.getAttribute('data-dir'); if(d==="LEFT"&&direction!=="RIGHT")direction="LEFT"; if(d==="RIGHT"&&direction!=="LEFT")direction="RIGHT"; if(d==="UP"&&direction!=="DOWN")direction="UP"; if(d==="DOWN"&&direction!=="UP")direction="DOWN"; });
+      const set=(d)=>{
+        if(d==="LEFT"&&direction!=="RIGHT")direction="LEFT";
+        if(d==="RIGHT"&&direction!=="LEFT")direction="RIGHT";
+        if(d==="UP"&&direction!=="DOWN")direction="UP";
+        if(d==="DOWN"&&direction!=="UP")direction="DOWN";
+      };
+      b.addEventListener('click',()=> set(b.dataset.dir));
+      b.addEventListener('touchstart',e=>{ e.preventDefault(); set(b.dataset.dir); },{passive:false});
     });
 
-    /***********************
-     *  WALLET / PAYMENT
-     ***********************/
+    /******** WALLET / PAYMENT ********/
     function provider(){ return window.solana?.isPhantom ? window.solana : null; }
 
     connectBtn.addEventListener("click", async ()=>{
@@ -200,28 +235,28 @@
         const p = provider(); if(!p) return alert("Phantom Wallet not found.");
         const { publicKey } = await p.connect(); walletPK = publicKey;
         connectBtn.textContent = `✅ ${publicKey.toString().slice(0,4)}…${publicKey.toString().slice(-4)}`;
+        payBtn.disabled = false;  // nu mag je betalen
       }catch(e){ console.error(e); alert("Wallet connect failed."); }
     });
 
     payBtn.addEventListener("click", async ()=>{
       try{
         const p = provider(); if(!p) return alert("Phantom Wallet not found.");
-        if(!walletPK){ const { publicKey } = await p.connect(); walletPK = publicKey; connectBtn.textContent = `✅ ${publicKey.toString().slice(0,4)}…${publicKey.toString().slice(-4)}`; }
+        if(!walletPK){ const { publicKey } = await p.connect(); walletPK=publicKey; connectBtn.textContent=`✅ ${publicKey.toString().slice(0,4)}…${publicKey.toString().slice(-4)}`; }
         payBtn.disabled = true; payBtn.textContent = "Processing…";
 
         const fromATA = await getAssociatedTokenAddress(CBS_MINT, walletPK);
         const toATA   = await getAssociatedTokenAddress(CBS_MINT, TREASURY);
 
-        // Basic balance check
+        // check balance
         const balInfo = await connection.getTokenAccountBalance(fromATA).catch(()=>null);
-        if(!balInfo || Number(balInfo.value.amount) < Number(ENTRY_CBS * 10n**CBS_DECIMALS)){
-          payBtn.disabled=false; payBtn.textContent="💳 Pay 10 CBS & Play";
+        const needRaw = ENTRY_CBS * (10 ** CBS_DECIMALS);
+        if(!balInfo || Number(balInfo.value.amount) < needRaw){
+          payBtn.disabled=false; payBtn.textContent="💳 Pay 10 CBS";
           return alert("Not enough CBS to play (need 10 CBS).");
         }
 
-        const amount = ENTRY_CBS * 10n ** CBS_DECIMALS; // 10 * 10^9
-        const ix = createTransferInstruction(fromATA, toATA, walletPK, Number(amount), [], TOKEN_PROGRAM_ID);
-
+        const ix = createTransferInstruction(fromATA, toATA, walletPK, needRaw, [], TOKEN_PROGRAM_ID);
         const tx = new Transaction().add(ix);
         tx.feePayer = walletPK;
         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
@@ -229,27 +264,41 @@
         const { signature } = await p.signAndSendTransaction(tx);
         await connection.confirmTransaction(signature, "confirmed");
 
-        lastPaymentSig = signature;
-        alert("Payment confirmed. Good luck!");
-        start();
+        // betaling geslaagd -> klaar om te starten
+        paidSig = signature;
+        roundSig = null;
+        startBtn.disabled = false;     // gebruiker mag nu starten
+        alert("Payment confirmed. Press START to play!");
       }catch(e){
         console.error(e);
         alert("Payment failed. Please try again.");
       }finally{
-        payBtn.disabled=false; payBtn.textContent="💳 Pay 10 CBS & Play";
+        payBtn.disabled=false; payBtn.textContent="💳 Pay 10 CBS";
       }
     });
 
-    startBtn.addEventListener("click", ()=> start());
+    // Start: alleen met verse betaling
+    startBtn.addEventListener("click", ()=>{
+      if(!walletPK) return alert("Connect your wallet first.");
+      if(!paidSig)  return alert("Please pay 10 CBS first.");
+      // consumeer betaling
+      roundSig = paidSig; paidSig = null;
+      startBtn.disabled = true; // tijdens run niet opnieuw starten
+      start();
+    });
 
-    /***********************
-     *  NAME / SAVE (Edge Function)
-     ***********************/
+    /******** NAME / SAVE (Edge Function) ********/
     function openNameModal(sc){
-      overlay.style.display="flex"; nameInput.value=""; err.style.display="none"; nameInput.focus();
+      overlay.style.display="flex";
+      nameInput.value=""; err.style.display="none"; nameInput.focus();
       overlay.dataset.score = String(sc ?? 0);
     }
-    cancelBtn.addEventListener("click", ()=> overlay.style.display="none");
+    cancelBtn.addEventListener("click", ()=>{
+      overlay.style.display="none";
+      // ronde afgesloten zonder opslaan -> nieuwe betaling nodig
+      roundSig = null;
+      startBtn.disabled = true;
+    });
 
     async function submitName(){
       const name = (nameInput.value||"").trim();
@@ -260,24 +309,24 @@
         const resp = await fetch(EDGE_FN_URL, {
           method:"POST",
           headers:{ "content-type":"application/json" },
-          body: JSON.stringify({ name, score: sc, tx_sig: lastPaymentSig })
+          body: JSON.stringify({ name, score: sc, tx_sig: roundSig })
         });
         const out = await resp.json().catch(()=> ({}));
         if(!resp.ok || !out?.ok) throw new Error(out?.error || "submit-score failed");
-        lastPaymentSig = null;
       }catch(e){
         console.error(e);
         alert("Saving failed (payment proof required).");
       }finally{
+        // ronde afgelopen -> opnieuw betalen
+        roundSig = null;
+        startBtn.disabled = true;
         renderTop3();
       }
     }
     nameInput.addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ e.preventDefault(); submitName(); } });
     saveBtn.addEventListener("click", submitName);
 
-    /***********************
-     *  LEADERBOARD (Top-3)
-     ***********************/
+    /******** LEADERBOARD (Top-3) ********/
     function escapeHtml(s){ return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
     async function renderTop3(){
       tbody.innerHTML = "<tr><td colspan='3' class='muted'>Loading…</td></tr>"; lbNote.style.display="none";
@@ -286,7 +335,7 @@
         if(error) throw error;
         tbody.innerHTML=""; (data||[]).forEach((r,i)=>{ const tr=document.createElement("tr"); tr.innerHTML = `<td>${i+1}</td><td>${escapeHtml((r.name||"").toString().slice(0,30)||"Anonymous")}</td><td>${Number(r.score)||0}</td>`; tbody.appendChild(tr); });
       }catch(e){
-        console.warn("Cloud leaderboard failed, showing local:", e);
+        console.warn("Cloud leaderboard failed:", e);
         lbNote.style.display="block"; tbody.innerHTML = "<tr><td colspan='3' class='muted'>No data</td></tr>";
       }
     }
