@@ -30,7 +30,7 @@
       background:linear-gradient(135deg,var(--bg1),var(--bg2));
       color:var(--fg);display:flex;flex-direction:column;align-items:center;padding:16px
     }
-    /* Verberg alles boven/onder de game tijdens spelen */
+    /* Verberg boven/onder tijdens spelen: canvas fullscreen in beeld */
     body.play-mode header,
     body.play-mode #controlsPanel,
     body.play-mode #leaderPanel{ display:none; }
@@ -63,24 +63,15 @@
 
     /* Mobile D-pad (transparant, onder het canvas) */
     #dpad{
-      position:static;              /* geen overlay */
-      display:none;                 /* alleen mobiel */
-      justify-content:center;
-      margin-top:12px;
+      position:static; display:none; justify-content:center; margin-top:12px;
     }
     #dpad .pad{
-      display:grid;
-      grid-template-columns:64px 64px 64px;
-      grid-template-rows:64px 64px 64px;
-      gap:12px;
-      opacity:.45;
-      filter:drop-shadow(0 0 6px #0ff6)
+      display:grid; grid-template-columns:64px 64px 64px; grid-template-rows:64px 64px 64px;
+      gap:12px; opacity:.45; filter:drop-shadow(0 0 6px #0ff6)
     }
     #dpad button{
-      pointer-events:auto;
-      background:rgba(0,255,255,.10);
-      border:1px solid #0ff7;color:#cff;border-radius:15px;
-      backdrop-filter:blur(2px);font-weight:800
+      pointer-events:auto; background:rgba(0,255,255,.10); border:1px solid #0ff7; color:#cff;
+      border-radius:15px; backdrop-filter:blur(2px); font-weight:800
     }
     #dpad button:active{background:rgba(0,255,255,.22)}
     @media (max-width:680px){ #dpad{display:flex} }
@@ -92,7 +83,7 @@
     <h1>CBS Snake Game</h1>
   </header>
 
-  <!-- Controls panel (verborgen in play-mode) -->
+  <!-- Controls -->
   <div id="controlsPanel" class="panel">
     <div class="row" style="justify-content:center;margin-bottom:.3rem">
       <button id="connectBtn" class="btn">🔗 Connect Wallet</button>
@@ -107,7 +98,7 @@
   <div class="panel" id="gamePanel">
     <div id="gameWrap">
       <canvas id="gameCanvas" width="420" height="420"></canvas>
-      <!-- Transparent mobile D-pad (onder het canvas) -->
+      <!-- D-pad onder het canvas -->
       <div id="dpad" aria-label="On-screen controls">
         <div class="pad">
           <div></div>     <button data-dir="UP">▲</button>     <div></div>
@@ -259,33 +250,54 @@
 
     /******** SCROLL/PLAY-MODE HELPERS ********/
     function scrollToGame(){
-      // probeer meerdere tactieken zodat mobiel ook netjes centreren doet
       requestAnimationFrame(()=>{
         canvas.scrollIntoView({ block: 'center', behavior: 'smooth' });
         setTimeout(()=>{
           const y = gameWrap.getBoundingClientRect().top + window.scrollY - 8;
           window.scrollTo({ top: y, behavior: 'smooth' });
         }, 220);
-        // kleine nudge om mobiele adresbalk te laten inklappen
         setTimeout(()=> window.scrollTo({ top: window.scrollY + 1 }), 600);
       });
     }
-    function enterPlayMode(){
-      document.body.classList.add('play-mode');
-      scrollToGame();
-    }
-    function exitPlayMode(){
-      document.body.classList.remove('play-mode');
-    }
+    function enterPlayMode(){ document.body.classList.add('play-mode'); scrollToGame(); }
+    function exitPlayMode(){ document.body.classList.remove('play-mode'); }
 
     /******** WALLET / PAYMENT ********/
     function provider(){ return window.solana?.isPhantom ? window.solana : null; }
-
-    // Algemene foutmelder met iets meer detail
     function showError(prefix, err){
       const msg = (err && err.message) ? err.message : String(err || 'Unknown error');
       console.error(prefix, err);
       alert(`${prefix}\n\n${msg}`);
+    }
+
+    // Wacht stevig op confirm/finalize (met blockhash + retry tot 120s)
+    async function waitForConfirmation(signature, latest, timeoutMs=120000){
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs){
+        const st = await connection.getSignatureStatuses([signature], { searchTransactionHistory: true })
+          .then(r => r.value[0])
+          .catch(()=>null);
+        if (st){
+          if (st.err) throw new Error("On-chain transaction error");
+          const conf = st.confirmationStatus || (st.confirmations != null ? (st.confirmations>0 ? 'confirmed' : null) : null);
+          if (conf === 'confirmed' || conf === 'finalized') return st;
+        }
+        // is blockhash verlopen?
+        if (latest?.lastValidBlockHeight){
+          const h = await connection.getBlockHeight('finalized').catch(()=>null);
+          if (h && h > latest.lastValidBlockHeight){
+            throw new Error("Blockhash expired before confirmation");
+          }
+        }
+        await new Promise(r=>setTimeout(r, 1500));
+      }
+      // laatste poging via confirmTransaction API
+      const res = await connection.confirmTransaction(
+        { signature, blockhash: latest.blockhash, lastValidBlockHeight: latest.lastValidBlockHeight },
+        'finalized'
+      ).catch(()=>null);
+      if (res && !res.value.err) return res.value;
+      throw new Error(`Confirmation timed out. You can check on Solscan:\nhttps://solscan.io/tx/${signature}`);
     }
 
     connectBtn.addEventListener("click", async ()=>{
@@ -293,7 +305,7 @@
         const p = provider(); if(!p) return alert("Phantom Wallet not found.");
         const { publicKey } = await p.connect(); walletPK = publicKey;
         connectBtn.textContent = `✅ ${publicKey.toString().slice(0,4)}…${publicKey.toString().slice(-4)}`;
-        payBtn.disabled = false;  // nu mag je betalen
+        payBtn.disabled = false;
       }catch(e){ showError("Wallet connect failed.", e); }
     });
 
@@ -306,7 +318,7 @@
         const fromATA = await getAssociatedTokenAddress(CBS_MINT, walletPK);
         const toATA   = await getAssociatedTokenAddress(CBS_MINT, TREASURY);
 
-        // Preflight: heeft speler genoeg CBS?
+        // heeft speler genoeg CBS?
         const balInfo = await connection.getTokenAccountBalance(fromATA).catch(()=>null);
         const needRaw = ENTRY_CBS * (10 ** CBS_DECIMALS);
         if(!balInfo || Number(balInfo.value.amount) < needRaw){
@@ -314,7 +326,7 @@
           return alert("Not enough CBS to play (need 10 CBS).");
         }
 
-        // Bestaat treasury ATA? (we maken 'm NIET auto aan om kosten voor speler te vermijden)
+        // bestaat treasury ATA?
         const toInfo = await connection.getAccountInfo(toATA);
         if(!toInfo){
           payBtn.disabled=false; payBtn.textContent="💳 Pay 10 CBS";
@@ -322,39 +334,48 @@
         }
 
         const ix = createTransferInstruction(fromATA, toATA, walletPK, needRaw, [], TOKEN_PROGRAM_ID);
-        const tx = new Transaction().add(ix);
-        tx.feePayer = walletPK;
-        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+        // gebruik het nieuwste blockhash + lastValidBlockHeight
+        const latest = await connection.getLatestBlockhash('confirmed');
+        const tx = new Transaction({ feePayer: walletPK, recentBlockhash: latest.blockhash });
+        tx.add(ix);
 
         const { signature } = await p.signAndSendTransaction(tx);
-        await connection.confirmTransaction(signature, "confirmed");
 
-        // betaling geslaagd → direct focus op game & auto-start
+        // robuuste confirm (tot 120s)
+        payBtn.textContent = "Waiting confirmation…";
+        await waitForConfirmation(signature, latest);
+
+        // confirmed → speel
         paidSig = signature;
-        roundSig = paidSig; // consumeer meteen voor deze run
+        roundSig = paidSig;  // consumeer meteen voor deze run
         paidSig = null;
 
-        enterPlayMode();     // verberg header/controls/leaderboard, scroll naar canvas
+        document.body.classList.add('play-mode');
         startBtn.disabled = true;
-        start();             // meteen spelen
+        start();
+        // extra scroll naar het canvas
+        scrollToGame();
       }catch(e){
+        // Toon link naar signature als die aanwezig is in de fouttekst
         showError("Payment failed.", e);
       }finally{
         payBtn.disabled=false; payBtn.textContent="💳 Pay 10 CBS";
       }
     });
 
-    // (Start-knop fallback: alleen na betalen)
+    // fallback Start (alleen na betalen)
     startBtn.addEventListener("click", ()=>{
       if(!walletPK) return alert("Connect your wallet first.");
       if(!paidSig)  return alert("Please pay 10 CBS first.");
       roundSig = paidSig; paidSig = null;
       startBtn.disabled = true;
-      enterPlayMode();
+      document.body.classList.add('play-mode');
       start();
+      scrollToGame();
     });
 
-    /******** NAME / SAVE (Edge Function) ********/
+    /******** NAME / SAVE ********/
     function openNameModal(sc){
       overlay.style.display="flex";
       nameInput.value=""; err.style.display="none"; nameInput.focus();
@@ -362,8 +383,7 @@
     }
     cancelBtn.addEventListener("click", ()=>{
       overlay.style.display="none";
-      // ronde afgesloten zonder opslaan → nieuwe betaling nodig
-      roundSig = null;
+      roundSig = null;        // ronde afgesloten → opnieuw betalen
       startBtn.disabled = true;
       exitPlayMode();
     });
@@ -384,7 +404,6 @@
       }catch(e){
         showError("Saving failed (payment proof required).", e);
       }finally{
-        // ronde afgelopen → opnieuw betalen
         roundSig = null;
         startBtn.disabled = true;
         exitPlayMode();
@@ -418,4 +437,3 @@
   </script>
 </body>
 </html>
-
