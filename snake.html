@@ -30,25 +30,10 @@
       border:1.5px solid var(--border);border-radius:16px;padding:1rem;margin:.6rem;
       box-shadow:var(--glow);width:100%;max-width:680px
     }
-    .controls{
-      display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:center;margin:.25rem 0 .5rem
-    }
-    .control{
-      display:flex;gap:.5rem;align-items:center;background:#0b0e10;border:1px solid #1c2e2e;padding:.5rem .75rem;border-radius:12px;
-      box-shadow: 0 0 10px rgba(0,255,204,.12) inset;
-      font-size:.95rem
-    }
-    .control label{opacity:.9}
-    select, input[type="checkbox"]{
-      accent-color:#00e5ff;
-    }
-    select{
-      background:#000;border:1px solid var(--border);color:#fff;border-radius:10px;padding:.35rem .6rem;font-family:inherit
-    }
     .btn{
       background:linear-gradient(180deg,#00ffe0,#00c8ff);
-      color:#001014;border:none;padding:.8rem 1.3rem;border-radius:.8rem;cursor:pointer;font-weight:700;
-      font-size:1rem;box-shadow:0 6px 22px rgba(0,255,224,.25), inset 0 0 0 2px rgba(0,0,0,.1)
+      color:#001014;border:none;padding:.85rem 1.4rem;border-radius:.9rem;cursor:pointer;font-weight:800;
+      font-size:1.05rem;box-shadow:0 6px 22px rgba(0,255,224,.25), inset 0 0 0 2px rgba(0,0,0,.1)
     }
     .btn:hover{filter:brightness(1.05)}
     .btn[disabled]{opacity:.6;cursor:not-allowed}
@@ -57,16 +42,13 @@
       width:100%;max-width:440px;height:auto;background:#000;touch-action:none;
       box-shadow: 0 0 18px rgba(0,255,255,.25)
     }
-
     /* D-PAD mobile controls */
     .dpad{
-      display:none; /* default verborgen op desktop */
+      display:none;
       position:sticky;bottom:env(safe-area-inset-bottom,10px);
-      margin: .25rem auto 0;max-width:440px;padding:.4rem 0
+      margin:.3rem auto 0;max-width:440px;padding:.4rem 0
     }
-    .dgrid{
-      display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;justify-items:center;align-items:center
-    }
+    .dgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;justify-items:center;align-items:center}
     .dirbtn{
       width:80px;height:80px;border-radius:16px;border:1px solid #1c2e2e;background:#0a0e11;color:#dff;
       font-size:1.3rem;font-weight:700;cursor:pointer;
@@ -74,7 +56,6 @@
     }
     .dirbtn:active{transform:scale(.97);filter:brightness(1.15)}
     .dirbtn.empty{visibility:hidden}
-
     table{width:100%;border-collapse:collapse;font-size:clamp(.9rem,2.2vw,1rem)}
     th,td{padding:.55rem;border-bottom:1px solid #1c2e2e;text-align:center}
     .muted{color:var(--muted)}
@@ -84,11 +65,7 @@
     #nameInput{width:100%;padding:.75rem 1rem;border:1.5px solid var(--border);border-radius:.6rem;background:#000;color:#fff;font-family:inherit;font-size:1rem}
     #error{color:#ff6e8a;font-size:.85rem;margin-top:.35rem;display:none}
     #saveBtn{min-width:6rem}
-    /* Small tweaks for small screens */
-    @media (max-width:520px){
-      .dirbtn{width:74px;height:74px}
-      .btn{padding:.75rem 1.1rem}
-    }
+    @media (max-width:520px){ .dirbtn{width:74px;height:74px} }
   </style>
 </head>
 <body>
@@ -98,33 +75,17 @@
   </header>
 
   <div class="panel">
-    <div class="controls">
-      <button id="playBtn" class="btn">▶️ Play</button>
-      <div class="control">
-        <label for="speed">Speed</label>
-        <select id="speed">
-          <option value="130">Easy</option>
-          <option value="100" selected>Normal</option>
-          <option value="80">Fast</option>
-        </select>
-      </div>
-      <div class="control">
-        <label for="wrap">Wrap walls</label>
-        <input id="wrap" type="checkbox">
-      </div>
-      <div class="control">
-        <label for="showPad">On-screen controls</label>
-        <input id="showPad" type="checkbox">
-      </div>
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center;align-items:center;margin:.25rem 0 .6rem">
+      <button id="payPlayBtn" class="btn">💳 Pay 100 CBS & Play</button>
     </div>
 
     <p style="text-align:center;margin:.2rem 0 .4rem">
-      <strong>Entry fee:</strong> 100 CBS <span class="muted">(demo mode, free play)</span>
+      <strong>Entry fee:</strong> 100 CBS <span class="muted">| Monthly prize for best score</span>
     </p>
 
     <canvas id="gameCanvas" width="400" height="400" aria-label="Snake game board"></canvas>
 
-    <!-- D-PAD -->
+    <!-- D-PAD (auto on touch) -->
     <div id="dpad" class="dpad" aria-label="On-screen controls">
       <div class="dgrid">
         <button class="dirbtn empty" tabindex="-1" aria-hidden="true">•</button>
@@ -162,110 +123,184 @@
     </div>
   </div>
 
-  <!-- Supabase client -->
+  <!-- Solana + Supabase -->
+  <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
   <script>
-    // ===== Supabase config =====
+    // ====== CONFIG ======
+    const CBS_MINT = new solanaWeb3.PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"); // CBS mint
+    const TREASURY_WALLET = new solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg"); // <-- eventueel aanpassen
+    const ENTRY_CBS = 100n; // 100 CBS per spel
+
     const SUPABASE_URL = "https://aiawteejixsgsunmefpi.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpYXd0ZWVqaXhzZ3N1bm1lZnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NDExODIsImV4cCI6MjA3MTAxNzE4Mn0.aMbRUM0YebNMfZhSLb9PFdSHAZ-D5WpACPefCfjSLqI";
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const TABLE = "leaderboard";
 
-    // ===== Game state =====
+    // ====== Solana helpers ======
+    const web3 = solanaWeb3;
+    const TOKEN_PROGRAM_ID = new web3.PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
+    const ASSOCIATED_TOKEN_PROGRAM_ID = new web3.PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
+    const connection = new web3.Connection("https://api.mainnet-beta.solana.com", "confirmed");
+
+    async function connectWallet(){
+      if(!(window.solana && window.solana.isPhantom)){
+        alert("Phantom Wallet not found.");
+        throw new Error("No Phantom");
+      }
+      const r = await window.solana.connect();
+      return r.publicKey;
+    }
+
+    function getAtaAddress(mint, owner){
+      return web3.PublicKey.findProgramAddressSync(
+        [owner.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
+        ASSOCIATED_TOKEN_PROGRAM_ID
+      )[0];
+    }
+
+    async function getMintDecimals(mint){
+      const info = await connection.getParsedAccountInfo(mint);
+      const decimals = info?.value?.data?.parsed?.info?.decimals;
+      if(typeof decimals !== "number") throw new Error("Cannot fetch mint decimals");
+      return decimals;
+    }
+
+    async function getTokenBalance(owner, mint){
+      const res = await connection.getParsedTokenAccountsByOwner(owner, { mint });
+      if(!res.value.length) return 0n;
+      const amt = res.value[0].account.data.parsed.info.tokenAmount.amount; // string of raw units
+      try{ return BigInt(amt); }catch{ return 0n; }
+    }
+
+    function createATAIx(payer, ata, owner, mint){
+      return new web3.TransactionInstruction({
+        programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+        keys: [
+          {pubkey:payer, isSigner:true, isWritable:true},
+          {pubkey:ata, isSigner:false, isWritable:true},
+          {pubkey:owner, isSigner:false, isWritable:false},
+          {pubkey:mint, isSigner:false, isWritable:false},
+          {pubkey:web3.SystemProgram.programId, isSigner:false, isWritable:false},
+          {pubkey:TOKEN_PROGRAM_ID, isSigner:false, isWritable:false},
+          {pubkey:web3.SYSVAR_RENT_PUBKEY, isSigner:false, isWritable:false},
+        ],
+        data: new Uint8Array([]) // Create ATA = empty data
+      });
+    }
+
+    function u64LE(n){ // BigInt -> 8 bytes little-endian
+      const out = new Uint8Array(8);
+      let x = BigInt(n);
+      for(let i=0;i<8;i++){ out[i] = Number(x & 0xffn); x >>= 8n; }
+      return out;
+    }
+
+    function transferCheckedIx(source, mint, dest, owner, amount, decimals){
+      // SPL Token Instruction: TransferChecked (index = 12)
+      const data = new Uint8Array(1 + 8 + 1);
+      data[0] = 12; // TransferChecked
+      data.set(u64LE(amount), 1);
+      data[1+8] = decimals;
+
+      return new web3.TransactionInstruction({
+        programId: TOKEN_PROGRAM_ID,
+        keys: [
+          {pubkey:source, isSigner:false, isWritable:true},
+          {pubkey:mint,   isSigner:false, isWritable:false},
+          {pubkey:dest,   isSigner:false, isWritable:true},
+          {pubkey:owner,  isSigner:true,  isWritable:false},
+        ],
+        data
+      });
+    }
+
+    async function payEntry(){
+      const owner = await connectWallet();
+      const decimals = await getMintDecimals(CBS_MINT);
+      const fee = ENTRY_CBS * (10n ** BigInt(decimals));
+
+      // check balance
+      const bal = await getTokenBalance(owner, CBS_MINT);
+      if(bal < fee){
+        alert("Not enough CBS to play. Need 100 CBS.");
+        return false;
+      }
+
+      const ownerAta = getAtaAddress(CBS_MINT, owner);
+      const treasuryAta = getAtaAddress(CBS_MINT, TREASURY_WALLET);
+
+      const ixs = [];
+      const destInfo = await connection.getAccountInfo(treasuryAta);
+      if(!destInfo){
+        ixs.push(createATAIx(owner, treasuryAta, TREASURY_WALLET, CBS_MINT));
+      }
+      ixs.push(transferCheckedIx(ownerAta, CBS_MINT, treasuryAta, owner, fee, decimals));
+
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("finalized");
+      const tx = new web3.Transaction().add(...ixs);
+      tx.feePayer = owner;
+      tx.recentBlockhash = blockhash;
+
+      let sig;
+      if(window.solana.signAndSendTransaction){
+        sig = await window.solana.signAndSendTransaction(tx);
+        if(typeof sig === "object" && sig.signature) sig = sig.signature;
+      }else{
+        sig = await window.solana.sendTransaction(tx, connection);
+      }
+      await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, "confirmed");
+      return true;
+    }
+
+    // ====== Game (always wrap walls, fixed speed) ======
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
     const box = 20;
+    let snake, direction, nextDir, food, score, loop=null;
 
-    let snake, direction, nextDir, food, score, game;
-    let pendingScore = null;
-    let saving = false;
-
-    // Preferences
     const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
-    const getPref = (k, d) => { try{ const v = localStorage.getItem("cbs_"+k); return v===null? d : JSON.parse(v);}catch{return d;} };
-    const setPref = (k, v) => { try{ localStorage.setItem("cbs_"+k, JSON.stringify(v)); }catch{} };
-
-    const speedSel = document.getElementById("speed");
-    const wrapChk  = document.getElementById("wrap");
-    const padChk   = document.getElementById("showPad");
-    const dpad     = document.getElementById("dpad");
-
-    // defaults
-    speedSel.value = String(getPref("speed", isTouch ? 130 : 100));
-    wrapChk.checked = !!getPref("wrap", isTouch ? true : false);
-    padChk.checked  = !!getPref("pad",  isTouch ? true : false);
-    dpad.style.display = padChk.checked ? "block" : "none";
-
-    speedSel.addEventListener("change", ()=>{ setPref("speed", Number(speedSel.value)); if(game) restartWithNewSpeed(); });
-    wrapChk.addEventListener("change", ()=> setPref("wrap", wrapChk.checked));
-    padChk.addEventListener("change", ()=>{ setPref("pad", padChk.checked); dpad.style.display = padChk.checked?"block":"none"; });
-
-    // Buttons
-    document.getElementById("playBtn").addEventListener("click", startGame);
-    document.getElementById("saveBtn").addEventListener("click", submitName);
-    document.getElementById("cancelBtn").addEventListener("click", cancelName);
-
-    // D-pad handlers
-    const btnUp = document.getElementById("btnUp");
-    const btnDown = document.getElementById("btnDown");
-    const btnLeft = document.getElementById("btnLeft");
-    const btnRight = document.getElementById("btnRight");
-    function setDir(d){
-      const opp = {LEFT:"RIGHT",RIGHT:"LEFT",UP:"DOWN",DOWN:"UP"};
-      if(direction && d===opp[direction]) return; // prevent 180°
-      nextDir = d;
-    }
-    [btnUp,btnDown,btnLeft,btnRight].forEach((b)=>{
-      if(!b) return;
-      b?.addEventListener("click", ()=> setDir(b===btnUp?"UP":b===btnDown?"DOWN":b===btnLeft?"LEFT":"RIGHT"));
-      b?.addEventListener("touchstart", (e)=>{ e.preventDefault(); setDir(b===btnUp?"UP":b===btnDown?"DOWN":b===btnLeft?"LEFT":"RIGHT"); }, {passive:false});
-    });
-
-    // Fallback lokale scores
-    function getLocalScores(){
-      try { return JSON.parse(localStorage.getItem("cbs_snake_scores") || "[]"); }
-      catch { return []; }
-    }
-    function putLocalScore(name, score){
-      const arr = getLocalScores();
-      arr.push({ name, score, created_at: new Date().toISOString() });
-      arr.sort((a,b)=> b.score - a.score || new Date(a.created_at)-new Date(b.created_at));
-      localStorage.setItem("cbs_snake_scores", JSON.stringify(arr.slice(0,50)));
-    }
-
-    function randFood(){
-      return { x: Math.floor(Math.random()*20)*box, y: Math.floor(Math.random()*20)*box };
-    }
+    const dpad = document.getElementById("dpad");
+    dpad.style.display = isTouch ? "block" : "none";
 
     function initGame(){
       snake=[{x:10*box,y:10*box}];
       direction=null; nextDir=null;
-      food=randFood();
-      score=0;
+      food=randFood(); score=0;
+      renderFrame();
+    }
+
+    function randFood(){ return { x: Math.floor(Math.random()*20)*box, y: Math.floor(Math.random()*20)*box }; }
+
+    function setDir(d){
+      const opp = {LEFT:"RIGHT",RIGHT:"LEFT",UP:"DOWN",DOWN:"UP"};
+      if(direction && d===opp[direction]) return;
+      nextDir = d;
     }
 
     document.addEventListener("keydown", e=>{
-      if(e.key==="ArrowLeft")  setDir("LEFT");
-      else if(e.key==="ArrowUp")    setDir("UP");
+      if(e.key==="ArrowLeft") setDir("LEFT");
+      else if(e.key==="ArrowUp") setDir("UP");
       else if(e.key==="ArrowRight") setDir("RIGHT");
-      else if(e.key==="ArrowDown")  setDir("DOWN");
+      else if(e.key==="ArrowDown") setDir("DOWN");
     });
 
-    // Swipe/tap fallback on canvas
+    ["btnUp","btnDown","btnLeft","btnRight"].forEach(id=>{
+      const b=document.getElementById(id); if(!b) return;
+      b.addEventListener("click", ()=> setDir(id==="btnUp"?"UP":id==="btnDown"?"DOWN":id==="btnLeft"?"LEFT":"RIGHT"));
+      b.addEventListener("touchstart", e=>{ e.preventDefault(); setDir(id==="btnUp"?"UP":id==="btnDown"?"DOWN":id==="btnLeft"?"LEFT":"RIGHT"); }, {passive:false});
+    });
+
     canvas.addEventListener("touchstart", e=>{
       if(!isTouch) return;
       e.preventDefault();
       const r=canvas.getBoundingClientRect();
       const cx=r.left+r.width/2, cy=r.top+r.height/2;
       const dx=e.changedTouches[0].clientX-cx, dy=e.changedTouches[0].clientY-cy;
-      if(Math.abs(dx)>Math.abs(dy)){
-        setDir(dx>0?"RIGHT":"LEFT");
-      }else{
-        setDir(dy>0?"DOWN":"UP");
-      }
+      if(Math.abs(dx)>Math.abs(dy)) setDir(dx>0?"RIGHT":"LEFT");
+      else setDir(dy>0?"DOWN":"UP");
     }, {passive:false});
 
-    // ===== Rendering helpers (neon snake + coin) =====
     function drawRoundedRect(x,y,w,h,r){
       const rr = Math.min(r, w/2, h/2);
       ctx.beginPath();
@@ -276,7 +311,6 @@
       ctx.arcTo(x,y,x+w,y,rr);
       ctx.closePath();
     }
-
     function drawNeonSegment(x, y, size, isHead=false){
       ctx.save();
       const grad = ctx.createLinearGradient(x, y, x+size, y+size);
@@ -285,141 +319,92 @@
       ctx.shadowColor = "#00d5ff";
       ctx.shadowBlur = 18;
       drawRoundedRect(x+2, y+2, size-4, size-4, 6);
-      ctx.fillStyle = grad;
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = "rgba(255,255,255,.25)";
-      ctx.stroke();
-
-      if(isHead){
-        ctx.beginPath();
-        ctx.arc(x+size*0.7, y+size*0.35, 2, 0, Math.PI*2);
-        ctx.fillStyle = "#fff";
-        ctx.fill();
-      }
+      ctx.fillStyle = grad; ctx.fill();
+      ctx.shadowBlur = 0; ctx.lineWidth = 2; ctx.strokeStyle = "rgba(255,255,255,.25)"; ctx.stroke();
+      if(isHead){ ctx.beginPath(); ctx.arc(x+size*0.7, y+size*0.35, 2, 0, Math.PI*2); ctx.fillStyle="#fff"; ctx.fill(); }
       ctx.restore();
     }
-
     function drawCoin(x, y, size){
       ctx.save();
-      const r = size/2;
-      const cx = x + r, cy = y + r;
-      ctx.shadowColor = "#ffd54d";
-      ctx.shadowBlur = 14;
-      const g = ctx.createRadialGradient(cx, cy, r*0.2, cx, cy, r);
-      g.addColorStop(0, "#ffe27a");
-      g.addColorStop(0.6, "#ffca28");
-      g.addColorStop(1, "#ffb300");
-      ctx.beginPath();
-      ctx.arc(cx, cy, r-2, 0, Math.PI*2);
-      ctx.fillStyle = g;
-      ctx.fill();
-      ctx.shadowBlur = 0;
-      ctx.lineWidth = 2;
-      ctx.strokeStyle = "rgba(255,255,255,.35)";
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(cx - r*0.3, cy - r*0.3, r*0.5, Math.PI*1.1, Math.PI*1.8);
-      ctx.strokeStyle = "rgba(255,255,255,.5)";
-      ctx.lineWidth = 1;
-      ctx.stroke();
+      const r = size/2, cx = x+r, cy=y+r;
+      ctx.shadowColor="#ffd54d"; ctx.shadowBlur=14;
+      const g = ctx.createRadialGradient(cx,cy,r*0.2,cx,cy,r);
+      g.addColorStop(0,"#ffe27a"); g.addColorStop(0.6,"#ffca28"); g.addColorStop(1,"#ffb300");
+      ctx.beginPath(); ctx.arc(cx,cy,r-2,0,Math.PI*2); ctx.fillStyle=g; ctx.fill();
+      ctx.shadowBlur=0; ctx.lineWidth=2; ctx.strokeStyle="rgba(255,255,255,.35)"; ctx.stroke();
+      ctx.beginPath(); ctx.arc(cx-r*0.3, cy-r*0.3, r*0.5, Math.PI*1.1, Math.PI*1.8);
+      ctx.strokeStyle="rgba(255,255,255,.5)"; ctx.lineWidth=1; ctx.stroke();
       ctx.restore();
     }
 
     function step(){
-      // apply pending direction at tick start (prevents 180°)
-      if(nextDir) { direction = nextDir; nextDir = null; }
-
-      // compute next head
+      if(nextDir){ direction=nextDir; nextDir=null; }
       let x=snake[0].x, y=snake[0].y;
       if(direction==="LEFT") x-=box;
-      if(direction==="UP")   y-=box;
-      if(direction==="RIGHT")x+=box;
+      if(direction==="UP") y-=box;
+      if(direction==="RIGHT") x+=box;
       if(direction==="DOWN") y+=box;
 
-      // wrap walls if enabled
-      if(wrapChk.checked){
-        const W = canvas.width, H = canvas.height;
-        if(x < 0) x = W - box; else if(x >= W) x = 0;
-        if(y < 0) y = H - box; else if(y >= H) y = 0;
-      }
+      // Always WRAP through walls
+      const W = canvas.width, H = canvas.height;
+      if(x < 0) x = W - box; else if(x >= W) x = 0;
+      if(y < 0) y = H - box; else if(y >= H) y = 0;
 
-      // eat
       if(x===food.x && y===food.y){
-        score++;
-        food=randFood();
+        score++; food=randFood();
         if(navigator.vibrate) navigator.vibrate(15);
       }else{
         snake.pop();
       }
 
       const head={x,y};
-
-      // collisions
-      const hitWall = !wrapChk.checked && (x<0||y<0||x>=canvas.width||y>=canvas.height);
       const hitSelf = snake.some(s=>s.x===x&&s.y===y);
-      if(hitWall || hitSelf){
-        stopGame();
+      if(hitSelf){
+        stopLoop();
         if(navigator.vibrate) navigator.vibrate(60);
         onGameOver(score);
-        renderFrame(); // final frame
+        renderFrame();
         return;
       }
       snake.unshift(head);
-
       renderFrame();
     }
 
     function renderFrame(){
-      ctx.fillStyle="#000";
-      ctx.fillRect(0,0,canvas.width,canvas.height);
-
+      ctx.fillStyle="#000"; ctx.fillRect(0,0,canvas.width,canvas.height);
       drawCoin(food.x, food.y, box);
-
-      for(let i=snake.length-1;i>=0;i--){
-        drawNeonSegment(snake[i].x, snake[i].y, box, i===0);
-      }
-
-      ctx.fillStyle="#fff";
-      ctx.font="18px Orbitron";
-      ctx.fillText("Score: "+score, box, 20);
+      for(let i=snake.length-1;i>=0;i--) drawNeonSegment(snake[i].x, snake[i].y, box, i===0);
+      ctx.fillStyle="#fff"; ctx.font="18px Orbitron"; ctx.fillText("Score: "+score, box, 20);
     }
 
-    function startGame(){
-      initGame();
-      stopGame();
-      game = setInterval(step, Number(speedSel.value)||100);
-      document.getElementById("playBtn").blur();
-    }
-    function stopGame(){ if(game){ clearInterval(game); game=null; } }
-    function restartWithNewSpeed(){ if(game){ clearInterval(game); game=setInterval(step, Number(speedSel.value)||100); } }
+    function startLoop(){ stopLoop(); loop = setInterval(step, 100); }
+    function stopLoop(){ if(loop){ clearInterval(loop); loop=null; } }
 
-    // ===== Name overlay & saving =====
+    // ===== Name overlay & Supabase save =====
     const overlay = document.getElementById("nameOverlay");
     const nameInput = document.getElementById("nameInput");
     const err = document.getElementById("error");
     const saveBtn = document.getElementById("saveBtn");
+    const cancelBtn = document.getElementById("cancelBtn");
     const lbNote = document.getElementById("lbNote");
 
     function onGameOver(sc){
       pendingScore = Number.isFinite(sc) ? sc : 0;
       overlay.style.display = "flex";
-      nameInput.value = "";
-      err.style.display = "none";
+      nameInput.value = ""; err.style.display = "none";
       setTimeout(()=>nameInput.focus(), 30);
     }
     function cancelName(){ overlay.style.display = "none"; pendingScore = null; }
 
-    let savingTimeout = null;
+    let pendingScore = null, saving = false, savingTimeout = null;
+
     async function submitName(){
       if(saving) return;
       const name = (nameInput.value || "").trim();
       if(!name){ err.textContent="Name is required."; err.style.display="block"; return; }
       if(name.length>30){ err.textContent="Max 30 characters."; err.style.display="block"; return; }
 
-      err.style.display="none";
-      saveBtn.disabled = true; saving = true;
+      err.style.display="none"; saveBtn.disabled = true; saving = true;
       clearTimeout(savingTimeout);
       savingTimeout = setTimeout(()=>{ saving=false; saveBtn.disabled=false; }, 8000);
 
@@ -431,15 +416,15 @@
       }catch{
         putLocalScore(name, sc); alert("Save failed unexpectedly. Saved locally instead.");
       }finally{
-        pendingScore = null;
-        await renderCloudBoard();
+        pendingScore = null; await renderCloudBoard();
         saving=false; saveBtn.disabled=false; clearTimeout(savingTimeout);
       }
     }
-    nameInput.addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ e.preventDefault(); submitName(); } });
+    saveBtn.addEventListener("click", submitName);
+    cancelBtn.addEventListener("click", cancelName);
+    nameInput.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); submitName(); } });
 
     async function saveScoreToCloud(name, score){
-      if(!Number.isFinite(score) || score<0) score = 0;
       try{
         const { error } = await sb.from(TABLE).insert([{ name, score }]);
         if(error){ console.error("Supabase insert error:", error); return false; }
@@ -447,7 +432,7 @@
       }catch(e){ console.error("Supabase insert threw:", e); return false; }
     }
 
-    // ===== Leaderboard: ONLY TOP-3 =====
+    // Leaderboard: ONLY TOP-3
     async function renderCloudBoard(){
       const tbody=document.getElementById("leaderboardBody");
       tbody.innerHTML = "<tr><td colspan='3' class='muted'>Loading…</td></tr>";
@@ -485,24 +470,36 @@
       });
     }
 
-    function escapeHtml(s){
-      return s.replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));
+    function getLocalScores(){ try { return JSON.parse(localStorage.getItem("cbs_snake_scores") || "[]"); } catch { return []; } }
+    function putLocalScore(name, score){
+      const arr = getLocalScores();
+      arr.push({ name, score, created_at: new Date().toISOString() });
+      arr.sort((a,b)=> b.score - a.score || new Date(a.created_at)-new Date(b.created_at));
+      localStorage.setItem("cbs_snake_scores", JSON.stringify(arr.slice(0,50)));
     }
+    function escapeHtml(s){ return s.replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m])); }
 
-    // Wallet connect (demo)
-    async function connectWallet(){
-      if(window.solana && window.solana.isPhantom){
-        try{
-          const r=await window.solana.connect();
-          alert("Connected: "+r.publicKey.toString());
-        }catch(e){ console.error(e); }
-      } else { alert("Phantom Wallet not found."); }
-    }
+    // ===== Pay & Play flow =====
+    const payPlayBtn = document.getElementById("payPlayBtn");
+    payPlayBtn.addEventListener("click", async ()=>{
+      payPlayBtn.disabled = true; payPlayBtn.textContent = "Processing…";
+      try{
+        const ok = await payEntry();
+        if(!ok){ payPlayBtn.disabled = false; payPlayBtn.textContent = "💳 Pay 100 CBS & Play"; return; }
+        initGame(); startLoop();
+        payPlayBtn.textContent = "💳 Pay 100 CBS & Play"; // volgende keer opnieuw betalen
+        payPlayBtn.disabled = false;
+      }catch(e){
+        console.error(e);
+        alert("Payment failed or cancelled.");
+        payPlayBtn.disabled = false; payPlayBtn.textContent = "💳 Pay 100 CBS & Play";
+      }
+    });
 
-    // Initial load
+    // ===== Initial load =====
     (async ()=>{ 
       try{ await renderCloudBoard(); } catch(e){ console.error(e); }
-      initGame(); renderFrame(); // toon direct een frame
+      initGame();
     })();
   </script>
 </body>
