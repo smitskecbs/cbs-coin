@@ -30,6 +30,10 @@
       background:linear-gradient(135deg,var(--bg1),var(--bg2));
       color:var(--fg);display:flex;flex-direction:column;align-items:center;padding:16px
     }
+    /* Verberg navigatie/controls tijdens spelen, zodat canvas volledig zichtbaar is */
+    body.play-mode header,
+    body.play-mode #controlsPanel{ display:none; }
+
     header{display:flex;align-items:center;gap:.75rem;margin:10px auto 14px auto}
     header img{height:48px}
     h1{margin:0;font-size:clamp(1.6rem,3.3vw,2.3rem);color:var(--accent);text-shadow:0 0 6px #0ff5}
@@ -87,7 +91,8 @@
     <h1>CBS Snake Game</h1>
   </header>
 
-  <div class="panel">
+  <!-- Controls panel (wordt verborgen in play-mode) -->
+  <div id="controlsPanel" class="panel">
     <div class="row" style="justify-content:center;margin-bottom:.3rem">
       <button id="connectBtn" class="btn">🔗 Connect Wallet</button>
       <button id="payBtn" class="btn" disabled>💳 Pay 10 CBS</button>
@@ -112,7 +117,7 @@
     </div>
   </div>
 
-  <div class="panel">
+  <div class="panel" id="leaderPanel">
     <h2 style="text-align:center">🏆 Top 3</h2>
     <p class="muted" style="text-align:center;margin-top:-.25rem">Only the three highest scores are shown.</p>
     <table>
@@ -146,7 +151,7 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpYXd0ZWVqaXhzZ3N1bm1lZnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NDExODIsImV4cCI6MjA3MTAxNzE4Mn0.aMbRUM0YebNMfZhSLb9PFdSHAZ-D5WpACPefCfjSLqI";
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const TABLE = "leaderboard";
-    // JOUW Edge Function (naam: quick-service)
+    // JOUW Edge Function
     const EDGE_FN_URL = "https://aiawteejixsgsunmefpi.supabase.co/functions/v1/quick-service";
 
     // Solana
@@ -161,10 +166,9 @@
     const connection = new Connection(RPC_URL, "confirmed");
     const CBS_MINT = new PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
     const TREASURY = new PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
-    const CBS_DECIMALS = 9;           // number
-    const ENTRY_CBS = 10;             // number of CBS
+    const CBS_DECIMALS = 9;
+    const ENTRY_CBS = 10;
     let walletPK = null;
-    // Payment/run state
     let paidSig  = null; // vers betaalbewijs, nog niet gebruikt
     let roundSig = null; // geconsumeerd voor huidige run
 
@@ -173,6 +177,7 @@
     const connectBtn = $("connectBtn"), payBtn = $("payBtn"), startBtn = $("startBtn");
     const overlay = $("nameOverlay"), nameInput = $("nameInput"), err = $("error"), saveBtn = $("saveBtn"), cancelBtn = $("cancelBtn");
     const tbody = $("leaderboardBody"), lbNote = $("lbNote");
+    const gameWrap = $("gameWrap");
 
     // Init button states
     payBtn.disabled = true;   // pas na connect
@@ -244,8 +249,26 @@
       b.addEventListener('touchstart',e=>{ e.preventDefault(); set(b.dataset.dir); },{passive:false});
     });
 
+    /******** HELPER: focus op game ********/
+    function scrollToGame(){
+      const y = gameWrap.getBoundingClientRect().top + window.scrollY - 8;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+      // extra nudge voor mobiele browsers om addressbar te verbergen
+      setTimeout(()=> window.scrollTo({ top: y, behavior: 'smooth' }), 250);
+    }
+    function enterPlayMode(){
+      document.body.classList.add('play-mode');
+      scrollToGame();
+    }
+    function exitPlayMode(){
+      document.body.classList.remove('play-mode');
+      // optioneel terug omhoog: window.scrollTo({ top: 0, behavior:'smooth' });
+    }
+
     /******** WALLET / PAYMENT ********/
     function provider(){ return window.solana?.isPhantom ? window.solana : null; }
+
+    const connectBtn = $("connectBtn"), payBtn = $("payBtn"), startBtn = $("startBtn");
 
     connectBtn.addEventListener("click", async ()=>{
       try{
@@ -281,11 +304,14 @@
         const { signature } = await p.signAndSendTransaction(tx);
         await connection.confirmTransaction(signature, "confirmed");
 
-        // betaling geslaagd -> klaar om te starten
+        // betaling geslaagd → direct focus op game & auto-start
         paidSig = signature;
-        roundSig = null;
-        startBtn.disabled = false;     // gebruiker mag nu starten
-        alert("Payment confirmed. Press START to play!");
+        roundSig = paidSig; // consumeer meteen voor deze run
+        paidSig = null;
+
+        enterPlayMode();     // verberg header/controls, scroll naar canvas
+        startBtn.disabled = true;
+        start();             // meteen spelen
       }catch(e){
         console.error(e);
         alert("Payment failed. Please try again.");
@@ -294,17 +320,19 @@
       }
     });
 
-    // Start: alleen met verse betaling
+    // (Start-knop blijft als fallback, maar werkt alleen na betaling)
     startBtn.addEventListener("click", ()=>{
       if(!walletPK) return alert("Connect your wallet first.");
       if(!paidSig)  return alert("Please pay 10 CBS first.");
-      // consumeer betaling
       roundSig = paidSig; paidSig = null;
-      startBtn.disabled = true; // tijdens run niet opnieuw starten
+      startBtn.disabled = true;
+      enterPlayMode();
       start();
     });
 
     /******** NAME / SAVE (Edge Function) ********/
+    const overlay = $("nameOverlay"), nameInput = $("nameInput"), err = $("error"), saveBtn = $("saveBtn"), cancelBtn = $("cancelBtn");
+
     function openNameModal(sc){
       overlay.style.display="flex";
       nameInput.value=""; err.style.display="none"; nameInput.focus();
@@ -312,9 +340,10 @@
     }
     cancelBtn.addEventListener("click", ()=>{
       overlay.style.display="none";
-      // ronde afgesloten zonder opslaan -> nieuwe betaling nodig
+      // ronde afgesloten zonder opslaan → nieuwe betaling nodig
       roundSig = null;
       startBtn.disabled = true;
+      exitPlayMode();
     });
 
     async function submitName(){
@@ -334,9 +363,10 @@
         console.error(e);
         alert("Saving failed (payment proof required).");
       }finally{
-        // ronde afgelopen -> opnieuw betalen
+        // ronde afgelopen → opnieuw betalen
         roundSig = null;
         startBtn.disabled = true;
+        exitPlayMode();
         renderTop3();
       }
     }
@@ -346,11 +376,18 @@
     /******** LEADERBOARD (Top-3) ********/
     function escapeHtml(s){ return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
     async function renderTop3(){
+      const tbody = document.getElementById("leaderboardBody");
+      const lbNote = document.getElementById("lbNote");
       tbody.innerHTML = "<tr><td colspan='3' class='muted'>Loading…</td></tr>"; lbNote.style.display="none";
       try{
         const { data, error } = await sb.from(TABLE).select("*").order("score",{ascending:false}).order("created_at",{ascending:true}).limit(3);
         if(error) throw error;
-        tbody.innerHTML=""; (data||[]).forEach((r,i)=>{ const tr=document.createElement("tr"); tr.innerHTML = `<td>${i+1}</td><td>${escapeHtml((r.name||"").toString().slice(0,30)||"Anonymous")}</td><td>${Number(r.score)||0}</td>`; tbody.appendChild(tr); });
+        tbody.innerHTML="";
+        (data||[]).forEach((r,i)=>{
+          const tr=document.createElement("tr");
+          tr.innerHTML = `<td>${i+1}</td><td>${escapeHtml((r.name||"").toString().slice(0,30)||"Anonymous")}</td><td>${Number(r.score)||0}</td>`;
+          tbody.appendChild(tr);
+        });
       }catch(e){
         console.warn("Cloud leaderboard failed:", e);
         lbNote.style.display="block"; tbody.innerHTML = "<tr><td colspan='3' class='muted'>No data</td></tr>";
@@ -362,4 +399,5 @@
   </script>
 </body>
 </html>
+
 
