@@ -129,27 +129,35 @@
   <script>
     // ====== CONFIG ======
     const CBS_MINT = new solanaWeb3.PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"); // CBS mint
-    const TREASURY_WALLET = new solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg"); // <-- eventueel aanpassen
+    const TREASURY_WALLET = new solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg"); // ontvangstadres
     const ENTRY_CBS = 100n; // 100 CBS per spel
 
+    // ---- RPC: zet hier je eigen RPC of gebruik ?rpc=
+    const RPC_URL_DEFAULT = "https://api.mainnet-beta.solana.com"; // vervang door je Helius/QuickNode als je wilt
+    const RPC_URL = new URLSearchParams(location.search).get("rpc") || RPC_URL_DEFAULT;
+
+    const web3 = solanaWeb3;
+    const TOKEN_PROGRAM_ID = new web3.PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
+    const ASSOCIATED_TOKEN_PROGRAM_ID = new web3.PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
+
+    const connection = new web3.Connection(RPC_URL, "confirmed");
+
+    // ===== Supabase (Top-3) =====
     const SUPABASE_URL = "https://aiawteejixsgsunmefpi.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpYXd0ZWVqaXhzZ3N1bm1lZnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NDExODIsImV4cCI6MjA3MTAxNzE4Mn0.aMbRUM0YebNMfZhSLb9PFdSHAZ-D5WpACPefCfjSLqI";
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const TABLE = "leaderboard";
 
-    // ====== Solana helpers ======
-    const web3 = solanaWeb3;
-    const TOKEN_PROGRAM_ID = new web3.PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
-    const ASSOCIATED_TOKEN_PROGRAM_ID = new web3.PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
-    const connection = new web3.Connection("https://api.mainnet-beta.solana.com", "confirmed");
-
-    async function connectWallet(){
+    // ====== Wallet helpers ======
+    async function ensureWallet(){
       if(!(window.solana && window.solana.isPhantom)){
         alert("Phantom Wallet not found.");
         throw new Error("No Phantom");
       }
-      const r = await window.solana.connect();
-      return r.publicKey;
+      if(!window.solana.isConnected || !window.solana.publicKey){
+        await window.solana.connect();
+      }
+      return window.solana.publicKey;
     }
 
     function getAtaAddress(mint, owner){
@@ -160,20 +168,24 @@
     }
 
     async function getMintDecimals(mint){
-      const info = await connection.getParsedAccountInfo(mint);
-      const decimals = info?.value?.data?.parsed?.info?.decimals;
-      if(typeof decimals !== "number") throw new Error("Cannot fetch mint decimals");
-      return decimals;
+      try{
+        const info = await connection.getParsedAccountInfo(mint);
+        const d = info?.value?.data?.parsed?.info?.decimals;
+        return (typeof d === "number") ? d : 9; // fallback
+      }catch{ return 9; }
     }
 
     async function getTokenBalance(owner, mint){
-      const res = await connection.getParsedTokenAccountsByOwner(owner, { mint });
-      if(!res.value.length) return 0n;
-      const amt = res.value[0].account.data.parsed.info.tokenAmount.amount; // string of raw units
-      try{ return BigInt(amt); }catch{ return 0n; }
+      try{
+        const res = await connection.getParsedTokenAccountsByOwner(owner, { mint });
+        if(!res.value.length) return 0n;
+        const amt = res.value[0].account.data.parsed.info.tokenAmount.amount; // string
+        return BigInt(amt);
+      }catch{ return 0n; }
     }
 
     function createATAIx(payer, ata, owner, mint){
+      // Standaard volgorde (zonder rent sysvar)
       return new web3.TransactionInstruction({
         programId: ASSOCIATED_TOKEN_PROGRAM_ID,
         keys: [
@@ -183,26 +195,22 @@
           {pubkey:mint, isSigner:false, isWritable:false},
           {pubkey:web3.SystemProgram.programId, isSigner:false, isWritable:false},
           {pubkey:TOKEN_PROGRAM_ID, isSigner:false, isWritable:false},
-          {pubkey:web3.SYSVAR_RENT_PUBKEY, isSigner:false, isWritable:false},
         ],
-        data: new Uint8Array([]) // Create ATA = empty data
+        data: new Uint8Array([]) // create ATA
       });
     }
 
-    function u64LE(n){ // BigInt -> 8 bytes little-endian
-      const out = new Uint8Array(8);
-      let x = BigInt(n);
+    function u64LE(n){
+      const out = new Uint8Array(8); let x = BigInt(n);
       for(let i=0;i<8;i++){ out[i] = Number(x & 0xffn); x >>= 8n; }
       return out;
     }
 
     function transferCheckedIx(source, mint, dest, owner, amount, decimals){
-      // SPL Token Instruction: TransferChecked (index = 12)
       const data = new Uint8Array(1 + 8 + 1);
       data[0] = 12; // TransferChecked
       data.set(u64LE(amount), 1);
-      data[1+8] = decimals;
-
+      data[9] = decimals & 0xff;
       return new web3.TransactionInstruction({
         programId: TOKEN_PROGRAM_ID,
         keys: [
@@ -216,11 +224,11 @@
     }
 
     async function payEntry(){
-      const owner = await connectWallet();
+      const owner = await ensureWallet();
       const decimals = await getMintDecimals(CBS_MINT);
       const fee = ENTRY_CBS * (10n ** BigInt(decimals));
 
-      // check balance
+      // heeft speler genoeg CBS?
       const bal = await getTokenBalance(owner, CBS_MINT);
       if(bal < fee){
         alert("Not enough CBS to play. Need 100 CBS.");
@@ -243,21 +251,34 @@
       tx.recentBlockhash = blockhash;
 
       let sig;
-      if(window.solana.signAndSendTransaction){
-        sig = await window.solana.signAndSendTransaction(tx);
-        if(typeof sig === "object" && sig.signature) sig = sig.signature;
-      }else{
-        sig = await window.solana.sendTransaction(tx, connection);
+      try{
+        if(window.solana.signAndSendTransaction){
+          const res = await window.solana.signAndSendTransaction(tx);
+          sig = typeof res === "object" ? (res.signature || res) : res;
+        }else{
+          sig = await window.solana.sendTransaction(tx, connection);
+        }
+      }catch(e){
+        console.error("User rejected or wallet error:", e);
+        return false;
       }
-      await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, "confirmed");
+
+      try{
+        await connection.confirmTransaction({ signature: sig, blockhash, lastValidBlockHeight }, "confirmed");
+      }catch(e){
+        console.warn("Confirm failed (RPC?). Proceeding anyway:", e);
+      }
       return true;
     }
 
-    // ====== Game (always wrap walls, fixed speed) ======
+    // ====== Game (wrap walls, fixed speed) ======
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
     const box = 20;
     let snake, direction, nextDir, food, score, loop=null;
+
+    // Watermark logo
+    const wmLogo = new Image(); wmLogo.src = "logo.png";
 
     const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
     const dpad = document.getElementById("dpad");
@@ -269,6 +290,8 @@
       food=randFood(); score=0;
       renderFrame();
     }
+    function stopLoop(){ if(loop){ clearInterval(loop); loop=null; } }
+    function startLoop(){ stopLoop(); loop = setInterval(step, 100); }
 
     function randFood(){ return { x: Math.floor(Math.random()*20)*box, y: Math.floor(Math.random()*20)*box }; }
 
@@ -345,7 +368,7 @@
       if(direction==="RIGHT") x+=box;
       if(direction==="DOWN") y+=box;
 
-      // Always WRAP through walls
+      // Always wrap
       const W = canvas.width, H = canvas.height;
       if(x < 0) x = W - box; else if(x >= W) x = 0;
       if(y < 0) y = H - box; else if(y >= H) y = 0;
@@ -371,14 +394,25 @@
     }
 
     function renderFrame(){
+      // bg
       ctx.fillStyle="#000"; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+      // watermark (achtergrond)
+      if(wmLogo.complete){
+        const s = Math.min(canvas.width, canvas.height) * 0.75;
+        const x = (canvas.width - s)/2, y = (canvas.height - s)/2;
+        ctx.save(); ctx.globalAlpha = 0.06;
+        ctx.drawImage(wmLogo, x, y, s, s);
+        ctx.restore();
+      }
+
+      // coin + snake
       drawCoin(food.x, food.y, box);
       for(let i=snake.length-1;i>=0;i--) drawNeonSegment(snake[i].x, snake[i].y, box, i===0);
+
+      // score
       ctx.fillStyle="#fff"; ctx.font="18px Orbitron"; ctx.fillText("Score: "+score, box, 20);
     }
-
-    function startLoop(){ stopLoop(); loop = setInterval(step, 100); }
-    function stopLoop(){ if(loop){ clearInterval(loop); loop=null; } }
 
     // ===== Name overlay & Supabase save =====
     const overlay = document.getElementById("nameOverlay");
@@ -388,6 +422,8 @@
     const cancelBtn = document.getElementById("cancelBtn");
     const lbNote = document.getElementById("lbNote");
 
+    let pendingScore = null, saving = false, savingTimeout = null;
+
     function onGameOver(sc){
       pendingScore = Number.isFinite(sc) ? sc : 0;
       overlay.style.display = "flex";
@@ -395,8 +431,6 @@
       setTimeout(()=>nameInput.focus(), 30);
     }
     function cancelName(){ overlay.style.display = "none"; pendingScore = null; }
-
-    let pendingScore = null, saving = false, savingTimeout = null;
 
     async function submitName(){
       if(saving) return;
@@ -484,16 +518,30 @@
     payPlayBtn.addEventListener("click", async ()=>{
       payPlayBtn.disabled = true; payPlayBtn.textContent = "Processing…";
       try{
+        // check wallet status UI
+        if(window.solana?.isConnected){ payPlayBtn.textContent = "Processing… (wallet connected)"; }
         const ok = await payEntry();
-        if(!ok){ payPlayBtn.disabled = false; payPlayBtn.textContent = "💳 Pay 100 CBS & Play"; return; }
+        if(!ok){
+          payPlayBtn.disabled = false; payPlayBtn.textContent = "💳 Pay 100 CBS & Play"; return;
+        }
         initGame(); startLoop();
-        payPlayBtn.textContent = "💳 Pay 100 CBS & Play"; // volgende keer opnieuw betalen
+        payPlayBtn.textContent = "💳 Pay 100 CBS & Play"; // voor de volgende ronde
         payPlayBtn.disabled = false;
       }catch(e){
         console.error(e);
-        alert("Payment failed or cancelled.");
+        const msg = (e?.message || "").toLowerCase();
+        if (msg.includes("403") || msg.includes("forbidden")){
+          alert("RPC blocked (403). Open with your RPC: ?rpc=https://rpc.helius.xyz/?api-key=YOUR_KEY");
+        }else{
+          alert("Payment failed or cancelled.");
+        }
         payPlayBtn.disabled = false; payPlayBtn.textContent = "💳 Pay 100 CBS & Play";
       }
+    });
+
+    // Wallet status hint op de knop
+    window.solana?.on?.("connect", () => {
+      payPlayBtn.textContent = "✅ Wallet ready • Pay 100 CBS & Play";
     });
 
     // ===== Initial load =====
