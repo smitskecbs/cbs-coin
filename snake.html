@@ -2,31 +2,93 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <title>CBS Snake Game</title>
   <link rel="icon" href="logo.png" type="image/png">
   <style>
-    :root { --bg1:#0f0f0f; --bg2:#1a1a1a; --fg:#00ffcc; --accent:#00ffff; --panel:#111; --border:#00ffcc; }
+    :root{
+      --bg1:#0b0b0b; --bg2:#141414; --fg:#eafffb; --accent:#00ffff;
+      --panel:#0e0f12; --border:#00ffcc; --muted:#9aa;
+      --glow: 0 0 22px rgba(0,255,204,.35);
+    }
     *{box-sizing:border-box}
-    body{margin:0;font-family:'Orbitron',sans-serif;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:var(--fg);display:flex;flex-direction:column;align-items:center;padding:1rem;min-height:100vh}
-    header{display:flex;align-items:center;gap:1rem;margin-bottom:1rem;flex-wrap:wrap;text-align:center;justify-content:center}
-    header img{height:50px}
-    h1{font-size:clamp(1.5rem,4vw,2rem);color:var(--accent)}
-    .panel{background:var(--panel);border:2px solid var(--border);border-radius:1rem;padding:1rem;margin:0.5rem;box-shadow:0 0 20px rgba(0,255,204,0.3);max-width:95vw;width:100%;max-width:640px}
-    canvas{display:block;margin:0 auto;border:2px solid var(--accent);width:100%;max-width:400px;height:auto;background:#000;touch-action:none}
-    button{background:var(--fg);color:#000;border:none;padding:0.8rem 1.5rem;border-radius:0.5rem;cursor:pointer;font-weight:bold;margin:0.5rem;font-size:1rem}
-    button:hover{background:var(--accent)}
-    button[disabled]{opacity:.6;cursor:not-allowed}
-    #boardWrap{margin-top:1rem;overflow-x:auto}
-    table{width:100%;border-collapse:collapse;font-size:clamp(0.8rem,2vw,1rem)}
-    th,td{padding:0.5rem;border-bottom:1px solid var(--border);text-align:center}
-    .muted{color:#9aa}
-    /* Name overlay */
-    #nameOverlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50;}
-    #nameCard{background:#111;border:2px solid var(--border);border-radius:12px;padding:1rem 1.25rem;box-shadow:0 0 18px rgba(0,255,204,.35);width:min(92vw,420px);}
-    #nameInput{width:100%;padding:.75rem 1rem;border:2px solid var(--border);border-radius:.6rem;background:#000;color:#fff;font-family:inherit;font-size:1rem;}
-    #error{color:#ff5d7a;font-size:.85rem;margin-top:.35rem;display:none}
+    html,body{height:100%}
+    body{
+      margin:0;font-family:'Orbitron',system-ui,Segoe UI,Roboto,Arial,sans-serif;
+      background:
+        radial-gradient(1200px 600px at 10% 0%, #07222620 0%, transparent 50%),
+        radial-gradient(1200px 600px at 90% 100%, #004c4c20 0%, transparent 50%),
+        linear-gradient(135deg,var(--bg1),var(--bg2));
+      color:var(--fg);display:flex;flex-direction:column;align-items:center;
+      padding:clamp(.75rem,2vw,1.25rem);min-height:100vh
+    }
+    header{display:flex;align-items:center;gap:.8rem;margin:.4rem 0 1rem;flex-wrap:wrap;justify-content:center;text-align:center}
+    header img{height:48px;filter:drop-shadow(0 0 8px rgba(0,255,255,.25))}
+    h1{font-size:clamp(1.4rem,4.5vw,2rem);color:var(--accent);letter-spacing:.5px;text-shadow:0 0 10px rgba(0,255,255,.25)}
+    .panel{
+      background:linear-gradient(180deg,#0e1114,#0b0c0f);
+      border:1.5px solid var(--border);border-radius:16px;padding:1rem;margin:.6rem;
+      box-shadow:var(--glow);width:100%;max-width:680px
+    }
+    .controls{
+      display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;justify-content:center;margin:.25rem 0 .5rem
+    }
+    .control{
+      display:flex;gap:.5rem;align-items:center;background:#0b0e10;border:1px solid #1c2e2e;padding:.5rem .75rem;border-radius:12px;
+      box-shadow: 0 0 10px rgba(0,255,204,.12) inset;
+      font-size:.95rem
+    }
+    .control label{opacity:.9}
+    select, input[type="checkbox"]{
+      accent-color:#00e5ff;
+    }
+    select{
+      background:#000;border:1px solid var(--border);color:#fff;border-radius:10px;padding:.35rem .6rem;font-family:inherit
+    }
+    .btn{
+      background:linear-gradient(180deg,#00ffe0,#00c8ff);
+      color:#001014;border:none;padding:.8rem 1.3rem;border-radius:.8rem;cursor:pointer;font-weight:700;
+      font-size:1rem;box-shadow:0 6px 22px rgba(0,255,224,.25), inset 0 0 0 2px rgba(0,0,0,.1)
+    }
+    .btn:hover{filter:brightness(1.05)}
+    .btn[disabled]{opacity:.6;cursor:not-allowed}
+    canvas{
+      display:block;margin:.4rem auto;border:2px solid var(--accent);border-radius:12px;
+      width:100%;max-width:440px;height:auto;background:#000;touch-action:none;
+      box-shadow: 0 0 18px rgba(0,255,255,.25)
+    }
+
+    /* D-PAD mobile controls */
+    .dpad{
+      display:none; /* default verborgen op desktop */
+      position:sticky;bottom:env(safe-area-inset-bottom,10px);
+      margin: .25rem auto 0;max-width:440px;padding:.4rem 0
+    }
+    .dgrid{
+      display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;justify-items:center;align-items:center
+    }
+    .dirbtn{
+      width:80px;height:80px;border-radius:16px;border:1px solid #1c2e2e;background:#0a0e11;color:#dff;
+      font-size:1.3rem;font-weight:700;cursor:pointer;
+      box-shadow: inset 0 0 18px rgba(0,255,224,.12), 0 0 14px rgba(0,255,224,.12)
+    }
+    .dirbtn:active{transform:scale(.97);filter:brightness(1.15)}
+    .dirbtn.empty{visibility:hidden}
+
+    table{width:100%;border-collapse:collapse;font-size:clamp(.9rem,2.2vw,1rem)}
+    th,td{padding:.55rem;border-bottom:1px solid #1c2e2e;text-align:center}
+    .muted{color:var(--muted)}
+    /* Overlay */
+    #nameOverlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:50}
+    #nameCard{background:#0e1114;border:1.5px solid var(--border);border-radius:14px;padding:1rem 1.1rem;box-shadow:var(--glow);width:min(92vw,420px)}
+    #nameInput{width:100%;padding:.75rem 1rem;border:1.5px solid var(--border);border-radius:.6rem;background:#000;color:#fff;font-family:inherit;font-size:1rem}
+    #error{color:#ff6e8a;font-size:.85rem;margin-top:.35rem;display:none}
     #saveBtn{min-width:6rem}
+    /* Small tweaks for small screens */
+    @media (max-width:520px){
+      .dirbtn{width:74px;height:74px}
+      .btn{padding:.75rem 1.1rem}
+    }
   </style>
 </head>
 <body>
@@ -35,15 +97,44 @@
     <h1>CBS Snake Game</h1>
   </header>
 
-  <div style="margin-bottom:1rem;">
-    <button onclick="connectWallet()">🔗 Connect Wallet</button>
-  </div>
-
   <div class="panel">
-    <p style="text-align:center;"><strong>Entry fee:</strong> 100 CBS <span class="muted">(demo mode, free play)</span></p>
-    <canvas id="gameCanvas" width="400" height="400"></canvas>
-    <div style="text-align:center;">
-      <button id="playBtn" onclick="startGame()">▶️ Play Snake</button>
+    <div class="controls">
+      <button id="playBtn" class="btn">▶️ Play</button>
+      <div class="control">
+        <label for="speed">Speed</label>
+        <select id="speed">
+          <option value="130">Easy</option>
+          <option value="100" selected>Normal</option>
+          <option value="80">Fast</option>
+        </select>
+      </div>
+      <div class="control">
+        <label for="wrap">Wrap walls</label>
+        <input id="wrap" type="checkbox">
+      </div>
+      <div class="control">
+        <label for="showPad">On-screen controls</label>
+        <input id="showPad" type="checkbox">
+      </div>
+    </div>
+
+    <p style="text-align:center;margin:.2rem 0 .4rem">
+      <strong>Entry fee:</strong> 100 CBS <span class="muted">(demo mode, free play)</span>
+    </p>
+
+    <canvas id="gameCanvas" width="400" height="400" aria-label="Snake game board"></canvas>
+
+    <!-- D-PAD -->
+    <div id="dpad" class="dpad" aria-label="On-screen controls">
+      <div class="dgrid">
+        <button class="dirbtn empty" tabindex="-1" aria-hidden="true">•</button>
+        <button id="btnUp" class="dirbtn" aria-label="Up">▲</button>
+        <button class="dirbtn empty" tabindex="-1" aria-hidden="true">•</button>
+
+        <button id="btnLeft" class="dirbtn" aria-label="Left">◀</button>
+        <button id="btnDown" class="dirbtn" aria-label="Down">▼</button>
+        <button id="btnRight" class="dirbtn" aria-label="Right">▶</button>
+      </div>
     </div>
   </div>
 
@@ -57,7 +148,7 @@
     <p id="lbNote" class="muted" style="display:none;margin-top:.5rem;text-align:center">Showing local scores (cloud unavailable).</p>
   </div>
 
-  <!-- Name input overlay (shown after game over) -->
+  <!-- Name input overlay -->
   <div id="nameOverlay">
     <div id="nameCard">
       <h3 style="margin:.2rem 0 .6rem;color:var(--accent)">Save your score</h3>
@@ -65,8 +156,8 @@
       <input id="nameInput" maxlength="30" placeholder="Your name or wallet…" autocomplete="off" />
       <div id="error">Name is required.</div>
       <div style="margin-top:.8rem;text-align:right">
-        <button id="saveBtn" onclick="submitName()">Save</button>
-        <button onclick="cancelName()" style="background:#333;color:#ddd">Cancel</button>
+        <button id="saveBtn" class="btn" style="padding:.6rem 1rem">Save</button>
+        <button id="cancelBtn" class="btn" style="background:#2c2f33;color:#dfe;box-shadow:none;border:1px solid #1c2e2e">Cancel</button>
       </div>
     </div>
   </div>
@@ -78,15 +169,57 @@
     const SUPABASE_URL = "https://aiawteejixsgsunmefpi.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpYXd0ZWVqaXhzZ3N1bm1lZnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NDExODIsImV4cCI6MjA3MTAxNzE4Mn0.aMbRUM0YebNMfZhSLb9PFdSHAZ-D5WpACPefCfjSLqI";
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const TABLE = "leaderboard"; // kolommen: id uuid, name text, score int/int8, created_at timestamptz default now()
+    const TABLE = "leaderboard";
 
     // ===== Game state =====
     const canvas = document.getElementById("gameCanvas");
     const ctx = canvas.getContext("2d");
     const box = 20;
-    let snake, direction, food, score, game;
+
+    let snake, direction, nextDir, food, score, game;
     let pendingScore = null;
     let saving = false;
+
+    // Preferences
+    const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    const getPref = (k, d) => { try{ const v = localStorage.getItem("cbs_"+k); return v===null? d : JSON.parse(v);}catch{return d;} };
+    const setPref = (k, v) => { try{ localStorage.setItem("cbs_"+k, JSON.stringify(v)); }catch{} };
+
+    const speedSel = document.getElementById("speed");
+    const wrapChk  = document.getElementById("wrap");
+    const padChk   = document.getElementById("showPad");
+    const dpad     = document.getElementById("dpad");
+
+    // defaults
+    speedSel.value = String(getPref("speed", isTouch ? 130 : 100));
+    wrapChk.checked = !!getPref("wrap", isTouch ? true : false);
+    padChk.checked  = !!getPref("pad",  isTouch ? true : false);
+    dpad.style.display = padChk.checked ? "block" : "none";
+
+    speedSel.addEventListener("change", ()=>{ setPref("speed", Number(speedSel.value)); if(game) restartWithNewSpeed(); });
+    wrapChk.addEventListener("change", ()=> setPref("wrap", wrapChk.checked));
+    padChk.addEventListener("change", ()=>{ setPref("pad", padChk.checked); dpad.style.display = padChk.checked?"block":"none"; });
+
+    // Buttons
+    document.getElementById("playBtn").addEventListener("click", startGame);
+    document.getElementById("saveBtn").addEventListener("click", submitName);
+    document.getElementById("cancelBtn").addEventListener("click", cancelName);
+
+    // D-pad handlers
+    const btnUp = document.getElementById("btnUp");
+    const btnDown = document.getElementById("btnDown");
+    const btnLeft = document.getElementById("btnLeft");
+    const btnRight = document.getElementById("btnRight");
+    function setDir(d){
+      const opp = {LEFT:"RIGHT",RIGHT:"LEFT",UP:"DOWN",DOWN:"UP"};
+      if(direction && d===opp[direction]) return; // prevent 180°
+      nextDir = d;
+    }
+    [btnUp,btnDown,btnLeft,btnRight].forEach((b)=>{
+      if(!b) return;
+      b?.addEventListener("click", ()=> setDir(b===btnUp?"UP":b===btnDown?"DOWN":b===btnLeft?"LEFT":"RIGHT"));
+      b?.addEventListener("touchstart", (e)=>{ e.preventDefault(); setDir(b===btnUp?"UP":b===btnDown?"DOWN":b===btnLeft?"LEFT":"RIGHT"); }, {passive:false});
+    });
 
     // Fallback lokale scores
     function getLocalScores(){
@@ -106,30 +239,29 @@
 
     function initGame(){
       snake=[{x:10*box,y:10*box}];
-      direction=null;
+      direction=null; nextDir=null;
       food=randFood();
       score=0;
     }
 
     document.addEventListener("keydown", e=>{
-      if(e.key==="ArrowLeft" && direction!=="RIGHT") direction="LEFT";
-      else if(e.key==="ArrowUp" && direction!=="DOWN") direction="UP";
-      else if(e.key==="ArrowRight" && direction!=="LEFT") direction="RIGHT";
-      else if(e.key==="ArrowDown" && direction!=="UP") direction="DOWN";
+      if(e.key==="ArrowLeft")  setDir("LEFT");
+      else if(e.key==="ArrowUp")    setDir("UP");
+      else if(e.key==="ArrowRight") setDir("RIGHT");
+      else if(e.key==="ArrowDown")  setDir("DOWN");
     });
 
-    // Tap controls
+    // Swipe/tap fallback on canvas
     canvas.addEventListener("touchstart", e=>{
+      if(!isTouch) return;
       e.preventDefault();
       const r=canvas.getBoundingClientRect();
       const cx=r.left+r.width/2, cy=r.top+r.height/2;
       const dx=e.changedTouches[0].clientX-cx, dy=e.changedTouches[0].clientY-cy;
       if(Math.abs(dx)>Math.abs(dy)){
-        if(dx>0 && direction!=="LEFT") direction="RIGHT";
-        else if(dx<0 && direction!=="RIGHT") direction="LEFT";
+        setDir(dx>0?"RIGHT":"LEFT");
       }else{
-        if(dy>0 && direction!=="UP") direction="DOWN";
-        else if(dy<0 && direction!=="DOWN") direction="UP";
+        setDir(dy>0?"DOWN":"UP");
       }
     }, {passive:false});
 
@@ -195,22 +327,29 @@
       ctx.restore();
     }
 
-    function draw(){
-      // background
-      ctx.fillStyle="#000";
-      ctx.fillRect(0,0,canvas.width,canvas.height);
+    function step(){
+      // apply pending direction at tick start (prevents 180°)
+      if(nextDir) { direction = nextDir; nextDir = null; }
 
-      // move
+      // compute next head
       let x=snake[0].x, y=snake[0].y;
       if(direction==="LEFT") x-=box;
       if(direction==="UP")   y-=box;
       if(direction==="RIGHT")x+=box;
       if(direction==="DOWN") y+=box;
 
+      // wrap walls if enabled
+      if(wrapChk.checked){
+        const W = canvas.width, H = canvas.height;
+        if(x < 0) x = W - box; else if(x >= W) x = 0;
+        if(y < 0) y = H - box; else if(y >= H) y = 0;
+      }
+
       // eat
       if(x===food.x && y===food.y){
         score++;
         food=randFood();
+        if(navigator.vibrate) navigator.vibrate(15);
       }else{
         snake.pop();
       }
@@ -218,10 +357,11 @@
       const head={x,y};
 
       // collisions
-      const hitWall = x<0||y<0||x>=canvas.width||y>=canvas.height;
+      const hitWall = !wrapChk.checked && (x<0||y<0||x>=canvas.width||y>=canvas.height);
       const hitSelf = snake.some(s=>s.x===x&&s.y===y);
       if(hitWall || hitSelf){
-        clearInterval(game);
+        stopGame();
+        if(navigator.vibrate) navigator.vibrate(60);
         onGameOver(score);
         renderFrame(); // final frame
         return;
@@ -238,8 +378,7 @@
       drawCoin(food.x, food.y, box);
 
       for(let i=snake.length-1;i>=0;i--){
-        const seg = snake[i];
-        drawNeonSegment(seg.x, seg.y, box, i===0);
+        drawNeonSegment(snake[i].x, snake[i].y, box, i===0);
       }
 
       ctx.fillStyle="#fff";
@@ -249,10 +388,12 @@
 
     function startGame(){
       initGame();
-      clearInterval(game);
-      game=setInterval(draw,100);
+      stopGame();
+      game = setInterval(step, Number(speedSel.value)||100);
       document.getElementById("playBtn").blur();
     }
+    function stopGame(){ if(game){ clearInterval(game); game=null; } }
+    function restartWithNewSpeed(){ if(game){ clearInterval(game); game=setInterval(step, Number(speedSel.value)||100); } }
 
     // ===== Name overlay & saving =====
     const overlay = document.getElementById("nameOverlay");
@@ -266,13 +407,9 @@
       overlay.style.display = "flex";
       nameInput.value = "";
       err.style.display = "none";
-      setTimeout(()=>nameInput.focus(), 50);
+      setTimeout(()=>nameInput.focus(), 30);
     }
-
-    function cancelName(){
-      overlay.style.display = "none";
-      pendingScore = null;
-    }
+    function cancelName(){ overlay.style.display = "none"; pendingScore = null; }
 
     let savingTimeout = null;
     async function submitName(){
@@ -282,9 +419,7 @@
       if(name.length>30){ err.textContent="Max 30 characters."; err.style.display="block"; return; }
 
       err.style.display="none";
-      saveBtn.disabled = true;
-      saving = true;
-
+      saveBtn.disabled = true; saving = true;
       clearTimeout(savingTimeout);
       savingTimeout = setTimeout(()=>{ saving=false; saveBtn.disabled=false; }, 8000);
 
@@ -292,39 +427,24 @@
       overlay.style.display="none";
       try{
         const ok = await saveScoreToCloud(name, sc);
-        if(!ok){
-          putLocalScore(name, sc);
-          alert("Cloud save failed. Saved locally instead.");
-        }
+        if(!ok){ putLocalScore(name, sc); alert("Cloud save failed. Saved locally instead."); }
       }catch{
-        putLocalScore(name, sc);
-        alert("Save failed unexpectedly. Saved locally instead.");
+        putLocalScore(name, sc); alert("Save failed unexpectedly. Saved locally instead.");
       }finally{
         pendingScore = null;
         await renderCloudBoard();
-        saving=false;
-        saveBtn.disabled=false;
-        clearTimeout(savingTimeout);
+        saving=false; saveBtn.disabled=false; clearTimeout(savingTimeout);
       }
     }
-
-    nameInput.addEventListener("keydown", (e)=>{
-      if(e.key==="Enter"){ e.preventDefault(); submitName(); }
-    });
+    nameInput.addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ e.preventDefault(); submitName(); } });
 
     async function saveScoreToCloud(name, score){
       if(!Number.isFinite(score) || score<0) score = 0;
       try{
         const { error } = await sb.from(TABLE).insert([{ name, score }]);
-        if(error){
-          console.error("Supabase insert error:", error);
-          return false;
-        }
+        if(error){ console.error("Supabase insert error:", error); return false; }
         return true;
-      }catch(e){
-        console.error("Supabase insert threw:", e);
-        return false;
-      }
+      }catch(e){ console.error("Supabase insert threw:", e); return false; }
     }
 
     // ===== Leaderboard: ONLY TOP-3 =====
@@ -340,7 +460,7 @@
           .select("*")
           .order("score", { ascending:false })
           .order("created_at", { ascending:true })
-          .limit(3); // <-- alleen top 3
+          .limit(3);
         if(error) throw error;
         rows = data || [];
       }catch(e){
@@ -350,7 +470,7 @@
       if(!rows || rows.length===0){
         const local = getLocalScores()
           .sort((a,b)=> b.score - a.score || new Date(a.created_at)-new Date(b.created_at))
-          .slice(0,3); // lokaal ook top-3
+          .slice(0,3);
         rows = local;
         lbNote.style.display = "block";
       }
@@ -381,10 +501,10 @@
 
     // Initial load
     (async ()=>{ 
-      try{ await renderCloudBoard(); } 
-      catch(e){ console.error(e); }
+      try{ await renderCloudBoard(); } catch(e){ console.error(e); }
       initGame(); renderFrame(); // toon direct een frame
     })();
   </script>
 </body>
 </html>
+
