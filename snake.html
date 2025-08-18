@@ -12,7 +12,6 @@
       --glow: 0 0 22px rgba(0,255,204,.35);
     }
     *{box-sizing:border-box}
-    html,body{height:100%}
     body{
       margin:0;font-family:'Orbitron',system-ui,Segoe UI,Roboto,Arial,sans-serif;
       background:
@@ -42,12 +41,7 @@
       width:100%;max-width:440px;height:auto;background:#000;touch-action:none;
       box-shadow: 0 0 18px rgba(0,255,255,.25)
     }
-    /* D-PAD mobile controls */
-    .dpad{
-      display:none;
-      position:sticky;bottom:env(safe-area-inset-bottom,10px);
-      margin:.3rem auto 0;max-width:440px;padding:.4rem 0
-    }
+    .dpad{display:none;position:sticky;bottom:env(safe-area-inset-bottom,10px);margin:.3rem auto 0;max-width:440px;padding:.4rem 0}
     .dgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;justify-items:center;align-items:center}
     .dirbtn{
       width:80px;height:80px;border-radius:16px;border:1px solid #1c2e2e;background:#0a0e11;color:#dff;
@@ -59,7 +53,6 @@
     table{width:100%;border-collapse:collapse;font-size:clamp(.9rem,2.2vw,1rem)}
     th,td{padding:.55rem;border-bottom:1px solid #1c2e2e;text-align:center}
     .muted{color:var(--muted)}
-    /* Overlay */
     #nameOverlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:50}
     #nameCard{background:#0e1114;border:1.5px solid var(--border);border-radius:14px;padding:1rem 1.1rem;box-shadow:var(--glow);width:min(92vw,420px)}
     #nameInput{width:100%;padding:.75rem 1rem;border:1.5px solid var(--border);border-radius:.6rem;background:#000;color:#fff;font-family:inherit;font-size:1rem}
@@ -78,20 +71,15 @@
     <div style="display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center;align-items:center;margin:.25rem 0 .6rem">
       <button id="payPlayBtn" class="btn">💳 Pay 100 CBS & Play</button>
     </div>
-
     <p style="text-align:center;margin:.2rem 0 .4rem">
       <strong>Entry fee:</strong> 100 CBS <span class="muted">| Monthly prize for best score</span>
     </p>
-
     <canvas id="gameCanvas" width="400" height="400" aria-label="Snake game board"></canvas>
-
-    <!-- D-PAD (auto on touch) -->
     <div id="dpad" class="dpad" aria-label="On-screen controls">
       <div class="dgrid">
         <button class="dirbtn empty" tabindex="-1" aria-hidden="true">•</button>
         <button id="btnUp" class="dirbtn" aria-label="Up">▲</button>
         <button class="dirbtn empty" tabindex="-1" aria-hidden="true">•</button>
-
         <button id="btnLeft" class="dirbtn" aria-label="Left">◀</button>
         <button id="btnDown" class="dirbtn" aria-label="Down">▼</button>
         <button id="btnRight" class="dirbtn" aria-label="Right">▶</button>
@@ -109,7 +97,6 @@
     <p id="lbNote" class="muted" style="display:none;margin-top:.5rem;text-align:center">Showing local scores (cloud unavailable).</p>
   </div>
 
-  <!-- Name input overlay -->
   <div id="nameOverlay">
     <div id="nameCard">
       <h3 style="margin:.2rem 0 .6rem;color:var(--accent)">Save your score</h3>
@@ -130,25 +117,25 @@
     // ====== CONFIG ======
     const CBS_MINT = new solanaWeb3.PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"); // CBS mint
     const TREASURY_WALLET = new solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg"); // ontvangstadres
-    const ENTRY_CBS = 100n; // 100 CBS per spel
+    const ENTRY_CBS = 100n;                            // 100 CBS per spel
+    const DECIMALS_OVERRIDE = null;                    // bv. 6 of 9 om te forceren; laat null om automatisch te bepalen
 
     // ---- RPC: zet hier je eigen RPC of gebruik ?rpc=
-    const RPC_URL_DEFAULT = "https://api.mainnet-beta.solana.com"; // vervang door je Helius/QuickNode als je wilt
+    const RPC_URL_DEFAULT = "https://api.mainnet-beta.solana.com"; // liever: je Helius/QuickNode
     const RPC_URL = new URLSearchParams(location.search).get("rpc") || RPC_URL_DEFAULT;
 
     const web3 = solanaWeb3;
     const TOKEN_PROGRAM_ID = new web3.PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
     const ASSOCIATED_TOKEN_PROGRAM_ID = new web3.PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
-
     const connection = new web3.Connection(RPC_URL, "confirmed");
 
-    // ===== Supabase (Top-3) =====
+    // ===== Supabase =====
     const SUPABASE_URL = "https://aiawteejixsgsunmefpi.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpYXd0ZWVqaXhzZ3N1bm1lZnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NDExODIsImV4cCI6MjA3MTAxNzE4Mn0.aMbRUM0YebNMfZhSLb9PFdSHAZ-D5WpACPefCfjSLqI";
     const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const TABLE = "leaderboard";
 
-    // ====== Wallet helpers ======
+    // ===== Helpers: wallet & tokens =====
     async function ensureWallet(){
       if(!(window.solana && window.solana.isPhantom)){
         alert("Phantom Wallet not found.");
@@ -167,37 +154,25 @@
       )[0];
     }
 
-    async function getMintDecimals(mint){
-      try{
-        const info = await connection.getParsedAccountInfo(mint);
-        const d = info?.value?.data?.parsed?.info?.decimals;
-        return (typeof d === "number") ? d : 9; // fallback
-      }catch{ return 9; }
-    }
-
-    async function getTokenBalance(owner, mint){
+    async function getTokenBalanceAndDecimals(owner, mint){
+      // Probeer eerst via het tokenaccount (bevat decimals) – werkt zelfs bij 0 balance als de ATA bestaat
       try{
         const res = await connection.getParsedTokenAccountsByOwner(owner, { mint });
-        if(!res.value.length) return 0n;
-        const amt = res.value[0].account.data.parsed.info.tokenAmount.amount; // string
-        return BigInt(amt);
-      }catch{ return 0n; }
-    }
-
-    function createATAIx(payer, ata, owner, mint){
-      // Standaard volgorde (zonder rent sysvar)
-      return new web3.TransactionInstruction({
-        programId: ASSOCIATED_TOKEN_PROGRAM_ID,
-        keys: [
-          {pubkey:payer, isSigner:true, isWritable:true},
-          {pubkey:ata, isSigner:false, isWritable:true},
-          {pubkey:owner, isSigner:false, isWritable:false},
-          {pubkey:mint, isSigner:false, isWritable:false},
-          {pubkey:web3.SystemProgram.programId, isSigner:false, isWritable:false},
-          {pubkey:TOKEN_PROGRAM_ID, isSigner:false, isWritable:false},
-        ],
-        data: new Uint8Array([]) // create ATA
-      });
+        if(res.value.length){
+          const info = res.value[0].account.data.parsed.info.tokenAmount;
+          return { balanceRaw: BigInt(info.amount), decimals: Number(info.decimals) };
+        }
+      }catch{}
+      // Fallback (mint lezen) + laatste fallback (9)
+      let decimals = DECIMALS_OVERRIDE;
+      if(decimals == null){
+        try{
+          const info = await connection.getParsedAccountInfo(mint);
+          decimals = info?.value?.data?.parsed?.info?.decimals;
+        }catch{}
+      }
+      if(typeof decimals !== "number") decimals = 9;
+      return { balanceRaw: 0n, decimals };
     }
 
     function u64LE(n){
@@ -207,10 +182,9 @@
     }
 
     function transferCheckedIx(source, mint, dest, owner, amount, decimals){
+      // SPL Token: TransferChecked (idx 12)
       const data = new Uint8Array(1 + 8 + 1);
-      data[0] = 12; // TransferChecked
-      data.set(u64LE(amount), 1);
-      data[9] = decimals & 0xff;
+      data[0] = 12; data.set(u64LE(amount), 1); data[9] = decimals & 0xff;
       return new web3.TransactionInstruction({
         programId: TOKEN_PROGRAM_ID,
         keys: [
@@ -225,28 +199,39 @@
 
     async function payEntry(){
       const owner = await ensureWallet();
-      const decimals = await getMintDecimals(CBS_MINT);
-      const fee = ENTRY_CBS * (10n ** BigInt(decimals));
 
-      // heeft speler genoeg CBS?
-      const bal = await getTokenBalance(owner, CBS_MINT);
-      if(bal < fee){
+      // Kleine SOL-check (fees)
+      const lamports = await connection.getBalance(owner);
+      const SOL = lamports / 1e9;
+      if(SOL < 0.003){
+        alert("You need a little SOL for network fees (~0.001 SOL).");
+        return false;
+      }
+
+      // Bepaal balance & decimals
+      const { balanceRaw, decimals } = await getTokenBalanceAndDecimals(owner, CBS_MINT);
+      const feeRaw = ENTRY_CBS * (10n ** BigInt(decimals));
+
+      if(balanceRaw < feeRaw){
         alert("Not enough CBS to play. Need 100 CBS.");
         return false;
       }
 
-      const ownerAta = getAtaAddress(CBS_MINT, owner);
+      // Treasury ATA moet vooraf bestaan (anders zou speler de ATA betalen)
       const treasuryAta = getAtaAddress(CBS_MINT, TREASURY_WALLET);
-
-      const ixs = [];
       const destInfo = await connection.getAccountInfo(treasuryAta);
       if(!destInfo){
-        ixs.push(createATAIx(owner, treasuryAta, TREASURY_WALLET, CBS_MINT));
+        alert("Treasury CBS account is not initialized yet.\nSend a tiny amount of CBS to the treasury once so its token account exists.");
+        return false;
       }
-      ixs.push(transferCheckedIx(ownerAta, CBS_MINT, treasuryAta, owner, fee, decimals));
+
+      // Source ATA van speler
+      const ownerAta = getAtaAddress(CBS_MINT, owner);
 
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("finalized");
-      const tx = new web3.Transaction().add(...ixs);
+      const tx = new web3.Transaction().add(
+        transferCheckedIx(ownerAta, CBS_MINT, treasuryAta, owner, feeRaw, decimals)
+      );
       tx.feePayer = owner;
       tx.recentBlockhash = blockhash;
 
@@ -277,7 +262,7 @@
     const box = 20;
     let snake, direction, nextDir, food, score, loop=null;
 
-    // Watermark logo
+    // Watermark
     const wmLogo = new Image(); wmLogo.src = "logo.png";
 
     const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
@@ -292,7 +277,6 @@
     }
     function stopLoop(){ if(loop){ clearInterval(loop); loop=null; } }
     function startLoop(){ stopLoop(); loop = setInterval(step, 100); }
-
     function randFood(){ return { x: Math.floor(Math.random()*20)*box, y: Math.floor(Math.random()*20)*box }; }
 
     function setDir(d){
@@ -368,7 +352,7 @@
       if(direction==="RIGHT") x+=box;
       if(direction==="DOWN") y+=box;
 
-      // Always wrap
+      // wrap
       const W = canvas.width, H = canvas.height;
       if(x < 0) x = W - box; else if(x >= W) x = 0;
       if(y < 0) y = H - box; else if(y >= H) y = 0;
@@ -394,10 +378,9 @@
     }
 
     function renderFrame(){
-      // bg
       ctx.fillStyle="#000"; ctx.fillRect(0,0,canvas.width,canvas.height);
 
-      // watermark (achtergrond)
+      // Watermark
       if(wmLogo.complete){
         const s = Math.min(canvas.width, canvas.height) * 0.75;
         const x = (canvas.width - s)/2, y = (canvas.height - s)/2;
@@ -406,15 +389,12 @@
         ctx.restore();
       }
 
-      // coin + snake
       drawCoin(food.x, food.y, box);
       for(let i=snake.length-1;i>=0;i--) drawNeonSegment(snake[i].x, snake[i].y, box, i===0);
-
-      // score
       ctx.fillStyle="#fff"; ctx.font="18px Orbitron"; ctx.fillText("Score: "+score, box, 20);
     }
 
-    // ===== Name overlay & Supabase save =====
+    // ===== Score overlay & Supabase =====
     const overlay = document.getElementById("nameOverlay");
     const nameInput = document.getElementById("nameInput");
     const err = document.getElementById("error");
@@ -445,10 +425,11 @@
       const sc = pendingScore ?? 0;
       overlay.style.display="none";
       try{
-        const ok = await saveScoreToCloud(name, sc);
-        if(!ok){ putLocalScore(name, sc); alert("Cloud save failed. Saved locally instead."); }
+        const { error } = await sb.from(TABLE).insert([{ name, score: sc }]);
+        if(error) throw error;
       }catch{
-        putLocalScore(name, sc); alert("Save failed unexpectedly. Saved locally instead.");
+        putLocalScore(name, sc);
+        alert("Cloud save failed. Saved locally instead.");
       }finally{
         pendingScore = null; await renderCloudBoard();
         saving=false; saveBtn.disabled=false; clearTimeout(savingTimeout);
@@ -458,15 +439,7 @@
     cancelBtn.addEventListener("click", cancelName);
     nameInput.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); submitName(); } });
 
-    async function saveScoreToCloud(name, score){
-      try{
-        const { error } = await sb.from(TABLE).insert([{ name, score }]);
-        if(error){ console.error("Supabase insert error:", error); return false; }
-        return true;
-      }catch(e){ console.error("Supabase insert threw:", e); return false; }
-    }
-
-    // Leaderboard: ONLY TOP-3
+    // Leaderboard Top-3
     async function renderCloudBoard(){
       const tbody=document.getElementById("leaderboardBody");
       tbody.innerHTML = "<tr><td colspan='3' class='muted'>Loading…</td></tr>";
@@ -475,23 +448,17 @@
       let rows=null;
       try{
         const { data, error } = await sb
-          .from(TABLE)
-          .select("*")
+          .from(TABLE).select("*")
           .order("score", { ascending:false })
           .order("created_at", { ascending:true })
           .limit(3);
         if(error) throw error;
         rows = data || [];
-      }catch(e){
-        console.warn("Cloud leaderboard failed, using local:", e);
-      }
+      }catch(e){ console.warn("Cloud leaderboard failed, using local:", e); }
 
       if(!rows || rows.length===0){
-        const local = getLocalScores()
-          .sort((a,b)=> b.score - a.score || new Date(a.created_at)-new Date(b.created_at))
-          .slice(0,3);
-        rows = local;
-        lbNote.style.display = "block";
+        const local = getLocalScores().sort((a,b)=> b.score - a.score || new Date(a.created_at)-new Date(b.created_at)).slice(0,3);
+        rows = local; lbNote.style.display = "block";
       }
 
       tbody.innerHTML="";
@@ -511,21 +478,20 @@
       arr.sort((a,b)=> b.score - a.score || new Date(a.created_at)-new Date(b.created_at));
       localStorage.setItem("cbs_snake_scores", JSON.stringify(arr.slice(0,50)));
     }
-    function escapeHtml(s){ return s.replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m])); }
+    function escapeHtml(s){ return s.replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;","&gt;":"&gt;",'"':"&quot;","'":"&#39;" }[m])); }
 
-    // ===== Pay & Play flow =====
+    // Pay & Play flow
     const payPlayBtn = document.getElementById("payPlayBtn");
     payPlayBtn.addEventListener("click", async ()=>{
       payPlayBtn.disabled = true; payPlayBtn.textContent = "Processing…";
       try{
-        // check wallet status UI
         if(window.solana?.isConnected){ payPlayBtn.textContent = "Processing… (wallet connected)"; }
         const ok = await payEntry();
         if(!ok){
           payPlayBtn.disabled = false; payPlayBtn.textContent = "💳 Pay 100 CBS & Play"; return;
         }
         initGame(); startLoop();
-        payPlayBtn.textContent = "💳 Pay 100 CBS & Play"; // voor de volgende ronde
+        payPlayBtn.textContent = "💳 Pay 100 CBS & Play";
         payPlayBtn.disabled = false;
       }catch(e){
         console.error(e);
@@ -538,17 +504,12 @@
         payPlayBtn.disabled = false; payPlayBtn.textContent = "💳 Pay 100 CBS & Play";
       }
     });
-
-    // Wallet status hint op de knop
     window.solana?.on?.("connect", () => {
       payPlayBtn.textContent = "✅ Wallet ready • Pay 100 CBS & Play";
     });
 
-    // ===== Initial load =====
-    (async ()=>{ 
-      try{ await renderCloudBoard(); } catch(e){ console.error(e); }
-      initGame();
-    })();
+    // Start
+    (async ()=>{ try{ await renderCloudBoard(); }catch(e){ console.error(e); } initGame(); })();
   </script>
 </body>
 </html>
