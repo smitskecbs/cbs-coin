@@ -8,8 +8,7 @@
   <style>
     :root{
       --bg1:#0b0b0b; --bg2:#141414; --fg:#eafffb; --accent:#00ffff;
-      --panel:#0e0f12; --border:#00ffcc; --muted:#9aa;
-      --glow: 0 0 22px rgba(0,255,204,.35);
+      --panel:#0e0f12; --border:#00ffcc; --muted:#9aa; --glow:0 0 22px rgba(0,255,204,.35);
     }
     *{box-sizing:border-box}
     body{
@@ -39,14 +38,12 @@
     .btn:hover{filter:brightness(1.05)}
     .btn[disabled]{opacity:.6;cursor:not-allowed}
     .pill{
-      display:inline-flex;align-items:center;gap:.5rem;
-      background:#0b0f12;border:1px solid #1c2e2e;border-radius:999px;
+      display:inline-flex;align-items:center;gap:.5rem;background:#0b0f12;border:1px solid #1c2e2e;border-radius:999px;
       padding:.45rem .7rem;font-size:.9rem; box-shadow: inset 0 0 10px rgba(0,255,224,.1)
     }
-    .pill a{color:#8ff; text-decoration:none}
     .row{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;align-items:center;margin:.2rem 0 .6rem}
     .rpc-panel{display:none;margin-top:.5rem;padding:.7rem;border-radius:12px;border:1px dashed #1c2e2e;background:#0b0e11}
-    .rpc-panel input{width:min(520px,95%);padding:.6rem .8rem;border-radius:.6rem;border:1px solid var(--border);background:#000;color:#fff}
+    .rpc-panel input{width:min(520px,95%);padding:.6rem .8rem;border-radius:.6rem;border:1.5px solid var(--border);background:#000;color:#fff}
     canvas{
       display:block;margin:.6rem auto;border:2px solid var(--accent);border-radius:12px;
       width:100%;max-width:480px;height:auto;background:#000;touch-action:none;
@@ -56,20 +53,15 @@
     .dgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;justify-items:center;align-items:center}
     .dirbtn{
       width:80px;height:80px;border-radius:16px;border:1px solid #1c2e2e;background:#0a0e11;color:#dff;
-      font-size:1.3rem;font-weight:700;cursor:pointer;
-      box-shadow: inset 0 0 18px rgba(0,255,224,.12), 0 0 14px rgba(0,255,224,.12)
+      font-size:1.3rem;font-weight:700;cursor:pointer;box-shadow: inset 0 0 18px rgba(0,255,224,.12), 0 0 14px rgba(0,255,224,.12)
     }
-    .dirbtn:active{transform:scale(.97);filter:brightness(1.15)}
-    .dirbtn.empty{visibility:hidden}
-    table{width:100%;border-collapse:collapse;font-size:clamp(.9rem,2.2vw,1rem)}
-    th,td{padding:.55rem;border-bottom:1px solid #1c2e2e;text-align:center}
+    .dirbtn:active{transform:scale(.97);filter:brightness(1.15)} .dirbtn.empty{visibility:hidden}
+    table{width:100%;border-collapse:collapse;font-size:clamp(.9rem,2.2vw,1rem)} th,td{padding:.55rem;border-bottom:1px solid #1c2e2e;text-align:center}
     .muted{color:var(--muted)}
     #nameOverlay{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;z-index:50}
     #nameCard{background:#0e1114;border:1.5px solid var(--border);border-radius:14px;padding:1rem 1.1rem;box-shadow:var(--glow);width:min(92vw,420px)}
     #nameInput{width:100%;padding:.75rem 1rem;border:1.5px solid var(--border);border-radius:.6rem;background:#000;color:#fff;font-family:inherit;font-size:1rem}
     #error{color:#ff6e8a;font-size:.85rem;margin-top:.35rem;display:none}
-    #saveBtn{min-width:6rem}
-    @media (max-width:520px){ .dirbtn{width:74px;height:74px} }
   </style>
 </head>
 <body>
@@ -82,13 +74,13 @@
     <!-- STATUS / WALLET / RPC -->
     <div class="row">
       <button id="connectBtn" class="btn secondary">🔗 Connect Phantom</button>
-      <span id="walletPill" class="pill" hidden>Wallet: <b id="walletShort">—</b> · <a href="#" id="copyPk">copy</a></span>
+      <span id="walletPill" class="pill" hidden>Wallet: <b id="walletShort">—</b> <button id="copyPk" class="btn small">copy</button></span>
       <span id="rpcPill" class="pill">RPC: default</span>
       <button id="rpcToggle" class="btn small">⚙️ RPC settings</button>
     </div>
     <div id="rpcPanel" class="rpc-panel">
       <div class="muted" style="margin-bottom:.35rem">
-        Tip: gebruik Helius/QuickNode. Plak hier je URL (we bewaren dit alleen in je browser).
+        Tip: gebruik Helius/QuickNode. We bewaren de URL alleen in je browser.
       </div>
       <input id="rpcInput" placeholder="https://rpc.helius.xyz/?api-key=YOUR_KEY" />
       <div class="row" style="margin-top:.5rem">
@@ -99,10 +91,10 @@
 
     <!-- PAY & PLAY -->
     <div class="row" style="margin:.4rem 0 .2rem">
-      <button id="payPlayBtn" class="btn">💳 Pay 100 CBS & Play</button>
+      <button id="payPlayBtn" class="btn">💳 Pay 10 CBS & Play</button>
     </div>
     <p style="text-align:center;margin:.2rem 0 .4rem">
-      <strong>Entry fee:</strong> 100 CBS <span class="muted">| Monthly prize for best score</span>
+      <strong>Entry fee:</strong> 10 CBS <span class="muted">| Monthly prize for best score</span>
     </p>
 
     <!-- GAME -->
@@ -140,7 +132,7 @@
       <div id="error">Name is required.</div>
       <div style="margin-top:.8rem;text-align:right">
         <button id="saveBtn" class="btn" style="padding:.6rem 1rem">Save</button>
-        <button id="cancelBtn" class="btn" style="background:#2c2f33;color:#dfe;box-shadow:none;border:1px solid #1c2e2e">Cancel</button>
+        <button id="cancelBtn" class="btn" style="background:#2c2f33;color:#dfe;box-shadow:none;border:1px solid #1c2e2e;padding:.6rem 1rem">Cancel</button>
       </div>
     </div>
   </div>
@@ -152,20 +144,25 @@
     // ====== CONFIG ======
     const CBS_MINT = new solanaWeb3.PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
     const TREASURY_WALLET = new solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
-    const ENTRY_CBS = 100n;
-    const DECIMALS_OVERRIDE = null; // laat null voor auto
+    const ENTRY_CBS = 10n;                  // <-- 10 CBS per spel
+    const DECIMALS_OVERRIDE = null;         // laat null voor automatisch
 
-    // RPC: default of via localStorage of ?rpc=
+    // RPC: default / localStorage / ?rpc + optioneel ?api-key
     const RPC_URL_DEFAULT = "https://api.mainnet-beta.solana.com";
-    const fromQS = new URLSearchParams(location.search).get("rpc");
+    const qs = new URLSearchParams(location.search);
+    const fromQS = qs.get("rpc");
     const savedRpc = localStorage.getItem("cbs_rpc");
     let RPC_URL = fromQS || savedRpc || RPC_URL_DEFAULT;
+    const qpKey = qs.get("api-key");
+    if (fromQS && qpKey && !RPC_URL.includes("api-key")) {
+      RPC_URL = `${fromQS}${fromQS.includes("?") ? "&" : "?"}api-key=${qpKey}`;
+    }
 
     // ===== Wallet / RPC UI =====
     const connectBtn = document.getElementById("connectBtn");
     const walletPill = document.getElementById("walletPill");
     const walletShort = document.getElementById("walletShort");
-    const copyPkLink = document.getElementById("copyPk");
+    const copyPkBtn = document.getElementById("copyPk");
     const rpcPill = document.getElementById("rpcPill");
     const rpcPanel = document.getElementById("rpcPanel");
     const rpcToggle = document.getElementById("rpcToggle");
@@ -175,7 +172,8 @@
 
     function abbr(pk){ const s=pk.toString(); return s.slice(0,4)+"…"+s.slice(-4); }
     function setRpcLabel(url){
-      rpcPill.textContent = "RPC: " + (url.startsWith("https://api.mainnet-beta") ? "default" : url.replace(/^https?:\/\//,''));
+      try { rpcPill.textContent = "RPC: " + new URL(url).hostname; }
+      catch { rpcPill.textContent = "RPC: custom"; }
     }
 
     rpcInput.value = RPC_URL;
@@ -226,13 +224,13 @@
         await window.solana.connect(); updateWalletUI();
       }catch(e){ console.warn(e); }
     });
-    copyPkLink.addEventListener("click", (e)=>{
-      e.preventDefault();
+    copyPkBtn.addEventListener("click", ()=>{
       const pk = window.solana?.publicKey?.toString(); if(!pk) return;
       navigator.clipboard?.writeText(pk); alert("Copied wallet address");
     });
     window.solana?.on?.("connect", updateWalletUI);
     window.solana?.on?.("disconnect", updateWalletUI);
+    window.solana?.on?.("accountChanged", updateWalletUI);
     updateWalletUI();
 
     // ===== Supabase =====
@@ -288,7 +286,7 @@
     async function payEntry(){
       const owner = await ensureWallet();
 
-      // Fee check (SOL)
+      // Kleine SOL-check (fee)
       try{
         const lamports = await connection.getBalance(owner);
         if(lamports < 300000){ alert("You need a little SOL for fees (~0.001 SOL)."); return {ok:false}; }
@@ -297,9 +295,9 @@
       // CBS balance & decimals
       const { balanceRaw, decimals } = await getTokenBalanceAndDecimals(owner, CBS_MINT);
       const feeRaw = ENTRY_CBS * (10n ** BigInt(decimals));
-      if(balanceRaw < feeRaw){ alert("Not enough CBS to play. Need 100 CBS."); return {ok:false}; }
+      if(balanceRaw < feeRaw){ alert("Not enough CBS to play. Need 10 CBS."); return {ok:false}; }
 
-      // Treasury ATA moet bestaan
+      // Treasury ATA moet bestaan (anders zou speler de ATA aanmaken & betalen)
       const treasuryAta = getAtaAddress(CBS_MINT, TREASURY_WALLET);
       const destInfo = await connection.getAccountInfo(treasuryAta);
       if(!destInfo){ alert("Treasury CBS account not initialized yet. Send a tiny amount of CBS to the treasury once."); return {ok:false}; }
@@ -308,10 +306,7 @@
 
       let blockhashInfo;
       try { blockhashInfo = await connection.getLatestBlockhash("finalized"); }
-      catch(e){
-        alert("RPC blocked (403). Open with your RPC: ?rpc=https://rpc.helius.xyz/?api-key=YOUR_KEY");
-        throw e;
-      }
+      catch(e){ alert("RPC blocked. Set your own RPC in settings."); throw e; }
 
       const tx = new web3.Transaction().add(
         transferCheckedIx(ownerAta, CBS_MINT, treasuryAta, owner, feeRaw, decimals)
@@ -430,7 +425,7 @@
 
     function renderFrame(){
       ctx.fillStyle="#000"; ctx.fillRect(0,0,canvas.width,canvas.height);
-      // watermark
+      // Watermark
       if(wmLogo.complete){
         const s = Math.min(canvas.width, canvas.height) * 0.75;
         const x = (canvas.width - s)/2, y = (canvas.height - s)/2;
@@ -522,20 +517,15 @@
         if(window.solana?.isConnected){ payPlayBtn.textContent = "Processing… (wallet connected)"; }
         const res = await payEntry();
         if(!res?.ok){
-          payPlayBtn.disabled = false; payPlayBtn.textContent = "💳 Pay 100 CBS & Play"; return;
+          payPlayBtn.disabled = false; payPlayBtn.textContent = "💳 Pay 10 CBS & Play"; return;
         }
         initGame(); startLoop();
-        payPlayBtn.textContent = "💳 Pay 100 CBS & Play";
+        payPlayBtn.textContent = "💳 Pay 10 CBS & Play";
         payPlayBtn.disabled = false;
       }catch(e){
         console.error(e);
-        const msg = (e?.message || "").toLowerCase();
-        if (msg.includes("403") || msg.includes("forbidden")){
-          alert("RPC blocked (403). Open with your RPC: ?rpc=https://rpc.helius.xyz/?api-key=YOUR_KEY");
-        }else{
-          alert("Payment failed or cancelled.");
-        }
-        payPlayBtn.disabled = false; payPlayBtn.textContent = "💳 Pay 100 CBS & Play";
+        alert("Payment failed or RPC blocked. Set your own RPC in settings.");
+        payPlayBtn.disabled = false; payPlayBtn.textContent = "💳 Pay 10 CBS & Play";
       }
     });
 
