@@ -172,12 +172,19 @@
     let paidSig  = null; // vers betaalbewijs, nog niet gebruikt
     let roundSig = null; // geconsumeerd voor huidige run
 
-    /******** UI ********/
+    /******** DOM short-hands ********/
     const $ = (id)=>document.getElementById(id);
-    const connectBtn = $("connectBtn"), payBtn = $("payBtn"), startBtn = $("startBtn");
-    const overlay = $("nameOverlay"), nameInput = $("nameInput"), err = $("error"), saveBtn = $("saveBtn"), cancelBtn = $("cancelBtn");
-    const tbody = $("leaderboardBody"), lbNote = $("lbNote");
-    const gameWrap = $("gameWrap");
+    const connectBtn = $("connectBtn");
+    const payBtn     = $("payBtn");
+    const startBtn   = $("startBtn");
+    const overlay    = $("nameOverlay");
+    const nameInput  = $("nameInput");
+    const err        = $("error");
+    const saveBtn    = $("saveBtn");
+    const cancelBtn  = $("cancelBtn");
+    const tbody      = $("leaderboardBody");
+    const lbNote     = $("lbNote");
+    const gameWrap   = $("gameWrap");
 
     // Init button states
     payBtn.disabled = true;   // pas na connect
@@ -253,7 +260,6 @@
     function scrollToGame(){
       const y = gameWrap.getBoundingClientRect().top + window.scrollY - 8;
       window.scrollTo({ top: y, behavior: 'smooth' });
-      // extra nudge voor mobiele browsers om addressbar te verbergen
       setTimeout(()=> window.scrollTo({ top: y, behavior: 'smooth' }), 250);
     }
     function enterPlayMode(){
@@ -262,13 +268,10 @@
     }
     function exitPlayMode(){
       document.body.classList.remove('play-mode');
-      // optioneel terug omhoog: window.scrollTo({ top: 0, behavior:'smooth' });
     }
 
     /******** WALLET / PAYMENT ********/
     function provider(){ return window.solana?.isPhantom ? window.solana : null; }
-
-    const connectBtn = $("connectBtn"), payBtn = $("payBtn"), startBtn = $("startBtn");
 
     connectBtn.addEventListener("click", async ()=>{
       try{
@@ -331,8 +334,6 @@
     });
 
     /******** NAME / SAVE (Edge Function) ********/
-    const overlay = $("nameOverlay"), nameInput = $("nameInput"), err = $("error"), saveBtn = $("saveBtn"), cancelBtn = $("cancelBtn");
-
     function openNameModal(sc){
       overlay.style.display="flex";
       nameInput.value=""; err.style.display="none"; nameInput.focus();
@@ -376,8 +377,6 @@
     /******** LEADERBOARD (Top-3) ********/
     function escapeHtml(s){ return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
     async function renderTop3(){
-      const tbody = document.getElementById("leaderboardBody");
-      const lbNote = document.getElementById("lbNote");
       tbody.innerHTML = "<tr><td colspan='3' class='muted'>Loading…</td></tr>"; lbNote.style.display="none";
       try{
         const { data, error } = await sb.from(TABLE).select("*").order("score",{ascending:false}).order("created_at",{ascending:true}).limit(3);
@@ -399,5 +398,4 @@
   </script>
 </body>
 </html>
-
 
