@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
   <title>CBS Snake Game</title>
   <link rel="icon" href="logo.png" type="image/png">
+  <!-- Aanbevolen CSP -->
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self';
+             img-src 'self' data:;
+             script-src 'self' https://unpkg.com 'unsafe-inline';
+             connect-src 'self' https://rpc.helius.xyz https://aiawteejixsgsunmefpi.supabase.co https://*.supabase.co;
+             style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+             font-src https://fonts.gstatic.com;">
   <style>
     :root{--bg1:#0b0b0b;--bg2:#141414;--fg:#eafffb;--accent:#00ffff;--panel:#0e0f12;--border:#00ffcc;--muted:#9aa;--glow:0 0 22px rgba(0,255,204,.35)}
     *{box-sizing:border-box}
@@ -27,14 +35,17 @@
     .btn:hover{filter:brightness(1.05)} .btn[disabled]{opacity:.6;cursor:not-allowed}
     .pill{display:inline-flex;align-items:center;gap:.5rem;background:#0b0f12;border:1px solid #1c2e2e;border-radius:999px;padding:.45rem .7rem;font-size:.9rem; box-shadow: inset 0 0 10px rgba(0,255,224,.1)}
     .row{display:flex;flex-wrap:wrap;gap:.5rem;justify-content:center;align-items:center;margin:.2rem 0 .6rem}
-    /* GAME WRAP keeps d-pad below canvas on touch */
+
+    /* GAME WRAP: houdt d-pad onder canvas op touch */
     .gameWrap{position:relative;width:100%;max-width:480px;margin:0 auto;}
-    body.touch .gameWrap{padding-bottom:120px;} /* reserve space for dpad */
+    body.touch .gameWrap{padding-bottom:120px;} /* ruimte voor dpad */
+
     canvas{
       display:block;margin:.6rem auto;border:2px solid var(--accent);border-radius:12px;
       width:100%;max-width:480px;height:auto;background:#000;touch-action:none;box-shadow: 0 0 18px rgba(0,255,255,.25)
     }
-    /* D-PAD transparent, centered under canvas */
+
+    /* D-PAD transparant, gecentreerd onder canvas */
     .dpad{
       display:none;position:absolute;left:50%;transform:translateX(-50%);
       bottom:6px;z-index:5;pointer-events:auto;
@@ -53,6 +64,7 @@
       .dpad{display:block}
       .dirbtn{width:74px;height:74px}
     }
+
     table{width:100%;border-collapse:collapse;font-size:clamp(.9rem,2.2vw,1rem)}
     th,td{padding:.55rem;border-bottom:1px solid #1c2e2e;text-align:center}
     .muted{color:var(--muted)}
@@ -134,7 +146,8 @@
     const TREASURY_WALLET = new solanaWeb3.PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
     const ENTRY_CBS = 10n;
     const DECIMALS_OVERRIDE = null;
-    // Hardcoded RPC (niet in UI)
+
+    // Hardcoded RPC
     const RPC_URL = "https://rpc.helius.xyz/?api-key=453a64a5-31dd-4c21-9619-6f0c69c74ff9";
 
     // ===== Web3 setup =====
@@ -221,6 +234,9 @@
       });
     }
 
+    // ===== Anti-misbruik state =====
+    let lastPaymentSig = null; // <- tx signature van de laatste entry-fee
+
     async function payEntry(){
       const owner = await ensureWallet();
 
@@ -235,7 +251,7 @@
       const feeRaw = ENTRY_CBS * (10n ** BigInt(decimals));
       if(balanceRaw < feeRaw){ alert("Not enough CBS to play. Need 10 CBS."); return {ok:false}; }
 
-      // Treasury ATA moet bestaan (anders betaalt speler de aanmaak)
+      // Treasury ATA moet bestaan (anders zou speler ATA aanmaken)
       const treasuryAta = getAtaAddress(CBS_MINT, TREASURY_WALLET);
       const destInfo = await connection.getAccountInfo(treasuryAta);
       if(!destInfo){ alert("Treasury CBS account not initialized yet. Send a tiny amount of CBS to the treasury once."); return {ok:false}; }
@@ -393,6 +409,13 @@
     async function submitName(){
       if(saving) return;
       const name = (nameInput.value || "").trim();
+
+      // 🔒 Vereis een betaling (front-end guard)
+      if(!lastPaymentSig){
+        alert("Betaal eerst de entry fee voor je score.");
+        return;
+      }
+
       if(!name){ err.textContent="Name is required."; err.style.display="block"; return; }
       if(name.length>30){ err.textContent="Max 30 characters."; err.style.display="block"; return; }
 
@@ -401,10 +424,15 @@
 
       const sc = pendingScore ?? 0; overlay.style.display="none";
       try{
-        const { error } = await sb.from(TABLE).insert([{ name, score: sc }]);
+        // stuur tx_sig mee (matcht RLS policy/unique index)
+        const { error } = await sb.from(TABLE).insert([{ name, score: sc, tx_sig: lastPaymentSig }]);
         if(error) throw error;
+        // één keer gebruiken
+        lastPaymentSig = null;
       }catch{
-        putLocalScore(name, sc); alert("Cloud save failed. Saved locally instead.");
+        // lokaal bewaren als cloud faalt
+        putLocalScore(name, sc);
+        alert("Cloud save failed. Saved locally instead.");
       }finally{
         pendingScore = null; await renderCloudBoard(); saving=false; saveBtn.disabled=false; clearTimeout(savingTimeout);
       }
@@ -455,6 +483,9 @@
         if(!res?.ok){
           payPlayBtn.disabled = false; payPlayBtn.textContent = "💳 Pay 10 CBS & Play"; return;
         }
+        // ✅ bewaar tx signature voor het opslaan van score
+        lastPaymentSig = res.sig;
+
         initGame(); startLoop();
         payPlayBtn.textContent = "💳 Pay 10 CBS & Play";
         payPlayBtn.disabled = false;
@@ -470,3 +501,4 @@
   </script>
 </body>
 </html>
+
