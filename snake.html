@@ -280,9 +280,8 @@
         if (st){
           if (st.err) throw new Error("On-chain transaction error");
           const conf = st.confirmationStatus || (st.confirmations != null ? (st.confirmations>0 ? 'confirmed' : null) : null);
-          if (conf === 'confirmed' || conf === 'finalized') return st;
+          if (conf === 'confirmed' || 'finalized' === conf) return st;
         }
-        // is blockhash verlopen?
         if (latest?.lastValidBlockHeight){
           const h = await connection.getBlockHeight('finalized').catch(()=>null);
           if (h && h > latest.lastValidBlockHeight){
@@ -291,7 +290,6 @@
         }
         await new Promise(r=>setTimeout(r, 1500));
       }
-      // laatste poging via confirmTransaction API
       const res = await connection.confirmTransaction(
         { signature, blockhash: latest.blockhash, lastValidBlockHeight: latest.lastValidBlockHeight },
         'finalized'
@@ -318,7 +316,6 @@
         const fromATA = await getAssociatedTokenAddress(CBS_MINT, walletPK);
         const toATA   = await getAssociatedTokenAddress(CBS_MINT, TREASURY);
 
-        // heeft speler genoeg CBS?
         const balInfo = await connection.getTokenAccountBalance(fromATA).catch(()=>null);
         const needRaw = ENTRY_CBS * (10 ** CBS_DECIMALS);
         if(!balInfo || Number(balInfo.value.amount) < needRaw){
@@ -326,7 +323,6 @@
           return alert("Not enough CBS to play (need 10 CBS).");
         }
 
-        // bestaat treasury ATA?
         const toInfo = await connection.getAccountInfo(toATA);
         if(!toInfo){
           payBtn.disabled=false; payBtn.textContent="💳 Pay 10 CBS";
@@ -335,18 +331,15 @@
 
         const ix = createTransferInstruction(fromATA, toATA, walletPK, needRaw, [], TOKEN_PROGRAM_ID);
 
-        // gebruik het nieuwste blockhash + lastValidBlockHeight
         const latest = await connection.getLatestBlockhash('confirmed');
         const tx = new Transaction({ feePayer: walletPK, recentBlockhash: latest.blockhash });
         tx.add(ix);
 
         const { signature } = await p.signAndSendTransaction(tx);
 
-        // robuuste confirm (tot 120s)
         payBtn.textContent = "Waiting confirmation…";
         await waitForConfirmation(signature, latest);
 
-        // confirmed → speel
         paidSig = signature;
         roundSig = paidSig;  // consumeer meteen voor deze run
         paidSig = null;
@@ -354,10 +347,8 @@
         document.body.classList.add('play-mode');
         startBtn.disabled = true;
         start();
-        // extra scroll naar het canvas
         scrollToGame();
       }catch(e){
-        // Toon link naar signature als die aanwezig is in de fouttekst
         showError("Payment failed.", e);
       }finally{
         payBtn.disabled=false; payBtn.textContent="💳 Pay 10 CBS";
@@ -396,7 +387,10 @@
       try{
         const resp = await fetch(EDGE_FN_URL, {
           method:"POST",
-          headers:{ "content-type":"application/json" },
+          headers:{
+            "content-type":"application/json",
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`   // <-- Optie A: toegevoegd
+          },
           body: JSON.stringify({ name, score: sc, tx_sig: roundSig })
         });
         const out = await resp.json().catch(()=> ({}));
