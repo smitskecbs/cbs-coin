@@ -194,7 +194,16 @@
     function start(){ clearInterval(loopId); initGame(); loopId=setInterval(tick,100); }
     function stop(){ clearInterval(loopId); }
 
-    function drawRoundedRect(x,y,w,h,r){ const rr=Math.min(r,w/2,h/2); ctx.beginPath(); ctx.moveTo(x+rr,y); ctx.arcTo(x+w,y,x+w,y+h,rr); ctx.arcTo(x+w,y+h,x,y,h); ctx.arcTo(x,y+h,x,y,rr); ctx.arcTo(x,y,x+w,y,rr); ctx.closePath(); }
+    function drawRoundedRect(x,y,w,h,r){
+      const rr=Math.min(r,w/2,h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+rr,y);
+      ctx.arcTo(x+w,y,x+w,y+h,rr);
+      ctx.arcTo(x+w,y+h,x,y+h,rr);
+      ctx.arcTo(x,y+h,x,y,rr);
+      ctx.arcTo(x,y,x+w,y,rr);
+      ctx.closePath();
+    }
     function neonSegment(x,y,s,head=false){ ctx.save(); const g=ctx.createLinearGradient(x,y,x+s,y+s); g.addColorStop(0,"#35d0ff"); g.addColorStop(1,"#00e5ff"); ctx.shadowColor="#00d5ff"; ctx.shadowBlur=18; drawRoundedRect(x+2,y+2,s-4,s-4,6); ctx.fillStyle=g; ctx.fill(); ctx.shadowBlur=0; ctx.strokeStyle="rgba(255,255,255,.25)"; ctx.lineWidth=2; ctx.stroke(); if(head){ctx.beginPath(); ctx.arc(x+s*0.7, y+s*0.35, 2, 0, Math.PI*2); ctx.fillStyle="#fff"; ctx.fill();} ctx.restore(); }
     function drawCoin(x,y,s){ ctx.save(); const r=s/2,cx=x+r,cy=y+r; ctx.shadowColor="#ffd54d"; ctx.shadowBlur=14; const g=ctx.createRadialGradient(cx,cy,r*0.2,cx,cy,r); g.addColorStop(0,"#ffe27a"); g.addColorStop(0.6,"#ffca28"); g.addColorStop(1,"#ffb300"); ctx.beginPath(); ctx.arc(cx,cy,r-2,0,Math.PI*2); ctx.fillStyle=g; ctx.fill(); ctx.shadowBlur=0; ctx.lineWidth=2; ctx.strokeStyle="rgba(255,255,255,.35)"; ctx.stroke(); ctx.restore(); }
 
@@ -388,7 +397,7 @@
           method:"POST",
           headers:{
             "content-type":"application/json",
-            "authorization":"Bearer " + SUPABASE_ANON_KEY   // <-- nieuw: Authorization header
+            "authorization":"Bearer " + SUPABASE_ANON_KEY   // Authorization header voor Edge Function
           },
           body: JSON.stringify({ name, score: sc, tx_sig: roundSig })
         });
@@ -407,7 +416,7 @@
     saveBtn.addEventListener("click", submitName);
 
     /******** LEADERBOARD (Top-3) ********/
-    function escapeHtml(s){ return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;","&gt;":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
+    function escapeHtml(s){ return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
     async function renderTop3(){
       tbody.innerHTML = "<tr><td colspan='3' class='muted'>Loading…</td></tr>"; lbNote.style.display="none";
       try{
