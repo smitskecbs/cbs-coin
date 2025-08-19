@@ -194,7 +194,7 @@
     function start(){ clearInterval(loopId); initGame(); loopId=setInterval(tick,100); }
     function stop(){ clearInterval(loopId); }
 
-    function drawRoundedRect(x,y,w,h,r){ const rr=Math.min(r,w/2,h/2); ctx.beginPath(); ctx.moveTo(x+rr,y); ctx.arcTo(x+w,y,x+w,y+h,rr); ctx.arcTo(x+w,y+h,x,y+h,rr); ctx.arcTo(x,y+h,x,y,rr); ctx.arcTo(x,y,x+w,y,rr); ctx.closePath(); }
+    function drawRoundedRect(x,y,w,h,r){ const rr=Math.min(r,w/2,h/2); ctx.beginPath(); ctx.moveTo(x+rr,y); ctx.arcTo(x+w,y,x+w,y+h,rr); ctx.arcTo(x+w,y+h,x,y,h); ctx.arcTo(x,y+h,x,y,rr); ctx.arcTo(x,y,x+w,y,rr); ctx.closePath(); }
     function neonSegment(x,y,s,head=false){ ctx.save(); const g=ctx.createLinearGradient(x,y,x+s,y+s); g.addColorStop(0,"#35d0ff"); g.addColorStop(1,"#00e5ff"); ctx.shadowColor="#00d5ff"; ctx.shadowBlur=18; drawRoundedRect(x+2,y+2,s-4,s-4,6); ctx.fillStyle=g; ctx.fill(); ctx.shadowBlur=0; ctx.strokeStyle="rgba(255,255,255,.25)"; ctx.lineWidth=2; ctx.stroke(); if(head){ctx.beginPath(); ctx.arc(x+s*0.7, y+s*0.35, 2, 0, Math.PI*2); ctx.fillStyle="#fff"; ctx.fill();} ctx.restore(); }
     function drawCoin(x,y,s){ ctx.save(); const r=s/2,cx=x+r,cy=y+r; ctx.shadowColor="#ffd54d"; ctx.shadowBlur=14; const g=ctx.createRadialGradient(cx,cy,r*0.2,cx,cy,r); g.addColorStop(0,"#ffe27a"); g.addColorStop(0.6,"#ffca28"); g.addColorStop(1,"#ffb300"); ctx.beginPath(); ctx.arc(cx,cy,r-2,0,Math.PI*2); ctx.fillStyle=g; ctx.fill(); ctx.shadowBlur=0; ctx.lineWidth=2; ctx.strokeStyle="rgba(255,255,255,.35)"; ctx.stroke(); ctx.restore(); }
 
@@ -282,7 +282,6 @@
           const conf = st.confirmationStatus || (st.confirmations != null ? (st.confirmations>0 ? 'confirmed' : null) : null);
           if (conf === 'confirmed' || conf === 'finalized') return st;
         }
-        // is blockhash verlopen?
         if (latest?.lastValidBlockHeight){
           const h = await connection.getBlockHeight('finalized').catch(()=>null);
           if (h && h > latest.lastValidBlockHeight){
@@ -291,7 +290,6 @@
         }
         await new Promise(r=>setTimeout(r, 1500));
       }
-      // laatste poging via confirmTransaction API
       const res = await connection.confirmTransaction(
         { signature, blockhash: latest.blockhash, lastValidBlockHeight: latest.lastValidBlockHeight },
         'finalized'
@@ -318,7 +316,6 @@
         const fromATA = await getAssociatedTokenAddress(CBS_MINT, walletPK);
         const toATA   = await getAssociatedTokenAddress(CBS_MINT, TREASURY);
 
-        // heeft speler genoeg CBS?
         const balInfo = await connection.getTokenAccountBalance(fromATA).catch(()=>null);
         const needRaw = ENTRY_CBS * (10 ** CBS_DECIMALS);
         if(!balInfo || Number(balInfo.value.amount) < needRaw){
@@ -326,7 +323,6 @@
           return alert("Not enough CBS to play (need 10 CBS).");
         }
 
-        // bestaat treasury ATA?
         const toInfo = await connection.getAccountInfo(toATA);
         if(!toInfo){
           payBtn.disabled=false; payBtn.textContent="💳 Pay 10 CBS";
@@ -335,26 +331,22 @@
 
         const ix = createTransferInstruction(fromATA, toATA, walletPK, needRaw, [], TOKEN_PROGRAM_ID);
 
-        // gebruik het nieuwste blockhash + lastValidBlockHeight
         const latest = await connection.getLatestBlockhash('confirmed');
         const tx = new Transaction({ feePayer: walletPK, recentBlockhash: latest.blockhash });
         tx.add(ix);
 
         const { signature } = await p.signAndSendTransaction(tx);
 
-        // robuuste confirm (tot 120s)
         payBtn.textContent = "Waiting confirmation…";
         await waitForConfirmation(signature, latest);
 
-        // confirmed → speel
         paidSig = signature;
-        roundSig = paidSig;  // consumeer meteen voor deze run
+        roundSig = paidSig;  // consumeer voor deze run
         paidSig = null;
 
         document.body.classList.add('play-mode');
         startBtn.disabled = true;
         start();
-        // extra scroll naar het canvas
         scrollToGame();
       }catch(e){
         showError("Payment failed.", e);
@@ -363,7 +355,6 @@
       }
     });
 
-    // fallback Start (alleen na betalen)
     startBtn.addEventListener("click", ()=>{
       if(!walletPK) return alert("Connect your wallet first.");
       if(!paidSig)  return alert("Please pay 10 CBS first.");
@@ -382,7 +373,7 @@
     }
     cancelBtn.addEventListener("click", ()=>{
       overlay.style.display="none";
-      roundSig = null;        // ronde afgesloten → opnieuw betalen
+      roundSig = null;
       startBtn.disabled = true;
       exitPlayMode();
     });
@@ -397,10 +388,7 @@
           method:"POST",
           headers:{
             "content-type":"application/json",
-            // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-            // ENIGE AANPASSING: Authorization-header meesturen
-            "authorization":"Bearer " + SUPABASE_ANON_KEY
-            // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+            "authorization":"Bearer " + SUPABASE_ANON_KEY   // <-- nieuw: Authorization header
           },
           body: JSON.stringify({ name, score: sc, tx_sig: roundSig })
         });
@@ -419,9 +407,7 @@
     saveBtn.addEventListener("click", submitName);
 
     /******** LEADERBOARD (Top-3) ********/
-    function escapeHtml(s){
-      return s.replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));
-    }
+    function escapeHtml(s){ return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;","&gt;":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
     async function renderTop3(){
       tbody.innerHTML = "<tr><td colspan='3' class='muted'>Loading…</td></tr>"; lbNote.style.display="none";
       try{
@@ -430,8 +416,7 @@
         tbody.innerHTML="";
         (data||[]).forEach((r,i)=>{
           const tr=document.createElement("tr");
-          const safeName = escapeHtml((r.name||"").toString().slice(0,30) || "Anonymous");
-          tr.innerHTML = `<td>${i+1}</td><td>${safeName}</td><td>${Number(r.score)||0}</td>`;
+          tr.innerHTML = `<td>${i+1}</td><td>${escapeHtml((r.name||"").toString().slice(0,30)||"Anonymous")}</td><td>${Number(r.score)||0}</td>`;
           tbody.appendChild(tr);
         });
       }catch(e){
