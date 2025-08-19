@@ -194,17 +194,27 @@
     function start(){ clearInterval(loopId); initGame(); loopId=setInterval(tick,100); }
     function stop(){ clearInterval(loopId); }
 
-    function drawRoundedRect(x,y,w,h,r){
-      const rr=Math.min(r,w/2,h/2);
-      ctx.beginPath();
-      ctx.moveTo(x+rr,y);
-      ctx.arcTo(x+w,y,x+w,y+h,rr);
-      ctx.arcTo(x+w,y+h,x,y+h,rr);
-      ctx.arcTo(x,y+h,x,y,rr);
-      ctx.arcTo(x,y,x+w,y,rr);
-      ctx.closePath();
+    // --- BLUE GLOWING CIRCLES (no spikes) ---
+    function drawSegmentCircle(x,y,isHead=false){
+      ctx.save();
+      // outer neon glow
+      ctx.shadowColor = '#00e5ff';
+      ctx.shadowBlur = 18;
+      // body gradient fill
+      const cx = x + box/2, cy = y + box/2, r = box/2.3;
+      const g = ctx.createRadialGradient(cx, cy, r*0.2, cx, cy, r);
+      g.addColorStop(0, '#7fe9ff');
+      g.addColorStop(1, '#00bfff');
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+      ctx.shadowBlur = 0;
+      if(isHead){
+        ctx.fillStyle = '#fff';
+        ctx.beginPath(); ctx.arc(x + box*0.65, y + box*0.35, 3, 0, Math.PI*2); ctx.fill();
+      }
+      ctx.restore();
     }
-    function neonSegment(x,y,s,head=false){ ctx.save(); const g=ctx.createLinearGradient(x,y,x+s,y+s); g.addColorStop(0,"#35d0ff"); g.addColorStop(1,"#00e5ff"); ctx.shadowColor="#00d5ff"; ctx.shadowBlur=18; drawRoundedRect(x+2,y+2,s-4,s-4,6); ctx.fillStyle=g; ctx.fill(); ctx.shadowBlur=0; ctx.strokeStyle="rgba(255,255,255,.25)"; ctx.lineWidth=2; ctx.stroke(); if(head){ctx.beginPath(); ctx.arc(x+s*0.7, y+s*0.35, 2, 0, Math.PI*2); ctx.fillStyle="#fff"; ctx.fill();} ctx.restore(); }
+
     function drawCoin(x,y,s){ ctx.save(); const r=s/2,cx=x+r,cy=y+r; ctx.shadowColor="#ffd54d"; ctx.shadowBlur=14; const g=ctx.createRadialGradient(cx,cy,r*0.2,cx,cy,r); g.addColorStop(0,"#ffe27a"); g.addColorStop(0.6,"#ffca28"); g.addColorStop(1,"#ffb300"); ctx.beginPath(); ctx.arc(cx,cy,r-2,0,Math.PI*2); ctx.fillStyle=g; ctx.fill(); ctx.shadowBlur=0; ctx.lineWidth=2; ctx.strokeStyle="rgba(255,255,255,.35)"; ctx.stroke(); ctx.restore(); }
 
     function drawFrame(){
@@ -214,7 +224,7 @@
         const w=canvas.width*0.75, h=w; ctx.save(); ctx.globalAlpha=0.08; ctx.drawImage(watermark,(canvas.width-w)/2,(canvas.height-h)/2,w,h); ctx.restore();
       }
       drawCoin(food.x, food.y, box);
-      for(let i=snake.length-1;i>=0;i--){ neonSegment(snake[i].x,snake[i].y,box,i===0); }
+      for(let i=snake.length-1;i>=0;i--){ drawSegmentCircle(snake[i].x,snake[i].y,i===0); }
       ctx.fillStyle="#fff"; ctx.font="18px Orbitron"; ctx.fillText("Score: "+score, box, 22);
     }
 
@@ -377,9 +387,10 @@
     /******** NAME / SAVE ********/
     function openNameModal(sc){
       overlay.style.display="flex";
-      nameInput.value=""; err.style.display="none"; nameInput.focus();
+      nameInput.value=""; err.style.display="none"; saveBtn.disabled = false; saveBtn.textContent = "Save"; nameInput.focus();
       overlay.dataset.score = String(sc ?? 0);
     }
+
     cancelBtn.addEventListener("click", ()=>{
       overlay.style.display="none";
       roundSig = null;
@@ -389,25 +400,45 @@
 
     async function submitName(){
       const name = (nameInput.value||"").trim();
+      // basic validation
       if(!name){ err.textContent="Name is required."; err.style.display="block"; return; }
+      if(!roundSig || typeof roundSig !== 'string' || roundSig.length < 43){
+        err.textContent = "Payment proof missing or expired. Please pay 10 CBS again.";
+        err.style.display = "block";
+        return;
+      }
       const sc = Number(overlay.dataset.score||0);
-      overlay.style.display="none";
+
+      // UI lock while saving
+      saveBtn.disabled = true; saveBtn.textContent = "Saving…";
       try{
         const resp = await fetch(EDGE_FN_URL, {
           method:"POST",
           headers:{
             "content-type":"application/json",
-            "authorization":"Bearer " + SUPABASE_ANON_KEY   // Authorization header voor Edge Function
+            "authorization":"Bearer " + SUPABASE_ANON_KEY
           },
           body: JSON.stringify({ name, score: sc, tx_sig: roundSig })
         });
-        const out = await resp.json().catch(()=> ({}));
-        if(!resp.ok || !out?.ok) throw new Error(out?.error || "submit-score failed");
+        let out = null;
+        try { out = await resp.json(); } catch { out = null; }
+        if(!resp.ok || !out || out.ok !== true){
+          const serverMsg = out && (out.error || out.message) ? ` (server: ${out.error || out.message})` : "";
+          throw new Error("submit-score failed" + serverMsg);
+        }
+        // success -> close modal
+        overlay.style.display="none";
       }catch(e){
+        // keep modal open so user can retry
+        err.textContent = "Saving failed. Check your payment and try again.";
+        err.style.display = "block";
         showError("Saving failed (payment proof required).", e);
+        return;
       }finally{
+        // consume proof regardless to avoid reuse
         roundSig = null;
-        startBtn.disabled = true;
+        saveBtn.disabled = false; saveBtn.textContent = "Save";
+        startBtn.disabled = true; // require new payment for next run
         exitPlayMode();
         renderTop3();
       }
