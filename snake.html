@@ -389,7 +389,7 @@
           method:"POST",
           headers:{
             "content-type":"application/json",
-            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`   // <-- Optie A: toegevoegd
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
           },
           body: JSON.stringify({ name, score: sc, tx_sig: roundSig })
         });
@@ -404,7 +404,17 @@
         renderTop3();
       }
     }
-    nameInput.addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ e.preventDefault(); submitName(); } });
+
+    /* ===== FIX: Enter/NumpadEnter triggert altijd submit ===== */
+    nameInput.addEventListener("keydown", (e)=>{
+      const k = e.key || e.code || "";
+      if (k === "Enter" || k === "NumpadEnter" || e.keyCode === 13){
+        e.preventDefault();
+        submitName();
+      }
+    });
+    /* ========================================================= */
+
     saveBtn.addEventListener("click", submitName);
 
     /******** LEADERBOARD (Top-3) ********/
