@@ -30,6 +30,7 @@
       background:linear-gradient(135deg,var(--bg1),var(--bg2));
       color:var(--fg);display:flex;flex-direction:column;align-items:center;padding:16px
     }
+    /* Verberg boven/onder tijdens spelen: canvas fullscreen in beeld */
     body.play-mode header,
     body.play-mode #controlsPanel,
     body.play-mode #leaderPanel{ display:none; }
@@ -54,6 +55,7 @@
     th,td{padding:.55rem;border-bottom:1px solid #0ff3;text-align:center}
     h2{margin:.2rem 0 .6rem}
 
+    /* Name overlay */
     #nameOverlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50}
     #nameCard{background:#111;border:2px solid var(--border);border-radius:12px;padding:16px 18px;box-shadow:0 0 18px #0ff6;width:min(92vw,420px)}
     #nameInput{width:100%;padding:.75rem 1rem;border:2px solid var(--border);border-radius:.6rem;background:#000;color:#fff;font-family:inherit;font-size:1rem}
@@ -81,6 +83,7 @@
     <h1>CBS Snake Game</h1>
   </header>
 
+  <!-- Controls -->
   <div id="controlsPanel" class="panel">
     <div class="row" style="justify-content:center;margin-bottom:.3rem">
       <button id="connectBtn" class="btn">🔗 Connect Wallet</button>
@@ -95,6 +98,7 @@
   <div class="panel" id="gamePanel">
     <div id="gameWrap">
       <canvas id="gameCanvas" width="420" height="420"></canvas>
+      <!-- D-pad onder het canvas -->
       <div id="dpad" aria-label="On-screen controls">
         <div class="pad">
           <div></div>     <button data-dir="UP">▲</button>     <div></div>
@@ -115,6 +119,7 @@
     <p id="lbNote" class="muted" style="display:none;margin-top:.5rem;text-align:center">Showing local scores (cloud unavailable).</p>
   </div>
 
+  <!-- Name modal -->
   <div id="nameOverlay">
     <div id="nameCard">
       <h3 style="margin:.2rem 0 .6rem;color:var(--accent)">Save your score</h3>
@@ -128,7 +133,10 @@
     </div>
   </div>
 
+  <!-- Supabase client -->
   <script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+
+  <!-- Game + Wallet -->
   <script type="module">
     /******** CONFIG ********/
     const SUPABASE_URL = "https://aiawteejixsgsunmefpi.supabase.co";
@@ -152,9 +160,10 @@
     const CBS_DECIMALS = 9;
     const ENTRY_CBS = 10;
     let walletPK = null;
-    let paidSig  = null;
-    let roundSig = null;
+    let paidSig  = null; // vers betaalbewijs, nog niet gebruikt
+    let roundSig = null; // geconsumeerd voor huidige run
 
+    /******** DOM ********/
     const $ = (id)=>document.getElementById(id);
     const connectBtn = $("connectBtn");
     const payBtn     = $("payBtn");
@@ -170,9 +179,11 @@
     const canvas     = $("gameCanvas");
     const ctx        = canvas.getContext("2d");
 
+    // Init buttons
     payBtn.disabled = true;
     startBtn.disabled = true;
 
+    /******** GAME ********/
     const box = 20;
     let snake, direction, food, score, loopId;
     const watermark = new Image();
@@ -189,6 +200,7 @@
 
     function drawFrame(){
       ctx.fillStyle="#000"; ctx.fillRect(0,0,canvas.width,canvas.height);
+      // Watermark
       if (watermark.complete){
         const w=canvas.width*0.75, h=w; ctx.save(); ctx.globalAlpha=0.08; ctx.drawImage(watermark,(canvas.width-w)/2,(canvas.height-h)/2,w,h); ctx.restore();
       }
@@ -203,11 +215,15 @@
       if(direction==="UP")   y-=box;
       if(direction==="RIGHT")x+=box;
       if(direction==="DOWN") y+=box;
+
+      // wrap walls
       const W=canvas.width, H=canvas.height;
       if(x<0) x=W-box; else if(x>=W) x=0;
       if(y<0) y=H-box; else if(y>=H) y=0;
+
       if(x===food.x && y===food.y){ score++; food=randCell(); }
       else snake.pop();
+
       if(snake.some(s=>s.x===x&&s.y===y)){ stop(); drawFrame(); openNameModal(score); return; }
       snake.unshift({x,y});
       drawFrame();
@@ -220,6 +236,7 @@
       else if(e.key==="ArrowDown" && direction!=="UP") direction="DOWN";
     });
 
+    // Mobile D-pad (click/touch)
     document.querySelectorAll('#dpad button').forEach(b=>{
       const set=(d)=>{
         if(d==="LEFT"&&direction!=="RIGHT")direction="LEFT";
@@ -231,6 +248,7 @@
       b.addEventListener('touchstart',e=>{ e.preventDefault(); set(b.dataset.dir); },{passive:false});
     });
 
+    /******** SCROLL/PLAY-MODE HELPERS ********/
     function scrollToGame(){
       requestAnimationFrame(()=>{
         canvas.scrollIntoView({ block: 'center', behavior: 'smooth' });
@@ -244,6 +262,7 @@
     function enterPlayMode(){ document.body.classList.add('play-mode'); scrollToGame(); }
     function exitPlayMode(){ document.body.classList.remove('play-mode'); }
 
+    /******** WALLET / PAYMENT ********/
     function provider(){ return window.solana?.isPhantom ? window.solana : null; }
     function showError(prefix, err){
       const msg = (err && err.message) ? err.message : String(err || 'Unknown error');
@@ -251,6 +270,7 @@
       alert(`${prefix}\n\n${msg}`);
     }
 
+    // Wacht stevig op confirm/finalize (met blockhash + retry tot 120s)
     async function waitForConfirmation(signature, latest, timeoutMs=120000){
       const start = Date.now();
       while (Date.now() - start < timeoutMs){
@@ -262,6 +282,7 @@
           const conf = st.confirmationStatus || (st.confirmations != null ? (st.confirmations>0 ? 'confirmed' : null) : null);
           if (conf === 'confirmed' || conf === 'finalized') return st;
         }
+        // is blockhash verlopen?
         if (latest?.lastValidBlockHeight){
           const h = await connection.getBlockHeight('finalized').catch(()=>null);
           if (h && h > latest.lastValidBlockHeight){
@@ -270,6 +291,7 @@
         }
         await new Promise(r=>setTimeout(r, 1500));
       }
+      // laatste poging via confirmTransaction API
       const res = await connection.confirmTransaction(
         { signature, blockhash: latest.blockhash, lastValidBlockHeight: latest.lastValidBlockHeight },
         'finalized'
@@ -296,6 +318,7 @@
         const fromATA = await getAssociatedTokenAddress(CBS_MINT, walletPK);
         const toATA   = await getAssociatedTokenAddress(CBS_MINT, TREASURY);
 
+        // heeft speler genoeg CBS?
         const balInfo = await connection.getTokenAccountBalance(fromATA).catch(()=>null);
         const needRaw = ENTRY_CBS * (10 ** CBS_DECIMALS);
         if(!balInfo || Number(balInfo.value.amount) < needRaw){
@@ -303,29 +326,35 @@
           return alert("Not enough CBS to play (need 10 CBS).");
         }
 
+        // bestaat treasury ATA?
         const toInfo = await connection.getAccountInfo(toATA);
         if(!toInfo){
           payBtn.disabled=false; payBtn.textContent="💳 Pay 10 CBS";
-          return alert("Payment cannot proceed: Treasury CBS account does not exist yet.");
+          return alert("Payment cannot proceed: Treasury CBS account does not exist yet.\nAsk the admin to create the CBS associated token account for the treasury once.");
         }
 
         const ix = createTransferInstruction(fromATA, toATA, walletPK, needRaw, [], TOKEN_PROGRAM_ID);
+
+        // gebruik het nieuwste blockhash + lastValidBlockHeight
         const latest = await connection.getLatestBlockhash('confirmed');
         const tx = new Transaction({ feePayer: walletPK, recentBlockhash: latest.blockhash });
         tx.add(ix);
 
         const { signature } = await p.signAndSendTransaction(tx);
 
+        // robuuste confirm (tot 120s)
         payBtn.textContent = "Waiting confirmation…";
         await waitForConfirmation(signature, latest);
 
+        // confirmed → speel
         paidSig = signature;
-        roundSig = paidSig;  // consume voor deze run
+        roundSig = paidSig;  // consumeer meteen voor deze run
         paidSig = null;
 
         document.body.classList.add('play-mode');
         startBtn.disabled = true;
         start();
+        // extra scroll naar het canvas
         scrollToGame();
       }catch(e){
         showError("Payment failed.", e);
@@ -334,6 +363,7 @@
       }
     });
 
+    // fallback Start (alleen na betalen)
     startBtn.addEventListener("click", ()=>{
       if(!walletPK) return alert("Connect your wallet first.");
       if(!paidSig)  return alert("Please pay 10 CBS first.");
@@ -344,6 +374,7 @@
       scrollToGame();
     });
 
+    /******** NAME / SAVE ********/
     function openNameModal(sc){
       overlay.style.display="flex";
       nameInput.value=""; err.style.display="none"; nameInput.focus();
@@ -351,7 +382,7 @@
     }
     cancelBtn.addEventListener("click", ()=>{
       overlay.style.display="none";
-      roundSig = null;
+      roundSig = null;        // ronde afgesloten → opnieuw betalen
       startBtn.disabled = true;
       exitPlayMode();
     });
@@ -362,12 +393,14 @@
       const sc = Number(overlay.dataset.score||0);
       overlay.style.display="none";
       try{
-        // === ENIGE WIJZIGING HIERONDER: Authorization header meegeven ===
         const resp = await fetch(EDGE_FN_URL, {
           method:"POST",
           headers:{
             "content-type":"application/json",
-            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`
+            // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+            // ENIGE AANPASSING: Authorization-header meesturen
+            "authorization":"Bearer " + SUPABASE_ANON_KEY
+            // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
           },
           body: JSON.stringify({ name, score: sc, tx_sig: roundSig })
         });
@@ -385,7 +418,10 @@
     nameInput.addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ e.preventDefault(); submitName(); } });
     saveBtn.addEventListener("click", submitName);
 
-    function escapeHtml(s){ return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;","&gt;":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
+    /******** LEADERBOARD (Top-3) ********/
+    function escapeHtml(s){
+      return s.replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));
+    }
     async function renderTop3(){
       tbody.innerHTML = "<tr><td colspan='3' class='muted'>Loading…</td></tr>"; lbNote.style.display="none";
       try{
@@ -394,7 +430,8 @@
         tbody.innerHTML="";
         (data||[]).forEach((r,i)=>{
           const tr=document.createElement("tr");
-          tr.innerHTML = `<td>${i+1}</td><td>${escapeHtml((r.name||"").toString().slice(0,30)||"Anonymous")}</td><td>${Number(r.score)||0}</td>`;
+          const safeName = escapeHtml((r.name||"").toString().slice(0,30) || "Anonymous");
+          tr.innerHTML = `<td>${i+1}</td><td>${safeName}</td><td>${Number(r.score)||0}</td>`;
           tbody.appendChild(tr);
         });
       }catch(e){
@@ -403,6 +440,7 @@
       }
     }
 
+    // init
     initGame(); renderTop3();
   </script>
 </body>
