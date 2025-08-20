@@ -91,7 +91,8 @@
       <button id="startBtn" class="btn" disabled>▶️ Start</button>
     </div>
     <p class="muted" style="text-align:center;margin:.2rem 0 0 0">
-      Entry fee: <b>10 CBS</b> • Monthly prize for best score
+      Entry fee: <b>10 CBS</b> • Monthly prize for best score<br>
+      <b>Playable on mobile in the Phantom browser or on desktop.</b>
     </p>
   </div>
 
@@ -186,13 +187,47 @@
     /******** GAME ********/
     const box = 20;
     let snake, direction, food, score, loopId;
+
+    // Watermark
     const watermark = new Image();
     watermark.src = "https://cyan-persistent-stork-902.mypinata.cloud/ipfs/bafybeia7qejzloll6teyt4o4orvd7bnvkg4thrfajv4rgb3fmm2odeweoa/logo.png";
 
-    function randCell(){ return {x: Math.floor(Math.random()* (canvas.width/box)) * box, y: Math.floor(Math.random()* (canvas.height/box)) * box }; }
-    function initGame(){ snake=[{x:10*box,y:10*box}]; direction=null; food=randCell(); score=0; drawFrame(); }
+    // --- POWER-UP (groot CBS-logo) ---
+    const BONUS_POINTS = 10;       // +10 punten bij pakken power-up
+    let powerUp = null;            // {x,y} linkerbovenhoek, 2x2 tiles
+    let coinsEaten = 0;            // tellen van muntjes
+    let powerUpTimeout = null;     // timer om power-up te verwijderen
+    const powerUpImg = new Image();
+    powerUpImg.src = "https://cyan-persistent-stork-902.mypinata.cloud/ipfs/bafybeid23sam2to23hawqsweaay25bluvr4ha75ntrax25ke3a2j2nx2yi"; // transparant CBS-logo
+
+    function randCell(){
+      return {
+        x: Math.floor(Math.random()*(canvas.width/box)) * box,
+        y: Math.floor(Math.random()*(canvas.height/box)) * box
+      };
+    }
+    // Plaats voor 2x2 sprite binnen veld
+    function randCell2x(){
+      const cols = Math.floor(canvas.width/box) - 1;  // -1 zodat x+2*box past
+      const rows = Math.floor(canvas.height/box) - 1; // -1 zodat y+2*box past
+      const x = Math.floor(Math.random()*cols) * box;
+      const y = Math.floor(Math.random()*rows) * box;
+      return { x, y };
+    }
+
+    function initGame(){
+      snake=[{x:10*box,y:10*box}];
+      direction=null;
+      food=randCell();
+      score=0;
+      coinsEaten=0;
+      // power-up resetten
+      powerUp=null;
+      if (powerUpTimeout){ clearTimeout(powerUpTimeout); powerUpTimeout=null; }
+      drawFrame();
+    }
     function start(){ clearInterval(loopId); initGame(); loopId=setInterval(tick,100); }
-    function stop(){ clearInterval(loopId); }
+    function stop(){ clearInterval(loopId); if (powerUpTimeout){ clearTimeout(powerUpTimeout); powerUpTimeout=null; } }
 
     // --- BLUE GLOWING CIRCLES (no spikes) ---
     function drawSegmentCircle(x,y,isHead=false){
@@ -215,7 +250,32 @@
       ctx.restore();
     }
 
-    function drawCoin(x,y,s){ ctx.save(); const r=s/2,cx=x+r,cy=y+r; ctx.shadowColor="#ffd54d"; ctx.shadowBlur=14; const g=ctx.createRadialGradient(cx,cy,r*0.2,cx,cy,r); g.addColorStop(0,"#ffe27a"); g.addColorStop(0.6,"#ffca28"); g.addColorStop(1,"#ffb300"); ctx.beginPath(); ctx.arc(cx,cy,r-2,0,Math.PI*2); ctx.fillStyle=g; ctx.fill(); ctx.shadowBlur=0; ctx.lineWidth=2; ctx.strokeStyle="rgba(255,255,255,.35)"; ctx.stroke(); ctx.restore(); }
+    function drawCoin(x,y,s){
+      ctx.save(); const r=s/2,cx=x+r,cy=y+r;
+      ctx.shadowColor="#ffd54d"; ctx.shadowBlur=14;
+      const g=ctx.createRadialGradient(cx,cy,r*0.2,cx,cy,r);
+      g.addColorStop(0,"#ffe27a"); g.addColorStop(0.6,"#ffca28"); g.addColorStop(1,"#ffb300");
+      ctx.beginPath(); ctx.arc(cx,cy,r-2,0,Math.PI*2); ctx.fillStyle=g; ctx.fill();
+      ctx.shadowBlur=0; ctx.lineWidth=2; ctx.strokeStyle="rgba(255,255,255,.35)"; ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawPowerUp(x,y){
+      // 2x2 tiles groot
+      if (powerUpImg.complete){
+        ctx.save();
+        ctx.shadowColor = '#00ffff';
+        ctx.shadowBlur = 12;
+        ctx.drawImage(powerUpImg, x, y, box*2, box*2);
+        ctx.restore();
+      }else{
+        // fallback: cyaan vierkant
+        ctx.save();
+        ctx.fillStyle = '#00ffff';
+        ctx.fillRect(x, y, box*2, box*2);
+        ctx.restore();
+      }
+    }
 
     function drawFrame(){
       ctx.fillStyle="#000"; ctx.fillRect(0,0,canvas.width,canvas.height);
@@ -224,6 +284,7 @@
         const w=canvas.width*0.75, h=w; ctx.save(); ctx.globalAlpha=0.08; ctx.drawImage(watermark,(canvas.width-w)/2,(canvas.height-h)/2,w,h); ctx.restore();
       }
       drawCoin(food.x, food.y, box);
+      if(powerUp) drawPowerUp(powerUp.x, powerUp.y);
       for(let i=snake.length-1;i>=0;i--){ drawSegmentCircle(snake[i].x,snake[i].y,i===0); }
       ctx.fillStyle="#fff"; ctx.font="18px Orbitron"; ctx.fillText("Score: "+score, box, 22);
     }
@@ -240,10 +301,35 @@
       if(x<0) x=W-box; else if(x>=W) x=0;
       if(y<0) y=H-box; else if(y>=H) y=0;
 
-      if(x===food.x && y===food.y){ score++; food=randCell(); }
-      else snake.pop();
+      // pak munt
+      if(x===food.x && y===food.y){
+        score++;
+        coinsEaten++;
+        food=randCell();
 
-      if(snake.some(s=>s.x===x&&s.y===y)){ stop(); drawFrame(); openNameModal(score); return; }
+        // Elke 5 muntjes -> power-up spawnen, 5s actief
+        if(coinsEaten % 5 === 0){
+          powerUp = randCell2x();
+          if (powerUpTimeout){ clearTimeout(powerUpTimeout); }
+          powerUpTimeout = setTimeout(()=>{ powerUp=null; powerUpTimeout=null; }, 5000);
+        }
+      }
+      // pak power-up (2x2 raakvlak)
+      else if(powerUp &&
+              x >= powerUp.x && x < powerUp.x + box*2 &&
+              y >= powerUp.y && y < powerUp.y + box*2){
+        score += BONUS_POINTS;
+        powerUp = null;
+        if (powerUpTimeout){ clearTimeout(powerUpTimeout); powerUpTimeout=null; }
+      }
+      else{
+        snake.pop();
+      }
+
+      // botsing met jezelf
+      if(snake.some(s=>s.x===x&&s.y===y)){
+        stop(); drawFrame(); openNameModal(score); return;
+      }
       snake.unshift({x,y});
       drawFrame();
     }
