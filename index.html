@@ -1,201 +1,132 @@
 <!DOCTYPE html>
-<html lang="nl" data-lang="nl">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CBS Coin – Community Builds Sovereignty</title>
-
-  <!-- Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet" />
-
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <style>
     :root{
-      --bg1:#0f0f0f; --bg2:#1a1a1a; --fg:#00ffcc; --cyan:#00ffff;
-      --panel:#111; --muted:#9aa; --border:#00ffcc
+      --bg1:#0f0f0f; --bg2:#1a1a1a; --fg:#00ffcc; --accent:#00ffff; --panel:#111; --border:#0ff;
     }
     *{box-sizing:border-box}
-    body{
-      margin:0; font-family:'Orbitron',sans-serif;
-      background:linear-gradient(135deg,var(--bg1),var(--bg2));
-      color:var(--fg); display:flex; flex-direction:column; align-items:center; padding:2rem
+    body {
+      margin: 0;
+      font-family: 'Orbitron', sans-serif;
+      background: linear-gradient(135deg, var(--bg1), var(--bg2));
+      color: var(--fg);
+      text-align: center;
+      padding: 2rem;
     }
-    nav{width:100%; background:#111; padding:1rem; text-align:center; margin-bottom:2rem; border-bottom:1px solid #0c2020}
-    nav a{margin:0 .8rem; color:var(--cyan); text-decoration:none; font-weight:700}
-    nav a:hover{text-decoration:underline}
-    header{text-align:center; width:100%}
-    h1{font-size:3rem; margin:.5rem 0 .2rem}
-    h2{font-size:1.35rem; font-weight:400; color:#9aa; margin:.4rem 0 1rem}
-    .logo{margin:1rem 0; max-width:180px}
-
-    .section{
-      max-width:1100px; width:100%;
-      background:#111; padding:1.4rem; margin:1rem 0;
-      border:1px solid var(--border); border-radius:12px
+    h1 {
+      margin-top: 2rem;
+      color: var(--accent);
+      text-shadow: 0 0 8px #0ff6;
     }
-    a{color:var(--cyan); text-decoration:none}
-    a:hover{text-decoration:underline}
-    footer{margin-top:2rem; font-size:.9rem; color:#aaa; text-align:center}
-    .social-links{display:flex; justify-content:center; gap:1rem; flex-wrap:wrap; margin:1rem 0}
-    .social-links a,.btn{display:inline-flex; align-items:center}
-    .social-links a{
-      padding:.5rem 1rem; background:#1a1a1a; border:1px solid var(--cyan);
-      border-radius:6px; font-weight:700; color:var(--cyan)
+    h2 {
+      margin-top: 0.5rem;
+      font-weight: normal;
+      color: #9ee;
     }
-    .social-links a:hover{background:var(--cyan); color:#000}
-
-    .toolbar{display:flex; gap:.8rem; justify-content:center; flex-wrap:wrap; margin:1rem 0}
-    .btn{
-      padding:.9rem 1.4rem; font-weight:800; border-radius:12px;
-      border:1px solid var(--cyan); background:#141414; color:#00ffff;
-      cursor:pointer; transition:transform .15s ease, box-shadow .2s ease
+    .panel {
+      background: var(--panel);
+      border: 2px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      margin: 20px auto;
+      max-width: 720px;
+      box-shadow: 0 0 22px #0ff3;
     }
-    .btn:hover{transform:translateY(-1px); box-shadow:0 8px 24px rgba(0,255,204,.15)}
-    .btn-primary{background:var(--fg); color:#001c1a; border:none;
-      box-shadow:0 0 10px var(--fg),0 0 40px var(--fg),0 0 80px var(--fg)}
-    .btn-primary:hover{box-shadow:0 0 20px var(--cyan),0 0 60px var(--cyan),0 0 100px var(--cyan)}
-    .btn[disabled]{opacity:.6; cursor:not-allowed}
+    .button {
+      margin: 1rem;
+      display: inline-block;
+      padding: 14px 28px;
+      background-color: var(--fg);
+      color: #000;
+      font-weight: bold;
+      border-radius: 12px;
+      box-shadow: 0 0 12px var(--fg), 0 0 28px var(--fg);
+      transition: all .2s;
+      text-decoration: none;
+    }
+    .button:hover {
+      background-color: var(--accent);
+      box-shadow: 0 0 16px var(--accent), 0 0 32px var(--accent);
+    }
+    #langSwitch {
+      position:absolute;
+      top:15px;
+      right:20px;
+      background:var(--fg);
+      color:#000;
+      font-weight:bold;
+      padding:6px 12px;
+      border-radius:8px;
+      cursor:pointer;
+      box-shadow:0 0 10px var(--fg);
+    }
   </style>
 </head>
 <body>
-  <!-- NAV -->
-  <nav>
-    <a id="navHome" href="index.html" data-i18n="navHome">Home</a>
-    <a id="navRoadmap" href="roadmap.html" data-i18n="navRoadmap">Roadmap</a>
-    <a id="navTokenomics" href="tokenomics.html" data-i18n="navTokenomics">Tokenomics</a>
-    <a id="navLitepaper" href="litepaper.html" data-i18n="navLitepaper">Litepaper</a>
-    <a id="navLitepaper2" href="litepaper2.0.html" data-i18n="navLitepaper2">Litepaper 2.0</a>
-    <a id="navContact" href="mailto:smitskecbs@gmail.com" data-i18n="navContact">Contact</a>
-  </nav>
+  <button id="langSwitch">NL 🇳🇱</button>
 
-  <!-- HEADER -->
-  <header>
-    <img class="logo" alt="CBS Coin Logo"
-         src="https://cyan-persistent-stork-902.mypinata.cloud/ipfs/bafybeia7qejzloll6teyt4o4orvd7bnvkg4thrfajv4rgb3fmm2odeweoa/logo.png" />
-    <h1>CBS Coin</h1>
-    <h2 id="subtitle" data-i18n="subtitle">Community Builds Sovereignty</h2>
+  <!-- English Content -->
+  <div id="content-en">
+    <h1>💠 CBS Coin</h1>
+    <h2>Community Builds Sovereignty</h2>
 
-    <div class="social-links">
-      <a id="linkTelegram" href="https://t.me/CBS_Coin" target="_blank" rel="noreferrer" data-i18n="telegram">Telegram</a>
-      <a id="linkX" href="https://twitter.com/CBS_Coin" target="_blank" rel="noreferrer" data-i18n="xTwitter">X (Twitter)</a>
-      <button id="langBtn" class="btn" data-i18n="langSwitch">🌐 English</button>
+    <div class="panel">
+      <p>CBS Coin is a community-driven token on Solana. Breaking chains together, building sovereignty for all.</p>
+      <a href="snake.html" class="button">🕹️ Play Snake Game</a>
+      <a href="buy.html" class="button">🛒 Buy CBS</a>
     </div>
-  </header>
 
-  <!-- KOOP CBS (Birdeye) -->
-  <section class="section" style="text-align:center">
-    <h2 data-i18n="buyCbsTitle">💳 Koop CBS</h2>
-    <div class="toolbar">
-      <a
-        class="btn btn-primary"
-        id="buyBirdeye"
-        href="https://birdeye.so/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk?chain=solana"
-        target="_blank"
-        rel="noreferrer"
-        data-i18n="buyOnBirdeye"
-      >Koop op Birdeye</a>
+    <div class="panel">
+      <h3>More Pages</h3>
+      <a href="litepaper.html" class="button">📜 Litepaper</a>
+      <a href="roadmap.html" class="button">🗺️ Roadmap</a>
+      <a href="tokenomics.html" class="button">📊 Tokenomics</a>
+      <a href="community.html" class="button">🌐 Community</a>
     </div>
-  </section>
+  </div>
 
-  <!-- TOKEN INFO -->
-  <section class="section">
-    <h3 id="tokenInfoTitle" data-i18n="tokenInfoTitle">📦 Token Info</h3>
-    <ul>
-      <li><strong data-i18n="tokenNameLabel">Tokennaam:</strong> <span data-i18n="tokenName">CBS Coin</span></li>
-      <li><strong data-i18n="symbolLabel">Symbool:</strong> CBS</li>
-      <li><strong data-i18n="supplyLabel">Totale supply:</strong> 100.000.000</li>
-      <li><strong data-i18n="mintAuthLabel">Mint authority:</strong> <em data-i18n="disabled">uitgeschakeld</em></li>
-      <li><strong data-i18n="freezeAuthLabel">Freeze authority:</strong> <em data-i18n="disabled">uitgeschakeld</em></li>
-      <li><strong data-i18n="explorerLabel">Explorer:</strong>
-        <a id="explorerLink" href="https://solscan.io/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"
-           target="_blank" rel="noreferrer" data-i18n="viewOnSolscan">Bekijk op Solscan</a>
-      </li>
-    </ul>
-  </section>
+  <!-- Dutch Content -->
+  <div id="content-nl" style="display:none">
+    <h1>💠 CBS Coin</h1>
+    <h2>Community Builds Sovereignty</h2>
 
-  <!-- ROADMAP -->
-  <section class="section">
-    <h3 id="roadmapTitle" data-i18n="roadmapTitle">📄 Whitepaper & Roadmap</h3>
-    <p id="roadmapText" data-i18n="roadmapText" data-i18n-html>
-      Bekijk onze visie en plannen in de <a href="litepaper.html" target="_blank" rel="noreferrer">litepaper</a>
-      of de <a href="litepaper2.0.html" target="_blank" rel="noreferrer">litepaper 2.0</a>.
-      De roadmap bevat o.a. liquidity pools, DAO integratie en tokenverificatie op grote platforms.
-    </p>
-  </section>
-
-  <!-- FOOTER -->
-  <footer>
-    © 2025 CBS Coin – <span data-i18n="footerTag">Sovereignty through community.</span>
-    <div class="social-links" style="justify-content:center;margin-top:.6rem">
-      <a href="https://t.me/CBS_Coin" target="_blank" rel="noreferrer" data-i18n="telegram">Telegram</a>
-      <a href="https://twitter.com/CBS_Coin" target="_blank" rel="noreferrer" data-i18n="xTwitter">X (Twitter)</a>
+    <div class="panel">
+      <p>CBS Coin is een door de community gedreven token op Solana. Samen de ketens breken en soevereiniteit opbouwen.</p>
+      <a href="snake.html" class="button">🕹️ Speel Snake Game</a>
+      <a href="buy.html" class="button">🛒 Koop CBS</a>
     </div>
-  </footer>
 
-  <script type="module">
-    // === i18n ===
-    const i18n = {
-      nl:{
-        navHome:"Home", navRoadmap:"Roadmap", navTokenomics:"Tokenomics", navLitepaper:"Litepaper", navLitepaper2:"Litepaper 2.0", navContact:"Contact",
-        subtitle:"Community Builds Sovereignty",
-        telegram:"Telegram", xTwitter:"X (Twitter)", langSwitch:"🌐 English",
-        buyCbsTitle:"💳 Koop CBS",
-        buyOnBirdeye:"Koop op Birdeye",
-        tokenInfoTitle:"📦 Token Info", tokenNameLabel:"Tokennaam:", tokenName:"CBS Coin",
-        symbolLabel:"Symbool:", supplyLabel:"Totale supply:", mintAuthLabel:"Mint authority:", freezeAuthLabel:"Freeze authority:", disabled:"uitgeschakeld",
-        explorerLabel:"Explorer:", viewOnSolscan:"Bekijk op Solscan",
-        roadmapTitle:"📄 Whitepaper & Roadmap",
-        roadmapText:'Bekijk onze visie en plannen in de <a href="litepaper.html" target="_blank" rel="noreferrer">litepaper</a> of de <a href="litepaper2.0.html" target="_blank" rel="noreferrer">litepaper 2.0</a>. De roadmap bevat o.a. liquidity pools, DAO integratie en tokenverificatie op grote platforms.',
-        footerTag:"Sovereignty through community."
-      },
-      en:{
-        navHome:"Home", navRoadmap:"Roadmap", navTokenomics:"Tokenomics", navLitepaper:"Litepaper", navLitepaper2:"Litepaper 2.0", navContact:"Contact",
-        subtitle:"Community Builds Sovereignty",
-        telegram:"Telegram", xTwitter:"X (Twitter)", langSwitch:"🌐 Nederlands",
-        buyCbsTitle:"💳 Buy CBS",
-        buyOnBirdeye:"Buy on Birdeye",
-        tokenInfoTitle:"📦 Token Info", tokenNameLabel:"Token name:", tokenName:"CBS Coin",
-        symbolLabel:"Symbol:", supplyLabel:"Total supply:", mintAuthLabel:"Mint authority:", freezeAuthLabel:"Freeze authority:", disabled:"disabled",
-        explorerLabel:"Explorer:", viewOnSolscan:"View on Solscan",
-        roadmapTitle:"📄 Whitepaper & Roadmap",
-        roadmapText:'See our vision and plans in the <a href="litepaper.html" target="_blank" rel="noreferrer">litepaper</a> or the <a href="litepaper2.0.html" target="_blank" rel="noreferrer">litepaper 2.0</a>. The roadmap includes liquidity pools, DAO integration, and token verification on major platforms.',
-        footerTag:"Sovereignty through community."
+    <div class="panel">
+      <h3>Meer Pagina’s</h3>
+      <a href="litepaper.html" class="button">📜 Litepaper</a>
+      <a href="roadmap.html" class="button">🗺️ Roadmap</a>
+      <a href="tokenomics.html" class="button">📊 Tokenomics</a>
+      <a href="community.html" class="button">🌐 Community</a>
+    </div>
+  </div>
+
+  <script>
+    const btn = document.getElementById("langSwitch");
+    const en = document.getElementById("content-en");
+    const nl = document.getElementById("content-nl");
+    let isEN = true;
+
+    btn.addEventListener("click", ()=>{
+      isEN = !isEN;
+      if(isEN){
+        en.style.display="block"; nl.style.display="none";
+        btn.textContent="NL 🇳🇱";
+      } else {
+        en.style.display="none"; nl.style.display="block";
+        btn.textContent="EN 🇬🇧";
       }
-    };
-
-    let currentLang = localStorage.getItem("cbs_lang") || "nl";
-    document.documentElement.setAttribute("lang", currentLang);
-    document.documentElement.setAttribute("data-lang", currentLang);
-
-    const $ = (id)=>document.getElementById(id);
-
-    function t(key, params={}){
-      const dict = i18n[currentLang] || i18n.nl;
-      let str = dict[key] || key;
-      return str.replace(/\{(\w+)\}/g, (_,k)=> (params[k] ?? `{${k}}`));
-    }
-
-    function applyI18n(){
-      document.querySelectorAll("[data-i18n]").forEach(el=>{
-        const key = el.getAttribute("data-i18n");
-        const html = el.hasAttribute("data-i18n-html");
-        const content = t(key);
-        if (html) el.innerHTML = content; else el.textContent = content;
-      });
-    }
-
-    // taal-knop
-    $("langBtn").addEventListener("click", () => {
-      currentLang = currentLang === "nl" ? "en" : "nl";
-      localStorage.setItem("cbs_lang", currentLang);
-      document.documentElement.setAttribute("lang", currentLang);
-      document.documentElement.setAttribute("data-lang", currentLang);
-      applyI18n();
-    });
-
-    // Init
-    window.addEventListener("load", () => {
-      applyI18n();
     });
   </script>
 </body>
 </html>
+
