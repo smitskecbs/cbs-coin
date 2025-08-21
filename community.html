@@ -26,7 +26,7 @@
       height:64px; filter: drop-shadow(0 0 10px #0ff6);
     }
 
-    h1 { color: var(--accent); text-shadow: 0 0 8px #0ff6; }
+    h1 { color: var(--accent); text-shadow: 0 0 8px #0ff6; margin-top:.25rem; }
     .panel {
       background: var(--panel);
       border: 2px solid var(--border);
@@ -44,7 +44,6 @@
       margin-top: 1rem;
     }
 
-    /* Cards met caption */
     .card {
       background: #000;
       border: 2px solid var(--border);
@@ -52,13 +51,12 @@
       overflow: hidden;
       box-shadow: 0 0 12px #0ff4;
     }
-    .card img,
-    .card video {
+    .card img, .card video {
       width: 100%;
       display: block;
       border: 0;
       outline: none;
-      aspect-ratio: 1 / 1; /* houdt grid netjes; video schaalt mee */
+      aspect-ratio: 1 / 1;
       object-fit: cover;
     }
     .card figcaption {
@@ -75,12 +73,16 @@
   </style>
 </head>
 <body>
-  <!-- Logo bovenaan -->
+  <!-- Logo bovenaan via absoluut pad (root) + fallback -->
   <header class="site-header">
-    <img src="logo.png" alt="CBS Logo">
+    <img
+      src="/cbs-coin/logo.png?v=2"
+      alt="CBS Logo"
+      onerror="this.onerror=null;this.src='/cbs-coin/Logo.png?v=2';"
+    >
   </header>
 
-  <h1>🌐 CBS Community & Memes</h1>
+  <h1>CBS Community & Memes</h1>
 
   <div class="panel">
     <h2>About</h2>
@@ -97,58 +99,68 @@
     <div class="gallery">
       <!-- meme1: alleen artiest -->
       <figure class="card">
-        <img src="image/meme1.png" alt="CBS Meme 1 – created by smitske" loading="lazy">
+        <img src="/cbs-coin/image/meme1.png" alt="CBS Meme 1 – created by smitske" loading="lazy">
         <figcaption>created by <b>smitske</b></figcaption>
       </figure>
 
       <!-- meme2 t/m meme6: content + artiest -->
       <figure class="card">
-        <img src="image/meme2.png" alt="CBS Meme 2 – created by sapodill" loading="lazy">
+        <img src="/cbs-coin/image/meme2.png" alt="CBS Meme 2 – created by sapodill" loading="lazy">
         <figcaption>created by <b>sapodill</b></figcaption>
       </figure>
 
       <figure class="card">
-        <img src="image/meme3.png" alt="CBS Meme 3 – created by majorliberty" loading="lazy">
+        <img src="/cbs-coin/image/meme3.png" alt="CBS Meme 3 – created by majorliberty" loading="lazy">
         <figcaption>created by <b>majorliberty</b></figcaption>
       </figure>
 
       <figure class="card">
-        <img src="image/meme4.png" alt="CBS Meme 4 – created by senifer" loading="lazy">
+        <img src="/cbs-coin/image/meme4.png" alt="CBS Meme 4 – created by senifer" loading="lazy">
         <figcaption>created by <b>senifer</b></figcaption>
       </figure>
 
       <figure class="card">
-        <img src="image/meme5.png" alt="CBS Meme 5 – created by belinda" loading="lazy">
+        <img src="/cbs-coin/image/meme5.png" alt="CBS Meme 5 – created by belinda" loading="lazy">
         <figcaption>created by <b>belinda</b></figcaption>
       </figure>
 
       <figure class="card">
-        <img src="image/meme6.png" alt="CBS Meme 6 – created by izumi tatsui" loading="lazy">
+        <img src="/cbs-coin/image/meme6.png" alt="CBS Meme 6 – created by izumi tatsui" loading="lazy">
         <figcaption>created by <b>izumi tatsui</b></figcaption>
       </figure>
 
       <!-- meme7: mp4 video + artiest -->
       <figure class="card">
-        <video src="image/meme7.mp4" controls playsinline muted preload="metadata"></video>
+        <video src="/cbs-coin/image/meme7.mp4" controls playsinline muted preload="metadata"></video>
         <figcaption>created by <b>dreams_swe</b></figcaption>
       </figure>
 
-      <!-- meme8: nieuw item + artiest -->
+      <!-- meme8 -->
       <figure class="card">
-        <img src="image/meme8.png" alt="CBS Meme 8 – created by izu" loading="lazy">
+        <img src="/cbs-coin/image/meme8.png" alt="CBS Meme 8 – created by izu" loading="lazy">
         <figcaption>created by <b>izu</b></figcaption>
       </figure>
 
-      <!-- meme9: nieuw item + artiest -->
+      <!-- meme9 met fallback-extensies -->
       <figure class="card">
-        <img src="image/meme9.png" alt="CBS Meme 9 – created by Fauzan" loading="lazy">
+        <img
+          id="meme9"
+          src="/cbs-coin/image/meme9.png?v=2"
+          alt="CBS Meme 9 – created by Fauzan"
+          loading="lazy"
+          onerror="
+            this.onerror=null;
+            this.src='/cbs-coin/image/meme9.PNG?v=2';
+            this.onerror=() => { this.src='/cbs-coin/image/meme9.jpg?v=2'; this.onerror=() => { this.src='/cbs-coin/image/meme9.jpeg?v=2'; this.onerror=null; }; };
+          "
+        >
         <figcaption>created by <b>Fauzan</b></figcaption>
       </figure>
     </div> <!-- /gallery -->
-  </div> <!-- /panel (Community Gallery) -->
+  </div> <!-- /panel -->
 
   <footer>
-    <a href="index.html">← Back to Home</a>
+    <a href="/cbs-coin/index.html">← Back to Home</a>
   </footer>
 </body>
 </html>
