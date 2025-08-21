@@ -28,21 +28,40 @@
       max-width: 960px;
       box-shadow: 0 0 22px #0ff3;
     }
+
     .gallery {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
       gap: 16px;
       margin-top: 1rem;
     }
-    .gallery img {
-      width: 100%;
-      border-radius: 12px;
+
+    /* Cards met caption */
+    .card {
+      background: #000;
       border: 2px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
       box-shadow: 0 0 12px #0ff4;
-      background:#000;
-      transition: transform .2s;
     }
-    .gallery img:hover { transform: scale(1.05); }
+    .card img,
+    .card video {
+      width: 100%;
+      display: block;
+      border: 0;
+      outline: none;
+      aspect-ratio: 1 / 1; /* houdt grid netjes; video schaalt mee */
+      object-fit: cover;
+    }
+    .card figcaption {
+      font-size: .85rem;
+      padding: 8px 10px;
+      color: #cfe;
+      background: #0b0b0b;
+      border-top: 1px solid #0ff3;
+      text-align: left;
+    }
+    .muted { color:#9aa }
     a { color: var(--accent); text-decoration: none; }
     a:hover { text-decoration: underline; }
     footer { margin-top: 2rem; }
@@ -64,13 +83,48 @@
   <div class="panel">
     <h2>Community Gallery</h2>
     <div class="gallery">
-      <!-- 👇 Jouw geuploade bestand -->
-      <img src="image/meme1.png" alt="CBS Meme 1">
-      <!-- Tip: voeg meer toe door extra regels te plaatsen, bv.:
-      <img src="image/meme2.png" alt="CBS Meme 2">
-      <img src="image/meme3.jpg" alt="CBS Meme 3">
-      -->
+      <!-- meme1: alleen artiest toevoegen -->
+      <figure class="card">
+        <img src="image/meme1.png" alt="CBS Meme 1 – created by smitske" loading="lazy">
+        <figcaption>created by <b>smitske</b></figcaption>
+      </figure>
+
+      <!-- meme2 t/m meme6: content + artiest -->
+      <figure class="card">
+        <img src="image/meme2.png" alt="CBS Meme 2 – created by sapodill" loading="lazy">
+        <figcaption>created by <b>sapodill</b></figcaption>
+      </figure>
+
+      <figure class="card">
+        <img src="image/meme3.png" alt="CBS Meme 3 – created by majorliberty" loading="lazy">
+        <figcaption>created by <b>majorliberty</b></figcaption>
+      </figure>
+
+      <figure class="card">
+        <img src="image/meme4.png" alt="CBS Meme 4 – created by senifer" loading="lazy">
+        <figcaption>created by <b>senifer</b></figcaption>
+      </figure>
+
+      <figure class="card">
+        <img src="image/meme5.png" alt="CBS Meme 5 – created by belinda" loading="lazy">
+        <figcaption>created by <b>belinda</b></figcaption>
+      </figure>
+
+      <figure class="card">
+        <img src="image/meme6.png" alt="CBS Meme 6 – created by izumi tatsui" loading="lazy">
+        <figcaption>created by <b>izumi tatsui</b></figcaption>
+      </figure>
+
+      <!-- meme7: mp4 video + artiest -->
+      <figure class="card">
+        <video src="image/meme7.mp4" controls playsinline muted preload="metadata"></video>
+        <figcaption>created by <b>dreams_swe</b></figcaption>
+      </figure>
     </div>
+
+    <p class="muted" style="margin-top:10px">
+      Tip: nieuwe inzending? Upload naar <code>image/</code> en voeg hier een extra kaart toe.
+    </p>
   </div>
 
   <footer>
@@ -78,4 +132,3 @@
   </footer>
 </body>
 </html>
-
