@@ -7,150 +7,208 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <style>
     :root{
-      --bg1:#0f0f0f; --bg2:#1a1a1a; --fg:#00ffcc; --accent:#00ffff; --panel:#111; --border:#0ff;
+      --bg1:#0b0d12; --bg2:#0e141a;
+      --fg:#00ffcc; --accent:#00ffff;
+      --panel:#0b0f13; --border:#0ff;
+      --text:#e8fffb; --muted:#9dd;
     }
-    *{box-sizing:border-box}
-    body {
-      margin: 0;
-      font-family: 'Orbitron', sans-serif;
-      background: linear-gradient(135deg, var(--bg1), var(--bg2));
-      color: var(--fg);
-      text-align: center;
-      padding: 2rem;
+    *{ box-sizing:border-box }
+    html,body{ height:100% }
+    body{
+      margin:0;
+      font-family:'Orbitron',sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 600px at 80% -20%, rgba(0,255,240,.12), transparent 60%),
+        radial-gradient(800px 400px at 0% 120%, rgba(0,190,255,.10), transparent 60%),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+      text-align:center;
+      padding:0 1rem 2rem;
     }
-    header {
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      gap:1rem;
-      margin-bottom:1rem;
+
+    /* Top bar */
+    .topbar{
+      position:sticky; top:0; z-index:10;
+      display:flex; align-items:center; justify-content:flex-end;
+      padding:.75rem 1rem;
+      background:linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,0));
+      backdrop-filter:blur(6px);
     }
-    header img {
-      height:64px;
+    #langSwitch{
+      background:var(--fg); color:#001015; font-weight:800;
+      padding:8px 12px; border-radius:10px; cursor:pointer; border:0;
+      box-shadow:0 0 8px var(--fg);
     }
-    h1 {
-      margin-top: 0.5rem;
-      color: var(--accent);
-      text-shadow: 0 0 8px #0ff6;
+
+    /* Hero */
+    .hero{
+      max-width:1100px; margin:1.2rem auto 0; padding:0 1rem;
+      display:grid; place-items:center;
     }
-    h2 {
-      margin-top: 0.5rem;
-      font-weight: normal;
-      color: #9ee;
+    .logo-wrap{
+      position:relative; width:min(220px,45vw); aspect-ratio:1/1; margin:18px auto 8px;
+      display:grid; place-items:center;
+      filter: drop-shadow(0 8px 28px rgba(0,255,230,.35));
     }
-    .panel {
-      background: var(--panel);
-      border: 2px solid var(--border);
-      border-radius: 16px;
-      padding: 20px;
-      margin: 20px auto;
-      max-width: 720px;
-      box-shadow: 0 0 22px #0ff3;
+    .logo-wrap::before{
+      /* zachte neon ring achter het logo */
+      content:""; position:absolute; inset:-18%;
+      border-radius:50%;
+      background:radial-gradient(closest-side, rgba(0,255,230,.22), rgba(0,255,230,.05) 55%, transparent 62%);
+      animation:pulse 4.5s ease-in-out infinite;
     }
-    .button {
-      margin: 1rem;
-      display: inline-block;
-      padding: 14px 28px;
-      background-color: var(--fg);
-      color: #000;
-      font-weight: bold;
-      border-radius: 12px;
-      box-shadow: 0 0 12px var(--fg), 0 0 28px var(--fg);
-      transition: all .2s;
-      text-decoration: none;
+    .logo-wrap::after{
+      /* subtiele dunne ring */
+      content:""; position:absolute; inset:-6%;
+      border-radius:50%;
+      box-shadow:0 0 0 2px rgba(0,255,230,.25), inset 0 0 40px rgba(0,255,230,.15);
     }
-    .button:hover {
-      background-color: var(--accent);
-      box-shadow: 0 0 16px var(--accent), 0 0 32px var(--accent);
+    @keyframes pulse{
+      0%,100%{ transform:scale(1) }
+      50%{ transform:scale(1.04) }
     }
-    #langSwitch {
-      position:absolute;
-      top:15px;
-      right:20px;
-      background:var(--fg);
-      color:#000;
-      font-weight:bold;
-      padding:6px 12px;
-      border-radius:8px;
-      cursor:pointer;
-      box-shadow:0 0 10px var(--fg);
+    .logo{
+      width:100%; height:100%; object-fit:contain; display:block;
+      border-radius:16px; /* laat het logo strakker in de glow vallen */
     }
-    footer {
-      margin-top: 2rem;
-      font-size:0.95rem;
+    h1{
+      margin:.3rem 0 0;
+      font-size:clamp(1.6rem, 4.2vw, 2.4rem);
+      color:var(--accent);
+      text-shadow:0 0 10px rgba(0,255,240,.35);
     }
-    footer a {
-      margin:0 10px;
-      color: var(--accent);
-      text-decoration:none;
+    h2{
+      margin:.2rem 0 1rem; font-weight:600; color:var(--muted);
+      font-size:clamp(.95rem, 2.6vw, 1.15rem);
     }
-    footer a:hover {
-      text-decoration:underline;
+
+    /* Panels (glass + neon border) */
+    .panel{
+      position:relative;
+      background:rgba(10,16,20,.55);
+      border:1.5px solid rgba(0,255,240,.35);
+      border-radius:18px;
+      padding:22px;
+      margin:18px auto;
+      max-width:780px;
+      box-shadow: 0 0 22px rgba(0,255,240,.16), inset 0 0 18px rgba(0,255,240,.06);
+      backdrop-filter: blur(6px);
+    }
+    .panel h3{ margin:.2rem 0 1rem }
+    .muted{ color:var(--muted) }
+
+    /* Buttons */
+    .btn-row{ display:flex; flex-wrap:wrap; justify-content:center; gap:12px; }
+    .button{
+      display:inline-block; min-width:190px; text-decoration:none; text-align:center;
+      padding:14px 20px; font-weight:900; letter-spacing:.4px;
+      color:#001015; background:linear-gradient(180deg, var(--fg), #4affea);
+      border-radius:14px; border:1px solid rgba(0,255,240,.6);
+      box-shadow:0 8px 24px rgba(0,255,230,.25), inset 0 -6px 12px rgba(0,0,0,.15);
+      transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+    }
+    .button:hover{ transform:translateY(-2px); box-shadow:0 10px 28px rgba(0,255,230,.36); filter:saturate(1.06); }
+    .button:active{ transform:translateY(0) scale(.99) }
+
+    /* Footer */
+    footer{ margin-top: 1.2rem; font-size:.98rem }
+    footer a{ color:var(--accent); text-decoration:none; margin:0 .4rem }
+    footer a:hover{ text-decoration:underline }
+
+    /* Layout helpers */
+    .container{ max-width:980px; margin:0 auto; padding:0 1rem }
+
+    /* Responsive fine-tuning */
+    @media (max-width:520px){
+      .button{ min-width:unset; width:100% }
+      .panel{ padding:18px }
     }
   </style>
 </head>
 <body>
-  <button id="langSwitch">NL 🇳🇱</button>
+  <!-- sticky topbar with language switch -->
+  <div class="topbar">
+    <button id="langSwitch">NL 🇳🇱</button>
+  </div>
 
   <!-- English Content -->
   <div id="content-en">
-    <header>
-      <img src="logo.png" alt="CBS Logo">
+    <section class="hero container">
+      <div class="logo-wrap" aria-hidden="true">
+        <img class="logo" src="logo.png" alt="CBS Logo">
+      </div>
       <h1>CBS Coin</h1>
-    </header>
-    <h2>Community Builds Sovereignty</h2>
+      <h2>Community Builds Sovereignty</h2>
+    </section>
 
-    <div class="panel">
-      <p>CBS Coin is a community-driven token on Solana. Breaking chains together, building sovereignty for all.</p>
-      <a href="snake.html" class="button">🕹️ Play Snake Game</a>
-      <a href="buy.html" class="button">🛒 Buy CBS</a>
-    </div>
+    <main class="container">
+      <div class="panel">
+        <p class="muted" style="margin-top:0">CBS Coin is a community-driven token on Solana. Breaking chains together, building sovereignty for all.</p>
+        <div class="btn-row" style="margin-top:.6rem">
+          <a href="snake.html" class="button">🕹️ Play Snake Game</a>
+          <a href="buy.html" class="button">🛒 Buy CBS</a>
+        </div>
+      </div>
 
-    <div class="panel">
-      <h3>More Pages</h3>
-      <a href="litepaper2.0.html" class="button">📜 Litepaper 2.0</a>
-      <a href="roadmap.html" class="button">🗺️ Roadmap</a>
-      <a href="tokenomics.html" class="button">📊 Tokenomics</a>
-      <a href="community.html" class="button">🌐 Community</a>
-    </div>
+      <div class="panel">
+        <h3>More Pages</h3>
+        <div class="btn-row">
+          <a href="litepaper2.0.html" class="button">📜 Litepaper 2.0</a>
+          <a href="roadmap.html" class="button">🗺️ Roadmap</a>
+          <a href="tokenomics.html" class="button">📊 Tokenomics</a>
+          <a href="community.html" class="button">🌐 Community</a>
+        </div>
+      </div>
+    </main>
 
-    <footer>
-      <p>Join the community:</p>
-      <a href="https://t.me/CBS_Coin" target="_blank">Telegram</a> | 
-      <a href="https://x.com/CBS_Coin" target="_blank">X (Twitter)</a>
+    <footer class="container">
+      <p>Join the community:
+        <a href="https://t.me/CBS_Coin" target="_blank" rel="noopener">Telegram</a> |
+        <a href="https://x.com/CBS_Coin" target="_blank" rel="noopener">X (Twitter)</a>
+      </p>
     </footer>
   </div>
 
   <!-- Dutch Content -->
   <div id="content-nl" style="display:none">
-    <header>
-      <img src="logo.png" alt="CBS Logo">
+    <section class="hero container">
+      <div class="logo-wrap" aria-hidden="true">
+        <img class="logo" src="logo.png" alt="CBS Logo">
+      </div>
       <h1>CBS Coin</h1>
-    </header>
-    <h2>Community Builds Sovereignty</h2>
+      <h2>Community Builds Sovereignty</h2>
+    </section>
 
-    <div class="panel">
-      <p>CBS Coin is een door de community gedreven token op Solana. Samen de ketens breken en soevereiniteit opbouwen.</p>
-      <a href="snake.html" class="button">🕹️ Speel Snake Game</a>
-      <a href="buy.html" class="button">🛒 Koop CBS</a>
-    </div>
+    <main class="container">
+      <div class="panel">
+        <p class="muted" style="margin-top:0">CBS Coin is een door de community gedreven token op Solana. Samen de ketens breken en soevereiniteit opbouwen.</p>
+        <div class="btn-row" style="margin-top:.6rem">
+          <a href="snake.html" class="button">🕹️ Speel Snake Game</a>
+          <a href="buy.html" class="button">🛒 Koop CBS</a>
+        </div>
+      </div>
 
-    <div class="panel">
-      <h3>Meer Pagina’s</h3>
-      <a href="litepaper2.0.html" class="button">📜 Litepaper 2.0</a>
-      <a href="roadmap.html" class="button">🗺️ Roadmap</a>
-      <a href="tokenomics.html" class="button">📊 Tokenomics</a>
-      <a href="community.html" class="button">🌐 Community</a>
-    </div>
+      <div class="panel">
+        <h3>Meer Pagina’s</h3>
+        <div class="btn-row">
+          <a href="litepaper2.0.html" class="button">📜 Litepaper 2.0</a>
+          <a href="roadmap.html" class="button">🗺️ Roadmap</a>
+          <a href="tokenomics.html" class="button">📊 Tokenomics</a>
+          <a href="community.html" class="button">🌐 Community</a>
+        </div>
+      </div>
+    </main>
 
-    <footer>
-      <p>Sluit je aan bij de community:</p>
-      <a href="https://t.me/CBS_Coin" target="_blank">Telegram</a> | 
-      <a href="https://x.com/CBS_Coin" target="_blank">X (Twitter)</a>
+    <footer class="container">
+      <p>Sluit je aan bij de community:
+        <a href="https://t.me/CBS_Coin" target="_blank" rel="noopener">Telegram</a> |
+        <a href="https://x.com/CBS_Coin" target="_blank" rel="noopener">X (Twitter)</a>
+      </p>
     </footer>
   </div>
 
   <script>
+    // Language toggle (same behavior, but placed in sticky topbar)
     const btn = document.getElementById("langSwitch");
     const en = document.getElementById("content-en");
     const nl = document.getElementById("content-nl");
@@ -165,7 +223,10 @@
         en.style.display="none"; nl.style.display="block";
         btn.textContent="EN 🇬🇧";
       }
+      // Scroll naar boven na taalwissel (beter UX)
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     });
   </script>
 </body>
 </html>
+
