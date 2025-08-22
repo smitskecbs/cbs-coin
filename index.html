@@ -4,211 +4,332 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>CBS Coin – Community Builds Sovereignty</title>
+
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+
   <style>
     :root{
-      --bg1:#0b0d12; --bg2:#0e141a;
-      --fg:#00ffcc; --accent:#00ffff;
-      --panel:#0b0f13; --border:#0ff;
-      --text:#e8fffb; --muted:#9dd;
+      --bg1:#0a0c10; --bg2:#0f141b;
+      --card:#0f151c; --card2:#0c1016;
+      --line:#0afbe0; --line2:#38f8ff;
+      --fg:#eafffb; --muted:#a8d6cd; --note:#7ee9dc;
+      --shadow: 0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
+      --radius:18px;
     }
-    *{ box-sizing:border-box }
-    html,body{ height:100% }
+    *{box-sizing:border-box}
+    html,body{height:100%}
     body{
-      margin:0;
-      font-family:'Orbitron',sans-serif;
-      color:var(--text);
+      margin:0; font-family:'Orbitron',sans-serif; color:var(--fg);
       background:
-        radial-gradient(1200px 600px at 80% -20%, rgba(0,255,240,.12), transparent 60%),
-        radial-gradient(800px 400px at 0% 120%, rgba(0,190,255,.10), transparent 60%),
-        linear-gradient(135deg, var(--bg1), var(--bg2));
-      text-align:center;
-      padding:0 1rem 2rem;
+        radial-gradient(900px 600px at 100% -10%, rgba(0,255,230,.10), transparent 60%),
+        radial-gradient(700px 500px at -10% 110%, rgba(0,170,255,.09), transparent 60%),
+        linear-gradient(135deg,var(--bg1),var(--bg2));
+      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
     }
 
-    /* Top bar */
+    /* ===== Header ===== */
     .topbar{
-      position:sticky; top:0; z-index:10;
-      display:flex; align-items:center; justify-content:flex-end;
-      padding:.75rem 1rem;
-      background:linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,0));
-      backdrop-filter:blur(6px);
+      position:sticky; top:0; z-index:20;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.8rem 1rem; backdrop-filter:blur(6px);
+      background:linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0));
+      border-bottom:1px solid rgba(0,255,240,.08);
+    }
+    .brand{display:flex; align-items:center; gap:.7rem}
+    .brand img{width:38px; height:38px; border-radius:10px; filter:drop-shadow(0 0 10px rgba(0,255,230,.35))}
+    .brand h1{
+      margin:0; font-size:1.05rem; letter-spacing:.4px; font-weight:700;
+      color:#bffef2;
     }
     #langSwitch{
-      background:var(--fg); color:#001015; font-weight:800;
-      padding:8px 12px; border-radius:10px; cursor:pointer; border:0;
-      box-shadow:0 0 8px var(--fg);
+      background:linear-gradient(180deg, #7dffe9, #55f1e7);
+      color:#012022; font-weight:900; border:1px solid rgba(0,255,240,.45);
+      padding:.55rem .9rem; border-radius:12px; cursor:pointer;
+      box-shadow:0 8px 18px rgba(0,255,230,.18), inset 0 -6px 10px rgba(0,0,0,.15);
+      transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
     }
+    #langSwitch:hover{ transform:translateY(-1px); box-shadow:0 10px 22px rgba(0,255,230,.26) }
 
-    /* Hero */
+    /* ===== Layout ===== */
+    .container{ max-width:1100px; margin:0 auto; padding:1.2rem 1rem 2.2rem }
+
     .hero{
-      max-width:1100px; margin:1.2rem auto 0; padding:0 1rem;
+      display:grid; grid-template-columns:120px 1fr; gap:1.2rem; align-items:center;
+      padding:1.2rem; margin:10px auto 18px; border-radius:var(--radius);
+      background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35));
+      border:1px solid rgba(0,255,240,.18); box-shadow:var(--shadow);
+    }
+    .hero .logo-wrap{
+      position:relative; width:120px; height:120px; border-radius:16px; overflow:hidden;
+      background:radial-gradient(closest-side, rgba(0,255,230,.18), rgba(0,255,230,.04) 58%, transparent 62%);
       display:grid; place-items:center;
     }
-    .logo-wrap{
-      position:relative; width:min(220px,45vw); aspect-ratio:1/1; margin:18px auto 8px;
-      display:grid; place-items:center;
-      filter: drop-shadow(0 8px 28px rgba(0,255,230,.35));
+    .hero .logo-wrap::after{
+      content:""; position:absolute; inset:-8%;
+      border-radius:18px; box-shadow:0 0 0 2px rgba(0,255,230,.18), inset 0 0 30px rgba(0,255,230,.14);
+      pointer-events:none;
     }
-    .logo-wrap::before{
-      /* zachte neon ring achter het logo */
-      content:""; position:absolute; inset:-18%;
-      border-radius:50%;
-      background:radial-gradient(closest-side, rgba(0,255,230,.22), rgba(0,255,230,.05) 55%, transparent 62%);
-      animation:pulse 4.5s ease-in-out infinite;
-    }
-    .logo-wrap::after{
-      /* subtiele dunne ring */
-      content:""; position:absolute; inset:-6%;
-      border-radius:50%;
-      box-shadow:0 0 0 2px rgba(0,255,230,.25), inset 0 0 40px rgba(0,255,230,.15);
-    }
-    @keyframes pulse{
-      0%,100%{ transform:scale(1) }
-      50%{ transform:scale(1.04) }
-    }
-    .logo{
-      width:100%; height:100%; object-fit:contain; display:block;
-      border-radius:16px; /* laat het logo strakker in de glow vallen */
-    }
-    h1{
-      margin:.3rem 0 0;
-      font-size:clamp(1.6rem, 4.2vw, 2.4rem);
-      color:var(--accent);
-      text-shadow:0 0 10px rgba(0,255,240,.35);
-    }
-    h2{
-      margin:.2rem 0 1rem; font-weight:600; color:var(--muted);
-      font-size:clamp(.95rem, 2.6vw, 1.15rem);
-    }
+    .hero .logo{width:86%; height:86%; object-fit:contain}
 
-    /* Panels (glass + neon border) */
-    .panel{
-      position:relative;
-      background:rgba(10,16,20,.55);
-      border:1.5px solid rgba(0,255,240,.35);
-      border-radius:18px;
-      padding:22px;
-      margin:18px auto;
-      max-width:780px;
-      box-shadow: 0 0 22px rgba(0,255,240,.16), inset 0 0 18px rgba(0,255,240,.06);
-      backdrop-filter: blur(6px);
-    }
-    .panel h3{ margin:.2rem 0 1rem }
-    .muted{ color:var(--muted) }
+    .hero h2{ margin:.15rem 0 0; color:var(--note); font-size:1.05rem; font-weight:600 }
+    .hero p{ margin:.35rem 0 0; color:var(--muted); font-size:.95rem }
 
-    /* Buttons */
-    .btn-row{ display:flex; flex-wrap:wrap; justify-content:center; gap:12px; }
-    .button{
-      display:inline-block; min-width:190px; text-decoration:none; text-align:center;
-      padding:14px 20px; font-weight:900; letter-spacing:.4px;
-      color:#001015; background:linear-gradient(180deg, var(--fg), #4affea);
-      border-radius:14px; border:1px solid rgba(0,255,240,.6);
-      box-shadow:0 8px 24px rgba(0,255,230,.25), inset 0 -6px 12px rgba(0,0,0,.15);
-      transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
+    /* ===== Cards ===== */
+    .grid{
+      display:grid; gap:16px;
+      grid-template-columns:repeat(12,1fr);
     }
-    .button:hover{ transform:translateY(-2px); box-shadow:0 10px 28px rgba(0,255,230,.36); filter:saturate(1.06); }
-    .button:active{ transform:translateY(0) scale(.99) }
+    .card{
+      grid-column:span 12;
+      background:linear-gradient(180deg, var(--card), var(--card2));
+      border:1px solid rgba(0,255,240,.14);
+      border-radius:var(--radius); box-shadow:var(--shadow);
+      padding:18px;
+    }
+    .card h3{ margin:.2rem 0 .6rem; color:#bffef2; font-size:1.05rem }
+    .card p{ margin:0 0 .9rem; color:var(--muted); font-size:.95rem }
+
+    /* Primary actions as large tiles */
+    .cta-grid{
+      display:grid; gap:14px;
+      grid-template-columns:repeat(12,1fr);
+    }
+    .cta{
+      grid-column:span 12;
+      display:flex; align-items:center; justify-content:space-between; gap:14px;
+      padding:18px; border-radius:16px;
+      background:
+        linear-gradient(180deg, rgba(0,255,230,.06), rgba(0,255,230,.02)),
+        radial-gradient(600px 300px at 100% 0%, rgba(0,255,230,.10), transparent 60%),
+        #0c1218;
+      border:1.5px solid rgba(0,255,240,.22);
+      box-shadow:0 20px 40px rgba(0,255,230,.10), inset 0 0 0 1px rgba(0,255,240,.06);
+    }
+    .cta h4{ margin:0 0 .25rem; font-size:1.05rem }
+    .cta small{ color:var(--muted) }
+
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+      min-width:190px; padding:13px 18px; border-radius:12px; text-decoration:none;
+      color:#001013; font-weight:900; letter-spacing:.3px;
+      background:linear-gradient(180deg, #83ffec, #54f1e8);
+      border:1px solid rgba(0,255,240,.55);
+      box-shadow:0 12px 26px rgba(0,255,230,.24), inset 0 -8px 14px rgba(0,0,0,.14);
+      transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
+      white-space:nowrap;
+    }
+    .btn:hover{ transform:translateY(-2px); box-shadow:0 14px 30px rgba(0,255,230,.30) }
+    .btn:active{ transform:translateY(0) scale(.99) }
+
+    /* More pages tiles */
+    .tiles{
+      display:grid; gap:14px; grid-template-columns:repeat(12,1fr);
+    }
+    .tile{
+      grid-column:span 12;
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding:16px; border-radius:14px;
+      background:linear-gradient(180deg, #0b1217, #0a1015);
+      border:1px solid rgba(0,255,240,.14);
+      box-shadow:0 10px 24px rgba(0,255,230,.08);
+    }
+    .tile h5{ margin:0; font-size:1rem; color:#d9fffb }
+    .tile small{ color:var(--muted) }
 
     /* Footer */
-    footer{ margin-top: 1.2rem; font-size:.98rem }
-    footer a{ color:var(--accent); text-decoration:none; margin:0 .4rem }
+    footer{ margin:24px auto 40px; text-align:center; color:var(--muted) }
+    footer a{ color:#79ffee; text-decoration:none }
     footer a:hover{ text-decoration:underline }
 
-    /* Layout helpers */
-    .container{ max-width:980px; margin:0 auto; padding:0 1rem }
-
-    /* Responsive fine-tuning */
-    @media (max-width:520px){
-      .button{ min-width:unset; width:100% }
-      .panel{ padding:18px }
+    /* Responsive columns */
+    @media (min-width:640px){
+      .cta{ grid-column:span 6 }
+      .tile{ grid-column:span 6 }
+    }
+    @media (min-width:980px){
+      .cta{ grid-column:span 6 }
+      .tile{ grid-column:span 3 }
     }
   </style>
 </head>
 <body>
-  <!-- sticky topbar with language switch -->
-  <div class="topbar">
+  <!-- ===== Header ===== -->
+  <header class="topbar">
+    <div class="brand">
+      <img src="logo.png" alt="CBS Logo">
+      <h1>CBS Coin</h1>
+    </div>
     <button id="langSwitch">NL 🇳🇱</button>
-  </div>
+  </header>
 
-  <!-- English Content -->
+  <!-- ===== EN Content ===== -->
   <div id="content-en">
-    <section class="hero container">
-      <div class="logo-wrap" aria-hidden="true">
-        <img class="logo" src="logo.png" alt="CBS Logo">
-      </div>
-      <h1>CBS Coin</h1>
-      <h2>Community Builds Sovereignty</h2>
-    </section>
-
-    <main class="container">
-      <div class="panel">
-        <p class="muted" style="margin-top:0">CBS Coin is a community-driven token on Solana. Breaking chains together, building sovereignty for all.</p>
-        <div class="btn-row" style="margin-top:.6rem">
-          <a href="snake.html" class="button">🕹️ Play Snake Game</a>
-          <a href="buy.html" class="button">🛒 Buy CBS</a>
+    <div class="container">
+      <section class="hero">
+        <div class="logo-wrap"><img class="logo" src="logo.png" alt="CBS Logo"></div>
+        <div>
+          <h2>Community Builds Sovereignty</h2>
+          <p>CBS Coin is a community-driven token on Solana. Breaking chains together.</p>
         </div>
-      </div>
+      </section>
 
-      <div class="panel">
-        <h3>More Pages</h3>
-        <div class="btn-row">
-          <a href="litepaper2.0.html" class="button">📜 Litepaper 2.0</a>
-          <a href="roadmap.html" class="button">🗺️ Roadmap</a>
-          <a href="tokenomics.html" class="button">📊 Tokenomics</a>
-          <a href="community.html" class="button">🌐 Community</a>
+      <!-- Primary actions -->
+      <section class="grid">
+        <div class="card">
+          <h3>Start here</h3>
+          <div class="cta-grid">
+            <div class="cta">
+              <div>
+                <h4>🕹️ Play Snake Game</h4>
+                <small>Compete on the leaderboard & have fun.</small>
+              </div>
+              <a class="btn" href="snake.html">Play now</a>
+            </div>
+
+            <div class="cta">
+              <div>
+                <h4>🛒 Buy CBS</h4>
+                <small>Get your first CBS tokens in a few clicks.</small>
+              </div>
+              <a class="btn" href="buy.html">Buy CBS</a>
+            </div>
+          </div>
         </div>
-      </div>
-    </main>
+      </section>
 
-    <footer class="container">
-      <p>Join the community:
-        <a href="https://t.me/CBS_Coin" target="_blank" rel="noopener">Telegram</a> |
+      <!-- More pages -->
+      <section class="grid">
+        <div class="card">
+          <h3>More pages</h3>
+          <div class="tiles">
+            <div class="tile">
+              <div>
+                <h5>📜 Litepaper 2.0</h5>
+                <small>Overview & principles</small>
+              </div>
+              <a class="btn" href="litepaper2.0.html">Open</a>
+            </div>
+
+            <div class="tile">
+              <div>
+                <h5>🗺️ Roadmap</h5>
+                <small>What we’re building next</small>
+              </div>
+              <a class="btn" href="roadmap.html">Open</a>
+            </div>
+
+            <div class="tile">
+              <div>
+                <h5>📊 Tokenomics</h5>
+                <small>Supply & distribution</small>
+              </div>
+              <a class="btn" href="tokenomics.html">Open</a>
+            </div>
+
+            <div class="tile">
+              <div>
+                <h5>🌐 Community</h5>
+                <small>Memes, updates & links</small>
+              </div>
+              <a class="btn" href="community.html">Open</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        Join the community:
+        <a href="https://t.me/CBS_Coin" target="_blank" rel="noopener">Telegram</a> ·
         <a href="https://x.com/CBS_Coin" target="_blank" rel="noopener">X (Twitter)</a>
-      </p>
-    </footer>
+      </footer>
+    </div>
   </div>
 
-  <!-- Dutch Content -->
+  <!-- ===== NL Content ===== -->
   <div id="content-nl" style="display:none">
-    <section class="hero container">
-      <div class="logo-wrap" aria-hidden="true">
-        <img class="logo" src="logo.png" alt="CBS Logo">
-      </div>
-      <h1>CBS Coin</h1>
-      <h2>Community Builds Sovereignty</h2>
-    </section>
-
-    <main class="container">
-      <div class="panel">
-        <p class="muted" style="margin-top:0">CBS Coin is een door de community gedreven token op Solana. Samen de ketens breken en soevereiniteit opbouwen.</p>
-        <div class="btn-row" style="margin-top:.6rem">
-          <a href="snake.html" class="button">🕹️ Speel Snake Game</a>
-          <a href="buy.html" class="button">🛒 Koop CBS</a>
+    <div class="container">
+      <section class="hero">
+        <div class="logo-wrap"><img class="logo" src="logo.png" alt="CBS Logo"></div>
+        <div>
+          <h2>Community Builds Sovereignty</h2>
+          <p>CBS Coin is een door de community gedreven token op Solana. Samen de ketens breken.</p>
         </div>
-      </div>
+      </section>
 
-      <div class="panel">
-        <h3>Meer Pagina’s</h3>
-        <div class="btn-row">
-          <a href="litepaper2.0.html" class="button">📜 Litepaper 2.0</a>
-          <a href="roadmap.html" class="button">🗺️ Roadmap</a>
-          <a href="tokenomics.html" class="button">📊 Tokenomics</a>
-          <a href="community.html" class="button">🌐 Community</a>
+      <!-- Primaire acties -->
+      <section class="grid">
+        <div class="card">
+          <h3>Begin hier</h3>
+          <div class="cta-grid">
+            <div class="cta">
+              <div>
+                <h4>🕹️ Speel Snake Game</h4>
+                <small>Strijd in het klassement & have fun.</small>
+              </div>
+              <a class="btn" href="snake.html">Spelen</a>
+            </div>
+
+            <div class="cta">
+              <div>
+                <h4>🛒 Koop CBS</h4>
+                <small>Haal je eerste CBS-tokens in enkele klikken.</small>
+              </div>
+              <a class="btn" href="buy.html">Koop CBS</a>
+            </div>
+          </div>
         </div>
-      </div>
-    </main>
+      </section>
 
-    <footer class="container">
-      <p>Sluit je aan bij de community:
-        <a href="https://t.me/CBS_Coin" target="_blank" rel="noopener">Telegram</a> |
+      <!-- Meer pagina's -->
+      <section class="grid">
+        <div class="card">
+          <h3>Meer pagina’s</h3>
+          <div class="tiles">
+            <div class="tile">
+              <div>
+                <h5>📜 Litepaper 2.0</h5>
+                <small>Overzicht & principes</small>
+              </div>
+              <a class="btn" href="litepaper2.0.html">Open</a>
+            </div>
+
+            <div class="tile">
+              <div>
+                <h5>🗺️ Roadmap</h5>
+                <small>Wat we hierna bouwen</small>
+              </div>
+              <a class="btn" href="roadmap.html">Open</a>
+            </div>
+
+            <div class="tile">
+              <div>
+                <h5>📊 Tokenomics</h5>
+                <small>Supply & distributie</small>
+              </div>
+              <a class="btn" href="tokenomics.html">Open</a>
+            </div>
+
+            <div class="tile">
+              <div>
+                <h5>🌐 Community</h5>
+                <small>Memes, updates & links</small>
+              </div>
+              <a class="btn" href="community.html">Open</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        Sluit je aan bij de community:
+        <a href="https://t.me/CBS_Coin" target="_blank" rel="noopener">Telegram</a> ·
         <a href="https://x.com/CBS_Coin" target="_blank" rel="noopener">X (Twitter)</a>
-      </p>
-    </footer>
+      </footer>
+    </div>
   </div>
 
+  <!-- ===== Language toggle (on header button) ===== -->
   <script>
-    // Language toggle (same behavior, but placed in sticky topbar)
     const btn = document.getElementById("langSwitch");
     const en = document.getElementById("content-en");
     const nl = document.getElementById("content-nl");
@@ -216,15 +337,10 @@
 
     btn.addEventListener("click", ()=>{
       isEN = !isEN;
-      if(isEN){
-        en.style.display="block"; nl.style.display="none";
-        btn.textContent="NL 🇳🇱";
-      } else {
-        en.style.display="none"; nl.style.display="block";
-        btn.textContent="EN 🇬🇧";
-      }
-      // Scroll naar boven na taalwissel (beter UX)
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      en.style.display = isEN ? "block" : "none";
+      nl.style.display = isEN ? "none"  : "block";
+      btn.textContent = isEN ? "NL 🇳🇱" : "EN 🇬🇧";
+      window.scrollTo({ top:0, behavior:'smooth' });
     });
   </script>
 </body>
