@@ -23,45 +23,136 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet" />
   <style>
-    :root{--bg1:#0f0f0f;--bg2:#1a1a1a;--fg:#00ffcc;--accent:#00ffff;--panel:#111;--border:#0ff}
-    *{box-sizing:border-box}
-    body{
-      margin:0;font-family:'Orbitron',sans-serif;
-      background:linear-gradient(135deg,var(--bg1),var(--bg2));
-      color:var(--fg);display:flex;flex-direction:column;align-items:center;padding:16px
+    /* ===== Theme (aligned with your homepage/litepaper) ===== */
+    :root{
+      --bg1:#0a0c10; --bg2:#0f141b;
+      --card:#0f151c; --card2:#0c1016;
+      --fg:#eafffb; --muted:#a8d6cd; --note:#7ee9dc;
+      --accent1:#7dffe9; --accent2:#55f1e7;
+      --line:rgba(0,255,240,.18);
+      --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
+      --radius:18px;
+      --glowBtnA:#5afff0; --glowBtnB:#2bffe4;
     }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:'Orbitron',sans-serif; color:var(--fg);
+      background:
+        radial-gradient(900px 600px at 100% -10%, rgba(0,255,230,.10), transparent 60%),
+        radial-gradient(700px 500px at -10% 110%, rgba(0,170,255,.09), transparent 60%),
+        linear-gradient(135deg,var(--bg1),var(--bg2));
+      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+      display:flex; flex-direction:column; align-items:center; padding:16px;
+    }
+
+    /* Hide chrome when playing (unchanged behavior) */
     body.play-mode header,
     body.play-mode #controlsPanel,
     body.play-mode #leaderPanel{ display:none; }
 
-    header{display:flex;align-items:center;gap:.75rem;margin:10px auto 14px auto}
-    header img{height:48px}
-    h1{margin:0;font-size:clamp(1.6rem,3.3vw,2.3rem);color:var(--accent);text-shadow:0 0 6px #0ff5}
-    .panel{background:var(--panel);border:2px solid var(--border);border-radius:16px;padding:16px;margin:10px auto;max-width:680px;width:100%;box-shadow:0 0 22px #0ff3}
-    .row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
-    .btn{background:var(--fg);color:#012;cursor:pointer;border:none;border-radius:12px;padding:.85rem 1.35rem;font-weight:800}
-    .btn:hover{background:var(--accent)}
-    .btn[disabled]{opacity:.6;cursor:not-allowed}
-    #payBtn{box-shadow:0 0 10px var(--fg),0 0 35px var(--fg),0 0 60px var(--fg)}
-
-    #gameWrap{max-width:440px;margin:10px auto}
-    canvas{
-      display:block;margin:0 auto;border:2px solid var(--accent);
-      width:100%;max-width:440px;height:auto;background:#000;touch-action:none;border-radius:12px
+    /* ===== Header ===== */
+    header{
+      width:100%; max-width:900px;
+      display:flex; align-items:center; gap:.9rem;
+      margin:10px auto 14px;
+      padding:12px 16px;
+      background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35));
+      border:1px solid var(--line);
+      border-radius:16px;
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(6px);
+    }
+    header img{height:44px; width:auto; border-radius:10px; filter:drop-shadow(0 0 10px rgba(0,255,230,.35))}
+    h1{
+      margin:0;
+      font-size:clamp(1.4rem,3.3vw,2.1rem);
+      color:#bffef2;
+      text-shadow:0 0 10px rgba(0,255,240,.25);
     }
 
-    .muted{color:#9aa} table{width:100%;border-collapse:collapse}
-    th,td{padding:.55rem;border-bottom:1px solid #0ff3;text-align:center}
-    h2{margin:.2rem 0 .6rem}
+    /* ===== Panels ===== */
+    .panel{
+      width:100%; max-width:900px;
+      background:linear-gradient(180deg, var(--card), var(--card2));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:18px;
+      margin:12px auto;
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(6px);
+    }
+    .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+    .muted{color:var(--muted)}
 
-    #nameOverlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50}
-    #nameCard{background:#111;border:2px solid var(--border);border-radius:12px;padding:16px 18px;box-shadow:0 0 18px #0ff6;width:min(92vw,420px)}
-    #nameInput{width:100%;padding:.75rem 1rem;border:2px solid var(--border);border-radius:.6rem;background:#000;color:#fff;font-family:inherit;font-size:1rem}
+    /* ===== Buttons (high-contrast neon) ===== */
+    .btn{
+      background:linear-gradient(180deg, var(--glowBtnA), var(--glowBtnB));
+      color:#001013; cursor:pointer; border:none;
+      border-radius:12px; padding:.9rem 1.35rem; font-weight:900; letter-spacing:.3px;
+      border:1px solid rgba(0,255,240,.7);
+      box-shadow:
+        0 0 12px rgba(0,255,230,.55),
+        0 0 24px rgba(0,255,230,.25),
+        inset 0 -8px 14px rgba(0,0,0,.14);
+      transition:transform .15s ease, box-shadow .15s ease, filter .15s ease;
+      white-space:nowrap;
+    }
+    .btn:hover{ transform:translateY(-2px) scale(1.03); box-shadow:0 0 16px rgba(0,255,230,.75), 0 0 32px rgba(0,255,230,.35) }
+    .btn:active{ transform:translateY(0) scale(.99) }
+    .btn[disabled]{opacity:.6;cursor:not-allowed;filter:saturate(.7)}
+    #payBtn{ box-shadow:0 0 12px rgba(0,255,230,.65), 0 0 34px rgba(0,255,230,.35) }
+
+    /* ===== Game Canvas ===== */
+    #gameWrap{max-width:520px;margin:10px auto}
+    canvas{
+      display:block;margin:0 auto;border:1px solid rgba(0,255,240,.35);
+      width:100%;max-width:520px;height:auto;background:#000;border-radius:14px;
+      box-shadow:0 0 22px rgba(0,255,240,.12), inset 0 0 0 1px rgba(0,255,240,.06);
+      touch-action:none;
+    }
+
+    /* ===== Table (Top 3) ===== */
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    th,td{padding:.65rem;border-bottom:1px solid rgba(0,255,240,.20);text-align:center}
+    thead th{color:#bffef2}
+    tbody td{color:var(--fg)}
+
+    h2{margin:.2rem 0 .6rem; color:#bffef2}
+
+    /* ===== Name Modal ===== */
+    #nameOverlay{
+      position:fixed; inset:0; background:rgba(0,0,0,.6);
+      display:none; align-items:center; justify-content:center; z-index:50;
+      backdrop-filter: blur(2px);
+    }
+    #nameCard{
+      width:min(92vw,480px);
+      background:linear-gradient(180deg, var(--card), var(--card2));
+      border:1px solid var(--line); border-radius:14px;
+      padding:18px 18px 14px;
+      box-shadow:var(--shadow);
+    }
+    #nameCard h3{ margin:.2rem 0 .6rem; color:#bffef2 }
+    #nameInput{
+      width:100%; padding:.85rem 1rem; border:1px solid rgba(0,255,240,.35);
+      border-radius:10px; background:#000; color:#fff; font-family:inherit; font-size:1rem;
+      box-shadow:inset 0 0 0 1px rgba(0,255,240,.06);
+    }
     #error{color:#ff6b7a;font-size:.85rem;margin-top:.35rem;display:none}
 
+    /* ===== D-Pad (mobile) ===== */
     #dpad{ position:static; display:none; justify-content:center; margin-top:12px; }
-    #dpad .pad{ display:grid; grid-template-columns:64px 64px 64px; grid-template-rows:64px 64px 64px; gap:12px; opacity:.45; filter:drop-shadow(0 0 6px #0ff6) }
-    #dpad button{ pointer-events:auto; background:rgba(0,255,255,.10); border:1px solid #0ff7; color:#cff; border-radius:15px; backdrop-filter:blur(2px); font-weight:800 }
+    #dpad .pad{
+      display:grid; grid-template-columns:64px 64px 64px; grid-template-rows:64px 64px 64px; gap:12px;
+      opacity:.55; filter:drop-shadow(0 0 6px rgba(0,255,240,.4));
+    }
+    #dpad button{
+      pointer-events:auto; background:rgba(0,255,255,.10);
+      border:1px solid rgba(0,255,240,.45); color:#cff;
+      border-radius:15px; backdrop-filter:blur(2px); font-weight:800
+    }
     #dpad button:active{background:rgba(0,255,255,.22)}
     @media (max-width:680px){ #dpad{display:flex} }
   </style>
@@ -109,19 +200,21 @@
 
   <div id="nameOverlay">
     <div id="nameCard">
-      <h3 style="margin:.2rem 0 .6rem;color:var(--accent)">Save your score</h3>
+      <h3>Save your score</h3>
       <p class="muted" style="margin:.1rem 0 .6rem">Type your name and press <b>Enter</b> to submit.</p>
       <input id="nameInput" maxlength="30" placeholder="Your name or wallet…" autocomplete="off" />
       <div id="error">Name is required.</div>
-      <div style="margin-top:.8rem;text-align:right">
+      <div style="margin-top:.8rem;text-align:right;display:flex;gap:10px;justify-content:flex-end">
+        <button id="cancelBtn" class="btn" style="background:#1a242c;color:#d9fffb;border:1px solid rgba(0,255,240,.25)">Cancel</button>
         <button id="saveBtn" class="btn">Save</button>
-        <button id="cancelBtn" class="btn" style="background:#333;color:#ddd">Cancel</button>
       </div>
     </div>
   </div>
 
+  <!-- Supabase -->
   <script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 
+  <!-- Game + Solana logic (ongewijzigd) -->
   <script type="module">
     /******** CONFIG ********/
     const SUPABASE_URL = "https://aiawteejixsgsunmefpi.supabase.co";
@@ -179,7 +272,6 @@
     let powerUpTimeout = null;
     const powerUpImg = new Image();
     powerUpImg.crossOrigin = "anonymous";
-    // Gebruik dezelfde bewezen-werkende asset als watermark:
     powerUpImg.src = watermark.src;
     let powerUpImgOk = false;
     powerUpImg.onload  = ()=>{ powerUpImgOk = powerUpImg.naturalWidth > 0; };
@@ -231,7 +323,6 @@
     }
 
     function drawPowerUp(x,y){
-      // Alleen tekenen als de image echt geladen is; anders fallback.
       if (powerUpImgOk && powerUpImg.complete && powerUpImg.naturalWidth>0){
         try{
           ctx.save();
@@ -240,7 +331,6 @@
           ctx.drawImage(powerUpImg, x, y, box*2, box*2);
           ctx.restore();
         }catch(e){
-          // Als drawImage alsnog faalt, teken fallback en zet flag uit
           powerUpImgOk = false;
           ctx.save(); ctx.fillStyle = '#00ffff'; ctx.globalAlpha=0.7; ctx.fillRect(x, y, box*2, box*2); ctx.restore();
         }
@@ -285,7 +375,7 @@
       else if(powerUp &&
               x >= powerUp.x && x < powerUp.x + box*2 &&
               y >= powerUp.y && y < powerUp.y + box*2){
-        score += BONUS_POINTS;
+        score += 10;
         powerUp = null;
         if (powerUpTimeout){ clearTimeout(powerUpTimeout); powerUpTimeout=null; }
       }
@@ -316,7 +406,7 @@
       b.addEventListener('touchstart',e=>{ e.preventDefault(); set(b.dataset.dir); },{passive:false});
     });
 
-    /******** SCROLL/PLAY-MODE HELPERS ********/
+    /* ===== Scroll / play-mode helpers ===== */
     function scrollToGame(){
       requestAnimationFrame(()=>{
         canvas.scrollIntoView({ block: 'center', behavior: 'smooth' });
@@ -330,7 +420,7 @@
     function enterPlayMode(){ document.body.classList.add('play-mode'); scrollToGame(); }
     function exitPlayMode(){ document.body.classList.remove('play-mode'); }
 
-    /******** WALLET / PAYMENT ********/
+    /* ===== Wallet / payment ===== */
     function provider(){ return window.solana?.isPhantom ? window.solana : null; }
     function showError(prefix, err){
       const msg = (err && err.message) ? err.message : String(err || 'Unknown error');
@@ -377,7 +467,7 @@
         const toATA   = await getAssociatedTokenAddress(CBS_MINT, TREASURY);
 
         const balInfo = await connection.getTokenAccountBalance(fromATA).catch(()=>null);
-        const needRaw = ENTRY_CBS * (10 ** CBS_DECIMALS);
+        const needRaw = 10 * (10 ** 9);
         if(!balInfo || Number(balInfo.value.amount) < needRaw){
           payBtn.disabled=false; payBtn.textContent="💳 Pay 10 CBS";
           return alert("Not enough CBS to play (need 10 CBS).");
@@ -425,7 +515,7 @@
       scrollToGame();
     });
 
-    /******** NAME / SAVE ********/
+    /* ===== Name / save ===== */
     function openNameModal(sc){
       overlay.style.display="flex";
       nameInput.value=""; err.style.display="none"; saveBtn.disabled = false; saveBtn.textContent = "Save"; nameInput.focus();
@@ -478,7 +568,7 @@
     nameInput.addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ e.preventDefault(); submitName(); } });
     saveBtn.addEventListener("click", submitName);
 
-    /******** LEADERBOARD (Top-3) ********/
+    /* ===== Leaderboard ===== */
     function escapeHtml(s){ return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
     async function renderTop3(){
       tbody.innerHTML = "<tr><td colspan='3' class='muted'>Loading…</td></tr>"; lbNote.style.display="none";
