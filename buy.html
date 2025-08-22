@@ -4,193 +4,254 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Buy CBS Coin</title>
+
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+
   <style>
     :root{
-      --bg1:#0f0f0f; --bg2:#1a1a1a; --fg:#00ffcc; --accent:#00ffff; --panel:#111; --border:#0ff;
+      --bg1:#0a0c10; --bg2:#0f141b;
+      --card:#0f151c; --card2:#0c1016;
+      --fg:#eafffb; --muted:#a8d6cd; --note:#7ee9dc;
+      --accent1:#7dffe9; --accent2:#55f1e7;
+      --line:rgba(0,255,240,.18);
+      --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
+      --radius:18px;
+      --btnA:#5afff0; --btnB:#2bffe4;
     }
     *{box-sizing:border-box}
-    body {
-      margin: 0;
-      font-family: 'Orbitron', sans-serif;
-      background: linear-gradient(135deg, var(--bg1), var(--bg2));
-      color: var(--fg);
-      padding: 2rem;
-      text-align: center;
+    html,body{height:100%}
+    body{
+      margin:0; font-family:'Orbitron',sans-serif; color:var(--fg);
+      background:
+        radial-gradient(900px 600px at 100% -10%, rgba(0,255,230,.10), transparent 60%),
+        radial-gradient(700px 500px at -10% 110%, rgba(0,170,255,.09), transparent 60%),
+        linear-gradient(135deg,var(--bg1),var(--bg2));
+      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
     }
-    h1 {
-      color: var(--accent);
-      text-shadow: 0 0 8px #0ff6;
+
+    /* ===== Header ===== */
+    .topbar{
+      position:sticky; top:0; z-index:20;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.8rem 1rem; backdrop-filter:blur(6px);
+      background:linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0));
+      border-bottom:1px solid rgba(0,255,240,.08);
     }
-    .panel {
-      background: var(--panel);
-      border: 2px solid var(--border);
-      border-radius: 16px;
-      padding: 20px;
-      margin: 20px auto;
-      max-width: 680px;
-      box-shadow: 0 0 22px #0ff3;
+    .brand{display:flex; align-items:center; gap:.7rem}
+    .brand img{width:38px; height:38px; border-radius:10px; filter:drop-shadow(0 0 10px rgba(0,255,230,.35))}
+    .brand h1{margin:0; font-size:1.05rem; font-weight:700; color:#bffef2}
+    #langSwitch{
+      background:linear-gradient(180deg, var(--accent1), var(--accent2));
+      color:#012022; font-weight:900; border:1px solid rgba(0,255,240,.45);
+      padding:.55rem .9rem; border-radius:12px; cursor:pointer;
+      box-shadow:0 8px 18px rgba(0,255,230,.18), inset 0 -6px 10px rgba(0,0,0,.15);
+      transition:transform .12s ease, box-shadow .12s ease;
     }
-    .button {
-      margin: 1rem auto;
-      display: inline-block;
-      padding: 14px 28px;
-      background-color: var(--fg);
-      color: #000;
-      font-weight: bold;
-      border-radius: 12px;
-      box-shadow: 0 0 12px var(--fg), 0 0 28px var(--fg);
-      transition: all .2s;
-    }
-    .button:hover {
-      background-color: var(--accent);
-      box-shadow: 0 0 16px var(--accent), 0 0 32px var(--accent);
-    }
-    a {
-      color: var(--accent);
-      text-decoration: none;
-    }
-    a:hover {
-      text-decoration: underline;
-    }
-    ol {
+    #langSwitch:hover{ transform:translateY(-1px); box-shadow:0 10px 22px rgba(0,255,230,.26) }
+
+    .container{ max-width:1100px; margin:0 auto; padding:1.2rem 1rem 2.2rem; text-align:center }
+
+    /* Hero */
+    .hero{
+      display:grid; grid-template-columns:110px 1fr; gap:1.2rem; align-items:center;
+      padding:1.2rem; margin:10px auto 18px; border-radius:var(--radius);
+      background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35));
+      border:1px solid var(--line); box-shadow:var(--shadow);
       text-align:left;
-      max-width:500px;
-      margin:0 auto;
-      color:#9ee;
-      line-height:1.6;
     }
-    #langSwitch {
-      position:absolute;
-      top:15px;
-      right:20px;
-      background:var(--fg);
-      color:#000;
-      font-weight:bold;
-      padding:6px 12px;
-      border-radius:8px;
-      cursor:pointer;
-      box-shadow:0 0 10px var(--fg);
+    .logo-wrap{
+      position:relative; width:110px; height:110px; border-radius:16px; overflow:hidden;
+      background:radial-gradient(closest-side, rgba(0,255,230,.18), rgba(0,255,230,.04) 58%, transparent 62%);
+      display:grid; place-items:center;
+    }
+    .logo-wrap::after{
+      content:""; position:absolute; inset:-8%;
+      border-radius:18px; box-shadow:0 0 0 2px rgba(0,255,230,.18), inset 0 0 30px rgba(0,255,230,.14);
+    }
+    .logo{width:84%; height:84%; object-fit:contain}
+    .hero h2{ margin:.15rem 0 0; color:#bffef2; font-size:1.2rem }
+    .hero p{ margin:.35rem 0 0; color:var(--muted); font-size:.95rem }
+
+    /* Panels */
+    .panel{
+      background:linear-gradient(180deg, var(--card), var(--card2));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:22px; margin:18px auto;
+      box-shadow:var(--shadow);
+      text-align:left;
+      max-width:780px;
+    }
+    .panel h2{ margin:.2rem 0 1rem; color:#bffef2; font-size:1.15rem }
+    .panel p{ color:var(--fg); line-height:1.6; margin:.4rem 0 }
+    .panel a{ color:#79ffee; text-decoration:none }
+    .panel a:hover{ text-decoration:underline }
+    ol{ margin:.2rem 0 0 1.2rem; color:var(--fg); line-height:1.6 }
+
+    /* Buttons */
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+      padding:13px 18px; border-radius:12px; text-decoration:none; font-weight:900; letter-spacing:.3px;
+      color:#001013; background:linear-gradient(180deg, var(--btnA), var(--btnB));
+      border:1px solid rgba(0,255,240,.7);
+      box-shadow:0 0 12px rgba(0,255,230,.55), 0 0 24px rgba(0,255,230,.25), inset 0 -8px 14px rgba(0,0,0,.14);
+      transition:transform .12s ease, box-shadow .12s ease;
+      white-space:nowrap;
+    }
+    .btn:hover{ transform:translateY(-2px) scale(1.03); box-shadow:0 0 16px rgba(0,255,230,.75), 0 0 32px rgba(0,255,230,.35) }
+    .btn-row{ display:flex; flex-wrap:wrap; gap:12px; align-items:center }
+
+    /* Footer */
+    footer{ margin:24px auto 40px; text-align:center; color:var(--muted) }
+    footer a{ color:#79ffee; text-decoration:none }
+    footer a:hover{ text-decoration:underline }
+
+    @media (max-width:640px){
+      .hero{ grid-template-columns:1fr; text-align:center }
+      .logo-wrap{ margin:0 auto }
     }
   </style>
 </head>
 <body>
-  <button id="langSwitch">NL 🇳🇱</button>
+  <!-- Header -->
+  <header class="topbar">
+    <div class="brand">
+      <img src="logo.png" alt="CBS Logo">
+      <h1>Buy CBS Coin</h1>
+    </div>
+    <button id="langSwitch">NL 🇳🇱</button>
+  </header>
 
-  <!-- English Content -->
+  <!-- EN -->
   <div id="content-en">
-    <h1>🛒 Buy CBS Coin</h1>
+    <main class="container">
+      <section class="hero">
+        <div class="logo-wrap"><img class="logo" src="logo.png" alt="CBS Logo"></div>
+        <div>
+          <h2>Get started in minutes</h2>
+          <p>Buy CBS using Jupiter or Raydium after funding your Phantom wallet with SOL.</p>
+        </div>
+      </section>
 
-    <div class="panel">
-      <h2>How to Buy</h2>
-      <ol>
-        <li><b>Get Solana (SOL)</b> – buy SOL on Binance, Coinbase, or Kraken and withdraw to your Phantom wallet.</li>
-        <li><b>Install Phantom Wallet</b> – download Phantom (browser extension or mobile app).</li>
-        <li><b>Swap SOL → CBS</b> – use Jupiter or Raydium to trade your SOL for CBS Coin.</li>
-      </ol>
-    </div>
-
-    <div class="panel">
-      <h2>🔗 Download Phantom</h2>
-      <p>Phantom is the most popular Solana wallet. Install it here:</p>
-      <div>
-        <a href="https://phantom.app/download" class="button" target="_blank">Get Phantom Wallet</a>
+      <div class="panel">
+        <h2>How to Buy</h2>
+        <ol>
+          <li><b>Get Solana (SOL)</b> – buy SOL on Binance, Coinbase, or Kraken and withdraw to your Phantom wallet.</li>
+          <li><b>Install Phantom Wallet</b> – download Phantom (browser extension or mobile app).</li>
+          <li><b>Swap SOL → CBS</b> – use Jupiter or Raydium to trade your SOL for CBS Coin.</li>
+        </ol>
       </div>
-      <p style="margin-top:1rem;color:#9ee">
-        Works on <b>Chrome / Brave / Firefox / Edge</b> as extension<br>
-        and on <b>iOS & Android</b> as mobile app.
-      </p>
-    </div>
 
-    <div class="panel">
-      <h2>⚡ How Phantom Works</h2>
-      <ol>
-        <li>Install Phantom → create a wallet and save your secret recovery phrase safely.</li>
-        <li>Send SOL from your exchange (e.g. Binance) to your Phantom address.</li>
-        <li>Use Phantom’s built-in browser (mobile) or connect it to this site → swap SOL for CBS.</li>
-      </ol>
-    </div>
-
-    <div class="panel">
-      <h2>Quick Links</h2>
-      <div>
-        <a href="https://jup.ag/tokens/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk" class="button" target="_blank">Swap on Jupiter</a>
+      <div class="panel">
+        <h2>🔗 Download Phantom</h2>
+        <p>Phantom is the most popular Solana wallet. Install it here:</p>
+        <div class="btn-row" style="margin-top:.4rem">
+          <a href="https://phantom.app/download" class="btn" target="_blank" rel="noopener">Get Phantom Wallet</a>
+        </div>
+        <p style="margin-top:1rem;color:var(--muted)">
+          Works on <b>Chrome / Brave / Firefox / Edge</b> as extension<br>
+          and on <b>iOS & Android</b> as mobile app.
+        </p>
       </div>
-      <div style="margin-top:1rem">
-        <a href="https://birdeye.so/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk?chain=solana" target="_blank">📊 View CBS on Birdeye</a>
-      </div>
-    </div>
 
-    <div style="margin-top: 2rem;">
-      <a href="index.html">← Back to Home</a>
-    </div>
+      <div class="panel">
+        <h2>⚡ How Phantom Works</h2>
+        <ol>
+          <li>Install Phantom → create a wallet and save your secret recovery phrase safely.</li>
+          <li>Send SOL from your exchange (e.g. Binance) to your Phantom address.</li>
+          <li>Use Phantom’s built-in browser (mobile) or connect it to this site → swap SOL for CBS.</li>
+        </ol>
+      </div>
+
+      <div class="panel">
+        <h2>Quick Links</h2>
+        <div class="btn-row">
+          <a href="https://jup.ag/tokens/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk" class="btn" target="_blank" rel="noopener">Swap on Jupiter</a>
+          <a href="https://raydium.io/swap/?inputMint=sol&outputMint=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk" class="btn" target="_blank" rel="noopener">Swap on Raydium</a>
+        </div>
+        <p style="margin-top:1rem">
+          <a href="https://birdeye.so/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk?chain=solana" target="_blank" rel="noopener">📊 View CBS on Birdeye</a>
+        </p>
+      </div>
+
+      <footer>
+        <a href="index.html">← Back to Home</a>
+      </footer>
+    </main>
   </div>
 
-  <!-- Dutch Content -->
+  <!-- NL -->
   <div id="content-nl" style="display:none">
-    <h1>🛒 Koop CBS Coin</h1>
+    <main class="container">
+      <section class="hero">
+        <div class="logo-wrap"><img class="logo" src="logo.png" alt="CBS Logo"></div>
+        <div>
+          <h2>Begin binnen enkele minuten</h2>
+          <p>Koop CBS via Jupiter of Raydium nadat je je Phantom wallet hebt gevuld met SOL.</p>
+        </div>
+      </section>
 
-    <div class="panel">
-      <h2>Hoe kopen</h2>
-      <ol>
-        <li><b>Koop Solana (SOL)</b> – koop SOL op Binance, Coinbase of Kraken en stuur het naar je Phantom wallet.</li>
-        <li><b>Installeer Phantom Wallet</b> – download Phantom (browser extensie of mobiele app).</li>
-        <li><b>Ruil SOL → CBS</b> – gebruik Jupiter of Raydium om je SOL om te zetten naar CBS Coin.</li>
-      </ol>
-    </div>
-
-    <div class="panel">
-      <h2>🔗 Download Phantom</h2>
-      <p>Phantom is de meest gebruikte Solana wallet. Installeer hem hier:</p>
-      <div>
-        <a href="https://phantom.app/download" class="button" target="_blank">Download Phantom Wallet</a>
+      <div class="panel">
+        <h2>Hoe kopen</h2>
+        <ol>
+          <li><b>Koop Solana (SOL)</b> – koop SOL op Binance, Coinbase of Kraken en stuur het naar je Phantom wallet.</li>
+          <li><b>Installeer Phantom Wallet</b> – download Phantom (browser extensie of mobiele app).</li>
+          <li><b>Ruil SOL → CBS</b> – gebruik Jupiter of Raydium om je SOL om te zetten naar CBS Coin.</li>
+        </ol>
       </div>
-      <p style="margin-top:1rem;color:#9ee">
-        Werkt op <b>Chrome / Brave / Firefox / Edge</b> als extensie<br>
-        en op <b>iOS & Android</b> als mobiele app.
-      </p>
-    </div>
 
-    <div class="panel">
-      <h2>⚡ Hoe Phantom werkt</h2>
-      <ol>
-        <li>Installeer Phantom → maak een wallet aan en noteer je geheime herstelzin veilig.</li>
-        <li>Stuur SOL vanaf je exchange (bijv. Binance) naar je Phantom adres.</li>
-        <li>Gebruik de ingebouwde browser in Phantom (mobiel) of verbind hem met deze site → ruil SOL voor CBS.</li>
-      </ol>
-    </div>
-
-    <div class="panel">
-      <h2>Snelkoppelingen</h2>
-      <div>
-        <a href="https://jup.ag/swap/SOL-CBS" class="button" target="_blank">Koop op Jupiter</a>
+      <div class="panel">
+        <h2>🔗 Download Phantom</h2>
+        <p>Phantom is de meest gebruikte Solana wallet. Installeer hem hier:</p>
+        <div class="btn-row" style="margin-top:.4rem">
+          <a href="https://phantom.app/download" class="btn" target="_blank" rel="noopener">Download Phantom Wallet</a>
+        </div>
+        <p style="margin-top:1rem;color:var(--muted)">
+          Werkt op <b>Chrome / Brave / Firefox / Edge</b> als extensie<br>
+          en op <b>iOS & Android</b> als mobiele app.
+        </p>
       </div>
-      <div style="margin-top:1rem">
-        <a href="https://birdeye.so/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk?chain=solana" target="_blank">📊 Bekijk CBS op Birdeye</a>
-      </div>
-    </div>
 
-    <div style="margin-top: 2rem;">
-      <a href="index.html">← Terug naar home</a>
-    </div>
+      <div class="panel">
+        <h2>⚡ Hoe Phantom werkt</h2>
+        <ol>
+          <li>Installeer Phantom → maak een wallet aan en noteer je geheime herstelzin veilig.</li>
+          <li>Stuur SOL vanaf je exchange (bijv. Binance) naar je Phantom adres.</li>
+          <li>Gebruik de ingebouwde browser in Phantom (mobiel) of verbind hem met deze site → ruil SOL voor CBS.</li>
+        </ol>
+      </div>
+
+      <div class="panel">
+        <h2>Snelkoppelingen</h2>
+        <div class="btn-row">
+          <a href="https://jup.ag/tokens/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk" class="btn" target="_blank" rel="noopener">Koop op Jupiter</a>
+          <a href="https://raydium.io/swap/?inputMint=sol&outputMint=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk" class="btn" target="_blank" rel="noopener">Koop op Raydium</a>
+        </div>
+        <p style="margin-top:1rem">
+          <a href="https://birdeye.so/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk?chain=solana" target="_blank" rel="noopener">📊 Bekijk CBS op Birdeye</a>
+        </p>
+      </div>
+
+      <footer>
+        <a href="index.html">← Terug naar home</a>
+      </footer>
+    </main>
   </div>
 
   <script>
+    // Language toggle (zelfde gedrag als de andere pagina's)
     const btn = document.getElementById("langSwitch");
-    const en = document.getElementById("content-en");
-    const nl = document.getElementById("content-nl");
+    const en  = document.getElementById("content-en");
+    const nl  = document.getElementById("content-nl");
     let isEN = true;
-
     btn.addEventListener("click", ()=>{
       isEN = !isEN;
-      if(isEN){
-        en.style.display="block"; nl.style.display="none";
-        btn.textContent="NL 🇳🇱";
-      } else {
-        en.style.display="none"; nl.style.display="block";
-        btn.textContent="EN 🇬🇧";
-      }
+      en.style.display = isEN ? "block" : "none";
+      nl.style.display = isEN ? "none"  : "block";
+      btn.textContent  = isEN ? "NL 🇳🇱" : "EN 🇬🇧";
+      window.scrollTo({ top:0, behavior:'smooth' });
     });
   </script>
 </body>
 </html>
+
