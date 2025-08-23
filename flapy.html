@@ -2,224 +2,169 @@
 <html lang="nl">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
   <title>CBS Flapy</title>
   <style>
-    /* --- GESCOPE’D STYLES: niets van je site overschrijven --- */
-    #flapy { position: relative; width: 100%; max-width: 960px; margin: 0 auto; }
-    #flapy .stage {
-      position: relative;
-      width: 100%;
-      /* Houd dezelfde verhouding als de vaste wereld (900x1600 => 9:16) */
-      aspect-ratio: 9 / 16;
-      background: radial-gradient(80% 60% at 70% 30%, rgba(255,255,255,.06), transparent 60%),
-                  linear-gradient(180deg, #0a0d12, #1a1f29);
-      border: 1px solid rgba(255,255,255,.12);
-      border-radius: 14px;
-      overflow: hidden;
+    /* Houd het simpel zoals Snake: fullscreen speelveld, geen site-CSS overschrijven */
+    html,body{height:100%;margin:0}
+    body{background:linear-gradient(180deg,#0a0d12,#1a1f29);overflow:hidden}
+    canvas{display:block;width:100vw;height:100vh}
+    .hud{
+      position:fixed;top:10px;left:50%;transform:translateX(-50%);
+      color:#fff;font:700 28px system-ui,sans-serif;text-shadow:0 2px 4px rgba(0,0,0,.6);z-index:2
     }
-    #flapy canvas { display: block; width: 100%; height: 100%; }
-    #flapy .hud {
-      position: absolute; top: 8px; left: 50%; transform: translateX(-50%);
-      color: #fff; font-weight: 700; font-family: system-ui, sans-serif;
-      text-shadow: 0 2px 4px rgba(0,0,0,.5); z-index: 2; font-size: clamp(18px, 3.2vw, 28px);
-      user-select: none; pointer-events: none;
+    .overlay{
+      position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.45);z-index:3
     }
-    #flapy .overlay {
-      position: absolute; inset: 0; display: grid; place-items: center;
-      background: rgba(0,0,0,.35); z-index: 3;
+    .card{
+      background:rgba(20,20,20,.86);padding:22px 26px;border-radius:16px;color:#fff;text-align:center;max-width:420px;width:min(92vw,420px)
     }
-    #flapy .card {
-      text-align: center; color: #fff; padding: 18px 20px;
-      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
-      border: 1px solid rgba(255,255,255,.18); border-radius: 14px; width: min(92%, 420px);
-      box-shadow: 0 18px 36px rgba(0,0,0,.45); backdrop-filter: blur(8px);
-    }
-    #flapy .btn {
-      margin-top: 10px; padding: 10px 14px; border-radius: 12px; cursor: pointer; border: 1px solid rgba(255,255,255,.25);
-      background: rgba(255,255,255,.1); color: #fff; font-weight: 700;
-    }
+    .btn{padding:10px 16px;border-radius:12px;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.25);cursor:pointer}
   </style>
 </head>
 <body>
-  <!-- Container zoals je Snake-sectie -->
-  <section id="flapy">
-    <div class="stage">
-      <div id="hud" class="hud">0</div>
-      <div id="overlay" class="overlay">
-        <div class="card">
-          <h3 style="margin:0 0 6px 0">CBS Flapy</h3>
-          <p style="margin:0 0 10px 0">Tik/klik of druk op <b>SPATIE</b> om te vliegen</p>
-          <button id="startBtn" class="btn">Start</button>
-        </div>
-      </div>
-      <canvas id="game" aria-label="CBS Flapy game canvas"></canvas>
+  <div id="scoreHud" class="hud">0</div>
+
+  <div id="overlay" class="overlay">
+    <div class="card">
+      <h2 style="margin:0 0 8px 0">CBS Flapy</h2>
+      <p style="margin:0 0 12px 0">Tik/klik of druk op <b>SPATIE</b> om te vliegen</p>
+      <button id="startBtn" class="btn">Start</button>
     </div>
-  </section>
+  </div>
+
+  <canvas id="game"></canvas>
 
   <script>
-  // ====== VASTE WERELD (hele speelveld altijd zichtbaar) ======
-  const VW = 900, VH = 1600; // 9:16
-  const stage = document.querySelector('#flapy .stage');
+  // ===== Canvas =====
   const canvas = document.getElementById('game');
-  const ctx = canvas.getContext('2d', { alpha: false });
+  const ctx = canvas.getContext('2d');
+  let W,H,DPR=Math.min(2,window.devicePixelRatio||1);
+  function resize(){ W=innerWidth; H=innerHeight; canvas.width=W*DPR; canvas.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0) }
+  addEventListener('resize',resize,{passive:true}); resize();
 
-  // Offscreen canvas in wereldresolutie voor superscherpe schaal
-  const off = document.createElement('canvas');
-  off.width = VW; off.height = VH;
-  const g = off.getContext('2d');
+  // ===== Assets =====
+  const logo = new Image(); logo.src = 'logo.png';
 
-  function fitCanvasToStage() {
-    const rect = stage.getBoundingClientRect();
-    canvas.width = Math.max(2, Math.floor(rect.width));
-    canvas.height = Math.max(2, Math.floor(rect.height));
-  }
-
-  // Gebruik visualViewport waar mogelijk (mobiele browser UI)
-  const vvp = window.visualViewport || null;
-  function onResize(){
-    fitCanvasToStage();
-  }
-  addEventListener('resize', onResize, { passive: true });
-  if (vvp) vvp.addEventListener('resize', onResize, { passive: true });
-  onResize();
-
-  // ====== Assets ======
-  const logo = new Image();
-  logo.src = 'logo.png'; // transparant CBS logo
-
-  // ====== Game state in wereld-coördinaten ======
+  // ===== State =====
   let running=false, over=false, started=false, score=0;
-  const coin = { x: VW*0.25, y: VH*0.5, vy: 0, r: VH*0.04 }; // ~64px
-  const physics = { gravity: VH*0.65, lift: VH*0.22, speed: VW*0.19 };
-  let pipes = [];
-  let last = 0, spawnTimer = 0;
-  const FIRST_SPAWN_DELAY = 1800; // ms
+  const isMobile=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const coin = { x: Math.max(140,W*0.2), y: H*0.55, vy: 0, r: Math.max(28, Math.min(42, H*0.05)) };
+  const physics = isMobile
+    ? { gravity: 800, lift: 360, speed: 160 }
+    : { gravity: 980, lift: 380, speed: 180 };
+  let pipes=[]; let last=0, spawnTimer=0;
+  const FIRST_SPAWN_DELAY=2000; // ms
 
-  // ====== Controls ======
-  function onPress(){
-    if(!started){ start(); return; }
-    if(over) return;
-    coin.vy = -physics.lift;
-  }
-  addEventListener('keydown', e => {
-    if(e.code === 'Space'){ e.preventDefault(); onPress(); }
-  });
-  addEventListener('pointerdown', onPress);
-  document.getElementById('startBtn').onclick = onPress;
+  // ===== Controls =====
+  function onPress(){ if(!started){start();return} if(over)return; coin.vy = -physics.lift; }
+  addEventListener('keydown',e=>{ if(e.code==='Space'){ e.preventDefault(); onPress(); }});
+  addEventListener('pointerdown',onPress);
+  document.getElementById('startBtn').onclick=onPress;
 
-  // ====== Obstakels: kettingen (boven/onder) ======
+  // ===== Obstakels: kettingen =====
   function spawnPipe(){
-    const gap = Math.max(VH*0.22, 300);
-    const margin = Math.max(VH*0.10, 120);
-    const top = Math.random() * (VH - margin*2 - gap) + margin;
-    pipes.push({ x: VW + 84, top, gap, w: 84, passed: false });
+    const gap = Math.max(170, Math.min(240, H*0.26));
+    const margin = Math.max(90, H*0.12);
+    const top = Math.random() * (H - margin*2 - gap) + margin;
+    pipes.push({ x: W + 80, top, gap, w: 70, passed:false });
   }
-  function drawChainColumn(ctx2, x, yStart, lengthPx, down=true){
-    const linkGap = 30, links = Math.max(0, Math.ceil(lengthPx / linkGap));
-    ctx2.lineWidth = 6;
+  function drawChainColumn(x,yStart,lenPx,down=true){
+    const linkGap=30, links=Math.max(0,Math.ceil(lenPx/linkGap));
+    ctx.lineWidth=6;
     for(let i=0;i<links;i++){
-      const yy = down ? (yStart + i*linkGap) : (yStart - i*linkGap);
-      const radial = ctx2.createRadialGradient(x-6, yy-6, 4, x, yy, 16);
-      radial.addColorStop(0, '#eee9da');
-      radial.addColorStop(0.45, '#d8c18a');
-      radial.addColorStop(1, '#8a6a2a');
-      ctx2.strokeStyle = radial;
-      ctx2.beginPath(); ctx2.arc(x, yy, 12, 0, Math.PI*2); ctx2.stroke();
-      ctx2.strokeStyle = 'rgba(255,255,255,.25)';
-      ctx2.beginPath(); ctx2.arc(x-3, yy-3, 12, -0.2, 0.8); ctx2.stroke();
+      const yy=down?(yStart+i*linkGap):(yStart-i*linkGap);
+      const radial=ctx.createRadialGradient(x-6,yy-6,4,x,yy,16);
+      radial.addColorStop(0,'#eee9da');radial.addColorStop(0.45,'#d8c18a');radial.addColorStop(1,'#8a6a2a');
+      ctx.strokeStyle=radial; ctx.beginPath(); ctx.arc(x,yy,12,0,Math.PI*2); ctx.stroke();
+      ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.beginPath(); ctx.arc(x-3,yy-3,12,-0.2,0.8); ctx.stroke();
     }
   }
 
-  // ====== Coin met vleugels (vleugels naast de munt) ======
-  let flapPhase = 0;
-  function drawCoinWithWings(ctx2, x, y, r, dt){
-    flapPhase += dt * 7;
+  // ===== Coin + vleugels (echt naast de munt) =====
+  let flapPhase=0;
+  function drawCoinWithWings(x,y,r,dt){
+    flapPhase += dt*7;
     const wingOsc = Math.sin(flapPhase) * (r*0.16);
 
-    // gouden munt
-    const grad = ctx2.createRadialGradient(x - r*0.3, y - r*0.3, r*0.2, x, y, r*1.2);
-    grad.addColorStop(0, '#fff6c8');
-    grad.addColorStop(0.5, '#f6d36a');
-    grad.addColorStop(1, '#b78628');
-    ctx2.fillStyle = grad;
-    ctx2.beginPath(); ctx2.arc(x,y,r,0,Math.PI*2); ctx2.fill();
+    // munt
+    const grad = ctx.createRadialGradient(x-r*0.3,y-r*0.3,r*0.2, x,y,r*1.2);
+    grad.addColorStop(0,'#fff6c8'); grad.addColorStop(0.5,'#f6d36a'); grad.addColorStop(1,'#b78628');
+    ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
 
     // rand
-    ctx2.lineWidth = 4; ctx2.strokeStyle = 'rgba(255,255,255,0.55)';
-    ctx2.beginPath(); ctx2.arc(x,y,r-2,0,Math.PI*2); ctx2.stroke();
+    ctx.lineWidth=4; ctx.strokeStyle='rgba(255,255,255,.55)';
+    ctx.beginPath(); ctx.arc(x,y,r-2,0,Math.PI*2); ctx.stroke();
 
     // logo
     if(logo.complete){
-      ctx2.save();
-      ctx2.beginPath(); ctx2.arc(x,y,r-4,0,Math.PI*2); ctx2.clip();
-      ctx2.drawImage(logo, x - r*0.8, y - r*0.8, r*1.6, r*1.6);
-      ctx2.restore();
+      ctx.save(); ctx.beginPath(); ctx.arc(x,y,r-4,0,Math.PI*2); ctx.clip();
+      ctx.drawImage(logo, x - r*0.8, y - r*0.8, r*1.6, r*1.6); ctx.restore();
     }
 
-    // vleugels ver naar buiten (geen overlap)
+    // vleugels: verder naar buiten (geen overlap)
     const wingW = r*1.7;
-    const offsetX = r + wingW*1.1;
-    drawWing(ctx2, x - offsetX, y + wingOsc, r, false);
-    drawWing(ctx2, x + offsetX, y + wingOsc, r, true);
+    const offsetX = r + wingW*1.05;   // <<— groter dan voorheen
+    drawWing(x - offsetX, y + wingOsc, r, false);
+    drawWing(x + offsetX, y + wingOsc, r, true);
   }
-  function drawWing(ctx2, cx, cy, r, flip=false){
-    ctx2.save(); ctx2.translate(cx,cy); if(flip) ctx2.scale(-1,1);
-    ctx2.fillStyle = 'rgba(255,255,255,.96)';
-    ctx2.beginPath();
-    ctx2.moveTo(0,0);
-    ctx2.bezierCurveTo(r*0.8,-r*0.36, r*1.45,-r*0.22, r*1.8,0);
-    ctx2.bezierCurveTo(r*1.45, r*0.22, r*0.8,  r*0.36, 0,0);
-    ctx2.closePath(); ctx2.fill();
-    ctx2.strokeStyle = 'rgba(230,230,230,.92)'; ctx2.lineWidth = 2;
+  function drawWing(cx,cy,r,flip=false){
+    ctx.save(); ctx.translate(cx,cy); if(flip) ctx.scale(-1,1);
+    ctx.fillStyle='rgba(255,255,255,.96)';
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.bezierCurveTo(r*0.8,-r*0.36, r*1.45,-r*0.22, r*1.8,0);
+    ctx.bezierCurveTo(r*1.45, r*0.22,  r*0.8,  r*0.36, 0,0);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='rgba(230,230,230,.92)'; ctx.lineWidth=2;
     for(let i=0;i<3;i++){
-      ctx2.beginPath();
-      ctx2.moveTo(r*(0.46+i*0.28), -r*(0.06+i*0.015));
-      ctx2.quadraticCurveTo(r*(0.9+i*0.22), 0, r*(0.46+i*0.28), r*(0.06+i*0.015));
-      ctx2.stroke();
+      ctx.beginPath();
+      ctx.moveTo(r*(0.46+i*0.28), -r*(0.06+i*0.015));
+      ctx.quadraticCurveTo(r*(0.9+i*0.22), 0, r*(0.46+i*0.28), r*(0.06+i*0.015));
+      ctx.stroke();
     }
-    ctx2.restore();
+    ctx.restore();
   }
 
-  // ====== Lifecycle ======
+  // ===== Lifecycle =====
   function start(){
-    started = true; running = true; over = false; score = 0;
-    coin.x = VW*0.25; coin.y = VH*0.50; coin.vy = 0;
-    pipes = []; spawnTimer = -FIRST_SPAWN_DELAY; last = performance.now();
-    document.getElementById('overlay').style.display = 'none';
-    document.getElementById('hud').textContent = '0';
+    started=true; running=true; over=false; score=0;
+    coin.x = Math.max(140, W*0.2);
+    coin.y = H*0.55; coin.vy=0;
+    pipes=[]; spawnTimer = -FIRST_SPAWN_DELAY; last=performance.now();
+    document.getElementById('overlay').style.display='none';
+    document.getElementById('scoreHud').textContent='0';
     requestAnimationFrame(loop);
   }
   function gameOver(){
-    running = false; over = true;
+    running=false; over=true;
     try{
       if(typeof window.submitScore==='function') window.submitScore(score);
       else if(typeof window.saveScore==='function') window.saveScore(score);
-      window.dispatchEvent(new CustomEvent('cbs-score',{ detail:{ score, game: 'flapy' }}));
+      window.dispatchEvent(new CustomEvent('cbs-score',{detail:{score,game:'flapy'}}));
     }catch(e){}
-    const ov = document.getElementById('overlay');
-    ov.innerHTML = `
-      <div class="card">
-        <h3 style="margin:0 0 6px 0">Game Over</h3>
-        <p style="margin:0 0 12px 0">Score: <b>${score}</b></p>
-        <button class="btn" onclick="(${start.toString()})()">Opnieuw</button>
-      </div>`;
-    ov.style.display = 'grid';
+    const ov=document.getElementById('overlay');
+    ov.innerHTML=`<div class="card">
+      <h2 style="margin:0 0 6px 0">Game Over</h2>
+      <p style="margin:0 0 12px 0">Score: <b>${score}</b></p>
+      <button class="btn" onclick="(${start.toString()})()">Opnieuw</button>
+    </div>`;
+    ov.style.display='grid';
   }
 
-  // ====== Main loop (tekenen in offscreen wereld, dan schalen) ======
+  // ===== Loop =====
   function loop(now){
     if(!running) return;
-    const dt = Math.min(0.032, (now - last)/1000); last = now;
+    const dt=Math.min(0.032,(now-last)/1000); last=now;
     spawnTimer += dt*1000;
-    if(spawnTimer > 1400){ spawnTimer = 0; spawnPipe(); }
+    if(spawnTimer>1400){ spawnTimer=0; spawnPipe(); }
 
     // physics
-    coin.vy += physics.gravity * dt;
-    coin.y  += coin.vy * dt;
+    coin.vy += physics.gravity*dt;
+    coin.y  += coin.vy*dt;
 
     // move obstacles
-    for(const p of pipes) p.x -= physics.speed * dt;
+    for(const p of pipes) p.x -= physics.speed*dt;
 
     // collisions & score
     for(const p of pipes){
@@ -229,46 +174,32 @@
         if(!inGap) return gameOver();
       }
       if(!p.passed && p.x + p.w < coin.x){
-        p.passed = true; score++; document.getElementById('hud').textContent = String(score);
+        p.passed=true; score++; document.getElementById('scoreHud').textContent=String(score);
       }
     }
-    // cleanup
-    pipes = pipes.filter(p => p.x + p.w > -20);
+    // veilige opschoning
+    pipes = pipes.filter(p => p.x + p.w > -12);
 
-    // bounds: top clamp, bottom = fail
+    // bounds (boven clamp, beneden = game over)
     if(coin.y - coin.r < 0){ coin.y = coin.r; coin.vy = 0; }
-    if(coin.y + coin.r > VH){ coin.y = VH - coin.r; return gameOver(); }
+    if(coin.y + coin.r > H){ coin.y = H - coin.r; return gameOver(); }
 
-    // === DRAW TO OFFSCREEN ===
-    g.setTransform(1,0,0,1,0,0);
-    g.clearRect(0,0,VW,VH);
+    // draw
+    ctx.clearRect(0,0,W,H);
 
-    // achtergrondgloed
-    const bg = g.createRadialGradient(VW*0.7, VH*0.35, 60, VW*0.7, VH*0.35, Math.max(VW,VH));
-    bg.addColorStop(0, 'rgba(255,255,255,0.05)');
-    bg.addColorStop(1, 'rgba(0,0,0,0)');
-    g.fillStyle = bg; g.fillRect(0,0,VW,VH);
+    // subtiele gloed
+    const ggrad=ctx.createRadialGradient(W*0.7,H*0.35,60, W*0.7,H*0.35, Math.max(W,H));
+    ggrad.addColorStop(0,'rgba(255,255,255,0.05)'); ggrad.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=ggrad; ctx.fillRect(0,0,W,H);
 
     // player
-    drawCoinWithWings(g, coin.x, coin.y, coin.r, dt);
+    drawCoinWithWings(coin.x,coin.y,coin.r,dt);
 
     // kettingen
     for(const p of pipes){
-      drawChainColumn(g, p.x + p.w/2, 0, p.top, true);
-      drawChainColumn(g, p.x + p.w/2, VH, VH - (p.top + p.gap), false);
+      drawChainColumn(p.x + p.w/2, 0, p.top, true);
+      drawChainColumn(p.x + p.w/2, H, H - (p.top + p.gap), false);
     }
-
-    // === BLIT naar zichtbaar canvas met letterbox schaal ===
-    const rect = stage.getBoundingClientRect();
-    const scale = Math.min(rect.width / VW, rect.height / VH);
-    const drawW = VW * scale, drawH = VH * scale;
-    const offX = (rect.width  - drawW) / 2;
-    const offY = (rect.height - drawH) / 2;
-
-    ctx.setTransform(1,0,0,1,0,0);
-    ctx.clearRect(0,0,canvas.width,canvas.height);
-    // Schaal beeld zonder onscherpte (browser doet filtering prima bij deze verhouding)
-    ctx.drawImage(off, offX, offY, drawW, drawH);
 
     requestAnimationFrame(loop);
   }
