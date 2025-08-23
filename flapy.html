@@ -51,69 +51,108 @@ const isMobile=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 const coin = { x: Math.max(140,W*0.2), y: H*0.55, vy: 0, r: Math.max(30, Math.min(46, H*0.05)) };
 const physics = isMobile
-  ? { gravity: 750, lift: 360, speed: 150 }
-  : { gravity: 900, lift: 380, speed: 170 };
+  ? { gravity: 760, lift: 360, speed: 165 }   // iets sneller dan vorige versie
+  : { gravity: 920, lift: 380, speed: 185 };
 
 /* ===== Parallax sterren ===== */
-const stars = {
-  near:  makeStars(50),   // snelst
-  mid:   makeStars(70),
-  far:   makeStars(90)    // langzaamst
-};
+const stars = { near: makeStars(50), mid: makeStars(70), far: makeStars(90) };
 function makeStars(n){
-  const arr=[];
-  for(let i=0;i<n;i++){
-    arr.push({
-      x: Math.random()*W, y: Math.random()*H,
-      r: Math.random()*1.8+0.4,
-      a: Math.random()*0.6+0.2
-    });
-  }
-  return arr;
+  const arr=[]; for(let i=0;i<n;i++){
+    arr.push({ x:Math.random()*W, y:Math.random()*H, r:Math.random()*1.8+0.4, a:Math.random()*0.6+0.2 });
+  } return arr;
 }
 function moveStars(layer, speed, dt){
-  for(const s of layer){
-    s.x -= speed*dt;
-    if(s.x < -4){ s.x = W + Math.random()*50; s.y = Math.random()*H; }
-  }
+  for(const s of layer){ s.x -= speed*dt; if(s.x<-4){ s.x=W+Math.random()*50; s.y=Math.random()*H; } }
 }
 function drawStars(layer){
-  for(const s of layer){
-    ctx.globalAlpha = s.a;
-    ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
-    ctx.fillStyle = '#cfe6ff'; ctx.fill();
-  }
-  ctx.globalAlpha = 1;
+  for(const s of layer){ ctx.globalAlpha=s.a; ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fillStyle='#cfe6ff'; ctx.fill(); }
+  ctx.globalAlpha=1;
 }
 
-/* ===== Planeten obstakels ===== */
+/* ===== Planeten obstakels (realistisch) ===== */
 let planets=[]; let last=0, spawnTimer=0;
-const FIRST_SPAWN_DELAY=2200;  // rustiger start
-const SPAWN_EVERY = 1500;      // langzamer spawn
-const MIN_SPACING = 280;       // minimale horizontale afstand tussen planeten
+const FIRST_SPAWN_DELAY=2200;        // rustiger start
+const SPAWN_EVERY = 1350;            // iets sneller dan vorige (moeilijker)
+const MIN_SPACING = 260;             // minimale afstand tussen planeten
+
 function spawnPlanet(){
-  // willekeurige planeet
-  const r = rand(isMobile? 26:28, isMobile? 44:54); // formaat
+  // diepte voor parallax & schaal
+  const z = rand(0.75, 1.25);                     // 0.75 = verder weg (kleiner, langzamer), 1.25 = dichterbij
+  const baseR = isMobile ? rand(26, 48) : rand(28, 58);
+  const r = baseR * z;
   const yMargin = 80 + r;
   const y = rand(yMargin, H - yMargin);
-  const x = W + 120;
-  planets.push({ x, y, r, passed:false, hue: Math.floor(rand(180, 360)) });
+  const x = W + 140;
+  const hue = Math.floor(rand(10, 360));
+  const ring = Math.random() < 0.28;              // ~28% kans op ringen
+  const rot = rand(0, Math.PI*2);                 // rotatie voor banding
+  const vY  = rand(-22, 22) * z;                  // mini verticale drift
+  planets.push({ x, y, r, z, hue, ring, rot, vY, passed:false });
 }
+
 function drawPlanet(p){
-  // body
-  const grd = ctx.createRadialGradient(p.x - p.r*0.4, p.y - p.r*0.4, p.r*0.1, p.x, p.y, p.r*1.2);
-  grd.addColorStop(0, `hsl(${p.hue}, 90%, 80%)`);
-  grd.addColorStop(0.55, `hsl(${p.hue}, 70%, 55%)`);
-  grd.addColorStop(1, `hsl(${p.hue}, 60%, 30%)`);
+  // schaduw/licht (Lambert-ish)
+  const lx = p.x - p.r*0.45, ly = p.y - p.r*0.45;
+  const grd = ctx.createRadialGradient(lx, ly, p.r*0.1, p.x, p.y, p.r*1.2);
+  grd.addColorStop(0, `hsl(${p.hue}, 90%, 82%)`);
+  grd.addColorStop(0.55, `hsl(${p.hue}, 70%, 52%)`);
+  grd.addColorStop(1, `hsl(${p.hue}, 55%, 22%)`);
   ctx.fillStyle = grd;
   ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
 
-  // ring/shine
-  ctx.globalAlpha = 0.22;
-  ctx.beginPath(); ctx.arc(p.x, p.y, p.r*1.15, -0.6, 0.6);
-  ctx.lineWidth = 6; ctx.strokeStyle = '#ffffff'; ctx.stroke();
+  // subtiele banding (gas-achtige lijnen)
+  ctx.save();
+  ctx.translate(p.x, p.y);
+  ctx.rotate(p.rot);
+  ctx.globalAlpha = 0.20;
+  const bands = 6;
+  for(let i=0;i<bands;i++){
+    const yy = -p.r + (i+1)*(2*p.r/(bands+1));
+    const w = p.r * Math.sqrt(Math.max(0, 1 - (yy*yy)/(p.r*p.r))); // chord breedte
+    const c = `hsl(${(p.hue+10*i)%360}, 50%, ${40 + i*6}%)`;
+    ctx.fillStyle = c;
+    ctx.fillRect(-w, yy-1.2, w*2, 2.4);
+  }
+  ctx.restore();
   ctx.globalAlpha = 1;
+
+  // specular highlight
+  ctx.globalAlpha = 0.18;
+  ctx.beginPath(); ctx.arc(p.x - p.r*0.35, p.y - p.r*0.35, p.r*0.55, 0, Math.PI*2);
+  ctx.fillStyle = '#ffffff'; ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // atmosfeer gloed
+  const atm = ctx.createRadialGradient(p.x, p.y, p.r*0.85, p.x, p.y, p.r*1.35);
+  atm.addColorStop(0, 'rgba(255,255,255,0)');
+  atm.addColorStop(1, 'rgba(150,200,255,0.10)');
+  ctx.fillStyle = atm; ctx.beginPath(); ctx.arc(p.x, p.y, p.r*1.35, 0, Math.PI*2); ctx.fill();
+
+  // ringen (met tilt)
+  if(p.ring){
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot + 0.7);
+    const inner = p.r*1.15, outer = p.r*1.8;
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ellipseStroke(0,0, outer, outer*0.35); ctx.stroke();
+    ctx.beginPath(); ellipseStroke(0,0, inner, inner*0.35); ctx.stroke();
+    ctx.restore();
+  }
 }
+
+// Helper to stroke an ellipse path
+function ellipseStroke(cx, cy, rx, ry){
+  // approx with many small segments
+  const seg=48;
+  for(let i=0;i<=seg;i++){
+    const a=i/seg*Math.PI*2;
+    const x=cx+Math.cos(a)*rx, y=cy+Math.sin(a)*ry;
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+}
+
 function rand(a,b){ return a + Math.random()*(b-a); }
 
 /* ===== Controls ===== */
@@ -198,7 +237,7 @@ function loop(now){
   if(!running) return;
   const dt=Math.min(0.032,(now-last)/1000); last=now;
 
-  // parallax snelheid (mee met game speed)
+  // parallax
   moveStars(stars.far,  physics.speed*0.12, dt);
   moveStars(stars.mid,  physics.speed*0.24, dt);
   moveStars(stars.near, physics.speed*0.45, dt);
@@ -207,7 +246,6 @@ function loop(now){
   spawnTimer += dt*1000;
   if(spawnTimer > SPAWN_EVERY){
     spawnTimer = 0;
-    // Zorg dat nieuwe planeet niet te dicht achter vorige zit
     if(planets.length===0 || (W - planets[planets.length-1].x) > MIN_SPACING){
       spawnPlanet();
     }
@@ -217,47 +255,40 @@ function loop(now){
   coin.vy += physics.gravity*dt;
   coin.y  += coin.vy*dt;
 
-  // move planets
-  for(const p of planets){ p.x -= physics.speed * dt; }
+  // move planets (met diepte)
+  for(const p of planets){ p.x -= physics.speed * dt * p.z; p.y += p.vY * dt; }
 
   // collisions & score
   for(const p of planets){
-    // afstand tussen centers
+    // botsing: cirkel vs cirkel
     const dx = (coin.x - p.x), dy = (coin.y - p.y);
-    const dist2 = dx*dx + dy*dy;
-    const rr = (coin.r + p.r) * (coin.r + p.r);
-    if(dist2 < rr) return gameOver();
+    if(dx*dx + dy*dy < (coin.r + p.r)*(coin.r + p.r)) return gameOver();
 
     if(!p.passed && p.x + p.r < coin.x){
       p.passed = true; score++;
       document.getElementById('scoreHud').textContent = String(score);
     }
   }
-  planets = planets.filter(p => p.x + p.r > -20);
+  planets = planets.filter(p => p.x + p.r > -40);
 
-  // bounds (boven clamp, onder = af)
+  // bounds
   if(coin.y - coin.r < 0){ coin.y = coin.r; coin.vy = 0; }
   if(coin.y + coin.r > H){ coin.y = H - coin.r; return gameOver(); }
 
   // draw
   ctx.clearRect(0,0,W,H);
-
-  // sterrenhemel
   drawStars(stars.far);
   drawStars(stars.mid);
   drawStars(stars.near);
 
-  // player
   drawCoinWithWings(coin.x, coin.y, coin.r, dt);
-
-  // planeten
   for(const p of planets) drawPlanet(p);
 
   requestAnimationFrame(loop);
 }
 
 /* ===== Helpers ===== */
-function clamp(v,a,b){ return Math.max(a, Math.min(b,v)); }
+function rand(a,b){ return a + Math.random()*(b-a); }
 </script>
 </body>
 </html>
