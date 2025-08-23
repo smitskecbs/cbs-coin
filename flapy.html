@@ -1,33 +1,32 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-  <title>CBS Flapy</title>
-  <style>
-    /* Houd het simpel zoals Snake: fullscreen speelveld, geen site-CSS overschrijven */
-    html,body{height:100%;margin:0}
-    body{background:linear-gradient(180deg,#0a0d12,#1a1f29);overflow:hidden}
-    canvas{display:block;width:100vw;height:100vh}
-    .hud{
-      position:fixed;top:10px;left:50%;transform:translateX(-50%);
-      color:#fff;font:700 28px system-ui,sans-serif;text-shadow:0 2px 4px rgba(0,0,0,.6);z-index:2
-    }
-    .overlay{
-      position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.45);z-index:3
-    }
-    .card{
-      background:rgba(20,20,20,.86);padding:22px 26px;border-radius:16px;color:#fff;text-align:center;max-width:420px;width:min(92vw,420px)
-    }
-    .btn{padding:10px 16px;border-radius:12px;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.25);cursor:pointer}
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>CBS Flapy – Space</title>
+<style>
+  html,body{height:100%;margin:0}
+  body{background:linear-gradient(180deg,#05070b,#0b1220);overflow:hidden}
+  canvas{display:block;width:100vw;height:100vh}
+  .hud{
+    position:fixed;top:10px;left:50%;transform:translateX(-50%);
+    color:#fff;font:700 28px system-ui,sans-serif;text-shadow:0 2px 4px rgba(0,0,0,.6);z-index:2
+  }
+  .overlay{
+    position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.45);z-index:3
+  }
+  .card{
+    background:rgba(20,20,32,.86);padding:22px 26px;border-radius:16px;color:#fff;text-align:center;max-width:420px;width:min(92vw,420px)
+  }
+  .btn{padding:10px 16px;border-radius:12px;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.25);cursor:pointer}
+</style>
 </head>
 <body>
   <div id="scoreHud" class="hud">0</div>
 
   <div id="overlay" class="overlay">
     <div class="card">
-      <h2 style="margin:0 0 8px 0">CBS Flapy</h2>
+      <h2 style="margin:0 0 8px 0">CBS Flapy – Space</h2>
       <p style="margin:0 0 12px 0">Tik/klik of druk op <b>SPATIE</b> om te vliegen</p>
       <button id="startBtn" class="btn">Start</button>
     </div>
@@ -35,174 +34,231 @@
 
   <canvas id="game"></canvas>
 
-  <script>
-  // ===== Canvas =====
-  const canvas = document.getElementById('game');
-  const ctx = canvas.getContext('2d');
-  let W,H,DPR=Math.min(2,window.devicePixelRatio||1);
-  function resize(){ W=innerWidth; H=innerHeight; canvas.width=W*DPR; canvas.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0) }
-  addEventListener('resize',resize,{passive:true}); resize();
+<script>
+/* ===== Canvas ===== */
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+let W,H,DPR=Math.min(2,window.devicePixelRatio||1);
+function resize(){ W=innerWidth; H=innerHeight; canvas.width=W*DPR; canvas.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0) }
+addEventListener('resize',resize,{passive:true}); resize();
 
-  // ===== Assets =====
-  const logo = new Image(); logo.src = 'logo.png';
+/* ===== Assets ===== */
+const logo = new Image(); logo.src='logo.png';
 
-  // ===== State =====
-  let running=false, over=false, started=false, score=0;
-  const isMobile=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-  const coin = { x: Math.max(140,W*0.2), y: H*0.55, vy: 0, r: Math.max(28, Math.min(42, H*0.05)) };
-  const physics = isMobile
-    ? { gravity: 800, lift: 360, speed: 160 }
-    : { gravity: 980, lift: 380, speed: 180 };
-  let pipes=[]; let last=0, spawnTimer=0;
-  const FIRST_SPAWN_DELAY=2000; // ms
+/* ===== State ===== */
+let running=false, over=false, started=false, score=0;
+const isMobile=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-  // ===== Controls =====
-  function onPress(){ if(!started){start();return} if(over)return; coin.vy = -physics.lift; }
-  addEventListener('keydown',e=>{ if(e.code==='Space'){ e.preventDefault(); onPress(); }});
-  addEventListener('pointerdown',onPress);
-  document.getElementById('startBtn').onclick=onPress;
+const coin = { x: Math.max(140,W*0.2), y: H*0.55, vy: 0, r: Math.max(30, Math.min(46, H*0.05)) };
+const physics = isMobile
+  ? { gravity: 750, lift: 360, speed: 150 }
+  : { gravity: 900, lift: 380, speed: 170 };
 
-  // ===== Obstakels: kettingen =====
-  function spawnPipe(){
-    const gap = Math.max(170, Math.min(240, H*0.26));
-    const margin = Math.max(90, H*0.12);
-    const top = Math.random() * (H - margin*2 - gap) + margin;
-    pipes.push({ x: W + 80, top, gap, w: 70, passed:false });
+/* ===== Parallax sterren ===== */
+const stars = {
+  near:  makeStars(50),   // snelst
+  mid:   makeStars(70),
+  far:   makeStars(90)    // langzaamst
+};
+function makeStars(n){
+  const arr=[];
+  for(let i=0;i<n;i++){
+    arr.push({
+      x: Math.random()*W, y: Math.random()*H,
+      r: Math.random()*1.8+0.4,
+      a: Math.random()*0.6+0.2
+    });
   }
-  function drawChainColumn(x,yStart,lenPx,down=true){
-    const linkGap=30, links=Math.max(0,Math.ceil(lenPx/linkGap));
-    ctx.lineWidth=6;
-    for(let i=0;i<links;i++){
-      const yy=down?(yStart+i*linkGap):(yStart-i*linkGap);
-      const radial=ctx.createRadialGradient(x-6,yy-6,4,x,yy,16);
-      radial.addColorStop(0,'#eee9da');radial.addColorStop(0.45,'#d8c18a');radial.addColorStop(1,'#8a6a2a');
-      ctx.strokeStyle=radial; ctx.beginPath(); ctx.arc(x,yy,12,0,Math.PI*2); ctx.stroke();
-      ctx.strokeStyle='rgba(255,255,255,.25)'; ctx.beginPath(); ctx.arc(x-3,yy-3,12,-0.2,0.8); ctx.stroke();
-    }
+  return arr;
+}
+function moveStars(layer, speed, dt){
+  for(const s of layer){
+    s.x -= speed*dt;
+    if(s.x < -4){ s.x = W + Math.random()*50; s.y = Math.random()*H; }
+  }
+}
+function drawStars(layer){
+  for(const s of layer){
+    ctx.globalAlpha = s.a;
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2);
+    ctx.fillStyle = '#cfe6ff'; ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+/* ===== Planeten obstakels ===== */
+let planets=[]; let last=0, spawnTimer=0;
+const FIRST_SPAWN_DELAY=2200;  // rustiger start
+const SPAWN_EVERY = 1500;      // langzamer spawn
+const MIN_SPACING = 280;       // minimale horizontale afstand tussen planeten
+function spawnPlanet(){
+  // willekeurige planeet
+  const r = rand(isMobile? 26:28, isMobile? 44:54); // formaat
+  const yMargin = 80 + r;
+  const y = rand(yMargin, H - yMargin);
+  const x = W + 120;
+  planets.push({ x, y, r, passed:false, hue: Math.floor(rand(180, 360)) });
+}
+function drawPlanet(p){
+  // body
+  const grd = ctx.createRadialGradient(p.x - p.r*0.4, p.y - p.r*0.4, p.r*0.1, p.x, p.y, p.r*1.2);
+  grd.addColorStop(0, `hsl(${p.hue}, 90%, 80%)`);
+  grd.addColorStop(0.55, `hsl(${p.hue}, 70%, 55%)`);
+  grd.addColorStop(1, `hsl(${p.hue}, 60%, 30%)`);
+  ctx.fillStyle = grd;
+  ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
+
+  // ring/shine
+  ctx.globalAlpha = 0.22;
+  ctx.beginPath(); ctx.arc(p.x, p.y, p.r*1.15, -0.6, 0.6);
+  ctx.lineWidth = 6; ctx.strokeStyle = '#ffffff'; ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+function rand(a,b){ return a + Math.random()*(b-a); }
+
+/* ===== Controls ===== */
+function onPress(){ if(!started){start();return} if(over)return; coin.vy = -physics.lift; }
+addEventListener('keydown',e=>{ if(e.code==='Space'){ e.preventDefault(); onPress(); }});
+addEventListener('pointerdown',onPress);
+document.getElementById('startBtn').onclick=onPress;
+
+/* ===== CBS-munt met vleugels (naast de munt) ===== */
+let flapPhase=0;
+function drawCoinWithWings(x,y,r,dt){
+  flapPhase += dt*7;
+  const wingOsc = Math.sin(flapPhase) * (r*0.16);
+
+  // munt
+  const grad = ctx.createRadialGradient(x-r*0.3,y-r*0.3,r*0.2, x,y,r*1.2);
+  grad.addColorStop(0,'#fff6c8'); grad.addColorStop(0.5,'#f6d36a'); grad.addColorStop(1,'#b78628');
+  ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+
+  // rand
+  ctx.lineWidth=4; ctx.strokeStyle='rgba(255,255,255,.55)';
+  ctx.beginPath(); ctx.arc(x,y,r-2,0,Math.PI*2); ctx.stroke();
+
+  // logo
+  if(logo.complete){
+    ctx.save(); ctx.beginPath(); ctx.arc(x,y,r-4,0,Math.PI*2); ctx.clip();
+    ctx.drawImage(logo, x - r*0.8, y - r*0.8, r*1.6, r*1.6); ctx.restore();
   }
 
-  // ===== Coin + vleugels (echt naast de munt) =====
-  let flapPhase=0;
-  function drawCoinWithWings(x,y,r,dt){
-    flapPhase += dt*7;
-    const wingOsc = Math.sin(flapPhase) * (r*0.16);
-
-    // munt
-    const grad = ctx.createRadialGradient(x-r*0.3,y-r*0.3,r*0.2, x,y,r*1.2);
-    grad.addColorStop(0,'#fff6c8'); grad.addColorStop(0.5,'#f6d36a'); grad.addColorStop(1,'#b78628');
-    ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
-
-    // rand
-    ctx.lineWidth=4; ctx.strokeStyle='rgba(255,255,255,.55)';
-    ctx.beginPath(); ctx.arc(x,y,r-2,0,Math.PI*2); ctx.stroke();
-
-    // logo
-    if(logo.complete){
-      ctx.save(); ctx.beginPath(); ctx.arc(x,y,r-4,0,Math.PI*2); ctx.clip();
-      ctx.drawImage(logo, x - r*0.8, y - r*0.8, r*1.6, r*1.6); ctx.restore();
-    }
-
-    // vleugels: verder naar buiten (geen overlap)
-    const wingW = r*1.7;
-    const offsetX = r + wingW*1.05;   // <<— groter dan voorheen
-    drawWing(x - offsetX, y + wingOsc, r, false);
-    drawWing(x + offsetX, y + wingOsc, r, true);
-  }
-  function drawWing(cx,cy,r,flip=false){
-    ctx.save(); ctx.translate(cx,cy); if(flip) ctx.scale(-1,1);
-    ctx.fillStyle='rgba(255,255,255,.96)';
+  // vleugels: ruim naast de munt
+  const wingW = r*1.7;
+  const offsetX = r + wingW*1.1;
+  drawWing(x - offsetX, y + wingOsc, r, false);
+  drawWing(x + offsetX, y + wingOsc, r, true);
+}
+function drawWing(cx,cy,r,flip=false){
+  ctx.save(); ctx.translate(cx,cy); if(flip) ctx.scale(-1,1);
+  ctx.fillStyle='rgba(255,255,255,.96)';
+  ctx.beginPath();
+  ctx.moveTo(0,0);
+  ctx.bezierCurveTo(r*0.8,-r*0.36, r*1.45,-r*0.22, r*1.8,0);
+  ctx.bezierCurveTo(r*1.45, r*0.22,  r*0.8,  r*0.36, 0,0);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle='rgba(230,230,230,.92)'; ctx.lineWidth=2;
+  for(let i=0;i<3;i++){
     ctx.beginPath();
-    ctx.moveTo(0,0);
-    ctx.bezierCurveTo(r*0.8,-r*0.36, r*1.45,-r*0.22, r*1.8,0);
-    ctx.bezierCurveTo(r*1.45, r*0.22,  r*0.8,  r*0.36, 0,0);
-    ctx.closePath(); ctx.fill();
-    ctx.strokeStyle='rgba(230,230,230,.92)'; ctx.lineWidth=2;
-    for(let i=0;i<3;i++){
-      ctx.beginPath();
-      ctx.moveTo(r*(0.46+i*0.28), -r*(0.06+i*0.015));
-      ctx.quadraticCurveTo(r*(0.9+i*0.22), 0, r*(0.46+i*0.28), r*(0.06+i*0.015));
-      ctx.stroke();
+    ctx.moveTo(r*(0.46+i*0.28), -r*(0.06+i*0.015));
+    ctx.quadraticCurveTo(r*(0.9+i*0.22), 0, r*(0.46+i*0.28), r*(0.06+i*0.015));
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+/* ===== Lifecycle ===== */
+function start(){
+  started=true; running=true; over=false; score=0;
+  coin.x = Math.max(140, W*0.2);
+  coin.y = H*0.55; coin.vy=0;
+  planets=[]; spawnTimer = -FIRST_SPAWN_DELAY; last=performance.now();
+  document.getElementById('overlay').style.display='none';
+  document.getElementById('scoreHud').textContent='0';
+  requestAnimationFrame(loop);
+}
+function gameOver(){
+  running=false; over=true;
+  try{
+    if(typeof window.submitScore==='function') window.submitScore(score);
+    else if(typeof window.saveScore==='function') window.saveScore(score);
+    window.dispatchEvent(new CustomEvent('cbs-score',{detail:{score,game:'flapy-space'}}));
+  }catch(e){}
+  const ov=document.getElementById('overlay');
+  ov.innerHTML=`<div class="card">
+    <h2 style="margin:0 0 6px 0">Game Over</h2>
+    <p style="margin:0 0 12px 0">Score: <b>${score}</b></p>
+    <button class="btn" onclick="(${start.toString()})()">Opnieuw</button>
+  </div>`;
+  ov.style.display='grid';
+}
+
+/* ===== Loop ===== */
+function loop(now){
+  if(!running) return;
+  const dt=Math.min(0.032,(now-last)/1000); last=now;
+
+  // parallax snelheid (mee met game speed)
+  moveStars(stars.far,  physics.speed*0.12, dt);
+  moveStars(stars.mid,  physics.speed*0.24, dt);
+  moveStars(stars.near, physics.speed*0.45, dt);
+
+  // spawn planets
+  spawnTimer += dt*1000;
+  if(spawnTimer > SPAWN_EVERY){
+    spawnTimer = 0;
+    // Zorg dat nieuwe planeet niet te dicht achter vorige zit
+    if(planets.length===0 || (W - planets[planets.length-1].x) > MIN_SPACING){
+      spawnPlanet();
     }
-    ctx.restore();
   }
 
-  // ===== Lifecycle =====
-  function start(){
-    started=true; running=true; over=false; score=0;
-    coin.x = Math.max(140, W*0.2);
-    coin.y = H*0.55; coin.vy=0;
-    pipes=[]; spawnTimer = -FIRST_SPAWN_DELAY; last=performance.now();
-    document.getElementById('overlay').style.display='none';
-    document.getElementById('scoreHud').textContent='0';
-    requestAnimationFrame(loop);
-  }
-  function gameOver(){
-    running=false; over=true;
-    try{
-      if(typeof window.submitScore==='function') window.submitScore(score);
-      else if(typeof window.saveScore==='function') window.saveScore(score);
-      window.dispatchEvent(new CustomEvent('cbs-score',{detail:{score,game:'flapy'}}));
-    }catch(e){}
-    const ov=document.getElementById('overlay');
-    ov.innerHTML=`<div class="card">
-      <h2 style="margin:0 0 6px 0">Game Over</h2>
-      <p style="margin:0 0 12px 0">Score: <b>${score}</b></p>
-      <button class="btn" onclick="(${start.toString()})()">Opnieuw</button>
-    </div>`;
-    ov.style.display='grid';
-  }
+  // physics
+  coin.vy += physics.gravity*dt;
+  coin.y  += coin.vy*dt;
 
-  // ===== Loop =====
-  function loop(now){
-    if(!running) return;
-    const dt=Math.min(0.032,(now-last)/1000); last=now;
-    spawnTimer += dt*1000;
-    if(spawnTimer>1400){ spawnTimer=0; spawnPipe(); }
+  // move planets
+  for(const p of planets){ p.x -= physics.speed * dt; }
 
-    // physics
-    coin.vy += physics.gravity*dt;
-    coin.y  += coin.vy*dt;
+  // collisions & score
+  for(const p of planets){
+    // afstand tussen centers
+    const dx = (coin.x - p.x), dy = (coin.y - p.y);
+    const dist2 = dx*dx + dy*dy;
+    const rr = (coin.r + p.r) * (coin.r + p.r);
+    if(dist2 < rr) return gameOver();
 
-    // move obstacles
-    for(const p of pipes) p.x -= physics.speed*dt;
-
-    // collisions & score
-    for(const p of pipes){
-      const inX = coin.x + coin.r > p.x && coin.x - coin.r < p.x + p.w;
-      if(inX){
-        const inGap = (coin.y - coin.r) >= p.top && (coin.y + coin.r) <= (p.top + p.gap);
-        if(!inGap) return gameOver();
-      }
-      if(!p.passed && p.x + p.w < coin.x){
-        p.passed=true; score++; document.getElementById('scoreHud').textContent=String(score);
-      }
+    if(!p.passed && p.x + p.r < coin.x){
+      p.passed = true; score++;
+      document.getElementById('scoreHud').textContent = String(score);
     }
-    // veilige opschoning
-    pipes = pipes.filter(p => p.x + p.w > -12);
-
-    // bounds (boven clamp, beneden = game over)
-    if(coin.y - coin.r < 0){ coin.y = coin.r; coin.vy = 0; }
-    if(coin.y + coin.r > H){ coin.y = H - coin.r; return gameOver(); }
-
-    // draw
-    ctx.clearRect(0,0,W,H);
-
-    // subtiele gloed
-    const ggrad=ctx.createRadialGradient(W*0.7,H*0.35,60, W*0.7,H*0.35, Math.max(W,H));
-    ggrad.addColorStop(0,'rgba(255,255,255,0.05)'); ggrad.addColorStop(1,'rgba(0,0,0,0)');
-    ctx.fillStyle=ggrad; ctx.fillRect(0,0,W,H);
-
-    // player
-    drawCoinWithWings(coin.x,coin.y,coin.r,dt);
-
-    // kettingen
-    for(const p of pipes){
-      drawChainColumn(p.x + p.w/2, 0, p.top, true);
-      drawChainColumn(p.x + p.w/2, H, H - (p.top + p.gap), false);
-    }
-
-    requestAnimationFrame(loop);
   }
-  </script>
+  planets = planets.filter(p => p.x + p.r > -20);
+
+  // bounds (boven clamp, onder = af)
+  if(coin.y - coin.r < 0){ coin.y = coin.r; coin.vy = 0; }
+  if(coin.y + coin.r > H){ coin.y = H - coin.r; return gameOver(); }
+
+  // draw
+  ctx.clearRect(0,0,W,H);
+
+  // sterrenhemel
+  drawStars(stars.far);
+  drawStars(stars.mid);
+  drawStars(stars.near);
+
+  // player
+  drawCoinWithWings(coin.x, coin.y, coin.r, dt);
+
+  // planeten
+  for(const p of planets) drawPlanet(p);
+
+  requestAnimationFrame(loop);
+}
+
+/* ===== Helpers ===== */
+function clamp(v,a,b){ return Math.max(a, Math.min(b,v)); }
+</script>
 </body>
 </html>
+
