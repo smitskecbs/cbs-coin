@@ -2,15 +2,19 @@
 <html lang="nl">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
-<title>CBS Flapy – Space</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<title>CBS Jump — From Underground to Heaven</title>
 <style>
   html,body{height:100%;margin:0}
-  body{background:linear-gradient(180deg,#05070b,#0b1220);overflow:hidden}
+  body{background:linear-gradient(180deg,#0a0d12,#1a1f29);overflow:hidden}
   canvas{display:block;width:100vw;height:100vh}
   .hud{
-    position:fixed;top:10px;left:50%;transform:translateX(-50%);
-    color:#fff;font:700 28px system-ui,sans-serif;text-shadow:0 2px 4px rgba(0,0,0,.6);z-index:2
+    position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:2;
+    color:#fff;font:700 24px system-ui,sans-serif;text-shadow:0 2px 4px rgba(0,0,0,.6);user-select:none
+  }
+  .subhud{
+    position:fixed;top:40px;left:50%;transform:translateX(-50%);z-index:2;
+    color:#cfe6ff;font:600 14px system-ui,sans-serif;text-shadow:0 1px 3px rgba(0,0,0,.6)
   }
   .overlay{
     position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.45);z-index:3
@@ -22,12 +26,13 @@
 </style>
 </head>
 <body>
-  <div id="scoreHud" class="hud">0</div>
+  <div id="scoreHud" class="hud">0 m</div>
+  <div id="levelHud" class="subhud">Ondergrond</div>
 
   <div id="overlay" class="overlay">
     <div class="card">
-      <h2 style="margin:0 0 8px 0">CBS Flapy – Space</h2>
-      <p style="margin:0 0 12px 0">Tik/klik of druk op <b>SPATIE</b> om te vliegen</p>
+      <h2 style="margin:0 0 8px 0">CBS Jump</h2>
+      <p style="margin:0 0 10px 0">Tik/klik (of <b>SPATIE</b>) om op de <b>platte CBS-munten</b> te springen.<br/>Klim van de ondergrond naar de hemel!</p>
       <button id="startBtn" class="btn">Start</button>
     </div>
   </div>
@@ -42,252 +47,313 @@ let W,H,DPR=Math.min(2,window.devicePixelRatio||1);
 function resize(){ W=innerWidth; H=innerHeight; canvas.width=W*DPR; canvas.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0) }
 addEventListener('resize',resize,{passive:true}); resize();
 
-/* ===== Assets ===== */
-const logo = new Image(); logo.src='logo.png';
+/* ===== Asset ===== */
+const logo = new Image(); logo.src = 'logo.png'; // centraal logo voor coin & platforms
 
-/* ===== State ===== */
-let running=false, over=false, started=false, score=0;
-const isMobile=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+/* ===== Game State ===== */
+let running=false, over=false, started=false;
+let scoreM=0; // meters
+const HUD = {
+  score: document.getElementById('scoreHud'),
+  level: document.getElementById('levelHud'),
+  overlay: document.getElementById('overlay'),
+};
+const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-const coin = { x: Math.max(140,W*0.2), y: H*0.55, vy: 0, r: Math.max(30, Math.min(46, H*0.05)) };
-const physics = isMobile
-  ? { gravity: 760, lift: 360, speed: 165 }   // iets sneller dan vorige versie
-  : { gravity: 920, lift: 380, speed: 185 };
+// speler (CBS coin)
+const player = {
+  x: W*0.35,
+  y: H*0.75,
+  r: Math.max(24, Math.min(40, H*0.04)), // radius voor collider
+  vy: 0,
+  onGround: false,
+  coyote: 0,      // paar ms springen na het loslaten van platform
+  jumpV: -(isMobile? 520:560),
+};
 
-/* ===== Parallax sterren ===== */
-const stars = { near: makeStars(50), mid: makeStars(70), far: makeStars(90) };
-function makeStars(n){
-  const arr=[]; for(let i=0;i<n;i++){
-    arr.push({ x:Math.random()*W, y:Math.random()*H, r:Math.random()*1.8+0.4, a:Math.random()*0.6+0.2 });
-  } return arr;
+// physics
+const phys = {
+  g: isMobile? 1600: 1800,   // zwaartekracht
+  scrollEase: 0.08,          // camera easing
+};
+
+let camY = 0;               // camera (wereld y offset)
+let worldYTop = 0;          // hoogste punt dat we bereikten (voor score)
+let last = 0;
+
+const platforms = [];        // {x,y,w,h,phase,speed,dir}
+const PLATFORM_MIN_GAP_Y = 110;     // verticale afstand
+const PLATFORM_MAX_GAP_Y = 170;
+const PLATFORM_SPEED = isMobile? 55 : 70;
+const PLATFORM_W = () => Math.max(90, Math.min(160, W*0.2)); // breedte schaalt met scherm
+const PLATFORM_H = () => Math.max(16, Math.min(22, H*0.018));
+
+/* ===== World / Levels by altitude (0 at start, negative is upwards) ===== */
+function levelName(yWorld){ // yWorld is wereld-hoogte (negatief = hoger)
+  const h = -yWorld;
+  if(h < 600) return 'Ondergrond';
+  if(h < 1800) return 'Aarde';
+  if(h < 3200) return 'Wolken';
+  if(h < 5200) return 'Ruimte';
+  return 'Hemel';
 }
-function moveStars(layer, speed, dt){
-  for(const s of layer){ s.x -= speed*dt; if(s.x<-4){ s.x=W+Math.random()*50; s.y=Math.random()*H; } }
-}
-function drawStars(layer){
-  for(const s of layer){ ctx.globalAlpha=s.a; ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2); ctx.fillStyle='#cfe6ff'; ctx.fill(); }
-  ctx.globalAlpha=1;
-}
-
-/* ===== Planeten obstakels (realistisch) ===== */
-let planets=[]; let last=0, spawnTimer=0;
-const FIRST_SPAWN_DELAY=2200;        // rustiger start
-const SPAWN_EVERY = 1350;            // iets sneller dan vorige (moeilijker)
-const MIN_SPACING = 260;             // minimale afstand tussen planeten
-
-function spawnPlanet(){
-  // diepte voor parallax & schaal
-  const z = rand(0.75, 1.25);                     // 0.75 = verder weg (kleiner, langzamer), 1.25 = dichterbij
-  const baseR = isMobile ? rand(26, 48) : rand(28, 58);
-  const r = baseR * z;
-  const yMargin = 80 + r;
-  const y = rand(yMargin, H - yMargin);
-  const x = W + 140;
-  const hue = Math.floor(rand(10, 360));
-  const ring = Math.random() < 0.28;              // ~28% kans op ringen
-  const rot = rand(0, Math.PI*2);                 // rotatie voor banding
-  const vY  = rand(-22, 22) * z;                  // mini verticale drift
-  planets.push({ x, y, r, z, hue, ring, rot, vY, passed:false });
+function bgFill(yWorld){
+  const h = -yWorld;
+  if(h < 600) return ['#24160e','#3b291f'];            // Ondergrond bruin
+  if(h < 1800) return ['#1a2932','#294b58'];           // Aarde blauwgroen
+  if(h < 3200) return ['#0d1620','#2a394d'];           // Wolken koel
+  if(h < 5200) return ['#06070e','#0b1120'];           // Ruimte donker
+  return ['#0e0c1b','#2a2142'];                        // Hemel mystiek paars
 }
 
-function drawPlanet(p){
-  // schaduw/licht (Lambert-ish)
-  const lx = p.x - p.r*0.45, ly = p.y - p.r*0.45;
-  const grd = ctx.createRadialGradient(lx, ly, p.r*0.1, p.x, p.y, p.r*1.2);
-  grd.addColorStop(0, `hsl(${p.hue}, 90%, 82%)`);
-  grd.addColorStop(0.55, `hsl(${p.hue}, 70%, 52%)`);
-  grd.addColorStop(1, `hsl(${p.hue}, 55%, 22%)`);
-  ctx.fillStyle = grd;
-  ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2); ctx.fill();
-
-  // subtiele banding (gas-achtige lijnen)
-  ctx.save();
-  ctx.translate(p.x, p.y);
-  ctx.rotate(p.rot);
-  ctx.globalAlpha = 0.20;
-  const bands = 6;
-  for(let i=0;i<bands;i++){
-    const yy = -p.r + (i+1)*(2*p.r/(bands+1));
-    const w = p.r * Math.sqrt(Math.max(0, 1 - (yy*yy)/(p.r*p.r))); // chord breedte
-    const c = `hsl(${(p.hue+10*i)%360}, 50%, ${40 + i*6}%)`;
-    ctx.fillStyle = c;
-    ctx.fillRect(-w, yy-1.2, w*2, 2.4);
+/* ===== Input: one-tap jump ===== */
+function onPress(){
+  if(!started){ start(); return; }
+  if(over) return;
+  if(player.onGround || player.coyote > 0){
+    player.vy = player.jumpV;
+    player.onGround = false;
+    player.coyote = 0;
   }
-  ctx.restore();
-  ctx.globalAlpha = 1;
+}
+addEventListener('keydown', e=>{ if(e.code==='Space'){ e.preventDefault(); onPress(); }});
+addEventListener('pointerdown', onPress);
+document.getElementById('startBtn').onclick = onPress;
 
-  // specular highlight
-  ctx.globalAlpha = 0.18;
-  ctx.beginPath(); ctx.arc(p.x - p.r*0.35, p.y - p.r*0.35, p.r*0.55, 0, Math.PI*2);
-  ctx.fillStyle = '#ffffff'; ctx.fill();
-  ctx.globalAlpha = 1;
+/* ===== Platform helpers ===== */
+function spawnInitialPlatforms(){
+  platforms.length = 0;
+  let y = player.y + 40; // eentje onder speler
+  for(let i=0;i<18;i++){
+    const w = PLATFORM_W(), h = PLATFORM_H();
+    const x = rand(w*0.5, W - w*0.5);
+    y -= rand(PLATFORM_MIN_GAP_Y, PLATFORM_MAX_GAP_Y);
+    platforms.push(makePlatform(x, y, w, h));
+  }
+}
+function makePlatform(x,y,w,h){
+  return {
+    x, y, w, h,
+    phase: Math.random()*Math.PI*2,
+    speed: PLATFORM_SPEED * (0.6 + Math.random()*0.8), // variatie
+    dir: Math.random()<0.5 ? -1:1,                     // L/R richting
+  };
+}
+function maybeSpawnAbove(){
+  // zorg dat er altijd platforms boven camera
+  const highest = platforms.reduce((m,p)=>Math.min(m,p.y), Infinity);
+  while(highest > camY - H*0.8){
+    const w = PLATFORM_W(), h = PLATFORM_H();
+    const x = rand(w*0.5, W - w*0.5);
+    const topY = (platforms.reduce((m,p)=>Math.min(m,p.y), Infinity)) - rand(PLATFORM_MIN_GAP_Y, PLATFORM_MAX_GAP_Y);
+    platforms.push(makePlatform(x, topY, w, h));
+    break;
+  }
+}
+function updatePlatforms(dt){
+  for(const p of platforms){
+    p.phase += dt;
+    p.x += Math.sin(p.phase)*p.dir*p.speed*dt; // soepel bewegen
+    // bounce tegen randen
+    const half = p.w*0.5;
+    if(p.x - half < 10){ p.x = 10 + half; p.dir = 1; }
+    if(p.x + half > W-10){ p.x = W-10 - half; p.dir = -1; }
+  }
+  // platforms onder de camera weggooien
+  for(let i=platforms.length-1;i>=0;i--){
+    if(platforms[i].y - camY > H + 200){ platforms.splice(i,1); }
+  }
+}
 
-  // atmosfeer gloed
-  const atm = ctx.createRadialGradient(p.x, p.y, p.r*0.85, p.x, p.y, p.r*1.35);
-  atm.addColorStop(0, 'rgba(255,255,255,0)');
-  atm.addColorStop(1, 'rgba(150,200,255,0.10)');
-  ctx.fillStyle = atm; ctx.beginPath(); ctx.arc(p.x, p.y, p.r*1.35, 0, Math.PI*2); ctx.fill();
+/* ===== Draw platform: platte CBS-munt (ellips + logo) ===== */
+function drawFlatCoin(x,y,w,h){
+  // ellips body (goud)
+  const grd = ctx.createLinearGradient(x, y-h*0.5, x, y+h*0.5);
+  grd.addColorStop(0, '#fff6c8');
+  grd.addColorStop(0.5, '#f6d36a');
+  grd.addColorStop(1, '#b78628');
+  ctx.fillStyle = grd;
+  ctx.beginPath(); roundEllipsePath(x,y,w,h); ctx.fill();
 
-  // ringen (met tilt)
-  if(p.ring){
+  // top highlight
+  ctx.globalAlpha=0.25;
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath(); roundEllipsePath(x, y-h*0.15, w*0.9, h*0.6); ctx.fill();
+  ctx.globalAlpha=1;
+
+  // logo perspectief
+  if(logo.complete){
     ctx.save();
-    ctx.translate(p.x, p.y);
-    ctx.rotate(p.rot + 0.7);
-    const inner = p.r*1.15, outer = p.r*1.8;
-    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
-    ctx.lineWidth = 4;
-    ctx.beginPath(); ellipseStroke(0,0, outer, outer*0.35); ctx.stroke();
-    ctx.beginPath(); ellipseStroke(0,0, inner, inner*0.35); ctx.stroke();
+    ctx.beginPath(); roundEllipsePath(x,y,w*0.82,h*0.82); ctx.clip();
+    // “perspectief”: trek wat in de hoogte samen
+    const imgW = w*0.82, imgH = imgW; // vierkant
+    ctx.drawImage(logo, x-imgW/2, y-imgH/2, imgW, imgH);
     ctx.restore();
   }
-}
-
-// Helper to stroke an ellipse path
-function ellipseStroke(cx, cy, rx, ry){
-  // approx with many small segments
-  const seg=48;
-  for(let i=0;i<=seg;i++){
-    const a=i/seg*Math.PI*2;
-    const x=cx+Math.cos(a)*rx, y=cy+Math.sin(a)*ry;
-    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
-  }
-}
-
-function rand(a,b){ return a + Math.random()*(b-a); }
-
-/* ===== Controls ===== */
-function onPress(){ if(!started){start();return} if(over)return; coin.vy = -physics.lift; }
-addEventListener('keydown',e=>{ if(e.code==='Space'){ e.preventDefault(); onPress(); }});
-addEventListener('pointerdown',onPress);
-document.getElementById('startBtn').onclick=onPress;
-
-/* ===== CBS-munt met vleugels (naast de munt) ===== */
-let flapPhase=0;
-function drawCoinWithWings(x,y,r,dt){
-  flapPhase += dt*7;
-  const wingOsc = Math.sin(flapPhase) * (r*0.16);
-
-  // munt
-  const grad = ctx.createRadialGradient(x-r*0.3,y-r*0.3,r*0.2, x,y,r*1.2);
-  grad.addColorStop(0,'#fff6c8'); grad.addColorStop(0.5,'#f6d36a'); grad.addColorStop(1,'#b78628');
-  ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
 
   // rand
-  ctx.lineWidth=4; ctx.strokeStyle='rgba(255,255,255,.55)';
-  ctx.beginPath(); ctx.arc(x,y,r-2,0,Math.PI*2); ctx.stroke();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+  ctx.beginPath(); roundEllipsePath(x,y,w,h); ctx.stroke();
+}
+function roundEllipsePath(x,y,w,h){
+  // ellips met zachte randen
+  const rx=w/2, ry=h/2;
+  ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);
+}
 
+/* ===== Player draw: staande coin (zonder vleugels) ===== */
+function drawPlayer(){
+  const x=player.x, y=player.y - camY, r=player.r;
+  // coin body
+  const grad=ctx.createRadialGradient(x-r*0.35,y-r*0.35,r*0.2, x,y,r*1.15);
+  grad.addColorStop(0,'#fff6c8'); grad.addColorStop(0.55,'#f6d36a'); grad.addColorStop(1,'#b78628');
+  ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+  // rim
+  ctx.lineWidth=4; ctx.strokeStyle='rgba(255,255,255,0.55)';
+  ctx.beginPath(); ctx.arc(x,y,r-2,0,Math.PI*2); ctx.stroke();
   // logo
   if(logo.complete){
     ctx.save(); ctx.beginPath(); ctx.arc(x,y,r-4,0,Math.PI*2); ctx.clip();
-    ctx.drawImage(logo, x - r*0.8, y - r*0.8, r*1.6, r*1.6); ctx.restore();
+    ctx.drawImage(logo, x-r*0.95, y-r*0.95, r*1.9, r*1.9); ctx.restore();
   }
-
-  // vleugels: ruim naast de munt
-  const wingW = r*1.7;
-  const offsetX = r + wingW*1.1;
-  drawWing(x - offsetX, y + wingOsc, r, false);
-  drawWing(x + offsetX, y + wingOsc, r, true);
 }
-function drawWing(cx,cy,r,flip=false){
-  ctx.save(); ctx.translate(cx,cy); if(flip) ctx.scale(-1,1);
-  ctx.fillStyle='rgba(255,255,255,.96)';
-  ctx.beginPath();
-  ctx.moveTo(0,0);
-  ctx.bezierCurveTo(r*0.8,-r*0.36, r*1.45,-r*0.22, r*1.8,0);
-  ctx.bezierCurveTo(r*1.45, r*0.22,  r*0.8,  r*0.36, 0,0);
-  ctx.closePath(); ctx.fill();
-  ctx.strokeStyle='rgba(230,230,230,.92)'; ctx.lineWidth=2;
-  for(let i=0;i<3;i++){
-    ctx.beginPath();
-    ctx.moveTo(r*(0.46+i*0.28), -r*(0.06+i*0.015));
-    ctx.quadraticCurveTo(r*(0.9+i*0.22), 0, r*(0.46+i*0.28), r*(0.06+i*0.015));
-    ctx.stroke();
+
+/* ===== Background (per level) ===== */
+function drawBackground(){
+  const [c1,c2] = bgFill(camY);
+  const g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,c1); g.addColorStop(1,c2);
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+  // extra details per zone
+  const h = -camY;
+  if(h > 3200 && h < 5200){
+    // ruimte – sterren
+    drawStars(70, 0.6);
+  } else if(h >= 5200){
+    // hemel – zachte gloed
+    const rg = ctx.createRadialGradient(W*0.5, H*0.3, 80, W*0.5, H*0.3, Math.max(W,H));
+    rg.addColorStop(0,'rgba(255,255,255,0.18)'); rg.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=rg; ctx.fillRect(0,0,W,H);
+  } else if(h < 600){
+    // ondergrond – subtiele textuur lijnen
+    ctx.globalAlpha=0.08; ctx.strokeStyle='#000';
+    for(let i=0;i<10;i++){ ctx.beginPath(); ctx.moveTo(0, H-(i*14)); ctx.lineTo(W, H-(i*14)); ctx.stroke(); }
+    ctx.globalAlpha=1;
   }
-  ctx.restore();
+}
+function drawStars(n, maxAlpha){
+  for(let i=0;i<n;i++){
+    const x = (i*1237 % W); // cheap pseudo spread
+    const y = (i*911  % H);
+    const r = (i%3===0)?1.6:(i%3===1?1.2:0.8);
+    ctx.globalAlpha = (0.3 + (i%7)/10) * maxAlpha;
+    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
+    ctx.fillStyle = '#cfe6ff'; ctx.fill();
+  }
+  ctx.globalAlpha = 1;
 }
 
 /* ===== Lifecycle ===== */
 function start(){
-  started=true; running=true; over=false; score=0;
-  coin.x = Math.max(140, W*0.2);
-  coin.y = H*0.55; coin.vy=0;
-  planets=[]; spawnTimer = -FIRST_SPAWN_DELAY; last=performance.now();
-  document.getElementById('overlay').style.display='none';
-  document.getElementById('scoreHud').textContent='0';
+  started=true; running=true; over=false;
+  scoreM=0; worldYTop = 0;
+  camY = 0;
+  player.x = W*0.35; player.y = H*0.75; player.vy = 0; player.onGround=false; player.coyote=0;
+  spawnInitialPlatforms();
+  HUD.overlay.style.display='none';
+  HUD.score.textContent = '0 m';
+  HUD.level.textContent = 'Ondergrond';
+  last = performance.now();
   requestAnimationFrame(loop);
 }
 function gameOver(){
   running=false; over=true;
+  // optionele scoreboard hooks
   try{
-    if(typeof window.submitScore==='function') window.submitScore(score);
-    else if(typeof window.saveScore==='function') window.saveScore(score);
-    window.dispatchEvent(new CustomEvent('cbs-score',{detail:{score,game:'flapy-space'}}));
+    if(typeof window.submitScore==='function') window.submitScore(Math.floor(scoreM));
+    else if(typeof window.saveScore==='function') window.saveScore(Math.floor(scoreM));
+    window.dispatchEvent(new CustomEvent('cbs-score',{detail:{score:Math.floor(scoreM),game:'cbs-jump'}}));
   }catch(e){}
-  const ov=document.getElementById('overlay');
-  ov.innerHTML=`<div class="card">
-    <h2 style="margin:0 0 6px 0">Game Over</h2>
-    <p style="margin:0 0 12px 0">Score: <b>${score}</b></p>
-    <button class="btn" onclick="(${start.toString()})()">Opnieuw</button>
-  </div>`;
-  ov.style.display='grid';
+  HUD.overlay.innerHTML = `
+    <div class="card">
+      <h2 style="margin:0 0 8px 0">Game Over</h2>
+      <p style="margin:0 0 12px 0">Hoogte: <b>${Math.floor(scoreM)} m</b><br/><span style="opacity:.8">${levelName(camY)}</span></p>
+      <button class="btn" onclick="(${start.toString()})()">Opnieuw</button>
+    </div>`;
+  HUD.overlay.style.display='grid';
 }
 
-/* ===== Loop ===== */
+/* ===== Main loop ===== */
 function loop(now){
   if(!running) return;
-  const dt=Math.min(0.032,(now-last)/1000); last=now;
+  const dt = Math.min(0.032, (now-last)/1000); last = now;
 
-  // parallax
-  moveStars(stars.far,  physics.speed*0.12, dt);
-  moveStars(stars.mid,  physics.speed*0.24, dt);
-  moveStars(stars.near, physics.speed*0.45, dt);
+  // gravity
+  player.vy += phys.g * dt;
+  player.y  += player.vy * dt;
 
-  // spawn planets
-  spawnTimer += dt*1000;
-  if(spawnTimer > SPAWN_EVERY){
-    spawnTimer = 0;
-    if(planets.length===0 || (W - planets[planets.length-1].x) > MIN_SPACING){
-      spawnPlanet();
+  // coyote time aftellen
+  if(player.onGround) player.coyote = 0.1; else player.coyote = Math.max(0, player.coyote - dt);
+  player.onGround = false;
+
+  // platform update + collisions
+  updatePlatforms(dt);
+
+  // collision (axis aligned platform, coin as circle vs ellipse -> approx AABB)
+  for(const p of platforms){
+    // AABB check
+    if(Math.abs(player.x - p.x) < (p.w/2 + player.r*0.6)){ // iets tolerant
+      const py = player.y + player.r;       // onderkant speler
+      const top = p.y - p.h/2;
+      const prevPy = player.y - player.vy*dt + player.r;
+      // land van boven (crossing)
+      if(prevPy <= top && py >= top && player.vy > 0){
+        player.y = top - player.r;
+        player.vy = 0;
+        player.onGround = true;
+      }
     }
   }
 
-  // physics
-  coin.vy += physics.gravity*dt;
-  coin.y  += coin.vy*dt;
+  // camera volgt omhoog (alleen naar boven)
+  const targetCam = Math.min(camY, player.y - H*0.45);
+  camY = camY + (targetCam - camY) * phys.scrollEase;
 
-  // move planets (met diepte)
-  for(const p of planets){ p.x -= physics.speed * dt * p.z; p.y += p.vY * dt; }
-
-  // collisions & score
-  for(const p of planets){
-    // botsing: cirkel vs cirkel
-    const dx = (coin.x - p.x), dy = (coin.y - p.y);
-    if(dx*dx + dy*dy < (coin.r + p.r)*(coin.r + p.r)) return gameOver();
-
-    if(!p.passed && p.x + p.r < coin.x){
-      p.passed = true; score++;
-      document.getElementById('scoreHud').textContent = String(score);
-    }
+  // score = hoogste bereikte hoogte (in meters)
+  worldYTop = Math.min(worldYTop, camY);
+  const meters = Math.floor(-worldYTop/3); // schaal naar “meters”
+  if(meters !== Math.floor(scoreM)){
+    scoreM = meters;
+    HUD.score.textContent = `${meters} m`;
+    HUD.level.textContent = levelName(camY);
   }
-  planets = planets.filter(p => p.x + p.r > -40);
 
-  // bounds
-  if(coin.y - coin.r < 0){ coin.y = coin.r; coin.vy = 0; }
-  if(coin.y + coin.r > H){ coin.y = H - coin.r; return gameOver(); }
+  // dood-condities (onder beeld vallen)
+  if(player.y - camY > H + 160) return gameOver();
+
+  // nieuwe platforms bovenaan toevoegen
+  maybeSpawnAbove();
 
   // draw
   ctx.clearRect(0,0,W,H);
-  drawStars(stars.far);
-  drawStars(stars.mid);
-  drawStars(stars.near);
+  drawBackground();
 
-  drawCoinWithWings(coin.x, coin.y, coin.r, dt);
-  for(const p of planets) drawPlanet(p);
+  // platforms
+  for(const p of platforms){
+    const sy = p.y - camY;
+    if(sy < -80 || sy > H+80) continue;
+    drawFlatCoin(p.x, sy, p.w, p.h);
+  }
+
+  // player
+  drawPlayer();
 
   requestAnimationFrame(loop);
 }
 
-/* ===== Helpers ===== */
+/* ===== Utils ===== */
 function rand(a,b){ return a + Math.random()*(b-a); }
 </script>
 </body>
