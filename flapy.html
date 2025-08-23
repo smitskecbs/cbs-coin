@@ -2,414 +2,118 @@
 <html lang="nl">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<title>CBS Jump — Underground → Heaven</title>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>CBS Jump – Basis</title>
 <style>
-  html,body{height:100%;margin:0}
-  body{background:linear-gradient(180deg,#0a0d12,#1a1f29);overflow:hidden}
+  html,body{margin:0;height:100%;background:#0b0f18;overflow:hidden}
   canvas{display:block;width:100vw;height:100vh}
   .hud{
-    position:fixed;top:8px;left:50%;transform:translateX(-50%);z-index:2;
-    color:#fff;font:700 24px system-ui,sans-serif;text-shadow:0 2px 4px rgba(0,0,0,.6);user-select:none
+    position:fixed;top:10px;left:50%;transform:translateX(-50%);
+    color:#fff;font:700 22px system-ui,sans-serif;text-shadow:0 2px 4px rgba(0,0,0,.7)
   }
-  .subhud{
-    position:fixed;top:40px;left:50%;transform:translateX(-50%);z-index:2;
-    color:#cfe6ff;font:600 14px system-ui,sans-serif;text-shadow:0 1px 3px rgba(0,0,0,.6)
-  }
-  .overlay{
-    position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.45);z-index:3
-  }
-  .card{
-    background:rgba(20,20,32,.86);padding:22px 26px;border-radius:16px;color:#fff;text-align:center;max-width:420px;width:min(92vw,420px)
-  }
-  .btn{padding:10px 16px;border-radius:12px;background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.25);cursor:pointer}
 </style>
 </head>
 <body>
-  <div id="scoreHud" class="hud">0 m</div>
-  <div id="levelHud" class="subhud">Ondergrond</div>
-
-  <div id="overlay" class="overlay">
-    <div class="card">
-      <h2 style="margin:0 0 8px 0">CBS Jump</h2>
-      <p style="margin:0 0 10px 0">Tik/klik (of <b>SPATIE</b>) om op de <b>platte CBS-munten</b> te springen.<br/>Klim van de ondergrond naar de hemel!</p>
-      <button id="startBtn" class="btn">Start</button>
-    </div>
-  </div>
-
-  <canvas id="game"></canvas>
+<canvas id="game"></canvas>
+<div id="hud" class="hud">0 m</div>
 
 <script>
-/* ===== Canvas ===== */
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-let W,H,DPR=Math.min(2,window.devicePixelRatio||1);
-function resize(){ W=innerWidth; H=innerHeight; canvas.width=W*DPR; canvas.height=H*DPR; ctx.setTransform(DPR,0,0,DPR,0,0) }
-addEventListener('resize',resize,{passive:true}); resize();
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+let W,H;function resize(){W=innerWidth;H=innerHeight;canvas.width=W;canvas.height=H}resize();
+addEventListener('resize',resize);
 
-/* ===== Asset ===== */
-const logo = new Image(); logo.src = 'logo.png'; // CBS-logo
+const logo=new Image();logo.src='logo.png';
 
-/* ===== Game State ===== */
-let running=false, over=false, started=false;
-let scoreM=0; // meters
-const HUD = {
-  score: document.getElementById('scoreHud'),
-  level: document.getElementById('levelHud'),
-  overlay: document.getElementById('overlay'),
-};
-const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+let player={x:W/2,y:H-120,r:30,vy:0,onGround:true};
+let gravity=1600,jumpV=-650;
+let camY=0,score=0;document.getElementById('hud').innerText="0 m";
 
-// speler (CBS coin)
-const player = {
-  x: W*0.35,
-  y: H*0.75,
-  r: Math.max(26, Math.min(40, H*0.04)), // collider
-  vy: 0,
-  onGround: false,
-  coyote: 0,                         // kleine marge na loslaten
-  jumpV: -(isMobile? 520:560),
-};
+let platforms=[];
 
-// physics
-const phys = {
-  g: isMobile? 1600: 1800,           // zwaartekracht
-  scrollEase: 0.08,                  // camera easing
-};
-
-let camY = 0;                        // camera (wereld y offset)
-let worldYTop = 0;                   // hoogste (negatieve) y
-let last = 0;
-
-const platforms = [];                // {x,y,w,h,phase,speed,dir,base}
-const PLATFORM_MIN_GAP_Y = 120;      // verticale afstand
-const PLATFORM_MAX_GAP_Y = 180;
-const PLATFORM_SPEED = isMobile? 50 : 65;
-const PLATFORM_W = () => Math.max(110, Math.min(180, W*0.22)); // breedte
-const PLATFORM_H = () => Math.max(18, Math.min(26, H*0.02));   // “dikte” top
-
-/* ===== World / Levels ===== */
-function levelName(yWorld){
-  const h = -yWorld;
-  if(h < 600) return 'Ondergrond';
-  if(h < 1800) return 'Aarde';
-  if(h < 3200) return 'Wolken';
-  if(h < 5200) return 'Ruimte';
-  return 'Hemel';
+function makePlatform(x,y,w=120,h=20){return{x,y,w,h};}
+function spawnInitial(){
+  platforms=[];
+  // startplatform
+  platforms.push(makePlatform(W/2,H-80));
+  // omhoog
+  let y=H-160;
+  for(let i=0;i<20;i++){
+    platforms.push(makePlatform(Math.random()*(W-140)+70,y));
+    y-=100;
+  }
 }
-function bgFill(yWorld){
-  const h = -yWorld;
-  if(h < 600) return ['#24160e','#3b291f'];       // Ondergrond
-  if(h < 1800) return ['#1a2932','#294b58'];      // Aarde
-  if(h < 3200) return ['#0d1620','#2a394d'];      // Wolken
-  if(h < 5200) return ['#06070e','#0b1120'];      // Ruimte
-  return ['#0e0c1b','#2a2142'];                   // Hemel
-}
+spawnInitial();
 
-/* ===== Input ===== */
 function onPress(){
-  if(!started){ start(); return; }
-  if(over) return;
-  if(player.onGround || player.coyote > 0){
-    player.vy = player.jumpV;
-    player.onGround = false;
-    player.coyote = 0;
+  if(player.onGround){
+    player.vy=jumpV;
+    player.onGround=false;
   }
 }
-addEventListener('keydown', e=>{ if(e.code==='Space'){ e.preventDefault(); onPress(); }});
-addEventListener('pointerdown', onPress);
-document.getElementById('startBtn').onclick = onPress;
+addEventListener('keydown',e=>{if(e.code==="Space"){onPress();}});
+addEventListener('pointerdown',onPress);
 
-/* ===== Platforms ===== */
-function spawnInitialPlatforms(){
-  platforms.length = 0;
-  // 1) Basis-platform direct onder de speler (zodat je NIET valt)
-  const baseW = Math.max(180, PLATFORM_W()*1.2);
-  const baseH = PLATFORM_H();
-  const baseY = player.y + player.r + baseH*0.5 + 2;
-  platforms.push(makePlatform(player.x, baseY, baseW, baseH, true));
-
-  // 2) Een rij omhoog
-  let y = baseY;
-  for(let i=0;i<18;i++){
-    const w = PLATFORM_W(), h = PLATFORM_H();
-    const x = rand(w*0.5, W - w*0.5);
-    y -= rand(PLATFORM_MIN_GAP_Y, PLATFORM_MAX_GAP_Y);
-    platforms.push(makePlatform(x, y, w, h, false));
-  }
-}
-function makePlatform(x,y,w,h,base=false){
-  return {
-    x, y, w, h, base,
-    phase: Math.random()*Math.PI*2,
-    speed: base ? 0 : PLATFORM_SPEED * (0.7 + Math.random()*0.7),
-    dir: Math.random()<0.5 ? -1:1,
-  };
-}
-function maybeSpawnAbove(){
-  // Zorg dat er altijd platforms boven camera blijven komen
-  const highest = platforms.reduce((m,p)=>Math.min(m,p.y), Infinity);
-  if(highest > camY - H*0.9){
-    const w = PLATFORM_W(), h = PLATFORM_H();
-    const x = rand(w*0.5, W - w*0.5);
-    const topY = highest - rand(PLATFORM_MIN_GAP_Y, PLATFORM_MAX_GAP_Y);
-    platforms.push(makePlatform(x, topY, w, h, false));
-  }
-}
-function updatePlatforms(dt){
-  for(const p of platforms){
-    if(p.speed===0) continue; // basisplatform staat stil
-    p.phase += dt;
-    p.x += Math.sin(p.phase)*p.dir*p.speed*dt;
-    // eenvoudige randbounce
-    const half = p.w*0.5;
-    if(p.x - half < 10){ p.x = 10 + half; p.dir = 1; }
-    if(p.x + half > W-10){ p.x = W-10 - half; p.dir = -1; }
-  }
-  // Ruim platforms op die ver onder beeld zijn
-  for(let i=platforms.length-1;i>=0;i--){
-    if(platforms[i].y - camY > H + 240){ platforms.splice(i,1); }
-  }
-}
-
-/* ===== Tekenen munt-platform met dikke rand + randtekst ===== */
-function drawFlatCoin3D(x,y,w,h,inscription){
-  const thickness = Math.max(10, h*1.2); // 3D zijkant
-
-  // 1) Zijkant (donkerder goud) voor 3D-look
-  const sideGrad = ctx.createLinearGradient(x, y, x, y+thickness);
-  sideGrad.addColorStop(0, '#d7b455');
-  sideGrad.addColorStop(1, '#8b6a28');
-  ctx.fillStyle = sideGrad;
-  ctx.beginPath();
-  ctx.ellipse(x, y+thickness, w/2, h/2, 0, 0, Math.PI*2); // onder-ellipse
-  ctx.fill();
-
-  // 2) Bovenzijde (top-ellipse)
-  const topGrad = ctx.createLinearGradient(x, y-h*0.5, x, y+h*0.5);
-  topGrad.addColorStop(0, '#fff6c8');
-  topGrad.addColorStop(0.5, '#f6d36a');
-  topGrad.addColorStop(1, '#b78628');
-  ctx.fillStyle = topGrad;
-  ctx.beginPath(); ctx.ellipse(x,y,w/2,h/2,0,0,Math.PI*2); ctx.fill();
-
-  // 3) Dikke rand (dubbele stroke)
-  ctx.lineWidth = 4;
-  ctx.strokeStyle = 'rgba(255,255,255,0.65)';
-  ctx.beginPath(); ctx.ellipse(x,y,w/2-2,h/2-2,0,0,Math.PI*2); ctx.stroke();
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = 'rgba(0,0,0,0.25)';
-  ctx.beginPath(); ctx.ellipse(x,y,w/2-6,h/2-6,0,0,Math.PI*2); ctx.stroke();
-
-  // 4) Logo (licht perspectief: gewoon gecentreerd op top)
-  if(logo.complete){
-    ctx.save();
-    ctx.beginPath(); ctx.ellipse(x,y,w*0.78/2,h*0.78/2,0,0,Math.PI*2); ctx.clip();
-    const imgW = w*0.78, imgH = imgW;
-    ctx.drawImage(logo, x-imgW/2, y-imgH/2, imgW, imgH);
-    ctx.restore();
-  }
-
-  // 5) Rand-inscriptie: tekst langs de ellipse-rand
-  if(inscription){
-    ctx.save();
-    ctx.fillStyle = 'rgba(50,30,0,0.9)';
-    ctx.font = `bold ${Math.max(10, h*0.55)}px system-ui, sans-serif`;
-    drawEllipseText(ctx, inscription, x, y, w/2-10, h/2-10);
-    ctx.restore();
-  }
-
-  // 6) Highlight boven
-  ctx.globalAlpha=0.22;
-  ctx.fillStyle='#fff';
-  ctx.beginPath(); ctx.ellipse(x, y-h*0.18, w*0.86/2, h*0.58/2, 0, 0, Math.PI*2); ctx.fill();
-  ctx.globalAlpha=1;
-}
-
-// Tekst langs een ellipse (bovenste 3/4e rondom)
-function drawEllipseText(ctx, text, cx, cy, rx, ry){
-  const full = text.trim() + ' • ';
-  const repeated = (full+full+full); // genoeg lengte
-  const steps = 64; // segmenten
-  let t = -Math.PI + 0.25; // start linksboven
-  const end = Math.PI - 0.25;
-  let idx = 0;
-
-  while(t < end){
-    const x = cx + rx * Math.cos(t);
-    const y = cy + ry * Math.sin(t);
-    // tangentiale hoek van ellipse
-    const dx = -rx * Math.sin(t);
-    const dy =  ry * Math.cos(t);
-    const ang = Math.atan2(dy, dx);
-
-    const ch = repeated[idx % repeated.length];
-    const w = ctx.measureText(ch).width || 8;
-
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(ang);
-    ctx.fillText(ch, -w/2, -2); // kleine offset naar binnen
-    ctx.restore();
-
-    // staphoek afhankelijk van letterbreedte (grofweg)
-    const arcLen = (rx+ry)/2; // gemiddelde radius
-    const dTheta = Math.max(0.04, w / Math.max(arcLen, 1) );
-    t += dTheta;
-    idx++;
-  }
-}
-
-/* ===== Player (ronde munt) ===== */
-function drawPlayer(){
-  const x=player.x, y=player.y - camY, r=player.r;
-  const grad=ctx.createRadialGradient(x-r*0.35,y-r*0.35,r*0.2, x,y,r*1.15);
-  grad.addColorStop(0,'#fff6c8'); grad.addColorStop(0.55,'#f6d36a'); grad.addColorStop(1,'#b78628');
-  ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
-  ctx.lineWidth=4; ctx.strokeStyle='rgba(255,255,255,0.55)';
-  ctx.beginPath(); ctx.arc(x,y,r-2,0,Math.PI*2); ctx.stroke();
-  if(logo.complete){
-    ctx.save(); ctx.beginPath(); ctx.arc(x,y,r-4,0,Math.PI*2); ctx.clip();
-    ctx.drawImage(logo, x-r*0.95, y-r*0.95, r*1.9, r*1.9); ctx.restore();
-  }
-}
-
-/* ===== Background ===== */
-function drawBackground(){
-  const [c1,c2] = bgFill(camY);
-  const g = ctx.createLinearGradient(0,0,0,H);
-  g.addColorStop(0,c1); g.addColorStop(1,c2);
-  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-
-  // extra details
-  const h = -camY;
-  if(h > 3200 && h < 5200){
-    // sterren in ruimte
-    for(let i=0;i<70;i++){
-      const x = (i*1237 % W), y = (i*911 % H);
-      const r = (i%3===0)?1.6:(i%3===1?1.2:0.8);
-      ctx.globalAlpha = 0.3 + (i%7)/10;
-      ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
-      ctx.fillStyle = '#cfe6ff'; ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-  } else if(h >= 5200){
-    const rg = ctx.createRadialGradient(W*0.5, H*0.3, 80, W*0.5, H*0.3, Math.max(W,H));
-    rg.addColorStop(0,'rgba(255,255,255,0.18)'); rg.addColorStop(1,'rgba(255,255,255,0)');
-    ctx.fillStyle=rg; ctx.fillRect(0,0,W,H);
-  }
-}
-
-/* ===== Lifecycle ===== */
-function start(){
-  started=true; running=true; over=false;
-  scoreM=0; worldYTop = 0;
-  camY = 0;
-  player.x = W*0.35; player.y = H*0.75; player.vy = 0; player.onGround=false; player.coyote=0;
-
-  spawnInitialPlatforms();                 // zet base-platform neer
-  // Zet speler precies BOVEN het basisplatform en markeer grounded
-  const base = platforms.find(p=>p.base);
-  if(base){
-    const top = base.y - base.h/2;
-    player.y = top - player.r;
-    player.vy = 0;
-    player.onGround = true;
-  }
-
-  HUD.overlay.style.display='none';
-  HUD.score.textContent = '0 m';
-  HUD.level.textContent = 'Ondergrond';
-  last = performance.now();
-  requestAnimationFrame(loop);
-}
-
-function gameOver(){
-  running=false; over=true;
-  try{
-    if(typeof window.submitScore==='function') window.submitScore(Math.floor(scoreM));
-    else if(typeof window.saveScore==='function') window.saveScore(Math.floor(scoreM));
-    window.dispatchEvent(new CustomEvent('cbs-score',{detail:{score:Math.floor(scoreM),game:'cbs-jump'}}));
-  }catch(e){}
-  HUD.overlay.innerHTML = `
-    <div class="card">
-      <h2 style="margin:0 0 8px 0">Game Over</h2>
-      <p style="margin:0 0 12px 0">Hoogte: <b>${Math.floor(scoreM)} m</b><br/><span style="opacity:.8">${levelName(camY)}</span></p>
-      <button class="btn" onclick="(${start.toString()})()">Opnieuw</button>
-    </div>`;
-  HUD.overlay.style.display='grid';
-}
-
-/* ===== Main loop ===== */
+let last=performance.now();
 function loop(now){
-  if(!running) return;
-  const dt = Math.min(0.032, (now-last)/1000); last = now;
+  let dt=(now-last)/1000;last=now;
 
-  // gravity
-  player.vy += phys.g * dt;
-  player.y  += player.vy * dt;
+  // physics
+  player.vy+=gravity*dt;
+  player.y+=player.vy*dt;
 
-  // coyote time aftellen
-  if(player.onGround) player.coyote = 0.12; else player.coyote = Math.max(0, player.coyote - dt);
-  player.onGround = false;
-
-  // platforms updaten + collisions
-  updatePlatforms(dt);
-
+  // collide with platforms
   for(const p of platforms){
-    // AABB check (x-range)
-    if(Math.abs(player.x - p.x) < (p.w/2 + player.r*0.55)){
-      const prevBottom = (player.y - player.vy*dt) + player.r;
-      const top = p.y - p.h/2;
-      const nowBottom  = player.y + player.r;
-
-      // Land ALLEEN als je van boven komt en door de top kruist
-      if(prevBottom <= top && nowBottom >= top && player.vy > 0){
-        player.y  = top - player.r;
-        player.vy = 0;
-        player.onGround = true;
+    if(player.x>p.x-p.w/2 && player.x<p.x+p.w/2){
+      const top=p.y-10;
+      if(player.vy>0 && player.y+player.r>top && player.y+player.r<top+30){
+        player.y=top-player.r;
+        player.vy=0;
+        player.onGround=true;
       }
     }
   }
 
-  // camera volgt omhoog (alleen omhoog)
-  const targetCam = Math.min(camY, player.y - H*0.45);
-  camY = camY + (targetCam - camY) * phys.scrollEase;
+  // camera follows up
+  if(player.y<camY+H*0.4){camY=player.y-H*0.4;}
 
-  // score = hoogste hoogte
-  worldYTop = Math.min(worldYTop, camY);
-  const meters = Math.floor(-worldYTop/3);
-  HUD.score.textContent = `${meters} m`;
-  HUD.level.textContent = levelName(camY);
-  scoreM = meters;
+  // spawn new
+  let highest=Math.min(...platforms.map(p=>p.y));
+  while(highest>camY-100){
+    highest-=100;
+    platforms.push(makePlatform(Math.random()*(W-140)+70,highest));
+  }
+  // remove old
+  platforms=platforms.filter(p=>p.y<camY+H+50);
 
-  // fail als je ver onder beeld valt
-  if(player.y - camY > H + 160) return gameOver();
-
-  // extra platforms bijspawnen
-  maybeSpawnAbove();
+  // score
+  let newScore=Math.max(score,Math.floor((H-80 - player.y)/10));
+  if(newScore!==score){score=newScore;document.getElementById('hud').innerText=score+" m";}
 
   // draw
-  ctx.clearRect(0,0,W,H);
-  drawBackground();
+  ctx.fillStyle="#0b0f18";ctx.fillRect(0,0,W,H);
+  ctx.save();ctx.translate(0,-camY);
 
-  // platforms
-  const inscription = 'BREAKING CHAINS TOGETHER • CBS COIN • ';
+  // platforms as golden coins
   for(const p of platforms){
-    const sy = p.y - camY;
-    if(sy < -120 || sy > H+140) continue;
-    drawFlatCoin3D(p.x, sy, p.w, p.h, inscription);
+    ctx.fillStyle="gold";
+    ctx.beginPath();ctx.ellipse(p.x,p.y,p.w/2,10,0,0,Math.PI*2);ctx.fill();
+    ctx.strokeStyle="#fff";ctx.stroke();
   }
 
-  // player
-  drawPlayer();
+  // player coin
+  ctx.fillStyle="gold";ctx.beginPath();ctx.arc(player.x,player.y,player.r,0,Math.PI*2);ctx.fill();
+  ctx.strokeStyle="#fff";ctx.lineWidth=3;ctx.stroke();
+  if(logo.complete){
+    ctx.save();ctx.beginPath();ctx.arc(player.x,player.y,player.r-3,0,Math.PI*2);ctx.clip();
+    ctx.drawImage(logo,player.x-player.r,player.y-player.r,player.r*2,player.r*2);
+    ctx.restore();
+  }
+
+  ctx.restore();
 
   requestAnimationFrame(loop);
 }
-
-/* ===== Utils ===== */
-function rand(a,b){ return a + Math.random()*(b-a); }
+requestAnimationFrame(loop);
 </script>
 </body>
 </html>
-
