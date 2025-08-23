@@ -1,531 +1,717 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>CBS 2048 – Neon</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg1:#0a0c10; --bg2:#0f141b;
-    --card:#0f151c; --card2:#0c1016;
-    --fg:#eafffb; --muted:#a8d6cd; --note:#7ee9dc;
-    --line:rgba(0,255,240,.18);
-    --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
-    --radius:18px;
-    --glow:#6fffee;
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0; font-family:'Orbitron',sans-serif; color:var(--fg);
-    background:
-      radial-gradient(900px 600px at 100% -10%, rgba(0,255,230,.10), transparent 60%),
-      radial-gradient(700px 500px at -10% 110%, rgba(0,170,255,.09), transparent 60%),
-      linear-gradient(135deg,var(--bg1),var(--bg2));
-    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
-  }
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>CBS 2048 – Neon</title>
 
-  /* Topbar */
-  .topbar{
-    position:sticky; top:0; z-index:20;
-    display:flex; align-items:center; justify-content:space-between;
-    padding:.8rem 1rem; backdrop-filter:blur(6px);
-    background:linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0));
-    border-bottom:1px solid rgba(0,255,240,.08);
-  }
-  .brand{display:flex; align-items:center; gap:.7rem}
-  .brand img{width:38px;height:38px;border-radius:10px;filter:drop-shadow(0 0 10px rgba(0,255,230,.35))}
-  .brand h1{margin:0; font-size:1.05rem; color:#bffef2; letter-spacing:.4px}
+  <!-- Content Security Policy (zoals snake.html) -->
+  <meta http-equiv="Content-Security-Policy"
+        content="
+          default-src 'self';
+          script-src 'self' 'unsafe-inline' https://unpkg.com https://esm.sh;
+          connect-src 'self' https://rpc.helius.xyz https://aiawteejixsgsunmefpi.supabase.co wss://aiawteejixsgsunmefpi.supabase.co https://*.supabase.co wss://*.supabase.co;
+          img-src 'self' data: https://cyan-persistent-stork-902.mypinata.cloud;
+          style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+          font-src https://fonts.gstatic.com;
+          object-src 'none';
+          base-uri 'none';
+          frame-ancestors 'self';
+          form-action 'self';
+          upgrade-insecure-requests;
+        ">
 
-  .btn{
-    display:inline-flex; align-items:center; justify-content:center;
-    padding:12px 18px; border-radius:10px; text-decoration:none; font-weight:900; font-size:.94rem;
-    color:#001010; background:linear-gradient(180deg, #5afff0, #2bffe4);
-    border:1px solid rgba(0,255,240,.7);
-    box-shadow:0 0 12px rgba(0,255,230,.55), 0 0 24px rgba(0,255,230,.25), inset 0 -8px 14px rgba(0,0,0,.14);
-    transition:transform .12s ease, box-shadow .12s ease;
-    cursor:pointer; user-select:none;
-  }
-  .btn:hover{ transform:translateY(-2px) scale(1.03) }
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 
-  .container{ max-width:1100px; margin:0 auto; padding:1.2rem 1rem 2.2rem }
-  .panels{ display:grid; gap:16px; grid-template-columns:repeat(12,1fr) }
+  <style>
+    :root{
+      --bg1:#0a0c10; --bg2:#0f141b;
+      --card:#0f151c; --card2:#0c1016;
+      --fg:#eafffb; --muted:#a8d6cd; --note:#7ee9dc;
+      --line:rgba(0,255,240,.18);
+      --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
+      --radius:18px;
+      --btnA:#5afff0; --btnB:#2bffe4;
+      --glow:#6fffee;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:'Orbitron',sans-serif; color:var(--fg);
+      background:
+        radial-gradient(900px 600px at 100% -10%, rgba(0,255,230,.10), transparent 60%),
+        radial-gradient(700px 500px at -10% 110%, rgba(0,170,255,.09), transparent 60%),
+        linear-gradient(135deg,var(--bg1),var(--bg2));
+      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+    }
 
-  .panel{
-    grid-column:span 12;
-    background:linear-gradient(180deg, var(--card), var(--card2));
-    border:1px solid var(--line);
-    border-radius:var(--radius);
-    padding:18px; box-shadow:var(--shadow);
-  }
+    /* Verberg UI tijdens het spelen (zoals snake) */
+    body.play-mode header,
+    body.play-mode #controlsPanel,
+    body.play-mode #leaderPanel { display:none; }
 
-  /* Game header */
-  .stats{ display:flex; flex-wrap:wrap; gap:10px; align-items:center; justify-content:space-between; }
-  .stat-box{
-    display:flex; gap:10px; flex-wrap:wrap; align-items:center;
-  }
-  .pill{
-    min-width:120px; padding:10px 14px; border-radius:12px;
-    background:linear-gradient(180deg,#0b1217,#0a1015);
-    border:1px solid rgba(0,255,240,.22);
-    box-shadow:inset 0 0 0 1px rgba(0,255,240,.05), 0 8px 18px rgba(0,255,230,.08);
-    text-align:center;
-  }
-  .pill b{ display:block; font-size:1.15rem; color:#bffef2 }
-  .pill small{ color:var(--muted) }
+    header.topbar{
+      position:sticky; top:0; z-index:20;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.8rem 1rem; backdrop-filter:blur(6px);
+      background:linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0));
+      border-bottom:1px solid rgba(0,255,240,.08);
+    }
+    .brand{display:flex; align-items:center; gap:.7rem}
+    .brand img{width:38px;height:38px;border-radius:10px;filter:drop-shadow(0 0 10px rgba(0,255,230,.35))}
+    .brand h1{margin:0; font-size:1.05rem; color:#bffef2; letter-spacing:.4px}
 
-  /* Board */
-  .game-wrap{
-    display:grid; grid-template-columns:1fr 1fr;
-    gap:16px; align-items:start;
-  }
-  @media (max-width:860px){ .game-wrap{ grid-template-columns:1fr } }
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      min-width:120px; padding:12px 18px; border-radius:10px;
+      text-decoration:none; font-weight:900; font-size:.94rem;
+      color:#001010; background:linear-gradient(180deg, var(--btnA), var(--btnB));
+      border:1px solid rgba(0,255,240,.7);
+      box-shadow:0 0 12px rgba(0,255,230,.55), 0 0 24px rgba(0,255,230,.25), inset 0 -8px 14px rgba(0,0,0,.14);
+      transition:transform .12s ease, box-shadow .12s ease;
+      cursor:pointer; user-select:none;
+    }
+    .btn:hover{ transform:translateY(-2px) scale(1.03) }
+    .btn[disabled]{opacity:.6; cursor:not-allowed}
 
-  .board-outer{
-    background:linear-gradient(180deg, #0b1217, #0a1015);
-    border:1px solid rgba(0,255,240,.2);
-    border-radius:16px; padding:12px;
-    box-shadow:inset 0 0 0 1px rgba(0,255,240,.05), 0 8px 18px rgba(0,255,230,.08);
-  }
-  .board{
-    position:relative;
-    width:min(92vw, 480px);
-    aspect-ratio:1/1;
-    margin:0 auto;
-    border-radius:12px;
-    background:#0a0f14;
-    box-shadow:inset 0 0 0 1px rgba(0,255,240,.06);
-    overflow:hidden;
-  }
-  .grid{
-    position:absolute; inset:0; display:grid; grid-template-columns:repeat(4,1fr); grid-template-rows:repeat(4,1fr);
-    gap:12px; padding:12px;
-  }
-  .cell{
-    border-radius:10px;
-    background:linear-gradient(180deg,#0e141a,#0b1217);
-    border:1px solid rgba(0,255,240,.10);
-  }
+    .container{ max-width:1100px; margin:0 auto; padding:1.2rem 1rem 2.2rem }
+    .panel{
+      background:linear-gradient(180deg, var(--card), var(--card2));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:18px; margin:16px auto;
+      box-shadow:var(--shadow);
+    }
 
-  /* Tiles (absolute for smooth moves) */
-  .tiles{
-    position:absolute; inset:0; padding:12px;
-  }
-  .tile{
-    position:absolute; width:calc((100% - 12px*3 - 24px)/4); /* (full - total gaps - padding*2)/4 */
-    height:calc((100% - 12px*3 - 24px)/4);
-    border-radius:12px; display:grid; place-items:center; text-align:center;
-    font-weight:900; letter-spacing:.3px;
-    color:#001012; border:1px solid rgba(0,255,240,.7);
-    box-shadow:0 10px 26px rgba(0,255,230,.18), inset 0 -10px 18px rgba(0,0,0,.18);
-    transform:translate(var(--x,0), var(--y,0));
-    transition:transform .12s ease;
-    will-change:transform;
-  }
-  .tile span{ display:block; font-size:clamp(.9rem, 3.2vw, 1.2rem) }
+    /* Controls */
+    .row{display:flex; gap:10px; flex-wrap:wrap; justify-content:center}
+    .muted{ color:var(--muted) }
 
-  /* New/merge animations */
-  .tile.tile--new{ animation: pop .15s ease }
-  .tile.tile--merge{ animation: fuse .25s ease }
-  @keyframes pop{
-    0%{ transform:scale(.7)}
-    100%{ transform:scale(1)}
-  }
-  @keyframes fuse{
-    0%{ box-shadow:0 0 0 rgba(0,255,240,0), 0 0 0 rgba(0,255,240,0) }
-    40%{ box-shadow:0 0 22px var(--glow), 0 0 60px rgba(0,255,230,.35) }
-    100%{ box-shadow:0 10px 26px rgba(0,255,230,.18), inset 0 -10px 18px rgba(0,0,0,.18) }
-  }
+    /* Game layout */
+    .game-wrap{ display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start }
+    @media (max-width:900px){ .game-wrap{ grid-template-columns:1fr } }
 
-  /* Right column: How-to + Local Top5 */
-  .side .panel h3{ margin:.2rem 0 .8rem; color:#bffef2 }
-  .side p{ color:var(--muted); line-height:1.6; margin:.35rem 0 }
-  .lb table{ width:100%; border-collapse:collapse }
-  .lb th,.lb td{ padding:.6rem .5rem; text-align:center; border-bottom:1px solid rgba(0,255,240,.12) }
-  .lb th{ color:#bffef2 }
+    /* Board */
+    .board-outer{
+      background:linear-gradient(180deg, #0b1217, #0a1015);
+      border:1px solid rgba(0,255,240,.2);
+      border-radius:16px; padding:12px;
+      box-shadow:inset 0 0 0 1px rgba(0,255,240,.05), 0 8px 18px rgba(0,255,230,.08);
+    }
+    .board{
+      position:relative;
+      width:min(92vw, 480px);
+      aspect-ratio:1/1;
+      margin:0 auto;
+      border-radius:12px;
+      background:#0a0f14;
+      box-shadow:inset 0 0 0 1px rgba(0,255,240,.06);
+      overflow:hidden;
+      touch-action:none;
+    }
+    .grid{
+      position:absolute; inset:0; display:grid; grid-template-columns:repeat(4,1fr); grid-template-rows:repeat(4,1fr);
+      gap:12px; padding:12px;
+    }
+    .cell{
+      border-radius:10px;
+      background:linear-gradient(180deg,#0e141a,#0b1217);
+      border:1px solid rgba(0,255,240,.10);
+    }
+    .tiles{ position:absolute; inset:0; padding:12px; }
+    .tile{
+      position:absolute; width:calc((100% - 12px*3 - 24px)/4);
+      height:calc((100% - 12px*3 - 24px)/4);
+      border-radius:12px; display:grid; place-items:center; text-align:center;
+      font-weight:900; letter-spacing:.3px;
+      color:#001012; border:1px solid rgba(0,255,240,.7);
+      box-shadow:0 10px 26px rgba(0,255,230,.18), inset 0 -10px 18px rgba(0,0,0,.18);
+      transform:translate(var(--x,0), var(--y,0));
+      transition:transform .12s ease;
+      will-change:transform;
+    }
+    .tile span{ display:block; font-size:clamp(.9rem, 3.2vw, 1.2rem) }
+    .tile.tile--new{ animation: pop .15s ease }
+    .tile.tile--merge{ animation: fuse .25s ease }
+    @keyframes pop{ 0%{ transform:scale(.7)} 100%{ transform:scale(1)} }
+    @keyframes fuse{
+      0%{ box-shadow:0 0 0 rgba(0,255,240,0), 0 0 0 rgba(0,255,240,0) }
+      40%{ box-shadow:0 0 22px var(--glow), 0 0 60px rgba(0,255,230,.35) }
+      100%{ box-shadow:0 10px 26px rgba(0,255,230,.18), inset 0 -10px 18px rgba(0,0,0,.18) }
+    }
 
-  footer{ margin:24px auto 40px; text-align:center; color:var(--muted) }
-  footer a{ color:#79ffee; text-decoration:none }
-  footer a:hover{ text-decoration:underline }
-</style>
+    /* Right column: stats + leaderboard */
+    .pill{
+      min-width:120px; padding:10px 14px; border-radius:12px;
+      background:linear-gradient(180deg,#0b1217,#0a1015);
+      border:1px solid rgba(0,255,240,.22);
+      box-shadow:inset 0 0 0 1px rgba(0,255,240,.05), 0 8px 18px rgba(0,255,230,.08);
+      text-align:center;
+    }
+    .pill b{ display:block; font-size:1.15rem; color:#bffef2 }
+    .pill small{ color:var(--muted) }
+    .side .panel h3{ margin:.2rem 0 .8rem; color:#bffef2 }
+    table{ width:100%; border-collapse:collapse }
+    th,td{ padding:.6rem .5rem; text-align:center; border-bottom:1px solid rgba(0,255,240,.12) }
+    th{ color:#bffef2 }
+
+    footer{ margin:24px auto 40px; text-align:center; color:var(--muted) }
+    footer a{ color:#79ffee; text-decoration:none }
+    footer a:hover{ text-decoration:underline }
+
+    /* Name overlay */
+    #nameOverlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50}
+    #nameCard{background:#111;border:2px solid rgba(0,255,240,.45);border-radius:12px;padding:16px 18px;box-shadow:0 0 18px #0ff6;width:min(92vw,420px)}
+    #nameInput{width:100%;padding:.75rem 1rem;border:2px solid rgba(0,255,240,.45);border-radius:.6rem;background:#000;color:#fff;font-family:inherit;font-size:1rem}
+    #error{color:#ff6b7a;font-size:.85rem;margin-top:.35rem;display:none}
+  </style>
 </head>
 <body>
-<header class="topbar">
-  <div class="brand">
-    <img src="logo.png" alt="CBS Logo">
-    <h1>CBS 2048</h1>
-  </div>
-  <div style="display:flex; gap:10px; align-items:center">
-    <button id="newBtn" class="btn">New Game</button>
-  </div>
-</header>
-
-<main class="container">
-  <div class="panel">
-    <div class="stats">
-      <div class="stat-box">
-        <div class="pill"><small>Score</small><b id="score">0</b></div>
-        <div class="pill"><small>Best</small><b id="best">0</b></div>
-        <div class="pill"><small>Time</small><b id="time">00:00</b></div>
-      </div>
-      <div class="stat-box">
-        <span style="color:var(--note);opacity:.9">Swipe or use arrow keys</span>
-      </div>
+  <header class="topbar">
+    <div class="brand">
+      <img src="logo.png" alt="CBS Logo">
+      <h1>CBS 2048</h1>
     </div>
+  </header>
+
+  <!-- Controls (zelfde flow als Snake) -->
+  <div id="controlsPanel" class="panel" style="max-width:820px">
+    <div class="row" style="justify-content:center;margin-bottom:.3rem">
+      <button id="connectBtn" class="btn">🔗 Connect Wallet</button>
+      <button id="payBtn" class="btn" disabled>💳 Pay 10 CBS</button>
+      <button id="startBtn" class="btn" disabled>▶️ Start</button>
+    </div>
+    <p class="muted" style="text-align:center;margin:.2rem 0 0 0">
+      Entry fee: <b>10 CBS</b> • Monthly prize for best score<br>
+      <b>Playable on mobile in the Phantom browser or on desktop.</b>
+    </p>
   </div>
 
-  <div class="panels game-wrap">
-    <!-- Board -->
-    <div class="panel">
-      <div class="board-outer">
-        <div id="board" class="board">
-          <div class="grid" aria-hidden="true">
-            <!-- 16 background cells -->
-            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
-            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
-            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
-            <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+  <!-- Game + side -->
+  <main class="container">
+    <div class="game-wrap">
+      <!-- Game panel -->
+      <div class="panel">
+        <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:space-between; align-items:center; margin-bottom:10px">
+          <div style="display:flex; gap:10px; flex-wrap:wrap">
+            <div class="pill"><small>Score</small><b id="score">0</b></div>
+            <div class="pill"><small>Best (local)</small><b id="best">0</b></div>
+            <div class="pill"><small>Time</small><b id="time">00:00</b></div>
           </div>
-          <div id="tiles" class="tiles"></div>
+          <button id="newBtn" class="btn">New Game</button>
+        </div>
+
+        <div class="board-outer">
+          <div id="board" class="board">
+            <div class="grid" aria-hidden="true">
+              <!-- 16 cells -->
+              <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+              <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+              <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+              <div class="cell"></div><div class="cell"></div><div class="cell"></div><div class="cell"></div>
+            </div>
+            <div id="tiles" class="tiles"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Side: how-to + leaderboard -->
+      <div class="side">
+        <div class="panel">
+          <h3>How to play</h3>
+          <p>Combine equal tiles to reach higher <b>CBS</b> values. Move with arrow keys or swipe on mobile. Two identical tiles fuse into one with a neon glow.</p>
+          <p>Tiles show values like <b>2 CBS</b>, <b>4 CBS</b>, … up to <b>2048 CBS</b> (and beyond).</p>
+        </div>
+
+        <div id="leaderPanel" class="panel">
+          <h3>🏆 Top 3</h3>
+          <p class="muted" style="margin-top:-.25rem">Only the three highest scores are shown.</p>
+          <table>
+            <thead><tr><th>Rank</th><th>Player</th><th>Score</th></tr></thead>
+            <tbody id="leaderboardBody"></tbody>
+          </table>
+          <p id="lbNote" class="muted" style="display:none;margin-top:.5rem">Showing local scores (cloud unavailable).</p>
+        </div>
+
+        <div class="panel" style="text-align:center">
+          <a href="index.html" class="btn">← Back to Home</a>
         </div>
       </div>
     </div>
+  </main>
 
-    <!-- Side info -->
-    <div class="side">
-      <div class="panel">
-        <h3>How to play</h3>
-        <p>Combine equal tiles to reach higher CBS values. Move with arrow keys or swipe on mobile. Two identical tiles fuse into one — enjoy the neon “fuse”!</p>
-        <p>Tiles show amounts like <b>2 CBS</b>, <b>4 CBS</b>, … up to <b>2048 CBS</b> (and beyond 😼).</p>
-      </div>
-
-      <div class="panel lb">
-        <h3>Local Top-5</h3>
-        <table>
-          <thead><tr><th>#</th><th>Score</th><th>Time</th><th>Date</th></tr></thead>
-          <tbody id="lbBody"><tr><td colspan="4" style="color:var(--muted)">No games yet</td></tr></tbody>
-        </table>
-        <p style="margin:.6rem 0 0; color:var(--muted); font-size:.9rem">Bewaren in je browser. Wil je cloud-leaderboard (Supabase) zoals bij Snake? Zeg het, dan koppel ik ’t direct.</p>
+  <!-- Name modal -->
+  <div id="nameOverlay">
+    <div id="nameCard">
+      <h3 style="margin:.2rem 0 .6rem;color:#7dffe9">Save your score</h3>
+      <p class="muted" style="margin:.1rem 0 .6rem">Type your name and press <b>Enter</b> to submit.</p>
+      <input id="nameInput" maxlength="30" placeholder="Your name or wallet…" autocomplete="off" />
+      <div id="error">Name is required.</div>
+      <div style="margin-top:.8rem;text-align:right">
+        <button id="saveBtn" class="btn">Save</button>
+        <button id="cancelBtn" class="btn" style="background:#333;color:#ddd;border-color:#444">Cancel</button>
       </div>
     </div>
   </div>
 
-  <footer>
-    <a href="index.html">← Back to Home</a>
-  </footer>
-</main>
+  <!-- Supabase SDK -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 
-<script>
-(function(){
-  const GRID = 4;
-  const tilesEl = document.getElementById('tiles');
-  const scoreEl = document.getElementById('score');
-  const bestEl  = document.getElementById('best');
-  const timeEl  = document.getElementById('time');
-  const newBtn  = document.getElementById('newBtn');
-  const lbBody  = document.getElementById('lbBody');
+  <!-- Game + Wallet + Leaderboard -->
+  <script type="module">
+    /******** CONFIG (exact zoals snake.html) ********/
+    const SUPABASE_URL = "https://aiawteejixsgsunmefpi.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpYXd0ZWVqaXhzZ3N1bm1lZnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NDExODIsImV4cCI6MjA3MTAxNzE4Mn0.aMbRUM0YebNMfZhSLb9PFdSHAZ-D5WpACPefCfjSLqI";
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const TABLE = "leaderboard";
+    const EDGE_FN_URL = "https://aiawteejixsgsunmefpi.supabase.co/functions/v1/quick-service";
 
-  let board = [...Array(GRID)].map(()=>Array(GRID).fill(null)); // holds tile ids or null
-  let tiles = new Map(); // id -> {id,value,row,col,el,merged:false}
-  let nextId = 1;
-  let moving = false;
-  let score = 0;
-  let best  = Number(localStorage.getItem('cbs2048_best')||0);
-  let startTime = null, timerInt = null;
+    // Solana / Phantom (zelfde als snake)
+    import { Connection, PublicKey, Transaction } from "https://esm.sh/@solana/web3.js@1.95.8";
+    import { getAssociatedTokenAddress, createTransferInstruction, TOKEN_PROGRAM_ID } from "https://esm.sh/@solana/spl-token@0.4.7";
+    const RPC_URL = "https://rpc.helius.xyz/?api-key=453a64a5-31dd-4c21-9619-6f0c69c74ff9";
+    const connection = new Connection(RPC_URL, "confirmed");
+    const CBS_MINT = new PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
+    const TREASURY = new PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
+    const CBS_DECIMALS = 9;
+    const ENTRY_CBS = 10;
 
-  bestEl.textContent = best;
+    let walletPK = null;
+    let paidSig  = null;  // betaling voor de volgende ronde
+    let roundSig = null;  // huidige ronde (wordt ingediend bij score)
 
-  // Helpers
-  function rndEmptyCell(){
-    const empties = [];
-    for(let r=0;r<GRID;r++)for(let c=0;c<GRID;c++) if(!board[r][c]) empties.push([r,c]);
-    if(!empties.length) return null;
-    return empties[Math.floor(Math.random()*empties.length)];
-  }
-  function spawnTile(val){
-    const cell = rndEmptyCell(); if(!cell) return;
-    const [r,c] = cell;
-    const id = nextId++;
-    const el = document.createElement('div');
-    el.className = 'tile tile--new';
-    el.dataset.id = String(id);
-    el.innerHTML = `<span>${val} CBS</span>`;
-    styleTile(el, val);
-    tilesEl.appendChild(el);
-    const t = {id, value:val, row:r, col:c, el, merged:false};
-    tiles.set(id, t);
-    board[r][c] = id;
-    placeTile(t, true);
-    setTimeout(()=> el.classList.remove('tile--new'), 180);
-  }
-  function styleTile(el, v){
-    const s = el.style;
-    const palette = getColors(v);
-    s.background = palette.bg;
-    s.color = palette.text;
-    s.borderColor = palette.border;
-    el.style.setProperty('--glow', palette.glow);
-  }
-  function getColors(v){
-    // simple hue mapping by log2(v)
-    const n = Math.max(1, Math.log2(v));
-    const hue = (180 + n*18) % 360;
-    const bg = `linear-gradient(180deg, hsl(${hue} 100% 60% / .95), hsl(${hue} 100% 50% / .95))`;
-    const border = `hsl(${hue} 100% 70%)`;
-    const text = (v >= 8) ? '#001012' : '#001012';
-    const glow = `hsl(${hue} 100% 70%)`;
-    return { bg, border, text, glow };
-  }
-  function placeTile(t, instant=false){
-    const gap = 12, pad = 12;
-    const cellSizeCalc = (container)=>{
-      const size = container.getBoundingClientRect();
-      const w = size.width;
+    /******** DOM ********/
+    const $ = (id)=>document.getElementById(id);
+    const connectBtn = $("connectBtn");
+    const payBtn     = $("payBtn");
+    const startBtn   = $("startBtn");
+    const overlay    = $("nameOverlay");
+    const nameInput  = $("nameInput");
+    const err        = $("error");
+    const saveBtn    = $("saveBtn");
+    const cancelBtn  = $("cancelBtn");
+    const tbody      = $("leaderboardBody");
+    const lbNote     = $("lbNote");
+
+    // Game DOM
+    const tilesEl = $("tiles");
+    const scoreEl = $("score");
+    const bestEl  = $("best");
+    const timeEl  = $("time");
+    const newBtn  = $("newBtn");
+    const boardEl = $("board");
+
+    payBtn.disabled = true;
+    startBtn.disabled = true;
+
+    /******** Helpers (wallet) ********/
+    function provider(){ return window.solana?.isPhantom ? window.solana : null; }
+    function showError(prefix, err){
+      const msg = (err && err.message) ? err.message : String(err || 'Unknown error');
+      console.error(prefix, err);
+      alert(`${prefix}\n\n${msg}`);
+    }
+    async function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
+
+    async function waitForConfirmation(signature, latest, timeoutMs=120000){
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs){
+        const st = await connection.getSignatureStatuses([signature], { searchTransactionHistory: true }).then(r => r.value[0]).catch(()=>null);
+        if (st){
+          if (st.err) throw new Error("On-chain transaction error");
+          const conf = st.confirmationStatus || (st.confirmations != null ? (st.confirmations>0 ? 'confirmed' : null) : null);
+          if (conf === 'confirmed' || 'finalized') return st;
+        }
+        if (latest?.lastValidBlockHeight){
+          const h = await connection.getBlockHeight('finalized').catch(()=>null);
+          if (h && h > latest.lastValidBlockHeight) throw new Error("Blockhash expired before confirmation");
+        }
+        await wait(1500);
+      }
+      const res = await connection.confirmTransaction({ signature, blockhash: latest.blockhash, lastValidBlockHeight: latest.lastValidBlockHeight }, 'finalized').catch(()=>null);
+      if (res && !res.value.err) return res.value;
+      throw new Error(`Confirmation timed out. You can check on Solscan:\nhttps://solscan.io/tx/${signature}`);
+    }
+
+    /******** Wallet buttons ********/
+    connectBtn.addEventListener("click", async ()=>{
+      try{
+        const p = provider(); if(!p) return alert("Phantom Wallet not found.");
+        const { publicKey } = await p.connect(); walletPK = publicKey;
+        connectBtn.textContent = `✅ ${publicKey.toString().slice(0,4)}…${publicKey.toString().slice(-4)}`;
+        payBtn.disabled = false;
+      }catch(e){ showError("Wallet connect failed.", e); }
+    });
+
+    payBtn.addEventListener("click", async ()=>{
+      try{
+        const p = provider(); if(!p) return alert("Phantom Wallet not found.");
+        if(!walletPK){ const { publicKey } = await p.connect(); walletPK=publicKey; connectBtn.textContent=`✅ ${publicKey.toString().slice(0,4)}…${publicKey.toString().slice(-4)}`; }
+        payBtn.disabled = true; payBtn.textContent = "Processing…";
+
+        const fromATA = await getAssociatedTokenAddress(CBS_MINT, walletPK);
+        const toATA   = await getAssociatedTokenAddress(CBS_MINT, TREASURY);
+
+        const balInfo = await connection.getTokenAccountBalance(fromATA).catch(()=>null);
+        const needRaw = ENTRY_CBS * (10 ** CBS_DECIMALS);
+        if(!balInfo || Number(balInfo.value.amount) < needRaw){
+          payBtn.disabled=false; payBtn.textContent="💳 Pay 10 CBS";
+          return alert("Not enough CBS to play (need 10 CBS).");
+        }
+        const toInfo = await connection.getAccountInfo(toATA);
+        if(!toInfo){
+          payBtn.disabled=false; payBtn.textContent="💳 Pay 10 CBS";
+          return alert("Treasury CBS account does not exist yet. Ask admin to create the ATA once.");
+        }
+
+        const ix = createTransferInstruction(fromATA, toATA, walletPK, needRaw, [], TOKEN_PROGRAM_ID);
+        const latest = await connection.getLatestBlockhash('confirmed');
+        const tx = new Transaction({ feePayer: walletPK, recentBlockhash: latest.blockhash });
+        tx.add(ix);
+        const { signature } = await p.signAndSendTransaction(tx);
+        payBtn.textContent = "Waiting confirmation…";
+        await waitForConfirmation(signature, latest);
+
+        paidSig = signature;
+        startBtn.disabled = false;
+        alert("Payment received. Press Start to begin!");
+      }catch(e){
+        showError("Payment failed.", e);
+      }finally{
+        payBtn.disabled=false; payBtn.textContent="💳 Pay 10 CBS";
+      }
+    });
+
+    startBtn.addEventListener("click", ()=>{
+      if(!walletPK) return alert("Connect your wallet first.");
+      if(!paidSig)  return alert("Please pay 10 CBS first.");
+      roundSig = paidSig; paidSig = null;
+      startBtn.disabled = true;
+      document.body.classList.add('play-mode');
+      reset(); // start game
+      scrollToGame();
+    });
+
+    function scrollToGame(){
+      const y = boardEl.getBoundingClientRect().top + window.scrollY - 8;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    }
+
+    /******** Leaderboard (Top-3) ********/
+    function escapeHtml(s){ return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+    async function renderTop3(){
+      const tbody = document.getElementById("leaderboardBody");
+      const lbNote = document.getElementById("lbNote");
+      tbody.innerHTML = "<tr><td colspan='3' class='muted'>Loading…</td></tr>"; lbNote.style.display="none";
+      try{
+        const { data, error } = await sb.from(TABLE).select("*").order("score",{ascending:false}).order("created_at",{ascending:true}).limit(3);
+        if(error) throw error;
+        tbody.innerHTML="";
+        (data||[]).forEach((r,i)=>{
+          const tr=document.createElement("tr");
+          tr.innerHTML = `<td>${i+1}</td><td>${escapeHtml((r.name||"").toString().slice(0,30)||"Anonymous")}</td><td>${Number(r.score)||0}</td>`;
+          tbody.appendChild(tr);
+        });
+      }catch(e){
+        console.warn("Cloud leaderboard failed:", e);
+        lbNote.style.display="block"; tbody.innerHTML = "<tr><td colspan='3' class='muted'>No data</td></tr>";
+      }
+    }
+
+    /******** Name / Save ********/
+    function openNameModal(sc){
+      overlay.style.display="flex";
+      nameInput.value=""; err.style.display="none"; saveBtn.disabled = false; saveBtn.textContent = "Save"; nameInput.focus();
+      overlay.dataset.score = String(sc ?? 0);
+    }
+    cancelBtn.addEventListener("click", ()=>{
+      overlay.style.display="none";
+      roundSig = null; // ronde niet ingediend
+      startBtn.disabled = true;
+      document.body.classList.remove('play-mode');
+    });
+
+    async function submitName(){
+      const name = (nameInput.value||"").trim();
+      if(!name){ err.textContent="Name is required."; err.style.display="block"; return; }
+      if(!roundSig || typeof roundSig !== 'string' || roundSig.length < 43){
+        err.textContent = "Payment proof missing or expired. Please pay 10 CBS again.";
+        err.style.display = "block";
+        return;
+      }
+      const sc = Number(overlay.dataset.score||0);
+
+      saveBtn.disabled = true; saveBtn.textContent = "Saving…";
+      try{
+        const resp = await fetch(EDGE_FN_URL, {
+          method:"POST",
+          headers:{ "content-type":"application/json", "authorization":"Bearer " + SUPABASE_ANON_KEY },
+          body: JSON.stringify({ name, score: sc, tx_sig: roundSig })
+        });
+        let out = null; try { out = await resp.json(); } catch {}
+        if(!resp.ok || !out || out.ok !== true){
+          const serverMsg = out && (out.error || out.message) ? ` (server: ${out.error || out.message})` : "";
+          throw new Error("submit-score failed" + serverMsg);
+        }
+        overlay.style.display="none";
+      }catch(e){
+        err.textContent = "Saving failed. Check your payment and try again.";
+        err.style.display = "block";
+        showError("Saving failed (payment proof required).", e);
+        return;
+      }finally{
+        roundSig = null;
+        saveBtn.disabled = false; saveBtn.textContent = "Save";
+        startBtn.disabled = true;
+        document.body.classList.remove('play-mode');
+        renderTop3();
+      }
+    }
+    nameInput.addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ e.preventDefault(); submitName(); } });
+    saveBtn.addEventListener("click", submitName);
+
+    /******** 2048 GAME ********/
+    const GRID = 4;
+    let board = [...Array(GRID)].map(()=>Array(GRID).fill(null)); // tile ids
+    let tiles = new Map(); // id -> {id,value,row,col,el,_merged}
+    let nextId = 1, moving = false;
+    let score = 0;
+    let best  = Number(localStorage.getItem('cbs2048_best')||0);
+    bestEl.textContent = best;
+
+    let startTime = null, timerInt = null;
+
+    function startTimer(){
+      startTime = Date.now();
+      clearInterval(timerInt);
+      timerInt = setInterval(()=>{
+        const s = Math.floor((Date.now()-startTime)/1000);
+        timeEl.textContent = toMMSS(s);
+      }, 500);
+    }
+    function stopTimer(){ clearInterval(timerInt); }
+    function toMMSS(total){
+      const m = Math.floor(total/60).toString().padStart(2,'0');
+      const s = (total%60).toString().padStart(2,'0');
+      return `${m}:${s}`;
+    }
+
+    function rndEmptyCell(){
+      const empties = [];
+      for(let r=0;r<GRID;r++)for(let c=0;c<GRID;c++) if(!board[r][c]) empties.push([r,c]);
+      if(!empties.length) return null;
+      return empties[Math.floor(Math.random()*empties.length)];
+    }
+    function spawnTile(val){
+      const cell = rndEmptyCell(); if(!cell) return;
+      const [r,c] = cell;
+      const id = nextId++;
+      const el = document.createElement('div');
+      el.className = 'tile tile--new';
+      el.dataset.id = String(id);
+      el.innerHTML = `<span>${val} CBS</span>`;
+      styleTile(el, val);
+      tilesEl.appendChild(el);
+      const t = {id, value:val, row:r, col:c, el, _merged:false};
+      tiles.set(id, t);
+      board[r][c] = id;
+      placeTile(t, true);
+      setTimeout(()=> el.classList.remove('tile--new'), 180);
+    }
+    function getColors(v){
+      const n = Math.max(1, Math.log2(v));
+      const hue = (180 + n*18) % 360;
+      const bg = `linear-gradient(180deg, hsl(${hue} 100% 60% / .95), hsl(${hue} 100% 50% / .95))`;
+      const border = `hsl(${hue} 100% 70%)`;
+      const text = '#001012';
+      const glow = `hsl(${hue} 100% 70%)`;
+      return { bg, border, text, glow };
+    }
+    function styleTile(el, v){
+      const palette = getColors(v);
+      el.style.background = palette.bg;
+      el.style.color = palette.text;
+      el.style.borderColor = palette.border;
+      el.style.setProperty('--glow', palette.glow);
+    }
+    function placeTile(t, instant=false){
+      const gap = 12, pad = 12;
+      const rect = boardEl.getBoundingClientRect();
+      const w = rect.width;
       const cell = (w - pad*2 - gap*3) / GRID;
-      return {cell, gap, pad};
+      const x = pad + t.col * (cell + gap);
+      const y = pad + t.row * (cell + gap);
+      if(instant){
+        t.el.style.transition = 'none';
+        t.el.style.setProperty('--x', x+'px');
+        t.el.style.setProperty('--y', y+'px');
+        void t.el.offsetWidth; t.el.style.transition = '';
+      }else{
+        t.el.style.setProperty('--x', x+'px');
+        t.el.style.setProperty('--y', y+'px');
+      }
+      t.el.querySelector('span').textContent = `${t.value} CBS`;
+      styleTile(t.el, t.value);
+    }
+    window.addEventListener('resize', ()=> tiles.forEach(t=> placeTile(t, true)));
+
+    const DIRS = {
+      LEFT:  { axis:'row', iter:range(0,GRID),  order:range(0,GRID) },
+      RIGHT: { axis:'row', iter:range(0,GRID),  order:range(GRID-1,-1,-1) },
+      UP:    { axis:'col', iter:range(0,GRID),  order:range(0,GRID) },
+      DOWN:  { axis:'col', iter:range(0,GRID),  order:range(GRID-1,-1,-1) }
     };
-    const b = document.getElementById('board');
-    const {cell, gap:gg, pad:pp} = cellSizeCalc(b);
-    const x = pp + t.col * (cell + gg);
-    const y = pp + t.row * (cell + gg);
-    if(instant){
-      t.el.style.transition = 'none';
-      t.el.style.setProperty('--x', x+'px');
-      t.el.style.setProperty('--y', y+'px');
-      // force reflow
-      void t.el.offsetWidth;
-      t.el.style.transition = '';
-    }else{
-      t.el.style.setProperty('--x', x+'px');
-      t.el.style.setProperty('--y', y+'px');
-    }
-    t.el.querySelector('span').textContent = `${t.value} CBS`;
-    styleTile(t.el, t.value);
-  }
-  window.addEventListener('resize', ()=>{
-    tiles.forEach(t=> placeTile(t, true));
-  });
+    function range(a,b,step=1){ const arr=[]; for(let i=a; (step>0? i<b : i>=b); i+=step) arr.push(i); return arr; }
 
-  function startTimer(){
-    startTime = Date.now();
-    clearInterval(timerInt);
-    timerInt = setInterval(()=>{
-      const s = Math.floor((Date.now()-startTime)/1000);
-      timeEl.textContent = toMMSS(s);
-    }, 500);
-  }
-  function stopTimer(){ clearInterval(timerInt); }
-  function toMMSS(total){
-    const m = Math.floor(total/60).toString().padStart(2,'0');
-    const s = (total%60).toString().padStart(2,'0');
-    return `${m}:${s}`;
-  }
+    async function move(dirKey){
+      if(moving) return;
+      const dir = DIRS[dirKey]; if(!dir) return;
+      if(gameOver()) return;
 
-  // Moves
-  const DIRS = {
-    LEFT:  { axis:'row', iter:rng(0,GRID),  order:rng(0,GRID) },
-    RIGHT: { axis:'row', iter:rng(0,GRID),  order:rng(GRID-1,-1,-1) },
-    UP:    { axis:'col', iter:rng(0,GRID),  order:rng(0,GRID) },
-    DOWN:  { axis:'col', iter:rng(0,GRID),  order:rng(GRID-1,-1,-1) }
-  };
-  function rng(a,b,step=1){ const arr=[]; for(let i=a; (step>0? i<b : i>=b); i+=step) arr.push(i); return arr; }
+      moving = true;
+      let movedAny = false;
+      const mergedIds = new Set();
 
-  async function move(dirKey){
-    if(moving) return;
-    const dir = DIRS[dirKey]; if(!dir) return;
-    if(gameOver() || win()) return;
-
-    moving = true;
-    let movedAny = false;
-    const mergedIds = new Set();
-
-    // For each line (row/col)
-    for(const fixed of dir.iter){
-      const line = [];
-      for(const i of dir.order){
-        const r = dir.axis==='row' ? fixed : i;
-        const c = dir.axis==='row' ? i     : fixed;
-        const id = board[r][c];
-        if(id){ line.push(tiles.get(id)); }
-      }
-
-      // compact + merge
-      const result = [];
-      for(let i=0;i<line.length;i++){
-        const cur = line[i];
-        if(result.length>0){
-          const last = result[result.length-1];
-          if(!last._merged && last.value===cur.value){
-            // merge into last
-            last.value *= 2;
-            last._merged = true;
-            mergedIds.add(cur.id);
-            score += last.value;
-            movedAny = true;
-            continue; // drop cur (it merges)
+      for(const fixed of dir.iter){
+        const line = [];
+        for(const i of dir.order){
+          const r = dir.axis==='row' ? fixed : i;
+          const c = dir.axis==='row' ? i     : fixed;
+          const id = board[r][c];
+          if(id){ line.push(tiles.get(id)); }
+        }
+        const result = [];
+        for(let i=0;i<line.length;i++){
+          const cur = line[i];
+          if(result.length>0){
+            const last = result[result.length-1];
+            if(!last._merged && last.value===cur.value){
+              last.value *= 2;
+              last._merged = true;
+              mergedIds.add(cur.id);
+              score += last.value;
+              movedAny = true;
+              continue;
+            }
           }
+          result.push(cur);
         }
-        result.push(cur);
-      }
-
-      // write back positions
-      // target indices along the moving axis = 0..result.length-1
-      let idx = 0;
-      for(const t of result){
-        const targetR = dir.axis==='row' ? fixed : dir.order[idx];
-        const targetC = dir.axis==='row' ? dir.order[idx] : fixed;
-        if(t.row!==targetR || t.col!==targetC){ movedAny = true; }
-        t.row = targetR; t.col = targetC;
-        idx++;
-      }
-
-      // clear the line in board first
-      for(const i of [0,1,2,3]){
-        const r = dir.axis==='row' ? fixed : i;
-        const c = dir.axis==='row' ? i     : fixed;
-        board[r][c] = null;
-      }
-      // place survivors
-      for(const t of result){
-        board[t.row][t.col] = t.id;
-      }
-    }
-
-    // animate to new positions
-    tiles.forEach(t=>{
-      placeTile(t, false);
-    });
-
-    // after transition, remove merged tiles
-    await wait(130);
-    if(mergedIds.size){
-      mergedIds.forEach(id=>{
-        const t = tiles.get(id);
-        if(!t) return;
-        t.el.remove();
-        tiles.delete(id);
-      });
-      // Add fuse class to survivors
-      tiles.forEach(t=>{
-        if(t._merged){
-          t.el.classList.add('tile--merge');
-          t.el.addEventListener('animationend', ()=> t.el.classList.remove('tile--merge'), {once:true});
-          delete t._merged;
+        // clear line
+        for(const i of [0,1,2,3]){
+          const r = dir.axis==='row' ? fixed : i;
+          const c = dir.axis==='row' ? i     : fixed;
+          board[r][c] = null;
         }
-      });
+        // place back
+        let idx = 0;
+        for(const t of result){
+          const targetR = dir.axis==='row' ? fixed : dir.order[idx];
+          const targetC = dir.axis==='row' ? dir.order[idx] : fixed;
+          if(t.row!==targetR || t.col!==targetC){ movedAny = true; }
+          t.row = targetR; t.col = targetC;
+          board[t.row][t.col] = t.id;
+          idx++;
+        }
+      }
+
+      tiles.forEach(t=> placeTile(t, false));
+      await wait(130);
+
+      if(mergedIds.size){
+        mergedIds.forEach(id=>{
+          const t = tiles.get(id); if(!t) return;
+          t.el.remove(); tiles.delete(id);
+        });
+        tiles.forEach(t=>{
+          if(t._merged){
+            t.el.classList.add('tile--merge');
+            t.el.addEventListener('animationend', ()=> t.el.classList.remove('tile--merge'), {once:true});
+            delete t._merged;
+          }
+        });
+      }
+
+      if(movedAny){
+        scoreEl.textContent = score;
+        const best = Number(localStorage.getItem('cbs2048_best')||0);
+        if(score>best){ localStorage.setItem('cbs2048_best', String(score)); bestEl.textContent = score; }
+        spawnTile(Math.random()<0.9?2:4);
+      }
+
+      moving = false;
+      if(gameOver()){
+        stopTimer();
+        // Naam vragen + opslaan (vereist roundSig)
+        openNameModal(score);
+      }
     }
 
-    if(movedAny){
-      scoreEl.textContent = score;
-      if(score>best){ best=score; bestEl.textContent = best; localStorage.setItem('cbs2048_best', String(best)); }
-      // spawn a new tile (2 with 90%, 4 with 10%)
-      spawnTile(Math.random()<0.9?2:4);
+    function gameOver(){
+      for(let r=0;r<GRID;r++)for(let c=0;c<GRID;c++) if(!board[r][c]) return false;
+      for(let r=0;r<GRID;r++)for(let c=0;c<GRID;c++){
+        const id = board[r][c]; const val = tiles.get(id).value;
+        if(r+1<GRID){ const id2=board[r+1][c]; if(id2 && tiles.get(id2).value===val) return false; }
+        if(c+1<GRID){ const id3=board[r][c+1]; if(id3 && tiles.get(id3).value===val) return false; }
+      }
+      return true;
     }
 
-    moving = false;
-    if(gameOver()){
-      stopTimer();
-      saveLocalLB(score, elapsedSec());
-      renderLB();
-      setTimeout(()=> alert('Game Over!'), 10);
+    function reset(){
+      // reset board
+      tiles.forEach(t=> t.el.remove());
+      tiles.clear();
+      board = [...Array(GRID)].map(()=>Array(GRID).fill(null));
+      score=0; scoreEl.textContent='0';
+      timeEl.textContent='00:00';
+      // start
+      spawnTile(2);
+      spawnTile(Math.random()<0.5?2:4);
+      startTimer();
+      // focus canvas area
     }
-  }
 
-  function elapsedSec(){ return Math.floor((Date.now()-startTime)/1000); }
-
-  function gameOver(){
-    // any empty cell?
-    for(let r=0;r<GRID;r++)for(let c=0;c<GRID;c++) if(!board[r][c]) return false;
-    // any merge possible?
-    for(let r=0;r<GRID;r++)for(let c=0;c<GRID;c++){
-      const id = board[r][c]; const val = tiles.get(id).value;
-      if(r+1<GRID){ const id2=board[r+1][c]; if(id2 && tiles.get(id2).value===val) return false; }
-      if(c+1<GRID){ const id3=board[r][c+1]; if(id3 && tiles.get(id3).value===val) return false; }
-    }
-    return true;
-  }
-  function win(){
-    for(const t of tiles.values()) if(t.value>=2048) return false; // continue gameplay; change to true to auto-stop at 2048
-    return false;
-  }
-
-  function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
-
-  function reset(){
-    // clear data
-    tiles.forEach(t=> t.el.remove());
-    tiles.clear();
-    board = [...Array(GRID)].map(()=>Array(GRID).fill(null));
-    score=0; scoreEl.textContent='0';
-    timeEl.textContent='00:00';
-    startTimer();
-    // spawn two tiles
-    spawnTile(2);
-    spawnTile(Math.random()<0.5?2:4);
-  }
-
-  // Controls: keys
-  window.addEventListener('keydown', (e)=>{
-    if(e.defaultPrevented) return;
-    const k = e.key;
-    if(k==='ArrowLeft'){ e.preventDefault(); move('LEFT'); }
-    else if(k==='ArrowRight'){ e.preventDefault(); move('RIGHT'); }
-    else if(k==='ArrowUp'){ e.preventDefault(); move('UP'); }
-    else if(k==='ArrowDown'){ e.preventDefault(); move('DOWN'); }
-  });
-
-  // Controls: swipe
-  let touchStartX=0,touchStartY=0;
-  const SWIPE_MIN = 24;
-  document.getElementById('board').addEventListener('touchstart', (e)=>{
-    const t = e.changedTouches[0];
-    touchStartX = t.clientX; touchStartY = t.clientY;
-  }, {passive:true});
-  document.getElementById('board').addEventListener('touchend', (e)=>{
-    const t = e.changedTouches[0];
-    const dx = t.clientX - touchStartX;
-    const dy = t.clientY - touchStartY;
-    if(Math.max(Math.abs(dx),Math.abs(dy)) < SWIPE_MIN) return;
-    if(Math.abs(dx) > Math.abs(dy)){
-      move(dx>0 ? 'RIGHT' : 'LEFT');
-    } else {
-      move(dy>0 ? 'DOWN'  : 'UP');
-    }
-  }, {passive:true});
-
-  newBtn.addEventListener('click', reset);
-
-  // Local Top-5 (score,time,date)
-  function loadLB(){
-    try{ return JSON.parse(localStorage.getItem('cbs2048_lb')||'[]'); }catch{ return []; }
-  }
-  function saveLB(score, secs){
-    const list = loadLB();
-    list.push({score, secs, at: Date.now()});
-    list.sort((a,b)=> b.score - a.score || a.secs - b.secs);
-    const top = list.slice(0,5);
-    localStorage.setItem('cbs2048_lb', JSON.stringify(top));
-    if(score>best){ best=score; localStorage.setItem('cbs2048_best', String(best)); bestEl.textContent = best; }
-  }
-  function renderLB(){
-    const list = loadLB();
-    if(!list.length){ lbBody.innerHTML = `<tr><td colspan="4" style="color:var(--muted)">No games yet</td></tr>`; return; }
-    lbBody.innerHTML = '';
-    list.forEach((row,i)=>{
-      const d = new Date(row.at);
-      const date = d.toLocaleDateString();
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td>${i+1}</td><td>${row.score}</td><td>${toMMSS(row.secs)}</td><td>${date}</td>`;
-      lbBody.appendChild(tr);
+    // Controls
+    window.addEventListener('keydown', (e)=>{
+      if(e.defaultPrevented) return;
+      const k = e.key;
+      if(k==='ArrowLeft'){ e.preventDefault(); move('LEFT'); }
+      else if(k==='ArrowRight'){ e.preventDefault(); move('RIGHT'); }
+      else if(k==='ArrowUp'){ e.preventDefault(); move('UP'); }
+      else if(k==='ArrowDown'){ e.preventDefault(); move('DOWN'); }
     });
-  }
+    // Swipe
+    let sx=0,sy=0; const SWIPE_MIN=24;
+    boardEl.addEventListener('touchstart', e=>{ const t=e.changedTouches[0]; sx=t.clientX; sy=t.clientY; }, {passive:true});
+    boardEl.addEventListener('touchend', e=>{
+      const t=e.changedTouches[0]; const dx=t.clientX-sx; const dy=t.clientY-sy;
+      if(Math.max(Math.abs(dx),Math.abs(dy))<SWIPE_MIN) return;
+      if(Math.abs(dx)>Math.abs(dy)) move(dx>0?'RIGHT':'LEFT'); else move(dy>0?'DOWN':'UP');
+    }, {passive:true});
 
-  // Boot
-  renderLB();
-  reset();
+    newBtn.addEventListener('click', reset);
 
-})();
-</script>
+    /******** Boot ********/
+    renderTop3();
+  </script>
 </body>
+
+<!-- Naam-overlay + submit logic buiten module zodat DOM refs bestaan -->
+<script>
+  // Deze blok gebruikt dezelfde globale variabelen die in de module zijn gedeclareerd via closure.
+  // We pakken de nodige elementen opnieuw.
+  (function(){
+    const overlay   = document.getElementById('nameOverlay');
+    const nameInput = document.getElementById('nameInput');
+    const err       = document.getElementById('error');
+    const saveBtn   = document.getElementById('saveBtn');
+    const cancelBtn = document.getElementById('cancelBtn');
+
+    // Exposeer helpers aan window (om bij module-variabelen te kunnen)
+    window.openNameModal = (sc)=>{
+      overlay.style.display="flex";
+      nameInput.value=""; err.style.display="none"; saveBtn.disabled = false; saveBtn.textContent = "Save"; nameInput.focus();
+      overlay.dataset.score = String(sc ?? 0);
+    };
+  })();
+</script>
 </html>
