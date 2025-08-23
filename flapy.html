@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+  <title>Flapy – CBS Coin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --bg1:#0a0d12; --bg2:#0f1a26; --glow:#00ffe0; --gold:#f6d36a; --gold-deep:#b78628; --gold-hi:#fff3b5;
+      --text:#e9fffb; --muted:#8fb0a9; --accent:#00ffe0;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:'Orbitron', system-ui, sans-serif; color:var(--text);
+      background: radial-gradient(1200px 800px at 70% 30%, #0f3042 0%, transparent 60%),
+                  radial-gradient(1000px 700px at 30% 70%, #08202b 0%, transparent 60%),
+                  linear-gradient(180deg, var(--bg1), var(--bg2));
+      overflow:hidden;
+    }
+    .frame{
+      position:fixed; inset:0; display:grid; grid-template-rows:auto 1fr auto;
+    }
+    header{
+      display:flex; align-items:center; justify-content:space-between; gap:.75rem;
+      padding:12px clamp(12px,2vw,28px);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.0));
+      border-bottom:1px solid rgba(255,255,255,.07);
+      backdrop-filter: blur(6px);
+    }
+    header .brand{
+      display:flex; align-items:center; gap:.75rem;
+    }
+    .logo{
+      width:36px; height:36px; border-radius:50%; position:relative;
+      background: radial-gradient(60% 60% at 35% 30%, var(--gold-hi), var(--gold) 40%, var(--gold-deep) 75%);
+      box-shadow: 0 0 14px rgba(246,211,106,.35), inset 0 1px 2px rgba(255,255,255,.6), inset 0 -2px 8px rgba(0,0,0,.35);
+    }
+    .logo:before{
+      content:"CBS"; font-weight:700; letter-spacing:1px; color:#5a3f0a;
+      position:absolute; inset:0; display:grid; place-items:center; font-size:.8rem; text-shadow:0 1px 0 #ffeaa6, 0 0 6px rgba(0,0,0,.25);
+    }
+    .hud{
+      display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    }
+    .pill{
+      border:1px solid rgba(255,255,255,.1);
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      padding:8px 12px; border-radius:999px; font-size:.9rem; color:var(--text);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.05);
+    }
+    .btn{
+      cursor:pointer; user-select:none; border:1px solid rgba(255,255,255,.12);
+      background:linear-gradient(180deg, rgba(0,255,224,.18), rgba(0,255,224,.08));
+      color:#001a18; font-weight:700; letter-spacing:.5px;
+      padding:10px 14px; border-radius:12px;
+      box-shadow: 0 8px 24px rgba(0,255,224,.15), inset 0 0 0 1px rgba(255,255,255,.08);
+      transition:.2s transform ease, .2s box-shadow ease, .2s filter ease;
+    }
+    .btn:hover{ transform:translateY(-1px); box-shadow:0 10px 28px rgba(0,255,224,.2), inset 0 0 0 1px rgba(255,255,255,.1)}
+    .btn:active{ transform:translateY(0)}
+    .canvas-wrap{ position:relative; }
+    canvas{ display:block; width:100vw; height:calc(100vh - 120px); }
+    .overlay{
+      position:absolute; inset:0; display:grid; place-items:center; pointer-events:none;
+    }
+    .card{
+      pointer-events:auto; text-align:center; padding:22px 20px; min-width:min(90vw,520px);
+      background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.05));
+      border:1px solid rgba(255,255,255,.16); border-radius:20px;
+      box-shadow:0 20px 40px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.06);
+      backdrop-filter: blur(10px);
+    }
+    h1{margin:.2rem 0 0; font-size:clamp(1.1rem, 1.4rem + .6vw, 2rem); letter-spacing:1px}
+    p{margin:.35rem 0; color:var(--muted)}
+    .score-big{font-size:clamp(2.2rem, 3.4vw, 3rem); color:var(--gold-hi); text-shadow:0 0 18px rgba(246,211,106,.25)}
+    footer{
+      padding:10px clamp(12px,2vw,28px); display:flex; align-items:center; justify-content:space-between;
+      border-top:1px solid rgba(255,255,255,.07); background:linear-gradient(180deg, rgba(255,255,255,.0), rgba(255,255,255,.04));
+    }
+    .hint{color:var(--muted); font-size:.9rem}
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.18); padding:2px 6px; border-radius:6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <header>
+      <div class="brand">
+        <div class="logo" aria-hidden="true"></div>
+        <div>
+          <div style="font-weight:700;line-height:1">CBS Flapy</div>
+          <div style="font-size:.8rem; color:var(--muted)">Vlieg met de CBS-munt door de goudstapels</div>
+        </div>
+      </div>
+      <div class="hud">
+        <div class="pill">Score: <span id="score">0</span></div>
+        <button id="playBtn" class="btn">Start</button>
+        <button id="muteBtn" class="btn" title="Geluid aan/uit">🔊</button>
+      </div>
+    </header>
+
+    <div class="canvas-wrap">
+      <canvas id="game"></canvas>
+
+      <!-- Start overlay -->
+      <div id="welcome" class="overlay">
+        <div class="card">
+          <h1>Ready to Flap?</h1>
+          <p>Druk op <span class="kbd">SPATIE</span> of tik om te stijgen.<br/>Ontwijk de <b>goudstapels</b> en pak punten.</p>
+          <p class="hint">Elke gepasseerde stapel = +1 punt</p>
+          <div style="margin-top:12px">
+            <button class="btn" id="startNow">Let's Go</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Game over overlay -->
+      <div id="gameover" class="overlay" style="display:none">
+        <div class="card">
+          <div class="score-big">Score: <span id="finalScore">0</span></div>
+          <p>Top! Deel je score of probeer opnieuw.</p>
+          <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:10px">
+            <button class="btn" id="retry">Opnieuw</button>
+            <button class="btn" id="share">Deel</button>
+          </div>
+          <p class="hint" style="margin-top:10px">Score wordt automatisch doorgestuurd als er een scoreboard aanwezig is.</p>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <div class="hint">Besturing: <span class="kbd">SPATIE</span> · klik/tap = stijgen</div>
+      <div class="hint">Tip: korte tikjes, niet vasthouden 😉</div>
+    </footer>
+  </div>
+
+  <script>
+    // ====== Luxe audio (optioneel, lichtgewicht beeps) ======
+    const SND = (() => {
+      const ctx = (window.AudioContext ? new AudioContext() : null);
+      let muted = false;
+      function beep(type='sine', time=0.06, freq=880, vol=0.03){
+        if(!ctx || muted) return;
+        const o = ctx.createOscillator();
+        const g = ctx.createGain();
+        o.type = type; o.frequency.value = freq;
+        g.gain.value = vol; o.connect(g); g.connect(ctx.destination);
+        o.start(); o.stop(ctx.currentTime + time);
+      }
+      return {
+        point(){ beep('triangle', .05, 1000, .03); },
+        flap(){ beep('sine', .04, 800, .035); },
+        hit(){ beep('sawtooth', .12, 160, .05); },
+        toggleMute(){ muted = !muted; return muted; }
+      }
+    })();
+
+    // ====== Canvas & helpers ======
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    let W, H, DPR= Math.min(2, window.devicePixelRatio || 1);
+    function resize(){
+      W = canvas.clientWidth; H = canvas.clientHeight;
+      canvas.width = W * DPR; canvas.height = H * DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
+    }
+    addEventListener('resize', resize, {passive:true});
+    resize();
+
+    // ====== Game state ======
+    const state = {
+      running:false, started:false, over:false,
+      t:0, dt:0, last:0,
+      score:0, high:0,
+      gravity: 1500, // px/s²
+      lift: 420,     // velocity boost on flap
+      speed: 220,    // world speed px/s
+      gapMin: 160,   // vertical flying corridor
+      gapMax: 200,
+      spawnEvery: 1400, // ms
+      obstacles: [],
+      coin: { x: 180, y: 300, vy: 0, r: 26 },
+    };
+
+    // ====== Visual: luxury background sheen ======
+    function drawBackdrop(){
+      // subtle vignette & vault arcs
+      const g = ctx.createRadialGradient(W*0.7, H*0.4, 80, W*0.7, H*0.4, Math.max(W,H));
+      g.addColorStop(0, 'rgba(0,255,224,0.06)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+
+      // gleam lines
+      ctx.globalAlpha = 0.08;
+      for(let i=0;i<6;i++){
+        const y = (i/6)*H;
+        const grd = ctx.createLinearGradient(0,y,W,y);
+        grd.addColorStop(0,'rgba(255,255,255,0)');
+        grd.addColorStop(0.5,'rgba(255,255,255,1)');
+        grd.addColorStop(1,'rgba(255,255,255,0)');
+        ctx.fillStyle = grd; ctx.fillRect(0, y, W, 2);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // ====== Player: CBS coin with wings (vector) ======
+    let flapPhase = 0;
+    function drawCBS(x, y, r, t){
+      // coin body (gold)
+      const grad = ctx.createRadialGradient(x - r*0.2, y - r*0.2, r*0.1, x, y, r*1.2);
+      grad.addColorStop(0, '#fff6c8'); // highlight
+      grad.addColorStop(0.45, '#f6d36a'); // gold
+      grad.addColorStop(1, '#b78628'); // deep
+      ctx.fillStyle = grad;
+      ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI*2); ctx.fill();
+
+      // rim
+      ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(255,255,255,0.45)';
+      ctx.beginPath(); ctx.arc(x, y, r-2, 0, Math.PI*2); ctx.stroke();
+
+      // embossed CBS letters
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.fillStyle = 'rgba(90,63,10,0.9)';
+      ctx.font = `bold ${r*0.9}px Orbitron, sans-serif`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.shadowColor='rgba(255,255,255,0.4)'; ctx.shadowBlur=6; ctx.shadowOffsetY=1;
+      ctx.fillText('CBS', 0, 0);
+      ctx.restore();
+
+      // wings (animated)
+      flapPhase += (state.running && !state.over ? 8 : 4) * (state.dt||0);
+      const amp = r*0.55;
+      const wy = Math.sin(flapPhase)* (r*0.22);
+
+      drawWing(x, y+wy, r, +1);
+      drawWing(x, y+wy, r, -1);
+    }
+    function drawWing(x,y,r,side){
+      ctx.save();
+      ctx.translate(x + side*(r*0.9), y);
+      ctx.scale(side,1);
+      // base
+      ctx.fillStyle = 'rgba(255,255,255,0.92)';
+      ctx.beginPath();
+      ctx.moveTo(0,0);
+      ctx.bezierCurveTo(r*0.5, -r*0.2, r*1.2, -r*0.3, r*1.5, 0);
+      ctx.bezierCurveTo(r*1.2,  r*0.3, r*0.5,  r*0.2, 0, 0);
+      ctx.closePath(); ctx.fill();
+      // feathers
+      ctx.globalAlpha = 0.75; ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(240,240,240,0.9)';
+      for(let i=0;i<3;i++){
+        ctx.beginPath();
+        ctx.moveTo(r*(0.3+i*0.3), -r*(0.08+i*0.02));
+        ctx.quadraticCurveTo(r*(0.7+i*0.25), 0, r*(0.3+i*0.3), r*(0.08+i*0.02));
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+      ctx.restore();
+    }
+
+    // ====== Obstacles: gold stacks (bottom) with gaps ======
+    function spawnObstacle(){
+      const gap = rand(state.gapMin, state.gapMax);
+      const base = rand(H*0.25, H*0.65);
+      state.obstacles.push({
+        x: W + 40,
+        w: 78,
+        h: base,     // stack height from bottom
+        gap: gap,    // gap above the stack
+        passed:false
+      });
+    }
+
+    function drawObstacle(o){
+      const topY = H - o.h; // top of bottom stack
+      // bottom stack - gleaming gold bars
+      drawGoldStack(o.x, topY, o.w, o.h);
+
+      // optional top cap (visual balance) -> faint ceiling glint
+      const gleam = ctx.createLinearGradient(o.x, 0, o.x, topY - o.gap);
+      gleam.addColorStop(0,'rgba(255,255,255,0.08)');
+      gleam.addColorStop(1,'rgba(255,255,255,0.00)');
+      ctx.fillStyle = gleam;
+      ctx.fillRect(o.x, 0, o.w, Math.max(0, topY - o.gap));
+    }
+
+    function drawGoldStack(x, y, w, h){
+      // body
+      const grd = ctx.createLinearGradient(x, y, x, y+h);
+      grd.addColorStop(0, '#fbeaa7');
+      grd.addColorStop(0.35, '#f4c74c');
+      grd.addColorStop(1, '#b2761b');
+      ctx.fillStyle = grd;
+      ctx.fillRect(x, y, w, h);
+
+      // bars lines
+      ctx.strokeStyle = 'rgba(0,0,0,0.22)'; ctx.lineWidth = 1;
+      const barH = 22; let yy = y + (h % barH);
+      for(; yy < y+h; yy += barH){
+        ctx.beginPath(); ctx.moveTo(x+4, yy); ctx.lineTo(x+w-4, yy); ctx.stroke();
+      }
+      // shine
+      const s = ctx.createLinearGradient(x, y, x+w, y);
+      s.addColorStop(0, 'rgba(255,255,255,0.25)');
+      s.addColorStop(0.2,'rgba(255,255,255,0.08)');
+      s.addColorStop(1, 'rgba(255,255,255,0.00)');
+      ctx.fillStyle = s;
+      ctx.fillRect(x, y, w, h);
+      // edge
+      ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+      ctx.strokeRect(x+0.5, y+0.5, w-1, h-1);
+    }
+
+    function rand(a,b){ return a + Math.random()*(b-a) }
+
+    // ====== Loop ======
+    let spawnTimer = 0, raf;
+    function start(){
+      state.running = true; state.started = true; state.over = false;
+      state.score = 0; state.obstacles = [];
+      state.coin.y = H*0.45; state.coin.vy = 0;
+      spawnTimer = 0; state.last = performance.now();
+      document.getElementById('welcome').style.display='none';
+      document.getElementById('gameover').style.display='none';
+      if(!raf) raf = requestAnimationFrame(step);
+    }
+    function gameOver(){
+      state.running = false; state.over = true;
+      SND.hit();
+      document.getElementById('finalScore').textContent = state.score;
+      document.getElementById('score').textContent = state.score;
+      document.getElementById('gameover').style.display='grid';
+
+      // ===== scoreboard integratie =====
+      try {
+        if (typeof window.submitScore === 'function') window.submitScore(state.score);
+        else if (typeof window.saveScore === 'function') window.saveScore(state.score);
+        // Event voor andere listeners
+        window.dispatchEvent(new CustomEvent('cbs-score', { detail: { score: state.score, game:'flapy' }}));
+      } catch(e){ console.warn('Scoreboard integratie mislukte:', e); }
+    }
+
+    function flap(){
+      if(state.over) return;
+      state.coin.vy = -state.lift;
+      SND.flap();
+    }
+
+    function step(now){
+      raf = requestAnimationFrame(step);
+      state.dt = Math.min(0.032, (now - state.last)/1000); state.last = now;
+      state.t += state.dt;
+      ctx.clearRect(0,0,W,H);
+      drawBackdrop();
+
+      // spawn
+      spawnTimer += state.dt*1000;
+      const spawnEvery = Math.max(900, state.spawnEvery - state.score*8); // beetje moeilijker over tijd
+      if(spawnTimer > spawnEvery){
+        spawnTimer = 0; spawnObstacle();
+      }
+
+      // move & draw obstacles
+      for(let i=state.obstacles.length-1;i>=0;i--){
+        const o = state.obstacles[i];
+        o.x -= state.speed * state.dt;
+        drawObstacle(o);
+        // scoring
+        if(!o.passed && (o.x + o.w) < state.coin.x){
+          o.passed = true; state.score++; document.getElementById('score').textContent = state.score; SND.point();
+        }
+        // cleanup
+        if(o.x + o.w < -10) state.obstacles.splice(i,1);
+      }
+
+      // physics
+      if(state.running){
+        state.coin.vy += state.gravity * state.dt;
+        state.coin.y += state.coin.vy * state.dt;
+      }
+      // draw player
+      drawCBS(state.coin.x, state.coin.y, state.coin.r, state.t);
+
+      // collisions
+      if(state.running){
+        // bounds
+        if(state.coin.y - state.coin.r <= 0 || state.coin.y + state.coin.r >= H){
+          return gameOver();
+        }
+        // with stacks
+        for(const o of state.obstacles){
+          const topY = H - o.h;
+          // gap is space from (topY - o.gap) to topY
+          const inX = (state.coin.x + state.coin.r) > o.x && (state.coin.x - state.coin.r) < (o.x + o.w);
+          const belowGap = (state.coin.y + state.coin.r) > topY; // hits bottom stack
+          const aboveGap = (state.coin.y - state.coin.r) < (topY - o.gap); // hits top area
+          if(inX && (belowGap || aboveGap)){
+            return gameOver();
+          }
+        }
+      }
+
+      // hint floating when not started
+      if(!state.started){
+        ctx.globalAlpha = 0.8;
+        ctx.fillStyle = 'rgba(255,255,255,0.8)';
+        ctx.font = '700 18px Orbitron, sans-serif';
+        ctx.textAlign='center';
+        ctx.fillText('Druk op SPATIE of tik om te starten', W/2, H*0.5);
+        ctx.globalAlpha = 1;
+      }
+    }
+
+    // ====== Controls ======
+    function onPress(){
+      if(!state.started) start(); else flap();
+    }
+    addEventListener('keydown', (e)=>{
+      if(e.code === 'Space'){ e.preventDefault(); onPress(); }
+    });
+    addEventListener('pointerdown', (e)=>{ onPress(); });
+
+    document.getElementById('startNow').onclick = start;
+    document.getElementById('retry').onclick = ()=>{ start(); };
+    document.getElementById('playBtn').onclick = ()=>{ state.started? flap() : start(); };
+    document.getElementById('share').onclick = async ()=>{
+      const text = `Ik scoorde ${state.score} in CBS Flapy! #CBS_Coin`;
+      try{
+        if(navigator.share){ await navigator.share({ text, url: location.href }); }
+        else { prompt('Kopieer je score:', text); }
+      }catch(e){}
+    };
+    document.getElementById('muteBtn').onclick = (e)=>{
+      const isMuted = SND.toggleMute();
+      e.currentTarget.textContent = isMuted ? '🔇' : '🔊';
+    };
+
+    // Auto start render loop (idle).
+    raf = requestAnimationFrame(step);
+
+    // Ensure canvas fits if header/footer changes height
+    const ro = new ResizeObserver(()=>resize());
+    ro.observe(document.body);
+  </script>
+</body>
+</html>
