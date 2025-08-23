@@ -2,177 +2,85 @@
 <html lang="nl">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
   <title>CBS Flapy</title>
   <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background: linear-gradient(180deg, #0a0d12, #1a1f29);
-    }
-    canvas {
-      display: block;
-    }
+    body{margin:0;overflow:hidden;background:linear-gradient(180deg,#0a0d12,#1a1f29)}
+    canvas{display:block}
+    .hud{position:fixed;top:10px;left:50%;transform:translateX(-50%);color:#fff;
+         font:700 28px Orbitron,sans-serif;text-shadow:0 2px 4px rgba(0,0,0,.6);z-index:2}
+    .btn{padding:10px 16px;border-radius:12px;background:rgba(255,255,255,.1);color:#fff;
+         border:1px solid rgba(255,255,255,.25);cursor:pointer}
+    .overlay{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.45);z-index:3}
+    .card{background:rgba(20,20,20,.85);padding:24px 28px;border-radius:16px;
+          text-align:center;color:#fff;max-width:400px}
   </style>
 </head>
 <body>
+  <div id="scoreHud" class="hud">0</div>
+  <div id="overlay" class="overlay">
+    <div class="card">
+      <h2>CBS Flapy</h2>
+      <p>Tik/klik of druk op <b>SPATIE</b> om te vliegen</p>
+      <button id="startBtn" class="btn">Start</button>
+    </div>
+  </div>
   <canvas id="game"></canvas>
+
   <script>
-    const canvas = document.getElementById("game");
-    const ctx = canvas.getContext("2d");
-    let W, H, DPR = window.devicePixelRatio || 1;
-    function resize(){
-      W = window.innerWidth;
-      H = window.innerHeight;
-      canvas.width = W * DPR;
-      canvas.height = H * DPR;
-      ctx.setTransform(DPR,0,0,DPR,0,0);
+    const canvas=document.getElementById('game'); const ctx=canvas.getContext('2d');
+    let W,H,DPR=Math.min(2,window.devicePixelRatio||1);
+    function resize(){W=innerWidth;H=innerHeight;canvas.width=W*DPR;canvas.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0)}
+    addEventListener('resize',resize);resize();
+
+    const logo=new Image();logo.src="logo.png";
+
+    let running=false,over=false,started=false,score=0;
+    let coin={x:160,y:H*0.55,vy:0,r:Math.max(28,Math.min(40,H*0.04))};
+    let physics={gravity:1000,lift:360,speed:180};
+    const pipes=[]; let last=0,spawnTimer=0,firstDelay=2000;
+
+    function onPress(){if(!started){start();return} if(over)return; coin.vy=-physics.lift}
+    addEventListener("keydown",e=>{if(e.code==="Space"){e.preventDefault();onPress()}})
+    addEventListener("pointerdown",onPress);
+    document.getElementById("startBtn").onclick=onPress;
+
+    function start(){started=true;running=true;over=false;score=0;coin.y=H*0.55;coin.vy=0;pipes.length=0;spawnTimer=-firstDelay;last=performance.now();document.getElementById("overlay").style.display="none";requestAnimationFrame(loop)}
+
+    function gameOver(){running=false;over=true;document.getElementById("overlay").innerHTML=`<div class="card"><h2>Game Over</h2><p>Score: ${score}</p><button class="btn" onclick="start()">Opnieuw</button></div>`;document.getElementById("overlay").style.display="grid"}
+
+    function spawnPipe(){const gap=180;const margin=100;const top=Math.random()*(H-margin*2-gap)+margin;pipes.push({x:W+60,top:top,gap:gap,w:70,passed:false})}
+
+    function drawChainColumn(x,yStart,lengthPx,downwards=true){const linkGap=30;const links=Math.ceil(lengthPx/linkGap);ctx.lineWidth=6;for(let i=0;i<links;i++){const yy=downwards?(yStart+i*linkGap):(yStart-i*linkGap);ctx.strokeStyle="#d8c18a";ctx.beginPath();ctx.arc(x,yy,12,0,Math.PI*2);ctx.stroke()}}
+
+    let flapPhase=0;
+    function drawCoinWithWings(x,y,r,dt){flapPhase+=dt*7;const wo=Math.sin(flapPhase)*(r*0.18);const span=r*1.45;
+      // munt
+      const grad=ctx.createRadialGradient(x-r*0.3,y-r*0.3,r*0.2,x,y,r*1.2);
+      grad.addColorStop(0,"#fff6c8");grad.addColorStop(0.5,"#f6d36a");grad.addColorStop(1,"#b78628");
+      ctx.fillStyle=grad;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
+      ctx.strokeStyle="rgba(255,255,255,.5)";ctx.lineWidth=4;ctx.stroke();
+      if(logo.complete){ctx.save();ctx.beginPath();ctx.arc(x,y,r-4,0,Math.PI*2);ctx.clip();ctx.drawImage(logo,x-r*0.8,y-r*0.8,r*1.6,r*1.6);ctx.restore();}
+      // vleugels
+      drawWing(x-r-r*0.4,y+wo,r);drawWing(x+r+r*0.4,y+wo,r,true);
     }
-    window.addEventListener("resize", resize);
-    resize();
+    function drawWing(cx,cy,r,flip){ctx.save();ctx.translate(cx,cy);if(flip)ctx.scale(-1,1);
+      ctx.fillStyle="rgba(255,255,255,.95)";ctx.beginPath();ctx.moveTo(0,0);
+      ctx.bezierCurveTo(r*0.6,-r*0.3,r*1.2,-r*0.15,r*1.5,0);ctx.bezierCurveTo(r*1.2,r*0.15,r*0.6,r*0.3,0,0);
+      ctx.closePath();ctx.fill();ctx.restore();}
 
-    // CBS logo laden
-    const logo = new Image();
-    logo.src = "logo.png";
-
-    // Game state
-    let running = false, over = false, score = 0;
-    let coin = {x:150, y:H/2, vy:0, r:30};
-    let gravity = 1500, lift = 420, speed = 220;
-    let obstacles = [];
-    let lastTime = 0, spawnTimer = 0;
-
-    function flap(){
-      if(over) return;
-      coin.vy = -lift;
-    }
-
-    // Controls
-    window.addEventListener("keydown", e=>{
-      if(e.code==="Space"){ e.preventDefault(); startOrFlap(); }
-    });
-    window.addEventListener("pointerdown", ()=>startOrFlap());
-    function startOrFlap(){
-      if(!running){ start(); } else flap();
-    }
-
-    function start(){
-      running = true; over = false; score=0;
-      coin.y = H/2; coin.vy=0; obstacles=[];
-      spawnTimer=0; lastTime=performance.now();
-      requestAnimationFrame(loop);
-    }
-
-    function gameOver(){
-      running=false; over=true;
-      // Score kan hier naar je Snake-leaderboard
-      try{
-        if(typeof window.submitScore==="function") window.submitScore(score);
-        if(typeof window.saveScore==="function") window.saveScore(score);
-      }catch(e){}
-    }
-
-    function spawnObstacle(){
-      const gap = 180;
-      const minY = 100;
-      const maxY = H - 100 - gap;
-      const topY = Math.random()*(maxY-minY)+minY;
-      obstacles.push({x:W+50, top:topY, gap:gap, w:60});
-    }
-
-    function drawCoin(x,y,r){
-      // gouden munt
-      const grad = ctx.createRadialGradient(x-r*0.3,y-r*0.3,r*0.2, x,y,r*1.2);
-      grad.addColorStop(0,"#fff6c8");
-      grad.addColorStop(0.5,"#f6d36a");
-      grad.addColorStop(1,"#b78628");
-      ctx.fillStyle = grad;
-      ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
-
-      // rand
-      ctx.lineWidth=4; ctx.strokeStyle="rgba(255,255,255,0.5)";
-      ctx.beginPath(); ctx.arc(x,y,r-2,0,Math.PI*2); ctx.stroke();
-
-      // logo in munt
-      if(logo.complete){
-        ctx.save();
-        ctx.beginPath(); ctx.arc(x,y,r-4,0,Math.PI*2); ctx.clip();
-        ctx.drawImage(logo, x-r*0.7, y-r*0.7, r*1.4, r*1.4);
-        ctx.restore();
-      }
-
-      // simpele vleugels
-      drawWing(x-r*1.2,y, r);
-      drawWing(x+r*1.2,y, r,true);
-    }
-    function drawWing(x,y,r,flip=false){
-      ctx.save();
-      ctx.translate(x,y);
-      if(flip) ctx.scale(-1,1);
-      ctx.fillStyle="rgba(255,255,255,0.9)";
-      ctx.beginPath();
-      ctx.moveTo(0,0);
-      ctx.bezierCurveTo(r*0.8,-r*0.3, r*1.4,-r*0.2, r*1.6,0);
-      ctx.bezierCurveTo(r*1.4, r*0.2, r*0.8, r*0.3, 0,0);
-      ctx.fill();
-      ctx.restore();
-    }
-
-    function drawChain(x,y,len,down=true){
-      ctx.lineWidth=6;
-      ctx.strokeStyle="gold";
-      for(let i=0;i<len;i++){
-        const cy = down ? y+i*30 : y-i*30;
-        ctx.beginPath();
-        ctx.arc(x,cy,12,0,Math.PI*2);
-        ctx.stroke();
-      }
-    }
-
-    function loop(now){
-      if(!running) return;
-      const dt = (now-lastTime)/1000; lastTime=now;
-      spawnTimer+=dt*1000;
-      if(spawnTimer>1400){
-        spawnTimer=0; spawnObstacle();
-      }
-
-      // physics
-      coin.vy += gravity*dt;
-      coin.y += coin.vy*dt;
-
-      // move obstacles
-      for(let o of obstacles){ o.x -= speed*dt; }
-
-      // collisions
-      for(let o of obstacles){
-        if(coin.x+coin.r>o.x && coin.x-coin.r<o.x+o.w){
-          if(coin.y-coin.r<o.top || coin.y+coin.r>o.top+o.gap){
-            return gameOver();
-          }
-        }
-        if(!o.passed && o.x+o.w<coin.x){
-          o.passed=true; score++;
-        }
-      }
-      obstacles = obstacles.filter(o=>o.x+o.w>0);
-
-      // death by bounds
-      if(coin.y-coin.r<0 || coin.y+coin.r>H){ return gameOver(); }
-
-      // draw
+    function loop(now){if(!running)return;const dt=Math.min(0.032,(now-last)/1000);last=now;spawnTimer+=dt*1000;
+      if(spawnTimer>1400){spawnTimer=0;spawnPipe()}
+      coin.vy+=physics.gravity*dt;coin.y+=coin.vy*dt;
+      for(const p of pipes)p.x-=physics.speed*dt;
+      for(const p of pipes){if(coin.x+coin.r>p.x&&coin.x-coin.r<p.x+p.w){if(coin.y-coin.r<p.top||coin.y+coin.r>p.top+p.gap)return gameOver()}
+        if(!p.passed&&p.x+p.w<coin.x){p.passed=true;score++;document.getElementById("scoreHud").textContent=score}}
+      pipes.splice(0,pipes.length-(pipes.findIndex(o=>o.x+p.w>0)+1));
+      if(coin.y-coin.r<0||coin.y+coin.r>H)return gameOver();
       ctx.clearRect(0,0,W,H);
-      // coin
-      drawCoin(coin.x,coin.y,coin.r);
-      // obstacles
-      ctx.strokeStyle="gold"; ctx.lineWidth=5;
-      for(let o of obstacles){
-        drawChain(o.x+o.w/2,0,Math.ceil(o.top/30),true); // boven
-        drawChain(o.x+o.w/2,H,Math.ceil((H-o.top-o.gap)/30),false); // onder
-      }
-
-      requestAnimationFrame(loop);
-    }
+      drawCoinWithWings(coin.x,coin.y,coin.r,dt);
+      for(const p of pipes){drawChainColumn(p.x+p.w/2,0,p.top,true);drawChainColumn(p.x+p.w/2,H,H-(p.top+p.gap),false);}
+      requestAnimationFrame(loop)}
   </script>
 </body>
 </html>
