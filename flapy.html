@@ -5,82 +5,250 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
   <title>CBS Flapy</title>
   <style>
-    body{margin:0;overflow:hidden;background:linear-gradient(180deg,#0a0d12,#1a1f29)}
+    :root{
+      --bg1:#0a0d12; --bg2:#1a1f29;
+      --gold:#f6d36a; --gold-deep:#b78628; --gold-hi:#fff3b5;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; overflow:hidden; background:linear-gradient(180deg,var(--bg1),var(--bg2))}
     canvas{display:block}
-    .hud{position:fixed;top:10px;left:50%;transform:translateX(-50%);color:#fff;
-         font:700 28px Orbitron,sans-serif;text-shadow:0 2px 4px rgba(0,0,0,.6);z-index:2}
-    .btn{padding:10px 16px;border-radius:12px;background:rgba(255,255,255,.1);color:#fff;
-         border:1px solid rgba(255,255,255,.25);cursor:pointer}
-    .overlay{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.45);z-index:3}
-    .card{background:rgba(20,20,20,.85);padding:24px 28px;border-radius:16px;
-          text-align:center;color:#fff;max-width:400px}
+    .hud{
+      position:fixed; top:10px; left:50%; transform:translateX(-50%);
+      color:#fff; font:700 28px system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif;
+      text-shadow:0 2px 4px rgba(0,0,0,.6); z-index:2
+    }
+    .overlay{
+      position:fixed; inset:0; display:grid; place-items:center; background:rgba(0,0,0,.45); z-index:3
+    }
+    .card{
+      background:rgba(20,20,20,.85); padding:22px 26px; border-radius:16px; color:#fff; text-align:center; max-width:420px; width:min(92vw,420px)
+    }
+    .btn{
+      padding:10px 16px; border-radius:12px; background:rgba(255,255,255,.1); color:#fff; border:1px solid rgba(255,255,255,.25); cursor:pointer
+    }
   </style>
 </head>
 <body>
   <div id="scoreHud" class="hud">0</div>
+
   <div id="overlay" class="overlay">
     <div class="card">
-      <h2>CBS Flapy</h2>
-      <p>Tik/klik of druk op <b>SPATIE</b> om te vliegen</p>
+      <h2 style="margin:0 0 8px 0">CBS Flapy</h2>
+      <p style="margin:0 0 12px 0">Tik/klik of druk op <b>SPATIE</b> om te vliegen</p>
       <button id="startBtn" class="btn">Start</button>
     </div>
   </div>
+
   <canvas id="game"></canvas>
 
   <script>
-    const canvas=document.getElementById('game'); const ctx=canvas.getContext('2d');
-    let W,H,DPR=Math.min(2,window.devicePixelRatio||1);
-    function resize(){W=innerWidth;H=innerHeight;canvas.width=W*DPR;canvas.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0)}
-    addEventListener('resize',resize);resize();
-
-    const logo=new Image();logo.src="logo.png";
-
-    let running=false,over=false,started=false,score=0;
-    let coin={x:160,y:H*0.55,vy:0,r:Math.max(28,Math.min(40,H*0.04))};
-    let physics={gravity:1000,lift:360,speed:180};
-    const pipes=[]; let last=0,spawnTimer=0,firstDelay=2000;
-
-    function onPress(){if(!started){start();return} if(over)return; coin.vy=-physics.lift}
-    addEventListener("keydown",e=>{if(e.code==="Space"){e.preventDefault();onPress()}})
-    addEventListener("pointerdown",onPress);
-    document.getElementById("startBtn").onclick=onPress;
-
-    function start(){started=true;running=true;over=false;score=0;coin.y=H*0.55;coin.vy=0;pipes.length=0;spawnTimer=-firstDelay;last=performance.now();document.getElementById("overlay").style.display="none";requestAnimationFrame(loop)}
-
-    function gameOver(){running=false;over=true;document.getElementById("overlay").innerHTML=`<div class="card"><h2>Game Over</h2><p>Score: ${score}</p><button class="btn" onclick="start()">Opnieuw</button></div>`;document.getElementById("overlay").style.display="grid"}
-
-    function spawnPipe(){const gap=180;const margin=100;const top=Math.random()*(H-margin*2-gap)+margin;pipes.push({x:W+60,top:top,gap:gap,w:70,passed:false})}
-
-    function drawChainColumn(x,yStart,lengthPx,downwards=true){const linkGap=30;const links=Math.ceil(lengthPx/linkGap);ctx.lineWidth=6;for(let i=0;i<links;i++){const yy=downwards?(yStart+i*linkGap):(yStart-i*linkGap);ctx.strokeStyle="#d8c18a";ctx.beginPath();ctx.arc(x,yy,12,0,Math.PI*2);ctx.stroke()}}
-
-    let flapPhase=0;
-    function drawCoinWithWings(x,y,r,dt){flapPhase+=dt*7;const wo=Math.sin(flapPhase)*(r*0.18);const span=r*1.45;
-      // munt
-      const grad=ctx.createRadialGradient(x-r*0.3,y-r*0.3,r*0.2,x,y,r*1.2);
-      grad.addColorStop(0,"#fff6c8");grad.addColorStop(0.5,"#f6d36a");grad.addColorStop(1,"#b78628");
-      ctx.fillStyle=grad;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
-      ctx.strokeStyle="rgba(255,255,255,.5)";ctx.lineWidth=4;ctx.stroke();
-      if(logo.complete){ctx.save();ctx.beginPath();ctx.arc(x,y,r-4,0,Math.PI*2);ctx.clip();ctx.drawImage(logo,x-r*0.8,y-r*0.8,r*1.6,r*1.6);ctx.restore();}
-      // vleugels
-      drawWing(x-r-r*0.4,y+wo,r);drawWing(x+r+r*0.4,y+wo,r,true);
+    // ===== Canvas =====
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    let W, H, DPR = Math.min(2, window.devicePixelRatio || 1);
+    function resize(){
+      W = innerWidth; H = innerHeight;
+      canvas.width = W * DPR; canvas.height = H * DPR; ctx.setTransform(DPR,0,0,DPR,0,0);
     }
-    function drawWing(cx,cy,r,flip){ctx.save();ctx.translate(cx,cy);if(flip)ctx.scale(-1,1);
-      ctx.fillStyle="rgba(255,255,255,.95)";ctx.beginPath();ctx.moveTo(0,0);
-      ctx.bezierCurveTo(r*0.6,-r*0.3,r*1.2,-r*0.15,r*1.5,0);ctx.bezierCurveTo(r*1.2,r*0.15,r*0.6,r*0.3,0,0);
-      ctx.closePath();ctx.fill();ctx.restore();}
+    addEventListener('resize', resize, {passive:true}); resize();
 
-    function loop(now){if(!running)return;const dt=Math.min(0.032,(now-last)/1000);last=now;spawnTimer+=dt*1000;
-      if(spawnTimer>1400){spawnTimer=0;spawnPipe()}
-      coin.vy+=physics.gravity*dt;coin.y+=coin.vy*dt;
-      for(const p of pipes)p.x-=physics.speed*dt;
-      for(const p of pipes){if(coin.x+coin.r>p.x&&coin.x-coin.r<p.x+p.w){if(coin.y-coin.r<p.top||coin.y+coin.r>p.top+p.gap)return gameOver()}
-        if(!p.passed&&p.x+p.w<coin.x){p.passed=true;score++;document.getElementById("scoreHud").textContent=score}}
-      pipes.splice(0,pipes.length-(pipes.findIndex(o=>o.x+p.w>0)+1));
-      if(coin.y-coin.r<0||coin.y+coin.r>H)return gameOver();
+    // ===== Assets =====
+    const logo = new Image();
+    logo.src = 'logo.png';
+
+    // ===== Game state =====
+    let running=false, over=false, started=false, score=0;
+    const coin = { x: Math.max(140, W*0.18), y: H*0.58, vy: 0, r: Math.max(28, Math.min(40, H*0.045)) };
+    const physics = { gravity: 980, lift: 340, speed: 170 }; // rustiger = beter op mobiel
+    let pipes = [];
+    let last=0, spawnTimer=0;
+    const FIRST_SPAWN_DELAY = 2000; // ms (geeft rust bij start)
+
+    // ===== Controls =====
+    function onPress(){
+      if(!started){ start(); return; }
+      if(over) return;
+      coin.vy = -physics.lift;
+    }
+    addEventListener('keydown', e=>{ if(e.code==='Space'){ e.preventDefault(); onPress(); } });
+    addEventListener('pointerdown', onPress);
+    document.getElementById('startBtn').onclick = onPress;
+
+    // ===== Obstakels: kettingkolommen =====
+    function spawnPipe(){
+      const gap = Math.max(170, Math.min(220, H*0.26)); // schaal met schermhoogte
+      const margin = Math.max(90, H*0.12);
+      const top = Math.random() * (H - margin*2 - gap) + margin;
+      pipes.push({ x: W + 60, top, gap, w: 70, passed:false });
+    }
+
+    function drawChainColumn(x, yStart, lengthPx, downwards=true){
+      const linkGap = 30;
+      const links = Math.max(0, Math.ceil(lengthPx / linkGap));
+      ctx.lineWidth = 6;
+      for(let i=0;i<links;i++){
+        const yy = downwards ? (yStart + i*linkGap) : (yStart - i*linkGap);
+        const radial = ctx.createRadialGradient(x-6, yy-6, 4, x, yy, 16);
+        radial.addColorStop(0, '#eee9da');
+        radial.addColorStop(0.45, '#d8c18a');
+        radial.addColorStop(1, '#8a6a2a');
+        ctx.strokeStyle = radial;
+        ctx.beginPath(); ctx.arc(x, yy, 12, 0, Math.PI*2); ctx.stroke();
+
+        // highlight
+        ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+        ctx.beginPath(); ctx.arc(x-3, yy-3, 12, -0.2, 0.8); ctx.stroke();
+      }
+    }
+
+    // ===== Coin + vleugels (vleugels duidelijk naast de munt) =====
+    let flapPhase = 0;
+    function drawCoinWithWings(x,y,r,dt){
+      flapPhase += dt * 7;
+      const wingOsc = Math.sin(flapPhase) * (r*0.16);
+
+      // munt
+      const grad = ctx.createRadialGradient(x - r*0.3, y - r*0.3, r*0.2, x, y, r*1.2);
+      grad.addColorStop(0, '#fff6c8');
+      grad.addColorStop(0.5, '#f6d36a');
+      grad.addColorStop(1, '#b78628');
+      ctx.fillStyle = grad;
+      ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+
+      // rand
+      ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(255,255,255,0.55)';
+      ctx.beginPath(); ctx.arc(x,y,r-2,0,Math.PI*2); ctx.stroke();
+
+      // logo
+      if(logo.complete){
+        ctx.save();
+        ctx.beginPath(); ctx.arc(x,y,r-4,0,Math.PI*2); ctx.clip();
+        ctx.drawImage(logo, x - r*0.8, y - r*0.8, r*1.6, r*1.6);
+        ctx.restore();
+      }
+
+      // vleugels: positie ver buiten de cirkel zodat ze het logo NIET overlappen
+      const wingW = r*1.55;  // breedte van een vleugel
+      const offsetX = r + wingW*0.65; // afstand vanaf muntcentrum
+      drawWingShape(x - offsetX, y + wingOsc, r, false);
+      drawWingShape(x + offsetX, y + wingOsc, r, true);
+    }
+
+    function drawWingShape(cx, cy, r, flip=false){
+      ctx.save();
+      ctx.translate(cx, cy);
+      if(flip) ctx.scale(-1,1);
+
+      // hoofdvorm
+      ctx.fillStyle = 'rgba(255,255,255,0.96)';
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.bezierCurveTo(r*0.7, -r*0.32, r*1.3, -r*0.18, r*1.6, 0);
+      ctx.bezierCurveTo(r*1.3,  r*0.18, r*0.7,  r*0.32, 0, 0);
+      ctx.closePath(); ctx.fill();
+
+      // veren
+      ctx.strokeStyle = 'rgba(230,230,230,0.92)';
+      ctx.lineWidth = 2;
+      for(let i=0;i<3;i++){
+        ctx.beginPath();
+        ctx.moveTo(r*(0.38 + i*0.28), -r*(0.06 + i*0.015));
+        ctx.quadraticCurveTo(r*(0.82 + i*0.22), 0, r*(0.38 + i*0.28), r*(0.06 + i*0.015));
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    // ===== Start/Over =====
+    function start(){
+      started = true; running = true; over = false; score = 0;
+      coin.x = Math.max(140, W*0.18);
+      coin.y = H*0.58; coin.vy = 0;
+      pipes = [];
+      spawnTimer = -FIRST_SPAWN_DELAY; // geeft ±2s rust
+      last = performance.now();
+      document.getElementById('overlay').style.display='none';
+      document.getElementById('scoreHud').textContent = '0';
+      requestAnimationFrame(loop);
+    }
+
+    function gameOver(){
+      running = false; over = true;
+      // (optionele) doorstuur naar extern scoreboard
+      try{
+        if(typeof window.submitScore==='function') window.submitScore(score);
+        else if(typeof window.saveScore==='function') window.saveScore(score);
+        window.dispatchEvent(new CustomEvent('cbs-score', { detail: { score, game:'flapy' }}));
+      }catch(e){}
+      // overlay
+      const ov = document.getElementById('overlay');
+      ov.innerHTML = `
+        <div class="card">
+          <h2 style="margin:0 0 6px 0">Game Over</h2>
+          <p style="margin:0 0 12px 0">Score: <b>${score}</b></p>
+          <button class="btn" onclick="(${start.toString()})()">Opnieuw</button>
+        </div>`;
+      ov.style.display='grid';
+    }
+
+    // ===== Loop =====
+    function loop(now){
+      if(!running) return;
+      const dt = Math.min(0.032, (now - last)/1000); last = now;
+      spawnTimer += dt*1000;
+
+      // spawn pas na de eerste delay
+      if(spawnTimer > 1400){
+        spawnTimer = 0;
+        spawnPipe();
+      }
+
+      // physics
+      coin.vy += physics.gravity * dt;
+      coin.y += coin.vy * dt;
+
+      // move obstacles
+      for(const p of pipes) p.x -= physics.speed * dt;
+
+      // collisions & score
+      for(const p of pipes){
+        const inX = coin.x + coin.r > p.x && coin.x - coin.r < p.x + p.w;
+        if(inX){
+          const inGap = (coin.y - coin.r) >= p.top && (coin.y + coin.r) <= (p.top + p.gap);
+          if(!inGap) return gameOver();
+        }
+        if(!p.passed && p.x + p.w < coin.x){
+          p.passed = true; score++; document.getElementById('scoreHud').textContent = String(score);
+        }
+      }
+
+      // veilige opschoning (voorkomt vastlopers)
+      pipes = pipes.filter(p => p.x + p.w > -12);
+
+      // bounds
+      if(coin.y - coin.r < 0 || coin.y + coin.r > H) return gameOver();
+
+      // === draw ===
       ctx.clearRect(0,0,W,H);
-      drawCoinWithWings(coin.x,coin.y,coin.r,dt);
-      for(const p of pipes){drawChainColumn(p.x+p.w/2,0,p.top,true);drawChainColumn(p.x+p.w/2,H,H-(p.top+p.gap),false);}
-      requestAnimationFrame(loop)}
+
+      // subtiele gloed
+      const g = ctx.createRadialGradient(W*0.7, H*0.35, 60, W*0.7, H*0.35, Math.max(W,H));
+      g.addColorStop(0, 'rgba(255,255,255,0.05)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = g; ctx.fillRect(0,0,W,H);
+
+      // player
+      drawCoinWithWings(coin.x, coin.y, coin.r, dt);
+
+      // kettingen
+      for(const p of pipes){
+        drawChainColumn(p.x + p.w/2, 0, p.top, true);                     // boven
+        drawChainColumn(p.x + p.w/2, H, H - (p.top + p.gap), false);      // onder
+      }
+
+      requestAnimationFrame(loop);
+    }
   </script>
 </body>
 </html>
