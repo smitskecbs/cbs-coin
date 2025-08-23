@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>CBS Stack – Neon</title>
 
-  <!-- CSP (zelfde basis als snake.html) -->
+  <!-- CSP -->
   <meta http-equiv="Content-Security-Policy"
         content="
           default-src 'self';
@@ -45,7 +45,7 @@
       -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
     }
 
-    /* Verberg enkele UI tijdens spel */
+    /* Verberg UI tijdens spel */
     body.play-mode header,
     body.play-mode #controlsPanel { display:none; }
 
@@ -84,11 +84,9 @@
     .row{display:flex; gap:10px; flex-wrap:wrap; justify-content:center}
     .muted{ color:var(--muted) }
 
-    /* Game layout */
     .game-wrap{ display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start }
     @media (max-width:900px){ .game-wrap{ grid-template-columns:1fr } }
 
-    /* Canvas kaart */
     #gamePanel .card{
       background:linear-gradient(180deg,#0b1217,#0a1015);
       border:1px solid rgba(0,255,240,.2);
@@ -117,7 +115,6 @@
     footer a{ color:#79ffee; text-decoration:none }
     footer a:hover{ text-decoration:underline }
 
-    /* Naam-overlay */
     #nameOverlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50}
     #nameCard{background:#111;border:2px solid rgba(0,255,240,.45);border-radius:12px;padding:16px 18px;box-shadow:0 0 18px #0ff6;width:min(92vw,420px)}
     #nameInput{width:100%;padding:.75rem 1rem;border:2px solid rgba(0,255,240,.45);border-radius:.6rem;background:#000;color:#fff;font-family:inherit;font-size:1rem}
@@ -165,7 +162,7 @@
         </p>
       </div>
 
-      <!-- Side (alleen uitleg + terugknop; GEEN leaderboard meer) -->
+      <!-- Side -->
       <div class="side">
         <div class="panel">
           <h3>How to play</h3>
@@ -196,11 +193,10 @@
   </div>
 
   <script type="module">
-    /******** CONFIG (zelfde payment + save flow, leaderboard verwijderd) ********/
+    /******** CONFIG ********/
     const EDGE_FN_URL = "https://aiawteejixsgsunmefpi.supabase.co/functions/v1/quick-service";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpYXd0ZWVqaXhzZ3N1bm1lZnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NDExODIsImV4cCI6MjA3MTAxNzE4Mn0.aMbRUM0YebNMfZhSLb9PFdSHAZ-D5WpACPefCfjSLqI";
 
-    // Solana
     import { Connection, PublicKey, Transaction } from "https://esm.sh/@solana/web3.js@1.95.8";
     import { getAssociatedTokenAddress, createTransferInstruction, TOKEN_PROGRAM_ID } from "https://esm.sh/@solana/spl-token@0.4.7";
 
@@ -212,8 +208,8 @@
     const ENTRY_CBS = 10;
 
     let walletPK = null;
-    let paidSig  = null;  // betaling voor de volgende ronde
-    let roundSig = null;  // huidige ronde (bij opslaan)
+    let paidSig  = null;
+    let roundSig = null;
 
     /******** DOM ********/
     const $ = (id)=>document.getElementById(id);
@@ -226,11 +222,11 @@
     const saveBtn    = $("saveBtn");
     const cancelBtn  = $("cancelBtn");
 
-    const canvas = $("game");
-    const ctx    = canvas.getContext("2d");
-    const scoreEl= $("score");
-    const bestEl = $("best");
-    const spdEl  = $("spd");
+    const canvas     = $("game");
+    const ctx        = canvas.getContext("2d");
+    const scoreEl    = $("score");
+    const bestEl     = $("best");
+    const spdEl      = $("spd");
     const restartBtn = $("restartBtn");
 
     // CBS logo in speelveld
@@ -239,14 +235,19 @@
     let logoReady = false;
     logo.onload = ()=>{ logoReady = true; };
 
-    /******** Wallet helpers ********/
-    function provider(){ return window.solana?.isPhantom ? window.solana : null; }
+    /******** Helpers ********/
+    function getProvider(){
+      // Robuuste Phantom-detectie (extensie + in-app browser)
+      if (window.phantom?.solana?.isPhantom) return window.phantom.solana;
+      if (window.solana?.isPhantom) return window.solana;
+      return null;
+    }
     function showError(prefix, err){
       const msg = (err && err.message) ? err.message : String(err || 'Unknown error');
       console.error(prefix, err);
       alert(`${prefix}\n\n${msg}`);
     }
-    async function wait(ms){ return new Promise(r=>setTimeout(r,ms)); }
+    const wait = (ms)=>new Promise(r=>setTimeout(r,ms));
 
     async function waitForConfirmation(signature, latest, timeoutMs=120000){
       const start = Date.now();
@@ -255,7 +256,7 @@
         if (st){
           if (st.err) throw new Error("On-chain transaction error");
           const conf = st.confirmationStatus || (st.confirmations != null ? (st.confirmations>0 ? 'confirmed' : null) : null);
-          if (conf === 'confirmed' || 'finalized') return st;
+          if (conf === 'confirmed' || conf === 'finalized') return st;
         }
         if (latest?.lastValidBlockHeight){
           const h = await connection.getBlockHeight('finalized').catch(()=>null);
@@ -273,8 +274,20 @@
 
     connectBtn.addEventListener("click", async ()=>{
       try{
-        const p = provider(); if(!p) return alert("Phantom Wallet not found.");
-        const { publicKey } = await p.connect(); walletPK = publicKey;
+        const p = getProvider();
+        if(!p){
+          const onMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
+          if(onMobile){
+            // Deeplink naar Phantom (opent de pagina in Phantom-browser)
+            window.location.href = "https://phantom.app/ul/browse/" + encodeURIComponent(window.location.href);
+          }else{
+            alert("Phantom Wallet not found. Please install: https://phantom.app/download");
+            window.open("https://phantom.app/download","_blank");
+          }
+          return;
+        }
+        const { publicKey } = await p.connect();
+        walletPK = publicKey;
         connectBtn.textContent = `✅ ${publicKey.toString().slice(0,4)}…${publicKey.toString().slice(-4)}`;
         payBtn.disabled = false;
       }catch(e){ showError("Wallet connect failed.", e); }
@@ -282,8 +295,12 @@
 
     payBtn.addEventListener("click", async ()=>{
       try{
-        const p = provider(); if(!p) return alert("Phantom Wallet not found.");
-        if(!walletPK){ const { publicKey } = await p.connect(); walletPK=publicKey; connectBtn.textContent=`✅ ${publicKey.toString().slice(0,4)}…${publicKey.toString().slice(-4)}`; }
+        const p = getProvider(); if(!p) return alert("Phantom Wallet not found.");
+        if(!walletPK){
+          const { publicKey } = await p.connect();
+          walletPK = publicKey;
+          connectBtn.textContent=`✅ ${publicKey.toString().slice(0,4)}…${publicKey.toString().slice(-4)}`;
+        }
         payBtn.disabled = true; payBtn.textContent = "Processing…";
 
         const fromATA = await getAssociatedTokenAddress(CBS_MINT, walletPK);
@@ -298,7 +315,7 @@
         const toInfo = await connection.getAccountInfo(toATA);
         if(!toInfo){
           payBtn.disabled=false; payBtn.textContent="💳 Pay 10 CBS";
-          return alert("Treasury CBS account does not exist yet. Ask admin to create the ATA once.");
+          return alert("Treasury CBS account does not exist yet. Ask admin to create the CBS ATA once.");
         }
 
         const ix = createTransferInstruction(fromATA, toATA, walletPK, needRaw, [], TOKEN_PROGRAM_ID);
@@ -342,7 +359,7 @@
     }
     cancelBtn.addEventListener("click", ()=>{
       overlay.style.display="none";
-      roundSig = null; // ronde niet ingediend
+      roundSig = null;
       startBtn.disabled = true;
       stopGame();
       document.body.classList.remove('play-mode');
@@ -391,25 +408,20 @@
     const W = canvas.width;
     const H = canvas.height;
 
-    // Block settings
     const BLOCK_H = 24;
     const START_W = Math.floor(W*0.74);
-    const SPEED_START = 2.2; // px per frame
+    const SPEED_START = 2.2;
     const SPEED_INC   = 0.08;
 
-    let blocks = [];     // placed blocks
-    let mover  = null;   // current moving block {x,y,w,dir}
-    let camY   = 0;      // camera offset (scroll up as stack grows)
+    let blocks = [];
+    let mover  = null;
+    let camY   = 0;
     let speed  = SPEED_START;
     let running= false;
     let rafId  = null;
     let score  = 0;
     let best   = Number(localStorage.getItem('cbs_stack_best')||0);
     let combo  = 0;
-
-    const scoreEl = document.getElementById('score');
-    const bestEl  = document.getElementById('best');
-    const spdEl   = document.getElementById('spd');
 
     bestEl.textContent = best.toString();
 
@@ -429,13 +441,11 @@
       camY = 0; speed = SPEED_START; score = 0; combo = 0;
       updateHUD();
 
-      // base block
       const baseW = START_W;
       const baseX = Math.floor((W-baseW)/2);
       const baseY = H - BLOCK_H;
       blocks.push({x:baseX, y:baseY, w:baseW, h:BLOCK_H, perfect:false});
 
-      // first moving block
       const mvY = baseY - BLOCK_H;
       mover = { x: -baseW, y: mvY, w: baseW, h: BLOCK_H, dir:+1 };
 
@@ -444,12 +454,15 @@
     }
 
     function updateHUD(){
-      scoreEl.textContent = score.toString();
+      scoreEl.textContent = String(score);
       spdEl.textContent = (speed/SPEED_START).toFixed(1) + "x";
-      if(score > best){ best = score; bestEl.textContent = best.toString(); localStorage.setItem('cbs_stack_best', String(best)); }
+      if(score > best){
+        best = score;
+        bestEl.textContent = String(best);
+        localStorage.setItem('cbs_stack_best', String(best));
+      }
     }
 
-    // Input: drop
     function drop(){
       if(!running) return;
       const prev = blocks[blocks.length-1];
@@ -462,7 +475,7 @@
         return;
       }
 
-      const tol = 2; // perfect tolerance in px
+      const tol = 2;
       const perfect = Math.abs(mover.x - prev.x) <= tol &&
                       Math.abs((mover.x + mover.w) - (prev.x + prev.w)) <= tol;
 
@@ -473,7 +486,7 @@
         newX = prev.x;
         newW = prev.w;
         combo++;
-        score += 2 + Math.min(combo, 5); // combo bonus
+        score += 2 + Math.min(combo, 5);
       }else{
         combo = 0;
         score += 1;
@@ -483,7 +496,7 @@
       blocks.push({x:newX, y:newY, w:newW, h:BLOCK_H, perfect});
 
       if(newY - camY < H*0.35){
-        camY -= BLOCK_H; // scroll up
+        camY -= BLOCK_H;
       }
 
       const nextY = newY - BLOCK_H;
@@ -500,18 +513,16 @@
       setTimeout(()=> openNameModal(score), 300);
     }
 
-    // Drawing
     function draw(ending=false){
       ctx.clearRect(0,0,W,H);
 
-      // background
       const grad = ctx.createLinearGradient(0,0,0,H);
       grad.addColorStop(0,"#071017");
       grad.addColorStop(1,"#09131a");
       ctx.fillStyle = grad;
       ctx.fillRect(0,0,W,H);
 
-      // CBS logo watermark (niet-scrollend, subtiele neon glow)
+      // CBS logo watermark
       if (logoReady){
         const size = Math.min(W,H) * 0.72;
         const x = (W - size)/2;
@@ -524,14 +535,12 @@
         ctx.restore();
       }
 
-      // placed blocks + mover (scroll met camera)
       ctx.save();
       ctx.translate(0, camY);
       for(const b of blocks){ drawBlock(b.x, b.y, b.w, b.h, b.perfect); }
       if(running || ending){ drawBlock(mover.x, mover.y, mover.w, mover.h, false, true); }
       ctx.restore();
 
-      // overlay info
       ctx.fillStyle = "#cffff7";
       ctx.font = "14px Orbitron";
       ctx.fillText("Tap / Click / Space / Enter to drop", 12, 22);
@@ -589,7 +598,6 @@
       rafId = requestAnimationFrame(loop);
     }
 
-    // Input handlers
     function onPress(){ drop(); }
     window.addEventListener('keydown', e=>{
       if(e.key === ' ' || e.key === 'Enter'){
@@ -602,7 +610,7 @@
   </script>
 </body>
 
-<!-- Naam-overlay helper buiten module scope -->
+<!-- Naam-overlay helper -->
 <script>
   (function(){
     const overlay   = document.getElementById('nameOverlay');
