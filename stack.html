@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>CBS Stack – Neon</title>
 
-  <!-- Zelfde CSP als snake.html -->
+  <!-- CSP (zelfde basis als snake.html) -->
   <meta http-equiv="Content-Security-Policy"
         content="
           default-src 'self';
@@ -45,10 +45,9 @@
       -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
     }
 
-    /* Verberg UI tijdens spelen */
+    /* Verberg enkele UI tijdens spel */
     body.play-mode header,
-    body.play-mode #controlsPanel,
-    body.play-mode #leaderPanel { display:none; }
+    body.play-mode #controlsPanel { display:none; }
 
     header.topbar{
       position:sticky; top:0; z-index:20;
@@ -113,9 +112,6 @@
     .pill b{ display:block; font-size:1.15rem; color:#bffef2 }
     .pill small{ color:var(--muted) }
     .side .panel h3{ margin:.2rem 0 .8rem; color:#bffef2 }
-    table{ width:100%; border-collapse:collapse }
-    th,td{ padding:.6rem .5rem; text-align:center; border-bottom:1px solid rgba(0,255,240,.12) }
-    th{ color:#bffef2 }
 
     footer{ margin:24px auto 40px; text-align:center; color:var(--muted) }
     footer a{ color:#79ffee; text-decoration:none }
@@ -169,23 +165,13 @@
         </p>
       </div>
 
-      <!-- Side -->
+      <!-- Side (alleen uitleg + terugknop; GEEN leaderboard meer) -->
       <div class="side">
         <div class="panel">
           <h3>How to play</h3>
           <p>A moving neon block slides horizontally. Tap (or press Space/Enter) to drop it on the stack.</p>
           <p>Only the overlapping part stays. Miss entirely → game over.</p>
           <p>Perfect alignment (±2px) glows and grants a combo bonus.</p>
-        </div>
-
-        <div id="leaderPanel" class="panel">
-          <h3>🏆 Top 3</h3>
-          <p class="muted" style="margin-top:-.25rem">Only the three highest scores are shown.</p>
-          <table>
-            <thead><tr><th>Rank</th><th>Player</th><th>Score</th></tr></thead>
-            <tbody id="leaderboardBody"></tbody>
-          </table>
-          <p id="lbNote" class="muted" style="display:none;margin-top:.5rem">Showing local scores (cloud unavailable).</p>
         </div>
 
         <div class="panel" style="text-align:center">
@@ -209,17 +195,12 @@
     </div>
   </div>
 
-  <!-- Supabase SDK -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-
   <script type="module">
-    /******** CONFIG (zoals snake.html) ********/
-    const SUPABASE_URL = "https://aiawteejixsgsunmefpi.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpYXd0ZWVqaXhzZ3N1bm1lZnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NDExODIsImV4cCI6MjA3MTAxNzE4Mn0.aMbRUM0YebNMfZhSLb9PFdSHAZ-D5WpACPefCfjSLqI";
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const TABLE = "leaderboard";
+    /******** CONFIG (zelfde payment + save flow, leaderboard verwijderd) ********/
     const EDGE_FN_URL = "https://aiawteejixsgsunmefpi.supabase.co/functions/v1/quick-service";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpYXd0ZWVqaXhzZ3N1bm1lZnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NDExODIsImV4cCI6MjA3MTAxNzE4Mn0.aMbRUM0YebNMfZhSLb9PFdSHAZ-D5WpACPefCfjSLqI";
 
+    // Solana
     import { Connection, PublicKey, Transaction } from "https://esm.sh/@solana/web3.js@1.95.8";
     import { getAssociatedTokenAddress, createTransferInstruction, TOKEN_PROGRAM_ID } from "https://esm.sh/@solana/spl-token@0.4.7";
 
@@ -244,8 +225,6 @@
     const err        = $("error");
     const saveBtn    = $("saveBtn");
     const cancelBtn  = $("cancelBtn");
-    const tbody      = $("leaderboardBody");
-    const lbNote     = $("lbNote");
 
     const canvas = $("game");
     const ctx    = canvas.getContext("2d");
@@ -253,6 +232,12 @@
     const bestEl = $("best");
     const spdEl  = $("spd");
     const restartBtn = $("restartBtn");
+
+    // CBS logo in speelveld
+    const logo = new Image();
+    logo.src = "logo.png";
+    let logoReady = false;
+    logo.onload = ()=>{ logoReady = true; };
 
     /******** Wallet helpers ********/
     function provider(){ return window.solana?.isPhantom ? window.solana : null; }
@@ -349,25 +334,6 @@
       window.scrollTo({ top: y, behavior: 'smooth' });
     }
 
-    /******** Leaderboard (Top-3) ********/
-    function escapeHtml(s){ return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
-    async function renderTop3(){
-      tbody.innerHTML = "<tr><td colspan='3' class='muted'>Loading…</td></tr>"; lbNote.style.display="none";
-      try{
-        const { data, error } = await sb.from(TABLE).select("*").order("score",{ascending:false}).order("created_at",{ascending:true}).limit(3);
-        if(error) throw error;
-        tbody.innerHTML="";
-        (data||[]).forEach((r,i)=>{
-          const tr=document.createElement("tr");
-          tr.innerHTML = `<td>${i+1}</td><td>${escapeHtml((r.name||"").toString().slice(0,30)||"Anonymous")}</td><td>${Number(r.score)||0}</td>`;
-          tbody.appendChild(tr);
-        });
-      }catch(e){
-        console.warn("Cloud leaderboard failed:", e);
-        lbNote.style.display="block"; tbody.innerHTML = "<tr><td colspan='3' class='muted'>No data</td></tr>";
-      }
-    }
-
     /******** Naam / Save ********/
     function openNameModal(sc){
       overlay.style.display="flex";
@@ -416,14 +382,12 @@
         startBtn.disabled = true;
         stopGame();
         document.body.classList.remove('play-mode');
-        renderTop3();
       }
     }
     nameInput.addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ e.preventDefault(); submitName(); } });
     saveBtn.addEventListener("click", submitName);
 
     /********=== CBS STACK GAME ===********/
-    // Canvas logical size fixed; CSS scales it responsief.
     const W = canvas.width;
     const H = canvas.height;
 
@@ -442,6 +406,10 @@
     let score  = 0;
     let best   = Number(localStorage.getItem('cbs_stack_best')||0);
     let combo  = 0;
+
+    const scoreEl = document.getElementById('score');
+    const bestEl  = document.getElementById('best');
+    const spdEl   = document.getElementById('spd');
 
     bestEl.textContent = best.toString();
 
@@ -484,7 +452,6 @@
     // Input: drop
     function drop(){
       if(!running) return;
-      // overlap with last placed block
       const prev = blocks[blocks.length-1];
       const left  = Math.max(mover.x, prev.x);
       const right = Math.min(mover.x + mover.w, prev.x + prev.w);
@@ -495,8 +462,7 @@
         return;
       }
 
-      // perfect tolerance
-      const tol = 2; // px
+      const tol = 2; // perfect tolerance in px
       const perfect = Math.abs(mover.x - prev.x) <= tol &&
                       Math.abs((mover.x + mover.w) - (prev.x + prev.w)) <= tol;
 
@@ -513,29 +479,23 @@
         score += 1;
       }
 
-      // place block
       const newY = mover.y;
       blocks.push({x:newX, y:newY, w:newW, h:BLOCK_H, perfect});
 
-      // camera move if needed
       if(newY - camY < H*0.35){
         camY -= BLOCK_H; // scroll up
       }
 
-      // prepare next mover
       const nextY = newY - BLOCK_H;
       const dir = (mover.dir===1 ? -1 : 1);
       mover = { x: (dir===1? -newW : W), y: nextY, w: newW, h: BLOCK_H, dir };
 
-      // speed up a bit
       speed += SPEED_INC;
-
       updateHUD();
     }
 
     function gameOver(){
       running = false;
-      // draw final glow
       draw(true);
       setTimeout(()=> openNameModal(score), 300);
     }
@@ -544,36 +504,34 @@
     function draw(ending=false){
       ctx.clearRect(0,0,W,H);
 
-      // background subtle grid glow
+      // background
       const grad = ctx.createLinearGradient(0,0,0,H);
       grad.addColorStop(0,"#071017");
       grad.addColorStop(1,"#09131a");
       ctx.fillStyle = grad;
       ctx.fillRect(0,0,W,H);
 
-      // watermark ring
-      ctx.save();
-      ctx.globalAlpha = 0.06;
-      ctx.beginPath();
-      ctx.arc(W/2, H/2, Math.min(W,H)*0.42, 0, Math.PI*2);
-      ctx.fillStyle = "#00fff0";
-      ctx.fill();
-      ctx.restore();
+      // CBS logo watermark (niet-scrollend, subtiele neon glow)
+      if (logoReady){
+        const size = Math.min(W,H) * 0.72;
+        const x = (W - size)/2;
+        const y = (H - size)/2;
+        ctx.save();
+        ctx.globalAlpha = 0.085;
+        ctx.shadowColor = "#00fff0";
+        ctx.shadowBlur  = 24;
+        ctx.drawImage(logo, x, y, size, size);
+        ctx.restore();
+      }
 
-      // baseline neon
+      // placed blocks + mover (scroll met camera)
       ctx.save();
       ctx.translate(0, camY);
-      // draw placed blocks
-      for(const b of blocks){
-        drawBlock(b.x, b.y, b.w, b.h, b.perfect);
-      }
-      // mover
-      if(running || ending){
-        drawBlock(mover.x, mover.y, mover.w, mover.h, false, true);
-      }
+      for(const b of blocks){ drawBlock(b.x, b.y, b.w, b.h, b.perfect); }
+      if(running || ending){ drawBlock(mover.x, mover.y, mover.w, mover.h, false, true); }
       ctx.restore();
 
-      // overlay text
+      // overlay info
       ctx.fillStyle = "#cffff7";
       ctx.font = "14px Orbitron";
       ctx.fillText("Tap / Click / Space / Enter to drop", 12, 22);
@@ -584,12 +542,10 @@
     }
 
     function drawBlock(x,y,w,h,perfect=false, isMover=false){
-      // glow
       ctx.save();
       ctx.shadowColor = perfect ? "#7dffe9" : "#38f8ff";
       ctx.shadowBlur = perfect ? 22 : 14;
 
-      // body
       const hue = perfect ? 168 : 192;
       const g = ctx.createLinearGradient(x, y, x, y+h);
       g.addColorStop(0, `hsl(${hue} 100% 60% / .95)`);
@@ -597,13 +553,11 @@
       ctx.fillStyle = g;
       ctx.fillRect(x, y, w, h);
 
-      // border
       ctx.shadowBlur = 0;
       ctx.lineWidth = 1.5;
       ctx.strokeStyle = "rgba(0,255,240,.7)";
       ctx.strokeRect(x+0.5, y+0.5, w-1, h-1);
 
-      // perfect sheen
       if(perfect){
         ctx.globalAlpha = 0.25;
         ctx.fillStyle = "#cff";
@@ -611,7 +565,6 @@
         ctx.globalAlpha = 1;
       }
 
-      // mover pulse
       if(isMover){
         const t = performance.now()/400;
         const a = 0.18 + 0.12*Math.sin(t*2*Math.PI);
@@ -620,17 +573,13 @@
         ctx.fillRect(x-4, y-4, w+8, h+8);
         ctx.globalAlpha = 1;
       }
-
       ctx.restore();
     }
 
     function update(){
-      // move mover
       mover.x += speed * mover.dir;
       if(mover.dir === 1 && mover.x > W) mover.x = -mover.w;
       if(mover.dir === -1 && mover.x + mover.w < 0) mover.x = W;
-
-      // gravity illusion: nothing (stack is static), we just move camera when needed
     }
 
     function loop(){
@@ -650,9 +599,6 @@
     });
     canvas.addEventListener('pointerdown', onPress, {passive:true});
     restartBtn.addEventListener('click', ()=>{ if(roundSig) { startGame(); } });
-
-    /******** Boot ********/
-    renderTop3();
   </script>
 </body>
 
