@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<title>CBS Jump — From Underground to Heaven</title>
+<title>CBS Jump — Underground → Heaven</title>
 <style>
   html,body{height:100%;margin:0}
   body{background:linear-gradient(180deg,#0a0d12,#1a1f29);overflow:hidden}
@@ -48,7 +48,7 @@ function resize(){ W=innerWidth; H=innerHeight; canvas.width=W*DPR; canvas.heigh
 addEventListener('resize',resize,{passive:true}); resize();
 
 /* ===== Asset ===== */
-const logo = new Image(); logo.src = 'logo.png'; // centraal logo voor coin & platforms
+const logo = new Image(); logo.src = 'logo.png'; // CBS-logo
 
 /* ===== Game State ===== */
 let running=false, over=false, started=false;
@@ -64,32 +64,32 @@ const isMobile = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 const player = {
   x: W*0.35,
   y: H*0.75,
-  r: Math.max(24, Math.min(40, H*0.04)), // radius voor collider
+  r: Math.max(26, Math.min(40, H*0.04)), // collider
   vy: 0,
   onGround: false,
-  coyote: 0,      // paar ms springen na het loslaten van platform
+  coyote: 0,                         // kleine marge na loslaten
   jumpV: -(isMobile? 520:560),
 };
 
 // physics
 const phys = {
-  g: isMobile? 1600: 1800,   // zwaartekracht
-  scrollEase: 0.08,          // camera easing
+  g: isMobile? 1600: 1800,           // zwaartekracht
+  scrollEase: 0.08,                  // camera easing
 };
 
-let camY = 0;               // camera (wereld y offset)
-let worldYTop = 0;          // hoogste punt dat we bereikten (voor score)
+let camY = 0;                        // camera (wereld y offset)
+let worldYTop = 0;                   // hoogste (negatieve) y
 let last = 0;
 
-const platforms = [];        // {x,y,w,h,phase,speed,dir}
-const PLATFORM_MIN_GAP_Y = 110;     // verticale afstand
-const PLATFORM_MAX_GAP_Y = 170;
-const PLATFORM_SPEED = isMobile? 55 : 70;
-const PLATFORM_W = () => Math.max(90, Math.min(160, W*0.2)); // breedte schaalt met scherm
-const PLATFORM_H = () => Math.max(16, Math.min(22, H*0.018));
+const platforms = [];                // {x,y,w,h,phase,speed,dir,base}
+const PLATFORM_MIN_GAP_Y = 120;      // verticale afstand
+const PLATFORM_MAX_GAP_Y = 180;
+const PLATFORM_SPEED = isMobile? 50 : 65;
+const PLATFORM_W = () => Math.max(110, Math.min(180, W*0.22)); // breedte
+const PLATFORM_H = () => Math.max(18, Math.min(26, H*0.02));   // “dikte” top
 
-/* ===== World / Levels by altitude (0 at start, negative is upwards) ===== */
-function levelName(yWorld){ // yWorld is wereld-hoogte (negatief = hoger)
+/* ===== World / Levels ===== */
+function levelName(yWorld){
   const h = -yWorld;
   if(h < 600) return 'Ondergrond';
   if(h < 1800) return 'Aarde';
@@ -99,14 +99,14 @@ function levelName(yWorld){ // yWorld is wereld-hoogte (negatief = hoger)
 }
 function bgFill(yWorld){
   const h = -yWorld;
-  if(h < 600) return ['#24160e','#3b291f'];            // Ondergrond bruin
-  if(h < 1800) return ['#1a2932','#294b58'];           // Aarde blauwgroen
-  if(h < 3200) return ['#0d1620','#2a394d'];           // Wolken koel
-  if(h < 5200) return ['#06070e','#0b1120'];           // Ruimte donker
-  return ['#0e0c1b','#2a2142'];                        // Hemel mystiek paars
+  if(h < 600) return ['#24160e','#3b291f'];       // Ondergrond
+  if(h < 1800) return ['#1a2932','#294b58'];      // Aarde
+  if(h < 3200) return ['#0d1620','#2a394d'];      // Wolken
+  if(h < 5200) return ['#06070e','#0b1120'];      // Ruimte
+  return ['#0e0c1b','#2a2142'];                   // Hemel
 }
 
-/* ===== Input: one-tap jump ===== */
+/* ===== Input ===== */
 function onPress(){
   if(!started){ start(); return; }
   if(over) return;
@@ -120,139 +120,184 @@ addEventListener('keydown', e=>{ if(e.code==='Space'){ e.preventDefault(); onPre
 addEventListener('pointerdown', onPress);
 document.getElementById('startBtn').onclick = onPress;
 
-/* ===== Platform helpers ===== */
+/* ===== Platforms ===== */
 function spawnInitialPlatforms(){
   platforms.length = 0;
-  let y = player.y + 40; // eentje onder speler
+  // 1) Basis-platform direct onder de speler (zodat je NIET valt)
+  const baseW = Math.max(180, PLATFORM_W()*1.2);
+  const baseH = PLATFORM_H();
+  const baseY = player.y + player.r + baseH*0.5 + 2;
+  platforms.push(makePlatform(player.x, baseY, baseW, baseH, true));
+
+  // 2) Een rij omhoog
+  let y = baseY;
   for(let i=0;i<18;i++){
     const w = PLATFORM_W(), h = PLATFORM_H();
     const x = rand(w*0.5, W - w*0.5);
     y -= rand(PLATFORM_MIN_GAP_Y, PLATFORM_MAX_GAP_Y);
-    platforms.push(makePlatform(x, y, w, h));
+    platforms.push(makePlatform(x, y, w, h, false));
   }
 }
-function makePlatform(x,y,w,h){
+function makePlatform(x,y,w,h,base=false){
   return {
-    x, y, w, h,
+    x, y, w, h, base,
     phase: Math.random()*Math.PI*2,
-    speed: PLATFORM_SPEED * (0.6 + Math.random()*0.8), // variatie
-    dir: Math.random()<0.5 ? -1:1,                     // L/R richting
+    speed: base ? 0 : PLATFORM_SPEED * (0.7 + Math.random()*0.7),
+    dir: Math.random()<0.5 ? -1:1,
   };
 }
 function maybeSpawnAbove(){
-  // zorg dat er altijd platforms boven camera
+  // Zorg dat er altijd platforms boven camera blijven komen
   const highest = platforms.reduce((m,p)=>Math.min(m,p.y), Infinity);
-  while(highest > camY - H*0.8){
+  if(highest > camY - H*0.9){
     const w = PLATFORM_W(), h = PLATFORM_H();
     const x = rand(w*0.5, W - w*0.5);
-    const topY = (platforms.reduce((m,p)=>Math.min(m,p.y), Infinity)) - rand(PLATFORM_MIN_GAP_Y, PLATFORM_MAX_GAP_Y);
-    platforms.push(makePlatform(x, topY, w, h));
-    break;
+    const topY = highest - rand(PLATFORM_MIN_GAP_Y, PLATFORM_MAX_GAP_Y);
+    platforms.push(makePlatform(x, topY, w, h, false));
   }
 }
 function updatePlatforms(dt){
   for(const p of platforms){
+    if(p.speed===0) continue; // basisplatform staat stil
     p.phase += dt;
-    p.x += Math.sin(p.phase)*p.dir*p.speed*dt; // soepel bewegen
-    // bounce tegen randen
+    p.x += Math.sin(p.phase)*p.dir*p.speed*dt;
+    // eenvoudige randbounce
     const half = p.w*0.5;
     if(p.x - half < 10){ p.x = 10 + half; p.dir = 1; }
     if(p.x + half > W-10){ p.x = W-10 - half; p.dir = -1; }
   }
-  // platforms onder de camera weggooien
+  // Ruim platforms op die ver onder beeld zijn
   for(let i=platforms.length-1;i>=0;i--){
-    if(platforms[i].y - camY > H + 200){ platforms.splice(i,1); }
+    if(platforms[i].y - camY > H + 240){ platforms.splice(i,1); }
   }
 }
 
-/* ===== Draw platform: platte CBS-munt (ellips + logo) ===== */
-function drawFlatCoin(x,y,w,h){
-  // ellips body (goud)
-  const grd = ctx.createLinearGradient(x, y-h*0.5, x, y+h*0.5);
-  grd.addColorStop(0, '#fff6c8');
-  grd.addColorStop(0.5, '#f6d36a');
-  grd.addColorStop(1, '#b78628');
-  ctx.fillStyle = grd;
-  ctx.beginPath(); roundEllipsePath(x,y,w,h); ctx.fill();
+/* ===== Tekenen munt-platform met dikke rand + randtekst ===== */
+function drawFlatCoin3D(x,y,w,h,inscription){
+  const thickness = Math.max(10, h*1.2); // 3D zijkant
 
-  // top highlight
-  ctx.globalAlpha=0.25;
-  ctx.fillStyle = '#ffffff';
-  ctx.beginPath(); roundEllipsePath(x, y-h*0.15, w*0.9, h*0.6); ctx.fill();
-  ctx.globalAlpha=1;
+  // 1) Zijkant (donkerder goud) voor 3D-look
+  const sideGrad = ctx.createLinearGradient(x, y, x, y+thickness);
+  sideGrad.addColorStop(0, '#d7b455');
+  sideGrad.addColorStop(1, '#8b6a28');
+  ctx.fillStyle = sideGrad;
+  ctx.beginPath();
+  ctx.ellipse(x, y+thickness, w/2, h/2, 0, 0, Math.PI*2); // onder-ellipse
+  ctx.fill();
 
-  // logo perspectief
+  // 2) Bovenzijde (top-ellipse)
+  const topGrad = ctx.createLinearGradient(x, y-h*0.5, x, y+h*0.5);
+  topGrad.addColorStop(0, '#fff6c8');
+  topGrad.addColorStop(0.5, '#f6d36a');
+  topGrad.addColorStop(1, '#b78628');
+  ctx.fillStyle = topGrad;
+  ctx.beginPath(); ctx.ellipse(x,y,w/2,h/2,0,0,Math.PI*2); ctx.fill();
+
+  // 3) Dikke rand (dubbele stroke)
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = 'rgba(255,255,255,0.65)';
+  ctx.beginPath(); ctx.ellipse(x,y,w/2-2,h/2-2,0,0,Math.PI*2); ctx.stroke();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+  ctx.beginPath(); ctx.ellipse(x,y,w/2-6,h/2-6,0,0,Math.PI*2); ctx.stroke();
+
+  // 4) Logo (licht perspectief: gewoon gecentreerd op top)
   if(logo.complete){
     ctx.save();
-    ctx.beginPath(); roundEllipsePath(x,y,w*0.82,h*0.82); ctx.clip();
-    // “perspectief”: trek wat in de hoogte samen
-    const imgW = w*0.82, imgH = imgW; // vierkant
+    ctx.beginPath(); ctx.ellipse(x,y,w*0.78/2,h*0.78/2,0,0,Math.PI*2); ctx.clip();
+    const imgW = w*0.78, imgH = imgW;
     ctx.drawImage(logo, x-imgW/2, y-imgH/2, imgW, imgH);
     ctx.restore();
   }
 
-  // rand
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = 'rgba(255,255,255,0.6)';
-  ctx.beginPath(); roundEllipsePath(x,y,w,h); ctx.stroke();
-}
-function roundEllipsePath(x,y,w,h){
-  // ellips met zachte randen
-  const rx=w/2, ry=h/2;
-  ctx.ellipse(x,y,rx,ry,0,0,Math.PI*2);
+  // 5) Rand-inscriptie: tekst langs de ellipse-rand
+  if(inscription){
+    ctx.save();
+    ctx.fillStyle = 'rgba(50,30,0,0.9)';
+    ctx.font = `bold ${Math.max(10, h*0.55)}px system-ui, sans-serif`;
+    drawEllipseText(ctx, inscription, x, y, w/2-10, h/2-10);
+    ctx.restore();
+  }
+
+  // 6) Highlight boven
+  ctx.globalAlpha=0.22;
+  ctx.fillStyle='#fff';
+  ctx.beginPath(); ctx.ellipse(x, y-h*0.18, w*0.86/2, h*0.58/2, 0, 0, Math.PI*2); ctx.fill();
+  ctx.globalAlpha=1;
 }
 
-/* ===== Player draw: staande coin (zonder vleugels) ===== */
+// Tekst langs een ellipse (bovenste 3/4e rondom)
+function drawEllipseText(ctx, text, cx, cy, rx, ry){
+  const full = text.trim() + ' • ';
+  const repeated = (full+full+full); // genoeg lengte
+  const steps = 64; // segmenten
+  let t = -Math.PI + 0.25; // start linksboven
+  const end = Math.PI - 0.25;
+  let idx = 0;
+
+  while(t < end){
+    const x = cx + rx * Math.cos(t);
+    const y = cy + ry * Math.sin(t);
+    // tangentiale hoek van ellipse
+    const dx = -rx * Math.sin(t);
+    const dy =  ry * Math.cos(t);
+    const ang = Math.atan2(dy, dx);
+
+    const ch = repeated[idx % repeated.length];
+    const w = ctx.measureText(ch).width || 8;
+
+    ctx.save();
+    ctx.translate(x, y);
+    ctx.rotate(ang);
+    ctx.fillText(ch, -w/2, -2); // kleine offset naar binnen
+    ctx.restore();
+
+    // staphoek afhankelijk van letterbreedte (grofweg)
+    const arcLen = (rx+ry)/2; // gemiddelde radius
+    const dTheta = Math.max(0.04, w / Math.max(arcLen, 1) );
+    t += dTheta;
+    idx++;
+  }
+}
+
+/* ===== Player (ronde munt) ===== */
 function drawPlayer(){
   const x=player.x, y=player.y - camY, r=player.r;
-  // coin body
   const grad=ctx.createRadialGradient(x-r*0.35,y-r*0.35,r*0.2, x,y,r*1.15);
   grad.addColorStop(0,'#fff6c8'); grad.addColorStop(0.55,'#f6d36a'); grad.addColorStop(1,'#b78628');
   ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
-  // rim
   ctx.lineWidth=4; ctx.strokeStyle='rgba(255,255,255,0.55)';
   ctx.beginPath(); ctx.arc(x,y,r-2,0,Math.PI*2); ctx.stroke();
-  // logo
   if(logo.complete){
     ctx.save(); ctx.beginPath(); ctx.arc(x,y,r-4,0,Math.PI*2); ctx.clip();
     ctx.drawImage(logo, x-r*0.95, y-r*0.95, r*1.9, r*1.9); ctx.restore();
   }
 }
 
-/* ===== Background (per level) ===== */
+/* ===== Background ===== */
 function drawBackground(){
   const [c1,c2] = bgFill(camY);
   const g = ctx.createLinearGradient(0,0,0,H);
   g.addColorStop(0,c1); g.addColorStop(1,c2);
   ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
 
-  // extra details per zone
+  // extra details
   const h = -camY;
   if(h > 3200 && h < 5200){
-    // ruimte – sterren
-    drawStars(70, 0.6);
+    // sterren in ruimte
+    for(let i=0;i<70;i++){
+      const x = (i*1237 % W), y = (i*911 % H);
+      const r = (i%3===0)?1.6:(i%3===1?1.2:0.8);
+      ctx.globalAlpha = 0.3 + (i%7)/10;
+      ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
+      ctx.fillStyle = '#cfe6ff'; ctx.fill();
+    }
+    ctx.globalAlpha = 1;
   } else if(h >= 5200){
-    // hemel – zachte gloed
     const rg = ctx.createRadialGradient(W*0.5, H*0.3, 80, W*0.5, H*0.3, Math.max(W,H));
     rg.addColorStop(0,'rgba(255,255,255,0.18)'); rg.addColorStop(1,'rgba(255,255,255,0)');
     ctx.fillStyle=rg; ctx.fillRect(0,0,W,H);
-  } else if(h < 600){
-    // ondergrond – subtiele textuur lijnen
-    ctx.globalAlpha=0.08; ctx.strokeStyle='#000';
-    for(let i=0;i<10;i++){ ctx.beginPath(); ctx.moveTo(0, H-(i*14)); ctx.lineTo(W, H-(i*14)); ctx.stroke(); }
-    ctx.globalAlpha=1;
   }
-}
-function drawStars(n, maxAlpha){
-  for(let i=0;i<n;i++){
-    const x = (i*1237 % W); // cheap pseudo spread
-    const y = (i*911  % H);
-    const r = (i%3===0)?1.6:(i%3===1?1.2:0.8);
-    ctx.globalAlpha = (0.3 + (i%7)/10) * maxAlpha;
-    ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2);
-    ctx.fillStyle = '#cfe6ff'; ctx.fill();
-  }
-  ctx.globalAlpha = 1;
 }
 
 /* ===== Lifecycle ===== */
@@ -261,16 +306,26 @@ function start(){
   scoreM=0; worldYTop = 0;
   camY = 0;
   player.x = W*0.35; player.y = H*0.75; player.vy = 0; player.onGround=false; player.coyote=0;
-  spawnInitialPlatforms();
+
+  spawnInitialPlatforms();                 // zet base-platform neer
+  // Zet speler precies BOVEN het basisplatform en markeer grounded
+  const base = platforms.find(p=>p.base);
+  if(base){
+    const top = base.y - base.h/2;
+    player.y = top - player.r;
+    player.vy = 0;
+    player.onGround = true;
+  }
+
   HUD.overlay.style.display='none';
   HUD.score.textContent = '0 m';
   HUD.level.textContent = 'Ondergrond';
   last = performance.now();
   requestAnimationFrame(loop);
 }
+
 function gameOver(){
   running=false; over=true;
-  // optionele scoreboard hooks
   try{
     if(typeof window.submitScore==='function') window.submitScore(Math.floor(scoreM));
     else if(typeof window.saveScore==='function') window.saveScore(Math.floor(scoreM));
@@ -295,45 +350,43 @@ function loop(now){
   player.y  += player.vy * dt;
 
   // coyote time aftellen
-  if(player.onGround) player.coyote = 0.1; else player.coyote = Math.max(0, player.coyote - dt);
+  if(player.onGround) player.coyote = 0.12; else player.coyote = Math.max(0, player.coyote - dt);
   player.onGround = false;
 
-  // platform update + collisions
+  // platforms updaten + collisions
   updatePlatforms(dt);
 
-  // collision (axis aligned platform, coin as circle vs ellipse -> approx AABB)
   for(const p of platforms){
-    // AABB check
-    if(Math.abs(player.x - p.x) < (p.w/2 + player.r*0.6)){ // iets tolerant
-      const py = player.y + player.r;       // onderkant speler
+    // AABB check (x-range)
+    if(Math.abs(player.x - p.x) < (p.w/2 + player.r*0.55)){
+      const prevBottom = (player.y - player.vy*dt) + player.r;
       const top = p.y - p.h/2;
-      const prevPy = player.y - player.vy*dt + player.r;
-      // land van boven (crossing)
-      if(prevPy <= top && py >= top && player.vy > 0){
-        player.y = top - player.r;
+      const nowBottom  = player.y + player.r;
+
+      // Land ALLEEN als je van boven komt en door de top kruist
+      if(prevBottom <= top && nowBottom >= top && player.vy > 0){
+        player.y  = top - player.r;
         player.vy = 0;
         player.onGround = true;
       }
     }
   }
 
-  // camera volgt omhoog (alleen naar boven)
+  // camera volgt omhoog (alleen omhoog)
   const targetCam = Math.min(camY, player.y - H*0.45);
   camY = camY + (targetCam - camY) * phys.scrollEase;
 
-  // score = hoogste bereikte hoogte (in meters)
+  // score = hoogste hoogte
   worldYTop = Math.min(worldYTop, camY);
-  const meters = Math.floor(-worldYTop/3); // schaal naar “meters”
-  if(meters !== Math.floor(scoreM)){
-    scoreM = meters;
-    HUD.score.textContent = `${meters} m`;
-    HUD.level.textContent = levelName(camY);
-  }
+  const meters = Math.floor(-worldYTop/3);
+  HUD.score.textContent = `${meters} m`;
+  HUD.level.textContent = levelName(camY);
+  scoreM = meters;
 
-  // dood-condities (onder beeld vallen)
+  // fail als je ver onder beeld valt
   if(player.y - camY > H + 160) return gameOver();
 
-  // nieuwe platforms bovenaan toevoegen
+  // extra platforms bijspawnen
   maybeSpawnAbove();
 
   // draw
@@ -341,10 +394,11 @@ function loop(now){
   drawBackground();
 
   // platforms
+  const inscription = 'BREAKING CHAINS TOGETHER • CBS COIN • ';
   for(const p of platforms){
     const sy = p.y - camY;
-    if(sy < -80 || sy > H+80) continue;
-    drawFlatCoin(p.x, sy, p.w, p.h);
+    if(sy < -120 || sy > H+140) continue;
+    drawFlatCoin3D(p.x, sy, p.w, p.h, inscription);
   }
 
   // player
