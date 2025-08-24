@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>CBS Jump – Worlds & Text</title>
+<title>CBS Jump – Realistic Worlds</title>
 <style>
   html,body{margin:0;height:100%;background:#0b0f18;overflow:hidden}
   canvas{display:block;width:100vw;height:100vh}
@@ -18,14 +18,19 @@
 <div id="hud" class="hud">0 m</div>
 
 <script>
+/* ----------------------------------
+   Canvas
+---------------------------------- */
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
 let W,H;function resize(){W=innerWidth;H=innerHeight;canvas.width=W;canvas.height=H}resize();
 addEventListener('resize',resize);
 
 const logo=new Image();logo.src='logo.png';
-
-// ===== Physics / Player =====
 const isMobile=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+/* ----------------------------------
+   Player & Physics
+---------------------------------- */
 const GRAV = 1600;
 const JUMP = isMobile? -980 : -1020;
 const COYOTE_TIME = 0.12;
@@ -35,7 +40,9 @@ let player={x:W/2, y:H-140, r:30, vy:0, onGround:false, coyote:0};
 let groundPlat=null;
 let camY=0, score=0; document.getElementById('hud').innerText="0 m";
 
-// ===== Platforms =====
+/* ----------------------------------
+   Platforms (altijd 1 nieuwe boven je)
+---------------------------------- */
 let platIdSeq=1; const newId=()=>platIdSeq++;
 let currentPlat=null, nextPlat=null;
 const BASE_W = ()=>Math.max(220, W*0.28);
@@ -44,7 +51,7 @@ const PLAT_H = 22;
 
 function makePlatform(x, y, w, h, isBase=false){
   const margin = 60;
-  const amp = isBase ? 0 : (W/2 - margin);
+  const amp = isBase ? 0 : (W/2 - margin);      // brede sweep zodat hij onder je door komt
   const speed = isBase ? 0 : (isMobile ? 0.95 : 1.10);
   return { id:newId(), x0:x, y, w, h, amp, speed, phase:Math.random()*Math.PI*2, isBase, lastX:x };
 }
@@ -70,22 +77,222 @@ function initRun(){
   camY = 0; score = 0; document.getElementById('hud').innerText="0 m";
 }
 
-function rand(a,b){ return a + Math.random()*(b-a) }
-function clamp(v,a,b){ return Math.max(a,Math.min(b,v)) }
-
-// ===== Input =====
+/* ----------------------------------
+   Input
+---------------------------------- */
 function onPress(){
   if(player.onGround || player.coyote>0){
     player.vy = JUMP;
     player.onGround = false;
     player.coyote = 0;
-    groundPlat = null;
+    groundPlat = null; // los van platform
   }
 }
 addEventListener('keydown',e=>{if(e.code==="Space"){e.preventDefault();onPress();}});
 addEventListener('pointerdown',onPress);
 
-// ===== Collision =====
+/* ----------------------------------
+   Environment (realistische achtergronden)
+---------------------------------- */
+const env = {
+  clouds: [], stars: [], hills: [],
+  insects: [], // alleen ondergrond
+  t: 0,
+  init(){
+    // Wolken
+    for(let i=0;i<20;i++){
+      this.clouds.push({x:Math.random()*W, y:Math.random()*H, w:rand(120,240), h:rand(40,80), s:rand(0.04,0.10)});
+    }
+    // Sterren
+    for(let i=0;i<140;i++){
+      this.stars.push({x:Math.random()*W, y:Math.random()*H, r:Math.random()*1.6+0.4, tw:Math.random()*6.28});
+    }
+    // Heuvels (silhouetten)
+    for(let i=0;i<3;i++){
+      this.hills.push(makeHill(i));
+    }
+    // Insecten (ondergrond)
+    for(let i=0;i<10;i++){
+      this.insects.push(makeInsect());
+    }
+  },
+  update(dt){
+    this.t += dt;
+
+    // Wolken langzaam parallax
+    for(const c of this.clouds){
+      c.x -= 12*c.s*dt;
+      if(c.x < -c.w) c.x = W + c.w*0.5, c.y = rand(0,H);
+    }
+
+    // Insecten bewegen alleen zichtbaar in ondergrond
+    for(const b of this.insects){
+      // type: 'ant'|'beetle'|'worm'|'firefly'
+      b.life += dt;
+      if(b.type==='ant' || b.type==='beetle'){
+        b.x += b.vx*dt;
+        if(b.x < -40 || b.x > W+40){
+          b.vx *= -1;
+        }
+      } else if(b.type==='worm'){
+        b.phase += dt*2;
+        b.x += b.vx*dt*0.6;
+        b.y0 += Math.sin(b.phase)*0.2;
+      } else if(b.type==='firefly'){
+        b.phase += dt*1.2;
+        b.x += Math.cos(b.phase*0.9)*10*dt;
+        b.y0 += Math.sin(b.phase*1.1)*8*dt;
+      }
+    }
+
+    // Heuvels: niets (statisch; parallax in draw)
+  },
+  draw(height){
+    const h = -height; // omhoog = groter
+    // Zone kleuren
+    if(h < 600){ // Ondergrond
+      let g = ctx.createLinearGradient(0,0,0,H);
+      g.addColorStop(0,'#3b2a1d'); g.addColorStop(1,'#22170f');
+      ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+      // rotslagen
+      ctx.globalAlpha=0.25; ctx.strokeStyle='#2a1d14'; ctx.lineWidth=12;
+      for(let i=0;i<8;i++){ let y = H - i*H/8; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y+rand(-8,8)); ctx.stroke(); }
+      ctx.globalAlpha=1;
+
+      // wortels
+      ctx.strokeStyle='rgba(30,15,5,0.7)'; ctx.lineWidth=2;
+      for(let i=0;i<6;i++){
+        const x= (i+0.2)*W/6; ctx.beginPath();
+        ctx.moveTo(x, rand(H*0.1,H*0.3));
+        ctx.bezierCurveTo(x-20, H*0.4, x+15, H*0.55, x+rand(-20,20), H*0.68);
+        ctx.stroke();
+      }
+
+      // steentjes
+      ctx.fillStyle='rgba(0,0,0,0.25)';
+      for(let i=0;i<50;i++){ ctx.beginPath(); ctx.ellipse((i*97)%W, H-(i*31)%H, rand(2,5), rand(1,3), 0, 0, Math.PI*2); ctx.fill(); }
+
+      // insecten (alleen tekenen in ondergrond)
+      for(const b of this.insects){
+        drawInsect(b);
+      }
+    }
+    else if(h < 1500){ // Aarde: lucht + heuvels
+      let g = ctx.createLinearGradient(0,0,0,H);
+      g.addColorStop(0,'#8ecae6'); g.addColorStop(1,'#90b4a5');
+      ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+      // heuvels (parallax)
+      drawHillLayer(this.hills[0], 0.3, '#29403d');
+      drawHillLayer(this.hills[1], 0.5, '#203532');
+      drawHillLayer(this.hills[2], 0.7, '#162826');
+    }
+    else if(h < 3000){ // Wolken
+      let g = ctx.createLinearGradient(0,0,0,H);
+      g.addColorStop(0,'#cfe6ff'); g.addColorStop(1,'#9fc7ff');
+      ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+      ctx.fillStyle='rgba(255,255,255,0.75)';
+      for(const c of this.clouds){
+        ctx.beginPath(); ctx.ellipse(c.x, c.y, c.w, c.h, 0, 0, Math.PI*2); ctx.fill();
+      }
+    }
+    else if(h < 5000){ // Ruimte
+      let g = ctx.createLinearGradient(0,0,0,H);
+      g.addColorStop(0,'#0b0e2a'); g.addColorStop(1,'#000005');
+      ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+      // sterren met twinkle
+      for(const s of this.stars){
+        const tw = 0.4 + 0.6*(0.5+0.5*Math.sin(this.t*2 + s.tw));
+        ctx.globalAlpha = 0.25 + 0.7*tw;
+        ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fillStyle='#cfe6ff'; ctx.fill();
+      }
+      ctx.globalAlpha=1;
+    }
+    else { // Hemel
+      let g = ctx.createLinearGradient(0,0,0,H);
+      g.addColorStop(0,'#f3e7ff'); g.addColorStop(1,'#d6c6ff');
+      ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+      // lichtstralen
+      const cx=W*0.5, cy=H*0.25;
+      for(let i=0;i<6;i++){
+        const ang = i/6*Math.PI*2 + this.t*0.05;
+        const x2 = cx + Math.cos(ang)*W*0.8;
+        const y2 = cy + Math.sin(ang)*H*0.8;
+        const lg = ctx.createLinearGradient(cx,cy,x2,y2);
+        lg.addColorStop(0,'rgba(255,255,255,0.22)');
+        lg.addColorStop(1,'rgba(255,255,255,0)');
+        ctx.fillStyle=lg;
+        ctx.beginPath();
+        ctx.moveTo(cx,cy);
+        ctx.lineTo(x2,y2);
+        ctx.lineTo(cx + Math.cos(ang+0.12)*W*0.65, cy + Math.sin(ang+0.12)*H*0.65);
+        ctx.closePath(); ctx.fill();
+      }
+    }
+  }
+};
+function makeHill(layer){
+  // simpele poly voor heuvelsilhouet
+  const pts=[]; const n=8;
+  for(let i=0;i<=n;i++){
+    const x=i/n*W;
+    const y=H*0.6 + Math.sin(i*0.8 + layer)*H*0.06 + layer*20 + rand(-10,10);
+    pts.push({x,y});
+  }
+  return {pts, offset:rand(0,W)};
+}
+function drawHillLayer(hill, speed, color){
+  ctx.save();
+  ctx.fillStyle=color;
+  ctx.translate(-env.t*20*speed % W, 0);
+  for(let k=0;k<2;k++){
+    ctx.beginPath();
+    ctx.moveTo(-W + k*W, H);
+    for(const p of hill.pts){
+      ctx.lineTo(p.x + k*W, p.y + 40);
+    }
+    ctx.lineTo(W + k*W, H); ctx.closePath(); ctx.fill();
+  }
+  ctx.restore();
+}
+function makeInsect(){
+  const kinds=['ant','beetle','worm','firefly'];
+  const type = kinds[Math.floor(Math.random()*kinds.length)];
+  return {
+    type,
+    x: rand(-40,W+40),
+    y0: rand(H*0.55, H*0.9),
+    vx: (Math.random()<0.5?-1:1)*rand(20,50),
+    phase: Math.random()*6.28,
+    life: 0
+  };
+}
+function drawInsect(b){
+  const y = b.y0; // basis
+  if(b.type==='ant'){
+    ctx.fillStyle='#2b2b2b';
+    ctx.beginPath(); ctx.ellipse(b.x,y,6,3,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(b.x-6,y,4,2,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(b.x+6,y,4,2,0,0,Math.PI*2); ctx.fill();
+  }else if(b.type==='beetle'){
+    ctx.fillStyle='#3a2c19';
+    ctx.beginPath(); ctx.ellipse(b.x,y,8,5,0,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.moveTo(b.x,y-5); ctx.lineTo(b.x,y+5); ctx.stroke();
+  }else if(b.type==='worm'){
+    ctx.strokeStyle='#a86852'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(b.x-8, y); ctx.quadraticCurveTo(b.x, y+4*Math.sin(b.phase), b.x+8, y); ctx.stroke();
+  }else if(b.type==='firefly'){
+    const glow = 0.4 + 0.6*(0.5+0.5*Math.sin(b.phase*2));
+    ctx.globalAlpha = 0.4 + 0.5*glow;
+    ctx.fillStyle='#ffe97a'; ctx.beginPath(); ctx.arc(b.x,y,2.4,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+}
+
+/* ----------------------------------
+   Collision helpers
+---------------------------------- */
 function tryLandOn(p, dt){
   if(!p) return false;
   if(groundPlat && groundPlat.id===p.id) return false;
@@ -111,63 +318,42 @@ function tryLandOn(p, dt){
   return false;
 }
 
-// ===== Background Worlds =====
-function drawBackground(height){
-  const h = -height; // hoogte boven start
-  let g;
-  if(h < 600){
-    g = ctx.createLinearGradient(0,0,0,H);
-    g.addColorStop(0,'#3b291f'); g.addColorStop(1,'#24160e'); // ondergrond
-    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-  }else if(h < 1500){
-    g = ctx.createLinearGradient(0,0,0,H);
-    g.addColorStop(0,'#294b58'); g.addColorStop(1,'#1a2932'); // aarde/groen
-    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-  }else if(h < 3000){
-    g = ctx.createLinearGradient(0,0,0,H);
-    g.addColorStop(0,'#87ceeb'); g.addColorStop(1,'#cfe6ff'); // wolken
-    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-    ctx.fillStyle="rgba(255,255,255,0.6)";
-    for(let i=0;i<5;i++){ ctx.beginPath(); ctx.ellipse(rand(0,W),rand(0,H),100,40,0,0,Math.PI*2); ctx.fill(); }
-  }else if(h < 5000){
-    g = ctx.createLinearGradient(0,0,0,H);
-    g.addColorStop(0,'#0a0d20'); g.addColorStop(1,'#000'); // ruimte
-    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-    ctx.fillStyle="#fff";
-    for(let i=0;i<60;i++){ ctx.fillRect(rand(0,W),rand(0,H),2,2); }
-  }else{
-    g = ctx.createLinearGradient(0,0,0,H);
-    g.addColorStop(0,'#2a2142'); g.addColorStop(1,'#0e0c1b'); // hemel
-    ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-    const rg=ctx.createRadialGradient(W/2,H/3,50,W/2,H/3,Math.max(W,H));
-    rg.addColorStop(0,'rgba(255,255,255,0.2)'); rg.addColorStop(1,'transparent');
-    ctx.fillStyle=rg; ctx.fillRect(0,0,W,H);
-  }
-}
-
-// ===== Draw =====
+/* ----------------------------------
+   Drawing (platformen & speler)
+---------------------------------- */
 function drawCoinPlatform(p){
   const x = platX(p);
   const y = p.y;
-  const w = p.w, h = p.h, thickness = 12;
+  const w = p.w, h = p.h, thickness = Math.max(12, h*0.9);
 
-  // side
+  // zijkant met schaduw
   const sideGrad=ctx.createLinearGradient(x,y,x,y+thickness);
   sideGrad.addColorStop(0,'#d9b95c'); sideGrad.addColorStop(1,'#8b6a28');
   ctx.fillStyle=sideGrad;
   ctx.beginPath(); ctx.ellipse(x,y+thickness,w/2,h/2,0,0,Math.PI*2); ctx.fill();
 
-  // top
+  // top goud
   const topGrad=ctx.createLinearGradient(x,y-h/2,x,y+h/2);
-  topGrad.addColorStop(0,'#fff6c8'); topGrad.addColorStop(0.5,'#f6d36a'); topGrad.addColorStop(1,'#b78628');
+  topGrad.addColorStop(0,'#fff6c8'); topGrad.addColorStop(0.55,'#f6d36a'); topGrad.addColorStop(1,'#b78628');
   ctx.fillStyle=topGrad;
   ctx.beginPath(); ctx.ellipse(x,y,w/2,h/2,0,0,Math.PI*2); ctx.fill();
 
-  // rim
-  ctx.lineWidth=3; ctx.strokeStyle='rgba(255,255,255,.7)';
+  // knurling (geribbelde rand)
+  ctx.strokeStyle='rgba(255,255,255,0.65)'; ctx.lineWidth=3;
   ctx.beginPath(); ctx.ellipse(x,y,w/2-2,h/2-2,0,0,Math.PI*2); ctx.stroke();
+  ctx.save(); ctx.translate(x,y); ctx.rotate(0);
+  ctx.strokeStyle='rgba(0,0,0,0.25)'; ctx.lineWidth=1;
+  const ticks = Math.max(16, Math.floor(w/10));
+  for(let i=0;i<ticks;i++){
+    const a = i/ticks*Math.PI*2;
+    const rx=w/2-6, ry=h/2-6;
+    const x1 = Math.cos(a)*rx, y1 = Math.sin(a)*ry;
+    const x2 = Math.cos(a)*(rx-4), y2 = Math.sin(a)*(ry-4);
+    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
+  }
+  ctx.restore();
 
-  // logo
+  // logo gecentreerd
   if(logo.complete){
     ctx.save();
     ctx.beginPath(); ctx.ellipse(x,y,w*0.78/2,h*0.78/2,0,0,Math.PI*2); ctx.clip();
@@ -176,25 +362,10 @@ function drawCoinPlatform(p){
     ctx.restore();
   }
 
-  // inscription
-  ctx.save();
-  ctx.fillStyle="rgba(40,20,0,0.9)";
-  ctx.font=`bold ${Math.max(10,h*0.6)}px sans-serif`;
-  drawEllipseText(ctx,"CBS – COIN • ",x,y,w/2-8,h/2-8);
-  ctx.restore();
-}
-function drawEllipseText(ctx,text,cx,cy,rx,ry){
-  const repeated=text.repeat(20);
-  let angle=-Math.PI; let idx=0;
-  while(angle<Math.PI){
-    const ch=repeated[idx++ % repeated.length];
-    const x=cx+rx*Math.cos(angle);
-    const y=cy+ry*Math.sin(angle);
-    const dx=-rx*Math.sin(angle), dy=ry*Math.cos(angle);
-    const ang=Math.atan2(dy,dx);
-    ctx.save(); ctx.translate(x,y); ctx.rotate(ang); ctx.fillText(ch,0,0); ctx.restore();
-    angle+=0.12;
-  }
+  // highlight
+  ctx.globalAlpha=0.2; ctx.fillStyle='#fff';
+  ctx.beginPath(); ctx.ellipse(x, y-h*0.18, w*0.86/2, h*0.58/2, 0, 0, Math.PI*2); ctx.fill();
+  ctx.globalAlpha=1;
 }
 
 function drawPlayer(){
@@ -210,8 +381,11 @@ function drawPlayer(){
   }
 }
 
-// ===== Loop =====
+/* ----------------------------------
+   Main loop (met substeps & sticky follow)
+---------------------------------- */
 let last=performance.now();
+env.init();
 initRun();
 requestAnimationFrame(loop);
 
@@ -219,53 +393,81 @@ function loop(now){
   let dt=(now-last)/1000; last=now;
   if(dt>0.05) dt=0.05;
 
-  const fixed=0.008, steps=Math.max(1,Math.ceil(dt/fixed)), h=dt/steps;
+  env.update(dt);
+
+  const fixed = 0.008;
+  const steps = Math.max(1, Math.ceil(dt / fixed));
+  const h = dt / steps;
+
   for(let i=0;i<steps;i++){
-    const prevX_curr=currentPlat?currentPlat.lastX:0;
-    const prevX_next=nextPlat?nextPlat.lastX:0;
+    // Update platform-fase + delta's
+    const prevX_curr = currentPlat ? currentPlat.lastX : 0;
+    const prevX_next = nextPlat    ? nextPlat.lastX    : 0;
 
-    if(nextPlat && !nextPlat.isBase) nextPlat.phase+=nextPlat.speed*h;
-    if(currentPlat && !currentPlat.isBase) currentPlat.phase+=currentPlat.speed*h;
-    if(currentPlat) currentPlat.lastX=platX(currentPlat);
-    if(nextPlat) nextPlat.lastX=platX(nextPlat);
+    if(nextPlat && !nextPlat.isBase)  nextPlat.phase  += nextPlat.speed  * h;
+    if(currentPlat && !currentPlat.isBase) currentPlat.phase += currentPlat.speed * h;
 
-    const dx_curr=currentPlat?(currentPlat.lastX-prevX_curr):0;
-    const dx_next=nextPlat?(nextPlat.lastX-prevX_next):0;
+    if(currentPlat) currentPlat.lastX = platX(currentPlat);
+    if(nextPlat)    nextPlat.lastX    = platX(nextPlat);
 
+    const dx_curr = currentPlat ? (currentPlat.lastX - prevX_curr) : 0;
+    const dx_next = nextPlat    ? (nextPlat.lastX    - prevX_next) : 0;
+
+    // Sticky follow
     if(groundPlat){
-      const dx=(groundPlat.id===currentPlat?.id)?dx_curr:(groundPlat.id===nextPlat?.id?dx_next:0);
-      player.x=clamp(player.x+dx,player.r,W-player.r);
-      player.y=platTop(groundPlat)-player.r;
-      player.vy=Math.max(0,player.vy);
-      player.onGround=true;
-      player.coyote=COYOTE_TIME;
-    }else{
-      player.vy+=GRAV*h; player.y+=player.vy*h;
-      player.coyote=Math.max(0,player.coyote-h);
-      player.onGround=false;
-      const landedNext=tryLandOn(nextPlat,h);
-      const landedCurr=tryLandOn(currentPlat,h);
-      if(landedNext){currentPlat=nextPlat;nextPlat=spawnNextAbove(currentPlat);nextPlat.lastX=platX(nextPlat);}
+      const dx = (groundPlat.id === currentPlat?.id) ? dx_curr
+               : (groundPlat.id === nextPlat?.id)    ? dx_next : 0;
+      player.x = clamp(player.x + dx, player.r, W - player.r);
+      player.y = platTop(groundPlat) - player.r;
+      player.vy = Math.max(0, player.vy);
+      player.onGround = true;
+      player.coyote = COYOTE_TIME;
+    } else {
+      player.vy += GRAV * h;
+      player.y  += player.vy * h;
+      player.coyote = Math.max(0, player.coyote - h);
+      player.onGround = false;
+
+      const landedNext = tryLandOn(nextPlat, h);
+      const landedCurr = tryLandOn(currentPlat, h);
+      if(landedNext){
+        currentPlat = nextPlat;
+        nextPlat = spawnNextAbove(currentPlat);
+        nextPlat.lastX = platX(nextPlat);
+      }
     }
   }
 
-  if(player.y<camY+H*0.45) camY=player.y-H*0.45;
-  if(player.y-camY>H+200) initRun();
+  // camera
+  if(player.y < camY + H*0.45) camY = player.y - H*0.45;
 
-  const meters=Math.max(0,Math.floor((-(player.y-(H-140)))/6));
-  if(meters!==score){score=meters;document.getElementById('hud').innerText=score+" m";}
+  // fail → reset
+  if(player.y - camY > H + 200){
+    initRun();
+  }
 
-  drawBackground(camY);
+  // score
+  const meters = Math.max(0, Math.floor((-(player.y - (H-140)))/6));
+  if(meters !== score){ score = meters; document.getElementById('hud').innerText = score + " m"; }
+
+  // draw
+  ctx.clearRect(0,0,W,H);
+  env.draw(camY);
 
   ctx.save(); ctx.translate(0,-camY);
   if(currentPlat) drawCoinPlatform(currentPlat);
-  if(nextPlat) drawCoinPlatform(nextPlat);
+  if(nextPlat)    drawCoinPlatform(nextPlat);
   drawPlayer();
   ctx.restore();
 
   requestAnimationFrame(loop);
 }
+
+/* ----------------------------------
+   Utils
+---------------------------------- */
+function rand(a,b){ return a + Math.random()*(b-a); }
+function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
 </script>
 </body>
 </html>
-
