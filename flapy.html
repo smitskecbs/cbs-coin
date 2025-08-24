@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>CBS Jump — Langere Lagen, Subtiele Vliegtuigen & Gebalanceerde Moeilijkheid</title>
+<title>CBS Jump — Aarde → Wolken (20x), Subtiele Jets, Heaven Coins → Big Coin</title>
 <style>
   html,body{margin:0;height:100%;background:#0b0f18;overflow:hidden}
   canvas{display:block;width:100vw;height:100vh}
@@ -71,76 +71,124 @@ const isMobile=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
 /* Balans mobiel vs desktop */
 const DIFF = isMobile
-  ? { jump:-820, gapBase:125, gapVar:34, widthMul:0.92, ampMul:1.10 } // mobiel iets moeilijker
-  : { jump:-920, gapBase:100, gapVar:26, widthMul:1.08, ampMul:0.85 }; // desktop iets makkelijker
+  ? { jump:-830, gapBase:125, gapVar:34, widthMul:0.95, ampMul:1.05 } // mobiel iets lastiger
+  : { jump:-920, gapBase:110, gapVar:28, widthMul:1.05, ampMul:0.90 }; // desktop iets vriendelijker
 
-/* ================ Lagen — véél verder uit elkaar ================ */
+/* ================ Progressie-regels (wat jij vroeg) ================ */
+const JUMPS_TO_CLOUDS = 20;          // pas na 20 landingen naar wolken
+const HEAVEN_COIN_JUMPS = 20;        // eerst 20 kleine munten in de hemel
+
+/* ================ Hoogtes voor latere lagen ================ */
 const GROUND_Y   = 460;
-const TROPO_TOP  = -6000;   // wolken start véél later → lang op aarde
-const STRATO_TOP = -14000;  // vliegtuigen later
-const SPACE_TOP  = -24000;  // sterren later
-const DEEP_SPACE = -30000;  // planeten pas diep in space
-const HEAVEN_TOP = -36000;  // hemel begint
-const BEYOND_HEAVEN = -41000; // variatie na poort
-const BIG_COIN_Y = HEAVEN_TOP - 8000; // grote coin véél later in heaven
+const STRATO_TOP = -16000;  // vliegtuigen (platform-laag) pas hoog
+const SPACE_TOP  = -24000;  // sterren
+const HEAVEN_TOP = -34000;  // hemel start (visueel), platforms schakelen via alt + jumps
 
 /* ================ Fysica/Speler ================ */
 const GRAV=1600, JUMP=DIFF.jump, COYOTE=0.12;
 let player={x:0,y:0,r:36,vy:0,onGround:false,coyote:0};
 let groundPlat=null, camY=0, meters=0; const hud=document.getElementById('hud');
+let gameOver=false;
+
+/* ================ Sprongen tellen & Heaven flow ================ */
+let jumps=0;                      // totaal geland
+let heavenEntered=false;
+let heavenCoinCount=0;
+let bigCoinPlaced=false;
+const avgGapGuess = () => (GAP_BASE + GAP_VAR*0.5);
 
 /* ================ Platforms ================ */
 let idSeq=1; const newId=()=>idSeq++;
 let currentPlat=null, nextPlat=null;
 
+/* compactere verticale gaps */
 const GAP_BASE=DIFF.gapBase, GAP_VAR=DIFF.gapVar;
 
-function platformSpecForAlt(y){
-  const wMul=DIFF.widthMul;
-  if(y > TROPO_TOP)  return {type:'wood',        w:Math.max(160,W*0.28)*wMul, h:24};  // Aarde
-  if(y > STRATO_TOP) return {type:'cloud',       w:Math.max(190,W*0.32)*wMul, h:30};  // Wolken
-  if(y > SPACE_TOP)  return {type:'plane',       w:Math.max(205,W*0.36)*wMul, h:34};  // Vliegtuig
-  if(y > HEAVEN_TOP) return {type:'rocket',      w:Math.max(175,W*0.30)*wMul, h:32};  // Ruimte
-  if(y > BEYOND_HEAVEN){
-    const r=Math.random();
-    if(r<0.4)  return {type:'heavenCloud', w:Math.max(210,W*0.36)*wMul, h:30};
-    if(r<0.75) return {type:'goldBridge',  w:Math.max(220,W*0.40)*wMul, h:26};
-    return {type:'haloRing', w:Math.max(180,W*0.30)*wMul, h:26};
-  }
-  const r=Math.random();
-  if(r<0.33) return {type:'heavenCloud', w:Math.max(220,W*0.38)*wMul, h:30};
-  if(r<0.66) return {type:'goldBridge',  w:Math.max(240,W*0.42)*wMul, h:26};
-  return {type:'haloRing', w:Math.max(200,W*0.34)*wMul, h:26};
+function rrPath(x,y,w,h,r=8){
+  const hw=w/2, hh=h/2;
+  ctx.beginPath();
+  ctx.moveTo(x-hw+r,y-hh); ctx.lineTo(x+hw-r,y-hh);
+  ctx.quadraticCurveTo(x+hw,y-hh,x+hw,y-hh+r);
+  ctx.lineTo(x+hw,y+hh-r);
+  ctx.quadraticCurveTo(x+hw,y+hh,x+hw-r,y+hh);
+  ctx.lineTo(x-hw+r,y+hh);
+  ctx.quadraticCurveTo(x-hw,y+hh,x-hw,y+hh-r);
+  ctx.lineTo(x-hw,y-hh+r);
+  ctx.quadraticCurveTo(x-hw,y-hh,x-hw+r,y-hh);
+  ctx.closePath();
 }
+
+/* Zone op basis van sprongen + hoogte */
+function zoneFor(y){
+  // Eerst gating: tot 20 sprongen blijf je Aarde
+  if(jumps < JUMPS_TO_CLOUDS) return 'EARTH';
+  // Daarna op hoogte bepalen
+  if(y > STRATO_TOP) return 'CLOUDS';
+  if(y > SPACE_TOP)  return 'STRATO';
+  if(y > HEAVEN_TOP) return 'SPACE';
+  return 'HEAVEN';
+}
+
+function platformSpecForZone(zone){
+  const wMul=DIFF.widthMul;
+  switch(zone){
+    case 'EARTH':  return {type:'wood',   w:Math.max(160,W*0.28)*wMul, h:24};
+    case 'CLOUDS': return {type:'cloud',  w:Math.max(190,W*0.32)*wMul, h:30};
+    case 'STRATO': return {type:'plane',  w:Math.max(205,W*0.36)*wMul, h:32};
+    case 'SPACE':  return {type:'rocket', w:Math.max(175,W*0.30)*wMul, h:30};
+    case 'HEAVEN':
+      // in de hemel eerst 20 kleine CBS coins als platform
+      if(!heavenEntered){heavenEntered=true; heavenCoinCount=0; bigCoinPlaced=false;}
+      if(heavenCoinCount < HEAVEN_COIN_JUMPS){
+        heavenCoinCount++;
+        return {type:'coinSmall', w:Math.max(120,W*0.20), h:Math.max(120,W*0.20)}; // rond platform
+      } else {
+        // Na de 20e coin blijven we coin/cloud mixen tot je bij de big coin komt
+        const r=Math.random();
+        if(r<0.7) return {type:'coinSmall', w:Math.max(120,W*0.20), h:Math.max(120,W*0.20)};
+        return {type:'heavenCloud', w:Math.max(210,W*0.36), h:30};
+      }
+  }
+}
+
 function makePlatform(x,y,isBase=false){
-  const s=platformSpecForAlt(y);
+  const zone=zoneFor(y);
+  const spec=platformSpecForZone(zone);
   const amp=isBase?0:(W/2-80)*DIFF.ampMul, speed=isBase?0:(isMobile?0.75:0.9)*DIFF.ampMul;
-  return {id:newId(), x0:x, y, w:s.w, h:s.h, type:s.type, amp, speed, phase:Math.random()*6.28, isBase, lastX:x};
+  return {id:newId(), x0:x, y, w:spec.w, h:spec.h, type:spec.type, amp, speed, phase:Math.random()*6.28, isBase, lastX:x};
 }
 const platX=p=>p.x0+Math.sin(p.phase)*p.amp, platTop=p=>p.y-p.h/2;
+
 function spawnNextAbove(ref){
-  const alt=-ref.y;
-  const diff=Math.min(220, Math.max(0, alt/16));
-  const gap=GAP_BASE + Math.min(GAP_VAR, diff);
-  const y = ref.y - (gap+Math.random()*20);
+  const gap = GAP_BASE + Math.random()*GAP_VAR;
+  const y = ref.y - (gap + 18);
+  // Plaats big coin pas zodra we 20 coins hebben laten spawnen in HEAVEN
+  if(!bigCoinPlaced && zoneFor(y)==='HEAVEN' && heavenEntered && heavenCoinCount>=HEAVEN_COIN_JUMPS){
+    env.bigCoin.y = y - avgGapGuess()*3; // paar sprongen boven de laatste coin
+    bigCoinPlaced=true;
+  }
   return makePlatform(W/2, y, false);
 }
 
 /* ================ Input ================ */
-function jump(){ if(player.onGround||player.coyote>0){ player.vy=JUMP; player.onGround=false; player.coyote=0; groundPlat=null; } }
-addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();jump();}});
-addEventListener('pointerdown',jump);
+function jump(){ if(gameOver) return; if(player.onGround||player.coyote>0){ player.vy=JUMP; player.onGround=false; player.coyote=0; groundPlat=null; } }
+addEventListener('keydown',e=>{
+  if(e.code==='Space'){e.preventDefault();jump();}
+  if(gameOver && (e.code==='KeyR'||e.code==='Space')) startRun();
+});
+addEventListener('pointerdown',()=>{ if(gameOver){startRun();} else {jump();} });
 
 /* ================ Wereldobjecten ================ */
 const env={
   t:0,
+  // aarde
   hills:null, trees:null, city:[],
   birds:[], groundClouds:[],
+  // troposfeer/strato
   clouds:[], planes:[],
+  // space/heaven
   stars:[], moon:null, planets:[],
-  bigCoin:{x:0,y:BIG_COIN_Y,r:230},
-  heavenGate:{x:0,y:HEAVEN_TOP-260,w:540,h:490},
-  heavenCoins:[],
+  bigCoin:{x:0,y:-99999,r:240},
   rebuild(){
     // Aarde
     this.hills = makeHillsBand(GROUND_Y+130,'#203331',0.55);
@@ -150,52 +198,36 @@ const env={
     // Vogels
     this.birds=[]; for(let i=0;i<12;i++) this.birds.push(makeBird(GROUND_Y - rnd(140,320)));
 
-    // Verre aardwolken
+    // Verre aardwolken (hoog in beeld)
     this.groundClouds=[];
     for(let i=0;i<16;i++){
       const y=rnd(GROUND_Y - H*0.95, GROUND_Y - H*0.6);
       this.groundClouds.push({x:Math.random()*W,y,w:rnd(140,260),h:rnd(50,100),s:rnd(0.01,0.03)});
     }
 
-    // Wolkenlaag
+    // Wolkenlaag (veel)
     this.clouds=[];
-    for(let i=0;i<50;i++){
-      const y=rnd(TROPO_TOP-1800, -120);
-      this.clouds.push({x:Math.random()*W,y,w:rnd(180,360),h:rnd(70,140),s:rnd(0.02,0.07)});
+    for(let i=0;i<52;i++){
+      const y=rnd(-25000, -400); // hoog bereik zodat je lang wolken ziet (na gating)
+      this.clouds.push({x:Math.random()*W,y,w:rnd(180,360),h:rnd(70,140),s:rnd(0.02,0.06)});
     }
 
-    // Achtergrond-vliegtuigen (subtieler & trager)
+    // Subtiele achtergrond-vliegtuigen: KLEIN, TRAAG, ACHTER de wolken (strato-hoog)
     this.planes=[];
     for(let i=0;i<8;i++){
-      this.planes.push(makePlane(rnd(STRATO_TOP-1900, TROPO_TOP-380)));
+      this.planes.push(makePlane(rnd(STRATO_TOP-2500, STRATO_TOP-600)));
     }
 
-    // Sterren
+    // Sterren, maan, planeten (diep)
     this.stars=[];
-    for(let i=0;i<340;i++){
-      this.stars.push({x:Math.random()*W,y:rnd(SPACE_TOP-2600, SPACE_TOP-200),r:Math.random()*1.2+0.3,tw:Math.random()*6.28});
+    for(let i=0;i<360;i++){
+      this.stars.push({x:Math.random()*W,y:rnd(SPACE_TOP-2600, SPACE_TOP-200),r:Math.random()*1.1+0.3,tw:Math.random()*6.28});
     }
-
-    // Maan
     this.moon = makeMoon(rnd(SPACE_TOP-1300, SPACE_TOP-700), rnd(W*0.25, W*0.75), rnd(34,58));
-
-    // Planeten (diep)
     this.planets=[];
-    for(let i=0;i<3;i++){
-      this.planets.push(makePlanet(rnd(DEEP_SPACE-2600, DEEP_SPACE-800)));
-    }
+    for(let i=0;i<3;i++) this.planets.push(makePlanet(rnd(SPACE_TOP-4800, SPACE_TOP-2600)));
 
-    // Heaven coins rond poort
-    this.heavenCoins=[];
-    const gate=this.heavenGate;
-    for(let i=0;i<28;i++){
-      const ang=(i/28)*Math.PI*2;
-      const rx=gate.w*0.48+rnd(-20,20), ry=gate.h*0.36+rnd(-20,20);
-      const cx=W*0.5+Math.cos(ang)*rx+rnd(-12,12);
-      const cy=gate.y+gate.h*0.05+Math.sin(ang)*ry+rnd(-12,12);
-      this.heavenCoins.push({x:cx,y:cy,r:rnd(12,18),phase:Math.random()*6.28,vy:rnd(-10,-6)});
-    }
-
+    this.bigCoin.x=W*0.5; this.bigCoin.y=-99999; // wordt later geplaatst
     this.t=0;
   },
   update(dt){
@@ -207,13 +239,9 @@ const env={
     for(const c of this.groundClouds){ c.x-=8*c.s*dt; if(c.x<-c.w) c.x=W+c.w*0.5; }
     for(const c of this.clouds){ c.x-=8*c.s*dt; if(c.x<-c.w) c.x=W+c.w*0.5; }
     for(const p of this.planes){
-      p.x += p.vx*dt; p.trail=Math.max(0,Math.min(1,p.trail+dt*0.06));
-      if(p.vx>0 && p.x>W+140){p.x=-140;p.y+=rnd(-80,80);}
-      if(p.vx<0 && p.x<-140){p.x=W+140;p.y+=rnd(-80,80);}
-    }
-    for(const c of this.heavenCoins){
-      c.y += c.vy*dt + Math.sin(this.t*1.5 + c.phase)*0.2;
-      c.x += Math.cos(this.t*0.8 + c.phase)*0.1;
+      p.x += p.vx*dt; p.trail=Math.max(0,Math.min(1,p.trail+dt*0.05));
+      if(p.vx>0 && p.x>W+160){p.x=-160;p.y+=rnd(-60,60);}
+      if(p.vx<0 && p.x<-160){p.x=W+160;p.y+=rnd(-60,60);}
     }
   }
 };
@@ -282,7 +310,7 @@ function drawCityBand(l){
   ctx.restore();
 }
 
-/* ---------- Dieren & wolken ---------- */
+/* ---------- Wezens & wolken ---------- */
 function makeBird(y){ return {x:rnd(-200,W), y, vx:rnd(25,45), phase:Math.random()*6.28}; }
 function drawBird(b){
   ctx.strokeStyle='rgba(0,0,0,.6)'; ctx.lineWidth=2;
@@ -301,32 +329,61 @@ function drawCloud(c){
   ctx.globalAlpha=1;
 }
 
-/* ---------- Platforms ---------- */
-function drawPlatform(p){
-  const x=platX(p), y=p.y, w=p.w, h=p.h;
-  if(p.type==='wood')        drawWood(x,y,w,h);
-  else if(p.type==='cloud')  drawCloudPlat(x,y,w,h);
-  else if(p.type==='plane')  drawPlanePlat(x,y,w,h);
-  else if(p.type==='rocket') drawRocketPlat(x,y,w,h);
-  else if(p.type==='goldBridge') drawGoldBridgePlat(x,y,w,h);
-  else if(p.type==='haloRing')   drawHaloRingPlat(x,y,w,h);
-  else                          drawHeavenCloudPlat(x,y,w,h); // heavenCloud
+/* ---------- Achtergrond: subtiele vliegtuigen (achter de wolken) ---------- */
+function makePlane(y){
+  const dir=Math.random()<0.5?-1:1;
+  return {x:rnd(40,W-40), y, vx:dir*rnd(22,36), dir, trail:0, phase:Math.random()*6.28};
 }
-
-/* Hout: planken + spijkers */
-function rrPath(x,y,w,h,r=8){
-  const hw=w/2, hh=h/2;
+function roundRect(x,y,w,h,r){
+  const x2=x+w,y2=y+h; r=Math.min(r,w/2,h/2);
   ctx.beginPath();
-  ctx.moveTo(x-hw+r,y-hh); ctx.lineTo(x+hw-r,y-hh);
-  ctx.quadraticCurveTo(x+hw,y-hh,x+hw,y-hh+r);
-  ctx.lineTo(x+hw,y+hh-r);
-  ctx.quadraticCurveTo(x+hw,y+hh,x+hw-r,y+hh);
-  ctx.lineTo(x-hw+r,y+hh);
-  ctx.quadraticCurveTo(x-hw,y+hh,x-hw,y+hh-r);
-  ctx.lineTo(x-hw,y-hh+r);
-  ctx.quadraticCurveTo(x-hw,y-hh,x-hw+r,y-hh);
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x2,y,x2,y+r,r);
+  ctx.arcTo(x2,y2,x2-r,y2,r);
+  ctx.arcTo(x,y2,x,y2-r,r);
+  ctx.arcTo(x,y,x+r,y,r);
   ctx.closePath();
 }
+function drawBGPlane(p){
+  ctx.save();
+  // conditiestreep
+  ctx.globalAlpha=0.14*p.trail;
+  ctx.strokeStyle='#e8f2ff'; ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.moveTo(p.x-34*p.dir, p.y+2); ctx.lineTo(p.x, p.y+2); ctx.stroke();
+  // klein vliegtuigje
+  ctx.filter='blur(0.7px) brightness(0.9)';
+  ctx.globalAlpha=0.30;
+  const g=ctx.createLinearGradient(p.x,p.y-8,p.x,p.y+8);
+  g.addColorStop(0,'#eff5ff'); g.addColorStop(1,'#c9d6ef');
+  ctx.fillStyle=g; roundRect(p.x-15, p.y-8, 30, 16, 7); ctx.fill();
+  ctx.fillStyle='#b7c8e6'; roundRect(p.x-26, p.y-5, 52, 10, 5); ctx.fill();
+  ctx.fillStyle='#5fa3e3'; roundRect(p.x-5, p.y-7, 10, 6, 3); ctx.fill();
+  ctx.filter='none'; ctx.restore();
+}
+
+/* ---------- Space ---------- */
+function makePlanet(y){ return {x:rnd(60,W-60), y, r:rnd(18,36), hue:rnd(180,360)}; }
+function drawPlanet(p){
+  const grad=ctx.createRadialGradient(p.x-p.r*0.5,p.y-p.r*0.5,p.r*0.2,p.x,p.y,p.r*1.1);
+  grad.addColorStop(0,`hsl(${p.hue},60%,75%)`); grad.addColorStop(1,`hsl(${p.hue},60%,35%)`);
+  ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+  ctx.globalAlpha=.28; ctx.strokeStyle='#fff'; ctx.lineWidth=1.4;
+  ctx.beginPath(); ctx.ellipse(p.x,p.y+3,p.r*1.2,p.r*0.35,0,0,Math.PI*2); ctx.stroke(); ctx.globalAlpha=1;
+}
+function makeMoon(y,x,r){ return {x,y,r}; }
+function drawMoon(m){
+  const g=ctx.createRadialGradient(m.x-m.r*0.3,m.y-m.r*0.3,m.r*0.2,m.x,m.y,m.r*1.1);
+  g.addColorStop(0,'#ffffff'); g.addColorStop(1,'#c8c8d0');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(m.x,m.y,m.r,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='rgba(120,120,140,.35)';
+  for(let i=0;i<6;i++){
+    const ang=Math.random()*Math.PI*2, rr=rnd(m.r*0.1,m.r*0.22);
+    const rx=m.x+Math.cos(ang)*rnd(0,m.r*0.55), ry=m.y+Math.sin(ang)*rnd(0,m.r*0.55);
+    ctx.beginPath(); ctx.ellipse(rx,ry,rr,rr*0.7,ang,0,Math.PI*2); ctx.fill();
+  }
+}
+
+/* ---------- Platforms (spelbaar) ---------- */
 function drawWood(x,y,w,h){
   const th=h*1.08;
   const sg=ctx.createLinearGradient(x,y,x,y+th); sg.addColorStop(0,'#6f3f19'); sg.addColorStop(1,'#3e220f');
@@ -342,8 +399,6 @@ function drawWood(x,y,w,h){
     ctx.beginPath(); ctx.arc(px, y+h*0.28, 1.8, 0, Math.PI*2); ctx.fill();
   }
 }
-
-/* Wolk-platform */
 function drawCloudPlat(x,y,w,h){
   const lobes=7, r=h*0.95, step=w/(lobes+1);
   ctx.save();
@@ -357,18 +412,6 @@ function drawCloudPlat(x,y,w,h){
   ctx.globalAlpha=.7; ctx.strokeStyle='rgba(255,255,255,.97)'; ctx.lineWidth=3;
   ctx.beginPath(); ctx.ellipse(x, y-h*0.28, w*0.92, h*0.72, 0, 0, Math.PI*2); ctx.stroke();
   ctx.restore();
-}
-
-/* Vliegtuig-platform (speelbaar) */
-function roundRect(x,y,w,h,r){
-  const x2=x+w,y2=y+h; r=Math.min(r,w/2,h/2);
-  ctx.beginPath();
-  ctx.moveTo(x+r,y);
-  ctx.arcTo(x2,y,x2,y+r,r);
-  ctx.arcTo(x2,y2,x2-r,y2,r);
-  ctx.arcTo(x,y2,x,y2-r,r);
-  ctx.arcTo(x,y,x+r,y,r);
-  ctx.closePath();
 }
 function drawPlanePlat(x,y,w,h){
   ctx.save();
@@ -388,8 +431,6 @@ function drawPlanePlat(x,y,w,h){
   ctx.beginPath(); ctx.moveTo(x-w*0.46,y); ctx.lineTo(x+w*0.46,y); ctx.stroke();
   ctx.restore();
 }
-
-/* Raket-platform */
 function drawRocketPlat(x,y,w,h){
   const g=ctx.createLinearGradient(x,y-h/2,x,y+h/2);
   g.addColorStop(0,'#eeeeee'); g.addColorStop(1,'#9aa2ad');
@@ -403,8 +444,17 @@ function drawRocketPlat(x,y,w,h){
   ctx.fillStyle='orange';
   ctx.beginPath(); ctx.moveTo(x-w*0.1, y+h/2); ctx.lineTo(x+w*0.1, y+h/2); ctx.lineTo(x, y+h/2+14); ctx.closePath(); ctx.fill();
 }
-
-/* Heaven wolk-platform */
+/* Kleine CBS-coin als platform (rond) */
+function drawCoinPlat(x,y,w,h){
+  const r=Math.min(w,h)/2;
+  const g=ctx.createRadialGradient(x-r*.35,y-r*.35,r*.2,x,y,r*1.15);
+  g.addColorStop(0,'#fff6c8'); g.addColorStop(0.55,'#f6d36a'); g.addColorStop(1,'#b78628');
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+  ctx.lineWidth=3; ctx.strokeStyle='rgba(255,255,255,.5)';
+  ctx.beginPath(); ctx.arc(x,y,r-2,0,Math.PI*2); ctx.stroke();
+  if(logo.complete){ ctx.save(); ctx.beginPath(); ctx.arc(x,y,r-3,0,Math.PI*2); ctx.clip(); ctx.drawImage(logo, x-r+3, y-r+3, (r-3)*2, (r-3)*2); ctx.restore(); }
+}
+/* Hemelwolk platform */
 function drawHeavenCloudPlat(x,y,w,h){
   const lobes=7, r=h*0.98, step=w/(lobes+1);
   ctx.save();
@@ -421,123 +471,127 @@ function drawHeavenCloudPlat(x,y,w,h){
   ctx.restore();
 }
 
-/* Gouden brug-segment (heaven variatie) */
-function drawGoldBridgePlat(x,y,w,h){
-  const deckGrad=ctx.createLinearGradient(x,y-h/2,x,y+h/2);
-  deckGrad.addColorStop(0,'#ffe48f'); deckGrad.addColorStop(1,'#cfa33f');
-  ctx.fillStyle=deckGrad; rrPath(x,y,w,h,12); ctx.fill();
-  ctx.strokeStyle='rgba(255,230,160,0.8)'; ctx.lineWidth=6;
-  ctx.beginPath(); ctx.moveTo(x-w*0.45, y+h*0.3);
-  ctx.quadraticCurveTo(x, y+h*0.75, x+w*0.45, y+h*0.3); ctx.stroke();
-  ctx.lineWidth=2.2; ctx.strokeStyle='rgba(255,240,200,0.9)';
-  for(let t=0.15;t<0.86;t+=0.14){
-    const px=x-w*0.45 + w*0.9*t;
-    ctx.beginPath(); ctx.moveTo(px, y-h*0.5);
-    ctx.quadraticCurveTo(px, y+h*0.1, px, y+h*0.3); ctx.stroke();
+function drawPlatform(p){
+  const x=platX(p), y=p.y, w=p.w, h=p.h;
+  if(p.type==='wood')        drawWood(x,y,w,h);
+  else if(p.type==='cloud')  drawCloudPlat(x,y,w,h);
+  else if(p.type==='plane')  drawPlanePlat(x,y,w,h);
+  else if(p.type==='rocket') drawRocketPlat(x,y,w,h);
+  else if(p.type==='coinSmall') drawCoinPlat(x,y,w,h);
+  else /*heavenCloud*/       drawHeavenCloudPlat(x,y,w,h);
+}
+
+/* ---------- Hemelkleuren & overgangen ---------- */
+function drawSky(){
+  const alt=-camY;
+
+  // Basiskleuren
+  const EARTH_TOP=[114,198,255],  EARTH_BOT=[167,231,191];
+  const CLOUD_TOP=[187,223,255],  CLOUD_BOT=[142,198,255];
+  const MID_TOP=[60,110,170],     MID_BOT=[20,40,70];
+  const SPACE_TOPC=[11,14,42],    SPACE_BOTC=[0,0,5];
+  const HEAVEN_TOPC=[244,236,255],HEAVEN_BOTC=[217,204,255];
+
+  // Voor wolken: eerst 20 sprongen op aarde, dan zachte fade-in over ~5 sprongen
+  const cloudFade = jumps < JUMPS_TO_CLOUDS ? 0 : Math.min(1,(jumps - JUMPS_TO_CLOUDS)/5);
+
+  let topCol=[...EARTH_TOP], botCol=[...EARTH_BOT];
+  // Meng naar wolken afhankelijk van cloudFade
+  for(let i=0;i<3;i++){
+    topCol[i] = Math.round(EARTH_TOP[i]*(1-cloudFade)+CLOUD_TOP[i]*cloudFade);
+    botCol[i] = Math.round(EARTH_BOT[i]*(1-cloudFade)+CLOUD_BOT[i]*cloudFade);
+  }
+
+  // Hogerop meng naar donker en uiteindelijk naar heaven
+  const toSpace = Math.max(0, Math.min(1, (alt - 8000)/12000));
+  if(toSpace>0){
+    for(let i=0;i<3;i++){
+      topCol[i]=Math.round(topCol[i]*(1-toSpace)+MID_TOP[i]*toSpace);
+      botCol[i]=Math.round(botCol[i]*(1-toSpace)+MID_BOT[i]*toSpace);
+    }
+  }
+  const toDeep = Math.max(0, Math.min(1, (alt - 20000)/14000));
+  if(toDeep>0){
+    for(let i=0;i<3;i++){
+      topCol[i]=Math.round(topCol[i]*(1-toDeep)+SPACE_TOPC[i]*toDeep);
+      botCol[i]=Math.round(botCol[i]*(1-toDeep)+SPACE_BOTC[i]*toDeep);
+    }
+  }
+  const toHeaven = Math.max(0, Math.min(1, (alt - 32000)/8000));
+  if(toHeaven>0){
+    for(let i=0;i<3;i++){
+      topCol[i]=Math.round(SPACE_TOPC[i]*(1-toHeaven)+HEAVEN_TOPC[i]*toHeaven);
+      botCol[i]=Math.round(SPACE_BOTC[i]*(1-toHeaven)+HEAVEN_BOTC[i]*toHeaven);
+    }
+  }
+
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,`rgb(${topCol[0]},${topCol[1]},${topCol[2]})`);
+  g.addColorStop(1,`rgb(${botCol[0]},${botCol[1]},${botCol[2]})`);
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+
+  // Hemelse lichtstralen als je in de buurt komt
+  if(toHeaven>0.15){
+    const alpha=0.04 + 0.22*(toHeaven-0.15);
+    const cx=W*.5, cy=H*.2;
+    for(let i=0;i<4;i++){
+      const ang=i/4*Math.PI*2 + env.t*.04;
+      const x2=cx+Math.cos(ang)*W*.9, y2=cy+Math.sin(ang)*H*.9;
+      const lg=ctx.createLinearGradient(cx,cy,x2,y2);
+      lg.addColorStop(0,`rgba(255,255,255,${Math.min(0.22,alpha)})`); lg.addColorStop(1,'rgba(255,255,255,0)');
+      ctx.fillStyle=lg; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(x2,y2);
+      ctx.lineTo(cx+Math.cos(ang+.12)*W*.6, cy+Math.sin(ang+.12)*H*.6); ctx.closePath(); ctx.fill();
+    }
   }
 }
 
-/* Halo-ring platform (zwevend) */
-function drawHaloRingPlat(x,y,w,h){
-  const r=Math.min(w,h)*0.46;
-  const glow=ctx.createRadialGradient(x,y,2,x,y,r*1.6);
-  glow.addColorStop(0,'rgba(255,245,200,.35)'); glow.addColorStop(1,'rgba(255,245,200,0)');
-  ctx.fillStyle=glow; ctx.beginPath(); ctx.arc(x,y,r*1.6,0,Math.PI*2); ctx.fill();
-  ctx.lineWidth=6; ctx.strokeStyle='rgba(255,230,150,0.95)';
-  ctx.beginPath(); ctx.ellipse(x,y,r,r*0.55,0,0,Math.PI*2); ctx.stroke();
-}
+/* ---------- Renderwereld met juiste laag-volgorde ---------- */
+function inView(y,pad=200){return y>camY-pad && y<camY+H+pad;}
 
-/* ---------- Achtergrond: subtiele vliegtuigen ---------- */
-function makePlane(y){
-  const dir=Math.random()<0.5?-1:1;
-  return {x:rnd(40,W-40), y, vx:dir*rnd(24,40), dir, trail:0, phase:Math.random()*6.28};
-}
-function drawPlane(p){
-  // zeer subtiele condensstreep
-  ctx.save();
-  ctx.globalAlpha=0.18*p.trail;
-  ctx.strokeStyle='#e8f2ff'; ctx.lineWidth=1.5;
-  ctx.beginPath(); ctx.moveTo(p.x-38*p.dir, p.y+3); ctx.lineTo(p.x, p.y+3); ctx.stroke();
-  // klein vliegtuig, iets geblurd & gedimd
-  ctx.filter='blur(0.6px) brightness(0.92)';
-  ctx.globalAlpha=0.35;
-  const g=ctx.createLinearGradient(p.x,p.y-10,p.x,p.y+10);
-  g.addColorStop(0,'#eff5ff'); g.addColorStop(1,'#c9d6ef');
-  ctx.fillStyle=g; roundRect(p.x-18, p.y-10, 36, 20, 8); ctx.fill();
-  ctx.fillStyle='#b7c8e6'; roundRect(p.x-32, p.y-6, 64, 12, 6); ctx.fill();
-  ctx.fillStyle='#5fa3e3'; roundRect(p.x-6, p.y-8, 12, 7, 3); ctx.fill();
-  ctx.filter='none';
+function drawWorld(){
+  drawSky();
+  ctx.save(); ctx.translate(0,-camY);
+
+  // Aarde (grond/bergen/stad/birds)
+  if(inView(GROUND_Y)){
+    ctx.fillStyle='#2a4a2f'; ctx.fillRect(0, GROUND_Y+10, W, 80);
+    drawHillsBand(env.hills);
+    for(const l of env.city) drawCityBand(l);
+    drawTreeLineBand(env.trees);
+    for(const b of env.birds) if(inView(b.y,0)) drawBird(b);
+  }
+
+  // *** ACHTERGROND-VLIETUIGEN EERST ***
+  for(const p of env.planes) if(inView(p.y)) drawBGPlane(p);
+
+  // *** DAN de WOLKEN (vliegtuigen zitten visueel erachter) ***
+  for(const c of env.clouds) if(inView(c.y)) drawCloud(c);
+
+  // Space: sterren/maan/planeten (alleen zichtbaar diep genoeg)
+  if(camY < SPACE_TOP + H){
+    const alt=-camY;
+    const starAlpha=Math.min(1, Math.max(0,(alt - 22000)/12000));
+    for(const s of env.stars){
+      if(inView(s.y,0)){
+        const tw=0.4 + 0.6*(0.5+0.5*Math.sin(env.t*2 + s.tw));
+        ctx.globalAlpha=starAlpha*(0.18 + 0.6*tw);
+        ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fillStyle='#cfe6ff'; ctx.fill();
+        ctx.globalAlpha=1;
+      }
+    }
+    if(env.moon && inView(env.moon.y,200)) drawMoon(env.moon);
+    for(const p of env.planets) if(inView(p.y)) drawPlanet(p);
+  }
+
+  // Grote lichtgevende CBS-coin (plaats wordt later gezet)
+  if(env.bigCoin.y>-90000 && inView(env.bigCoin.y, H*2)) drawBigCoinLight(env.bigCoin);
+
   ctx.restore();
-  ctx.globalAlpha=1;
 }
 
-/* Space: sterren/maan/planeten */
-function makePlanet(y){ return {x:rnd(60,W-60), y, r:rnd(18,36), hue:rnd(180,360)}; }
-function drawPlanet(p){
-  const grad=ctx.createRadialGradient(p.x-p.r*0.5,p.y-p.r*0.5,p.r*0.2,p.x,p.y,p.r*1.1);
-  grad.addColorStop(0,`hsl(${p.hue},60%,75%)`); grad.addColorStop(1,`hsl(${p.hue},60%,35%)`);
-  ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
-  ctx.globalAlpha=.28; ctx.strokeStyle='#fff'; ctx.lineWidth=1.6;
-  ctx.beginPath(); ctx.ellipse(p.x,p.y+3,p.r*1.2,p.r*0.35,0,0,Math.PI*2); ctx.stroke(); ctx.globalAlpha=1;
-}
-function makeMoon(y,x,r){ return {x,y,r}; }
-function drawMoon(m){
-  const g=ctx.createRadialGradient(m.x-m.r*0.3,m.y-m.r*0.3,m.r*0.2,m.x,m.y,m.r*1.1);
-  g.addColorStop(0,'#ffffff'); g.addColorStop(1,'#c8c8d0');
-  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(m.x,m.y,m.r,0,Math.PI*2); ctx.fill();
-  ctx.fillStyle='rgba(120,120,140,.35)';
-  for(let i=0;i<6;i++){
-    const ang=Math.random()*Math.PI*2, rr=rnd(m.r*0.1,m.r*0.22);
-    const rx=m.x+Math.cos(ang)*rnd(0,m.r*0.55), ry=m.y+Math.sin(ang)*rnd(0,m.r*0.55);
-    ctx.beginPath(); ctx.ellipse(rx,ry,rr,rr*0.7,ang,0,Math.PI*2); ctx.fill();
-  }
-}
-
-/* ---------- Heaven: poort + coins + Big Coin ---------- */
-function drawGoldenGate(g){
-  const x=W*0.5, y=g.y, w=g.w, h=g.h;
-  const glow=ctx.createRadialGradient(x, y+h*0.4, 10, x, y+h*0.4, Math.max(W,H)*0.65);
-  glow.addColorStop(0,'rgba(255,223,130,0.18)'); glow.addColorStop(1,'rgba(255,223,130,0)');
-  ctx.fillStyle=glow; ctx.fillRect(x-W, y-h, W*2, H*2);
-
-  const colW=30, colR=10, lgCol=ctx.createLinearGradient(0,y,0,y+h);
-  lgCol.addColorStop(0,'#ffd76a'); lgCol.addColorStop(1,'#caa03a');
-  ctx.fillStyle=lgCol;
-  roundRect(W*0.5-w*0.35, y, colW, h, colR); ctx.fill();
-  roundRect(W*0.5+w*0.35-colW, y, colW, h, colR); ctx.fill();
-
-  const archTop=y-h*0.06, archBot=y+h*0.56, gradArch=ctx.createLinearGradient(0,archTop,0,archBot);
-  gradArch.addColorStop(0,'#ffe48f'); gradArch.addColorStop(1,'#cfa33f');
-  ctx.strokeStyle=gradArch; ctx.lineWidth=14;
-  ctx.beginPath(); ctx.moveTo(W*0.5-w*0.35+colW, archBot);
-  ctx.quadraticCurveTo(W*0.5, archTop, W*0.5+w*0.35-colW, archBot); ctx.stroke();
-
-  ctx.lineWidth=3; ctx.strokeStyle='rgba(255,236,170,0.7)';
-  for(let t=0.1;t<0.9;t+=0.12){
-    ctx.beginPath();
-    const tx=W*0.5 - w*0.3 + t*w*0.6;
-    ctx.moveTo(tx, archBot-6);
-    ctx.quadraticCurveTo(W*0.5, archTop+12, W*0.5+(W*0.5-tx), archBot-6);
-    ctx.stroke();
-  }
-
-  const baseY=y+h*0.63, sg=ctx.createLinearGradient(0,baseY,0,baseY+18);
-  sg.addColorStop(0,'#e9e9ee'); sg.addColorStop(1,'#bdbdd2');
-  ctx.fillStyle=sg; roundRect(W*0.5-(w*0.85)/2, baseY+9, w*0.85, 18, 10); ctx.fill();
-}
-function drawHeavenCoin(c){
-  const g=ctx.createRadialGradient(c.x-c.r*.35,c.y-c.r*.35,c.r*.2,c.x,c.y,c.r*1.1);
-  g.addColorStop(0,'#fff6c8'); g.addColorStop(0.55,'#f6d36a'); g.addColorStop(1,'#b78628');
-  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(c.x,c.y,c.r,0,Math.PI*2); ctx.fill();
-  ctx.lineWidth=2; ctx.strokeStyle='rgba(255,255,255,.45)';
-  ctx.beginPath(); ctx.arc(c.x,c.y,c.r-1,0,Math.PI*2); ctx.stroke();
-  if(logo.complete){
-    ctx.save(); ctx.beginPath(); ctx.arc(c.x,c.y,c.r-2,0,Math.PI*2); ctx.clip();
-    ctx.drawImage(logo, c.x-(c.r-2), c.y-(c.r-2), (c.r-2)*2, (c.r-2)*2); ctx.restore();
-  }
-}
+/* ---------- Big coin ---------- */
 function drawBigCoinLight(bc){
-  const x=W*0.5, y=bc.y, r=bc.r;
+  const x=bc.x, y=bc.y, r=bc.r;
   const farGlow=ctx.createRadialGradient(x,y,60,x,y,Math.max(W,H)*0.95);
   farGlow.addColorStop(0,'rgba(255,245,160,0.12)'); farGlow.addColorStop(1,'rgba(255,245,160,0)');
   ctx.fillStyle=farGlow; ctx.fillRect(0, y-2*H, W, 4*H);
@@ -552,122 +606,6 @@ function drawBigCoinLight(bc){
     ctx.save(); ctx.beginPath(); ctx.arc(x,y,r-6,0,Math.PI*2); ctx.clip();
     ctx.drawImage(logo, x-(r-6), y-(r-6), (r-6)*2, (r-6)*2); ctx.restore();
   }
-}
-
-/* ---------- Hemelkleuren & overgangen ---------- */
-function drawSky(){
-  const alt=-camY;
-  const EARTH_TOP=[114,198,255],  EARTH_BOT=[167,231,191];
-  const CLOUD_TOP=[187,223,255],  CLOUD_BOT=[142,198,255];
-  const MID_TOP=[60,110,170],     MID_BOT=[20,40,70];
-  const SPACE_TOPC=[11,14,42],    SPACE_BOTC=[0,0,5];
-  const HEAVEN_TOPC=[244,236,255],HEAVEN_BOTC=[217,204,255];
-
-  function seg(a,b){return {a,b,length:(b-a)}}
-  const sEarth=seg(-200, -TROPO_TOP);
-  const sMid  =seg(-TROPO_TOP, -SPACE_TOP);
-  const sSpace=seg(-SPACE_TOP, -HEAVEN_TOP);
-  const sHeav =seg(-HEAVEN_TOP, 8000);
-
-  let topCol,botCol;
-  if(alt<=sEarth.a){ topCol=EARTH_TOP; botCol=EARTH_BOT; }
-  else if(alt<sEarth.b){ topCol=EARTH_TOP; botCol=EARTH_BOT; }
-  else if(alt<sMid.b){
-    const t=(alt - sEarth.b)/sMid.length;
-    topCol=[Math.round(CLOUD_TOP[0]*(1-t)+MID_TOP[0]*t),
-            Math.round(CLOUD_TOP[1]*(1-t)+MID_TOP[1]*t),
-            Math.round(CLOUD_TOP[2]*(1-t)+MID_TOP[2]*t)];
-    botCol=[Math.round(CLOUD_BOT[0]*(1-t)+MID_BOT[0]*t),
-            Math.round(CLOUD_BOT[1]*(1-t)+MID_BOT[1]*t),
-            Math.round(CLOUD_BOT[2]*(1-t)+MID_BOT[2]*t)];
-  } else if(alt<sSpace.b){
-    const t=(alt - sMid.b)/sSpace.length;
-    topCol=[Math.round(MID_TOP[0]*(1-t)+SPACE_TOPC[0]*t),
-            Math.round(MID_TOP[1]*(1-t)+SPACE_TOPC[1]*t),
-            Math.round(MID_TOP[2]*(1-t)+SPACE_TOPC[2]*t)];
-    botCol=[Math.round(MID_BOT[0]*(1-t)+SPACE_BOTC[0]*t),
-            Math.round(MID_BOT[1]*(1-t)+SPACE_BOTC[1]*t),
-            Math.round(MID_BOT[2]*(1-t)+SPACE_BOTC[2]*t)];
-  } else {
-    const t=Math.min(1,(alt - sSpace.b)/sHeav.length);
-    topCol=[Math.round(SPACE_TOPC[0]*(1-t)+HEAVEN_TOPC[0]*t),
-            Math.round(SPACE_TOPC[1]*(1-t)+HEAVEN_TOPC[1]*t),
-            Math.round(SPACE_TOPC[2]*(1-t)+HEAVEN_TOPC[2]*t)];
-    botCol=[Math.round(SPACE_BOTC[0]*(1-t)+HEAVEN_BOTC[0]*t),
-            Math.round(SPACE_BOTC[1]*(1-t)+HEAVEN_BOTC[1]*t),
-            Math.round(SPACE_BOTC[2]*(1-t)+HEAVEN_BOTC[2]*t)];
-  }
-
-  const g=ctx.createLinearGradient(0,0,0,H);
-  g.addColorStop(0,`rgb(${topCol[0]},${topCol[1]},${topCol[2]})`);
-  g.addColorStop(1,`rgb(${botCol[0]},${botCol[1]},${botCol[2]})`);
-  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-
-  // hemelse lichtstralen al voor heaven
-  if(alt > -HEAVEN_TOP - 2000){
-    const near=Math.min(1,(alt + HEAVEN_TOP + 2000)/2000);
-    const alpha=0.04 + 0.18*near;
-    const cx=W*.5, cy=H*.2;
-    for(let i=0;i<4;i++){
-      const ang=i/4*Math.PI*2 + env.t*.04;
-      const x2=cx+Math.cos(ang)*W*.9, y2=cy+Math.sin(ang)*H*.9;
-      const lg=ctx.createLinearGradient(cx,cy,x2,y2);
-      lg.addColorStop(0,`rgba(255,255,255,${alpha})`); lg.addColorStop(1,'rgba(255,255,255,0)');
-      ctx.fillStyle=lg; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(x2,y2);
-      ctx.lineTo(cx+Math.cos(ang+.12)*W*.6, cy+Math.sin(ang+.12)*H*.6); ctx.closePath(); ctx.fill();
-    }
-  }
-}
-
-/* ---------- Tekenwereld ---------- */
-function inView(y,pad=200){return y>camY-pad && y<camY+H+pad;}
-
-function drawWorld(){
-  drawSky();
-  ctx.save(); ctx.translate(0,-camY);
-
-  // Aarde
-  if(inView(GROUND_Y)){
-    ctx.fillStyle='#2a4a2f'; ctx.fillRect(0, GROUND_Y+10, W, 80);
-    drawHillsBand(env.hills);
-    for(const l of env.city) drawCityBand(l);
-    drawTreeLineBand(env.trees);
-    for(const b of env.birds) if(inView(b.y,0)) drawBird(b);
-    for(const c of env.groundClouds) if(inView(c.y)) drawCloud(c);
-  }
-
-  // Wolken
-  for(const c of env.clouds) if(inView(c.y)) drawCloud(c);
-
-  // Strato (subtiele vliegtuigen)
-  for(const p of env.planes) if(inView(p.y)) drawPlane(p);
-
-  // Space
-  if(camY < SPACE_TOP + H){
-    const alt=-camY;
-    const starAlpha=Math.min(1, Math.max(0,(alt + SPACE_TOP)/(-SPACE_TOP + STRATO_TOP)));
-    for(const s of env.stars){
-      if(inView(s.y,0)){
-        const tw=0.4 + 0.6*(0.5+0.5*Math.sin(env.t*2 + s.tw));
-        ctx.globalAlpha=starAlpha*(0.18 + 0.6*tw);
-        ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fillStyle='#cfe6ff'; ctx.fill();
-        ctx.globalAlpha=1;
-      }
-    }
-    if(env.moon && inView(env.moon.y,200)) drawMoon(env.moon);
-    if(camY < DEEP_SPACE + H) for(const p of env.planets) if(inView(p.y)) drawPlanet(p);
-  }
-
-  // Grote licht-coin (veel later)
-  if(inView(env.bigCoin.y, H*2)) drawBigCoinLight(env.bigCoin);
-
-  // Poort + coins (heaven)
-  if(camY < HEAVEN_TOP + H){
-    drawGoldenGate(env.heavenGate);
-    for(const c of env.heavenCoins) if(inView(c.y,50)) drawHeavenCoin(c);
-  }
-
-  ctx.restore();
 }
 
 /* ---------- Botsing ---------- */
@@ -685,7 +623,9 @@ function tryLandOn(p,dt){
 
 /* ================ Lifecycle & Loop ================ */
 function startRun(){
+  gameOver=false;
   player.r=Math.max(26,Math.min(42,H*0.04));
+  jumps=0; heavenEntered=false; heavenCoinCount=0; bigCoinPlaced=false;
   currentPlat=makePlatform(W/2, GROUND_Y-8, true);
   currentPlat.lastX=platX(currentPlat);
   player.x=W/2; player.y=platTop(currentPlat)-player.r;
@@ -699,44 +639,60 @@ resize(); startRun();
 let last=performance.now();
 function loop(now){
   let dt=(now-last)/1000; last=now; if(dt>0.05) dt=0.05;
-  env.update(dt);
 
-  const fixed=0.008, steps=Math.max(1,Math.ceil(dt/fixed)), h=dt/steps;
-  for(let i=0;i<steps;i++){
-    const prevXc=currentPlat?currentPlat.lastX:0, prevXn=nextPlat?nextPlat.lastX:0;
-    if(nextPlat&&!nextPlat.isBase) nextPlat.phase+=nextPlat.speed*h;
-    if(currentPlat&&!currentPlat.isBase) currentPlat.phase+=currentPlat.speed*h;
-    if(currentPlat) currentPlat.lastX=platX(currentPlat); if(nextPlat) nextPlat.lastX=platX(nextPlat);
-    const dxc=currentPlat?(currentPlat.lastX-prevXc):0, dxn=nextPlat?(nextPlat.lastX-prevXn):0;
+  if(!gameOver){
+    env.update(dt);
 
-    if(groundPlat){
-      const dx=(groundPlat.id===currentPlat?.id)?dxc:(groundPlat.id===nextPlat?.id?dxn:0);
-      player.x=Math.max(player.r,Math.min(W-player.r,player.x+dx));
-      player.y=platTop(groundPlat)-player.r; player.vy=Math.max(0,player.vy);
-      player.onGround=true; player.coyote=COYOTE;
-    }else{
-      player.vy+=GRAV*h; player.y+=player.vy*h; player.coyote=Math.max(0,player.coyote-h); player.onGround=false;
-      const landed=tryLandOn(nextPlat,h) || tryLandOn(currentPlat,h);
-      if(landed){
-        if(groundPlat && groundPlat.id===nextPlat?.id){
-          currentPlat=nextPlat; nextPlat=spawnNextAbove(currentPlat); nextPlat.lastX=platX(nextPlat);
+    const fixed=0.008, steps=Math.max(1,Math.ceil(dt/fixed)), h=dt/steps;
+    for(let i=0;i<steps;i++){
+      const prevXc=currentPlat?currentPlat.lastX:0, prevXn=nextPlat?nextPlat.lastX:0;
+      if(nextPlat&&!nextPlat.isBase) nextPlat.phase+=nextPlat.speed*h;
+      if(currentPlat&&!currentPlat.isBase) currentPlat.phase+=currentPlat.speed*h;
+      if(currentPlat) currentPlat.lastX=platX(currentPlat); if(nextPlat) nextPlat.lastX=platX(nextPlat);
+      const dxc=currentPlat?(currentPlat.lastX-prevXc):0, dxn=nextPlat?(nextPlat.lastX-prevXn):0;
+
+      if(groundPlat){
+        const dx=(groundPlat.id===currentPlat?.id)?dxc:(groundPlat.id===nextPlat?.id?dxn:0);
+        player.x=Math.max(player.r,Math.min(W-player.r,player.x+dx));
+        player.y=platTop(groundPlat)-player.r; player.vy=Math.max(0,player.vy);
+        player.onGround=true; player.coyote=COYOTE;
+      }else{
+        player.vy+=GRAV*h; player.y+=player.vy*h; player.coyote=Math.max(0,player.coyote-h); player.onGround=false;
+        const landedNext=tryLandOn(nextPlat,h);
+        const landedCurr=!landedNext && tryLandOn(currentPlat,h);
+        if(landedNext || landedCurr){
+          // Tel alleen wanneer je op een nieuw platform landt
+          jumps++;
+          // schuif omhoog als je nextPlat was
+          if(landedNext){
+            currentPlat=nextPlat; nextPlat=spawnNextAbove(currentPlat); nextPlat.lastX=platX(nextPlat);
+          }
         }
       }
     }
+
+    if(player.y<camY+H*0.45) camY=player.y-H*0.45;
+    if(player.y-camY>H+260) startRun();
+
+    // Finish: boven de grote CBS-coin is het klaar
+    if(env.bigCoin.y>-90000 && player.y < (env.bigCoin.y - env.bigCoin.r*1.05)){
+      gameOver=true;
+    }
   }
 
-  if(player.y<camY+H*0.45) camY=player.y-H*0.45;
-  if(player.y-camY>H+240) startRun();
-
+  // HUD meters
   const m=Math.max(0,Math.floor((-player.y + GROUND_Y)/6));
   if(m!==meters){ meters=m; hud.textContent=m+" m"; }
 
+  // Render
   ctx.clearRect(0,0,W,H);
   drawWorld();
 
+  // Platforms + speler
   ctx.save(); ctx.translate(0,-camY);
   if(currentPlat && inView(currentPlat.y)) drawPlatform(currentPlat);
   if(nextPlat    && inView(nextPlat.y))    drawPlatform(nextPlat);
+
   // Speler (CBS coin)
   const x=player.x,y=player.y,r=player.r;
   const g=ctx.createRadialGradient(x-r*.35,y-r*.35,r*.2,x,y,r*1.15);
@@ -747,12 +703,33 @@ function loop(now){
   if(logo.complete){ ctx.save(); ctx.beginPath(); ctx.arc(x,y,r-3,0,Math.PI*2); ctx.clip(); ctx.drawImage(logo, x-r, y-r, r*2, r*2); ctx.restore(); }
   ctx.restore();
 
+  // Game Over overlay
+  if(gameOver){
+    ctx.save();
+    ctx.fillStyle='rgba(0,0,0,0.45)'; ctx.fillRect(0,0,W,H);
+    ctx.shadowColor='rgba(255,255,200,0.6)'; ctx.shadowBlur=24;
+    ctx.fillStyle='#fff8cc';
+    ctx.font=`700 ${Math.max(22, Math.min(48, W*0.04))}px system-ui, sans-serif`;
+    const text='CBS-Community builds souvereignty.';
+    const tw=ctx.measureText(text).width;
+    ctx.fillText(text, (W-tw)/2, H*0.45);
+    ctx.shadowBlur=0; ctx.fillStyle='#e8f0ff';
+    ctx.font=`600 ${Math.max(16, Math.min(28, W*0.02))}px system-ui, sans-serif`;
+    const sub='Klik of druk op R / Spatie om opnieuw te starten';
+    const sw=ctx.measureText(sub).width;
+    ctx.fillText(sub, (W-sw)/2, H*0.52);
+    ctx.restore();
+  }
+
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
 
 /* ================ Utils ================ */
 function rnd(a,b){return a+Math.random()*(b-a)}
+
+/* ---------- Extra helpers (trees/hills etc.) ---------- */
+function drawBigCoinLight(bc){ /* (boven staat de echte definitie) */ } // dummy to keep linter quiet
 </script>
 </body>
 </html>
