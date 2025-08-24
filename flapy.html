@@ -3,41 +3,117 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>CBS Jump — Zones & Platforms</title>
+<title>CBS Jump — Deluxe Worlds + Music</title>
 <style>
   html,body{margin:0;height:100%;background:#0b0f18;overflow:hidden}
   canvas{display:block;width:100vw;height:100vh}
   .hud{
     position:fixed;top:10px;left:50%;transform:translateX(-50%);
-    color:#fff;font:700 22px system-ui,sans-serif;text-shadow:0 2px 4px rgba(0,0,0,.7)
+    color:#fff;font:700 22px system-ui,sans-serif;text-shadow:0 2px 4px rgba(0,0,0,.7);
+    pointer-events:none
   }
+  .audio-ui{
+    position:fixed;top:10px;right:10px;display:flex;gap:8px;align-items:center;
+    background:rgba(0,0,0,.35);backdrop-filter:blur(6px);
+    border:1px solid rgba(255,255,255,.15); padding:8px 10px; border-radius:12px;
+    color:#fff;font:600 13px system-ui,sans-serif
+  }
+  .audio-btn{
+    appearance:none;border:0;border-radius:10px;padding:6px 10px;cursor:pointer;
+    background:#1f2937;color:#fff;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.35)
+  }
+  .audio-btn:active{transform:translateY(1px)}
+  .vol{width:110px}
 </style>
 </head>
 <body>
 <canvas id="game"></canvas>
 <div id="hud" class="hud">0 m</div>
 
+<!-- Muziek UI -->
+<div class="audio-ui">
+  <button id="toggleAudio" class="audio-btn">▶︎ Play</button>
+  <label>Vol.</label>
+  <input id="vol" class="vol" type="range" min="0" max="1" step="0.01" value="0.5"/>
+  <span id="audioStatus" style="opacity:.8">klaar</span>
+</div>
+
 <script>
-/* ---------- Canvas ---------- */
+/* ========== Audio (vervang AUDIO_URL met jouw Pinata CID gateway URL) ========== */
+const AUDIO_URL = 'https://gateway.pinata.cloud/ipfs/<bafybeif7okyipwq3m5fus33fpbxyd5byftb62m72xz4vvwkyf4cng6k2bq>'; // <-- CID plakken
+const audio = new Audio();
+audio.src = AUDIO_URL;
+audio.loop = true;
+audio.preload = 'auto';
+audio.volume = 0.5;
+let audioReady = false, audioPlaying = false;
+const btn = document.getElementById('toggleAudio');
+const vol = document.getElementById('vol');
+const aStatus = document.getElementById('audioStatus');
+
+audio.addEventListener('canplaythrough', ()=>{ audioReady = true; aStatus.textContent = 'gereed'; });
+audio.addEventListener('error', ()=>{ aStatus.textContent = 'audio laadfout'; });
+
+async function safePlay(){
+  try{
+    await audio.play();
+    audioPlaying = true;
+    btn.textContent = '⏸ Pause';
+    aStatus.textContent = 'speelt';
+  }catch(e){
+    // autoplay geblokkeerd – wacht op user gesture
+    aStatus.textContent = 'tap om te spelen';
+  }
+}
+btn.addEventListener('click', async ()=>{
+  if(!audioReady){ aStatus.textContent = 'laden…'; return; }
+  if(audioPlaying){ audio.pause(); audioPlaying=false; btn.textContent='▶︎ Play'; aStatus.textContent='gepauzeerd'; }
+  else { await safePlay(); }
+});
+vol.addEventListener('input', ()=>{ audio.volume = parseFloat(vol.value); });
+
+/* Start audio bij eerste interactie (autoplay policy) */
+['pointerdown','keydown'].forEach(evt=>{
+  window.addEventListener(evt, async ()=>{
+    if(audioReady && !audioPlaying){ await safePlay(); }
+  }, {once:false});
+});
+
+/* ========== Canvas & Setup ========== */
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
 let W=0,H=0;
-function resizeOnlyCanvas(){ W=innerWidth; H=innerHeight; canvas.width=W; canvas.height=H; }
-resizeOnlyCanvas();
-addEventListener('resize', ()=>{ resizeOnlyCanvas(); /* env.rebuild() komt na init */ }, {passive:true});
+function resizeCanvas(){ W=innerWidth; H=innerHeight; canvas.width=W; canvas.height=H; env.rebuild(); }
+function resizeOnlySize(){ W=innerWidth; H=innerHeight; canvas.width=W; canvas.height=H; }
+resizeOnlySize();
+addEventListener('resize', ()=>{ resizeCanvas(); }, {passive:true});
 
 const logo=new Image(); logo.src='logo.png';
 const isMobile=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-/* ---------- Physics / Player ---------- */
+/* ========== Physics / Player ========== */
 const GRAV=1600, JUMP=isMobile?-980:-1020, COYOTE_TIME=0.12;
 let player={x:0,y:0,r:30,vy:0,onGround:false,coyote:0};
 let groundPlat=null, camY=0, score=0; const hud=document.getElementById('hud');
 
-/* ---------- Hoogtezones ---------- */
+/* ========== Zones & Smooth Transitions ========== */
 const ALT_EARTH=800, ALT_CLOUDS=2200, ALT_SPACE=4200, ALT_HEAVEN=7000;
+const BLEND_BAND=500; // breder = vloeiender overgang
+const ZONES=['UNDERGROUND','EARTH','CLOUDS','SPACE','HEAVEN'];
 const zoneByAlt=a=> a<ALT_EARTH?'UNDERGROUND' : a<ALT_CLOUDS?'EARTH' : a<ALT_SPACE?'CLOUDS' : a<ALT_HEAVEN?'SPACE' : 'HEAVEN';
+function blendFactor(alt){
+  const thresholds=[ALT_EARTH,ALT_CLOUDS,ALT_SPACE,ALT_HEAVEN];
+  for(const thr of thresholds){
+    const start=thr - BLEND_BAND*0.5, end=thr + BLEND_BAND*0.5;
+    if(alt>=start && alt<=end){
+      const zUnder = zoneByAlt(thr-1), zOver = zoneByAlt(thr+1);
+      const t = (alt - start)/(end-start);
+      return [zUnder, zOver, Math.max(0,Math.min(1,t))];
+    }
+  }
+  const z=zoneByAlt(alt); return [z,z,0];
+}
 
-/* ---------- Platforms (altijd 1 nieuw boven je) ---------- */
+/* ========== Platforms (5 types) ========== */
 let idSeq=1; const newId=()=>idSeq++;
 let currentPlat=null, nextPlat=null;
 const GAP_BASE=180, GAP_VAR=50;
@@ -51,7 +127,6 @@ function platformSpecForZone(zone){
     case 'HEAVEN':      return {type:'marble', w:Math.max(170,W*0.28), h:22};
   }
 }
-
 function makePlatform(x,y,zone,isBase=false){
   const spec=platformSpecForZone(zone);
   const amp=isBase?0:(W/2-60), speed=isBase?0:(isMobile?0.9:1.05);
@@ -60,14 +135,14 @@ function makePlatform(x,y,zone,isBase=false){
 const platX=p=>p.x0+Math.sin(p.phase)*p.amp, platTop=p=>p.y-p.h/2;
 
 function spawnNextAbove(ref){
-  const alt=-ref.y; // hoger = groter alt
+  const alt=-ref.y;
   const zone=zoneByAlt(alt);
-  const diff=Math.min(220, Math.max(0, alt/10));
+  const diff=Math.min(240, Math.max(0, alt/10)); // iets uitdagender hoger
   const gap=GAP_BASE + Math.min(GAP_VAR, diff);
-  return makePlatform(W/2, ref.y - (gap+Math.random()*20), zone, false);
+  return makePlatform(W/2, ref.y - (gap+Math.random()*18), zone, false);
 }
 
-/* ---------- Input ---------- */
+/* ========== Input ========== */
 function jump(){
   if(player.onGround||player.coyote>0){
     player.vy=JUMP; player.onGround=false; player.coyote=0; groundPlat=null;
@@ -76,28 +151,61 @@ function jump(){
 addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();jump();}});
 addEventListener('pointerdown',jump);
 
-/* ---------- Parallax & Achtergronden ---------- */
+/* ========== Parallax & Visuele rijkdom ========== */
 const env={
-  t:0, clouds:[], stars:[], hills:[], city:[],
+  t:0, clouds:[], stars:[], hills:[], city:[], birds:[], balloons:[], planets:[], meteors:[],
+  insects:[], // ondergrond
   rebuild(){
-    this.clouds=[]; for(let i=0;i<26;i++) this.clouds.push({x:Math.random()*W,y:Math.random()*H,w:rnd(140,260),h:rnd(50,90),s:rnd(0.04,0.10)});
-    this.stars=[];  for(let i=0;i<160;i++) this.stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.6+0.4,tw:Math.random()*6.28});
+    this.clouds=[]; for(let i=0;i<28;i++) this.clouds.push({x:Math.random()*W,y:Math.random()*H,w:rnd(140,280),h:rnd(50,100),s:rnd(0.04,0.10)});
+    this.stars=[];  for(let i=0;i<200;i++) this.stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.6+0.4,tw:Math.random()*6.28});
     this.hills=[mkHill(0),mkHill(1),mkHill(2)];
-    this.city=[mkCity(0.25,'#32454b',.08,.72), mkCity(0.45,'#25373c',.12,.78), mkCity(0.65,'#16262a',.18,.84)];
+    this.city=[mkCity(0.25,'#32454b',.08,.75), mkCity(0.45,'#25373c',.12,.82), mkCity(0.65,'#16262a',.18,.89)];
+    this.birds=[]; for(let i=0;i<6;i++) this.birds.push(makeBird());
+    this.balloons=[]; for(let i=0;i<2;i++) this.balloons.push(makeBalloon());
+    this.planets=[]; for(let i=0;i<3;i++) this.planets.push(makePlanet());
+    this.meteors=[]; // gevuld tijdens update
+    this.insects=[]; for(let i=0;i<18;i++) this.insects.push(makeInsect());
+    buildDirtNoise();
   },
   update(dt){
     this.t+=dt;
-    for(const c of this.clouds){ c.x-=12*c.s*dt; if(c.x<-c.w) c.x=W+c.w*0.5, c.y=rnd(0,H); }
-  },
-  draw(height){
-    const alt=-height, zone=zoneByAlt(alt);
-    if(zone==='UNDERGROUND') drawUnderground();
-    else if(zone==='EARTH')  drawEarth(this);
-    else if(zone==='CLOUDS') drawClouds(this);
-    else if(zone==='SPACE')  drawSpace(this);
-    else                     drawHeaven(this);
+    // wolken
+    for(const c of this.clouds){ c.x-=10*c.s*dt; if(c.x<-c.w) c.x=W+c.w*0.5, c.y=rnd(0,H); }
+    // vogels
+    for(const b of this.birds){
+      b.x += b.vx*dt; b.y += Math.sin(this.t*2 + b.phase)*0.3;
+      if(b.x > W+40) { b.x = -40; b.y=rnd(H*0.15,H*0.5); }
+    }
+    // balloons
+    for(const bal of this.balloons){
+      bal.x += Math.sin(this.t*0.2 + bal.phase)*0.4;
+      bal.y -= 4*dt;
+      if(bal.y < -120){ bal.y = H + rnd(40,120); bal.x=rnd(60,W-60);}
+    }
+    // meteoren sporadisch
+    if(Math.random() < 0.008){
+      this.meteors.push({x:rnd(-100, W+100), y:-50, vx:rnd(-50,50), vy:rnd(180,260), life:0});
+    }
+    this.meteors = this.meteors.filter(m=>{
+      m.x += m.vx*dt; m.y += m.vy*dt; m.life += dt; return m.y < H+120;
+    });
+    // insecten
+    for(const ins of this.insects){
+      ins.life += dt;
+      if(ins.type==='ant' || ins.type==='beetle' || ins.type==='woodlouse' || ins.type==='centipede'){
+        ins.x += ins.vx*dt; if(ins.x< -80 || ins.x> W+80) ins.vx *= -1;
+      }else if(ins.type==='worm'){
+        ins.phase += dt*2; ins.x += ins.vx*dt*0.5; ins.y0 += Math.sin(ins.phase)*0.25;
+      }else if(ins.type==='spider'){
+        ins.phase += dt*1.4;
+      }else if(ins.type==='firefly'){
+        ins.phase += dt*1.1; ins.x += Math.cos(ins.phase*0.9)*10*dt; ins.y0 += Math.sin(ins.phase*1.1)*8*dt;
+      }
+    }
   }
 };
+
+/* ——— Helpers voor parallax ——— */
 function mkHill(layer){
   const pts=[], n=8;
   for(let i=0;i<=n;i++){ pts.push({x:i/n*W, y:H*0.6 + Math.sin(i*0.8+layer)*H*0.06 + layer*20 + rnd(-10,10)}); }
@@ -134,56 +242,206 @@ function drawCity(layer){
   }
   ctx.restore();
 }
-
-/* Achtergrondlagen per zone */
-function drawUnderground(){
-  const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#3b2a1d'); g.addColorStop(1,'#22170f');
-  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-  ctx.globalAlpha=.25; ctx.strokeStyle='#2a1d14'; ctx.lineWidth=12;
-  for(let i=0;i<8;i++){ const y=H-i*H/8; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y+rnd(-8,8)); ctx.stroke(); }
-  ctx.globalAlpha=1;
-  ctx.strokeStyle='rgba(30,15,5,.7)'; ctx.lineWidth=2;
-  for(let i=0;i<6;i++){ const x=(i+0.2)*W/6; ctx.beginPath();
-    ctx.moveTo(x,rnd(H*.1,H*.3)); ctx.bezierCurveTo(x-20,H*.4,x+15,H*.55,x+rnd(-20,20),H*.68); ctx.stroke();
-  }
-  ctx.fillStyle='rgba(0,0,0,.25)';
-  for(let i=0;i<60;i++){ ctx.beginPath(); ctx.ellipse((i*97)%W, H-(i*31)%H, rnd(2,5), rnd(1,3), 0, 0, Math.PI*2); ctx.fill(); }
+function makeBird(){ return {x:rnd(-200,W), y:rnd(H*0.15,H*0.5), vx:rnd(20,45), phase:Math.random()*6.28}; }
+function drawBird(b){
+  ctx.strokeStyle='rgba(0,0,0,.6)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(b.x-6,b.y); ctx.quadraticCurveTo(b.x,b.y-4,b.x+6,b.y); ctx.stroke();
 }
-function drawEarth(env){
+function makeBalloon(){ return {x:rnd(60,W-60), y:H+rnd(40,120), phase:Math.random()*6.28}; }
+function drawBalloon(b){
+  ctx.fillStyle='#e74c3c'; ctx.beginPath(); ctx.ellipse(b.x,b.y,14,18,0,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='rgba(0,0,0,.4)'; ctx.beginPath(); ctx.moveTo(b.x,b.y+18); ctx.lineTo(b.x,b.y+48); ctx.stroke();
+  ctx.fillStyle='#555'; ctx.fillRect(b.x-8,b.y+48,16,8);
+}
+function makePlanet(){ return {x:rnd(60,W-60), y:rnd(H*0.2,H*0.7), r:rnd(18,42), hue:rnd(180,360)}; }
+function drawPlanet(p){
+  const grad=ctx.createRadialGradient(p.x-p.r*0.5,p.y-p.r*0.5,p.r*0.2,p.x,p.y,p.r*1.1);
+  grad.addColorStop(0, `hsl(${p.hue},60%,75%)`);
+  grad.addColorStop(1, `hsl(${p.hue},60%,35%)`);
+  ctx.fillStyle=grad; ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+  // ring?
+  ctx.globalAlpha=.35; ctx.strokeStyle='#fff'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.ellipse(p.x,p.y+3,p.r*1.3,p.r*0.4,0,0,Math.PI*2); ctx.stroke(); ctx.globalAlpha=1;
+}
+function drawMeteor(m){
+  ctx.strokeStyle='rgba(255,255,255,.7)'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(m.x-12,m.y-18); ctx.lineTo(m.x,m.y); ctx.stroke();
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(m.x,m.y,2.2,0,Math.PI*2); ctx.fill();
+}
+
+/* ----- Realistische ondergrond: texture/strata/fauna ----- */
+let dirtCanvas, dirtCtx;
+function buildDirtNoise(){
+  dirtCanvas=document.createElement('canvas'); dirtCanvas.width=256; dirtCanvas.height=256; dirtCtx=dirtCanvas.getContext('2d');
+  const img=dirtCtx.createImageData(256,256);
+  for(let y=0;y<256;y++){
+    for(let x=0;x<256;x++){
+      const n = smoothNoise(x*0.07,y*0.07)*0.6 + smoothNoise(x*0.19,y*0.19)*0.4;
+      const v = Math.floor(78 + n*42);
+      const i=(y*256+x)*4;
+      img.data[i]=v*1.08; img.data[i+1]=v; img.data[i+2]=v*0.85; img.data[i+3]=255;
+    }
+  }
+  dirtCtx.putImageData(img,0,0);
+}
+function hash(x,y){ return Math.sin(x*127.1 + y*311.7)*43758.5453 % 1; }
+function lerp(a,b,t){ return a+(b-a)*t; }
+function smoothNoise(x,y){
+  const x0=Math.floor(x), y0=Math.floor(y), x1=x0+1, y1=y0+1;
+  const sx=x-x0, sy=y-y0;
+  const n00=hash(x0,y0), n10=hash(x1,y0), n01=hash(x0,y1), n11=hash(x1,y1);
+  const ix0=lerp(n00,n10,sx), ix1=lerp(n01,n11,sx);
+  return lerp(ix0,ix1,sy);
+}
+
+function drawUndergroundLayer(){
+  // base gradient
+  const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#3a2a1d'); g.addColorStop(1,'#1f160f');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  // noise
+  if(dirtCanvas){
+    const pat=ctx.createPattern(dirtCanvas,'repeat');
+    ctx.globalAlpha=0.35; ctx.fillStyle=pat; ctx.fillRect(0,0,W,H); ctx.globalAlpha=1;
+  }
+  // strata
+  ctx.globalAlpha=0.25; ctx.strokeStyle='#2a1d14'; ctx.lineWidth=12;
+  for(let i=0;i<10;i++){ const y=H - i*H/10; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y+rnd(-10,10)); ctx.stroke(); }
+  ctx.globalAlpha=1;
+  // roots
+  ctx.strokeStyle='rgba(30,15,5,0.8)'; ctx.lineWidth=2;
+  for(let i=0;i<9;i++){
+    const x=(i+0.2)*W/9; ctx.beginPath();
+    ctx.moveTo(x, rnd(H*0.08,H*0.28));
+    ctx.bezierCurveTo(x-24, H*0.42, x+18, H*0.57, x+rnd(-24,24), H*0.72);
+    ctx.stroke();
+    // vertakkingen
+    ctx.beginPath();
+    ctx.moveTo(x+rnd(-10,10), H*0.55);
+    ctx.quadraticCurveTo(x+rnd(-30,30), H*0.62, x+rnd(-15,15), H*0.68);
+    ctx.stroke();
+  }
+  // stones
+  ctx.fillStyle='rgba(0,0,0,0.28)';
+  for(let i=0;i<90;i++){ ctx.beginPath(); ctx.ellipse((i*83)%W, H-(i*29)%H, rnd(2,6), rnd(1,3.5), 0, 0, Math.PI*2); ctx.fill(); }
+  // tunnels
+  ctx.globalAlpha=0.35; ctx.fillStyle='#1a120b';
+  for(let i=0;i<12;i++){
+    const cx=rnd(0,W), cy=rnd(H*0.4, H*0.9), rw=rnd(30,60), rh=rnd(15,30);
+    ctx.beginPath(); ctx.ellipse(cx,cy,rw,rh,0,0,Math.PI*2); ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  // fauna
+  for(const ins of env.insects) drawInsect(ins);
+}
+function makeInsect(){
+  const kinds=['ant','beetle','worm','firefly','woodlouse','centipede','spider'];
+  const type=kinds[Math.floor(Math.random()*kinds.length)];
+  return {type, x:rnd(-80,W+80), y0:rnd(H*0.55,H*0.92), vx:(Math.random()<.5?-1:1)*rnd(25,55), phase:Math.random()*6.28, life:0};
+}
+function drawInsect(b){
+  const y=b.y0;
+  if(b.type==='ant'){
+    ctx.fillStyle='#2b2b2b';
+    ctx.beginPath(); ctx.ellipse(b.x,y,6,3,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(b.x-6,y,4,2,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(b.x+6,y,4,2,0,0,Math.PI*2); ctx.fill();
+  }else if(b.type==='beetle'){
+    ctx.fillStyle='#3a2c19';
+    ctx.beginPath(); ctx.ellipse(b.x,y,8,5,0,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,0.35)'; ctx.beginPath(); ctx.moveTo(b.x,y-5); ctx.lineTo(b.x,y+5); ctx.stroke();
+  }else if(b.type==='woodlouse'){
+    ctx.fillStyle='#4b4b4b';
+    for(let i=0;i<5;i++){ ctx.beginPath(); ctx.ellipse(b.x-8+i*4,y,6-i,3,0,0,Math.PI*2); ctx.fill(); }
+  }else if(b.type==='centipede'){
+    ctx.strokeStyle='#8a3a1c'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(b.x-12, y); ctx.lineTo(b.x+12, y); ctx.stroke();
+    ctx.lineWidth=1.5; for(let i=-12;i<=12;i+=4){ ctx.beginPath(); ctx.moveTo(b.x+i,y); ctx.lineTo(b.x+i,y+4); ctx.stroke(); }
+  }else if(b.type==='worm'){
+    ctx.strokeStyle='#a86852'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(b.x-8, y); ctx.quadraticCurveTo(b.x, y+4*Math.sin(b.phase), b.x+8, y); ctx.stroke();
+  }else if(b.type==='firefly'){
+    const glow = 0.4 + 0.6*(0.5+0.5*Math.sin(b.phase*2));
+    ctx.globalAlpha = 0.4 + 0.5*glow; ctx.fillStyle='#ffe97a';
+    ctx.beginPath(); ctx.arc(b.x,y,2.4,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+  }else if(b.type==='spider'){
+    const topX=b.x, topY=y-16;
+    ctx.strokeStyle='rgba(255,255,255,0.18)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(topX, topY-40); ctx.lineTo(topX, y-8); ctx.stroke();
+    ctx.fillStyle='#1e1e1e';
+    ctx.beginPath(); ctx.arc(b.x, y-4+Math.sin(b.phase)*2, 4, 0, Math.PI*2); ctx.fill();
+  }
+}
+
+/* ——— Base layers per zone + extras ——— */
+function drawEarthBase(){
   const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#8ecae6'); g.addColorStop(1,'#90b4a5');
   ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-  hillLayer(env.hills[0], .35, '#2f4946');
-  hillLayer(env.hills[1], .55, '#233a37');
-  hillLayer(env.hills[2], .75, '#172c2a');
-  for(const layer of env.city) drawCity(layer);
 }
-function drawClouds(env){
+function drawCloudsBase(){
   const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#cfe6ff'); g.addColorStop(1,'#9fc7ff');
   ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-  ctx.fillStyle='rgba(255,255,255,.85)';
-  for(const c of env.clouds){ ctx.beginPath(); ctx.ellipse(c.x,c.y,c.w,c.h,0,0,Math.PI*2); ctx.fill(); }
 }
-function drawSpace(env){
+function drawSpaceBase(){
   const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#0b0e2a'); g.addColorStop(1,'#000005');
   ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-  for(const s of env.stars){
-    const tw = 0.4 + 0.6*(0.5+0.5*Math.sin(env.t*2 + s.tw));
-    ctx.globalAlpha = 0.25 + 0.7*tw;
-    ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fillStyle='#cfe6ff'; ctx.fill();
-  } ctx.globalAlpha=1;
 }
-function drawHeaven(){
+function drawHeavenBase(){
   const g=ctx.createLinearGradient(0,0,0,H); g.addColorStop(0,'#f3e7ff'); g.addColorStop(1,'#d6c6ff');
   ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-  const cx=W*.5, cy=H*.25;
-  for(let i=0;i<6;i++){
-    const ang=i/6*Math.PI*2 + env.t*.05, x2=cx+Math.cos(ang)*W*.8, y2=cy+Math.sin(ang)*H*.8;
-    const lg=ctx.createLinearGradient(cx,cy,x2,y2); lg.addColorStop(0,'rgba(255,255,255,.22)'); lg.addColorStop(1,'rgba(255,255,255,0)');
-    ctx.fillStyle=lg; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(x2,y2); ctx.lineTo(cx+Math.cos(ang+.12)*W*.65, cy+Math.sin(ang+.12)*H*.65); ctx.closePath(); ctx.fill();
-  }
 }
 
-/* ---------- Collision ---------- */
+function drawLayer(zone, alpha=1){
+  ctx.save(); ctx.globalAlpha = alpha;
+  if(zone==='UNDERGROUND'){
+    drawUndergroundLayer();
+  } else if(zone==='EARTH'){
+    drawEarthBase();
+    hillLayer(env.hills[0], .35, '#2f4946');
+    hillLayer(env.hills[1], .55, '#233a37');
+    hillLayer(env.hills[2], .75, '#172c2a');
+    for(const layer of env.city) drawCity(layer);
+    // vogels voor diepte
+    for(const b of env.birds) drawBird(b);
+  } else if(zone==='CLOUDS'){
+    drawCloudsBase();
+    // puffy wolken met schaduw
+    for(const c of env.clouds){
+      ctx.fillStyle='rgba(255,255,255,0.92)';
+      ctx.beginPath(); ctx.ellipse(c.x,c.y,c.w,c.h,0,0,Math.PI*2); ctx.fill();
+      ctx.globalAlpha=.18; ctx.fillStyle='#6ea3d6';
+      ctx.beginPath(); ctx.ellipse(c.x, c.y+c.h*0.25, c.w*0.8, c.h*0.9, 0, 0, Math.PI*2); ctx.fill();
+      ctx.globalAlpha=alpha;
+    }
+    for(const bal of env.balloons) drawBalloon(bal);
+  } else if(zone==='SPACE'){
+    drawSpaceBase();
+    for(const p of env.planets) drawPlanet(p);
+    for(const s of env.stars){
+      const tw = 0.4 + 0.6*(0.5+0.5*Math.sin(env.t*2 + s.tw));
+      ctx.globalAlpha = alpha*(0.25 + 0.7*tw);
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fillStyle='#cfe6ff'; ctx.fill();
+    }
+    ctx.globalAlpha = alpha;
+    for(const m of env.meteors) drawMeteor(m);
+  } else { // HEAVEN
+    drawHeavenBase();
+    const cx=W*.5, cy=H*.25;
+    for(let i=0;i<7;i++){
+      const ang=i/7*Math.PI*2 + env.t*.05, x2=cx+Math.cos(ang)*W*.85, y2=cy+Math.sin(ang)*H*.85;
+      const lg=ctx.createLinearGradient(cx,cy,x2,y2); lg.addColorStop(0,'rgba(255,255,255,.22)'); lg.addColorStop(1,'rgba(255,255,255,0)');
+      ctx.fillStyle=lg; ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(x2,y2);
+      ctx.lineTo(cx+Math.cos(ang+.12)*W*.7, cy+Math.sin(ang+.12)*H*.7); ctx.closePath(); ctx.fill();
+    }
+    // lichte translucent vormen
+    ctx.globalAlpha=.08; ctx.fillStyle='#ffffff';
+    ctx.beginPath(); ctx.ellipse(W*0.3,H*0.35,140,80,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(W*0.7,H*0.42,110,70,0,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha=alpha;
+  }
+  ctx.restore();
+}
+
+/* ========== Collision ========== */
 function tryLandOn(p,dt){
   if(!p) return false;
   if(groundPlat && groundPlat.id===p.id) return false;
@@ -196,7 +454,7 @@ function tryLandOn(p,dt){
   return false;
 }
 
-/* ---------- Platform rendering ---------- */
+/* ========== Platforms tekenen (5 types) ========== */
 function rrPath(x,y,w,h,r=8){
   const hw=w/2, hh=h/2;
   ctx.beginPath();
@@ -238,21 +496,21 @@ function drawWood(x,y,w,h,th){
   ctx.globalAlpha=.25; ctx.beginPath(); ctx.moveTo(x,y-h/2+4); ctx.lineTo(x,y+h/2-4); ctx.stroke(); ctx.globalAlpha=1;
 }
 function drawCloudPlat(x,y,w,h){
-  const r=h*.9; ctx.fillStyle='rgba(255,255,255,.95)';
+  const r=h*.9; ctx.fillStyle='rgba(255,255,255,.96)';
   const n=5, step=w/(n+1);
   for(let i=0;i<n;i++){ const cx=x-w/2+step*(i+1); ctx.beginPath(); ctx.ellipse(cx,y,r,r*.7,0,0,Math.PI*2); ctx.fill(); }
-  ctx.globalAlpha=.25; ctx.fillStyle='#9fc7ff'; ctx.beginPath(); ctx.ellipse(x,y+h*.35,w*.46,h*.6,0,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+  ctx.globalAlpha=.22; ctx.fillStyle='#6ea3d6'; ctx.beginPath(); ctx.ellipse(x,y+h*.35,w*.46,h*.6,0,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
 }
 function drawSat(x,y,w,h,th){
   const sg=ctx.createLinearGradient(x,y,x,y+th); sg.addColorStop(0,'#4b5360'); sg.addColorStop(1,'#2b313a');
   ctx.fillStyle=sg; rrPath(x,y+th,w,h,8); ctx.fill();
   const g=ctx.createLinearGradient(x,y-h/2,x,y+h/2); g.addColorStop(0,'#8fa7d9'); g.addColorStop(1,'#4166b3');
   ctx.fillStyle=g; rrPath(x,y,w,h,8); ctx.fill();
-  ctx.strokeStyle='rgba(255,255,255,.3)'; ctx.lineWidth=1;
+  ctx.strokeStyle='rgba(255,255,255,.35)'; ctx.lineWidth=1;
   const cols=6, rows=3;
   for(let i=1;i<cols;i++){ const xx=x-w/2 + i*(w/cols); ctx.beginPath(); ctx.moveTo(xx,y-h/2+4); ctx.lineTo(xx,y+h/2-4); ctx.stroke(); }
   for(let j=1;j<rows;j++){ const yy=y-h/2 + j*(h/rows); ctx.beginPath(); ctx.moveTo(x-w/2+4,yy); ctx.lineTo(x+w/2-4,yy); ctx.stroke(); }
-  ctx.fillStyle='rgba(255,255,255,.6)';
+  ctx.fillStyle='rgba(255,255,255,.7)';
   for(let i=0;i<4;i++) for(let j=0;j<2;j++){ ctx.beginPath(); ctx.arc(x-w/2+8+i*(w-16)/3, y-h/2+8+j*(h-16), 2, 0, Math.PI*2); ctx.fill(); }
 }
 function drawMarble(x,y,w,h,th){
@@ -266,7 +524,7 @@ function drawMarble(x,y,w,h,th){
   ctx.globalAlpha=.22; ctx.fillStyle='#fff'; rrPath(x,y-h*.18,w*.86,h*.58,8); ctx.fill(); ctx.globalAlpha=1;
 }
 
-/* ---------- Player ---------- */
+/* ========== Player (CBS coin) ========== */
 function drawPlayer(){
   const x=player.x,y=player.y,r=player.r;
   const g=ctx.createRadialGradient(x-r*.35,y-r*.35,r*.2,x,y,r*1.15);
@@ -277,7 +535,7 @@ function drawPlayer(){
   if(logo.complete){ ctx.save(); ctx.beginPath(); ctx.arc(x,y,r-3,0,Math.PI*2); ctx.clip(); ctx.drawImage(logo, x-r, y-r, r*2, r*2); ctx.restore(); }
 }
 
-/* ---------- Lifecycle ---------- */
+/* ========== Game lifecycle ========== */
 function startRun(){
   currentPlat=makePlatform(W/2,H-90,'UNDERGROUND',true);
   currentPlat.lastX=platX(currentPlat);
@@ -287,11 +545,10 @@ function startRun(){
   nextPlat=spawnNextAbove(currentPlat); nextPlat.lastX=platX(nextPlat);
   camY=0; score=0; hud.textContent='0 m';
 }
-
-/* ---------- Main loop (substeps + sticky follow) ---------- */
-env.rebuild();          // <-- nu pas, na env-definitie
+resizeCanvas(); // nu env gevuld
 startRun();
 
+/* ========== Main loop (substeps + sticky follow + smooth blend) ========== */
 let last=performance.now(); requestAnimationFrame(loop);
 function loop(now){
   let dt=(now-last)/1000; last=now; if(dt>0.05) dt=0.05;
@@ -323,8 +580,18 @@ function loop(now){
   const meters=Math.max(0,Math.floor((-(player.y - (H-140)))/6));
   if(meters!==score){ score=meters; hud.textContent=score+" m"; }
 
+  // backgrounds with blend
+  const alt=-camY; const [zA,zB,t]=blendFactor(alt);
   ctx.clearRect(0,0,W,H);
-  env.draw(camY);
+  drawLayer(zA, 1-t);
+  drawLayer(zB, t);
+  if(t>0 && t<1){
+    const fog=ctx.createLinearGradient(0,0,0,H);
+    fog.addColorStop(0,`rgba(255,255,255,${0.06*t})`);
+    fog.addColorStop(1,`rgba(0,0,0,${0.06*(1-t)})`);
+    ctx.fillStyle=fog; ctx.fillRect(0,0,W,H);
+  }
+
   ctx.save(); ctx.translate(0,-camY);
   if(currentPlat) drawPlatform(currentPlat);
   if(nextPlat) drawPlatform(nextPlat);
@@ -334,7 +601,7 @@ function loop(now){
   requestAnimationFrame(loop);
 }
 
-/* ---------- Utils ---------- */
+/* ========== Utils ========== */
 function rnd(a,b){return a+Math.random()*(b-a)}
 function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
 </script>
