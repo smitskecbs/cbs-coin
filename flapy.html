@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>CBS Jump – 1-Platform Mode</title>
+<title>CBS Jump – 1-Platform Mode (Fixed)</title>
 <style>
   html,body{margin:0;height:100%;background:#0b0f18;overflow:hidden}
   canvas{display:block;width:100vw;height:100vh}
@@ -24,55 +24,44 @@ addEventListener('resize',resize);
 
 const logo=new Image();logo.src='logo.png';
 
-// ===== Player & physics (afgesteld op bereik) =====
+// ===== Player & physics =====
 const isMobile=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-const GRAV = isMobile? 1600 : 1600;           // zwaartekracht
-const JUMP = isMobile? -980  : -1020;         // sprong
-// Theoretische stijghoogte v^2/(2g) ≈ 300–325 px → gap max ~240 px veilig
-const GAP_MIN = 170, GAP_MAX = 220;           // verticale afstand tussen platforms
+const GRAV = 1600;
+const JUMP = isMobile? -980 : -1020;
+const COYOTE_TIME = 0.12;
+const GAP_MIN = 170, GAP_MAX = 220;
 
 let player={x:W/2, y:H-140, r:30, vy:0, onGround:true, coyote:0};
 let camY=0, score=0; document.getElementById('hud').innerText="0 m";
 
 // ===== Platforms: altijd 1 “next” boven je =====
 /*
-  Platform: {x0, y, w, h, amp, speed, phase}
-  x(t) = x0 + sin(phase)*amp   (oscilleert breed, zodat hij altijd eens onder je komt)
+  Platform: {x0, y, w, h, amp, speed, phase, isBase}
+  x(t) = x0 + sin(phase)*amp
 */
-let currentPlat=null;   // waarop je staat/laatst geland
-let nextPlat=null;      // het ENIGE platform daarboven
+let currentPlat=null;
+let nextPlat=null;
 const BASE_W = ()=>Math.max(220, W*0.28);
 const PLAT_W = ()=>Math.max(140, W*0.24);
 const PLAT_H = 22;
 
-// spawn start + eerste next
 function initRun(){
-  // startplatform recht onder speler
   currentPlat = makePlatform(W/2, H-90, BASE_W(), PLAT_H, true);
-  // zet speler er echt op
   const top = currentPlat.y - currentPlat.h/2;
   player.x = W/2; player.y = top - player.r; player.vy=0; player.onGround=true; player.coyote=0;
-
-  // één next boven je
   nextPlat = spawnNextAbove(currentPlat);
   camY = 0; score = 0; document.getElementById('hud').innerText="0 m";
 }
 
 function makePlatform(x, y, w, h, isBase=false){
-  // brede oscillatie zodat hij altijd jouw x kruist
   const margin = 60;
-  const amp = isBase ? 0 : (W/2 - margin);
-  const speed = isBase ? 0 : (isMobile ? 0.95 : 1.1);
-  return {
-    x0: x, y, w, h,
-    amp, speed, phase: Math.random()*Math.PI*2,
-    isBase
-  };
+  const amp = isBase ? 0 : (W/2 - margin);           // grote sweep → komt altijd onder speler door
+  const speed = isBase ? 0 : (isMobile ? 0.95 : 1.10);
+  return { x0:x, y, w, h, amp, speed, phase:Math.random()*Math.PI*2, isBase };
 }
 function spawnNextAbove(refPlat){
   const gap = rand(GAP_MIN, GAP_MAX);
   const y   = refPlat.y - gap;
-  // start midden; amplitude groot → platform veegt hele schermbreedte
   return makePlatform(W/2, y, PLAT_W(), PLAT_H, false);
 }
 
@@ -90,9 +79,38 @@ function onPress(){
 addEventListener('keydown',e=>{if(e.code==="Space"){e.preventDefault();onPress();}});
 addEventListener('pointerdown',onPress);
 
-// ===== Drawing =====
+// ===== Helpers =====
+function platTopY(p){ return p.y - p.h/2; }
+function platXNow(p){ return p.x0 + Math.sin(p.phase)*p.amp; }
+
+// Retourneert true als je deze substep op p landt
+function collideWithPlatSubstep(p, dt){
+  if(!p) return false;
+  const xNow = platXNow(p);
+  // horizontale overlap (kleine marge)
+  if(player.x > xNow - p.w/2 - player.r*0.5 && player.x < xNow + p.w/2 + player.r*0.5){
+    const top = platTopY(p);
+    const prevBottom = (player.y - player.vy*dt) + player.r;
+    const nowBottom  = player.y + player.r;
+    const TOL = 6; // tolerantie tegen tunneling
+    if(player.vy > 0 && prevBottom <= top + TOL && nowBottom >= top - TOL){
+      // Land exact op de bovenkant
+      player.y  = top - player.r;
+      player.vy = 0;
+      player.onGround = true;
+      // mini meebewegen (voelt lekker)
+      if(!p.isBase){
+        const vx = Math.cos(p.phase) * p.amp * p.speed * 0.2;
+        player.x = clamp(player.x + vx*dt*60, player.r, W - player.r);
+      }
+      return true;
+    }
+  }
+  return false;
+}
+
 function drawCoinPlatform(p){
-  const x = p.x0 + Math.sin(p.phase)*p.amp;
+  const x = platXNow(p);
   const y = p.y;
   const w = p.w, h = p.h, thickness = 12;
 
@@ -135,34 +153,46 @@ function drawPlayer(){
   }
 }
 
-// ===== Loop =====
+// ===== Loop (met substeps om tunneling te voorkomen) =====
 let last=performance.now();
 initRun();
 requestAnimationFrame(loop);
 
 function loop(now){
-  const dt=Math.min(0.032,(now-last)/1000); last=now;
+  let dt=(now-last)/1000; last=now;
+  if(dt>0.05) dt=0.05; // cap frame gap
 
-  // update platforms' phase
-  if(nextPlat && !nextPlat.isBase) nextPlat.phase += nextPlat.speed * dt;
-  if(currentPlat && !currentPlat.isBase) currentPlat.phase += currentPlat.speed * dt;
+  // update fases gespreid over substeps
+  const fixed = 0.008; // 8ms substep
+  const steps = Math.max(1, Math.ceil(dt / fixed));
+  const h = dt / steps;
 
-  // physics
-  player.vy += GRAV*dt;
-  player.y  += player.vy*dt;
+  let landedOnNext = false;
 
-  // coyote
-  player.coyote = player.onGround ? 0.12 : Math.max(0, player.coyote - dt);
-  player.onGround = false;
+  for(let i=0;i<steps;i++){
+    // update platform fases
+    if(nextPlat && !nextPlat.isBase) nextPlat.phase += nextPlat.speed * h;
+    if(currentPlat && !currentPlat.isBase) currentPlat.phase += currentPlat.speed * h;
 
-  // COLLISION met current en next
-  collideWithPlat(currentPlat, dt);
-  collideWithPlat(nextPlat, dt);
+    // physics
+    player.vy += GRAV * h;
+    player.y  += player.vy * h;
 
-  // Heb je de next gehaald? → promoveer tot current en spawn een nieuwe next
-  if(isStandingOn(nextPlat)){
-    currentPlat = nextPlat;
-    nextPlat = spawnNextAbove(currentPlat);
+    // coyote
+    player.coyote = player.onGround ? COYOTE_TIME : Math.max(0, player.coyote - h);
+    player.onGround = false;
+
+    // collisions (substep)
+    // eerst met nextPlat, zodat landingen daar onmiddellijk tellen
+    landedOnNext = collideWithPlatSubstep(nextPlat, h) || landedOnNext;
+    collideWithPlatSubstep(currentPlat, h);
+
+    // promote direct wanneer geland op next
+    if(landedOnNext){
+      currentPlat = nextPlat;
+      nextPlat = spawnNextAbove(currentPlat);
+      landedOnNext = false; // reset voor volgende cyclus
+    }
   }
 
   // camera alleen omhoog
@@ -179,54 +209,17 @@ function loop(now){
 
   // draw
   ctx.clearRect(0,0,W,H);
-  // achtergrond
   const bg=ctx.createLinearGradient(0,0,0,H);
   bg.addColorStop(0,'#0a1020'); bg.addColorStop(1,'#0b0f18');
   ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
 
   ctx.save(); ctx.translate(0,-camY);
-
-  // teken platforms (onder → boven)
   if(currentPlat) drawCoinPlatform(currentPlat);
   if(nextPlat)    drawCoinPlatform(nextPlat);
-
-  // speler
   drawPlayer();
-
   ctx.restore();
+
   requestAnimationFrame(loop);
-}
-
-// ===== Collision helpers =====
-function platTopY(p){ return p.y - p.h/2; }
-function platXNow(p){ return p.x0 + Math.sin(p.phase)*p.amp; }
-
-function collideWithPlat(p, dt){
-  if(!p) return;
-  const xNow = platXNow(p);
-  // horizontale overlap (klein beetje marge)
-  if(player.x > xNow - p.w/2 - player.r*0.5 && player.x < xNow + p.w/2 + player.r*0.5){
-    const prevBottom = (player.y - player.vy*dt) + player.r;
-    const top = platTopY(p);
-    const nowBottom  = player.y + player.r;
-    if(player.vy > 0 && prevBottom <= top && nowBottom >= top){
-      // landen
-      player.y  = top - player.r;
-      player.vy = 0;
-      player.onGround = true;
-      // klein beetje meebewegen voelt lekker
-      if(!p.isBase){
-        const vx = Math.cos(p.phase) * p.amp * p.speed * 0.2; // afgeleid van sin
-        player.x = clamp(player.x + vx*dt*60, player.r, W - player.r);
-      }
-    }
-  }
-}
-
-function isStandingOn(p){
-  if(!p) return false;
-  const top = platTopY(p);
-  return Math.abs((player.y + player.r) - top) < 0.5 && player.onGround;
 }
 </script>
 </body>
