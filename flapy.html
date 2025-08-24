@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>CBS Jump — Wolkenvogels, Vallende Sterren & Vuurwerk</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>CBS Jump — Clean build (fix black screen)</title>
 <style>
   html,body{margin:0;height:100%;background:#0b0f18;overflow:hidden}
   canvas{display:block;width:100vw;height:100vh}
@@ -23,6 +23,13 @@
   }
   .audio-btn:active{transform:translateY(1px)}
   .vol{width:110px}
+  /* error overlay */
+  .err{
+    position:fixed;left:50%;top:0;transform:translateX(-50%);
+    background:#111c; color:#ffb; padding:8px 12px; border-radius:10px;
+    border:1px solid #fffa; font:600 12px ui-monospace,monospace; z-index:9999;
+    max-width:90vw; text-wrap:balance; display:none
+  }
 </style>
 </head>
 <body>
@@ -37,7 +44,24 @@
   <span id="audioStatus" style="opacity:.8">klaar</span>
 </div>
 
+<div id="err" class="err"></div>
+
 <script>
+'use strict';
+
+/* ====== Error overlay ====== */
+(function(){
+  const box=document.getElementById('err');
+  window.addEventListener('error',e=>{
+    box.style.display='block';
+    box.textContent='JS error: '+(e.message||e.error);
+  });
+  window.addEventListener('unhandledrejection',e=>{
+    box.style.display='block';
+    box.textContent='Promise error: '+(e.reason?.message||e.reason);
+  });
+})();
+
 /* ================= Audio ================= */
 const AUDIO_URL='https://gateway.pinata.cloud/ipfs/bafybeif7okyipwq3m5fus33fpbxyd5byftb62m72xz4vvwkyf4cng6k2bq';
 const audio=new Audio(AUDIO_URL);
@@ -57,7 +81,7 @@ vol.addEventListener('input',()=>{audio.volume=parseFloat(vol.value);localStorag
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
 let W=0,H=0,DPR=1;
 function resize(){
-  DPR=Math.max(1,Math.min(2,devicePixelRatio||1));
+  DPR=Math.max(1,Math.min(2,window.devicePixelRatio||1));
   W=innerWidth; H=innerHeight;
   canvas.width=Math.floor(W*DPR); canvas.height=Math.floor(H*DPR);
   canvas.style.width=W+'px'; canvas.style.height=H+'px';
@@ -69,7 +93,7 @@ addEventListener('resize',resize);
 const logo=new Image(); logo.src='logo.png';
 const isMobile=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-/* Moeilijkheid iets omhoog: smallere platforms + iets meer amplitude */
+/* Moeilijkheid iets omhoog */
 const DIFF = isMobile
   ? { jump:-860, gapBase:118, gapVar:28, widthMul:0.88, ampMul:1.20 }
   : { jump:-900, gapBase:112, gapVar:26, widthMul:0.90, ampMul:1.10 };
@@ -80,7 +104,7 @@ const J_SPACE  = 50;  // Wolken -> Ruimte
 const J_HEAVEN = 80;  // Ruimte -> Hemel
 const HEAVEN_COIN_JUMPS = 20; // eerst 20 coin-platforms in hemel
 
-/* ================ Hoogtes voor decor ================ */
+/* ================ Decor-hoogtes ================ */
 const GROUND_Y   = 460;
 const CLOUD_BAND_TOP = -6000;
 const SPACE_BAND_TOP = -18000;
@@ -116,7 +140,7 @@ function rrPath(x,y,w,h,r=8){
   ctx.closePath();
 }
 
-/* Zone puur op sprongen (garandeert doorgang) */
+/* Zone puur op sprongen */
 function zoneByJumps(){
   if(jumps < J_CLOUDS) return 'EARTH';
   if(jumps < J_SPACE ) return 'CLOUDS';
@@ -136,7 +160,6 @@ function platformSpecForZone(zone){
         heavenCoinCount++;
         return {type:'coinSmall', w:Math.max(120,W*0.20), h:Math.max(120,W*0.20)};
       } else {
-        // mix tot big coin
         const r=Math.random();
         if(r<0.7) return {type:'coinSmall', w:Math.max(120,W*0.20), h:Math.max(120,W*0.20)};
         return {type:'heavenCloud', w:Math.max(210,W*0.36), h:30};
@@ -155,10 +178,10 @@ function spawnNextAbove(ref){
   const gap = GAP_BASE + Math.random()*GAP_VAR;
   const y = ref.y - (gap + 18);
 
-  // Plaats big coin zodra we door de coins heen zijn
+  // Big coin iets later plaatsen
   if(!bigCoinPlaced && zoneByJumps()==='HEAVEN' && heavenEntered && heavenCoinCount>=HEAVEN_COIN_JUMPS){
     env.bigCoin.x = W*0.5;
-    env.bigCoin.y = y - (GAP_BASE + GAP_VAR*0.5)*3; // paar sprongen hoger
+    env.bigCoin.y = y - (GAP_BASE + GAP_VAR*0.5)*3;
     bigCoinPlaced=true;
   }
   return makePlatform(W/2, y, false);
@@ -210,7 +233,7 @@ const env={
       this.planes.push(makeBGPlane(rnd(CLOUD_BAND_TOP-3000, CLOUD_BAND_TOP-600)));
     }
 
-    // Sky-birds in wolkenlaag (subtieler en trager)
+    // Sky-birds in wolkenlaag
     this.skyBirds=[];
     for(let i=0;i<10;i++) this.skyBirds.push(makeSkyBird(rnd(CLOUD_BAND_TOP-3200, -1200)));
 
@@ -257,12 +280,11 @@ const env={
     if(jumps>=J_SPACE){
       this.meteorTimer-=dt;
       if(this.meteorTimer<=0){
-        // spawn 1 meteor
         const fromLeft=Math.random()<0.5;
         const x=fromLeft? -50 : W+50;
         const y=rnd(SPACE_BAND_TOP-2400, SPACE_BAND_TOP-1200);
         const speed=rnd(280,420);
-        const ang=fromLeft? rnd(-0.9,-0.5) : rnd(Math.PI+0.5, Math.PI+0.9); // diagonaal omlaag
+        const ang=fromLeft? rnd(-0.9,-0.5) : rnd(Math.PI+0.5, Math.PI+0.9);
         const vx=Math.cos(ang)*speed, vy=Math.sin(ang)*speed;
         this.meteors.push({x,y,vx,vy,life:rnd(0.8,1.6)});
         this.meteorTimer=rnd(1.8,3.6);
@@ -276,9 +298,7 @@ const env={
   },
 
   /* ---- fireworks ---- */
-  startFireworks(){
-    this.fireworks=true; this.fireTimer=0;
-  },
+  startFireworks(){ this.fireworks=true; this.fireTimer=0; },
   updateFireworks(dt){
     if(!this.fireworks) return;
     this.fireTimer+=dt;
@@ -291,12 +311,10 @@ const env={
         this.rockets.push({x,y,vx,vy,life:rnd(0.8,1.2),color:randColor()});
       }
     }
-
     // update rockets
     for(let i=this.rockets.length-1;i>=0;i--){
       const r=this.rockets[i];
       r.x+=r.vx*dt; r.y+=r.vy*dt; r.vy+=120*dt; r.life-=dt;
-      // explode
       if(r.life<=0 || r.vy>0){
         const n=80;
         for(let k=0;k<n;k++){
@@ -306,7 +324,6 @@ const env={
         this.rockets.splice(i,1);
       }
     }
-
     // update sparks
     for(let i=this.sparks.length-1;i>=0;i--){
       const s=this.sparks[i];
@@ -374,7 +391,7 @@ function drawCityBand(l){
     ctx.fillStyle=b.color; ctx.fillRect(X,Y,Wd,Hd);
     if(b.roof){ ctx.beginPath(); ctx.moveTo(X,Y); ctx.lineTo(X+Wd/2,Y-10); ctx.lineTo(X+Wd,Y); ctx.closePath(); ctx.fill(); }
     const cols=Math.max(2,Math.floor(Wd/20)), rows=Math.max(2,Math.floor(Hd/28));
-    ctx.fillStyle='rgba(255,214,115,0.6)'; 
+    ctx.fillStyle='rgba(255,214,115,0.6)';
     for(let i=0;i<cols;i++) for(let j=0;j<rows;j++) if(Math.random()<.08){
       ctx.fillRect(X+6+i*(Wd-12)/cols, Y+6+j*(Hd-12)/rows, 5, 8);
     }
@@ -396,9 +413,7 @@ function makeSkyBird(y){
 function drawSkyBird(b){
   ctx.globalAlpha=0.7;
   ctx.strokeStyle='rgba(0,0,0,.5)'; ctx.lineWidth=1.6;
-  ctx.beginPath(); 
-  ctx.moveTo(b.x-6,b.y); ctx.quadraticCurveTo(b.x,b.y-3,b.x+6,b.y); 
-  ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(b.x-6,b.y); ctx.quadraticCurveTo(b.x,b.y-3,b.x+6,b.y); ctx.stroke();
   ctx.globalAlpha=1;
 }
 function drawCloud(c){
@@ -419,7 +434,13 @@ function makeBGPlane(y){
   const dir=Math.random()<0.5?-1:1;
   return {x:rnd(40,W-40), y, vx:dir*rnd(22,36), dir, trail:0, phase:Math.random()*6.28};
 }
-function roundRect(x,y,w,h,r){const x2=x+w,y2=y+h; r=Math.min(r,w/2,h/2); ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x2,y,x2,y+r,r); ctx.arcTo(x2,y2,x2-r,y2,r); ctx.arcTo(x,y2,x,y2-r,r); ctx.arcTo(x,y,x+r,y,r); ctx.closePath();}
+function roundRect(x,y,w,h,r){
+  const x2=x+w,y2=y+h; r=Math.min(r,w/2,h/2);
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.arcTo(x2,y,x2,y+r,r);
+  ctx.arcTo(x2,y2,x2-r,y2,r); ctx.arcTo(x,y2,x,y2-r,r);
+  ctx.arcTo(x,y,x+r,y,r); ctx.closePath();
+}
 function roundRect2(x,y,w,h,r){roundRect(x-w/2,y-h/2,w,h,r);}
 function drawBGPlane(p){
   ctx.save();
@@ -460,18 +481,16 @@ function drawMoon(m){
 /* Meteoren */
 function drawMeteor(m){
   ctx.save();
-  // trail
   ctx.strokeStyle='rgba(200,220,255,0.6)'; ctx.lineWidth=2;
   ctx.beginPath(); ctx.moveTo(m.x - m.vx*0.05, m.y - m.vy*0.05);
   ctx.lineTo(m.x, m.y); ctx.stroke();
-  // head
   const rg=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,7);
   rg.addColorStop(0,'#ffffff'); rg.addColorStop(1,'rgba(200,220,255,0)');
   ctx.fillStyle=rg; ctx.beginPath(); ctx.arc(m.x,m.y,7,0,Math.PI*2); ctx.fill();
   ctx.restore();
 }
 
-/* ---------- Platforms (spelbaar) ---------- */
+/* ---------- Platform renders ---------- */
 function drawWood(x,y,w,h){
   const th=h*1.08;
   const sg=ctx.createLinearGradient(x,y,x,y+th); sg.addColorStop(0,'#6f3f19'); sg.addColorStop(1,'#3e220f');
@@ -549,7 +568,6 @@ function drawPlatform(p){
 
 /* ---------- Hemelkleuren & overgangen (op sprongen) ---------- */
 function drawSky(){
-  // Basiskleuren
   const EARTH_TOP=[114,198,255],  EARTH_BOT=[167,231,191];
   const CLOUD_TOP=[187,223,255],  CLOUD_BOT=[142,198,255];
   const MID_TOP=[60,110,170],     MID_BOT=[20,40,70];
@@ -588,7 +606,7 @@ function drawSky(){
   }
 }
 
-/* ---------- Renderwereld met juiste volgorde ---------- */
+/* ---------- Renderwereld ---------- */
 function inView(y,pad=200){return y>camY-pad && y<camY+H+pad;}
 
 function drawWorld(){
@@ -610,11 +628,10 @@ function drawWorld(){
     for(const c of env.clouds) if(inView(c.y)) drawCloud(c);
     for(const sb of env.skyBirds) if(inView(sb.y)) drawSkyBird(sb);
   } else {
-    // Wolken decor ook al licht zichtbaar vóór overgang
     for(const c of env.clouds) if(inView(c.y) && c.y<GROUND_Y-800) drawCloud(c);
   }
 
-  // Space decor zodra je in SPACE bent
+  // Space decor
   if(jumps>=J_SPACE){
     const starAlpha = Math.min(1, (jumps - J_SPACE)/10);
     for(const s of env.stars){
@@ -627,8 +644,6 @@ function drawWorld(){
     }
     if(env.moon && inView(env.moon.y,200)) drawMoon(env.moon);
     for(const p of env.planets) if(inView(p.y)) drawPlanet(p);
-
-    // Meteors
     for(const m of env.meteors) if(inView(m.y,300)) drawMeteor(m);
   }
 
@@ -710,7 +725,7 @@ function loop(now){
         const landedNext=tryLandOn(nextPlat,h);
         const landedCurr=!landedNext && tryLandOn(currentPlat,h);
         if(landedNext || landedCurr){
-          jumps++; // elke nieuwe landing telt
+          jumps++;
           if(landedNext){
             currentPlat=nextPlat; nextPlat=spawnNextAbove(currentPlat); nextPlat.lastX=platX(nextPlat);
           }
@@ -731,7 +746,7 @@ function loop(now){
   const m=Math.max(0,Math.floor((-player.y + GROUND_Y)/6));
   if(m!==meters){ meters=m; hud.textContent=m+" m"; }
 
-  // Altijd meteors/fireworks updaten (ook bij gameOver)
+  // Extra systems
   env.updateFireworks(dt);
 
   // Render
@@ -753,10 +768,10 @@ function loop(now){
   if(logo.complete){ ctx.save(); ctx.beginPath(); ctx.arc(x,y,r-3,0,Math.PI*2); ctx.clip(); ctx.drawImage(logo, x-r, y-r, r*2, r*2); ctx.restore(); }
   ctx.restore();
 
-  // Fireworks render (bovenop alles)
+  // Fireworks render
   renderFireworks();
 
-  // Game Over overlay + tekst
+  // Overlay bij einde
   if(gameOver){
     if(!fireworksArmed){ env.startFireworks(); fireworksArmed=true; }
     ctx.save();
@@ -793,23 +808,17 @@ function randColor(){
 
 /* ---------- Fireworks render ---------- */
 function renderFireworks(){
-  // rockets
   for(const r of env.rockets){
-    ctx.save();
-    ctx.globalCompositeOperation='lighter';
+    ctx.save(); ctx.globalCompositeOperation='lighter';
     ctx.fillStyle='rgba(255,255,255,0.9)';
     ctx.beginPath(); ctx.arc(r.x, r.y, 2.5, 0, Math.PI*2); ctx.fill();
-    ctx.globalCompositeOperation='source-over';
-    ctx.restore();
+    ctx.globalCompositeOperation='source-over'; ctx.restore();
   }
-  // sparks
   for(const s of env.sparks){
     const a=Math.max(0, s.life/1.2);
-    ctx.save();
-    ctx.globalCompositeOperation='lighter';
+    ctx.save(); ctx.globalCompositeOperation='lighter';
     ctx.strokeStyle=s.color; ctx.globalAlpha=a;
-    ctx.beginPath();
-    ctx.moveTo(s.x - s.vx*0.02, s.y - s.vy*0.02);
+    ctx.beginPath(); ctx.moveTo(s.x - s.vx*0.02, s.y - s.vy*0.02);
     ctx.lineTo(s.x, s.y); ctx.stroke();
     ctx.restore();
   }
