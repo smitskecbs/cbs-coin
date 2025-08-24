@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CBS Jump — Clean build (cloud/space tuned + fireworks)</title>
+<title>CBS Jump — tuned clouds + guaranteed stars/meteors + fireworks</title>
 <style>
   html,body{margin:0;height:100%;background:#0b0f18;overflow:hidden}
   canvas{display:block;width:100vw;height:100vh}
@@ -101,7 +101,7 @@ const DIFF = isMobile
 const J_CLOUDS = 20;  // Aarde -> Wolken
 const J_SPACE  = 50;  // Wolken -> Ruimte
 const J_HEAVEN = 80;  // Ruimte -> Hemel
-const HEAVEN_COIN_JUMPS = 20; // eerst 20 coin-platforms in hemel
+const HEAVEN_COIN_JUMPS = 20;
 
 /* ================ Decor-hoogtes ================ */
 const GROUND_Y   = 460;
@@ -226,27 +226,35 @@ const env={
     // Vogels (aarde)
     this.birds=[]; for(let i=0;i<12;i++) this.birds.push(makeBird(GROUND_Y - rnd(140,320)));
 
-    // Wolkenlaag (KLEINER + hogere scroll-snelheid s)
+    // Wolkenlaag — NOG KLEINER + SNELLER
     this.clouds=[];
-    for(let i=0;i<64;i++){
-      const y=rnd(CLOUD_BAND_TOP-4000, -400);
-      this.clouds.push({x:Math.random()*W,y,w:rnd(110,220),h:rnd(40,90),s:rnd(0.06,0.14)});
+    for(let i=0;i<60;i++){
+      const y=rnd(CLOUD_BAND_TOP-3800, -500);
+      this.clouds.push({x:Math.random()*W,y,w:rnd(70,140),h:rnd(26,60),s:rnd(0.09,0.18)});
     }
 
     // Subtiele jets (achter wolken)
     this.planes=[];
-    for(let i=0;i<10;i++){
-      this.planes.push(makeBGPlane(rnd(CLOUD_BAND_TOP-3000, CLOUD_BAND_TOP-600)));
+    for(let i=0;i<8;i++){
+      this.planes.push(makeBGPlane(rnd(CLOUD_BAND_TOP-2800, CLOUD_BAND_TOP-650)));
     }
 
     // Sky-birds in wolkenlaag
     this.skyBirds=[];
-    for(let i=0;i<10;i++) this.skyBirds.push(makeSkyBird(rnd(CLOUD_BAND_TOP-3200, -1200)));
+    for(let i=0;i<8;i++) this.skyBirds.push(makeSkyBird(rnd(CLOUD_BAND_TOP-3000, -1300)));
 
-    // Space decor — MEER/HELDERDER STERREN
+    // Space decor — GROTE BAND + HOGE DICHTHEID STERREN
     this.stars=[];
-    for(let i=0;i<720;i++){
-      this.stars.push({x:Math.random()*W,y:rnd(SPACE_BAND_TOP-2600, SPACE_BAND_TOP-200),r:Math.random()*1.6+0.6,tw:Math.random()*6.28});
+    // enorme verticale range zodat je ze altijd ziet zodra je SPACE bereikt
+    const STAR_Y_MIN = CLOUD_BAND_TOP - 16000;   // bv. -22000
+    const STAR_Y_MAX = CLOUD_BAND_TOP -  800;    // bv.  -6800
+    for(let i=0;i<1200;i++){
+      this.stars.push({
+        x:Math.random()*W,
+        y:rnd(STAR_Y_MIN, STAR_Y_MAX),
+        r:Math.random()*1.8+0.7,   // groter
+        tw:Math.random()*6.28
+      });
     }
     this.moon = makeMoon(rnd(SPACE_BAND_TOP-1300, SPACE_BAND_TOP-700), rnd(W*0.25, W*0.75), rnd(34,58));
     this.planets=[];
@@ -271,8 +279,8 @@ const env={
       b.x+=b.vx*dt; b.y+=Math.sin(this.t*1.8+b.phase)*0.25;
       if(b.x>W+40){b.x=-40; b.y=GROUND_Y - rnd(140,320);}
     }
-    // wolken (SNELLER)
-    for(const c of this.clouds){ c.x-=18*c.s*dt; if(c.x<-c.w) c.x=W+c.w*0.5; }
+    // wolken sneller
+    for(const c of this.clouds){ c.x-=22*c.s*dt; if(c.x<-c.w) c.x=W+c.w*0.5; }
     // jets
     for(const p of this.planes){
       p.x += p.vx*dt; p.trail=Math.max(0,Math.min(1,p.trail+dt*0.05));
@@ -286,18 +294,19 @@ const env={
       if(sb.x<-40){sb.x=W+40;}
     }
 
-    // METEOREN vaker & sneller in/na SPACE
+    // METEOREN — spawn in je zicht als je in SPACE bent
     if(jumps>=J_SPACE){
       this.meteorTimer -= dt;
       if(this.meteorTimer <= 0){
         const fromLeft = Math.random() < 0.5;
         const x = fromLeft ? -50 : W + 50;
-        const y = rnd(SPACE_BAND_TOP - 2400, SPACE_BAND_TOP - 1200);
-        const speed = rnd(360, 520);
+        // y nu rondom de camera zodat ze zichtbaar zijn
+        const y = camY + rnd(-H*0.15, H*0.55);
+        const speed = rnd(360, 540);
         const ang = fromLeft ? rnd(-0.9, -0.5) : rnd(Math.PI + 0.5, Math.PI + 0.9);
         const vx = Math.cos(ang) * speed, vy = Math.sin(ang) * speed;
         this.meteors.push({x, y, vx, vy, life: rnd(0.9, 1.8)});
-        this.meteorTimer = rnd(0.7, 1.6);
+        this.meteorTimer = rnd(0.6, 1.4);
       }
       for(let i=this.meteors.length-1;i>=0;i--){
         const m=this.meteors[i];
@@ -315,7 +324,7 @@ const env={
 
     // spawn rockets (tot ~4 sec)
     if(this.fireTimer<4){
-      if(Math.random()<0.08){
+      if(Math.random()<0.10){
         const x=rnd(80,W-80), y=camY+H+20;
         const vy=-rnd(260,340), vx=rnd(-40,40);
         this.rockets.push({x,y,vx,vy,life:rnd(0.8,1.2),color:randColor()});
@@ -326,7 +335,7 @@ const env={
       const r=this.rockets[i];
       r.x+=r.vx*dt; r.y+=r.vy*dt; r.vy+=120*dt; r.life-=dt;
       if(r.life<=0 || r.vy>0){
-        const n=80;
+        const n=90;
         for(let k=0;k<n;k++){
           const ang=(k/n)*Math.PI*2, sp=rnd(80,220);
           this.sparks.push({x:r.x,y:r.y, vx:Math.cos(ang)*sp, vy:Math.sin(ang)*sp, life:rnd(0.6,1.2), color:r.color});
@@ -495,7 +504,7 @@ function drawMoon(m){
 }
 function drawMeteor(m){
   ctx.save();
-  ctx.strokeStyle='rgba(220,235,255,0.85)'; ctx.lineWidth=2.5;
+  ctx.strokeStyle='rgba(220,235,255,0.9)'; ctx.lineWidth=2.5;
   ctx.beginPath(); ctx.moveTo(m.x - m.vx*0.07, m.y - m.vy*0.07);
   ctx.lineTo(m.x, m.y); ctx.stroke();
   const rg=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,7);
@@ -640,9 +649,9 @@ function drawWorld(){
     for(const b of env.birds) if(inView(b.y,0)) drawBird(b);
   }
 
-  // Wolken/planes alleen in CLOUDS (tussen J_CLOUDS en J_SPACE)
+  // Wolken/planes alleen in CLOUDS; fade al ~12 sprongen vóór SPACE
   if(jumps>=J_CLOUDS && jumps < J_SPACE){
-    const cloudFade = Math.max(0, Math.min(1, (J_SPACE - jumps)/4));
+    const cloudFade = Math.max(0, Math.min(1, (J_SPACE - jumps)/12)); // eerder weg
     ctx.save(); ctx.globalAlpha = 0.85 * cloudFade;
     for(const p of env.planes) if(inView(p.y)) drawBGPlane(p);
     for(const c of env.clouds) if(inView(c.y)) drawCloud(c);
@@ -653,13 +662,12 @@ function drawWorld(){
   }
   // In SPACE geen wolken/planes/skyBirds meer
 
-  // Space decor — STERREN direct vol zichtbaar
+  // Space decor — STERREN ALTIJD ZICHTBAAR
   if(jumps>=J_SPACE){
-    const starAlpha = 1;
     for(const s of env.stars){
       if(inView(s.y,0)){
         const tw=0.4 + 0.6*(0.5+0.5*Math.sin(env.t*2 + s.tw));
-        ctx.globalAlpha=starAlpha*(0.38 + 0.62*tw);
+        ctx.globalAlpha=(0.38 + 0.62*tw);
         ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fillStyle='#eaf4ff'; ctx.fill();
         ctx.globalAlpha=1;
       }
