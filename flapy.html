@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>CBS Jump – Realistic Worlds</title>
+<title>CBS Jump – Worlds Overhaul</title>
 <style>
   html,body{margin:0;height:100%;background:#0b0f18;overflow:hidden}
   canvas{display:block;width:100vw;height:100vh}
@@ -18,258 +18,247 @@
 <div id="hud" class="hud">0 m</div>
 
 <script>
-/* ----------------------------------
-   Canvas
----------------------------------- */
+/* =========================
+   Canvas & setup
+========================= */
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
-let W,H;function resize(){W=innerWidth;H=innerHeight;canvas.width=W;canvas.height=H}resize();
-addEventListener('resize',resize);
+let W,H;function resize(){W=innerWidth;H=innerHeight;canvas.width=W;canvas.height=H; env.rebuild();}resize();
+addEventListener('resize',resize,{passive:true});
 
 const logo=new Image();logo.src='logo.png';
 const isMobile=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
-/* ----------------------------------
-   Player & Physics
----------------------------------- */
+/* =========================
+   Physics / Player
+========================= */
 const GRAV = 1600;
 const JUMP = isMobile? -980 : -1020;
 const COYOTE_TIME = 0.12;
-const GAP_MIN = 170, GAP_MAX = 220;
 
-let player={x:W/2, y:H-140, r:30, vy:0, onGround:false, coyote:0};
+// hoogte-drempels (px)
+const ALT_UNDERGROUND = 0;
+const ALT_EARTH       = 800;
+const ALT_CLOUDS      = 2200;
+const ALT_SPACE       = 4200;
+const ALT_HEAVEN      = 7000;
+
+function zoneByAlt(alt){
+  if(alt < ALT_EARTH) return 'UNDERGROUND';
+  if(alt < ALT_CLOUDS) return 'EARTH';
+  if(alt < ALT_SPACE) return 'CLOUDS';
+  if(alt < ALT_HEAVEN) return 'SPACE';
+  return 'HEAVEN';
+}
+
+let player={x:0, y:0, r:30, vy:0, onGround:false, coyote:0};
 let groundPlat=null;
-let camY=0, score=0; document.getElementById('hud').innerText="0 m";
+let camY=0, score=0; const hud=document.getElementById('hud');
 
-/* ----------------------------------
-   Platforms (altijd 1 nieuwe boven je)
----------------------------------- */
+/* =========================
+   Platforms (altijd 1 nieuwe)
+========================= */
 let platIdSeq=1; const newId=()=>platIdSeq++;
 let currentPlat=null, nextPlat=null;
-const BASE_W = ()=>Math.max(220, W*0.28);
-const PLAT_W = ()=>Math.max(140, W*0.24);
-const PLAT_H = 22;
 
-function makePlatform(x, y, w, h, isBase=false){
+// default gaps (pixel) — worden iets groter in hogere zones
+const GAP_BASE = 180, GAP_VAR = 50;
+
+function platformSpecForZone(zone){
+  // type, visuele hoogte, breedte (relatief aan scherm)
+  switch(zone){
+    case 'UNDERGROUND': return {type:'stone',   w: Math.max(160, W*0.28), h: 22};
+    case 'EARTH':       return {type:'wood',    w: Math.max(150, W*0.26), h: 20};
+    case 'CLOUDS':      return {type:'cloud',   w: Math.max(180, W*0.30), h: 26};
+    case 'SPACE':       return {type:'sat',     w: Math.max(150, W*0.25), h: 18};
+    case 'HEAVEN':      return {type:'marble',  w: Math.max(170, W*0.28), h: 22};
+  }
+}
+
+function makePlatform(x, y, zone, isBase=false){
+  const spec = platformSpecForZone(zone);
   const margin = 60;
-  const amp = isBase ? 0 : (W/2 - margin);      // brede sweep zodat hij onder je door komt
-  const speed = isBase ? 0 : (isMobile ? 0.95 : 1.10);
-  return { id:newId(), x0:x, y, w, h, amp, speed, phase:Math.random()*Math.PI*2, isBase, lastX:x };
+  const amp = isBase ? 0 : (W/2 - margin);           // brede sweep zodat hij onder je door komt
+  const speed = isBase ? 0 : (isMobile ? 0.90 : 1.05);
+  return {
+    id:newId(), x0:x, y,
+    w: spec.w, h: spec.h,
+    type: spec.type,
+    amp, speed, phase:Math.random()*Math.PI*2, isBase, lastX:x
+  };
 }
 const platX = p => p.x0 + Math.sin(p.phase)*p.amp;
 const platTop = p => p.y - p.h/2;
 
 function spawnNextAbove(ref){
-  const gap = rand(GAP_MIN, GAP_MAX);
-  const y   = ref.y - gap;
-  return makePlatform(W/2, y, PLAT_W(), PLAT_H, false);
+  // bepaal zone van nieuwe p op basis van hoogte
+  const altRef = -ref.y; // alt neemt toe bij omhoog
+  const zone   = zoneByAlt(altRef);
+  const diff   = Math.min(220, Math.max(0, altRef/10)); // iets grotere gap naarmate je hoger komt
+  const gap    = GAP_BASE + Math.min(GAP_VAR, diff);
+  const y      = ref.y - (gap + Math.random()*20);
+  return makePlatform(W/2, y, zone, false);
 }
 
-function initRun(){
-  currentPlat = makePlatform(W/2, H-90, BASE_W(), PLAT_H, true);
-  currentPlat.lastX = platX(currentPlat);
-  const top = platTop(currentPlat);
-  player.x = W/2; player.y = top - player.r; player.vy=0; player.onGround=true; player.coyote=0;
-  groundPlat = currentPlat;
-
-  nextPlat = spawnNextAbove(currentPlat);
-  nextPlat.lastX = platX(nextPlat);
-
-  camY = 0; score = 0; document.getElementById('hud').innerText="0 m";
-}
-
-/* ----------------------------------
+/* =========================
    Input
----------------------------------- */
+========================= */
 function onPress(){
   if(player.onGround || player.coyote>0){
     player.vy = JUMP;
     player.onGround = false;
     player.coyote = 0;
-    groundPlat = null; // los van platform
+    groundPlat = null; // los
   }
 }
 addEventListener('keydown',e=>{if(e.code==="Space"){e.preventDefault();onPress();}});
 addEventListener('pointerdown',onPress);
 
-/* ----------------------------------
-   Environment (realistische achtergronden)
----------------------------------- */
+/* =========================
+   Environment (parallax & fauna)
+========================= */
 const env = {
-  clouds: [], stars: [], hills: [],
-  insects: [], // alleen ondergrond
-  t: 0,
-  init(){
+  t:0, clouds:[], stars:[], hills:[], insects:[], cityLayers:[],
+  rebuild(){
+    // regenereer alle parallax-lagen bij resize/start
+    this.clouds=[]; this.stars=[]; this.hills=[]; this.insects=[]; this.cityLayers=[];
     // Wolken
-    for(let i=0;i<20;i++){
-      this.clouds.push({x:Math.random()*W, y:Math.random()*H, w:rand(120,240), h:rand(40,80), s:rand(0.04,0.10)});
+    for(let i=0;i<26;i++){
+      this.clouds.push({x:Math.random()*W, y:Math.random()*H, w:rand(140,260), h:rand(50,90), s:rand(0.04,0.10)});
     }
     // Sterren
-    for(let i=0;i<140;i++){
+    for(let i=0;i<160;i++){
       this.stars.push({x:Math.random()*W, y:Math.random()*H, r:Math.random()*1.6+0.4, tw:Math.random()*6.28});
     }
-    // Heuvels (silhouetten)
-    for(let i=0;i<3;i++){
-      this.hills.push(makeHill(i));
-    }
-    // Insecten (ondergrond)
-    for(let i=0;i<10;i++){
-      this.insects.push(makeInsect());
-    }
+    // Heuvel-silhouetten
+    for(let i=0;i<3;i++){ this.hills.push(makeHill(i)); }
+    // Stadslagen (Earth)
+    this.cityLayers.push(makeCityLayer(0.25, '#32454b', 0.08, 0.72));
+    this.cityLayers.push(makeCityLayer(0.45, '#25373c', 0.12, 0.78));
+    this.cityLayers.push(makeCityLayer(0.65, '#16262a', 0.18, 0.84));
+    // Insecten ondergrond
+    for(let i=0;i<14;i++){ this.insects.push(makeInsect()); }
   },
   update(dt){
     this.t += dt;
-
-    // Wolken langzaam parallax
+    // wolken
     for(const c of this.clouds){
       c.x -= 12*c.s*dt;
       if(c.x < -c.w) c.x = W + c.w*0.5, c.y = rand(0,H);
     }
-
-    // Insecten bewegen alleen zichtbaar in ondergrond
+    // insecten
     for(const b of this.insects){
-      // type: 'ant'|'beetle'|'worm'|'firefly'
       b.life += dt;
-      if(b.type==='ant' || b.type==='beetle'){
+      if(b.type==='ant' || b.type==='beetle' || b.type==='woodlouse' || b.type==='centipede'){
         b.x += b.vx*dt;
-        if(b.x < -40 || b.x > W+40){
-          b.vx *= -1;
-        }
-      } else if(b.type==='worm'){
+        if(b.x < -60 || b.x > W+60){ b.vx *= -1; }
+      }else if(b.type==='worm'){
         b.phase += dt*2;
-        b.x += b.vx*dt*0.6;
-        b.y0 += Math.sin(b.phase)*0.2;
-      } else if(b.type==='firefly'){
-        b.phase += dt*1.2;
+        b.x += b.vx*dt*0.5;
+        b.y0 += Math.sin(b.phase)*0.25;
+      }else if(b.type==='spider'){
+        // bungelend aan web
+        b.phase += dt*1.5;
+      }else if(b.type==='firefly'){
+        b.phase += dt*1.1;
         b.x += Math.cos(b.phase*0.9)*10*dt;
         b.y0 += Math.sin(b.phase*1.1)*8*dt;
       }
     }
-
-    // Heuvels: niets (statisch; parallax in draw)
   },
   draw(height){
-    const h = -height; // omhoog = groter
-    // Zone kleuren
-    if(h < 600){ // Ondergrond
-      let g = ctx.createLinearGradient(0,0,0,H);
-      g.addColorStop(0,'#3b2a1d'); g.addColorStop(1,'#22170f');
-      ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-
-      // rotslagen
-      ctx.globalAlpha=0.25; ctx.strokeStyle='#2a1d14'; ctx.lineWidth=12;
-      for(let i=0;i<8;i++){ let y = H - i*H/8; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y+rand(-8,8)); ctx.stroke(); }
-      ctx.globalAlpha=1;
-
-      // wortels
-      ctx.strokeStyle='rgba(30,15,5,0.7)'; ctx.lineWidth=2;
-      for(let i=0;i<6;i++){
-        const x= (i+0.2)*W/6; ctx.beginPath();
-        ctx.moveTo(x, rand(H*0.1,H*0.3));
-        ctx.bezierCurveTo(x-20, H*0.4, x+15, H*0.55, x+rand(-20,20), H*0.68);
-        ctx.stroke();
-      }
-
-      // steentjes
-      ctx.fillStyle='rgba(0,0,0,0.25)';
-      for(let i=0;i<50;i++){ ctx.beginPath(); ctx.ellipse((i*97)%W, H-(i*31)%H, rand(2,5), rand(1,3), 0, 0, Math.PI*2); ctx.fill(); }
-
-      // insecten (alleen tekenen in ondergrond)
-      for(const b of this.insects){
-        drawInsect(b);
-      }
-    }
-    else if(h < 1500){ // Aarde: lucht + heuvels
-      let g = ctx.createLinearGradient(0,0,0,H);
-      g.addColorStop(0,'#8ecae6'); g.addColorStop(1,'#90b4a5');
-      ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-
-      // heuvels (parallax)
-      drawHillLayer(this.hills[0], 0.3, '#29403d');
-      drawHillLayer(this.hills[1], 0.5, '#203532');
-      drawHillLayer(this.hills[2], 0.7, '#162826');
-    }
-    else if(h < 3000){ // Wolken
-      let g = ctx.createLinearGradient(0,0,0,H);
-      g.addColorStop(0,'#cfe6ff'); g.addColorStop(1,'#9fc7ff');
-      ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-      ctx.fillStyle='rgba(255,255,255,0.75)';
-      for(const c of this.clouds){
-        ctx.beginPath(); ctx.ellipse(c.x, c.y, c.w, c.h, 0, 0, Math.PI*2); ctx.fill();
-      }
-    }
-    else if(h < 5000){ // Ruimte
-      let g = ctx.createLinearGradient(0,0,0,H);
-      g.addColorStop(0,'#0b0e2a'); g.addColorStop(1,'#000005');
-      ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-      // sterren met twinkle
-      for(const s of this.stars){
-        const tw = 0.4 + 0.6*(0.5+0.5*Math.sin(this.t*2 + s.tw));
-        ctx.globalAlpha = 0.25 + 0.7*tw;
-        ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fillStyle='#cfe6ff'; ctx.fill();
-      }
-      ctx.globalAlpha=1;
-    }
-    else { // Hemel
-      let g = ctx.createLinearGradient(0,0,0,H);
-      g.addColorStop(0,'#f3e7ff'); g.addColorStop(1,'#d6c6ff');
-      ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
-      // lichtstralen
-      const cx=W*0.5, cy=H*0.25;
-      for(let i=0;i<6;i++){
-        const ang = i/6*Math.PI*2 + this.t*0.05;
-        const x2 = cx + Math.cos(ang)*W*0.8;
-        const y2 = cy + Math.sin(ang)*H*0.8;
-        const lg = ctx.createLinearGradient(cx,cy,x2,y2);
-        lg.addColorStop(0,'rgba(255,255,255,0.22)');
-        lg.addColorStop(1,'rgba(255,255,255,0)');
-        ctx.fillStyle=lg;
-        ctx.beginPath();
-        ctx.moveTo(cx,cy);
-        ctx.lineTo(x2,y2);
-        ctx.lineTo(cx + Math.cos(ang+0.12)*W*0.65, cy + Math.sin(ang+0.12)*H*0.65);
-        ctx.closePath(); ctx.fill();
-      }
-    }
+    const alt = -height; // huidige hoogte
+    const zone = zoneByAlt(alt);
+    if(zone==='UNDERGROUND') drawUnderground(this);
+    else if(zone==='EARTH')  drawEarth(this);
+    else if(zone==='CLOUDS') drawClouds(this);
+    else if(zone==='SPACE')  drawSpace(this);
+    else                     drawHeaven(this);
   }
 };
 function makeHill(layer){
-  // simpele poly voor heuvelsilhouet
   const pts=[]; const n=8;
   for(let i=0;i<=n;i++){
     const x=i/n*W;
     const y=H*0.6 + Math.sin(i*0.8 + layer)*H*0.06 + layer*20 + rand(-10,10);
     pts.push({x,y});
   }
-  return {pts, offset:rand(0,W)};
+  return {pts, speed: 20*(0.3+layer*0.2)};
 }
-function drawHillLayer(hill, speed, color){
+function drawHillLayer(hill, speedMul, color){
   ctx.save();
   ctx.fillStyle=color;
-  ctx.translate(-env.t*20*speed % W, 0);
-  for(let k=0;k<2;k++){
+  const shift = (env.t*hill.speed*speedMul) % W;
+  ctx.translate(-shift, 0);
+  for(let k=0;k<3;k++){
     ctx.beginPath();
     ctx.moveTo(-W + k*W, H);
-    for(const p of hill.pts){
-      ctx.lineTo(p.x + k*W, p.y + 40);
-    }
+    for(const p of hill.pts){ ctx.lineTo(p.x + k*W, p.y + 40); }
     ctx.lineTo(W + k*W, H); ctx.closePath(); ctx.fill();
   }
   ctx.restore();
 }
+function makeCityLayer(speed, color, windowProb, groundYRatio){
+  const yBase = H*groundYRatio;
+  const buildings=[];
+  let x=0;
+  while(x < W+100){
+    const w=rand(50,120);
+    const h=rand(60,180);
+    buildings.push({
+      x, y:yBase-h, w, h,
+      roof: Math.random()<0.35,
+      color, windowProb
+    });
+    x += w + rand(12,24);
+  }
+  return { speed, color, buildings, yBase };
+}
+function drawCityLayer(layer, idx){
+  const shift = (env.t*50*layer.speed) % (W+120);
+  ctx.save();
+  ctx.translate(-shift,0);
+  for(let k=0;k<2;k++){
+    for(const b of layer.buildings){
+      const X = b.x + k*(W+120), Y = b.y, Wd=b.w, Hd=b.h;
+      // body
+      ctx.fillStyle = b.color;
+      ctx.fillRect(X, Y, Wd, Hd);
+      // roof
+      if(b.roof){
+        ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(X+Wd/2, Y-12); ctx.lineTo(X+Wd, Y); ctx.closePath();
+        ctx.fill();
+      }
+      // windows
+      const wp = b.windowProb;
+      const cols=Math.max(2,Math.floor(Wd/16)), rows=Math.max(2,Math.floor(Hd/22));
+      for(let i=0;i<cols;i++){
+        for(let j=0;j<rows;j++){
+          if(Math.random()<wp){
+            const wx = X+6+i*(Wd-12)/cols, wy=Y+6+j*(Hd-12)/rows;
+            ctx.globalAlpha = 0.6 + 0.4*(0.5+0.5*Math.sin(env.t*3 + i*2 + j));
+            ctx.fillStyle = '#ffd673'; ctx.fillRect(wx,wy,6,10);
+            ctx.globalAlpha = 1;
+          }
+        }
+      }
+    }
+  }
+  ctx.restore();
+}
 function makeInsect(){
-  const kinds=['ant','beetle','worm','firefly'];
+  const kinds=['ant','beetle','worm','firefly','woodlouse','centipede','spider'];
   const type = kinds[Math.floor(Math.random()*kinds.length)];
   return {
     type,
-    x: rand(-40,W+40),
-    y0: rand(H*0.55, H*0.9),
-    vx: (Math.random()<0.5?-1:1)*rand(20,50),
+    x: rand(-60,W+60),
+    y0: rand(H*0.55, H*0.92),
+    vx: (Math.random()<0.5?-1:1)*rand(25,55),
     phase: Math.random()*6.28,
     life: 0
   };
 }
 function drawInsect(b){
-  const y = b.y0; // basis
+  const y = b.y0;
   if(b.type==='ant'){
     ctx.fillStyle='#2b2b2b';
     ctx.beginPath(); ctx.ellipse(b.x,y,6,3,0,0,Math.PI*2); ctx.fill();
@@ -279,20 +268,110 @@ function drawInsect(b){
     ctx.fillStyle='#3a2c19';
     ctx.beginPath(); ctx.ellipse(b.x,y,8,5,0,0,Math.PI*2); ctx.fill();
     ctx.strokeStyle='rgba(0,0,0,0.3)'; ctx.beginPath(); ctx.moveTo(b.x,y-5); ctx.lineTo(b.x,y+5); ctx.stroke();
+  }else if(b.type==='woodlouse'){
+    ctx.fillStyle='#4b4b4b';
+    for(let i=0;i<5;i++){ ctx.beginPath(); ctx.ellipse(b.x-8+i*4,y,6-i,3,0,0,Math.PI*2); ctx.fill(); }
+  }else if(b.type==='centipede'){
+    ctx.strokeStyle='#8a3a1c'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(b.x-12, y); ctx.lineTo(b.x+12, y); ctx.stroke();
+    ctx.lineWidth=1.5; for(let i=-12;i<=12;i+=4){ ctx.beginPath(); ctx.moveTo(b.x+i,y); ctx.lineTo(b.x+i,y+4); ctx.stroke(); }
   }else if(b.type==='worm'){
     ctx.strokeStyle='#a86852'; ctx.lineWidth=3;
     ctx.beginPath(); ctx.moveTo(b.x-8, y); ctx.quadraticCurveTo(b.x, y+4*Math.sin(b.phase), b.x+8, y); ctx.stroke();
   }else if(b.type==='firefly'){
     const glow = 0.4 + 0.6*(0.5+0.5*Math.sin(b.phase*2));
-    ctx.globalAlpha = 0.4 + 0.5*glow;
-    ctx.fillStyle='#ffe97a'; ctx.beginPath(); ctx.arc(b.x,y,2.4,0,Math.PI*2); ctx.fill();
-    ctx.globalAlpha = 1;
+    ctx.globalAlpha = 0.4 + 0.5*glow; ctx.fillStyle='#ffe97a';
+    ctx.beginPath(); ctx.arc(b.x,y,2.4,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+  }else if(b.type==='spider'){
+    // web
+    const topX=b.x, topY=y-16;
+    ctx.strokeStyle='rgba(255,255,255,0.18)'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(topX, topY-40); ctx.lineTo(topX, y-8); ctx.stroke();
+    // spider
+    ctx.fillStyle='#1e1e1e';
+    ctx.beginPath(); ctx.arc(b.x, y-4+Math.sin(b.phase)*2, 4, 0, Math.PI*2); ctx.fill();
+  }
+}
+function drawUnderground(env){
+  let g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#3b2a1d'); g.addColorStop(1,'#22170f');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  // rotslagen
+  ctx.globalAlpha=0.25; ctx.strokeStyle='#2a1d14'; ctx.lineWidth=12;
+  for(let i=0;i<8;i++){ let y = H - i*H/8; ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y+rand(-8,8)); ctx.stroke(); }
+  ctx.globalAlpha=1;
+  // wortels
+  ctx.strokeStyle='rgba(30,15,5,0.7)'; ctx.lineWidth=2;
+  for(let i=0;i<6;i++){
+    const x= (i+0.2)*W/6; ctx.beginPath();
+    ctx.moveTo(x, rand(H*0.1,H*0.3));
+    ctx.bezierCurveTo(x-20, H*0.4, x+15, H*0.55, x+rand(-20,20), H*0.68);
+    ctx.stroke();
+  }
+  // steentjes
+  ctx.fillStyle='rgba(0,0,0,0.25)';
+  for(let i=0;i<60;i++){ ctx.beginPath(); ctx.ellipse((i*97)%W, H-(i*31)%H, rand(2,5), rand(1,3), 0, 0, Math.PI*2); ctx.fill(); }
+  // fauna
+  for(const b of env.insects){ drawInsect(b); }
+}
+function drawEarth(env){
+  let g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#8ecae6'); g.addColorStop(1,'#90b4a5');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  // heuvels
+  drawHillLayer(env.hills[0], 0.35, '#2f4946');
+  drawHillLayer(env.hills[1], 0.55, '#233a37');
+  drawHillLayer(env.hills[2], 0.75, '#172c2a');
+  // stadssilhouetten (met ramen)
+  for(let i=0;i<env.cityLayers.length;i++){
+    drawCityLayer(env.cityLayers[i], i);
+  }
+}
+function drawClouds(env){
+  let g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#cfe6ff'); g.addColorStop(1,'#9fc7ff');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='rgba(255,255,255,0.85)';
+  for(const c of env.clouds){
+    ctx.beginPath(); ctx.ellipse(c.x, c.y, c.w, c.h, 0, 0, Math.PI*2); ctx.fill();
+  }
+}
+function drawSpace(env){
+  let g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#0b0e2a'); g.addColorStop(1,'#000005');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  for(const s of env.stars){
+    const tw = 0.4 + 0.6*(0.5+0.5*Math.sin(env.t*2 + s.tw));
+    ctx.globalAlpha = 0.25 + 0.7*tw;
+    ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fillStyle='#cfe6ff'; ctx.fill();
+  }
+  ctx.globalAlpha=1;
+}
+function drawHeaven(env){
+  let g = ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#f3e7ff'); g.addColorStop(1,'#d6c6ff');
+  ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+  // stralen
+  const cx=W*0.5, cy=H*0.25;
+  for(let i=0;i<6;i++){
+    const ang = i/6*Math.PI*2 + env.t*0.05;
+    const x2 = cx + Math.cos(ang)*W*0.8;
+    const y2 = cy + Math.sin(ang)*H*0.8;
+    const lg = ctx.createLinearGradient(cx,cy,x2,y2);
+    lg.addColorStop(0,'rgba(255,255,255,0.22)');
+    lg.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=lg;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.lineTo(x2,y2);
+    ctx.lineTo(cx + Math.cos(ang+0.12)*W*0.65, cy + Math.sin(ang+0.12)*H*0.65);
+    ctx.closePath(); ctx.fill();
   }
 }
 
-/* ----------------------------------
+/* =========================
    Collision helpers
----------------------------------- */
+========================= */
 function tryLandOn(p, dt){
   if(!p) return false;
   if(groundPlat && groundPlat.id===p.id) return false;
@@ -318,56 +397,124 @@ function tryLandOn(p, dt){
   return false;
 }
 
-/* ----------------------------------
-   Drawing (platformen & speler)
----------------------------------- */
-function drawCoinPlatform(p){
-  const x = platX(p);
-  const y = p.y;
-  const w = p.w, h = p.h, thickness = Math.max(12, h*0.9);
-
-  // zijkant met schaduw
-  const sideGrad=ctx.createLinearGradient(x,y,x,y+thickness);
-  sideGrad.addColorStop(0,'#d9b95c'); sideGrad.addColorStop(1,'#8b6a28');
-  ctx.fillStyle=sideGrad;
-  ctx.beginPath(); ctx.ellipse(x,y+thickness,w/2,h/2,0,0,Math.PI*2); ctx.fill();
-
-  // top goud
-  const topGrad=ctx.createLinearGradient(x,y-h/2,x,y+h/2);
-  topGrad.addColorStop(0,'#fff6c8'); topGrad.addColorStop(0.55,'#f6d36a'); topGrad.addColorStop(1,'#b78628');
-  ctx.fillStyle=topGrad;
-  ctx.beginPath(); ctx.ellipse(x,y,w/2,h/2,0,0,Math.PI*2); ctx.fill();
-
-  // knurling (geribbelde rand)
-  ctx.strokeStyle='rgba(255,255,255,0.65)'; ctx.lineWidth=3;
-  ctx.beginPath(); ctx.ellipse(x,y,w/2-2,h/2-2,0,0,Math.PI*2); ctx.stroke();
-  ctx.save(); ctx.translate(x,y); ctx.rotate(0);
-  ctx.strokeStyle='rgba(0,0,0,0.25)'; ctx.lineWidth=1;
-  const ticks = Math.max(16, Math.floor(w/10));
-  for(let i=0;i<ticks;i++){
-    const a = i/ticks*Math.PI*2;
-    const rx=w/2-6, ry=h/2-6;
-    const x1 = Math.cos(a)*rx, y1 = Math.sin(a)*ry;
-    const x2 = Math.cos(a)*(rx-4), y2 = Math.sin(a)*(ry-4);
-    ctx.beginPath(); ctx.moveTo(x1,y1); ctx.lineTo(x2,y2); ctx.stroke();
-  }
-  ctx.restore();
-
-  // logo gecentreerd
-  if(logo.complete){
-    ctx.save();
-    ctx.beginPath(); ctx.ellipse(x,y,w*0.78/2,h*0.78/2,0,0,Math.PI*2); ctx.clip();
-    const imgW=w*0.78, imgH=imgW;
-    ctx.drawImage(logo, x-imgW/2, y-imgH/2, imgW, imgH);
-    ctx.restore();
-  }
-
-  // highlight
-  ctx.globalAlpha=0.2; ctx.fillStyle='#fff';
-  ctx.beginPath(); ctx.ellipse(x, y-h*0.18, w*0.86/2, h*0.58/2, 0, 0, Math.PI*2); ctx.fill();
-  ctx.globalAlpha=1;
+/* =========================
+   Draw Platforms (per zone/type)
+========================= */
+function roundRectPath(x,y,w,h,r=8){
+  const hw=w/2, hh=h/2;
+  ctx.beginPath();
+  ctx.moveTo(x-hw+r,y-hh);
+  ctx.lineTo(x+hw-r,y-hh);
+  ctx.quadraticCurveTo(x+hw,y-hh,x+hw,y-hh+r);
+  ctx.lineTo(x+hw,y+hh-r);
+  ctx.quadraticCurveTo(x+hw,y+hh,x+hw-r,y+hh);
+  ctx.lineTo(x-hw+r,y+hh);
+  ctx.quadraticCurveTo(x-hw,y+hh,x-hw,y+hh-r);
+  ctx.lineTo(x-hw,y-hh+r);
+  ctx.quadraticCurveTo(x-hw,y-hh,x-hw+r,y-hh);
+  ctx.closePath();
 }
 
+function drawPlatform(p){
+  const x = platX(p), y=p.y, w=p.w, h=p.h, th = Math.max(10, h*1.1);
+  switch(p.type){
+    case 'stone':   drawStonePlatform(x,y,w,h,th); break;
+    case 'wood':    drawWoodPlatform(x,y,w,h,th);  break;
+    case 'cloud':   drawCloudPlatform(x,y,w,h);    break;
+    case 'sat':     drawSatellitePlatform(x,y,w,h,th); break;
+    case 'marble':  drawMarblePlatform(x,y,w,h,th); break;
+  }
+}
+function drawStonePlatform(x,y,w,h,th){
+  // side
+  ctx.fillStyle='#4a4a4a';
+  roundRectPath(x, y+th, w, h, 10); ctx.fill();
+  // top
+  const g=ctx.createLinearGradient(x,y-h/2,x,y+h/2);
+  g.addColorStop(0,'#bdbdbd'); g.addColorStop(1,'#7b7b7b');
+  ctx.fillStyle=g; roundRectPath(x,y,w,h,10); ctx.fill();
+  // scheuren
+  ctx.strokeStyle='rgba(0,0,0,0.22)'; ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(x-w*0.3,y-h*0.1); ctx.lineTo(x-w*0.1,y+h*0.1); ctx.lineTo(x+w*0.05,y);
+  ctx.moveTo(x+w*0.2,y-h*0.2); ctx.lineTo(x+w*0.28,y); ctx.lineTo(x+w*0.35,y+h*0.12);
+  ctx.stroke();
+  // mos
+  ctx.fillStyle='rgba(60,120,60,0.25)';
+  roundRectPath(x-w*0.18,y+h*0.1,w*0.36,h*0.25,6); ctx.fill();
+}
+function drawWoodPlatform(x,y,w,h,th){
+  // side
+  const sg=ctx.createLinearGradient(x,y,x,y+th);
+  sg.addColorStop(0,'#7a4a1e'); sg.addColorStop(1,'#4b2b12');
+  ctx.fillStyle=sg; roundRectPath(x,y+th,w,h,10); ctx.fill();
+  // top planken
+  const g=ctx.createLinearGradient(x,y-h/2,x,y+h/2);
+  g.addColorStop(0,'#c08a4b'); g.addColorStop(1,'#8a5a2a');
+  ctx.fillStyle=g; roundRectPath(x,y,w,h,10); ctx.fill();
+  // nerf-lijnen
+  ctx.strokeStyle='rgba(0,0,0,0.25)'; ctx.lineWidth=2;
+  for(let i=-2;i<=2;i++){
+    ctx.beginPath();
+    ctx.moveTo(x-w*0.45,y+i*4); ctx.quadraticCurveTo(x,y+i*6, x+w*0.45,y+i*4); ctx.stroke();
+  }
+  // plank scheiding
+  ctx.globalAlpha=0.25; ctx.beginPath(); ctx.moveTo(x, y-h/2+4); ctx.lineTo(x, y+h/2-4); ctx.stroke(); ctx.globalAlpha=1;
+}
+function drawCloudPlatform(x,y,w,h){
+  // puffy cluster
+  const r = h*0.9;
+  ctx.fillStyle='rgba(255,255,255,0.95)';
+  const n=5, step=w/(n+1);
+  for(let i=0;i<n;i++){
+    const cx = x - w/2 + step*(i+1);
+    ctx.beginPath(); ctx.ellipse(cx, y, r, r*0.7, 0, 0, Math.PI*2); ctx.fill();
+  }
+  // schaduw
+  ctx.globalAlpha=0.25; ctx.fillStyle='#9fc7ff';
+  ctx.beginPath(); ctx.ellipse(x, y+h*0.35, w*0.46, h*0.6, 0, 0, Math.PI*2); ctx.fill();
+  ctx.globalAlpha=1;
+}
+function drawSatellitePlatform(x,y,w,h,th){
+  // side
+  const sg=ctx.createLinearGradient(x,y,x,y+th);
+  sg.addColorStop(0,'#4b5360'); sg.addColorStop(1,'#2b313a');
+  ctx.fillStyle=sg; roundRectPath(x,y+th,w,h,8); ctx.fill();
+  // top panel
+  const g=ctx.createLinearGradient(x,y-h/2,x,y+h/2);
+  g.addColorStop(0,'#8fa7d9'); g.addColorStop(1,'#4166b3');
+  ctx.fillStyle=g; roundRectPath(x,y,w,h,8); ctx.fill();
+  // grid
+  ctx.strokeStyle='rgba(255,255,255,0.3)'; ctx.lineWidth=1;
+  const cols=6, rows=3;
+  for(let i=1;i<cols;i++){ const xx=x-w/2 + i*(w/cols); ctx.beginPath(); ctx.moveTo(xx,y-h/2+4); ctx.lineTo(xx,y+h/2-4); ctx.stroke(); }
+  for(let j=1;j<rows;j++){ const yy=y-h/2 + j*(h/rows); ctx.beginPath(); ctx.moveTo(x-w/2+4,yy); ctx.lineTo(x+w/2-4,yy); ctx.stroke(); }
+  // rivets
+  ctx.fillStyle='rgba(255,255,255,0.6)';
+  for(let i=0;i<4;i++){ for(let j=0;j<2;j++){ ctx.beginPath(); ctx.arc(x-w/2+8+i*(w-16)/3, y-h/2+8+j*(h-16), 2, 0, Math.PI*2); ctx.fill(); } }
+}
+function drawMarblePlatform(x,y,w,h,th){
+  // side
+  const sg=ctx.createLinearGradient(x,y,x,y+th);
+  sg.addColorStop(0,'#e9e9ee'); sg.addColorStop(1,'#bdbdd2');
+  ctx.fillStyle=sg; roundRectPath(x,y+th,w,h,10); ctx.fill();
+  // top
+  const g=ctx.createLinearGradient(x,y-h/2,x,y+h/2);
+  g.addColorStop(0,'#ffffff'); g.addColorStop(1,'#e7e7f5');
+  ctx.fillStyle=g; roundRectPath(x,y,w,h,10); ctx.fill();
+  // marmer-aderen
+  ctx.strokeStyle='rgba(120,120,160,0.35)'; ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(x-w*0.45,y-h*0.15); ctx.quadraticCurveTo(x-w*0.2,y, x,y-h*0.05);
+  ctx.quadraticCurveTo(x+w*0.2,y+h*0.1, x+w*0.45,y-h*0.02); ctx.stroke();
+  // glow
+  ctx.globalAlpha=0.22; ctx.fillStyle='#ffffff';
+  roundRectPath(x,y-h*0.18,w*0.86,h*0.58,8); ctx.fill(); ctx.globalAlpha=1;
+}
+
+/* =========================
+   Player draw
+========================= */
 function drawPlayer(){
   const x=player.x, y=player.y, r=player.r;
   const grad=ctx.createRadialGradient(x-r*0.35,y-r*0.35,r*0.2,x,y,r*1.15);
@@ -381,91 +528,97 @@ function drawPlayer(){
   }
 }
 
-/* ----------------------------------
-   Main loop (met substeps & sticky follow)
----------------------------------- */
-let last=performance.now();
-env.init();
-initRun();
-requestAnimationFrame(loop);
+/* =========================
+   Lifecycle
+========================= */
+function initRun(){
+  // start op UNDERGROUND
+  const baseZone='UNDERGROUND';
+  currentPlat = makePlatform(W/2, H-90, baseZone, true);
+  currentPlat.lastX=platX(currentPlat);
+  const top = platTop(currentPlat);
+  player.x = W/2; player.y=top - player.r; player.r=Math.max(26,Math.min(40,H*0.04));
+  player.vy=0; player.onGround=true; player.coyote=0; groundPlat=currentPlat;
 
+  nextPlat = spawnNextAbove(currentPlat); nextPlat.lastX = platX(nextPlat);
+
+  camY=0; score=0; hud.textContent='0 m';
+}
+
+/* =========================
+   Main loop (substeps & sticky follow)
+========================= */
+env.rebuild();
+initRun();
+
+let last=performance.now();
+requestAnimationFrame(loop);
 function loop(now){
   let dt=(now-last)/1000; last=now;
   if(dt>0.05) dt=0.05;
 
   env.update(dt);
 
-  const fixed = 0.008;
-  const steps = Math.max(1, Math.ceil(dt / fixed));
-  const h = dt / steps;
-
+  const fixed=0.008, steps=Math.max(1,Math.ceil(dt/fixed)), h=dt/steps;
   for(let i=0;i<steps;i++){
-    // Update platform-fase + delta's
-    const prevX_curr = currentPlat ? currentPlat.lastX : 0;
-    const prevX_next = nextPlat    ? nextPlat.lastX    : 0;
+    // update platform fases
+    const prevX_curr=currentPlat?currentPlat.lastX:0;
+    const prevX_next=nextPlat?nextPlat.lastX:0;
+    if(nextPlat && !nextPlat.isBase) nextPlat.phase += nextPlat.speed*h;
+    if(currentPlat && !currentPlat.isBase) currentPlat.phase += currentPlat.speed*h;
+    if(currentPlat) currentPlat.lastX=platX(currentPlat);
+    if(nextPlat)    nextPlat.lastX=platX(nextPlat);
+    const dx_curr=currentPlat?(currentPlat.lastX - prevX_curr):0;
+    const dx_next=nextPlat?(nextPlat.lastX - prevX_next):0;
 
-    if(nextPlat && !nextPlat.isBase)  nextPlat.phase  += nextPlat.speed  * h;
-    if(currentPlat && !currentPlat.isBase) currentPlat.phase += currentPlat.speed * h;
-
-    if(currentPlat) currentPlat.lastX = platX(currentPlat);
-    if(nextPlat)    nextPlat.lastX    = platX(nextPlat);
-
-    const dx_curr = currentPlat ? (currentPlat.lastX - prevX_curr) : 0;
-    const dx_next = nextPlat    ? (nextPlat.lastX    - prevX_next) : 0;
-
-    // Sticky follow
+    // sticky follow
     if(groundPlat){
-      const dx = (groundPlat.id === currentPlat?.id) ? dx_curr
-               : (groundPlat.id === nextPlat?.id)    ? dx_next : 0;
+      const dx = (groundPlat.id===currentPlat?.id)?dx_curr : (groundPlat.id===nextPlat?.id?dx_next:0);
       player.x = clamp(player.x + dx, player.r, W - player.r);
       player.y = platTop(groundPlat) - player.r;
       player.vy = Math.max(0, player.vy);
       player.onGround = true;
       player.coyote = COYOTE_TIME;
-    } else {
-      player.vy += GRAV * h;
-      player.y  += player.vy * h;
+    }else{
+      player.vy += GRAV*h;
+      player.y  += player.vy*h;
       player.coyote = Math.max(0, player.coyote - h);
-      player.onGround = false;
+      player.onGround=false;
 
       const landedNext = tryLandOn(nextPlat, h);
       const landedCurr = tryLandOn(currentPlat, h);
       if(landedNext){
         currentPlat = nextPlat;
-        nextPlat = spawnNextAbove(currentPlat);
-        nextPlat.lastX = platX(nextPlat);
+        nextPlat = spawnNextAbove(currentPlat); nextPlat.lastX=platX(nextPlat);
       }
     }
   }
 
-  // camera
+  // camera (alleen omhoog)
   if(player.y < camY + H*0.45) camY = player.y - H*0.45;
 
   // fail → reset
-  if(player.y - camY > H + 200){
-    initRun();
-  }
+  if(player.y - camY > H + 200){ initRun(); }
 
   // score
   const meters = Math.max(0, Math.floor((-(player.y - (H-140)))/6));
-  if(meters !== score){ score = meters; document.getElementById('hud').innerText = score + " m"; }
+  if(meters !== score){ score=meters; hud.textContent=score+" m"; }
 
   // draw
   ctx.clearRect(0,0,W,H);
   env.draw(camY);
-
   ctx.save(); ctx.translate(0,-camY);
-  if(currentPlat) drawCoinPlatform(currentPlat);
-  if(nextPlat)    drawCoinPlatform(nextPlat);
+  if(currentPlat) drawPlatform(currentPlat);
+  if(nextPlat)    drawPlatform(nextPlat);
   drawPlayer();
   ctx.restore();
 
   requestAnimationFrame(loop);
 }
 
-/* ----------------------------------
+/* =========================
    Utils
----------------------------------- */
+========================= */
 function rand(a,b){ return a + Math.random()*(b-a); }
 function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
 </script>
