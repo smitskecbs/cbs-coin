@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CBS Jump — tuned clouds + guaranteed stars/meteors + fireworks</title>
+<title>CBS Jump — tiny clouds + guaranteed fireworks & stars</title>
 <style>
   html,body{margin:0;height:100%;background:#0b0f18;overflow:hidden}
   canvas{display:block;width:100vw;height:100vh}
@@ -182,10 +182,10 @@ function spawnNextAbove(ref){
   const gap = GAP_BASE + Math.random()*GAP_VAR;
   const y = ref.y - (gap + 18);
 
-  // Big coin iets later plaatsen
+  // Big coin iets dichterbij zodat je 'm zeker raakt
   if(!bigCoinPlaced && zoneByJumps()==='HEAVEN' && heavenEntered && heavenCoinCount>=HEAVEN_COIN_JUMPS){
     env.bigCoin.x = W*0.5;
-    env.bigCoin.y = y - (GAP_BASE + GAP_VAR*0.5)*3;
+    env.bigCoin.y = y - GAP_BASE*1.2;  // dichter bij
     bigCoinPlaced=true;
   }
   return makePlatform(W/2, y, false);
@@ -228,9 +228,9 @@ const env={
 
     // Wolkenlaag — NOG KLEINER + SNELLER
     this.clouds=[];
-    for(let i=0;i<60;i++){
-      const y=rnd(CLOUD_BAND_TOP-3800, -500);
-      this.clouds.push({x:Math.random()*W,y,w:rnd(70,140),h:rnd(26,60),s:rnd(0.09,0.18)});
+    for(let i=0;i<56;i++){
+      const y=rnd(CLOUD_BAND_TOP-3600, -550);
+      this.clouds.push({x:Math.random()*W,y,w:rnd(50,110),h:rnd(16,38),s:rnd(0.12,0.24)});
     }
 
     // Subtiele jets (achter wolken)
@@ -243,16 +243,15 @@ const env={
     this.skyBirds=[];
     for(let i=0;i<8;i++) this.skyBirds.push(makeSkyBird(rnd(CLOUD_BAND_TOP-3000, -1300)));
 
-    // Space decor — GROTE BAND + HOGE DICHTHEID STERREN
+    // Space decor — brede band + hoge dichtheid sterren
     this.stars=[];
-    // enorme verticale range zodat je ze altijd ziet zodra je SPACE bereikt
-    const STAR_Y_MIN = CLOUD_BAND_TOP - 16000;   // bv. -22000
-    const STAR_Y_MAX = CLOUD_BAND_TOP -  800;    // bv.  -6800
-    for(let i=0;i<1200;i++){
+    const STAR_Y_MIN = CLOUD_BAND_TOP - 18000;
+    const STAR_Y_MAX = CLOUD_BAND_TOP -   800;
+    for(let i=0;i<1400;i++){
       this.stars.push({
         x:Math.random()*W,
         y:rnd(STAR_Y_MIN, STAR_Y_MAX),
-        r:Math.random()*1.8+0.7,   // groter
+        r:Math.random()*1.9+0.7,
         tw:Math.random()*6.28
       });
     }
@@ -280,7 +279,7 @@ const env={
       if(b.x>W+40){b.x=-40; b.y=GROUND_Y - rnd(140,320);}
     }
     // wolken sneller
-    for(const c of this.clouds){ c.x-=22*c.s*dt; if(c.x<-c.w) c.x=W+c.w*0.5; }
+    for(const c of this.clouds){ c.x-=28*c.s*dt; if(c.x<-c.w) c.x=W+c.w*0.5; }
     // jets
     for(const p of this.planes){
       p.x += p.vx*dt; p.trail=Math.max(0,Math.min(1,p.trail+dt*0.05));
@@ -300,13 +299,12 @@ const env={
       if(this.meteorTimer <= 0){
         const fromLeft = Math.random() < 0.5;
         const x = fromLeft ? -50 : W + 50;
-        // y nu rondom de camera zodat ze zichtbaar zijn
-        const y = camY + rnd(-H*0.15, H*0.55);
-        const speed = rnd(360, 540);
+        const y = camY + rnd(H*0.05, H*0.6); // direct in zicht
+        const speed = rnd(380, 560);
         const ang = fromLeft ? rnd(-0.9, -0.5) : rnd(Math.PI + 0.5, Math.PI + 0.9);
         const vx = Math.cos(ang) * speed, vy = Math.sin(ang) * speed;
         this.meteors.push({x, y, vx, vy, life: rnd(0.9, 1.8)});
-        this.meteorTimer = rnd(0.6, 1.4);
+        this.meteorTimer = rnd(0.6, 1.3);
       }
       for(let i=this.meteors.length-1;i>=0;i--){
         const m=this.meteors[i];
@@ -317,16 +315,25 @@ const env={
   },
 
   /* ---- fireworks ---- */
-  startFireworks(){ this.fireworks=true; this.fireTimer=0; },
+  startFireworks(){
+    this.fireworks=true; this.fireTimer=0;
+
+    // Instant burst zodat je meteen iets ziet
+    for(let i=0;i<6;i++){
+      const x=rnd(80,W-80), y=camY + H*0.9;
+      const vy=-rnd(300,380), vx=rnd(-60,60);
+      this.rockets.push({x,y,vx,vy,life:rnd(0.6,1.0),color:randColor()});
+    }
+  },
   updateFireworks(dt){
     if(!this.fireworks) return;
     this.fireTimer+=dt;
 
-    // spawn rockets (tot ~4 sec)
+    // extra rockets de eerste ~4s
     if(this.fireTimer<4){
-      if(Math.random()<0.10){
-        const x=rnd(80,W-80), y=camY+H+20;
-        const vy=-rnd(260,340), vx=rnd(-40,40);
+      if(Math.random()<0.12){
+        const x=rnd(80,W-80), y=camY + H*0.9; // dichter bij beeld
+        const vy=-rnd(300,380), vx=rnd(-50,50);
         this.rockets.push({x,y,vx,vy,life:rnd(0.8,1.2),color:randColor()});
       }
     }
@@ -337,7 +344,7 @@ const env={
       if(r.life<=0 || r.vy>0){
         const n=90;
         for(let k=0;k<n;k++){
-          const ang=(k/n)*Math.PI*2, sp=rnd(80,220);
+          const ang=(k/n)*Math.PI*2, sp=rnd(90,230);
           this.sparks.push({x:r.x,y:r.y, vx:Math.cos(ang)*sp, vy:Math.sin(ang)*sp, life:rnd(0.6,1.2), color:r.color});
         }
         this.rockets.splice(i,1);
@@ -441,15 +448,13 @@ function drawSkyBird(b){
   ctx.globalAlpha=1;
 }
 function drawCloud(c){
+  ctx.save();
+  ctx.filter='blur(0.3px)'; /* klein en zacht */
   ctx.fillStyle='rgba(255,255,255,.96)';
   ctx.beginPath(); ctx.ellipse(c.x,c.y,c.w,c.h,0,0,Math.PI*2); ctx.fill();
-  ctx.save();
-  const sh=ctx.createLinearGradient(c.x,c.y,c.x,c.y+c.h*0.9);
-  sh.addColorStop(0,'rgba(0,0,0,0)'); sh.addColorStop(1,'rgba(0,0,0,0.08)');
-  ctx.fillStyle=sh; ctx.beginPath(); ctx.ellipse(c.x,c.y+c.h*0.15,c.w*0.9,c.h*0.9,0,0,Math.PI*2); ctx.fill();
   ctx.restore();
-  ctx.globalAlpha=.7; ctx.strokeStyle='rgba(255,255,255,.9)'; ctx.lineWidth=2;
-  ctx.beginPath(); ctx.ellipse(c.x,c.y-c.h*0.15,c.w*0.95,c.h*0.65,0,0,Math.PI*2); ctx.stroke();
+  ctx.globalAlpha=.65; ctx.strokeStyle='rgba(255,255,255,.9)'; ctx.lineWidth=1.6;
+  ctx.beginPath(); ctx.ellipse(c.x,c.y-c.h*0.12,c.w*0.92,c.h*0.62,0,0,Math.PI*2); ctx.stroke();
   ctx.globalAlpha=1;
 }
 
@@ -504,7 +509,7 @@ function drawMoon(m){
 }
 function drawMeteor(m){
   ctx.save();
-  ctx.strokeStyle='rgba(220,235,255,0.9)'; ctx.lineWidth=2.5;
+  ctx.strokeStyle='rgba(220,235,255,0.92)'; ctx.lineWidth=2.6;
   ctx.beginPath(); ctx.moveTo(m.x - m.vx*0.07, m.y - m.vy*0.07);
   ctx.lineTo(m.x, m.y); ctx.stroke();
   const rg=ctx.createRadialGradient(m.x,m.y,0,m.x,m.y,7);
@@ -649,10 +654,10 @@ function drawWorld(){
     for(const b of env.birds) if(inView(b.y,0)) drawBird(b);
   }
 
-  // Wolken/planes alleen in CLOUDS; fade al ~12 sprongen vóór SPACE
+  // Wolken/planes alleen in CLOUDS; fade ~12 sprongen vóór SPACE
   if(jumps>=J_CLOUDS && jumps < J_SPACE){
-    const cloudFade = Math.max(0, Math.min(1, (J_SPACE - jumps)/12)); // eerder weg
-    ctx.save(); ctx.globalAlpha = 0.85 * cloudFade;
+    const cloudFade = Math.max(0, Math.min(1, (J_SPACE - jumps)/12));
+    ctx.save(); ctx.globalAlpha = 0.82 * cloudFade;
     for(const p of env.planes) if(inView(p.y)) drawBGPlane(p);
     for(const c of env.clouds) if(inView(c.y)) drawCloud(c);
     ctx.restore();
@@ -662,16 +667,14 @@ function drawWorld(){
   }
   // In SPACE geen wolken/planes/skyBirds meer
 
-  // Space decor — STERREN ALTIJD ZICHTBAAR
+  // Space decor — sterren ALTIJD zichtbaar (geen culling)
   if(jumps>=J_SPACE){
     for(const s of env.stars){
-      if(inView(s.y,0)){
-        const tw=0.4 + 0.6*(0.5+0.5*Math.sin(env.t*2 + s.tw));
-        ctx.globalAlpha=(0.38 + 0.62*tw);
-        ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fillStyle='#eaf4ff'; ctx.fill();
-        ctx.globalAlpha=1;
-      }
+      const tw=0.4 + 0.6*(0.5+0.5*Math.sin(env.t*2 + s.tw));
+      ctx.globalAlpha=(0.38 + 0.62*tw);
+      ctx.beginPath(); ctx.arc(s.x, s.y, s.r, 0, Math.PI*2); ctx.fillStyle='#eaf4ff'; ctx.fill();
     }
+    ctx.globalAlpha=1;
     if(env.moon && inView(env.moon.y,200)) drawMoon(env.moon);
     for(const p of env.planets) if(inView(p.y)) drawPlanet(p);
     for(const m of env.meteors) if(inView(m.y,300)) drawMeteor(m);
@@ -769,7 +772,7 @@ function loop(now){
     if(player.y<camY+H*0.45) camY=player.y-H*0.45;
     if(player.y-camY>H+260) startRun();
 
-    // Finish boven de grote coin -> DIRECT gameOver
+    // Win-conditie: boven de grote coin -> einde + vuurwerk
     if(env.bigCoin.y>-90000 && player.y < (env.bigCoin.y - env.bigCoin.r*1.05)){
       gameOver=true;
     }
@@ -852,7 +855,7 @@ function renderFireworks(){
   for(const r of env.rockets){
     ctx.save(); ctx.globalCompositeOperation='lighter';
     ctx.fillStyle='rgba(255,255,255,0.9)';
-    ctx.beginPath(); ctx.arc(r.x, r.y, 2.5, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(r.x, r.y, 2.6, 0, Math.PI*2); ctx.fill();
     ctx.globalCompositeOperation='source-over'; ctx.restore();
   }
   for(const s of env.sparks){
