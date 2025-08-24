@@ -3,20 +3,32 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>CBS Jump – Hout → Wolken → Vliegtuigen → Raketjes</title>
+<title>CBS Jump — Alleen springen, platforms bewegen</title>
 <style>
   :root{ --bg1:#0d1320; --bg2:#0a0d18; --mint:#00ffd1; --ink:#eaf2ff; --muted:#9ab0c7 }
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%;background:linear-gradient(180deg,var(--bg1),var(--bg2));font-family:system-ui,Segoe UI,Roboto,Inter,Arial}
+  html,body{
+    margin:0;height:100%;
+    background:linear-gradient(180deg,var(--bg1),var(--bg2));
+    font-family:system-ui,Segoe UI,Roboto,Inter,Arial;
+    overscroll-behavior: contain;
+    -webkit-tap-highlight-color: transparent;
+  }
   #wrap{display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:1rem}
   h1{margin:.25rem 0;color:var(--mint)}
   #hud{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center;justify-content:center}
   .pill{padding:.35rem .7rem;border:1px solid #1f2a3c;background:#0c111a;border-radius:999px;color:var(--ink);font-size:.9rem}
   .btn{padding:.5rem .9rem;border:1px solid #223046;background:#101622;color:var(--ink);border-radius:.6rem;cursor:pointer}
-  #canvas{width:min(100vw - 2rem, 900px);height:70vh;max-height:860px;border:1px solid #1f2434;border-radius:14px;background:#05060a;display:block}
+  #canvas{
+    width:min(100vw - 2rem, 900px);
+    height:70vh; max-height:860px;
+    border:1px solid #1f2434;border-radius:14px;background:#05060a;display:block;
+    touch-action:none; /* voorkomt zoomen/scrollen tijdens tikken */
+  }
   #tips{color:var(--muted);font-size:.92rem;text-align:center;max-width:900px}
-  .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
-  .card{pointer-events:auto;background:rgba(10,12,18,.78);backdrop-filter:blur(6px);border:1px solid #1f2937;border-radius:16px;padding:1rem 1.25rem;color:#eaf2ff;max-width:min(92vw,560px);text-align:center}
+  /* Overlays */
+  .overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:auto}
+  .card{background:rgba(10,12,18,.82);backdrop-filter:blur(6px);border:1px solid #1f2937;border-radius:16px;padding:1rem 1.25rem;color:#eaf2ff;max-width:min(92vw,560px);text-align:center}
   .row{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;margin-top:.6rem}
   .kbd{border:1px solid #2b3344;background:#0e1320;padding:.3rem .5rem;border-radius:.5rem}
 </style>
@@ -32,25 +44,27 @@
       <button id="mute" class="btn">🔈 Geluid: <span id="muteState">aan</span></button>
     </div>
     <canvas id="canvas"></canvas>
-    <div id="tips">Flow: <b>Houten planken</b> → <b>Wolken</b> → <b>Vliegtuigjes</b> → <b>Raketjes</b>. Overgangen bij <b>landingen</b> (20 / 40 / 70).</div>
-  </div>
-
-  <div class="overlay" id="startOverlay">
-    <div class="card">
-      <h2>Klaar? 🚀</h2>
-      <p>Spring: <b>hout → wolken → vliegtuigen → raketjes</b>. Wolken na 20 landingen, vliegtuigen na 40, raketten na 70.</p>
-      <p class="row">
-        <span class="kbd">←</span><span class="kbd">→</span> bewegen
-        <span class="kbd">Spatie</span>/<span class="kbd">↑</span> springen
-      </p>
-      <div class="row"><button id="startBtn" class="btn">Start</button></div>
+    <div id="tips">
+      Alleen <b>springen</b> (Space/↑ of tik): <b>Hout</b> → <b>Wolken</b> → <b>Vliegtuigjes</b> → <b>Raketjes</b>. Overgangen bij <b>20/40/70 landingen</b>.  
+      Platforms bewegen; jij blijft in het midden — het gaat om timing.
     </div>
   </div>
 
+  <!-- Start overlay -->
+  <div class="overlay" id="startOverlay">
+    <div class="card">
+      <h2>Tik of druk om te starten 🚀</h2>
+      <p>Spring alleen met <b>↑</b>/<b>Spatie</b> of tik; platforms bewegen onder je door.</p>
+      <p class="row"><span class="kbd">↑</span> / <span class="kbd">Spatie</span> om te springen</p>
+      <div class="row"><button id="startBtn" class="btn">Start</button></div>
+      <small>Op mobiel: tik overal om te starten & springen.</small>
+    </div>
+  </div>
+
+  <!-- Game over overlay -->
   <div class="overlay" id="overOverlay" style="display:none;">
     <div class="card">
       <h2>Game Over</h2>
-      <p>Thanks for your support ❤️</p>
       <p>Score: <b><span id="finalScore">0</span></b> – Hoogte: <b><span id="finalHeight">0</span></b> m</p>
       <div class="row"><button id="againBtn" class="btn">Nog een keer</button></div>
     </div>
@@ -58,28 +72,26 @@
 
 <script>
 (()=>{
-  // ========= CONFIG (finetune hier) =========
-  const CONFIG = {
-    thresholds: { cloud:20, plane:40, rocket:70 },     // landingen
-    physics:    { gravity:0.50, jump:-10.6, speed:3.6 },
-    wrap:       true,                                   // screen wrap links/rechts
-    widths:     { wood:90, cloud:100, plane:110, rocket:100 },
-    gaps:       { base:68, scalePerLanding:0.9, maxAdd:90 },
-    move:       { wood:0.10, cloud:0.12, plane:0.85, rocket:0.90 },
-    vx:         { wood:[0.5,1.1], cloud:[0.5,1.1], plane:[0.9,1.5], rocket:[1.2,2.0] },
-    bob:        { plane:{s:[0.015,0.03], amp:[2,4]}, rocket:{s:[0.02,0.035], amp:[3,6]} },
-    audioGain:  0.25
-  };
-  // ==========================================
+  // ====== BASISINSTELLINGEN ======
+  const PHYS = { GRAV:0.5, JUMP:-10.8 };           // spronghoogte ~116px
+  const THRESH = { CLOUD:20, PLANE:40, ROCKET:70 }; // landingen per fase
+  const WIDTHS = { wood:90, cloud:100, plane:110, rocket:100 };
+  const GAP = { base:88, max:112 };                 // verticale afstand tussen platforms (hou < ~116px)
+  const VX = { wood:[0.5,1.1], cloud:[0.6,1.2], plane:[0.9,1.6], rocket:[1.2,2.0] };
+  const BOB = { plane:{s:[0.015,0.03], a:[2,4]}, rocket:{s:[0.02,0.035], a:[3,6]} };
+  const H = 12; // platform-hoogte (hitbox)
 
-  // ===== Canvas =====
+  // ====== Canvas ======
   const cvs = document.getElementById('canvas');
   const ctx = cvs.getContext('2d');
-  function fit(){ const r=cvs.getBoundingClientRect(), dpr=Math.max(1,Math.floor(window.devicePixelRatio||1));
-    cvs.width=Math.max(2,Math.floor(r.width*dpr)); cvs.height=Math.max(2,Math.floor(r.height*dpr)); ctx.setTransform(dpr,0,0,dpr,0,0); }
+  function fit(){
+    const r=cvs.getBoundingClientRect(), dpr=Math.max(1,Math.floor(window.devicePixelRatio||1));
+    cvs.width=Math.max(2,Math.floor(r.width*dpr));
+    cvs.height=Math.max(2,Math.floor(r.height*dpr));
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
   addEventListener('resize', fit, {passive:true}); fit();
 
-  // ===== UI =====
   const $=id=>document.getElementById(id);
   const uiScore=$('score'), uiHeight=$('height'), uiPhase=$('phase');
   const startOverlay=$('startOverlay'), overOverlay=$('overOverlay');
@@ -87,207 +99,202 @@
   const finalScore=$('finalScore'), finalHeight=$('finalHeight');
   const muteBtn=$('mute'), muteState=$('muteState');
 
-  // ===== Audio (IPFS) =====
+  // ====== Audio (IPFS) ======
   const CID="bafybeif7okyipwq3m5fus33fpbxyd5byftb62m72xz4vvwkyf4cng6k2bq";
-  const SOURCES=[`https://gateway.pinata.cloud/ipfs/${CID}`, `https://ipfs.io/ipfs/${CID}`, `https://cloudflare-ipfs.com/ipfs/${CID}`];
+  const SRC=[`https://gateway.pinata.cloud/ipfs/${CID}`,`https://ipfs.io/ipfs/${CID}`,`https://cloudflare-ipfs.com/ipfs/${CID}`];
   let audioCtx, gain, src, buf=null, muted=false; muteState.textContent='aan';
-  async function ensureAudio(){ if(!audioCtx){ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); gain=audioCtx.createGain(); gain.gain.value=CONFIG.audioGain; gain.connect(audioCtx.destination); } }
-  async function loadAudio(){
-    if(buf) return buf; await ensureAudio();
-    for(const u of SOURCES){ try{ const a=await (await fetch(u)).arrayBuffer(); buf=await audioCtx.decodeAudioData(a); return buf; }catch{} }
-    throw new Error('BGM load fail');
-  }
-  async function playBGM(){ try{ const b=await loadAudio(); if(src){try{src.stop()}catch{} } src=audioCtx.createBufferSource(); src.buffer=b; src.loop=true; src.connect(gain); src.start(0);}catch{} }
+  async function ensureAudio(){ if(!audioCtx){ audioCtx=new (window.AudioContext||window.webkitAudioContext)(); gain=audioCtx.createGain(); gain.gain.value=.25; gain.connect(audioCtx.destination); } }
+  async function loadBGM(){ if(buf) return buf; await ensureAudio(); for(const u of SRC){ try{ const a=await (await fetch(u)).arrayBuffer(); buf=await audioCtx.decodeAudioData(a); return buf; }catch{} } throw new Error('BGM'); }
+  async function playBGM(){ try{ const b=await loadBGM(); if(src){try{src.stop()}catch{} } src=audioCtx.createBufferSource(); src.buffer=b; src.loop=true; src.connect(gain); src.start(0);}catch{} }
   muteBtn.onclick = async ()=>{ muted=!muted; muteState.textContent=muted?'uit':'aan'; if(!muted) await playBGM(); else if(src){ try{src.stop()}catch{} } };
 
-  // ===== Game constants =====
-  const H = 12; // platform hoogte (hitbox)
-  const WORLD_WRAP=CONFIG.wrap;
-
-  // ===== State =====
-  let running=false, over=false, lastTs=0;
+  // ====== State ======
+  let running=false, over=false, last=0;
   const world={camY:0, score:0, height:0, landings:0, time:0, phase:'WOOD'};
-  const coin={x:100,y:0,vx:0,vy:0,w:28,h:28,on:false,spin:0};
-
-  // platform: {x,y,w,h,type, vx?, bobA?, bobS?, bobAmp?, y0?}
+  const coin={x:0,y:0,vy:0,w:28,h:28,on:false,spin:0}; // geen vx/links/rechts meer
   const plats=[], birds=[], farPlanes=[], stars=[], meteors=[], fx=[];
 
-  // ===== Helpers =====
+  // ====== Helpers ======
   const rand=(a,b)=>Math.random()*(b-a)+a;
   const irand=(a,b)=>Math.floor(rand(a,b));
   const vw=()=>cvs.width/(window.devicePixelRatio||1);
   const vh=()=>cvs.height/(window.devicePixelRatio||1);
   const hit=(ax,ay,aw,ah,bx,by,bw,bh)=> ax<bx+bw && ax+aw>bx && ay<by+bh && ay+ah>by;
 
-  function setPhaseByLandings(){
-    const L=world.landings, T=CONFIG.thresholds;
+  function setPhase(){
+    const L=world.landings;
     const old=world.phase;
-    world.phase = (L>=T.rocket)? 'SPACE' : (L>=T.plane)? 'SKY' : (L>=T.cloud)? 'CLOUD' : 'WOOD';
+    world.phase = (L>=THRESH.ROCKET)? 'SPACE' : (L>=THRESH.PLANE)? 'SKY' : (L>=THRESH.CLOUD)? 'CLOUD' : 'WOOD';
     if(old!==world.phase){
-      if(world.phase==='CLOUD'){ farPlanes.length=0; for(let i=0;i<4;i++) farPlanes.push({x:rand(0, vw()), y: world.camY - rand(200,800), vx:rand(.18,.4), s:rand(.6,1)}) }
-      if(world.phase==='SPACE'){ stars.length=0; for(let i=0;i<140;i++) stars.push({x:rand(0, vw()), y: world.camY - rand(0,2400), tw:rand(0,6.283), r:rand(.6,1.8)}) }
+      if(world.phase==='CLOUD'){ farPlanes.length=0; for(let i=0;i<4;i++) farPlanes.push({x:rand(0,vw()), y:world.camY-rand(200,800), vx:rand(.18,.4), s:rand(.6,1)}) }
+      if(world.phase==='SPACE'){ stars.length=0; for(let i=0;i<140;i++) stars.push({x:rand(0,vw()), y:world.camY-rand(0,2400), tw:rand(0,6.283), r:rand(.6,1.8)}) }
     }
   }
 
-  // ===== Reset =====
   function reset(){
-    running=false; over=false; lastTs=0;
+    running=false; over=false; last=0;
     Object.assign(world,{camY:0,score:0,height:0,landings:0,time:0,phase:'WOOD'});
-    Object.assign(coin,{x:vw()/2,y:0,vx:0,vy:0,on:false,spin:0});
+    coin.x = vw()/2 - coin.w/2;
+    const baseY = 60; // eerste plank op ~60px boven bodem
+    coin.y = baseY + coin.h; coin.vy=0; coin.on=true; coin.spin=0;
     plats.length=0; birds.length=0; farPlanes.length=0; stars.length=0; meteors.length=0; fx.length=0;
 
-    // Start platforms (hout)
-    const base=40, W=CONFIG.widths.wood;
-    for(let i=0;i<10;i++){
-      const y=-i*70+base;
-      plats.push({x:(i===0? coin.x-W/2 : rand(30, vw()-W-30)), y, w:W, h:H, type:'wood'});
-    }
-    // Vogels op de grond
+    // Startplatform (hout) exact onder de coin
+    plats.push({x:coin.x - (WIDTHS.wood-coin.w)/2, y:baseY, w:WIDTHS.wood, h:H, type:'wood', vx:0.8, minX:10, maxX:vw()-WIDTHS.wood-10});
+    // Verder omhoog alvast wat platforms
+    for(let i=1;i<10;i++){ const y = baseY - i*90; plats.push(makePlatform('wood', y)); }
+
+    // Vogels (grond)
     for(let i=0;i<6;i++) birds.push({x:rand(0,vw()), y:rand(-60,60), vx:rand(.28,.6), flap:rand(0,6.283)});
+
     $('overOverlay').style.display='none'; $('startOverlay').style.display='flex';
     draw(0);
   }
 
-  // ===== Input =====
-  const keys={};
-  addEventListener('keydown', e=>{
-    keys[e.code]=true;
-    if(!running && !over && (['Space','ArrowUp','ArrowLeft','ArrowRight'].includes(e.code))) start();
-  });
-  addEventListener('keyup', e=>keys[e.code]=false);
-  $('startBtn').onclick = ()=>start();
-  $('againBtn').onclick = ()=>{ reset(); start(); };
-  $('reset').onclick = ()=> reset();
-  $('startOverlay').addEventListener('click', ()=>start(), {passive:true});
-  document.addEventListener('touchstart', ()=>start(), {passive:true});
-
-  async function start(){
-    $('startOverlay').style.display='none';
-    running=true;
-    if(!muted) await playBGM();
-    requestAnimationFrame(loop);
-  }
-
-  // ===== Spawning =====
-  function difficulty(){
-    const L=world.landings, G=CONFIG.gaps;
-    return { gap: G.base + Math.min(G.maxAdd, L*G.scalePerLanding) };
-  }
-  function currentType(){
-    switch(world.phase){
-      case 'WOOD': return 'wood';
-      case 'CLOUD': return 'cloud';
-      case 'SKY' : return 'plane';
-      case 'SPACE': return 'rocket';
+  function makePlatform(type, y){
+    const w = WIDTHS[type]||90;
+    const x = rand(20, vw()-w-20);
+    const p = {x,y,w,h:H,type};
+    // alle platforms bewegen (zoals je vroeg)
+    const range = VX[type]||VX.wood;
+    p.vx = rand(range[0], range[1]) * (Math.random()<0.5?-1:1);
+    p.minX = 10; p.maxX = vw()-w-10;
+    if(type==='plane' || type==='rocket'){
+      p.y0=y; p.bobA=rand(0,6.283);
+      const b = (type==='plane')? BOB.plane : BOB.rocket;
+      p.bobS = rand(b.s[0], b.s[1]); p.bobAmp = rand(b.a[0], b.a[1]);
     }
+    return p;
   }
-  function typeWidth(t){ return CONFIG.widths[t]; }
+
+  function currentType(){
+    return world.phase==='WOOD'?'wood': world.phase==='CLOUD'?'cloud': world.phase==='SKY'?'plane':'rocket';
+  }
+
   function topY(){ let m=Infinity; for(const t of plats){ if(t.y<m) m=t.y; } return m; }
 
   function spawnAhead(){
-    const {gap}=difficulty();
-    const target = world.camY - 800;
+    const target = world.camY - 700;
     let top = topY();
     while(top > target){
-      const y = top - gap;
       const type = currentType();
-      const w = Math.max(70, typeWidth(type));
-      const x = rand(25, vw()-w-25);
-      const t = {x,y,w,h:H,type};
-
-      // beweging per type
-      const mvChance = CONFIG.move[type];
-      if(Math.random() < mvChance){
-        const [lo,hi] = CONFIG.vx[type];
-        t.vx = rand(lo,hi) * (Math.random()<0.5?-1:1);
-        t.minX=20; t.maxX=vw()-w-20;
-        if(type==='plane' || type==='rocket'){
-          const b=CONFIG.bob[type];
-          t.bobA=rand(0,6.283); t.bobS=rand(b.s[0],b.s[1]); t.bobAmp=rand(b.amp[0],b.amp[1]); t.y0=y;
-        }
-      }
-      plats.push(t); top = topY();
+      // veilige gap (tussen 88 en 112)
+      const gap = rand(GAP.base, GAP.max);
+      const y = top - gap;
+      plats.push(makePlatform(type, y));
+      top = topY();
     }
     // cull onderin
-    for(let i=plats.length-1;i>=0;i--) if(plats[i].y - world.camY > vh()+120) plats.splice(i,1);
+    for(let i=plats.length-1;i>=0;i--) if(plats[i].y - world.camY > vh()+140) plats.splice(i,1);
   }
 
-  // ===== Loop =====
+  // ====== Input: alleen springen ======
+  let wantJump=false;
+  function requestJump(){ wantJump = true; }
+  function startIfNeeded(){
+    if(!running && !over){
+      $('startOverlay').style.display='none';
+      running=true;
+      if(!muted) playBGM();
+      requestAnimationFrame(loop);
+    }
+  }
+
+  // Desktop: Space/ArrowUp
+  addEventListener('keydown', e=>{
+    if(e.code==='Space' || e.code==='ArrowUp'){ e.preventDefault(); startIfNeeded(); requestJump(); }
+  }, {passive:false});
+
+  // Pointer/tap overal
+  ['pointerdown','touchstart','mousedown'].forEach(evt=>{
+    document.addEventListener(evt, (e)=>{ startIfNeeded(); requestJump(); }, {passive:true});
+  });
+  $('startBtn').onclick = ()=>{ startIfNeeded(); };
+  $('againBtn').onclick = ()=>{ reset(); startIfNeeded(); };
+  $('reset').onclick = ()=> reset();
+
+  // ====== Loop ======
   function loop(ts){
     if(!running){ draw(0); return; }
-    const dt = Math.min(32, ts-(lastTs||ts)); lastTs=ts; world.time+=dt;
+    const dt = Math.min(32, ts-(last||ts)); last=ts; world.time+=dt;
     update(dt/16.6); draw(dt/16.6); requestAnimationFrame(loop);
   }
 
   function update(dt){
-    const P=CONFIG.physics;
-    const mv = P.speed * (1 + world.landings*0.008);
+    // coin staat horizontaal in het midden; alleen verticale fysica
+    coin.x = vw()/2 - coin.w/2;
 
-    // input
-    if(keys['ArrowLeft']) coin.vx=-mv; else if(keys['ArrowRight']) coin.vx=mv; else coin.vx*=0.82;
-    if((keys['Space']||keys['ArrowUp']) && coin.on){ coin.vy=P.jump*(1+world.landings*0.001); coin.on=false; }
+    // jump op verzoek
+    if(wantJump && coin.on){ coin.vy = PHYS.JUMP; coin.on=false; wantJump=false; }
 
-    // physics
-    coin.vy += P.gravity * dt; coin.x += coin.vx * dt; coin.y += coin.vy * dt; coin.spin += dt*0.12;
+    // zwaartekracht & beweging
+    coin.vy += PHYS.GRAV * dt;
+    coin.y += coin.vy * dt;
+    coin.spin += dt*0.12;
 
-    // wrap
-    if(WORLD_WRAP){ if(coin.x<-coin.w) coin.x=vw(); if(coin.x>vw()) coin.x=-coin.w; } else { coin.x=Math.max(0,Math.min(vw()-coin.w,coin.x)); }
+    // platforms bewegen
+    for(const t of plats){
+      t.x += t.vx * dt;
+      if(t.x < t.minX){ t.x=t.minX; t.vx*=-1; }
+      if(t.x > t.maxX){ t.x=t.maxX; t.vx*=-1; }
+      if(t.bobA!=null){ t.bobA += t.bobS * dt; t.y = t.y0 + Math.sin(t.bobA)*t.bobAmp; }
+    }
 
-    // platforms
+    // landing: alleen wanneer we dalen en boven het platform zaten
     let landed=false;
     for(const t of plats){
-      if(t.vx){ t.x+=t.vx*dt; if(t.x<t.minX){t.x=t.minX;t.vx*=-1} if(t.x>t.maxX){t.x=t.maxX;t.vx*=-1} }
-      if(t.bobA!=null){ t.bobA+=t.bobS*dt; t.y = t.y0 + Math.sin(t.bobA)*t.bobAmp; }
-      const wasAbove=(coin.y-coin.h)<=t.y && coin.vy>0;
-      const extraH = t.type==='cloud'? 10 : 12; // iets ruimere hitbox
+      const wasAbove = (coin.y - coin.h) <= t.y && coin.vy > 0;
+      const extraH = t.type==='cloud' ? 10 : 12;
       if(wasAbove && hit(coin.x, coin.y-coin.h, coin.w, coin.h, t.x, t.y-2, t.w, t.h+extraH)){
-        coin.y=t.y+coin.h; coin.vy=0; coin.on=true; landed=true;
+        coin.y = t.y + coin.h; coin.vy = 0; coin.on = true; landed=true;
       }
     }
     if(!landed) coin.on=false;
 
-    // camera
-    const m=(vh())*0.45; world.camY = Math.min(world.camY, coin.y - m);
+    // camera volgt omhoog
+    const margin = vh()*0.45;
+    world.camY = Math.min(world.camY, coin.y - margin);
 
-    // score
+    // score/hoogte
     world.height = Math.max(world.height, -world.camY/10);
     world.score += dt*0.6 + (coin.vy<0?0.2:0);
 
-    // landings teller
-    if(landed && (world._landMark!==true)){ world.landings++; setPhaseByLandings(); }
+    // landingen tellen exact bij overgang false->true
+    if(landed && world._landMark!==true){ world.landings++; setPhase(); }
     world._landMark = landed;
 
     // ambience
+    // vogels (grond)
     for(const b of birds){
-      b.x += b.vx*dt; b.flap+=dt*0.6;
+      b.x += b.vx*dt; b.flap += dt*0.6;
       if(b.x>vw()+20){ b.x=-20; b.y+=rand(-10,10); }
-      if(world.phase!=='WOOD'){ b.y = world.camY - rand(200,600); } // bewegen mee omhoog
     }
-    if((world.phase==='CLOUD' || world.phase==='SKY') && Math.random()<0.01) farPlanes.push({x:-30,y:world.camY-rand(300,1200),vx:rand(.18,.4),s:rand(.6,1)});
-    for(const fp of farPlanes){ fp.x += fp.vx * dt * 2.0; if(fp.x>vw()+40) fp.x=-40; }
-    if(world.phase==='SPACE' && Math.random()<0.01) meteors.push({x:rand(0,vw()), y:world.camY-rand(100,800), vx:rand(3,6), vy:rand(2,4), life:irand(30,60)});
+    // far planes (in clouds/sky)
+    if((world.phase==='CLOUD' || world.phase==='SKY') && Math.random()<0.01){
+      farPlanes.push({x:-30, y:world.camY-rand(300,1200), vx:rand(.18,.4), s:rand(.6,1)});
+    }
+    for(const fp of farPlanes){ fp.x += fp.vx*dt*2.0; if(fp.x>vw()+40) fp.x=-40; }
+    // ruimte
+    if(world.phase==='SPACE' && Math.random()<0.01){
+      meteors.push({x:rand(0,vw()), y:world.camY-rand(100,800), vx:rand(3,6), vy:rand(2,4), life:irand(30,60)});
+    }
     for(let i=meteors.length-1;i>=0;i--){ const m=meteors[i]; m.x+=m.vx*dt; m.y+=m.vy*dt; if(--m.life<=0) meteors.splice(i,1); }
 
-    // spawn
+    // spawn platforms bovenin
     spawnAhead();
 
-    // fail
-    if( (coin.y - world.camY) > vh()+60 ){ gameOver(); }
+    // falen: te ver onder beeld
+    if( (coin.y - world.camY) > vh()+60 ) gameOver();
   }
 
-  // ===== Game Over =====
   function gameOver(){
     if(over) return; over=true; running=false;
-    finalScore.textContent = Math.floor(world.score); finalHeight.textContent = Math.floor(world.height);
-    $('overOverlay').style.display='flex';
-    // vuurwerk
-    for(let k=0;k<5;k++) for(let i=0;i<50;i++){
-      const a=rand(0,6.283), sp=rand(1.2,3.2), cx=vw()/2, cy=vh()/2;
-      fx.push({x:cx, y:world.camY+cy, vx:Math.cos(a)*sp, vy:Math.sin(a)*sp, life:irand(36,60), g:.02, c:['#ff6b6b','#ffd166','#4cc9f0','#b8f2e6','#f72585'][k%5]});
-    }
+    finalScore.textContent = Math.floor(world.score);
+    finalHeight.textContent = Math.floor(world.height);
+    overOverlay.style.display='flex';
   }
 
-  // ===== Rendering =====
+  // ====== Tekenen ======
   function sky(){
     const w=vw(), h=vh(); let g=ctx.createLinearGradient(0,h,0,0);
     if(world.phase==='WOOD'){ g.addColorStop(0,'#0d1320'); g.addColorStop(1,'#16263f'); }
@@ -295,13 +302,12 @@
     else { g.addColorStop(0,'#05060c'); g.addColorStop(1,'#0a0d18'); }
     ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
   }
-  function groundWithHouses(){
+  function ground(){
     if(world.phase!=='WOOD') return;
     const w=vw(), h=vh(), base=Math.floor(h-30 + (world.camY*0.2)%60);
-    // gras
     ctx.fillStyle='#0a1a12'; ctx.fillRect(0,base,w,h-base);
     ctx.fillStyle='#0f3a28'; ctx.fillRect(0,base-6,w,6);
-    // huizen-silhouet
+    // simpele huizen-silhouet
     const y0=base-20; ctx.save(); ctx.translate((world.camY*0.1)%120,0); ctx.fillStyle='#0b1322';
     for(let x=-120;x<w+240;x+=60){ const bw=28+((x/60)%3)*8, bh=30+((x/60)%4)*12, roof=Math.random()<0.5;
       ctx.fillRect(x,y0-bh,bw,bh); ctx.beginPath();
@@ -338,73 +344,40 @@
 
   function drawPlat(t){
     ctx.save(); const yy=t.y - world.camY; ctx.translate(t.x, yy);
-    if(t.type==='wood'){ // Houten plank
-      ctx.fillStyle='#8b5a2b'; rrect(0,0,t.w,H,4); ctx.fillStyle='#5e3c1c'; ctx.fillRect(2,H-3,t.w-4,3);
-    } else if(t.type==='cloud'){ // Wolk-platform
-      ctx.fillStyle='rgba(240,248,255,.95)'; rrect(0,0,t.w,H+10,8);
-      ctx.fillStyle='rgba(200,220,240,.85)'; rrect(4,3,t.w-8,H+7,6);
-    } else if(t.type==='plane'){ // Vliegtuig als platform
-      ctx.save(); ctx.translate(0,-6); ctx.fillStyle='#cde3ff'; rrect(0,6,t.w,12,6); // romp
-      ctx.fillRect(t.w*0.22,2,16,6); ctx.fillRect(t.w*0.56,14,16,6); // vleugels
-      ctx.beginPath(); ctx.moveTo(0,12); ctx.lineTo(-10,10); ctx.lineTo(0,8); ctx.closePath(); ctx.fill(); // neus
-      ctx.fillRect(t.w-6,8,6,8); // staart
-      ctx.restore();
-    } else if(t.type==='rocket'){ // Raket als platform
-      ctx.save(); ctx.translate(0,-8);
-      ctx.fillStyle='#d9d9d9'; rrect(8,8,t.w-16,14,7); // body
-      ctx.beginPath(); ctx.moveTo(8,15); ctx.lineTo(-8,8); ctx.lineTo(8,22); ctx.closePath(); ctx.fill(); // nose
-      ctx.fillStyle='#f05a5a'; ctx.beginPath(); ctx.moveTo(t.w-8,8); ctx.lineTo(t.w+6,12); ctx.lineTo(t.w-8,16); ctx.closePath(); ctx.fill(); // fin
-      // flame anim
-      ctx.fillStyle='#f0a15a'; const fl=4+Math.sin(world.time*0.22 + t.x*0.05)*2;
-      ctx.beginPath(); ctx.moveTo(t.w+6,12); ctx.lineTo(t.w+6+fl,12-4); ctx.lineTo(t.w+6+fl,12+4); ctx.closePath(); ctx.fill();
-      ctx.restore();
-    }
+    if(t.type==='wood'){ ctx.fillStyle='#8b5a2b'; rrect(0,0,t.w,H,4); ctx.fillStyle='#5e3c1c'; ctx.fillRect(2,H-3,t.w-4,3); }
+    else if(t.type==='cloud'){ ctx.fillStyle='rgba(240,248,255,.95)'; rrect(0,0,t.w,H+10,8); ctx.fillStyle='rgba(200,220,240,.85)'; rrect(4,3,t.w-8,H+7,6); }
+    else if(t.type==='plane'){ ctx.save(); ctx.translate(0,-6); ctx.fillStyle='#cde3ff'; rrect(0,6,t.w,12,6); ctx.fillRect(t.w*0.22,2,16,6); ctx.fillRect(t.w*0.56,14,16,6); ctx.beginPath(); ctx.moveTo(0,12); ctx.lineTo(-10,10); ctx.lineTo(0,8); ctx.closePath(); ctx.fill(); ctx.fillRect(t.w-6,8,6,8); ctx.restore(); }
+    else if(t.type==='rocket'){ ctx.save(); ctx.translate(0,-8); ctx.fillStyle='#d9d9d9'; rrect(8,8,t.w-16,14,7); ctx.beginPath(); ctx.moveTo(8,15); ctx.lineTo(-8,8); ctx.lineTo(8,22); ctx.closePath(); ctx.fill(); ctx.fillStyle='#f05a5a'; ctx.beginPath(); ctx.moveTo(t.w-8,8); ctx.lineTo(t.w+6,12); ctx.lineTo(t.w-8,16); ctx.closePath(); ctx.fill(); ctx.fillStyle='#f0a15a'; const fl=4+Math.sin(world.time*0.22 + t.x*0.05)*2; ctx.beginPath(); ctx.moveTo(t.w+6,12); ctx.lineTo(t.w+6+fl,12-4); ctx.lineTo(t.w+6+fl,12+4); ctx.closePath(); ctx.fill(); ctx.restore(); }
     ctx.restore();
   }
 
   function drawCoin(){
-    // glanzende coin met kleine “glint” en dunne ring
-    const px=coin.x + coin.w/2, py=coin.y - world.camY - coin.h/2, r=coin.w/2;
-    // body gradient
+    const px=vw()/2, py=coin.y - world.camY - coin.h/2, r=coin.w/2;
     const g=ctx.createRadialGradient(px-r*0.4,py-r*0.4,r*0.2, px,py,r);
     g.addColorStop(0,'#ffe680'); g.addColorStop(0.6,'#ffcc33'); g.addColorStop(1,'#d4a322');
     ctx.fillStyle=g; ctx.beginPath(); ctx.arc(px,py,r,0,Math.PI*2); ctx.fill();
-    // ring
     ctx.strokeStyle='#fff2'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(px,py,r-1,0,Math.PI*2); ctx.stroke();
-    // glint
-    ctx.save(); ctx.translate(px,py); ctx.rotate(coin.spin);
-    ctx.fillStyle='rgba(255,255,255,.4)'; ctx.beginPath(); ctx.ellipse(-r*0.2,-r*0.2,r*0.15,r*0.05,0,0,Math.PI*2); ctx.fill();
-    ctx.restore();
-  }
-
-  function drawFX(dt){
-    for(let i=fx.length-1;i>=0;i--){
-      const f=fx[i]; f.x+=f.vx*dt; f.y+=f.vy*dt; f.vy+=f.g*dt; if(--f.life<=0){ fx.splice(i,1); continue; }
-      ctx.fillStyle=f.c||'#aaf'; ctx.globalAlpha=Math.max(0,f.life/60);
-      ctx.beginPath(); ctx.arc(f.x, f.y - world.camY, 2, 0, 6.283); ctx.fill(); ctx.globalAlpha=1;
-    }
+    ctx.save(); ctx.translate(px,py); ctx.rotate(coin.spin); ctx.fillStyle='rgba(255,255,255,.4)';
+    ctx.beginPath(); ctx.ellipse(-r*0.2,-r*0.2,r*0.15,r*0.05,0,0,Math.PI*2); ctx.fill(); ctx.restore();
   }
 
   function draw(dt){
-    sky(); groundWithHouses();
-    // cloud/sky achtergrond vliegtuigen
-    if(world.phase==='CLOUD' || world.phase==='SKY') for(const fp of farPlanes){
-      ctx.save(); ctx.translate(fp.x, fp.y - world.camY*0.3); ctx.scale(fp.s,fp.s); ctx.globalAlpha=.38;
-      ctx.fillStyle='#d0e2ff'; ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(24,2); ctx.lineTo(24,-2); ctx.closePath(); ctx.fill();
-      ctx.fillRect(6,-1.5,10,3); ctx.fillRect(10,-5,6,3); ctx.fillRect(10,2,6,3);
-      ctx.globalAlpha=1; ctx.restore();
-    }
-    // ruimte
+    // achtergrond
+    sky();
+    if(world.phase==='WOOD'){ ground(); }
+    if(world.phase==='CLOUD' || world.phase==='SKY'){ farplanes(); }
     if(world.phase==='SPACE'){ starfield(); }
 
+    // platforms
     for(const t of plats) drawPlat(t);
+
+    // coin
     drawCoin();
-    drawFX(dt);
 
     // HUD
     uiScore.textContent = Math.floor(world.score);
     uiHeight.textContent = Math.floor(-world.camY/10);
-    uiPhase.textContent = ({WOOD:'Hout',CLOUD:'Wolken',SKY:'Vliegtuigen',SPACE:'Raketjes'})[world.phase];
+    uiPhase.textContent = ({WOOD:'Hout',CLOUD:'Wolken',SKY:'Vliegtuigjes',SPACE:'Raketjes'})[world.phase];
   }
 
   // ===== Start =====
