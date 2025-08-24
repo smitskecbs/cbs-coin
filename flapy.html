@@ -20,8 +20,11 @@
 <script>
 /* ---------- Canvas ---------- */
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
-let W,H;function resize(){W=innerWidth;H=innerHeight;canvas.width=W;canvas.height=H; env.rebuild();}
-resize(); addEventListener('resize',resize,{passive:true});
+let W=0,H=0;
+function resizeOnlyCanvas(){ W=innerWidth; H=innerHeight; canvas.width=W; canvas.height=H; }
+resizeOnlyCanvas();
+addEventListener('resize', ()=>{ resizeOnlyCanvas(); /* env.rebuild() komt na init */ }, {passive:true});
+
 const logo=new Image(); logo.src='logo.png';
 const isMobile=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
@@ -284,9 +287,11 @@ function startRun(){
   nextPlat=spawnNextAbove(currentPlat); nextPlat.lastX=platX(nextPlat);
   camY=0; score=0; hud.textContent='0 m';
 }
-env.rebuild(); startRun();
 
 /* ---------- Main loop (substeps + sticky follow) ---------- */
+env.rebuild();          // <-- nu pas, na env-definitie
+startRun();
+
 let last=performance.now(); requestAnimationFrame(loop);
 function loop(now){
   let dt=(now-last)/1000; last=now; if(dt>0.05) dt=0.05;
@@ -335,4 +340,3 @@ function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
 </script>
 </body>
 </html>
-
