@@ -45,12 +45,8 @@
       -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
     }
 
-    /* Verberg UI tijdens spel */
-    body.play-mode header,
-    body.play-mode #controlsPanel { display:none; }
-
     header.topbar{
-      position:sticky; top:0; z-index:20;
+      position:sticky; top:0; z-index:10;
       display:flex; align-items:center; justify-content:space-between;
       padding:.8rem 1rem; backdrop-filter:blur(6px);
       background:linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0));
@@ -115,10 +111,42 @@
     footer a{ color:#79ffee; text-decoration:none }
     footer a:hover{ text-decoration:underline }
 
-    #nameOverlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50}
+    #nameOverlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:60}
     #nameCard{background:#111;border:2px solid rgba(0,255,240,.45);border-radius:12px;padding:16px 18px;box-shadow:0 0 18px #0ff6;width:min(92vw,420px)}
     #nameInput{width:100%;padding:.75rem 1rem;border:2px solid rgba(0,255,240,.45);border-radius:.6rem;background:#000;color:#fff;font-family:inherit;font-size:1rem}
     #error{color:#ff6b7a;font-size:.85rem;margin-top:.35rem;display:none}
+
+    /* === Fullscreen Play Overlay === */
+    .play-overlay{
+      position:fixed; inset:0; z-index:50; display:none;
+      background:
+        radial-gradient(70% 60% at 50% 0%, rgba(0,255,240,.07), transparent 60%),
+        linear-gradient(180deg, rgba(0,0,0,.65), rgba(0,0,0,.85));
+      backdrop-filter: blur(4px);
+      align-items:center; justify-content:center; flex-direction:column; gap:14px;
+      touch-action:none;  /* overal tikken toegestaan zonder scroll */
+    }
+    .play-overlay .hud{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:space-between;
+      width:min(92vw,520px);
+    }
+    .play-overlay .stage{
+      width:min(92vw,520px);
+      background:linear-gradient(180deg,#0b1217,#0a1015);
+      border:1px solid rgba(0,255,240,.22);
+      border-radius:16px; padding:12px;
+      box-shadow:0 22px 48px rgba(0,255,230,.10), inset 0 0 0 1px rgba(0,255,240,.06);
+    }
+    .play-overlay .tip{
+      color:#bffef2; opacity:.8; font-size:.9rem; text-align:center;
+      width:min(92vw,520px);
+    }
+
+    /* Verberg UI tijdens spel */
+    body.play-mode header,
+    body.play-mode #controlsPanel,
+    body.play-mode main { display:none; }
+    body.play-mode .play-overlay{ display:flex; }
   </style>
 </head>
 <body>
@@ -155,7 +183,10 @@
           <button id="restartBtn" class="btn">Restart</button>
         </div>
         <div class="card">
-          <canvas id="game" width="420" height="560"></canvas>
+          <!-- we verplaatsen het canvas dynamisch naar de overlay tijdens spel -->
+          <div id="canvasHome">
+            <canvas id="game" width="420" height="560"></canvas>
+          </div>
         </div>
         <p class="muted" style="text-align:center;margin:.6rem 0 0 0">
           Tip: a <b>perfect</b> drop (±2px) keeps width and builds a combo for bonus points.
@@ -177,6 +208,23 @@
       </div>
     </div>
   </main>
+
+  <!-- === Fullscreen Play Overlay === -->
+  <div id="playOverlay" class="play-overlay" aria-hidden="true">
+    <div class="hud">
+      <button id="exitBtn" class="btn" title="Exit game">⏹ Exit</button>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; margin-left:auto">
+        <div class="pill"><small>Score</small><b id="scoreFS">0</b></div>
+        <div class="pill"><small>Best</small><b id="bestFS">0</b></div>
+        <div class="pill"><small>Speed</small><b id="spdFS">1.0x</b></div>
+      </div>
+    </div>
+    <div class="stage">
+      <!-- Hier zetten we het canvas tijdens het spelen -->
+      <div id="playStage"></div>
+    </div>
+    <div class="tip">Tap anywhere / Press Space or Enter to drop</div>
+  </div>
 
   <!-- Naam-modal -->
   <div id="nameOverlay">
@@ -229,6 +277,15 @@
     const spdEl      = $("spd");
     const restartBtn = $("restartBtn");
 
+    // Fullscreen overlay refs
+    const playOverlay = $("playOverlay");
+    const playStage   = $("playStage");
+    const exitBtn     = $("exitBtn");
+    const scoreFS     = $("scoreFS");
+    const bestFS      = $("bestFS");
+    const spdFS       = $("spdFS");
+    const canvasHome  = $("canvasHome"); // originele plek van canvas
+
     // CBS logo in speelveld
     const logo = new Image();
     logo.src = "logo.png";
@@ -237,7 +294,6 @@
 
     /******** Helpers ********/
     function getProvider(){
-      // Robuuste Phantom-detectie (extensie + in-app browser)
       if (window.phantom?.solana?.isPhantom) return window.phantom.solana;
       if (window.solana?.isPhantom) return window.solana;
       return null;
@@ -278,7 +334,6 @@
         if(!p){
           const onMobile = /Android|iPhone|iPad/i.test(navigator.userAgent);
           if(onMobile){
-            // Deeplink naar Phantom (opent de pagina in Phantom-browser)
             window.location.href = "https://phantom.app/ul/browse/" + encodeURIComponent(window.location.href);
           }else{
             alert("Phantom Wallet not found. Please install: https://phantom.app/download");
@@ -341,15 +396,9 @@
       if(!paidSig)  return alert("Please pay 10 CBS first.");
       roundSig = paidSig; paidSig = null;
       startBtn.disabled = true;
-      document.body.classList.add('play-mode');
+      enterPlayScreen();   // << fullscreen speelscherm
       startGame();
-      scrollToCanvas();
     });
-
-    function scrollToCanvas(){
-      const y = canvas.getBoundingClientRect().top + window.scrollY - 8;
-      window.scrollTo({ top: y, behavior: 'smooth' });
-    }
 
     /******** Naam / Save ********/
     function openNameModal(sc){
@@ -362,7 +411,7 @@
       roundSig = null;
       startBtn.disabled = true;
       stopGame();
-      document.body.classList.remove('play-mode');
+      exitPlayScreen();     // terug naar normale pagina
     });
 
     async function submitName(){
@@ -398,7 +447,7 @@
         saveBtn.disabled = false; saveBtn.textContent = "Save";
         startBtn.disabled = true;
         stopGame();
-        document.body.classList.remove('play-mode');
+        exitPlayScreen();   // terug naar normale pagina NA save
       }
     }
     nameInput.addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ e.preventDefault(); submitName(); } });
@@ -424,6 +473,7 @@
     let combo  = 0;
 
     bestEl.textContent = best.toString();
+    bestFS.textContent = bestEl.textContent;
 
     function startGame(){
       reset();
@@ -456,9 +506,13 @@
     function updateHUD(){
       scoreEl.textContent = String(score);
       spdEl.textContent = (speed/SPEED_START).toFixed(1) + "x";
+      scoreFS.textContent = scoreEl.textContent;
+      spdFS.textContent = spdEl.textContent;
+
       if(score > best){
         best = score;
         bestEl.textContent = String(best);
+        bestFS.textContent = bestEl.textContent;
         localStorage.setItem('cbs_stack_best', String(best));
       }
     }
@@ -510,6 +564,7 @@
     function gameOver(){
       running = false;
       draw(true);
+      // open modal en na sluiten ga je terug naar de normale pagina (exitPlayScreen in cancel/save)
       setTimeout(()=> openNameModal(score), 300);
     }
 
@@ -522,7 +577,6 @@
       ctx.fillStyle = grad;
       ctx.fillRect(0,0,W,H);
 
-      // CBS logo watermark
       if (logoReady){
         const size = Math.min(W,H) * 0.72;
         const x = (W - size)/2;
@@ -541,13 +595,7 @@
       if(running || ending){ drawBlock(mover.x, mover.y, mover.w, mover.h, false, true); }
       ctx.restore();
 
-      ctx.fillStyle = "#cffff7";
-      ctx.font = "14px Orbitron";
-      ctx.fillText("Tap / Click / Space / Enter to drop", 12, 22);
-      if(combo>1){
-        ctx.fillStyle = "#8bffe9";
-        ctx.fillText(`Combo x${combo}!`, W-120, 22);
-      }
+      // kleine hint in overlay HUD; geen extra tekst hier om clean te houden
     }
 
     function drawBlock(x,y,w,h,perfect=false, isMover=false){
@@ -598,15 +646,60 @@
       rafId = requestAnimationFrame(loop);
     }
 
-    function onPress(){ drop(); }
-    window.addEventListener('keydown', e=>{
+    /******** Speelscherm (fullscreen) logica ********/
+    function enterPlayScreen(){
+      // verplaats canvas naar overlay-stage
+      if (playStage && canvas && canvas.parentElement !== playStage){
+        playStage.appendChild(canvas);
+      }
+      document.body.classList.add('play-mode');
+      playOverlay.setAttribute('aria-hidden','false');
+      // overal tikken om te droppen (mobiel/desktop)
+      window.addEventListener('pointerdown', globalPress, {passive:true});
+      window.addEventListener('keydown', keyPress);
+    }
+    function exitPlayScreen(){
+      // canvas terugzetten naar oorspronkelijke plek
+      if (canvasHome && canvas && canvas.parentElement !== canvasHome){
+        canvasHome.appendChild(canvas);
+      }
+      document.body.classList.remove('play-mode');
+      playOverlay.setAttribute('aria-hidden','true');
+      window.removeEventListener('pointerdown', globalPress, {passive:true});
+      window.removeEventListener('keydown', keyPress);
+    }
+
+    function keyPress(e){
       if(e.key === ' ' || e.key === 'Enter'){
         e.preventDefault();
-        onPress();
+        if(document.body.classList.contains('play-mode')) drop();
       }
+      if(e.key === 'Escape'){
+        // handmatige exit (forfeit)
+        roundSig = null; // ronde ongeldig maken indien men opgeeft
+        stopGame();
+        exitPlayScreen();
+      }
+    }
+
+    function globalPress(e){
+      // Klik op knoppen/inputs negeren
+      const t = e.target;
+      if (t.closest('button') || t.closest('input') || t.closest('#nameOverlay')) return;
+      if(document.body.classList.contains('play-mode')) drop();
+    }
+
+    exitBtn.addEventListener('click', ()=>{
+      roundSig = null; // forfeit
+      stopGame();
+      exitPlayScreen();
     });
-    canvas.addEventListener('pointerdown', onPress, {passive:true});
+
+    // Extra: restart in normale layout start alleen opnieuw als ronde open staat
     restartBtn.addEventListener('click', ()=>{ if(roundSig) { startGame(); } });
+
+    // fallback canvas click (als je buiten overlay zou spelen)
+    canvas.addEventListener('pointerdown', ()=>{ if(document.body.classList.contains('play-mode')) drop(); }, {passive:true});
   </script>
 </body>
 
@@ -626,3 +719,4 @@
   })();
 </script>
 </html>
+
