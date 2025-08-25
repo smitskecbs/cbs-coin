@@ -119,6 +119,13 @@ let endTime=0;                    // seconden in de huidige eindfase
 const FIREWORKS_DURATION=6.0;     // duur vuurwerk
 const CREDITS_MIN_DURATION=6.0;   // minimale tijd vóór herstart
 
+function win(){
+  if(endState!=='PLAY') return;
+  endState='WIN_FIREWORKS';
+  endTime=0;
+  env.startFireworks();
+}
+
 /* ================ Landingen tellen & Hemel flow ================ */
 let jumps=0;
 let heavenEntered=false;
@@ -207,6 +214,8 @@ addEventListener('keydown',e=>{
   if((e.code==='KeyR' || e.code==='Enter') && endState==='WIN_CREDITS' && endTime>=CREDITS_MIN_DURATION){
     e.preventDefault(); startRun();
   }
+  // Forceer eindshow met 'F' (debug)
+  if(e.code==='KeyF'){ e.preventDefault(); win(); }
 },{passive:false});
 addEventListener('pointerdown',()=>{
   if(endState==='PLAY'){ jump(); }
@@ -787,10 +796,16 @@ function loop(now){
     if(player.y<camY+H*0.45) camY=player.y-H*0.45;
     if(player.y-camY>H+260) startRun();
 
-    // Win-conditie: boven de grote coin -> start vuurwerkfase
-    if(env.bigCoin.y>-90000 && player.y < (env.bigCoin.y - env.bigCoin.r*1.05)){
-      endState='WIN_FIREWORKS'; endTime=0;
-      env.startFireworks();
+    // Win-conditions (ruimer):
+    // A) Boven de big coin
+    if (endState==='PLAY' &&
+        env.bigCoin.y>-90000 &&
+        player.y < (env.bigCoin.y - env.bigCoin.r*0.9)) {
+      win();
+    }
+    // B) Veiligheidsnet: in HEAVEN na een paar extra landingen
+    if (endState==='PLAY' && jumps >= (J_HEAVEN + 5)) {
+      win();
     }
   } else {
     // eindfases
@@ -865,22 +880,26 @@ function loop(now){
     ctx.fillStyle='#eaeaea';
     ctx.font=`700 ${Math.max(26, Math.min(52, W*0.045))}px system-ui, sans-serif`;
     const t1='CBS Jump – Thanks for playing!';
-    let w1=ctx.measureText(t1).width; ctx.fillText(t1,(W-w1)/2, H*0.38);
+    let w1=ctx.measureText(t1).width; ctx.fillText(t1,(W-w1)/2, H*0.36);
 
     ctx.font=`600 ${Math.max(18, Math.min(32, W*0.028))}px system-ui, sans-serif`;
     const t2='Music by Weathen_creation';
-    let w2=ctx.measureText(t2).width; ctx.fillText(t2,(W-w2)/2, H*0.48);
+    let w2=ctx.measureText(t2).width; ctx.fillText(t2,(W-w2)/2, H*0.46);
+
+    ctx.font=`700 ${Math.max(18, Math.min(32, W*0.028))}px system-ui, sans-serif`;
+    const t2b='Thanks for your support!';
+    let w2b=ctx.measureText(t2b).width; ctx.fillText(t2b,(W-w2b)/2, H*0.54);
 
     ctx.font=`600 ${Math.max(16, Math.min(26, W*0.022))}px system-ui, sans-serif`;
-    const t3='CBS Coin — Community Builds Sovereignty • © 2025';
-    let w3=ctx.measureText(t3).width; ctx.fillText(t3,(W-w3)/2, H*0.56);
+    const t3='Stay tuned for more — follow us for new drops & games!';
+    let w3=ctx.measureText(t3).width; ctx.fillText(t3,(W-w3)/2, H*0.62);
 
     if(endTime>=CREDITS_MIN_DURATION){
       ctx.globalAlpha=Math.min(1,(endTime-CREDITS_MIN_DURATION)/1.2);
       ctx.fillStyle='#c9d6ff';
       ctx.font=`600 ${Math.max(14, Math.min(24, W*0.02))}px system-ui, sans-serif`;
       const t4='Klik of druk op R / Spatie / ↑ / Enter om opnieuw te starten';
-      let w4=ctx.measureText(t4).width; ctx.fillText(t4,(W-w4)/2, H*0.68);
+      let w4=ctx.measureText(t4).width; ctx.fillText(t4,(W-w4)/2, H*0.72);
     }
     ctx.restore();
   }
@@ -921,3 +940,4 @@ function renderFireworks(){
 </script>
 </body>
 </html>
+
