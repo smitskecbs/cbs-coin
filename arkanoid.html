@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>CBS Arkanoid – Neon (Free Play)</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root{
+      --bg1:#0a0c10; --bg2:#0f141b;
+      --card:#0f151c; --card2:#0c1016;
+      --fg:#eafffb; --muted:#a8d6cd;
+      --line:rgba(0,255,240,.18);
+      --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
+      --radius:18px;
+      --btnA:#5afff0; --btnB:#2bffe4;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:'Orbitron',sans-serif; color:var(--fg);
+      background:
+        radial-gradient(900px 600px at 100% -10%, rgba(0,255,230,.10), transparent 60%),
+        radial-gradient(700px 500px at -10% 110%, rgba(0,170,255,.09), transparent 60%),
+        linear-gradient(135deg,var(--bg1),var(--bg2));
+    }
+
+    header.topbar{
+      position:sticky; top:0; z-index:10;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:.8rem 1rem;
+      background:linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0));
+      border-bottom:1px solid rgba(0,255,240,.08);
+    }
+    .brand{display:flex; align-items:center; gap:.7rem}
+    .brand img{width:38px;height:38px;border-radius:10px;filter:drop-shadow(0 0 10px rgba(0,255,230,.35))}
+    .brand h1{margin:0; font-size:1.05rem; color:#bffef2; letter-spacing:.4px}
+
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      min-width:120px; padding:12px 18px; border-radius:10px;
+      text-decoration:none; font-weight:900; font-size:.94rem;
+      color:#001010; background:linear-gradient(180deg, var(--btnA), var(--btnB));
+      border:1px solid rgba(0,255,240,.7);
+      box-shadow:0 0 12px rgba(0,255,230,.55), 0 0 24px rgba(0,255,230,.25), inset 0 -8px 14px rgba(0,0,0,.14);
+      cursor:pointer;
+    }
+    .btn:hover{ transform:translateY(-2px) scale(1.03) }
+
+    .container{ max-width:1100px; margin:0 auto; padding:1.2rem 1rem 2.2rem }
+    .panel{
+      background:linear-gradient(180deg, var(--card), var(--card2));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:18px; margin:16px auto;
+      box-shadow:var(--shadow);
+    }
+
+    .game-wrap{ display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start }
+    @media (max-width:900px){ .game-wrap{ grid-template-columns:1fr } }
+
+    #gamePanel .card{
+      background:linear-gradient(180deg,#0b1217,#0a1015);
+      border:1px solid rgba(0,255,240,.2);
+      border-radius:16px; padding:12px;
+      box-shadow:inset 0 0 0 1px rgba(0,255,240,.05), 0 8px 18px rgba(0,255,230,.08);
+    }
+    canvas{
+      display:block; margin:0 auto; width:100%; max-width:480px; height:auto;
+      background:#05090d; border-radius:12px; border:1px solid rgba(0,255,240,.12);
+      box-shadow: inset 0 0 0 1px rgba(0,255,240,.05);
+      touch-action:none;
+    }
+
+    /* Fullscreen speelscherm */
+    .play-overlay{
+      position:fixed; inset:0; z-index:50; display:none;
+      background:
+        radial-gradient(70% 60% at 50% 0%, rgba(0,255,240,.07), transparent 60%),
+        linear-gradient(180deg, rgba(0,0,0,.65), rgba(0,0,0,.85));
+      align-items:center; justify-content:center; flex-direction:column; gap:14px;
+      touch-action:none;
+    }
+    .play-overlay .stage{
+      width:min(92vw,520px);
+      background:linear-gradient(180deg,#0b1217,#0a1015);
+      border:1px solid rgba(0,255,240,.22);
+      border-radius:16px; padding:12px;
+      box-shadow:0 22px 48px rgba(0,255,230,.10), inset 0 0 0 1px rgba(0,255,240,.06);
+    }
+
+    body.play-mode header,
+    body.play-mode #controlsPanel,
+    body.play-mode main { display:none; }
+    body.play-mode .play-overlay{ display:flex; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="logo.png" alt="CBS Logo">
+      <h1>CBS Arkanoid</h1>
+    </div>
+  </header>
+
+  <!-- Controls -->
+  <div id="controlsPanel" class="panel" style="max-width:820px; text-align:center">
+    <button id="startBtn" class="btn">▶️ Start</button>
+    <p class="muted" style="margin-top:.5rem">
+      Free to play • Tap to launch • <b>Drag anywhere</b> to move the paddle • Space/Enter/←/→ on desktop
+    </p>
+  </div>
+
+  <main class="container">
+    <div class="game-wrap">
+      <div id="gamePanel" class="panel">
+        <div class="card">
+          <div id="canvasHome">
+            <canvas id="game" width="420" height="560"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="side">
+        <div class="panel">
+          <h3>How to play</h3>
+          <p>Break all neon bricks. Tap/Click to launch the ball. Drag anywhere (or use arrow keys) to move the paddle.</p>
+          <p>Hit the paddle near the edges to change the ball angle. Miss the ball → game over.</p>
+        </div>
+        <div class="panel" style="text-align:center">
+          <a href="index.html" class="btn">← Back to Home</a>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Fullscreen Play -->
+  <div id="playOverlay" class="play-overlay" aria-hidden="true">
+    <div class="stage"><div id="playStage"></div></div>
+    <button id="exitBtn" class="btn">⏹ Exit</button>
+  </div>
+
+  <script>
+    const startBtn   = document.getElementById("startBtn");
+    const playOverlay= document.getElementById("playOverlay");
+    const playStage  = document.getElementById("playStage");
+    const exitBtn    = document.getElementById("exitBtn");
+    const canvas     = document.getElementById("game");
+    const canvasHome = document.getElementById("canvasHome");
+    const ctx        = canvas.getContext("2d");
+
+    // CBS logo watermark
+    const logo = new Image();
+    logo.src = "logo.png";
+    let logoReady=false;
+    logo.onload=()=>{logoReady=true};
+
+    const W = canvas.width, H = canvas.height;
+
+    // === Arkanoid constants ===
+    const PADDLE_W0 = 84, PADDLE_H = 14, PADDLE_Y = H - 42;
+    const BALL_R = 6;
+    const BALL_SPEED = 290;        // px/s
+    const BRICK_ROWS = 7, BRICK_COLS = 10;
+    const BRICK_TOP = 80, BRICK_H = 22;
+    const BRICK_GAP = 4, BRICK_SIDE = 14;
+    const WALL_PAD = 10;
+
+    // Game state
+    let running=false, launched=false, rafId=null, last=0;
+    let paddle = { x:(W-PADDLE_W0)/2, w:PADDLE_W0 };
+    let ball   = { x:W/2, y:PADDLE_Y-BALL_R-1, vx:0, vy:0 };
+    let bricks = [];
+    let bricksLeft = 0;
+
+    // Input
+    let keyLeft=false, keyRight=false;
+    let dragActive=false;
+
+    function makeLevel(){
+      bricks = [];
+      const totalGapX = (BRICK_COLS-1)*BRICK_GAP + BRICK_SIDE*2;
+      const brickW = Math.floor((W-totalGapX)/BRICK_COLS);
+      const startX = Math.floor((W - (brickW*BRICK_COLS + BRICK_GAP*(BRICK_COLS-1))) / 2);
+      for(let r=0;r<BRICK_ROWS;r++){
+        for(let c=0;c<BRICK_COLS;c++){
+          const x = startX + c*(brickW+BRICK_GAP);
+          const y = BRICK_TOP + r*(BRICK_H+BRICK_GAP);
+          const hue = 180 + r*12;
+          bricks.push({x,y,w:brickW,h:BRICK_H,alive:true,hue});
+        }
+      }
+      bricksLeft = bricks.length;
+    }
+
+    function reset(){
+      cancelAnim();
+      running=false; launched=false;
+      paddle = { x:(W-PADDLE_W0)/2, w:PADDLE_W0 };
+      ball = { x: paddle.x + paddle.w/2, y: PADDLE_Y - BALL_R - 1, vx:0, vy:0 };
+      makeLevel();
+      last=performance.now();
+      draw();
+    }
+
+    function startGame(){
+      reset();
+      running=true; last=performance.now();
+      rafId=requestAnimationFrame(loop);
+    }
+
+    function cancelAnim(){ if(rafId) cancelAnimationFrame(rafId); rafId=null; }
+
+    function launchBall(){
+      if(launched) return;
+      launched=true;
+      // start schuin omhoog
+      const angle = (-Math.PI/3) + (Math.random()*Math.PI/6); // -60° .. -30°
+      ball.vx = Math.cos(angle)*BALL_SPEED;
+      ball.vy = Math.sin(angle)*BALL_SPEED;
+    }
+
+    // ===== Input handling =====
+    function canvasToLocalX(clientX){
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      return (clientX - rect.left) * scaleX;
+    }
+    function movePaddleTo(x){
+      const minX = WALL_PAD, maxX = W - WALL_PAD - paddle.w;
+      paddle.x = Math.max(minX, Math.min(maxX, x - paddle.w/2));
+      // als bal nog niet gelanceerd: bal mee laten “plakken”
+      if(!launched){
+        ball.x = paddle.x + paddle.w/2;
+        ball.y = PADDLE_Y - BALL_R - 1;
+      }
+    }
+
+    window.addEventListener('pointerdown', (e)=>{
+      if(!document.body.classList.contains('play-mode')) return;
+      if(e.target.closest('button') || e.target.closest('input')) return;
+      dragActive=true;
+      movePaddleTo(canvasToLocalX(e.clientX));
+      launchBall();
+    }, {passive:true});
+
+    window.addEventListener('pointermove', (e)=>{
+      if(!document.body.classList.contains('play-mode')) return;
+      if(!dragActive) return;
+      movePaddleTo(canvasToLocalX(e.clientX));
+    }, {passive:true});
+
+    window.addEventListener('pointerup', ()=>{ dragActive=false; }, {passive:true});
+
+    window.addEventListener('keydown', (e)=>{
+      if(!document.body.classList.contains('play-mode')) return;
+      if(e.key===' '||e.key==='Enter'){ e.preventDefault(); launchBall(); }
+      if(e.key==='ArrowLeft' || e.key==='a' || e.key==='A') keyLeft=true;
+      if(e.key==='ArrowRight'|| e.key==='d' || e.key==='D') keyRight=true;
+      if(e.key==='Escape'){ stopGame(); exitPlayScreen(); }
+    });
+    window.addEventListener('keyup', (e)=>{
+      if(e.key==='ArrowLeft' || e.key==='a' || e.key==='A') keyLeft=false;
+      if(e.key==='ArrowRight'|| e.key==='d' || e.key==='D') keyRight=false;
+    });
+
+    // ===== Game loop =====
+    function loop(now){
+      if(!running) return;
+      const dt = Math.min(0.033, (now-last)/1000); last=now;
+      update(dt);
+      draw();
+      rafId=requestAnimationFrame(loop);
+    }
+
+    function update(dt){
+      // Keyboard paddle
+      const paddleSpeed = 420;
+      if(keyLeft)  movePaddleTo(paddle.x + paddle.w/2 - paddleSpeed*dt);
+      if(keyRight) movePaddleTo(paddle.x + paddle.w/2 + paddleSpeed*dt);
+
+      if(!launched) return;
+
+      // Move ball
+      ball.x += ball.vx * dt;
+      ball.y += ball.vy * dt;
+
+      // Wall collisions
+      if(ball.x - BALL_R < WALL_PAD){ ball.x = WALL_PAD + BALL_R; ball.vx = Math.abs(ball.vx); }
+      if(ball.x + BALL_R > W - WALL_PAD){ ball.x = W - WALL_PAD - BALL_R; ball.vx = -Math.abs(ball.vx); }
+      if(ball.y - BALL_R < WALL_PAD){ ball.y = WALL_PAD + BALL_R; ball.vy = Math.abs(ball.vy); }
+
+      // Bottom -> game over
+      if(ball.y - BALL_R > H){ gameOver(false); return; }
+
+      // Paddle collision
+      const px = paddle.x, py = PADDLE_Y, pw = paddle.w, ph = PADDLE_H;
+      if(ball.y + BALL_R >= py && ball.y + BALL_R <= py + ph && ball.x >= px - BALL_R && ball.x <= px + pw + BALL_R && ball.vy > 0){
+        ball.y = py - BALL_R - 0.01;
+        // reflect & angle by hit position (-1..1)
+        const hit = ((ball.x - (px + pw/2)) / (pw/2));
+        const angle = clamp(hit, -1, 1) * (Math.PI/3); // max ±60°
+        const speed = Math.hypot(ball.vx, ball.vy);
+        ball.vx = Math.sin(angle) * speed;
+        ball.vy = -Math.abs(Math.cos(angle) * speed);
+        if(navigator.vibrate) navigator.vibrate(10);
+      }
+
+      // Brick collisions (simple circle-rect)
+      for(let i=0;i<bricks.length;i++){
+        const b = bricks[i]; if(!b.alive) continue;
+        const nx = clamp(ball.x, b.x, b.x+b.w);
+        const ny = clamp(ball.y, b.y, b.y+b.h);
+        const dx = ball.x - nx, dy = ball.y - ny;
+        if(dx*dx + dy*dy <= BALL_R*BALL_R){
+          b.alive=false; bricksLeft--;
+          // resolve bounce: check which side overlapped more
+          const overlapX = Math.min(Math.abs((ball.x - BALL_R) - (b.x + b.w)),
+                                    Math.abs((ball.x + BALL_R) - b.x));
+          const overlapY = Math.min(Math.abs((ball.y - BALL_R) - (b.y + b.h)),
+                                    Math.abs((ball.y + BALL_R) - b.y));
+          if(overlapX < overlapY){ ball.vx *= -1; }
+          else{ ball.vy *= -1; }
+          // tiny speed-up for fun
+          const s = Math.hypot(ball.vx,ball.vy)*1.01;
+          const ang = Math.atan2(ball.vy, ball.vx);
+          ball.vx = Math.cos(ang)*s; ball.vy = Math.sin(ang)*s;
+          if(navigator.vibrate) navigator.vibrate(8);
+          if(bricksLeft<=0){ gameOver(true); }
+          break;
+        }
+      }
+    }
+
+    function gameOver(win){
+      running=false;
+      draw();
+      // klein “flash moment”, dan terug
+      setTimeout(()=>{ exitPlayScreen(); }, 700);
+    }
+
+    // ===== Rendering =====
+    function draw(){
+      ctx.clearRect(0,0,W,H);
+
+      // bg
+      const grad=ctx.createLinearGradient(0,0,0,H);
+      grad.addColorStop(0,"#071017"); grad.addColorStop(1,"#09131a");
+      ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
+
+      // watermark
+      if(logoReady){
+        const size=Math.min(W,H)*0.72; const x=(W-size)/2,y=(H-size)/2;
+        ctx.save(); ctx.globalAlpha=0.085; ctx.shadowColor="#00fff0"; ctx.shadowBlur=24;
+        ctx.drawImage(logo,x,y,size,size); ctx.restore();
+      }
+
+      // walls glow
+      ctx.save();
+      ctx.strokeStyle="rgba(0,255,240,.35)"; ctx.lineWidth=3; ctx.shadowColor="#38f8ff"; ctx.shadowBlur=10;
+      ctx.strokeRect(WALL_PAD+1, WALL_PAD+1, W-2*WALL_PAD-2, H-2*WALL_PAD-2);
+      ctx.restore();
+
+      // bricks
+      for(const b of bricks){
+        if(!b.alive) continue;
+        drawBrick(b);
+      }
+
+      // paddle
+      drawPaddle(paddle.x, PADDLE_Y, paddle.w, PADDLE_H);
+
+      // ball
+      drawBall(ball.x, ball.y, BALL_R);
+    }
+
+    function drawBrick(b){
+      ctx.save();
+      ctx.shadowColor = "rgba(0,255,240,.7)";
+      ctx.shadowBlur  = 14;
+      const g = ctx.createLinearGradient(b.x, b.y, b.x, b.y+b.h);
+      g.addColorStop(0, `hsl(${b.hue} 100% 62% / .95)`);
+      g.addColorStop(1, `hsl(${b.hue} 100% 46% / .95)`);
+      ctx.fillStyle = g;
+      ctx.fillRect(b.x, b.y, b.w, b.h);
+      ctx.shadowBlur=0;
+      ctx.lineWidth=1.4; ctx.strokeStyle="rgba(0,255,240,.65)";
+      ctx.strokeRect(b.x+0.5,b.y+0.5,b.w-1,b.h-1);
+      // top shine
+      ctx.globalAlpha=0.22; ctx.fillStyle="#e6ffff"; ctx.fillRect(b.x, b.y, b.w, 3);
+      ctx.globalAlpha=1;
+      ctx.restore();
+    }
+
+    function drawPaddle(x,y,w,h){
+      ctx.save();
+      ctx.shadowColor="#7dffe9"; ctx.shadowBlur=18;
+      const g = ctx.createLinearGradient(x,y,x,y+h);
+      g.addColorStop(0, "hsl(190 100% 60% / .95)");
+      g.addColorStop(1, "hsl(190 100% 50% / .95)");
+      ctx.fillStyle = g;
+      const r=8;
+      roundRect(x,y,w,h,r); ctx.fill();
+      ctx.shadowBlur=0; ctx.lineWidth=1.6; ctx.strokeStyle="rgba(0,255,240,.7)";
+      roundRect(x+0.5,y+0.5,w-1,h-1,r-1); ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawBall(x,y,r){
+      ctx.save();
+      ctx.shadowColor="#38f8ff"; ctx.shadowBlur=12;
+      const g = ctx.createRadialGradient(x-r*0.4,y-r*0.4,r*0.3,x,y,r*1.05);
+      g.addColorStop(0,"#eaffff"); g.addColorStop(1,"#78eaf0");
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+      ctx.shadowBlur=0; ctx.lineWidth=1.3; ctx.strokeStyle="rgba(0,255,240,.7)";
+      ctx.beginPath(); ctx.arc(x,y,r-0.7,0,Math.PI*2); ctx.stroke();
+      ctx.restore();
+    }
+
+    function roundRect(x,y,w,h,r){
+      const x2=x+w, y2=y+h; r=Math.min(r,w/2,h/2);
+      ctx.beginPath();
+      ctx.moveTo(x+r,y); ctx.arcTo(x2,y,x2,y+r,r);
+      ctx.arcTo(x2,y2,x2-r,y2,r); ctx.arcTo(x,y2,x,y2-r,r);
+      ctx.arcTo(x,y,x+r,y,r); ctx.closePath();
+    }
+
+    // Utils
+    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+
+    // ===== Overlay enter/exit (zelfde patroon als stack) =====
+    function enterPlayScreen(){
+      if(playStage && canvas && canvas.parentElement !== playStage) playStage.appendChild(canvas);
+      document.body.classList.add('play-mode'); playOverlay.setAttribute('aria-hidden','false');
+    }
+    function exitPlayScreen(){
+      cancelAnim();
+      if(canvasHome && canvas && canvas.parentElement !== canvasHome) canvasHome.appendChild(canvas);
+      document.body.classList.remove('play-mode'); playOverlay.setAttribute('aria-hidden','true');
+    }
+    function stopGame(){ running=false; cancelAnim(); }
+
+    startBtn.addEventListener('click',()=>{ enterPlayScreen(); startGame(); });
+    exitBtn.addEventListener('click',()=>{ stopGame(); exitPlayScreen(); });
+
+    // Initial static render
+    reset();
+  </script>
+</body>
+</html>
