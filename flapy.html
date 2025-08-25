@@ -112,10 +112,15 @@ const SPACE_BAND_TOP = -18000;
 const GRAV=1600, JUMP=DIFF.jump, COYOTE=0.12;
 let player={x:0,y:0,r:36,vy:0,onGround:false,coyote:0};
 let groundPlat=null, camY=0, meters=0; const hud=document.getElementById('hud');
-let gameOver=false, fireworksArmed=false;
+
+/* ================ Eind-sequence state ================ */
+let endState='PLAY';              // 'PLAY' | 'WIN_FIREWORKS' | 'WIN_CREDITS'
+let endTime=0;                    // seconden in de huidige eindfase
+const FIREWORKS_DURATION=6.0;     // duur vuurwerk
+const CREDITS_MIN_DURATION=6.0;   // minimale tijd vóór herstart
 
 /* ================ Landingen tellen & Hemel flow ================ */
-let jumps=0;                      
+let jumps=0;
 let heavenEntered=false;
 let heavenCoinCount=0;
 let bigCoinPlaced=false;
@@ -192,14 +197,21 @@ function spawnNextAbove(ref){
 }
 
 /* ================ Input ================ */
-function jump(){ if(gameOver) return; if(player.onGround||player.coyote>0){ player.vy=JUMP; player.onGround=false; player.coyote=0; groundPlat=null; } }
+function jump(){ if(endState!=='PLAY') return; if(player.onGround||player.coyote>0){ player.vy=JUMP; player.onGround=false; player.coyote=0; groundPlat=null; } }
 addEventListener('keydown',e=>{
-  if(e.code==='Space' || e.code==='ArrowUp'){ e.preventDefault(); jump(); }
-  if(gameOver && (e.code==='KeyR' || e.code==='Space' || e.code==='ArrowUp' || e.code==='Enter')){
+  if(e.code==='Space' || e.code==='ArrowUp'){
+    e.preventDefault();
+    if(endState==='PLAY'){ jump(); }
+    else if(endState==='WIN_CREDITS' && endTime>=CREDITS_MIN_DURATION){ e.preventDefault(); startRun(); }
+  }
+  if((e.code==='KeyR' || e.code==='Enter') && endState==='WIN_CREDITS' && endTime>=CREDITS_MIN_DURATION){
     e.preventDefault(); startRun();
   }
 },{passive:false});
-addEventListener('pointerdown',()=>{ if(gameOver){startRun();} else {jump();} });
+addEventListener('pointerdown',()=>{
+  if(endState==='PLAY'){ jump(); }
+  else if(endState==='WIN_CREDITS' && endTime>=CREDITS_MIN_DURATION){ startRun(); }
+});
 
 /* ================ Wereldobjecten ================ */
 const env={
@@ -226,7 +238,7 @@ const env={
     // Vogels (aarde)
     this.birds=[]; for(let i=0;i<12;i++) this.birds.push(makeBird(GROUND_Y - rnd(140,320)));
 
-    // Wolkenlaag — NOG KLEINER + SNELLER
+    // Wolkenlaag — klein + snel
     this.clouds=[];
     for(let i=0;i<56;i++){
       const y=rnd(CLOUD_BAND_TOP-3600, -550);
@@ -243,7 +255,7 @@ const env={
     this.skyBirds=[];
     for(let i=0;i<8;i++) this.skyBirds.push(makeSkyBird(rnd(CLOUD_BAND_TOP-3000, -1300)));
 
-    // Space decor — brede band + hoge dichtheid sterren
+    // Space decor — veel sterren
     this.stars=[];
     const STAR_Y_MIN = CLOUD_BAND_TOP - 18000;
     const STAR_Y_MAX = CLOUD_BAND_TOP -   800;
@@ -324,6 +336,9 @@ const env={
       const vy=-rnd(300,380), vx=rnd(-60,60);
       this.rockets.push({x,y,vx,vy,life:rnd(0.6,1.0),color:randColor()});
     }
+  },
+  stopFireworks(){
+    this.fireworks=false; this.rockets.length=0; this.sparks.length=0;
   },
   updateFireworks(dt){
     if(!this.fireworks) return;
@@ -723,7 +738,7 @@ function tryLandOn(p,dt){
 
 /* ================ Lifecycle & Loop ================ */
 function startRun(){
-  gameOver=false; fireworksArmed=false;
+  endState='PLAY'; endTime=0;
   player.r=Math.max(26,Math.min(42,H*0.04));
   jumps=0; heavenEntered=false; heavenCoinCount=0; bigCoinPlaced=false;
   currentPlat=makePlatform(W/2, GROUND_Y-8, true);
@@ -740,7 +755,7 @@ let last=performance.now();
 function loop(now){
   let dt=(now-last)/1000; last=now; if(dt>0.05) dt=0.05;
 
-  if(!gameOver){
+  if(endState==='PLAY'){
     env.update(dt);
 
     const fixed=0.008, steps=Math.max(1,Math.ceil(dt/fixed)), h=dt/steps;
@@ -772,10 +787,14 @@ function loop(now){
     if(player.y<camY+H*0.45) camY=player.y-H*0.45;
     if(player.y-camY>H+260) startRun();
 
-    // Win-conditie: boven de grote coin -> einde + vuurwerk
+    // Win-conditie: boven de grote coin -> start vuurwerkfase
     if(env.bigCoin.y>-90000 && player.y < (env.bigCoin.y - env.bigCoin.r*1.05)){
-      gameOver=true;
+      endState='WIN_FIREWORKS'; endTime=0;
+      env.startFireworks();
     }
+  } else {
+    // eindfases
+    endTime+=dt;
   }
 
   // HUD meters
@@ -789,6 +808,7 @@ function loop(now){
   ctx.clearRect(0,0,W,H);
   drawWorld();
 
+  // platforms + speler (bevroren tijdens eindfase)
   ctx.save(); ctx.translate(0,-camY);
   if(currentPlat && inView(currentPlat.y)) drawPlatform(currentPlat);
   if(nextPlat    && inView(nextPlat.y))    drawPlatform(nextPlat);
@@ -808,16 +828,15 @@ function loop(now){
   }
   ctx.restore();
 
-  // Overlay en vuurwerk: start vuurwerk direct en teken BOVEN overlay
-  if(gameOver){
-    if(!fireworksArmed){ env.startFireworks(); fireworksArmed=true; }
-    // overlay
+  /* ----------- Overlays per fase ----------- */
+  if(endState==='WIN_FIREWORKS'){
+    // half-transparante overlay + titel/thanks
     ctx.save();
     ctx.fillStyle='rgba(0,0,0,0.35)'; ctx.fillRect(0,0,W,H);
     ctx.shadowColor='rgba(255,255,200,0.6)'; ctx.shadowBlur=24;
     ctx.fillStyle='#fff8cc';
     ctx.font=`700 ${Math.max(22, Math.min(48, W*0.04))}px system-ui, sans-serif`;
-    const text='CBS-Community builds souvereignty.';
+    const text='CBS — Community Builds Sovereignty';
     const tw=ctx.measureText(text).width;
     ctx.fillText(text, (W-tw)/2, H*0.42);
     ctx.shadowBlur=0; ctx.fillStyle='#e8f0ff';
@@ -825,16 +844,48 @@ function loop(now){
     const thanks='Thanks for your support!';
     const tw2=ctx.measureText(thanks).width;
     ctx.fillText(thanks, (W-tw2)/2, H*0.50);
-    ctx.font=`600 ${Math.max(14, Math.min(26, W*0.02))}px system-ui, sans-serif`;
-    const sub='Klik of druk op R / Spatie / ↑ / Enter om opnieuw te starten';
-    const sw=ctx.measureText(sub).width;
-    ctx.fillText(sub, (W-sw)/2, H*0.58);
     ctx.restore();
 
     // vuurwerk boven overlay
     renderFireworks();
-  } else {
-    // tijdens het spel (indien actief) ook renderen
+
+    // na de vuurwerkduur => door naar credits
+    if(endTime>=FIREWORKS_DURATION){
+      endState='WIN_CREDITS'; endTime=0;
+      env.stopFireworks();
+    }
+  }
+  else if(endState==='WIN_CREDITS'){
+    // volledig zwart + aftiteling, fade-in
+    const a=Math.min(1, endTime/1.2);
+    ctx.save();
+    ctx.globalAlpha=1; ctx.fillStyle='black'; ctx.fillRect(0,0,W,H);
+
+    ctx.globalAlpha=a;
+    ctx.fillStyle='#eaeaea';
+    ctx.font=`700 ${Math.max(26, Math.min(52, W*0.045))}px system-ui, sans-serif`;
+    const t1='CBS Jump – Thanks for playing!';
+    let w1=ctx.measureText(t1).width; ctx.fillText(t1,(W-w1)/2, H*0.38);
+
+    ctx.font=`600 ${Math.max(18, Math.min(32, W*0.028))}px system-ui, sans-serif`;
+    const t2='Music by Weathen_creation';
+    let w2=ctx.measureText(t2).width; ctx.fillText(t2,(W-w2)/2, H*0.48);
+
+    ctx.font=`600 ${Math.max(16, Math.min(26, W*0.022))}px system-ui, sans-serif`;
+    const t3='CBS Coin — Community Builds Sovereignty • © 2025';
+    let w3=ctx.measureText(t3).width; ctx.fillText(t3,(W-w3)/2, H*0.56);
+
+    if(endTime>=CREDITS_MIN_DURATION){
+      ctx.globalAlpha=Math.min(1,(endTime-CREDITS_MIN_DURATION)/1.2);
+      ctx.fillStyle='#c9d6ff';
+      ctx.font=`600 ${Math.max(14, Math.min(24, W*0.02))}px system-ui, sans-serif`;
+      const t4='Klik of druk op R / Spatie / ↑ / Enter om opnieuw te starten';
+      let w4=ctx.measureText(t4).width; ctx.fillText(t4,(W-w4)/2, H*0.68);
+    }
+    ctx.restore();
+  }
+  else {
+    // gameplay: als fireworks toch actief zijn (bijv. test), ook tonen
     renderFireworks();
   }
 
@@ -870,4 +921,3 @@ function renderFireworks(){
 </script>
 </body>
 </html>
-
