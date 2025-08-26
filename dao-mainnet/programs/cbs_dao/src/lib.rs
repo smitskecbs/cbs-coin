@@ -2,17 +2,25 @@ use anchor_lang::prelude::*;
 
 declare_id!("FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY");
 
-const MAX_QUESTION_LEN: usize = 256; // ruimte in account
+const MAX_QUESTION_LEN: usize = 256;
 
 #[program]
 pub mod cbs_dao {
     use super::*;
 
+    /// 1) Init: 1x per creator
+    pub fn init_creator_state(ctx: Context<InitCreatorState>) -> Result<()> {
+        let st = &mut ctx.accounts.creator_state;
+        st.next_index = 0;
+        Ok(())
+    }
+
+    /// 2) Create proposal met index (uniek per creator)
     pub fn create_proposal(
         ctx: Context<CreateProposal>,
         question: String,
         ends_at: i64,
-        index: u32, // 🔹 NIEUW: index als seed + check tegen creator_state
+        index: u32,
     ) -> Result<()> {
         require!(question.len() <= MAX_QUESTION_LEN, ErrorCode::QuestionTooLong);
 
@@ -20,35 +28,32 @@ pub mod cbs_dao {
         require!(ends_at > now, ErrorCode::AlreadyEnded);
 
         // Enforce index == next_index
-        let state = &mut ctx.accounts.creator_state;
-        require!(index == state.next_index, ErrorCode::IndexMismatch);
+        let st = &mut ctx.accounts.creator_state;
+        require!(index == st.next_index, ErrorCode::IndexMismatch);
 
-        let proposal = &mut ctx.accounts.proposal;
-        proposal.creator    = ctx.accounts.creator.key();
-        proposal.question   = question;
-        proposal.yes_votes  = 0;
-        proposal.no_votes   = 0;
-        proposal.created_at = now;
-        proposal.ends_at    = ends_at;
+        let p = &mut ctx.accounts.proposal;
+        p.creator    = ctx.accounts.creator.key();
+        p.question   = question;
+        p.yes_votes  = 0;
+        p.no_votes   = 0;
+        p.created_at = now;
+        p.ends_at    = ends_at;
 
-        state.next_index = state
-            .next_index
-            .checked_add(1)
-            .ok_or(ErrorCode::Overflow)?;
-
+        st.next_index = st.next_index.checked_add(1).ok_or(ErrorCode::Overflow)?;
         Ok(())
     }
 
+    /// 3) Vote
     pub fn vote(ctx: Context<Vote>, yes: bool) -> Result<()> {
         let now = Clock::get()?.unix_timestamp;
         require!(now <= ctx.accounts.proposal.ends_at, ErrorCode::AlreadyEnded);
 
-        let receipt = &mut ctx.accounts.vote_receipt;
-        require!(!receipt.has_voted, ErrorCode::AlreadyVoted);
+        let r = &mut ctx.accounts.vote_receipt;
+        require!(!r.has_voted, ErrorCode::AlreadyVoted);
 
-        receipt.proposal  = ctx.accounts.proposal.key();
-        receipt.voter     = ctx.accounts.voter.key();
-        receipt.has_voted = true;
+        r.proposal  = ctx.accounts.proposal.key();
+        r.voter     = ctx.accounts.voter.key();
+        r.has_voted = true;
 
         if yes {
             ctx.accounts.proposal.yes_votes =
@@ -61,12 +66,12 @@ pub mod cbs_dao {
     }
 }
 
+/* ---------------------------- Accounts ---------------------------- */
+
 #[derive(Accounts)]
-#[instruction(question: String, ends_at: i64, index: u32)]
-pub struct CreateProposal<'info> {
-    // 🔹 CreatorState houdt de teller bij (init als hij nog niet bestaat)
+pub struct InitCreatorState<'info> {
     #[account(
-        init_if_needed,
+        init,
         payer = creator,
         space = 8 + CreatorState::MAX_SIZE,
         seeds = [b"creator_state", creator.key().as_ref()],
@@ -74,7 +79,23 @@ pub struct CreateProposal<'info> {
     )]
     pub creator_state: Account<'info, CreatorState>,
 
-    // 🔹 Proposal met unieke seed: creator + index
+    #[account(mut)]
+    pub creator: Signer<'info>,
+
+    pub system_program: Program<'info, System>,
+}
+
+#[derive(Accounts)]
+#[instruction(question: String, ends_at: i64, index: u32)]
+pub struct CreateProposal<'info> {
+    // LET OP: GEEN init_if_needed MEER
+    #[account(
+        mut,
+        seeds = [b"creator_state", creator.key().as_ref()],
+        bump
+    )]
+    pub creator_state: Account<'info, CreatorState>,
+
     #[account(
         init,
         payer = creator,
@@ -110,25 +131,27 @@ pub struct Vote<'info> {
     pub system_program: Program<'info, System>,
 }
 
+/* ---------------------------- Data ---------------------------- */
+
 #[account]
 pub struct Proposal {
-    pub creator:    Pubkey,  // 32
-    pub question:   String,  // 4 + N (reserve bij alloc)
-    pub yes_votes:  u64,     // 8
-    pub no_votes:   u64,     // 8
-    pub created_at: i64,     // 8
-    pub ends_at:    i64,     // 8
+    pub creator:    Pubkey,
+    pub question:   String,  // 4 + N
+    pub yes_votes:  u64,
+    pub no_votes:   u64,
+    pub created_at: i64,
+    pub ends_at:    i64,
 }
 impl Proposal {
-    // 32 + (4 + 256) + 8 + 8 + 8 + 8 = 324 bytes
+    // 32 + (4+256) + 8 + 8 + 8 + 8 = 324
     pub const MAX_SIZE: usize = 32 + 4 + MAX_QUESTION_LEN + 8 + 8 + 8 + 8;
 }
 
 #[account]
 pub struct VoteReceipt {
-    pub proposal:  Pubkey, // 32
-    pub voter:     Pubkey, // 32
-    pub has_voted: bool,   // 1
+    pub proposal:  Pubkey,
+    pub voter:     Pubkey,
+    pub has_voted: bool,
 }
 impl VoteReceipt {
     pub const MAX_SIZE: usize = 32 + 32 + 1;
@@ -136,26 +159,24 @@ impl VoteReceipt {
 
 #[account]
 pub struct CreatorState {
-    pub next_index: u32, // start 0, telt op
+    pub next_index: u32,
 }
 impl CreatorState {
     pub const MAX_SIZE: usize = 4;
 }
 
+/* ---------------------------- Errors ---------------------------- */
+
 #[error_code]
 pub enum ErrorCode {
     #[msg("Vraag is te lang")]
     QuestionTooLong, // 6000
-
     #[msg("Stemperiode is voorbij")]
     AlreadyEnded, // 6001
-
     #[msg("Je hebt al gestemd")]
     AlreadyVoted, // 6002
-
     #[msg("Overflow")]
     Overflow, // 6003
-
     #[msg("Index komt niet overeen met next_index")]
     IndexMismatch, // 6004
 }
