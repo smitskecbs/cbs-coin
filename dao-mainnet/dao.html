@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CBS DAO – Mainnet (no-Anchor)</title>
+  <title>CBS DAO – Mainnet (no-Anchor, multi-proposal)</title>
   <style>
     :root { color-scheme: dark; }
     body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#0b0b0f; color:#eaeaea; margin:0; }
@@ -25,6 +25,7 @@
     a { color: #8ab4ff; text-decoration: none; }
     a:hover { text-decoration: underline; }
   </style>
+  <!-- UMD web3.js -->
   <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
 </head>
 <body>
@@ -34,10 +35,13 @@
   <div class="card">
     <div class="row" style="justify-content: space-between;">
       <div class="row">
-        <button id="btnConnect">Connect Phantom</button>
-        <button id="btnDisconnect">Disconnect</button>
+        <button id="btnConnect" title="Verbind Phantom wallet">Connect Phantom</button>
+        <button id="btnDisconnect" title="Wallet loskoppelen">Disconnect</button>
       </div>
-      <div><span class="muted">Query:</span> <code>?program=...&rpc=...</code></div>
+      <div>
+        <span class="muted">Query: </span>
+        <code>?program=...&rpc=...</code>
+      </div>
     </div>
     <p id="wallet" class="muted">Wallet: <em>niet verbonden</em></p>
     <p id="network" class="muted">RPC: <code>(niet ingesteld)</code></p>
@@ -46,14 +50,14 @@
 
   <div class="card">
     <h2>Status</h2>
-    <div id="status">Pagina geladen.</div>
+    <div id="status">Pagina geladen. Verbind je wallet. (no-Anchor)</div>
   </div>
 
   <div class="card">
     <h2>CreatorState</h2>
     <div class="row">
-      <button id="btnInitState">Init CreatorState</button>
-      <button id="btnShowIndex">Toon index</button>
+      <button id="btnInitState" title="Maak CreatorState PDA (1x)">Init CreatorState</button>
+      <button id="btnShowIndex" title="Lees next_index uit creator_state">Toon index</button>
     </div>
     <p id="state" class="muted">—</p>
   </div>
@@ -75,7 +79,8 @@
       </div>
     </div>
     <div class="row" style="margin-top:10px">
-      <button id="btnCreate">Create Proposal</button>
+      <button id="btnCreate"   title="Echte transactie versturen">Create Proposal</button>
+      <button id="btnSimCreate" title="Simuleren zonder te verzenden">Simulate Create</button>
     </div>
     <p id="lastCreate" class="muted">—</p>
   </div>
@@ -91,38 +96,66 @@
         <button id="btnFetch">Fetch</button>
         <button id="btnYes">Vote YES</button>
         <button id="btnNo">Vote NO</button>
+        <button id="btnSimYes">Sim YES</button>
+        <button id="btnSimNo">Sim NO</button>
       </div>
     </div>
     <p id="result" class="muted">—</p>
   </div>
 
   <div class="card">
-    <h2>Logs</h2>
-    <pre id="logs" class="muted" style="white-space:pre-wrap;word-break:break-word;max-height:360px;overflow:auto;">—</pre>
+    <h2>Instellingen</h2>
+    <div class="grid">
+      <div>
+        <label class="muted" for="inpProgram">Program ID</label>
+        <input id="inpProgram" type="text" placeholder="Program ID (Pubkey)" />
+      </div>
+      <div>
+        <label class="muted" for="inpRpc">RPC endpoint</label>
+        <input id="inpRpc" type="text" placeholder="https://rpc.helius.xyz/?api-key=..." />
+      </div>
+    </div>
+    <div style="margin-top:12px">
+      <label class="muted" for="inpProposal2">Proposal Pubkey (korte invoer)</label>
+      <input id="inpProposal2" type="text" placeholder="Snel proposal invullen voor vote/fetch" />
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button id="btnApply">Apply & re-init</button>
+      <button id="btnDefaults" title="Herstel standaardwaarden">Reset defaults</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Laatste fetch / logs</h2>
+    <pre id="lastFetch" class="muted" style="white-space:pre-wrap;word-break:break-word;max-height:360px;overflow:auto;">—</pre>
   </div>
 </div>
 
 <script>
-const { Connection, PublicKey, SystemProgram, Transaction, TransactionInstruction } = solanaWeb3;
+/* ===== Web3 helpers ===== */
+const { Connection, PublicKey, SystemProgram, Transaction, TransactionInstruction, ComputeBudgetProgram } = solanaWeb3;
 const $ = (id)=>document.getElementById(id);
-const statusEl=$("status"), walletEl=$("wallet"), networkEl=$("network"), programInfoEl=$("programInfo"), logsEl=$("logs");
-const stateEl=$("state"), lastCreateEl=$("lastCreate"), resultEl=$("result");
-const inpQuestion=$("inpQuestion"), inpMinutes=$("inpMinutes"), inpEndsAtDT=$("inpEndsAtDT"), inpProposal=$("inpProposal");
+const statusEl=$("status"), walletEl=$("wallet"), networkEl=$("network"), programInfoEl=$("programInfo");
+const stateEl=$("state"), lastCreateEl=$("lastCreate"), lastFetchEl=$("lastFetch"), resultEl=$("result");
+const inpQuestion=$("inpQuestion"), inpMinutes=$("inpMinutes"), inpEndsAtDT=$("inpEndsAtDT");
+const inpProgram=$("inpProgram"), inpRpc=$("inpRpc"), inpProposal=$("inpProposal"), inpProposal2=$("inpProposal2");
 
 const enc = (s)=> new TextEncoder().encode(s);
 const dec = (b)=> new TextDecoder().decode(b);
+const EXPLORER_TX = "https://solscan.io/tx/";
 
-// === Discriminators (Anchor 0.31) ===
-const DISC_INIT_STATE    = Uint8Array.from([105,60,2,31,14,151,165,18]);   // global:init_creator_state
-const DISC_CREATE        = Uint8Array.from([132,116,68,174,216,160,198,22]); // global:create_proposal
-const DISC_VOTE          = Uint8Array.from([227,110,155,23,136,126,172,25]); // global:vote
-// account discriminators alleen voor sanity (niet strikt nodig)
-const DISC_ACC_CREATOR   = Uint8Array.from([158,29,241,193,175,176,255,100]); // account:creator_state
+/* ===== Discriminators (Anchor 0.31) =====
+   global:init_creator_state / create_proposal / vote */
+const DISC_INIT_STATE = Uint8Array.from([105,60,2,31,14,151,165,18]);
+const DISC_CREATE     = Uint8Array.from([132,116,68,174,216,160,198,22]);
+const DISC_VOTE       = Uint8Array.from([227,110,155,23,136,126,172,25]);
 
+/* ===== Borsh helpers ===== */
 function u32le(n){ const b=new Uint8Array(4); new DataView(b.buffer).setUint32(0,n>>>0,true); return b; }
 function i64le(n){ let x=BigInt(n); if(x<0n)x=(1n<<64n)+x; const b=new Uint8Array(8); for(let i=0;i<8;i++) b[i]=Number((x>>BigInt(8*i))&0xffn); return b; }
 function encodeString(str){ const s=enc(str); const out=new Uint8Array(4+s.length); out.set(u32le(s.length),0); out.set(s,4); return out; }
 
+/* ===== PDA helpers ===== */
 function pdaCreatorState(programId, creatorPk){
   return PublicKey.findProgramAddressSync([enc("creator_state"), creatorPk.toBytes()], programId)[0];
 }
@@ -133,18 +166,18 @@ function pdaVoteReceipt(programId, proposalPk, voterPk){
   return PublicKey.findProgramAddressSync([enc("vote"), proposalPk.toBytes(), voterPk.toBytes()], programId)[0];
 }
 
+/* ===== Instruction builders ===== */
 function ixInitCreatorState(programId, creator, creatorStatePda){
   return new TransactionInstruction({
     programId,
-    keys: [
+    keys:[
       { pubkey: creatorStatePda, isSigner:false, isWritable:true },
       { pubkey: creator,         isSigner:true,  isWritable:true },
       { pubkey: SystemProgram.programId, isSigner:false, isWritable:false },
     ],
-    data: DISC_INIT_STATE // geen args
+    data: DISC_INIT_STATE
   });
 }
-
 function ixCreateProposal(programId, creator, creatorStatePda, proposalPda, question, endsAt, index){
   const q = encodeString(question);
   const data = new Uint8Array(DISC_CREATE.length + q.length + 8 + 4);
@@ -154,7 +187,7 @@ function ixCreateProposal(programId, creator, creatorStatePda, proposalPda, ques
   data.set(u32le(index),o);
   return new TransactionInstruction({
     programId,
-    keys: [
+    keys:[
       { pubkey: creatorStatePda, isSigner:false, isWritable:true },
       { pubkey: proposalPda,     isSigner:false, isWritable:true },
       { pubkey: creator,         isSigner:true,  isWritable:true },
@@ -163,7 +196,288 @@ function ixCreateProposal(programId, creator, creatorStatePda, proposalPda, ques
     data
   });
 }
-
 function ixVote(programId, proposalPk, voter, voteReceiptPda, yes){
   const data = new Uint8Array(DISC_VOTE.length + 1);
-  data.set(DISC_VOTE,0); data[DISC_VOTE.length] =
+  data.set(DISC_VOTE,0); data[DISC_VOTE.length] = yes ? 1 : 0;
+  return new TransactionInstruction({
+    programId,
+    keys:[
+      { pubkey: proposalPk,     isSigner:false, isWritable:true },
+      { pubkey: voter,          isSigner:true,  isWritable:true },
+      { pubkey: voteReceiptPda, isSigner:false, isWritable:true },
+      { pubkey: SystemProgram.programId, isSigner:false, isWritable:false },
+    ],
+    data
+  });
+}
+
+/* ===== TX helpers ===== */
+async function sendTx(connection, wallet, tx){
+  tx.feePayer = wallet.publicKey;
+  const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('finalized');
+  tx.recentBlockhash = blockhash;
+  const signed = await wallet.signTransaction(tx);
+  const sig = await connection.sendRawTransaction(signed.serialize(), { skipPreflight:false });
+  await connection.confirmTransaction({ signature:sig, blockhash, lastValidBlockHeight }, 'confirmed');
+  return sig;
+}
+function u8ToBase64(u8){ let s=""; for(let i=0;i<u8.length;i++) s+=String.fromCharCode(u8[i]); return btoa(s); }
+
+/* Simulate: 1) signed, 2) unsigned, 3) raw RPC base64 */
+async function simulateTx(connection, wallet, tx){
+  tx.feePayer = wallet.publicKey;
+  tx.recentBlockhash = (await connection.getLatestBlockhash('confirmed')).blockhash;
+  try{
+    const signed = await wallet.signTransaction(tx);
+    return await connection.simulateTransaction(signed, { sigVerify:true, replaceRecentBlockhash:true });
+  }catch(e1){ console.warn("simulate signed fail:", e1?.message||e1); }
+  try{
+    tx.feePayer = wallet.publicKey;
+    tx.recentBlockhash = (await connection.getLatestBlockhash('confirmed')).blockhash;
+    return await connection.simulateTransaction(tx, { sigVerify:false, replaceRecentBlockhash:true });
+  }catch(e2){ console.warn("simulate unsigned fail:", e2?.message||e2); }
+  try{
+    tx.feePayer = wallet.publicKey;
+    tx.recentBlockhash = (await connection.getLatestBlockhash('confirmed')).blockhash;
+    const raw = tx.serialize({ requireAllSignatures:false, verifySignatures:false });
+    const encoded = u8ToBase64(raw);
+    const args = [encoded, { encoding:'base64', sigVerify:false, replaceRecentBlockhash:true, commitment:'confirmed' }];
+    const res = await connection._rpcRequest('simulateTransaction', args);
+    if(res?.error) throw new Error(res.error.message || 'simulateTransaction RPC error');
+    return { value: res.result };
+  }catch(e3){ console.error("simulate raw fail:", e3?.message||e3); throw e3; }
+}
+
+/* ===== Defaults & state ===== */
+const qs = new URLSearchParams(location.search);
+const DEFAULT_RPC = qs.get("rpc") || "https://rpc.helius.xyz/?api-key=3d335769-1880-4497-8fd0-ac7ed0701a7c";
+let PROGRAM_ID = new PublicKey((qs.get("program") || "FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY").trim());
+let RPC_URL = DEFAULT_RPC;
+
+let connection = new Connection(RPC_URL, "confirmed");
+let wallet = null;
+
+inpProgram.value = PROGRAM_ID.toBase58();
+inpRpc.value = RPC_URL;
+programInfoEl.innerHTML = "Program: <code>"+PROGRAM_ID.toBase58()+"</code>";
+networkEl.innerHTML = "RPC: <code>"+RPC_URL+"</code>";
+
+function getPhantom(){
+  if (window?.solana?.isPhantom) return window.solana;
+  if (window?.phantom?.solana?.isPhantom) return window.phantom.solana;
+  return null;
+}
+function setStatus(msg, cls=""){ statusEl.innerHTML = cls ? `<span class="${cls}">${msg}</span>` : msg; }
+function setWallet(pk){ walletEl.innerHTML = pk ? `Wallet: <code>${pk}</code>` : "Wallet: <em>niet verbonden</em>"; }
+
+/* ===== Handlers ===== */
+$("btnConnect").onclick = async ()=>{
+  try{
+    const ph = getPhantom(); if(!ph){ alert("Installeer Phantom: https://phantom.app/"); return; }
+    const resp = await ph.connect({ onlyIfTrusted:false });
+    wallet = { publicKey: ph.publicKey, signTransaction: ph.signTransaction.bind(ph) };
+    setWallet(wallet.publicKey.toBase58());
+    connection = new Connection(RPC_URL, "confirmed");
+    setStatus("Verbonden (no-Anchor).", "ok");
+  }catch(e){ setStatus("Connect mislukt: "+(e.message||e), "err"); }
+};
+$("btnDisconnect").onclick = async ()=>{
+  try{ await getPhantom()?.disconnect?.(); }catch{}
+  wallet=null; setWallet(null); setStatus("Losgekoppeld.");
+};
+
+$("btnApply").onclick = ()=>{
+  try{
+    PROGRAM_ID = new PublicKey(inpProgram.value.trim());
+    RPC_URL = (inpRpc.value.trim() || DEFAULT_RPC);
+    programInfoEl.innerHTML = "Program: <code>"+PROGRAM_ID.toBase58()+"</code>";
+    networkEl.innerHTML = "RPC: <code>"+RPC_URL+"</code>";
+    if(wallet) connection = new Connection(RPC_URL, "confirmed");
+    setStatus("Instellingen toegepast.", "ok");
+  }catch(e){ setStatus("Fout in instellingen: "+(e.message||e), "err"); }
+};
+$("btnDefaults").onclick = ()=>{
+  inpProgram.value = "FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY";
+  inpRpc.value = "https://rpc.helius.xyz/?api-key=3d335769-1880-4497-8fd0-ac7ed0701a7c";
+  $("btnApply").click();
+};
+
+/* ===== CreatorState actions ===== */
+$("btnInitState").onclick = async ()=>{
+  try{
+    if(!wallet) throw new Error("Wallet niet verbonden.");
+    if(!connection) connection = new Connection(RPC_URL, "confirmed");
+    const csPda = pdaCreatorState(PROGRAM_ID, wallet.publicKey);
+
+    const cuPrice = ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1000 });
+    const ix = ixInitCreatorState(PROGRAM_ID, wallet.publicKey, csPda);
+    const tx = new Transaction().add(cuPrice, ix);
+    const sig = await sendTx(connection, wallet, tx);
+    stateEl.innerHTML = `<span class="ok">CreatorState init TX: <a href="${EXPLORER_TX}${sig}" target="_blank" rel="noopener">${sig}</a></span>`;
+  }catch(e){ stateEl.innerHTML = `<span class="err">${e.message||e}</span>`; }
+};
+
+$("btnShowIndex").onclick = async ()=>{
+  try{
+    if(!wallet) throw new Error("Wallet niet verbonden.");
+    if(!connection) connection = new Connection(RPC_URL, "confirmed");
+    const csPda = pdaCreatorState(PROGRAM_ID, wallet.publicKey);
+    const info = await connection.getAccountInfo(csPda, "confirmed");
+    if(!info){ stateEl.innerHTML = `<span class="warn">CreatorState bestaat nog niet. Klik <b>Init CreatorState</b>.</span>`; return; }
+    // layout: 8 disc | u32 next_index
+    const idx = new DataView(info.data.buffer, info.data.byteOffset+8, 4).getUint32(0,true);
+    stateEl.textContent = "next_index = " + idx;
+  }catch(e){ stateEl.innerHTML = `<span class="err">${e.message||e}</span>`; }
+};
+
+/* ===== Create Proposal ===== */
+$("btnCreate").onclick = async ()=>{
+  try{
+    if(!wallet) throw new Error("Wallet niet verbonden.");
+    if(!connection) connection = new Connection(RPC_URL, "confirmed");
+
+    const creator = wallet.publicKey;
+    const csPda = pdaCreatorState(PROGRAM_ID, creator);
+
+    // lees next_index
+    const csInfo = await connection.getAccountInfo(csPda, "confirmed");
+    if(!csInfo){ lastCreateEl.innerHTML = `<span class="warn">CreatorState bestaat nog niet. Klik eerst <b>Init CreatorState</b>.</span>`; return; }
+    const nextIndex = new DataView(csInfo.data.buffer, csInfo.data.byteOffset+8, 4).getUint32(0,true);
+
+    const endsAt = inpEndsAtDT.value
+      ? Math.floor(new Date(inpEndsAtDT.value).getTime()/1000)
+      : Math.floor(Date.now()/1000) + (parseInt(inpMinutes.value)||60)*60;
+
+    const question = (inpQuestion.value||"").trim();
+    if(!question) throw new Error("Vul een vraag in.");
+
+    const proposalPda = pdaProposal(PROGRAM_ID, creator, nextIndex);
+    const cuPrice = ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1000 });
+    const ix = ixCreateProposal(PROGRAM_ID, creator, csPda, proposalPda, question, endsAt, nextIndex);
+    const tx = new Transaction().add(cuPrice, ix);
+
+    const sig = await sendTx(connection, wallet, tx);
+
+    inpProposal.value = proposalPda.toBase58();
+    inpProposal2.value = proposalPda.toBase58();
+    lastCreateEl.innerHTML = `<span class="ok">✅ Proposal: ${proposalPda.toBase58()} — TX: <a href="${EXPLORER_TX}${sig}" target="_blank" rel="noopener">${sig}</a></span>`;
+  }catch(e){ lastCreateEl.innerHTML = `<span class="err">${e.message||e}</span>`; }
+};
+
+$("btnSimCreate").onclick = async ()=>{
+  try{
+    if(!wallet) throw new Error("Wallet niet verbonden.");
+    if(!connection) connection = new Connection(RPC_URL, "confirmed");
+
+    const creator = wallet.publicKey;
+    const csPda = pdaCreatorState(PROGRAM_ID, creator);
+    const csInfo = await connection.getAccountInfo(csPda, "confirmed");
+    if(!csInfo){ lastCreateEl.innerHTML = `<span class="warn">CreatorState bestaat nog niet. Klik eerst <b>Init CreatorState</b>.</span>`; return; }
+    const nextIndex = new DataView(csInfo.data.buffer, csInfo.data.byteOffset+8, 4).getUint32(0,true);
+
+    const endsAt = inpEndsAtDT.value
+      ? Math.floor(new Date(inpEndsAtDT.value).getTime()/1000)
+      : Math.floor(Date.now()/1000) + (parseInt(inpMinutes.value)||60)*60;
+
+    const question = (inpQuestion.value||"").trim();
+    if(!question) throw new Error("Vul een vraag in.");
+
+    const proposalPda = pdaProposal(PROGRAM_ID, creator, nextIndex);
+    const cuPrice = ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1000 });
+    const ix = ixCreateProposal(PROGRAM_ID, creator, csPda, proposalPda, question, endsAt, nextIndex);
+    const tx = new Transaction().add(cuPrice, ix);
+
+    const sim = await simulateTx(connection, wallet, tx);
+    lastFetchEl.textContent = (sim?.value?.logs || []).join("\n") || "—";
+    lastCreateEl.innerHTML = `<span class="ok">✅ Simulate(create) OK — predicted PDA: ${proposalPda.toBase58()}</span>`;
+  }catch(e){ lastCreateEl.innerHTML = `<span class="err">${e.message||e}</span>`; }
+};
+
+/* ===== Fetch / Vote ===== */
+$("btnFetch").onclick = async ()=>{
+  try{
+    const input = (inpProposal.value||inpProposal2.value||"").trim();
+    if(!input) throw new Error("Geen proposal pubkey ingevuld.");
+    if(!connection) connection = new Connection(RPC_URL, "confirmed");
+    const pk = new PublicKey(input);
+    const info = await connection.getAccountInfo(pk, "confirmed");
+    if(!info) throw new Error("Account niet gevonden.");
+
+    // Proposal layout: 8 disc | 32 creator | 4+N question | 8 yes | 8 no | 8 created | 8 ends
+    const data = new Uint8Array(info.data);
+    let o=8;
+    const creator = new PublicKey(data.slice(o,o+32)); o+=32;
+    const strlen = new DataView(data.buffer, data.byteOffset+o, 4).getUint32(0,true); o+=4;
+    const question = dec(data.slice(o,o+strlen)); o+=strlen;
+    const dv = new DataView(data.buffer, data.byteOffset+o);
+    const yes = Number(dv.getBigUint64(0,true));   o+=8;
+    const no  = Number(dv.getBigUint64(0,true));   // o niet opschuiven; we lezen opnieuw
+    const created = Number(dv.getBigInt64(8,true));
+    const ends    = Number(dv.getBigInt64(16,true));
+
+    lastFetchEl.textContent = JSON.stringify({
+      creator: creator.toBase58(),
+      question,
+      yes_votes: yes,
+      no_votes:  no,
+      created_at: created,
+      ends_at: ends
+    }, null, 2);
+    resultEl.innerHTML = `<span class="ok">✅ Proposal gelezen.</span>`;
+  }catch(e){ resultEl.innerHTML = `<span class="err">${e.message||e}</span>`; }
+};
+
+function voteHandler(yes){ return async ()=>{
+  try{
+    const input = (inpProposal.value||inpProposal2.value||"").trim();
+    if(!wallet) throw new Error("Wallet niet verbonden.");
+    if(!input) throw new Error("Geen proposal pubkey ingevuld.");
+    if(!connection) connection = new Connection(RPC_URL, "confirmed");
+    const proposalPk = new PublicKey(input);
+    const receiptPda = pdaVoteReceipt(PROGRAM_ID, proposalPk, wallet.publicKey);
+
+    const cuPrice = ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1000 });
+    const ix = ixVote(PROGRAM_ID, proposalPk, wallet.publicKey, receiptPda, yes);
+    const tx = new Transaction().add(cuPrice, ix);
+    const sig = await sendTx(connection, wallet, tx);
+    resultEl.innerHTML = `<span class="ok">✅ Vote TX: <a href="${EXPLORER_TX}${sig}" target="_blank" rel="noopener">${sig}</a></span>`;
+  }catch(e){ resultEl.innerHTML = `<span class="err">${e.message||e}</span>`; }
+};}
+$("btnYes").onclick = voteHandler(true);
+$("btnNo").onclick  = voteHandler(false);
+
+$("btnSimYes").onclick = async ()=>{
+  try{
+    const input = (inpProposal.value||inpProposal2.value||"").trim();
+    if(!wallet) throw new Error("Wallet niet verbonden.");
+    if(!input) throw new Error("Geen proposal pubkey ingevuld.");
+    const proposalPk = new PublicKey(input);
+    const receiptPda = pdaVoteReceipt(PROGRAM_ID, proposalPk, wallet.publicKey);
+    const cuPrice = ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1000 });
+    const ix = ixVote(PROGRAM_ID, proposalPk, wallet.publicKey, receiptPda, true);
+    const tx = new Transaction().add(cuPrice, ix);
+    const sim = await simulateTx(connection, wallet, tx);
+    lastFetchEl.textContent = (sim?.value?.logs || []).join("\n") || "—";
+    resultEl.innerHTML = `<span class="ok">✅ Simulate(vote YES) OK</span>`;
+  }catch(e){ resultEl.innerHTML = `<span class="err">${e.message||e}</span>`; }
+};
+$("btnSimNo").onclick = async ()=>{
+  try{
+    const input = (inpProposal.value||inpProposal2.value||"").trim();
+    if(!wallet) throw new Error("Wallet niet verbonden.");
+    if(!input) throw new Error("Geen proposal pubkey ingevuld.");
+    const proposalPk = new PublicKey(input);
+    const receiptPda = pdaVoteReceipt(PROGRAM_ID, proposalPk, wallet.publicKey);
+    const cuPrice = ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1000 });
+    const ix = ixVote(PROGRAM_ID, proposalPk, wallet.publicKey, receiptPda, false);
+    const tx = new Transaction().add(cuPrice, ix);
+    const sim = await simulateTx(connection, wallet, tx);
+    lastFetchEl.textContent = (sim?.value?.logs || []).join("\n") || "—";
+    resultEl.innerHTML = `<span class="ok">✅ Simulate(vote NO) OK</span>`;
+  }catch(e){ resultEl.innerHTML = `<span class="err">${e.message||e}</span>`; }
+};
+
+setStatus("Pagina geladen. Verbind je wallet. (no-Anchor)");
+</script>
+</body>
+</html>
