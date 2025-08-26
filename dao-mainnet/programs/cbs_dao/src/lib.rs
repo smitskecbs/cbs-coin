@@ -8,14 +8,11 @@ const MAX_QUESTION_LEN: usize = 256;
 pub mod cbs_dao {
     use super::*;
 
-    /// 1) Init: 1x per creator
     pub fn init_creator_state(ctx: Context<InitCreatorState>) -> Result<()> {
-        let st = &mut ctx.accounts.creator_state;
-        st.next_index = 0;
+        ctx.accounts.creator_state.next_index = 0;
         Ok(())
     }
 
-    /// 2) Create proposal met index (uniek per creator)
     pub fn create_proposal(
         ctx: Context<CreateProposal>,
         question: String,
@@ -23,11 +20,9 @@ pub mod cbs_dao {
         index: u32,
     ) -> Result<()> {
         require!(question.len() <= MAX_QUESTION_LEN, ErrorCode::QuestionTooLong);
-
         let now = Clock::get()?.unix_timestamp;
         require!(ends_at > now, ErrorCode::AlreadyEnded);
 
-        // Enforce index == next_index
         let st = &mut ctx.accounts.creator_state;
         require!(index == st.next_index, ErrorCode::IndexMismatch);
 
@@ -43,7 +38,6 @@ pub mod cbs_dao {
         Ok(())
     }
 
-    /// 3) Vote
     pub fn vote(ctx: Context<Vote>, yes: bool) -> Result<()> {
         let now = Clock::get()?.unix_timestamp;
         require!(now <= ctx.accounts.proposal.ends_at, ErrorCode::AlreadyEnded);
@@ -66,7 +60,7 @@ pub mod cbs_dao {
     }
 }
 
-/* ---------------------------- Accounts ---------------------------- */
+/* ---------------- Accounts ---------------- */
 
 #[derive(Accounts)]
 pub struct InitCreatorState<'info> {
@@ -78,17 +72,14 @@ pub struct InitCreatorState<'info> {
         bump
     )]
     pub creator_state: Account<'info, CreatorState>,
-
     #[account(mut)]
     pub creator: Signer<'info>,
-
     pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
-#[instruction(question: String, ends_at: i64, index: u32)]
+#[instruction(_question: String, _ends_at: i64, index: u32)]
 pub struct CreateProposal<'info> {
-    // LET OP: GEEN init_if_needed MEER
     #[account(
         mut,
         seeds = [b"creator_state", creator.key().as_ref()],
@@ -107,7 +98,6 @@ pub struct CreateProposal<'info> {
 
     #[account(mut)]
     pub creator: Signer<'info>,
-
     pub system_program: Program<'info, System>,
 }
 
@@ -115,10 +105,8 @@ pub struct CreateProposal<'info> {
 pub struct Vote<'info> {
     #[account(mut)]
     pub proposal: Account<'info, Proposal>,
-
     #[account(mut)]
     pub voter: Signer<'info>,
-
     #[account(
         init,
         payer = voter,
@@ -127,11 +115,10 @@ pub struct Vote<'info> {
         bump
     )]
     pub vote_receipt: Account<'info, VoteReceipt>,
-
     pub system_program: Program<'info, System>,
 }
 
-/* ---------------------------- Data ---------------------------- */
+/* ---------------- Data ---------------- */
 
 #[account]
 pub struct Proposal {
@@ -143,7 +130,6 @@ pub struct Proposal {
     pub ends_at:    i64,
 }
 impl Proposal {
-    // 32 + (4+256) + 8 + 8 + 8 + 8 = 324
     pub const MAX_SIZE: usize = 32 + 4 + MAX_QUESTION_LEN + 8 + 8 + 8 + 8;
 }
 
@@ -153,30 +139,19 @@ pub struct VoteReceipt {
     pub voter:     Pubkey,
     pub has_voted: bool,
 }
-impl VoteReceipt {
-    pub const MAX_SIZE: usize = 32 + 32 + 1;
-}
+impl VoteReceipt { pub const MAX_SIZE: usize = 32 + 32 + 1; }
 
 #[account]
-pub struct CreatorState {
-    pub next_index: u32,
-}
-impl CreatorState {
-    pub const MAX_SIZE: usize = 4;
-}
+pub struct CreatorState { pub next_index: u32 }
+impl CreatorState { pub const MAX_SIZE: usize = 4; }
 
-/* ---------------------------- Errors ---------------------------- */
+/* ---------------- Errors ---------------- */
 
 #[error_code]
 pub enum ErrorCode {
-    #[msg("Vraag is te lang")]
-    QuestionTooLong, // 6000
-    #[msg("Stemperiode is voorbij")]
-    AlreadyEnded, // 6001
-    #[msg("Je hebt al gestemd")]
-    AlreadyVoted, // 6002
-    #[msg("Overflow")]
-    Overflow, // 6003
-    #[msg("Index komt niet overeen met next_index")]
-    IndexMismatch, // 6004
+    #[msg("Vraag is te lang")] QuestionTooLong, // 6000
+    #[msg("Stemperiode is voorbij")] AlreadyEnded, // 6001
+    #[msg("Je hebt al gestemd")] AlreadyVoted, // 6002
+    #[msg("Overflow")] Overflow, // 6003
+    #[msg("Index komt niet overeen met next_index")] IndexMismatch, // 6004
 }
