@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>CBS DAO – Mainnet (Anchor)</title>
+  <style>
+    :root { color-scheme: dark; }
+    body { font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:#0b0b0f; color:#eaeaea; margin:0; }
+    .wrap { max-width: 980px; margin:28px auto; padding:0 16px; }
+    .card { background:#13131a; border:1px solid #23232b; border-radius:16px; padding:20px; margin-bottom:16px; }
+    h1,h2 { margin:0 0 12px; }
+    button { cursor:pointer; border:none; padding:12px 16px; border-radius:12px; background:#1f2430; color:#eaeaea; }
+    button:hover { filter:brightness(1.1); }
+    .row { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+    .muted { color:#a6a6b3; font-size:14px; }
+    code { background:#1a1a22; padding:2px 6px; border-radius:6px; }
+    input[type="text"],input[type="number"],input[type="datetime-local"]{
+      width:100%; padding:10px; border-radius:10px; border:1px solid #2a2a33; background:#0f0f14; color:#eaeaea;
+    }
+    .ok { color:#79e07f; } .warn { color:#ffd75e; } .err { color:#ff7575; }
+    .grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .grid3 { display:grid; grid-template-columns:2fr 1fr 1fr; gap:12px; }
+    @media (max-width:900px){ .grid,.grid3{ grid-template-columns:1fr; } }
+    a { color:#8ab4ff; text-decoration:none; } a:hover { text-decoration:underline; }
+  </style>
+  <!-- Anchor & web3 via ESM -->
+  <script type="module">
+    import * as anchor from "https://esm.sh/@project-serum/anchor@0.28.1";
+    import { Connection, PublicKey } from "https://esm.sh/@solana/web3.js@1.95.3";
+
+    // ====== IDL inline ======
+    const idl = {
+      "version":"0.1.0","name":"cbs_dao",
+      "address":"FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY",
+      "instructions":[
+        {"name":"create_proposal","discriminator":[132,116,68,174,216,160,198,22],
+         "accounts":[
+           {"name":"proposal","writable":true,"pda":{"seeds":[
+             {"kind":"const","value":[112,114,111,112,111,115,97,108]},
+             {"kind":"account","path":"creator"},
+             {"kind":"account","path":"creator"}]}},
+           {"name":"creator","writable":true,"signer":true},
+           {"name":"systemProgram","address":"11111111111111111111111111111111"}
+         ],
+         "args":[{"name":"question","type":"string"},{"name":"ends_at","type":"i64"}]
+        },
+        {"name":"vote","discriminator":[227,110,155,23,136,126,172,25],
+         "accounts":[
+           {"name":"proposal","writable":true},
+           {"name":"voter","writable":true,"signer":true},
+           {"name":"voteReceipt","writable":true,"pda":{"seeds":[
+             {"kind":"const","value":[118,111,116,101]},
+             {"kind":"account","path":"proposal"},
+             {"kind":"account","path":"voter"}]}},
+           {"name":"systemProgram","address":"11111111111111111111111111111111"}
+         ],
+         "args":[{"name":"yes","type":"bool"}]
+        }
+      ],
+      "accounts":[
+        {"name":"proposal","discriminator":[26,94,189,187,116,136,53,33],
+         "type":{"kind":"struct","fields":[
+           {"name":"creator","type":"publicKey"},
+           {"name":"question","type":"string"},
+           {"name":"yes_votes","type":"u64"},
+           {"name":"no_votes","type":"u64"},
+           {"name":"created_at","type":"i64"},
+           {"name":"ends_at","type":"i64"}]}},
+        {"name":"voteReceipt","discriminator":[104,20,204,252,45,84,37,195],
+         "type":{"kind":"struct","fields":[
+           {"name":"proposal","type":"publicKey"},
+           {"name":"voter","type":"publicKey"},
+           {"name":"has_voted","type":"bool"}]}}
+      ]
+    };
+
+    // ====== UI refs ======
+    const $ = (id)=>document.getElementById(id);
+    const statusEl=$("status"), walletEl=$("wallet"), networkEl=$("network");
+    const programInfoEl=$("programInfo"), proposalInfoEl=$("proposalInfo");
+    const resultEl=$("result"), lastFetchEl=$("lastFetch");
+    const inpProgram=$("inpProgram"), inpProposal=$("inpProposal"), inpRpc=$("inpRpc");
+    const inpQuestion=$("inpQuestion"), inpMinutes=$("inpMinutes"), inpEndsAtDT=$("inpEndsAtDT");
+
+    const PROGRAM_ID = new PublicKey(idl.address);
+    const qs = new URLSearchParams(location.search);
+    const RPC_URL = qs.get("rpc") || "https://rpc.helius.xyz/?api-key=3d335769-1880-4497-8fd0-ac7ed0701a7c";
+
+    let connection, provider, program;
+
+    // PDA helpers (zelfde seeds als IDL)
+    function pdaProposal(creatorPk){
+      const SEED = new Uint8Array([112,114,111,112,111,115,97,108]); // "proposal"
+      return PublicKey.findProgramAddressSync([SEED, creatorPk.toBuffer(), creatorPk.toBuffer()], PROGRAM_ID)[0];
+    }
+    function pdaVoteReceipt(proposalPk, voterPk){
+      const SEED = new Uint8Array([118,111,116,101]); // "vote"
+      return PublicKey.findProgramAddressSync([SEED, proposalPk.toBuffer(), voterPk.toBuffer()], PROGRAM_ID)[0];
+    }
+
+    // Init UI
+    inpProgram.value = PROGRAM_ID.toBase58();
+    inpRpc.value = RPC_URL;
+    programInfoEl.innerHTML = "Program: <code>"+PROGRAM_ID.toBase58()+"</code>";
+    networkEl.innerHTML = "RPC: <code>"+RPC_URL+"</code>";
+    proposalInfoEl.innerHTML = "Proposal: <code>—</code>";
+
+    function setStatus(msg, cls=""){ statusEl.innerHTML = cls ? `<span class="${cls}">${msg}</span>` : msg; }
+    function getPhantom(){
+      if (window?.solana?.isPhantom) return window.solana;
+      if (window?.phantom?.solana?.isPhantom) return window.phantom.solana;
+      return null;
+    }
+
+    // Connect
+    window.connectPhantom = async ()=>{
+      const phantom = getPhantom();
+      if(!phantom){ alert("Installeer Phantom: https://phantom.app/"); return; }
+      await phantom.connect({ onlyIfTrusted:false });
+      walletEl.innerHTML = "Wallet: <code>"+phantom.publicKey.toBase58()+"</code>";
+      connection = new Connection(RPC_URL,"confirmed");
+      provider = new anchor.AnchorProvider(connection, phantom, { commitment:"confirmed" });
+      anchor.setProvider(provider);
+      program = new anchor.Program(idl, PROGRAM_ID, provider);
+      setStatus("Verbonden (Anchor mode).","ok");
+    };
+    window.disconnectPhantom = async ()=>{
+      try{ await getPhantom()?.disconnect?.(); }catch{}
+      walletEl.innerHTML = "Wallet: <em>niet verbonden</em>";
+      setStatus("Losgekoppeld.");
+    };
+
+    // Create proposal
+    window.createProposal = async ()=>{
+      try{
+        if(!provider) throw new Error("Wallet niet verbonden.");
+        const creator = provider.wallet.publicKey;
+        const endsAt = inpEndsAtDT.value ? Math.floor(new Date(inpEndsAtDT.value).getTime()/1000)
+                    : Math.floor(Date.now()/1000) + (parseInt(inpMinutes.value)||60)*60;
+        const question = (inpQuestion.value||"").trim();
+        if(!question) throw new Error("Vraag invullen.");
+
+        const proposalPda = pdaProposal(creator);
+        console.log("Derived proposal PDA (frontend):", proposalPda.toBase58());
+
+        const sig = await program.methods
+          .createProposal(question, new anchor.BN(endsAt))
+          .accounts({
+            proposal: proposalPda,
+            creator: creator,
+            systemProgram: anchor.web3.SystemProgram.programId
+          })
+          .rpc();
+
+        inpProposal.value = proposalPda.toBase58();
+        proposalInfoEl.innerHTML = "Proposal: <code>"+proposalPda.toBase58()+"</code>";
+        resultEl.innerHTML = `✅ TX: <a href="https://solscan.io/tx/${sig}" target="_blank" rel="noopener">${sig}</a>`;
+      }catch(e){
+        console.error(e);
+        // Laat logs zien als Anchor een seeds-mismatch gooit
+        const logs = e?.logs || [];
+        lastFetchEl.textContent = Array.isArray(logs) ? logs.join("\n") : String(logs||"—");
+        resultEl.innerHTML = `<span class="err">❌ ${e.message}</span>`;
+      }
+    };
+
+    // Fetch proposal
+    window.fetchProposal = async ()=>{
+      try{
+        const pkStr = (document.getElementById("inpProposal").value||"").trim();
+        if(!pkStr) throw new Error("Geen proposal pubkey.");
+        const acc = await program.account.proposal.fetch(new PublicKey(pkStr));
+        lastFetchEl.textContent = JSON.stringify({
+          creator: acc.creator.toBase58(),
+          question: acc.question,
+          yes_votes: acc.yesVotes.toString(),
+          no_votes: acc.noVotes.toString(),
+          created_at: acc.createdAt.toNumber(),
+          ends_at: acc.endsAt.toNumber(),
+        }, null, 2);
+        resultEl.innerHTML = `<span class="ok">✅ Proposal gelezen.</span>`;
+      }catch(e){ console.error(e); resultEl.innerHTML = `<span class="err">❌ ${e.message}</span>`; }
+    };
+
+    // Vote
+    async function doVote(yes){
+      try{
+        if(!provider) throw new Error("Wallet niet verbonden.");
+        const proposalStr = (document.getElementById("inpProposal").value||"").trim();
+        if(!proposalStr) throw new Error("Geen proposal pubkey.");
+        const proposalPk = new PublicKey(proposalStr);
+        const voter = provider.wallet.publicKey;
+        const receiptPda = pdaVoteReceipt(proposalPk, voter);
+
+        const sig = await program.methods
+          .vote(yes)
+          .accounts({
+            proposal: proposalPk,
+            voter,
+            voteReceipt: receiptPda,
+            systemProgram: anchor.web3.SystemProgram.programId
+          })
+          .rpc();
+
+        resultEl.innerHTML = `✅ Vote TX: <a href="https://solscan.io/tx/${sig}" target="_blank" rel="noopener">${sig}</a>`;
+      }catch(e){ console.error(e); resultEl.innerHTML = `<span class="err">❌ ${e.message}</span>`; }
+    }
+    window.voteYes = ()=>doVote(true);
+    window.voteNo  = ()=>doVote(false);
+  </script>
+</head>
+<body>
+  <div class="wrap">
+    <h1>CBS DAO – Mainnet (Anchor)</h1>
+
+    <div class="card">
+      <div class="row" style="justify-content:space-between;">
+        <div class="row">
+          <button onclick="connectPhantom()">Connect Phantom</button>
+          <button onclick="disconnectPhantom()">Disconnect</button>
+        </div>
+        <div><span class="muted">RPC via query:</span> <code>?rpc=...</code></div>
+      </div>
+      <p id="wallet" class="muted">Wallet: <em>niet verbonden</em></p>
+      <p id="network" class="muted">RPC: <code>(niet ingesteld)</code></p>
+      <p id="programInfo" class="muted">Program: <code>—</code></p>
+      <p id="proposalInfo" class="muted">Proposal: <code>—</code></p>
+    </div>
+
+    <div class="card">
+      <h2>Status</h2>
+      <div id="status">Pagina geladen. Verbind je wallet. (Anchor mode)</div>
+    </div>
+
+    <div class="card">
+      <h2>Proposal aanmaken</h2>
+      <div class="grid3">
+        <div>
+          <label class="muted" for="inpQuestion">Vraag (question)</label>
+          <input id="inpQuestion" type="text" placeholder="Bijv. 'Steun je CBS DAO?'" />
+        </div>
+        <div>
+          <label class="muted" for="inpMinutes">Duur (minuten)</label>
+          <input id="inpMinutes" type="number" min="1" value="60" />
+        </div>
+        <div>
+          <label class="muted" for="inpEndsAtDT">of Eindtijd</label>
+          <input id="inpEndsAtDT" type="datetime-local" />
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button onclick="createProposal()">Create Proposal</button>
+        <button onclick="fetchProposal()">Fetch Proposal</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Instellingen</h2>
+      <div class="grid">
+        <div>
+          <label class="muted" for="inpProgram">Program ID</label>
+          <input id="inpProgram" type="text" disabled />
+        </div>
+        <div>
+          <label class="muted" for="inpProposal">Proposal Pubkey</label>
+          <input id="inpProposal" type="text" placeholder="Proposal account pubkey" />
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <label class="muted" for="inpRpc">RPC endpoint</label>
+        <input id="inpRpc" type="text" disabled />
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Laatste fetch / logs</h2>
+      <pre id="lastFetch" class="muted" style="white-space:pre-wrap;word-break:break-word;max-height:360px;overflow:auto;">—</pre>
+    </div>
+
+    <div class="card">
+      <h2>Stemmen</h2>
+      <div class="row">
+        <button onclick="voteYes()">Vote YES</button>
+        <button onclick="voteNo()">Vote NO</button>
+      </div>
+      <p id="result" class="muted">Resultaat: —</p>
+    </div>
+  </div>
+</body>
+</html>
