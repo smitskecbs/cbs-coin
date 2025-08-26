@@ -6,26 +6,25 @@
   <title>CBS DAO – Mainnet (no-Anchor)</title>
   <style>
     :root { color-scheme: dark; }
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; background:#0b0b0f; color:#eaeaea; margin:0; }
+    body { font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; background:#0b0b0f; color:#eaeaea; margin:0; }
     .wrap { max-width: 980px; margin: 28px auto; padding: 0 16px; }
     .card { background:#13131a; border:1px solid #23232b; border-radius:16px; padding:20px; margin-bottom:16px; }
-    h1, h2 { margin: 0 0 12px; }
+    h1,h2 { margin: 0 0 12px; }
     button { cursor:pointer; border:none; padding:12px 16px; border-radius:12px; background:#1f2430; color:#eaeaea; }
-    button:hover { filter: brightness(1.1); }
+    button:hover { filter:brightness(1.1); }
     .row { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
     .muted { color:#a6a6b3; font-size:14px; }
     code { background:#1a1a22; padding:2px 6px; border-radius:6px; }
-    input[type="text"], input[type="number"], input[type="datetime-local"]{
+    input[type="text"],input[type="number"],input[type="datetime-local"]{
       width:100%; padding:10px; border-radius:10px; border:1px solid #2a2a33; background:#0f0f14; color:#eaeaea;
     }
     .ok { color:#79e07f; } .warn { color:#ffd75e; } .err { color:#ff7575; }
     .grid { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
     .grid3 { display:grid; grid-template-columns: 2fr 1fr 1fr; gap:12px; }
-    @media (max-width: 900px){ .grid, .grid3{ grid-template-columns: 1fr; } }
-    a { color: #8ab4ff; text-decoration: none; }
-    a:hover { text-decoration: underline; }
+    @media (max-width: 900px){ .grid,.grid3{ grid-template-columns:1fr; } }
+    a { color:#8ab4ff; text-decoration:none; } a:hover { text-decoration:underline; }
   </style>
-  <!-- UMD web3.js — werkt met GitHub Pages CSP -->
+  <!-- web3.js IIFE (werkt met GitHub Pages CSP) -->
   <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
 </head>
 <body>
@@ -33,14 +32,13 @@
     <h1>CBS DAO – Mainnet</h1>
 
     <div class="card">
-      <div class="row" style="justify-content: space-between;">
+      <div class="row" style="justify-content:space-between;">
         <div class="row">
-          <button id="btnConnect" title="Verbind Phantom wallet">Connect Phantom</button>
-          <button id="btnDisconnect" title="Wallet loskoppelen">Disconnect</button>
+          <button id="btnConnect">Connect Phantom</button>
+          <button id="btnDisconnect">Disconnect</button>
         </div>
         <div>
-          <span class="muted">Queryparams: </span>
-          <code>?program=...&proposal=...&rpc=...</code>
+          <span class="muted">Queryparams: </span><code>?program=...&proposal=...&rpc=...</code>
         </div>
       </div>
       <p id="wallet" class="muted">Wallet: <em>niet verbonden</em></p>
@@ -59,31 +57,31 @@
       <div class="grid3">
         <div>
           <label class="muted" for="inpQuestion">Vraag (question)</label>
-          <input id="inpQuestion" type="text" placeholder="Bijv. 'Steun je CBS DAO?'" title="De vraag die gestemd wordt" />
+          <input id="inpQuestion" type="text" placeholder="Bijv. 'Steun je CBS DAO?'" />
         </div>
         <div>
           <label class="muted" for="inpMinutes">Duur (minuten)</label>
-          <input id="inpMinutes" type="number" min="1" value="60" title="Duur van de stemming in minuten" />
+          <input id="inpMinutes" type="number" min="1" value="60" />
         </div>
         <div>
           <label class="muted" for="inpEndsAtDT">of Eindtijd</label>
-          <input id="inpEndsAtDT" type="datetime-local" title="Specifieke eindtijd (optioneel)" />
+          <input id="inpEndsAtDT" type="datetime-local" />
         </div>
       </div>
       <div class="row" style="margin-top:10px">
-        <button id="btnCreate" title="Echte transactie versturen (kost SOL fees)">Create Proposal</button>
-        <button id="btnSimCreate" title="Simuleren zonder te verzenden">Simulate Create</button>
+        <button id="btnCreate">Create Proposal</button>
+        <button id="btnSimCreate">Simulate Create</button>
       </div>
     </div>
 
     <div class="card">
       <h2>Acties op proposal</h2>
       <div class="row">
-        <button id="btnFetch" title="Lees proposal account">Fetch Proposal</button>
-        <button id="btnVoteYes" title="Stem JA">Vote YES</button>
-        <button id="btnVoteNo"  title="Stem NEE">Vote NO</button>
-        <button id="btnSimYes"  title="Simuleer JA">Sim YES</button>
-        <button id="btnSimNo"   title="Simuleer NEE">Sim NO</button>
+        <button id="btnFetch">Fetch Proposal</button>
+        <button id="btnVoteYes">Vote YES</button>
+        <button id="btnVoteNo">Vote NO</button>
+        <button id="btnSimYes">Sim YES</button>
+        <button id="btnSimNo">Sim NO</button>
       </div>
       <p id="result" class="muted">Resultaat: —</p>
     </div>
@@ -93,20 +91,20 @@
       <div class="grid">
         <div>
           <label class="muted" for="inpProgram">Program ID</label>
-          <input id="inpProgram" type="text" placeholder="Program ID (Pubkey)" title="CBS DAO Program ID" />
+          <input id="inpProgram" type="text" placeholder="Program ID" />
         </div>
         <div>
           <label class="muted" for="inpProposal">Proposal Pubkey</label>
-          <input id="inpProposal" type="text" placeholder="Proposal account pubkey" title="Bestaande proposal om te lezen/stemmen" />
+          <input id="inpProposal" type="text" placeholder="Proposal account pubkey" />
         </div>
       </div>
       <div style="margin-top:12px">
         <label class="muted" for="inpRpc">RPC endpoint</label>
-        <input id="inpRpc" type="text" placeholder="https://rpc.helius.xyz/?api-key=..." title="Solana RPC URL" />
+        <input id="inpRpc" type="text" placeholder="https://rpc.helius.xyz/?api-key=..." />
       </div>
       <div class="row" style="margin-top:10px">
         <button id="btnApply">Apply & re-init</button>
-        <button id="btnDefaults" title="Herstel standaardwaarden">Reset defaults</button>
+        <button id="btnDefaults">Reset defaults</button>
       </div>
     </div>
 
@@ -117,40 +115,39 @@
   </div>
 
   <script>
-    // ===== Web3 helpers =====
     const { Connection, PublicKey, SystemProgram, Transaction, TransactionInstruction } = solanaWeb3;
-    const $ = (id) => document.getElementById(id);
-    const statusEl = $("status"), walletEl = $("wallet"), networkEl = $("network");
-    const programInfoEl = $("programInfo"), proposalInfoEl = $("proposalInfo");
-    const resultEl = $("result"), lastFetchEl = $("lastFetch");
-    const inpProgram = $("inpProgram"), inpProposal = $("inpProposal"), inpRpc = $("inpRpc");
-    const inpQuestion = $("inpQuestion"), inpMinutes = $("inpMinutes"), inpEndsAtDT = $("inpEndsAtDT");
+    const $ = (id)=>document.getElementById(id);
+    const statusEl=$("status"), walletEl=$("wallet"), networkEl=$("network");
+    const programInfoEl=$("programInfo"), proposalInfoEl=$("proposalInfo");
+    const resultEl=$("result"), lastFetchEl=$("lastFetch");
+    const inpProgram=$("inpProgram"), inpProposal=$("inpProposal"), inpRpc=$("inpRpc");
+    const inpQuestion=$("inpQuestion"), inpMinutes=$("inpMinutes"), inpEndsAtDT=$("inpEndsAtDT");
 
-    const enc = (s) => new TextEncoder().encode(s);
-    const dec = (b) => new TextDecoder().decode(b);
+    const enc = (s)=>new TextEncoder().encode(s);
+    const dec = (b)=>new TextDecoder().decode(b);
     const EXPLORER_TX = "https://solscan.io/tx/";
 
-    function setStatus(msg, cls = "") { statusEl.innerHTML = cls ? `<span class="${cls}">${msg}</span>` : msg; }
-    function setWallet(pk) { walletEl.innerHTML = pk ? `Wallet: <code>${pk}</code>` : "Wallet: <em>niet verbonden</em>"; }
-    function getPhantom() {
+    function setStatus(msg, cls=""){ statusEl.innerHTML = cls ? `<span class="${cls}">${msg}</span>` : msg; }
+    function setWallet(pk){ walletEl.innerHTML = pk ? `Wallet: <code>${pk}</code>` : "Wallet: <em>niet verbonden</em>"; }
+    function getPhantom(){
       if (window?.solana?.isPhantom) return window.solana;
       if (window?.phantom?.solana?.isPhantom) return window.phantom.solana;
       return null;
     }
 
-    // ===== DISCRIMINATORS (uit jouw IDL) =====
+    // === Discriminators (uit IDL) ===
     const DISC_CREATE = Uint8Array.from([132,116,68,174,216,160,198,22]);
     const DISC_VOTE   = Uint8Array.from([227,110,155,23,136,126,172,25]);
     const DISC_ACC_PROPOSAL = Uint8Array.from([26,94,189,187,116,136,53,33]);
 
-    // ===== Borsh helpers =====
+    // === Borsh helpers ===
     function u32le(n){ const b=new Uint8Array(4); new DataView(b.buffer).setUint32(0,n>>>0,true); return b; }
-    function i64le(n){ let x=BigInt(n); if (x<0n) x=(1n<<64n)+x; const b=new Uint8Array(8); for(let i=0;i<8;i++) b[i]=Number((x>>BigInt(8*i))&0xffn); return b; }
+    function i64le(n){ let x=BigInt(n); if(x<0n) x=(1n<<64n)+x; const b=new Uint8Array(8); for(let i=0;i<8;i++) b[i]=Number((x>>BigInt(8*i))&0xffn); return b; }
     function encodeString(str){ const s=enc(str); const out=new Uint8Array(4+s.length); out.set(u32le(s.length),0); out.set(s,4); return out; }
-    function readU64LE(view, o){ let v=0n; for (let i=0n;i<8n;i++) v |= BigInt(view[o+Number(i)]) << (8n*i); return v; }
-    function readI64LE(view, o){ let u=readU64LE(view,o); return (u >= (1n<<63n)) ? u - (1n<<64n) : u; }
+    function readU64LE(view,o){ let v=0n; for(let i=0n;i<8n;i++) v |= BigInt(view[o+Number(i)])<<(8n*i); return v; }
+    function readI64LE(view,o){ let u=readU64LE(view,o); return (u>=(1n<<63n)) ? u-(1n<<64n) : u; }
 
-    // ===== Instruction builders =====
+    // === Instruction builders ===
     function ixCreateProposal(programId, creator, proposalPda, question, endsAt){
       const q = encodeString(question);
       const data = new Uint8Array(DISC_CREATE.length + q.length + 8);
@@ -180,21 +177,23 @@
       });
     }
 
-    // ===== PDA helpers =====
+    // === PDA helpers (gefixte seeds + toBuffer) ===
     function pdaProposal(programId, creatorPk){
+      const SEED = new Uint8Array([112,114,111,112,111,115,97,108]); // "proposal"
       return PublicKey.findProgramAddressSync(
-        [enc("proposal"), creatorPk.toBytes(), creatorPk.toBytes()],
+        [SEED, creatorPk.toBuffer(), creatorPk.toBuffer()],
         programId
       )[0];
     }
     function pdaVoteReceipt(programId, proposalPk, voterPk){
+      const SEED = new Uint8Array([118,111,116,101]); // "vote"
       return PublicKey.findProgramAddressSync(
-        [enc("vote"), proposalPk.toBytes(), voterPk.toBytes()],
+        [SEED, proposalPk.toBuffer(), voterPk.toBuffer()],
         programId
       )[0];
     }
 
-    // ===== TX helpers =====
+    // === TX helpers ===
     async function sendTx(connection, wallet, tx){
       tx.feePayer = wallet.publicKey;
       const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash('finalized');
@@ -204,75 +203,53 @@
       await connection.confirmTransaction({ signature:sig, blockhash, lastValidBlockHeight }, 'confirmed');
       return sig;
     }
-
-    // --- helpers voor base64 ---
-    function u8ToBase64(u8){
-      let s = "";
-      for (let i=0;i<u8.length;i++) s += String.fromCharCode(u8[i]);
-      return btoa(s);
-    }
-
-    // ✅ Simulatie: 1) gesigneerd, 2) unsigned, 3) raw RPC met base64 (fallback)
+    function u8ToBase64(u8){ let s=""; for(let i=0;i<u8.length;i++) s+=String.fromCharCode(u8[i]); return btoa(s); }
     async function simulateTx(connection, wallet, tx){
       tx.feePayer = wallet.publicKey;
       tx.recentBlockhash = (await connection.getLatestBlockhash('confirmed')).blockhash;
-
       try {
         const signed = await wallet.signTransaction(tx);
-        return await connection.simulateTransaction(signed, { sigVerify: true, replaceRecentBlockhash: true });
+        return await connection.simulateTransaction(signed, { sigVerify:true, replaceRecentBlockhash:true });
       } catch (e1) {
-        console.warn("simulateTx signed path failed:", e1?.message || e1);
-      }
-
-      try {
-        tx.feePayer = wallet.publicKey;
-        tx.recentBlockhash = (await connection.getLatestBlockhash('confirmed')).blockhash;
-        return await connection.simulateTransaction(tx, { sigVerify: false, replaceRecentBlockhash: true });
-      } catch (e2) {
-        console.warn("simulateTx unsigned path failed:", e2?.message || e2);
-      }
-
-      try {
-        tx.feePayer = wallet.publicKey;
-        tx.recentBlockhash = (await connection.getLatestBlockhash('confirmed')).blockhash;
-        const raw = tx.serialize({ requireAllSignatures: false, verifySignatures: false });
-        const encoded = u8ToBase64(raw);
-        const args = [
-          encoded,
-          { encoding: 'base64', sigVerify: false, replaceRecentBlockhash: true, commitment: 'confirmed' }
-        ];
-        const res = await connection._rpcRequest('simulateTransaction', args);
-        if (res?.error) throw new Error(res.error.message || 'simulateTransaction RPC error');
-        return { value: res.result };
-      } catch (e3) {
-        console.error("simulateTx raw RPC fallback failed:", e3?.message || e3);
-        throw e3;
+        try {
+          tx.feePayer = wallet.publicKey;
+          tx.recentBlockhash = (await connection.getLatestBlockhash('confirmed')).blockhash;
+          return await connection.simulateTransaction(tx, { sigVerify:false, replaceRecentBlockhash:true });
+        } catch (e2) {
+          tx.feePayer = wallet.publicKey;
+          tx.recentBlockhash = (await connection.getLatestBlockhash('confirmed')).blockhash;
+          const raw = tx.serialize({ requireAllSignatures:false, verifySignatures:false });
+          const encoded = u8ToBase64(raw);
+          const args = [encoded, { encoding:'base64', sigVerify:false, replaceRecentBlockhash:true, commitment:'confirmed' }];
+          const res = await connection._rpcRequest('simulateTransaction', args);
+          if (res?.error) throw new Error(res.error.message || 'simulateTransaction RPC error');
+          return { value: res.result };
+        }
       }
     }
 
-    // ===== Defaults =====
+    // === Defaults ===
     const qs = new URLSearchParams(location.search);
-    const DEFAULT_RPC = qs.get("rpc")
-      || "https://rpc.helius.xyz/?api-key=3d335769-1880-4497-8fd0-ac7ed0701a7c";
-    let PROGRAM_ID = new PublicKey((qs.get("program") || "FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY").trim());
+    const DEFAULT_RPC = qs.get("rpc") || "https://rpc.helius.xyz/?api-key=3d335769-1880-4497-8fd0-ac7ed0701a7c";
+    let PROGRAM_ID = new PublicKey((qs.get("program") || "FZGYyZ9hwUBriGpCH65vsS2VDoCyoC92rPoBPeBsuUY").trim());
     let PROPOSAL_PUBKEY = (qs.get("proposal") || "").trim();
     let RPC_URL = DEFAULT_RPC;
 
-    let connection = null, wallet = null;
+    let connection=null, wallet=null;
 
     // UI init
     inpProgram.value = PROGRAM_ID.toBase58();
     inpProposal.value = PROPOSAL_PUBKEY;
     inpRpc.value = RPC_URL;
-    programInfoEl.innerHTML = "Program: <code>" + PROGRAM_ID.toBase58() + "</code>";
-    proposalInfoEl.innerHTML = "Proposal: <code>" + (PROPOSAL_PUBKEY || "—") + "</code>";
-    networkEl.innerHTML = "RPC: <code>" + RPC_URL + "</code>";
+    programInfoEl.innerHTML = "Program: <code>"+PROGRAM_ID.toBase58()+"</code>";
+    proposalInfoEl.innerHTML = "Proposal: <code>"+(PROPOSAL_PUBKEY||"—")+"</code>";
+    networkEl.innerHTML = "RPC: <code>"+RPC_URL+"</code>";
 
-    // ===== Handlers =====
+    // === Handlers ===
     $("btnConnect").onclick = async () => {
-      try {
+      try{
         const phantom = getPhantom();
-        if (!phantom) { alert("Installeer Phantom: https://phantom.app/"); return; }
+        if(!phantom){ alert("Installeer Phantom: https://phantom.app/"); return; }
         const resp = await phantom.connect({ onlyIfTrusted:false });
         const pubkey = resp?.publicKey?.toBase58?.() || phantom.publicKey?.toBase58?.();
         wallet = {
@@ -285,109 +262,78 @@
         connection = new Connection(RPC_URL, "confirmed");
         setStatus("Verbonden (no-Anchor mode).", "ok");
         console.log("✅ Wallet verbonden:", pubkey);
-      } catch (e) {
-        console.error(e);
-        setStatus("Connect mislukt: " + e.message, "err");
-      }
+      }catch(e){ console.error(e); setStatus("Connect mislukt: "+e.message, "err"); }
     };
+    $("btnDisconnect").onclick = async ()=>{ try{ await getPhantom()?.disconnect?.(); }catch{} wallet=null; setWallet(null); setStatus("Losgekoppeld."); };
 
-    $("btnDisconnect").onclick = async () => {
-      try { await getPhantom()?.disconnect?.(); } catch {}
-      wallet = null; setWallet(null);
-      setStatus("Losgekoppeld.");
-    };
-
-    $("btnApply").onclick = async () => {
+    $("btnApply").onclick = async ()=>{
       try{
         PROGRAM_ID = new PublicKey(inpProgram.value.trim());
         PROPOSAL_PUBKEY = inpProposal.value.trim();
         RPC_URL = inpRpc.value.trim() || DEFAULT_RPC;
-        programInfoEl.innerHTML = "Program: <code>" + PROGRAM_ID.toBase58() + "</code>";
-        proposalInfoEl.innerHTML = "Proposal: <code>" + (PROPOSAL_PUBKEY || "—") + "</code>";
-        networkEl.innerHTML = "RPC: <code>" + RPC_URL + "</code>";
-        if (wallet) connection = new Connection(RPC_URL, "confirmed");
-        setStatus("Instellingen toegepast.", "ok");
-      }catch(e){
-        setStatus("Fout in instellingen: "+e.message, "err");
-      }
+        programInfoEl.innerHTML = "Program: <code>"+PROGRAM_ID.toBase58()+"</code>";
+        proposalInfoEl.innerHTML = "Proposal: <code>"+(PROPOSAL_PUBKEY||"—")+"</code>";
+        networkEl.innerHTML = "RPC: <code>"+RPC_URL+"</code>";
+        if(wallet) connection = new Connection(RPC_URL,"confirmed");
+        setStatus("Instellingen toegepast.","ok");
+      }catch(e){ setStatus("Fout in instellingen: "+e.message,"err"); }
     };
+    $("btnDefaults").onclick = ()=>{ inpProgram.value="FZGYyZ9hwUBriGpCH65vsS2VDoCyoC92rPoBPeBsuUY"; inpRpc.value=DEFAULT_RPC; inpProposal.value=""; $("btnApply").click(); };
 
-    $("btnDefaults").onclick = () => {
-      inpProgram.value = "FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY";
-      inpRpc.value = "https://rpc.helius.xyz/?api-key=3d335769-1880-4497-8fd0-ac7ed0701a7c";
-      inpProposal.value = "";
-      $("btnApply").click();
-    };
-
-    // ---- Create (met ConstraintSeeds log-fix) ----
+    // === Create ===
     $("btnCreate").onclick = async () => {
       try{
-        if (!wallet) throw new Error("Wallet niet verbonden.");
-        if (!connection) connection = new Connection(RPC_URL, "confirmed");
+        if(!wallet) throw new Error("Wallet niet verbonden.");
+        if(!connection) connection = new Connection(RPC_URL,"confirmed");
 
         const creator = wallet.publicKey;
         const proposalPda = pdaProposal(PROGRAM_ID, creator);
-
-        const endsAt = inpEndsAtDT.value
-          ? Math.floor(new Date(inpEndsAtDT.value).getTime()/1000)
-          : Math.floor(Date.now()/1000) + (parseInt(inpMinutes.value)||60)*60;
-
+        const endsAt = inpEndsAtDT.value ? Math.floor(new Date(inpEndsAtDT.value).getTime()/1000)
+                    : Math.floor(Date.now()/1000) + (parseInt(inpMinutes.value)||60)*60;
         const question = (inpQuestion.value||"").trim();
-        if (!question) throw new Error("Vraag invullen.");
+        if(!question) throw new Error("Vraag invullen.");
 
         const ix = ixCreateProposal(PROGRAM_ID, creator, proposalPda, question, endsAt);
         const tx = new Transaction().add(ix);
 
-        console.log("➡️ Create Proposal", {
-          program: PROGRAM_ID.toBase58(),
-          proposalPda: proposalPda.toBase58(),
-          question, endsAt
-        });
+        console.log("Derived proposal PDA (frontend):", proposalPda.toBase58());
+        console.log("➡️ Create Proposal",{ program:PROGRAM_ID.toBase58(), proposalPda:proposalPda.toBase58(), question, endsAt });
 
         const sig = await sendTx(connection, wallet, tx);
-
         PROPOSAL_PUBKEY = proposalPda.toBase58();
         inpProposal.value = PROPOSAL_PUBKEY;
-        proposalInfoEl.innerHTML = "Proposal: <code>" + PROPOSAL_PUBKEY + "</code>";
-        resultEl.innerHTML = `<span class="ok">✅ Proposal aangemaakt: ${PROPOSAL_PUBKEY}<br/>
-          TX: <a href="${EXPLORER_TX}${sig}" target="_blank" rel="noopener">${sig}</a></span>`;
-      } catch (e) {
+        proposalInfoEl.innerHTML = "Proposal: <code>"+PROPOSAL_PUBKEY+"</code>";
+        resultEl.innerHTML = `<span class="ok">✅ Proposal aangemaakt: ${PROPOSAL_PUBKEY}<br/>TX: <a href="${EXPLORER_TX}${sig}" target="_blank" rel="noopener">${sig}</a></span>`;
+      }catch(e){
         console.error("❌ Create proposal error", e);
-
-        // Probeer 'Right:' PDA uit logs te halen bij ConstraintSeeds
-        try {
+        try{
           const logs = (e.getLogs ? await e.getLogs() : null) || e?.logs || [];
-          const text = Array.isArray(logs) ? logs.join("\n") : String(logs || "");
+          const text = Array.isArray(logs) ? logs.join("\n") : String(logs||"");
           const match = text.match(/Right:\s+'([1-9A-HJ-NP-Za-km-z]{32,44})'/);
-          if (match && match[1]) {
+          if(match && match[1]){
             PROPOSAL_PUBKEY = match[1];
             inpProposal.value = PROPOSAL_PUBKEY;
-            proposalInfoEl.innerHTML =
-              `Proposal: <code>${PROPOSAL_PUBKEY}</code> <span class="muted">(gevonden in logs – klik nogmaals <b>Create Proposal</b>)</span>`;
-            resultEl.innerHTML = `<span class="warn">⚠️ Seeds mismatch. Ik heb de verwachte PDA uit de logs ingevuld. Probeer Create nogmaals.</span>`;
+            proposalInfoEl.innerHTML = `Proposal: <code>${PROPOSAL_PUBKEY}</code> <span class="muted">(gevonden in logs – klik nogmaals <b>Create Proposal</b>)</span>`;
+            resultEl.innerHTML = `<span class="warn">⚠️ Seeds mismatch. Verwachte PDA ingevuld vanuit logs. Probeer opnieuw.</span>`;
             return;
           }
-        } catch {}
-
+        }catch{}
         resultEl.innerHTML = `<span class="err">❌ ${e.message}</span>`;
       }
     };
 
-    // ---- Simulate Create (vult predicted PDA in) ----
-    $("btnSimCreate").onclick = async () => {
-      try {
-        if (!wallet) throw new Error("Wallet niet verbonden.");
-        if (!connection) connection = new Connection(RPC_URL, "confirmed");
+    // === Simulate Create ===
+    $("btnSimCreate").onclick = async ()=>{
+      try{
+        if(!wallet) throw new Error("Wallet niet verbonden.");
+        if(!connection) connection = new Connection(RPC_URL,"confirmed");
 
         const creator = wallet.publicKey;
         const proposalPda = pdaProposal(PROGRAM_ID, creator);
-
-        const endsAt = inpEndsAtDT.value
-          ? Math.floor(new Date(inpEndsAtDT.value).getTime() / 1000)
-          : Math.floor(Date.now()/1000) + (parseInt(inpMinutes.value)||60)*60;
-
+        const endsAt = inpEndsAtDT.value ? Math.floor(new Date(inpEndsAtDT.value).getTime()/1000)
+                    : Math.floor(Date.now()/1000) + (parseInt(inpMinutes.value)||60)*60;
         const question = (inpQuestion.value||"").trim();
-        if (!question) throw new Error("Vul een vraag in.");
+        if(!question) throw new Error("Vul een vraag in.");
 
         const ix = ixCreateProposal(PROGRAM_ID, creator, proposalPda, question, endsAt);
         const tx = new Transaction().add(ix);
@@ -395,32 +341,26 @@
         const sim = await simulateTx(connection, wallet, tx);
         lastFetchEl.textContent = (sim?.value?.logs || []).join("\n") || "—";
 
-        // Vul predicted PDA in UI (handig voor stemmen/2e poging)
         PROPOSAL_PUBKEY = proposalPda.toBase58();
         inpProposal.value = PROPOSAL_PUBKEY;
-        proposalInfoEl.innerHTML =
-          `Proposal: <code>${PROPOSAL_PUBKEY}</code> <span class="muted">(voorspeld – klik Create om on-chain te zetten)</span>`;
-
+        proposalInfoEl.innerHTML = `Proposal: <code>${PROPOSAL_PUBKEY}</code> <span class="muted">(voorspeld – klik Create)</span>`;
         resultEl.innerHTML = `<span class="ok">✅ Simulate(create) OK</span>`;
-      } catch (e) {
-        console.error("❌ Simulate(create) error", e);
-        resultEl.innerHTML = `<span class="err">❌ Simulate(create) fail: ${e.message}</span>`;
-      }
+      }catch(e){ console.error("❌ Simulate(create) error", e); resultEl.innerHTML = `<span class="err">❌ ${e.message}</span>`; }
     };
 
-    $("btnFetch").onclick = async () => {
+    // === Fetch Proposal ===
+    $("btnFetch").onclick = async ()=>{
       try{
-        if (!PROPOSAL_PUBKEY) throw new Error("Geen proposal pubkey ingevuld.");
-        if (!connection) connection = new Connection(RPC_URL, "confirmed");
+        if(!PROPOSAL_PUBKEY) throw new Error("Geen proposal pubkey.");
+        if(!connection) connection = new Connection(RPC_URL,"confirmed");
         const pk = new PublicKey(PROPOSAL_PUBKEY);
-        const info = await connection.getAccountInfo(pk, "confirmed");
-        if (!info) throw new Error("Account niet gevonden.");
+        const info = await connection.getAccountInfo(pk,"confirmed");
+        if(!info) throw new Error("Account niet gevonden.");
         const data = new Uint8Array(info.data);
 
-        let o = 0;
-        const discOk = data.slice(0,8).every((v,i)=> v===DISC_ACC_PROPOSAL[i]);
-        if (!discOk) console.warn("⚠️ Account discriminator mismatch (verwacht Proposal).");
-        o += 8;
+        let o=0;
+        const discOk = data.slice(0,8).every((v,i)=>v===DISC_ACC_PROPOSAL[i]); o+=8;
+        if(!discOk) console.warn("⚠️ Account discriminator mismatch (verwacht Proposal).");
         const creator = new PublicKey(data.slice(o,o+32)); o+=32;
         const strlen = new DataView(data.buffer, data.byteOffset+o, 4).getUint32(0,true); o+=4;
         const question = dec(data.slice(o,o+strlen)); o+=strlen;
@@ -438,40 +378,33 @@
           ends_at: Number(endsAt)
         }, null, 2);
         resultEl.innerHTML = `<span class="ok">✅ Proposal gelezen.</span>`;
-      }catch(e){
-        console.error("❌ Fetch error", e);
-        resultEl.innerHTML = `<span class="err">${e.message}</span>`;
-      }
+      }catch(e){ console.error("❌ Fetch error", e); resultEl.innerHTML = `<span class="err">${e.message}</span>`; }
     };
 
-    function doVote(yes){ return async () => {
+    // === Vote handlers ===
+    function doVote(yes){ return async ()=>{
       try{
-        if (!wallet) throw new Error("Wallet niet verbonden.");
-        if (!PROPOSAL_PUBKEY) throw new Error("Geen proposal pubkey.");
-        if (!connection) connection = new Connection(RPC_URL, "confirmed");
+        if(!wallet) throw new Error("Wallet niet verbonden.");
+        if(!PROPOSAL_PUBKEY) throw new Error("Geen proposal pubkey.");
+        if(!connection) connection = new Connection(RPC_URL,"confirmed");
 
         const proposalPk = new PublicKey(PROPOSAL_PUBKEY);
         const receiptPda = pdaVoteReceipt(PROGRAM_ID, proposalPk, wallet.publicKey);
-
         const ix = ixVote(PROGRAM_ID, proposalPk, wallet.publicKey, receiptPda, yes);
         const tx = new Transaction().add(ix);
-
-        console.log("➡️ Vote", { proposal: proposalPk.toBase58(), voter: wallet.publicKey.toBase58(), receipt: receiptPda.toBase58(), yes });
+        console.log("➡️ Vote",{ proposal:proposalPk.toBase58(), voter:wallet.publicKey.toBase58(), receipt:receiptPda.toBase58(), yes });
         const sig = await sendTx(connection, wallet, tx);
         resultEl.innerHTML = `<span class="ok">✅ Vote TX: <a href="${EXPLORER_TX}${sig}" target="_blank" rel="noopener">${sig}</a></span>`;
-      }catch(e){
-        console.error("❌ Vote error", e);
-        resultEl.innerHTML = `<span class="err">❌ ${e.message}</span>`;
-      }
-    } }
+      }catch(e){ console.error("❌ Vote error", e); resultEl.innerHTML = `<span class="err">❌ ${e.message}</span>`; }
+    }}
     $("btnVoteYes").onclick = doVote(true);
     $("btnVoteNo").onclick  = doVote(false);
 
-    $("btnSimYes").onclick = async () => {
+    $("btnSimYes").onclick = async ()=>{
       try{
-        if (!wallet) throw new Error("Wallet niet verbonden.");
-        if (!PROPOSAL_PUBKEY) throw new Error("Geen proposal pubkey.");
-        if (!connection) connection = new Connection(RPC_URL, "confirmed");
+        if(!wallet) throw new Error("Wallet niet verbonden.");
+        if(!PROPOSAL_PUBKEY) throw new Error("Geen proposal pubkey.");
+        if(!connection) connection = new Connection(RPC_URL,"confirmed");
         const proposalPk = new PublicKey(PROPOSAL_PUBKEY);
         const receiptPda = pdaVoteReceipt(PROGRAM_ID, proposalPk, wallet.publicKey);
         const ix = ixVote(PROGRAM_ID, proposalPk, wallet.publicKey, receiptPda, true);
@@ -479,17 +412,14 @@
         const sim = await simulateTx(connection, wallet, tx);
         lastFetchEl.textContent = (sim?.value?.logs || []).join("\n") || "—";
         resultEl.innerHTML = `<span class="ok">✅ Simulate(vote YES) OK</span>`;
-      }catch(e){
-        console.error("❌ Simulate(vote) error", e);
-        resultEl.innerHTML = `<span class="err">❌ Simulate(vote) fail: ${e.message}</span>`;
-      }
+      }catch(e){ console.error("❌ Simulate(vote) error", e); resultEl.innerHTML = `<span class="err">❌ ${e.message}</span>`; }
     };
 
-    $("btnSimNo").onclick = async () => {
+    $("btnSimNo").onclick = async ()=>{
       try{
-        if (!wallet) throw new Error("Wallet niet verbonden.");
-        if (!PROPOSAL_PUBKEY) throw new Error("Geen proposal pubkey.");
-        if (!connection) connection = new Connection(RPC_URL, "confirmed");
+        if(!wallet) throw new Error("Wallet niet verbonden.");
+        if(!PROPOSAL_PUBKEY) throw new Error("Geen proposal pubkey.");
+        if(!connection) connection = new Connection(RPC_URL,"confirmed");
         const proposalPk = new PublicKey(PROPOSAL_PUBKEY);
         const receiptPda = pdaVoteReceipt(PROGRAM_ID, proposalPk, wallet.publicKey);
         const ix = ixVote(PROGRAM_ID, proposalPk, wallet.publicKey, receiptPda, false);
@@ -497,10 +427,7 @@
         const sim = await simulateTx(connection, wallet, tx);
         lastFetchEl.textContent = (sim?.value?.logs || []).join("\n") || "—";
         resultEl.innerHTML = `<span class="ok">✅ Simulate(vote NO) OK</span>`;
-      }catch(e){
-        console.error("❌ Simulate(vote) error", e);
-        resultEl.innerHTML = `<span class="err">❌ Simulate(vote) fail: ${e.message}</span>`;
-      }
+      }catch(e){ console.error("❌ Simulate(vote) error", e); resultEl.innerHTML = `<span class="err">❌ ${e.message}</span>`; }
     };
 
     setStatus("Pagina geladen. Verbind je wallet. (No-Anchor mode)");
