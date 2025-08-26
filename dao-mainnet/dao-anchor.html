@@ -113,7 +113,7 @@
   const logsEl = $("logs"), resultEl = $("result"), stateEl = $("state"), lastCreateEl = $("lastCreate");
   const inpProposal = $("inpProposal"), inpMinutes = $("inpMinutes"), inpEndsAtDT = $("inpEndsAtDT"), inpQuestion = $("inpQuestion");
 
-  const { Connection, PublicKey, SystemProgram, Transaction } = solanaWeb3;
+  const { Connection, PublicKey, SystemProgram, Transaction, ComputeBudgetProgram } = solanaWeb3;
   const anchor = window.anchor; // UMD
 
   const enc = (s)=> new TextEncoder().encode(s);
@@ -123,6 +123,9 @@
   function pdaProposal(programId, creatorPk, index){
     const u32 = new Uint8Array(4); new DataView(u32.buffer).setUint32(0, index, true);
     return PublicKey.findProgramAddressSync([enc("proposal"), creatorPk.toBytes(), u32], programId)[0];
+  }
+  function pdaVoteReceipt(programId, proposalPk, voterPk){
+    return PublicKey.findProgramAddressSync([enc("vote"), proposalPk.toBytes(), voterPk.toBytes()], programId)[0];
   }
 
   const qs = new URLSearchParams(location.search);
@@ -141,26 +144,33 @@
   let provider = null, program = null;
 
   async function initAnchor(){
-    const phantom = getPhantom();
-    if (!phantom) throw new Error("Installeer Phantom: https://phantom.app/");
-    await phantom.connect({ onlyIfTrusted:false });
+    try{
+      const phantom = getPhantom();
+      if (!phantom) throw new Error("Installeer Phantom: https://phantom.app/");
+      await phantom.connect({ onlyIfTrusted:false });
 
-    const wallet = {
-      publicKey: phantom.publicKey,
-      signTransaction: phantom.signTransaction?.bind(phantom),
-      signAllTransactions: phantom.signAllTransactions?.bind(phantom),
-    };
+      const wallet = {
+        publicKey: phantom.publicKey,
+        signTransaction: phantom.signTransaction?.bind(phantom),
+        signAllTransactions: phantom.signAllTransactions?.bind(phantom),
+      };
 
-    provider = new anchor.AnchorProvider(connection, wallet, { commitment:"confirmed" });
+      provider = new anchor.AnchorProvider(connection, wallet, { commitment:"confirmed" });
 
-    // Laad IDL uit repo
-    const idl = await fetch("./target/idl/cbs_dao.json").then(r => r.json());
-    program = new anchor.Program(idl, PROGRAM_ID, provider);
+      // Laad IDL uit repo
+      const idl = await fetch("./target/idl/cbs_dao.json").then(r => {
+        if (!r.ok) throw new Error("IDL niet gevonden op ./target/idl/cbs_dao.json");
+        return r.json();
+      });
+      program = new anchor.Program(idl, PROGRAM_ID, provider);
 
-    walletEl.innerHTML = "Wallet: <code>"+wallet.publicKey.toBase58()+"</code>";
-    const csPda = pdaCreatorState(PROGRAM_ID, wallet.publicKey);
-    creatorStateInfoEl.innerHTML = "CreatorState PDA: <code>"+csPda.toBase58()+"</code>";
-    statusEl.innerHTML = '<span class="ok">Verbonden (Anchor, multi-proposal).</span>';
+      walletEl.innerHTML = "Wallet: <code>"+wallet.publicKey.toBase58()+"</code>";
+      const csPda = pdaCreatorState(PROGRAM_ID, wallet.publicKey);
+      creatorStateInfoEl.innerHTML = "CreatorState PDA: <code>"+csPda.toBase58()+"</code>";
+      statusEl.innerHTML = '<span class="ok">Verbonden (Anchor, multi-proposal).</span>';
+    }catch(e){
+      statusEl.innerHTML = '<span class="err">'+(e.message||e)+'</span>';
+    }
   }
 
   $("btnConnect").onclick = initAnchor;
@@ -185,14 +195,21 @@
       .initCreatorState()
       .accounts({ creatorState: statePda, creator, systemProgram: SystemProgram.programId })
       .instruction();
-    const tx = new Transaction().add(ix);
+    // optioneel: priority fee
+    const cuPrice = ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1000 });
+    const tx = new Transaction().add(cuPrice, ix);
     const sig = await provider.sendAndConfirm(tx, [], { commitment:"confirmed", skipPreflight:false });
     stateEl.innerHTML = `<span class="ok">CreatorState aangemaakt. TX: <a href="https://solscan.io/tx/${sig}" target="_blank" rel="noopener">${sig}</a></span>`;
   }
 
-  $("btnEnsure").onclick = async () => { try{ await ensureCreatorState(); }catch(e){ stateEl.innerHTML = '<span class="err">'+e.message+'</span>'; } };
+  $("btnEnsure").onclick = async () => {
+    try { if(!program) throw new Error("Wallet niet verbonden."); await ensureCreatorState(); }
+    catch(e){ stateEl.innerHTML = '<span class="err">'+(e.message||e)+'</span>'; }
+  };
+
   $("btnShowState").onclick = async () => {
     try{
+      if(!program) throw new Error("Wallet niet verbonden.");
       const cs = pdaCreatorState(PROGRAM_ID, provider.wallet.publicKey);
       const st = await program.account.creatorState.fetch(cs);
       stateEl.textContent = "next_index = " + st.nextIndex;
@@ -218,7 +235,8 @@
 
       const proposalPda = pdaProposal(PROGRAM_ID, creator, index);
 
-      const sig = await program.methods
+      const cuPrice = ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1000 });
+      const ix = await program.methods
         .createProposal(question, new anchor.BN(endsAt), index)
         .accounts({
           creatorState: csPda,
@@ -226,7 +244,10 @@
           creator,
           systemProgram: SystemProgram.programId,
         })
-        .rpc({ commitment:"confirmed", skipPreflight:false });
+        .instruction();
+
+      const tx = new Transaction().add(cuPrice, ix);
+      const sig = await provider.sendAndConfirm(tx, [], { commitment:"confirmed", skipPreflight:false });
 
       inpProposal.value = proposalPda.toBase58();
       lastCreateEl.innerHTML = `<span class="ok">✅ Proposal: ${proposalPda.toBase58()} — TX: <a href="https://solscan.io/tx/${sig}" target="_blank" rel="noopener">${sig}</a></span>`;
@@ -237,6 +258,7 @@
 
   $("btnFetch").onclick = async () => {
     try{
+      if (!program) throw new Error("Wallet niet verbonden.");
       const pk = new PublicKey((inpProposal.value||"").trim());
       const acc = await program.account.proposal.fetch(pk);
       resultEl.textContent = JSON.stringify({
@@ -252,16 +274,20 @@
 
   async function vote(yes){
     try{
+      if (!program) throw new Error("Wallet niet verbonden.");
       const pk = new PublicKey((inpProposal.value||"").trim());
       const voter = provider.wallet.publicKey;
-      const vrPda = PublicKey.findProgramAddressSync(
-        [new TextEncoder().encode("vote"), pk.toBytes(), voter.toBytes()],
-        PROGRAM_ID
-      )[0];
-      const sig = await program.methods
+      const vrPda = pdaVoteReceipt(PROGRAM_ID, pk, voter);
+
+      const cuPrice = ComputeBudgetProgram.setComputeUnitPrice({ microLamports: 1000 });
+      const ix = await program.methods
         .vote(yes)
         .accounts({ proposal: pk, voter, voteReceipt: vrPda, systemProgram: SystemProgram.programId })
-        .rpc({ commitment:"confirmed", skipPreflight:false });
+        .instruction();
+
+      const tx = new Transaction().add(cuPrice, ix);
+      const sig = await provider.sendAndConfirm(tx, [], { commitment:"confirmed", skipPreflight:false });
+
       resultEl.innerHTML = `<span class="ok">✅ Vote TX: <a href="https://solscan.io/tx/${sig}" target="_blank" rel="noopener">${sig}</a></span>`;
     }catch(e){ resultEl.innerHTML = '<span class="err">'+e.message+'</span>'; }
   }
