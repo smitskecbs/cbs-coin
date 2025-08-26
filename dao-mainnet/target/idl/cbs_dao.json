@@ -1,0 +1,117 @@
+{
+  "version": "0.1.0",
+  "name": "cbs_dao",
+  "address": "FZGYyZ9hwUBriGpCH65vswS2VDoCyoC92rPoBPeBsuUY",
+  "instructions": [
+    {
+      "name": "create_proposal",
+      "discriminator": [132,116,68,174,216,160,198,22],
+      "accounts": [
+        {
+          "name": "creatorState",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              { "kind": "const", "value": [99,114,101,97,116,111,114,95,115,116,97,116,101] }, // "creator_state"
+              { "kind": "account", "path": "creator" }
+            ]
+          }
+        },
+        {
+          "name": "proposal",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              { "kind": "const", "value": [112,114,111,112,111,115,97,108] },                 // "proposal"
+              { "kind": "account", "path": "creator" },
+              { "kind": "arg", "path": "index" }                                              // 🔹 NIEUW
+            ]
+          }
+        },
+        { "name": "creator", "writable": true, "signer": true },
+        { "name": "systemProgram", "address": "11111111111111111111111111111111" }
+      ],
+      "args": [
+        { "name": "question", "type": "string" },
+        { "name": "ends_at",  "type": "i64" },
+        { "name": "index",    "type": "u32" }
+      ]
+    },
+    {
+      "name": "vote",
+      "discriminator": [227,110,155,23,136,126,172,25],
+      "accounts": [
+        { "name": "proposal", "writable": true },
+        { "name": "voter",    "writable": true, "signer": true },
+        {
+          "name": "voteReceipt",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              { "kind": "const", "value": [118,111,116,101] },                                  // "vote"
+              { "kind": "account", "path": "proposal" },
+              { "kind": "account", "path": "voter" }
+            ]
+          }
+        },
+        { "name": "systemProgram", "address": "11111111111111111111111111111111" }
+      ],
+      "args": [
+        { "name": "yes", "type": "bool" }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "proposal",
+      "discriminator": [26,94,189,187,116,136,53,33],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "creator",    "type": "publicKey" },
+          { "name": "question",   "type": "string" },
+          { "name": "yes_votes",  "type": "u64" },
+          { "name": "no_votes",   "type": "u64" },
+          { "name": "created_at", "type": "i64" },
+          { "name": "ends_at",    "type": "i64" }
+        ]
+      }
+    },
+    {
+      "name": "voteReceipt",
+      "discriminator": [104,20,204,252,45,84,37,195],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "proposal",  "type": "publicKey" },
+          { "name": "voter",     "type": "publicKey" },
+          { "name": "has_voted", "type": "bool" }
+        ]
+      }
+    },
+    {
+      "name": "creatorState",
+      "discriminator": [199,154,36,173,14,32,55,144],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          { "name": "next_index", "type": "u32" }
+        ]
+      }
+    }
+  ],
+  "errors": [
+    { "code": 6000, "name": "QuestionTooLong", "msg": "Vraag is te lang" },
+    { "code": 6001, "name": "AlreadyEnded",    "msg": "Stemperiode is voorbij" },
+    { "code": 6002, "name": "AlreadyVoted",    "msg": "Je hebt al gestemd" },
+    { "code": 6003, "name": "Overflow",        "msg": "Overflow" },
+    { "code": 6004, "name": "IndexMismatch",   "msg": "Index komt niet overeen met next_index" }
+  ],
+  "metadata": {
+    "spec": "0.1.0",
+    "name": "cbs_dao",
+    "description": "CBS DAO voting program",
+    "language": "rust",
+    "anchor": ">=0.28.0"
+  }
+}
