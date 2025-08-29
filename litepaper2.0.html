@@ -93,7 +93,6 @@
       box-shadow:inset 0 0 0 1px rgba(0,255,240,.05), 0 8px 20px rgba(0,255,230,.08);
     }
 
-    /* Footer small note (optional) */
     footer{ margin:28px 0 10px; text-align:center; color:var(--muted); font-size:.95rem }
     footer a{ color:#79ffee; text-decoration:none }
     footer a:hover{ text-decoration:underline }
@@ -165,10 +164,10 @@
         <b>Mint authority & freeze authority:</b> uitgeschakeld – geen extra mint, geen manipulatie.</p>
         <div class="tokenomics">
           <ul>
-            <li>40,77% – Creator wallet</li>
-            <li>14,12% – Liquidity pool (Raydium CBS–SOL)</li>
-            <li>13,97% – Grote holder (airdrop-misbruik)</li>
-            <li>31,14% – Communityleden & team</li>
+            <li><b>21,77%</b> – Team wallet (beheer door Kevin; persoonlijk 0 CBS)</li>
+            <li><b>25,98%</b> – Liquidity pool (Raydium CBS–SOL)</li>
+            <li><b>13,97%</b> – Legacy airdrop (gecompromitteerd)</li>
+            <li><b>38,28%</b> – Community (team & early + overige holders)</li>
           </ul>
           <div class="chart-container"><canvas id="chartNL"></canvas></div>
         </div>
@@ -258,10 +257,10 @@
         <b>Mint authority & freeze authority:</b> disabled – no extra minting, no manipulation possible.</p>
         <div class="tokenomics">
           <ul>
-            <li>40.77% – Creator wallet</li>
-            <li>14.12% – Liquidity pool (Raydium CBS–SOL)</li>
-            <li>13.97% – Large holder (airdrop misuse)</li>
-            <li>31.14% – Community members & team</li>
+            <li><b>21.77%</b> – Team wallet (managed by Kevin; personal holdings 0 CBS)</li>
+            <li><b>25.98%</b> – Liquidity pool (Raydium CBS–SOL)</li>
+            <li><b>13.97%</b> – Legacy airdrop (compromised)</li>
+            <li><b>38.28%</b> – Community (team & early + wider holders)</li>
           </ul>
           <div class="chart-container"><canvas id="chartEN"></canvas></div>
         </div>
@@ -303,7 +302,7 @@
   <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
-    // Language switch matches your homepage behavior
+    // Language switch
     const btn = document.getElementById('langSwitch');
     const nl = document.getElementById('content-nl');
     const en = document.getElementById('content-en');
@@ -316,16 +315,19 @@
       window.scrollTo({ top:0, behavior:'smooth' });
     });
 
-    // Charts (exact same data; just styled for dark theme)
+    // Charts (updated dataset)
+    const DATA = [21.77, 25.98, 13.97, 38.28]; // Team, Pool, Legacy airdrop, Community
+    const LABELS = ['Team', 'Pool', 'Legacy airdrop', 'Community'];
+
     function buildChart(id){
       const el = document.getElementById(id);
       if(!el) return;
       new Chart(el, {
         type:'doughnut',
         data:{
-          labels:['Creator','Pool','Exploiter','Community'],
+          labels: LABELS,
           datasets:[{
-            data:[40.77,14.12,13.97,31.14],
+            data: DATA,
             backgroundColor:['#7dffe9','#55f1e7','#73ffd9','#5ad1ff'],
             borderColor:'#071017',
             borderWidth:1
@@ -348,4 +350,3 @@
   </footer>
 </body>
 </html>
-
