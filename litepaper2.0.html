@@ -28,6 +28,7 @@
       -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
     }
 
+    /* Header */
     .topbar{
       position:sticky; top:0; z-index:20;
       display:flex; align-items:center; justify-content:space-between;
@@ -49,6 +50,7 @@
 
     .container{ max-width:1100px; margin:0 auto; padding:1.2rem 1rem 2.2rem }
 
+    /* Hero */
     .hero{
       display:grid; grid-template-columns:120px 1fr; gap:1.2rem; align-items:center;
       padding:1.2rem; margin:10px auto 18px; border-radius:var(--radius);
@@ -69,6 +71,7 @@
     .hero h2{ margin:.15rem 0 0; color:var(--note); font-size:1.05rem; font-weight:600 }
     .hero p{ margin:.35rem 0 0; color:var(--muted); font-size:.95rem }
 
+    /* Sections */
     .section{
       background:linear-gradient(180deg,var(--card),var(--card2));
       border:1px solid var(--border);
@@ -81,6 +84,7 @@
     p{ color:var(--fg); line-height:1.6; margin:.5rem 0 }
     ul{ color:var(--fg); margin:.2rem 0 1rem 1.2rem; line-height:1.6 }
 
+    /* Tokenomics layout + charts */
     .tokenomics{ display:flex; gap:1.2rem; align-items:center; flex-wrap:wrap }
     .chart-container{
       width:220px; height:220px; padding:10px; border-radius:14px;
@@ -89,6 +93,7 @@
       box-shadow:inset 0 0 0 1px rgba(0,255,240,.05), 0 8px 20px rgba(0,255,230,.08);
     }
 
+    /* Footer small note (optional) */
     footer{ margin:28px 0 10px; text-align:center; color:var(--muted); font-size:.95rem }
     footer a{ color:#79ffee; text-decoration:none }
     footer a:hover{ text-decoration:underline }
@@ -100,6 +105,7 @@
   </style>
 </head>
 <body>
+  <!-- Header -->
   <header class="topbar">
     <div class="brand">
       <img src="logo.png" alt="CBS Logo">
@@ -108,7 +114,7 @@
     <button id="langSwitch" class="switch">EN 🇬🇧</button>
   </header>
 
-  <!-- NL -->
+  <!-- NL content -->
   <div id="content-nl">
     <div class="container">
       <section class="hero">
@@ -156,14 +162,13 @@
       <div class="section">
         <h2>4. Tokenomics (augustus 2025)</h2>
         <p><b>Totale supply:</b> 100.000.000 CBS<br>
-        <b>Mint authority & freeze authority:</b> uitgeschakeld — geen extra mint of bevriezen mogelijk.<br>
-        <b>Metadata:</b> update authority vergrendeld (immutable) — naam/logo kunnen niet meer worden aangepast.</p>
+        <b>Mint authority & freeze authority:</b> uitgeschakeld – geen extra mint, geen manipulatie.</p>
         <div class="tokenomics">
           <ul>
-            <li><b>21,77%</b> – Team wallet (beheer door Kevin; persoonlijk 0 CBS)</li>
-            <li><b>25,98%</b> – Liquidity pool (Raydium CBS–SOL)</li>
-            <li><b>13,97%</b> – Legacy airdrop (gecompromitteerd)</li>
-            <li><b>38,28%</b> – Community (team & early + overige holders)</li>
+            <li>40,77% – Creator wallet</li>
+            <li>14,12% – Liquidity pool (Raydium CBS–SOL)</li>
+            <li>13,97% – Grote holder (airdrop-misbruik)</li>
+            <li>31,14% – Communityleden & team</li>
           </ul>
           <div class="chart-container"><canvas id="chartNL"></canvas></div>
         </div>
@@ -202,7 +207,7 @@
     </div>
   </div>
 
-  <!-- EN -->
+  <!-- EN content -->
   <div id="content-en" style="display:none">
     <div class="container">
       <section class="hero">
@@ -250,14 +255,13 @@
       <div class="section">
         <h2>4. Tokenomics (August 2025)</h2>
         <p><b>Total supply:</b> 100,000,000 CBS<br>
-        <b>Mint authority & freeze authority:</b> disabled — no extra minting or freezing possible.<br>
-        <b>Metadata:</b> update authority locked (immutable) — name/logo can no longer be changed.</p>
+        <b>Mint authority & freeze authority:</b> disabled – no extra minting, no manipulation possible.</p>
         <div class="tokenomics">
           <ul>
-            <li><b>21.77%</b> – Team wallet (managed by Kevin; personal 0 CBS)</li>
-            <li><b>25.98%</b> – Liquidity pool (Raydium CBS–SOL)</li>
-            <li><b>13.97%</b> – Legacy airdrop (compromised)</li>
-            <li><b>38.28%</b> – Community (team & early + wider holders)</li>
+            <li>40.77% – Creator wallet</li>
+            <li>14.12% – Liquidity pool (Raydium CBS–SOL)</li>
+            <li>13.97% – Large holder (airdrop misuse)</li>
+            <li>31.14% – Community members & team</li>
           </ul>
           <div class="chart-container"><canvas id="chartEN"></canvas></div>
         </div>
@@ -296,8 +300,10 @@
     </div>
   </div>
 
+  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
+    // Language switch matches your homepage behavior
     const btn = document.getElementById('langSwitch');
     const nl = document.getElementById('content-nl');
     const en = document.getElementById('content-en');
@@ -310,25 +316,25 @@
       window.scrollTo({ top:0, behavior:'smooth' });
     });
 
-    const DATA = [21.77, 25.98, 13.97, 38.28];
-    const LABELS = ['Team', 'Pool', 'Legacy airdrop', 'Community'];
-
+    // Charts (exact same data; just styled for dark theme)
     function buildChart(id){
       const el = document.getElementById(id);
       if(!el) return;
       new Chart(el, {
         type:'doughnut',
         data:{
-          labels: LABELS,
+          labels:['Creator','Pool','Exploiter','Community'],
           datasets:[{
-            data: DATA,
+            data:[40.77,14.12,13.97,31.14],
             backgroundColor:['#7dffe9','#55f1e7','#73ffd9','#5ad1ff'],
             borderColor:'#071017',
             borderWidth:1
           }]
         },
         options:{
-          plugins:{ legend:{ labels:{ color:'#c8fff2', font:{ family:'Orbitron', size:12 } } } },
+          plugins:{
+            legend:{ labels:{ color:'#c8fff2', font:{ family:'Orbitron', size:12 } } }
+          },
           cutout:'55',
         }
       });
