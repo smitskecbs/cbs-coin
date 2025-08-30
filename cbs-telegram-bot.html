@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>CBS Bot – Community Helper for Telegram (EN/NL)</title>
-<meta name="description" content="CBS Bot is a friendly community helper for Telegram groups. Welcomes members, replies to greetings, auto-messages, and group-configured links.">
+<meta name="description" content="CBS Bot is a friendly community helper for Telegram groups. Welcomes members, replies to greetings, auto-messages, antibot radar, and group-configured links.">
 <style>
   :root{
     --bg:#0b0f14; --card:#0f141b; --fg:#eaf2f9; --muted:#a9c1d6; --acc:#46e0c1;
@@ -33,8 +33,8 @@
 <body>
 <div class="wrap">
   <div class="hero">
-    <h1>🤖 CBS Bot – Community Helper for Telegram</h1>
-    <p class="lead">Welcomes members • subtle replies • inspiring auto-messages • per-group links (website, X/Twitter, Discord, Telegram, mint/CA, etc.).</p>
+    <h1>CBS Bot – Community Helper for Telegram</h1>
+    <p class="lead">Welcomes members • subtle replies • inspiring auto-messages • antibot radar • per-group links (website, X/Twitter, Discord, Telegram, mint/CA, etc.).</p>
     <div class="tabs">
       <button class="tab active" data-lang="en">English</button>
       <button class="tab" data-lang="nl">Nederlands</button>
@@ -45,7 +45,7 @@
   <div id="lang-en">
     <section class="card">
       <h2>What is CBS Bot?</h2>
-      <p>CBS Bot is a friendly, lightweight helper for any Telegram group. It keeps chats warm (welcome messages and subtle replies), shares occasional inspiring messages, and lets admins configure group links that members can retrieve with simple keywords.</p>
+      <p>CBS Bot is a friendly, lightweight helper for any Telegram group. It keeps chats warm (welcome messages and subtle replies), shares occasional inspiring messages, lets admins configure group links, and optionally blocks unwanted bot accounts.</p>
       <div class="grid">
         <div class="card">
           <h3>Key features</h3>
@@ -53,6 +53,8 @@
             <li>👋 Auto-welcome new members (customizable)</li>
             <li>💬 Subtle replies to greetings / thanks / fun</li>
             <li>✨ Auto-chat: inspiring messages every 30 min (on by default)</li>
+            <li>🛡️ Antibot radar: auto-block new bots (default off, per-group)</li>
+            <li>🤖 Whitelist: allow trusted bots via <code>/allowbot</code></li>
             <li>🔗 Per-group links: <code>website</code>, <code>twitter/x</code>, <code>telegram</code>, <code>discord</code>, <code>facebook</code>, <code>instagram</code>, <code>youtube</code>, <code>mint</code>, <code>ca</code></li>
             <li>🛡️ Only admins can change settings</li>
             <li>🧠 Anti-spam throttle (max 1 bot reply / 30s per chat)</li>
@@ -75,9 +77,8 @@
       <ol>
         <li>Invite <strong>@CBS_Coin_bot</strong> to your group.</li>
         <li>In BotFather → Bot Settings: <strong>Allow Groups = ON</strong>, <strong>Group Privacy = OFF</strong>.</li>
-        <li>Make sure bot can read & send messages.</li>
+        <li>Make sure bot can read & send messages. To use antibot, make the bot admin with “Ban users”.</li>
       </ol>
-      <div class="callout muted">Tip: Supergroups have chat IDs like <code>-100…</code>. Settings are saved per chat, so each group manages its own links.</div>
     </section>
 
     <section class="card">
@@ -102,6 +103,11 @@
             <li><code>/set rules &lt;text&gt;</code> – group rules</li>
             <li><code>/set welcome &lt;text&gt;</code> – welcome template (use <code>{name}</code>)</li>
             <li><code>/set autochat on</code> | <code>off</code> – periodic messages</li>
+            <li><code>/set antibot on</code> | <code>off</code> – enable/disable bot blocking</li>
+            <li><code>/allowbot @username</code> – whitelist a bot</li>
+            <li><code>/unallowbot @username</code> – remove from whitelist</li>
+            <li><code>/whitelist</code> – show allowed bots</li>
+            <li><code>/unset &lt;key&gt;</code> – remove a stored key</li>
             <li><code>/get</code> – show current group settings</li>
             <li><code>/help</code> – show features & usage</li>
           </ul>
@@ -118,16 +124,15 @@
     <section class="card">
       <h2>Privacy & Data</h2>
       <ul>
-        <li><strong>Data stored:</strong> per-group settings only (links, rules, welcome text, autochat on/off).</li>
+        <li><strong>Data stored:</strong> per-group settings only (links, rules, welcome text, autochat, antibot, whitelist).</li>
         <li><strong>No personal data</strong> is stored or profiled.</li>
         <li>Settings are kept until an admin changes them or the group is removed.</li>
-        <li>Want a stricter policy? Host your own page and link it in BotFather → Privacy Policy.</li>
       </ul>
     </section>
 
     <section class="card">
       <h2>Contact</h2>
-      <p>Questions or requests? Reach out via Telegram: <a href="https://t.me/CBS_Coin" target="_blank">@CBS_Coin</a> or email: <a href="mailto:smitskecbs@gmail.com">you@example.com</a>.</p>
+      <p>Questions or requests? Reach out via Telegram: <a href="https://t.me/CBS_Coin" target="_blank">@CBS_Coin</a> or email: <a href="mailto:smitskecbs@gmail.com">smitskecbs@gmail.com</a>.</p>
     </section>
   </div>
 
@@ -135,7 +140,7 @@
   <div id="lang-nl" style="display:none">
     <section class="card">
       <h2>Wat is CBS Bot?</h2>
-      <p>CBS Bot is een vriendelijke, lichte helper voor elke Telegram-groep. Hij houdt de chat levendig (welkomstberichten en subtiele reacties), deelt af en toe inspirerende berichten en laat admins groepslinks instellen die leden met simpele woorden kunnen opvragen.</p>
+      <p>CBS Bot is een vriendelijke, lichte helper voor elke Telegram-groep. Hij houdt de chat levendig (welkomstberichten en subtiele reacties), deelt af en toe inspirerende berichten, laat admins groepslinks instellen, en kan desgewenst bots blokkeren.</p>
       <div class="grid">
         <div class="card">
           <h3>Belangrijkste functies</h3>
@@ -143,18 +148,11 @@
             <li>👋 Automatisch nieuwe leden welkom heten (aanpasbaar)</li>
             <li>💬 Subtiele reacties op begroetingen / dank / fun</li>
             <li>✨ Auto-chat: inspirerende berichten elke 30 min (standaard aan)</li>
+            <li>🛡️ Antibot radar: blokkeer nieuwe bots (standaard uit, per groep instelbaar)</li>
+            <li>🤖 Whitelist: sta vertrouwde bots toe met <code>/allowbot</code></li>
             <li>🔗 Per-groep links: <code>website</code>, <code>twitter/x</code>, <code>telegram</code>, <code>discord</code>, <code>facebook</code>, <code>instagram</code>, <code>youtube</code>, <code>mint</code>, <code>ca</code></li>
             <li>🛡️ Alleen admins mogen instellingen wijzigen</li>
             <li>🧠 Anti-spam (max 1 botreactie / 30s per chat)</li>
-          </ul>
-        </div>
-        <div class="card">
-          <h3>Net gedrag</h3>
-          <ul>
-            <li>Neutrale toon, geen spam</li>
-            <li>Subtiele “community/sovereiniteit” zinnen (zelden)</li>
-            <li>Werkt in groepen & supergroepen</li>
-            <li>Geen persoonsgegevens: alleen groepsinstellingen</li>
           </ul>
         </div>
       </div>
@@ -165,9 +163,8 @@
       <ol>
         <li>Nodig <strong>@CBS_Coin_bot</strong> uit in je groep.</li>
         <li>In BotFather → Bot Settings: <strong>Allow Groups = Aan</strong>, <strong>Group Privacy = Uit</strong>.</li>
-        <li>Geef de bot rechten om berichten te lezen en te sturen.</li>
+        <li>Geef de bot rechten om berichten te lezen en te sturen. Voor antibot: maak hem admin met “Ban users”.</li>
       </ol>
-      <div class="callout muted">Tip: Supergroepen hebben chat-ID’s zoals <code>-100…</code>. Instellingen worden per chat opgeslagen, dus elke groep beheert z’n eigen links.</div>
     </section>
 
     <section class="card">
@@ -192,6 +189,11 @@
             <li><code>/set rules &lt;tekst&gt;</code> – groepsregels</li>
             <li><code>/set welcome &lt;tekst&gt;</code> – welkomtemplate (gebruik <code>{name}</code>)</li>
             <li><code>/set autochat on</code> | <code>off</code> – periodieke berichten</li>
+            <li><code>/set antibot on</code> | <code>off</code> – zet bot-blokkade aan/uit</li>
+            <li><code>/allowbot @username</code> – zet een bot op whitelist</li>
+            <li><code>/unallowbot @username</code> – verwijder van whitelist</li>
+            <li><code>/whitelist</code> – toon toegestane bots</li>
+            <li><code>/unset &lt;key&gt;</code> – verwijder een waarde</li>
             <li><code>/get</code> – bekijk huidige groepsinstellingen</li>
             <li><code>/help</code> – toon overzicht</li>
           </ul>
@@ -208,16 +210,15 @@
     <section class="card">
       <h2>Privacy & Data</h2>
       <ul>
-        <li><strong>Wat wordt opgeslagen:</strong> alleen groepsinstellingen (links, rules, welcome-tekst, autochat aan/uit).</li>
+        <li><strong>Wat wordt opgeslagen:</strong> alleen groepsinstellingen (links, regels, welcome-tekst, autochat, antibot, whitelist).</li>
         <li><strong>Geen persoonsgegevens</strong> worden opgeslagen of geprofileerd.</li>
         <li>Instellingen blijven bewaard tot een admin ze wijzigt of de groep verdwijnt.</li>
-        <li>Striktere policy? Plaats een eigen pagina en vul de URL in bij BotFather → Privacy Policy.</li>
       </ul>
     </section>
 
     <section class="card">
       <h2>Contact</h2>
-      <p>Vragen of verzoeken? Telegram: <a href="https://t.me/CBS_Coin" target="_blank">@CBS_Coin</a> of e-mail: <a href="mailto:smitskecbs@gmail.com">you@example.com</a>.</p>
+      <p>Vragen of verzoeken? Telegram: <a href="https://t.me/CBS_Coin" target="_blank">@CBS_Coin</a> of e-mail: <a href="mailto:smitskecbs@gmail.com">smitskecbs@gmail.com</a>.</p>
     </section>
   </div>
 
