@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>CBS Bot – Community Helper for Telegram (EN/NL)</title>
-<meta name="description" content="CBS Bot is a friendly community helper for Telegram groups. Welcomes members, replies to greetings, auto-messages, antibot radar, raid mode, and group-configured links.">
+<meta name="description" content="CBS Bot is a friendly community helper for Telegram groups. Welcomes members, replies to greetings, auto-messages, antibot radar, raid mode, invite contest, and group-configured links.">
 <style>
   :root{
     --bg:#0b0f14; --card:#0f141b; --fg:#eaf2f9; --muted:#a9c1d6; --acc:#46e0c1; --call:#0b131a;
@@ -37,7 +37,7 @@
 <div class="wrap">
   <div class="hero">
     <h1>CBS Bot – Community Helper for Telegram</h1>
-    <p class="lead">Welcomes members • subtle replies • inspiring auto-messages • antibot radar • <strong>raid mode</strong> • per-group links (website, X/Twitter, Discord, Telegram, mint/CA, etc.).</p>
+    <p class="lead">Welcomes members • subtle replies • inspiring auto-messages • antibot radar • <strong>raid mode</strong> • <strong>invite contest</strong> • per-group links (website, X/Twitter, Discord, Telegram, mint/CA, etc.).</p>
     <div class="tabs">
       <button class="tab active" data-lang="en">English</button>
       <button class="tab" data-lang="nl">Nederlands</button>
@@ -50,16 +50,17 @@
       <h2>Quick Start (EN)</h2>
       <div class="qs">
         <div class="step"><span class="n">1.</span>Invite <b>@CBS_Coin_bot</b> → BotFather: <b>Allow Groups = ON</b>, <b>Group Privacy = OFF</b>.</div>
-        <div class="step"><span class="n">2.</span>Optional: Make bot <b>Admin</b> (needed for antibot bans).</div>
+        <div class="step"><span class="n">2.</span>Optional: Make bot <b>Admin</b> (needed for antibot bans & invite links).</div>
         <div class="step"><span class="n">3.</span>Set links: <code>/set website &lt;url&gt;</code>, <code>/set x &lt;url&gt;</code>, …</div>
         <div class="step"><span class="n">4.</span>Autochat is <b>ON</b> by default. Toggle: <code>/set autochat off</code>.</div>
         <div class="step"><span class="n">5.</span>Raid mode (optional): <code>/set raid on</code> → <code>/raidtarget &lt;url&gt;</code> → <code>/raid</code>.</div>
+        <div class="step"><span class="n">6.</span>Invite Contest (optional): <code>/set contest on</code> → members run <code>/mylink</code> → track with <code>/contest</code>.</div>
       </div>
     </section>
 
     <section class="card">
       <h2>What is CBS Bot?</h2>
-      <p>CBS Bot is a friendly, lightweight helper for any Telegram group. It keeps chats warm (welcome messages and subtle replies), shares occasional inspiring messages, lets admins configure group links, can block unwanted bots, and supports <strong>raid mode</strong> for X/Twitter engagement.</p>
+      <p>CBS Bot is a friendly, lightweight helper for any Telegram group. It keeps chats warm (welcome messages and subtle replies), shares occasional inspiring messages, lets admins configure group links, can block unwanted bots, supports <strong>raid mode</strong> for X/Twitter engagement, and provides an <strong>invite contest</strong> with personal links and a leaderboard.</p>
       <div class="grid">
         <div class="card">
           <h3>Key features</h3>
@@ -67,9 +68,9 @@
             <li>👋 Auto-welcome new members (customizable)</li>
             <li>💬 Subtle replies to greetings / thanks / fun</li>
             <li>✨ Auto-chat: inspiring messages every 30 min (on by default)</li>
-            <li>🛡️ Antibot radar: auto-block new bots (default off, per-group)</li>
+            <li>🛡️ Antibot radar: auto-block new bots (default off, per-group) + whitelist</li>
             <li>🚩 <strong>Raid mode</strong>: drop a raid message with <code>/raid</code> (default off)</li>
-            <li>🤖 Whitelist: allow trusted bots via <code>/allowbot</code></li>
+            <li>🏆 <strong>Invite contest</strong>: personal invite links, auto scoring, leaderboard</li>
             <li>🔗 Per-group links: <code>website</code>, <code>twitter/x</code>, <code>telegram</code>, <code>discord</code>, <code>facebook</code>, <code>instagram</code>, <code>youtube</code>, <code>mint</code>, <code>ca</code></li>
             <li>🛡️ Only admins can change settings</li>
             <li>🧠 Anti-spam throttle (max 1 bot reply / 30s per chat)</li>
@@ -92,7 +93,8 @@
       <ol>
         <li>Invite <strong>@CBS_Coin_bot</strong> to your group.</li>
         <li>In BotFather → Bot Settings: <strong>Allow Groups = ON</strong>, <strong>Group Privacy = OFF</strong>.</li>
-        <li>Make sure bot can read & send messages. To use antibot, make the bot admin with “Ban users”.</li>
+        <li>Make sure bot can read & send messages. For antibot, make the bot admin with “Ban users”.</li>
+        <li>For Invite Contest, bot must be admin with “Invite users via link”.</li>
       </ol>
     </section>
 
@@ -137,7 +139,18 @@
             <li><code>/raidnow</code> – admin shortcut to post immediately</li>
           </ul>
         </div>
+        <div class="card">
+          <h3>Invite Contest</h3>
+          <ul>
+            <li><code>/set contest on</code> | <code>off</code> – enable/disable invite contest</li>
+            <li><code>/mylink</code> – member gets personal invite link</li>
+            <li><code>/contest</code> – show leaderboard</li>
+            <li><code>/resetcontest</code> – reset scores (admin)</li>
+            <li><code>/contestlink @user</code> – get/create someone’s link (admin)</li>
+          </ul>
+        </div>
       </div>
+      <p class="muted">Scoring: when someone joins via a personal link created by the bot, the inviter gets +1 automatically.</p>
     </section>
 
     <section class="card">
@@ -145,12 +158,13 @@
       <p>Members can type a keyword to get the group’s link/info (if set):</p>
       <p><code>website</code> · <code>twitter</code>/<code>x</code> · <code>telegram</code> · <code>discord</code> · <code>facebook</code> · <code>instagram</code> · <code>youtube</code> · <code>mint</code> · <code>ca</code> · <code>rules</code></p>
       <p><strong>Raid:</strong> when raid mode is ON, any member can run <code>/raid</code> to drop the current raid message.</p>
+      <p><strong>Invite Contest:</strong> members run <code>/mylink</code> to get their personal link; check standings with <code>/contest</code>.</p>
     </section>
 
     <section class="card">
       <h2>Privacy & Data</h2>
       <ul>
-        <li><strong>Data stored:</strong> per-group settings only (links, rules, welcome text, autochat, antibot, whitelist, raid mode/target/message).</li>
+        <li><strong>Data stored:</strong> per-group settings only (links, rules, welcome text, autochat, antibot + whitelist, raid mode/target/message, invite contest links/scores).</li>
         <li><strong>No personal data</strong> is stored or profiled.</li>
         <li>Settings are kept until an admin changes them or the group is removed.</li>
       </ul>
@@ -168,16 +182,17 @@
       <h2>Quick Start (NL)</h2>
       <div class="qs">
         <div class="step"><span class="n">1.</span>Nodig <b>@CBS_Coin_bot</b> uit → BotFather: <b>Allow Groups = Aan</b>, <b>Group Privacy = Uit</b>.</div>
-        <div class="step"><span class="n">2.</span>Optioneel: maak de bot <b>Admin</b> (nodig voor antibot bans).</div>
+        <div class="step"><span class="n">2.</span>Optioneel: maak de bot <b>Admin</b> (nodig voor antibot bans & invite links).</div>
         <div class="step"><span class="n">3.</span>Zet links: <code>/set website &lt;url&gt;</code>, <code>/set x &lt;url&gt;</code>, …</div>
         <div class="step"><span class="n">4.</span>Autochat staat <b>Aan</b>. Uitzetten: <code>/set autochat off</code>.</div>
         <div class="step"><span class="n">5.</span>Raid-modus (optioneel): <code>/set raid on</code> → <code>/raidtarget &lt;url&gt;</code> → <code>/raid</code>.</div>
+        <div class="step"><span class="n">6.</span>Invite Contest (optioneel): <code>/set contest on</code> → leden gebruiken <code>/mylink</code> → overzicht met <code>/contest</code>.</div>
       </div>
     </section>
 
     <section class="card">
       <h2>Wat is CBS Bot?</h2>
-      <p>CBS Bot is een vriendelijke, lichte helper voor elke Telegram-groep. Hij houdt de chat levendig (welkomstberichten en subtiele reacties), deelt af en toe inspirerende berichten, laat admins groepslinks instellen, kan bots blokkeren en ondersteunt <strong>raid-modus</strong> voor X/Twitter engagement.</p>
+      <p>CBS Bot is een vriendelijke, lichte helper voor elke Telegram-groep. Hij houdt de chat levendig (welkomstberichten en subtiele reacties), deelt af en toe inspirerende berichten, laat admins groepslinks instellen, kan bots blokkeren, ondersteunt <strong>raid-modus</strong> en heeft een <strong>invite contest</strong> met persoonlijke links en leaderboard.</p>
       <div class="grid">
         <div class="card">
           <h3>Belangrijkste functies</h3>
@@ -185,9 +200,9 @@
             <li>👋 Automatisch nieuwe leden welkom heten (aanpasbaar)</li>
             <li>💬 Subtiele reacties op begroetingen / dank / fun</li>
             <li>✨ Auto-chat: inspirerende berichten elke 30 min (standaard aan)</li>
-            <li>🛡️ Antibot radar: blokkeer nieuwe bots (standaard uit, per groep instelbaar)</li>
+            <li>🛡️ Antibot radar: blokkeer nieuwe bots (standaard uit, per groep instelbaar) + whitelist</li>
             <li>🚩 <strong>Raid-modus</strong>: laat leden met <code>/raid</code> het raid-bericht posten (standaard uit)</li>
-            <li>🤖 Whitelist: sta vertrouwde bots toe met <code>/allowbot</code></li>
+            <li>🏆 <strong>Invite contest</strong>: persoonlijke invite links, auto-scoring, leaderboard</li>
             <li>🔗 Per-groep links: <code>website</code>, <code>twitter/x</code>, <code>telegram</code>, <code>discord</code>, <code>facebook</code>, <code>instagram</code>, <code>youtube</code>, <code>mint</code>, <code>ca</code></li>
             <li>🛡️ Alleen admins mogen instellingen wijzigen</li>
             <li>🧠 Anti-spam (max 1 botreactie / 30s per chat)</li>
@@ -202,6 +217,7 @@
         <li>Nodig <strong>@CBS_Coin_bot</strong> uit in je groep.</li>
         <li>In BotFather → Bot Settings: <strong>Allow Groups = Aan</strong>, <strong>Group Privacy = Uit</strong>.</li>
         <li>Geef de bot rechten om berichten te lezen en te sturen. Voor antibot: maak hem admin met “Ban users”.</li>
+        <li>Voor Invite Contest: bot moet admin zijn met “Invite users via link”.</li>
       </ol>
     </section>
 
@@ -246,7 +262,18 @@
             <li><code>/raidnow</code> – admin-snelcommando om direct te posten</li>
           </ul>
         </div>
+        <div class="card">
+          <h3>Invite Contest</h3>
+          <ul>
+            <li><code>/set contest on</code> | <code>off</code> – zet invite contest aan/uit</li>
+            <li><code>/mylink</code> – gebruiker krijgt persoonlijke invite link</li>
+            <li><code>/contest</code> – toon leaderboard</li>
+            <li><code>/resetcontest</code> – scores resetten (admin)</li>
+            <li><code>/contestlink @user</code> – link van iemand opvragen/aanmaken (admin)</li>
+          </ul>
+        </div>
       </div>
+      <p class="muted">Scores: wanneer iemand via een persoonlijke link (door de bot aangemaakt) joint, krijgt de inviter automatisch +1.</p>
     </section>
 
     <section class="card">
@@ -254,12 +281,13 @@
       <p>Leden kunnen met een trefwoord de ingestelde link/info opvragen (als die bestaat):</p>
       <p><code>website</code> · <code>twitter</code>/<code>x</code> · <code>telegram</code> · <code>discord</code> · <code>facebook</code> · <code>instagram</code> · <code>youtube</code> · <code>mint</code> · <code>ca</code> · <code>rules</code></p>
       <p><strong>Raid:</strong> wanneer raid-modus aan staat, kan iedereen <code>/raid</code> gebruiken om het huidige raid-bericht te posten.</p>
+      <p><strong>Invite Contest:</strong> leden gebruiken <code>/mylink</code> voor hun persoonlijke link; stand bekijken met <code>/contest</code>.</p>
     </section>
 
     <section class="card">
       <h2>Privacy & Data</h2>
       <ul>
-        <li><strong>Wat wordt opgeslagen:</strong> alleen groepsinstellingen (links, regels, welcome-tekst, autochat, antibot, whitelist, raid-modus/target/bericht).</li>
+        <li><strong>Wat wordt opgeslagen:</strong> alleen groepsinstellingen (links, regels, welcome-tekst, autochat, antibot + whitelist, raid-modus/target/bericht, invite contest links/scores).</li>
         <li><strong>Geen persoonsgegevens</strong> worden opgeslagen of geprofileerd.</li>
         <li>Instellingen blijven bewaard tot een admin ze wijzigt of de groep verdwijnt.</li>
       </ul>
