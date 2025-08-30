@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CBS Bot – Community Helper for Telegram (EN/NL)</title>
+<meta name="description" content="CBS Bot is a friendly community helper for Telegram groups. Welcomes members, replies to greetings, auto-messages, and group-configured links.">
+<style>
+  :root{
+    --bg:#0b0f14; --card:#0f141b; --fg:#eaf2f9; --muted:#a9c1d6; --acc:#46e0c1;
+  }
+  *{box-sizing:border-box}
+  body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial; background:linear-gradient(180deg,var(--bg),#0a0c10); color:var(--fg)}
+  .wrap{max-width:1000px; margin:0 auto; padding:28px 16px 64px}
+  .hero{padding:24px; background:linear-gradient(180deg,#0f151d,var(--card)); border:1px solid #18212a; border-radius:18px; box-shadow:0 25px 60px rgba(0,0,0,.35)}
+  h1{font-size:28px; margin:0 0 6px}
+  p.lead{margin:6px 0 0; color:var(--muted)}
+  .tabs{display:flex; gap:8px; margin:20px 0}
+  .tab{padding:10px 14px; border-radius:12px; border:1px solid #1a2230; cursor:pointer; background:#0e141c; color:var(--fg)}
+  .tab.active{outline:2px solid var(--acc)}
+  section.card{padding:18px; border:1px solid #18212a; border-radius:16px; background:rgba(20,26,33,.75); margin:14px 0}
+  h2{font-size:20px; margin:0 0 8px}
+  code,kbd{background:#0a121a; border:1px solid #1a2632; padding:.15em .35em; border-radius:6px}
+  ul{margin:8px 0 0 22px}
+  .muted{color:var(--muted)}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px}
+  .footer{margin-top:24px; color:var(--muted); font-size:14px}
+  a{color:var(--acc); text-decoration:none}
+  .kbd{padding:.2em .4em; border-radius:6px; border:1px solid #1e2835}
+  .callout{border-left:4px solid var(--acc); padding:10px 12px; background:#0b131a; border-radius:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero">
+    <h1>🤖 CBS Bot – Community Helper for Telegram</h1>
+    <p class="lead">Welcomes members • subtle replies • inspiring auto-messages • per-group links (website, X/Twitter, Discord, Telegram, mint/CA, etc.).</p>
+    <div class="tabs">
+      <button class="tab active" data-lang="en">English</button>
+      <button class="tab" data-lang="nl">Nederlands</button>
+    </div>
+  </div>
+
+  <!-- ENGLISH -->
+  <div id="lang-en">
+    <section class="card">
+      <h2>What is CBS Bot?</h2>
+      <p>CBS Bot is a friendly, lightweight helper for any Telegram group. It keeps chats warm (welcome messages and subtle replies), shares occasional inspiring messages, and lets admins configure group links that members can retrieve with simple keywords.</p>
+      <div class="grid">
+        <div class="card">
+          <h3>Key features</h3>
+          <ul>
+            <li>👋 Auto-welcome new members (customizable)</li>
+            <li>💬 Subtle replies to greetings / thanks / fun</li>
+            <li>✨ Auto-chat: inspiring messages every 30 min (on by default)</li>
+            <li>🔗 Per-group links: <code>website</code>, <code>twitter/x</code>, <code>telegram</code>, <code>discord</code>, <code>facebook</code>, <code>instagram</code>, <code>youtube</code>, <code>mint</code>, <code>ca</code></li>
+            <li>🛡️ Only admins can change settings</li>
+            <li>🧠 Anti-spam throttle (max 1 bot reply / 30s per chat)</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Good citizenship</h3>
+          <ul>
+            <li>Neutral tone, no spam</li>
+            <li>Subtle “community/sovereignty” lines (rare)</li>
+            <li>Works in groups & supergroups</li>
+            <li>Zero personal data: stores only group settings</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>How to add</h2>
+      <ol>
+        <li>Invite <strong>@CBS_Coin_Bot</strong> to your group.</li>
+        <li>In BotFather → Bot Settings: <strong>Allow Groups = ON</strong>, <strong>Group Privacy = OFF</strong>.</li>
+        <li>Make sure bot can read & send messages.</li>
+      </ol>
+      <div class="callout muted">Tip: Supergroups have chat IDs like <code>-100…</code>. Settings are saved per chat, so each group manages its own links.</div>
+    </section>
+
+    <section class="card">
+      <h2>Commands (admins)</h2>
+      <p>Use <code>/set &lt;key&gt; &lt;value&gt;</code> to configure links and texts:</p>
+      <div class="grid">
+        <div class="card">
+          <h3>Links</h3>
+          <ul>
+            <li><code>/set website &lt;url&gt;</code></li>
+            <li><code>/set twitter &lt;url&gt;</code> or <code>/set x &lt;url&gt;</code></li>
+            <li><code>/set telegram &lt;url&gt;</code>, <code>/set discord &lt;url&gt;</code></li>
+            <li><code>/set facebook &lt;url&gt;</code>, <code>/set instagram &lt;url&gt;</code></li>
+            <li><code>/set youtube &lt;url&gt;</code></li>
+            <li><code>/set mint &lt;address&gt;</code> (Solana)</li>
+            <li><code>/set ca &lt;address&gt;</code> (EVM)</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Chat & behavior</h3>
+          <ul>
+            <li><code>/set rules &lt;text&gt;</code> – group rules</li>
+            <li><code>/set welcome &lt;text&gt;</code> – welcome template (use <code>{name}</code>)</li>
+            <li><code>/set autochat on</code> | <code>off</code> – periodic messages</li>
+            <li><code>/get</code> – show current group settings</li>
+            <li><code>/help</code> – show features & usage</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Member usage (no commands)</h2>
+      <p>Members can simply type a keyword to get the group’s link/info (if set):</p>
+      <p><code>website</code> · <code>twitter</code>/<code>x</code> · <code>telegram</code> · <code>discord</code> · <code>facebook</code> · <code>instagram</code> · <code>youtube</code> · <code>mint</code> · <code>ca</code> · <code>rules</code></p>
+    </section>
+
+    <section class="card">
+      <h2>Privacy & Data</h2>
+      <ul>
+        <li><strong>Data stored:</strong> per-group settings only (links, rules, welcome text, autochat on/off).</li>
+        <li><strong>No personal data</strong> is stored or profiled.</li>
+        <li>Settings are kept until an admin changes them or the group is removed.</li>
+        <li>Want a stricter policy? Host your own page and link it in BotFather → Privacy Policy.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Contact</h2>
+      <p>Questions or requests? Reach out via Telegram: <a href="https://t.me/CBS_Coin" target="_blank">@CBS_Coin</a> or email: <a href="mailto:you@example.com">you@example.com</a>.</p>
+    </section>
+  </div>
+
+  <!-- NEDERLANDS -->
+  <div id="lang-nl" style="display:none">
+    <section class="card">
+      <h2>Wat is CBS Bot?</h2>
+      <p>CBS Bot is een vriendelijke, lichte helper voor elke Telegram-groep. Hij houdt de chat levendig (welkomstberichten en subtiele reacties), deelt af en toe inspirerende berichten en laat admins groepslinks instellen die leden met simpele woorden kunnen opvragen.</p>
+      <div class="grid">
+        <div class="card">
+          <h3>Belangrijkste functies</h3>
+          <ul>
+            <li>👋 Automatisch nieuwe leden welkom heten (aanpasbaar)</li>
+            <li>💬 Subtiele reacties op begroetingen / dank / fun</li>
+            <li>✨ Auto-chat: inspirerende berichten elke 30 min (standaard aan)</li>
+            <li>🔗 Per-groep links: <code>website</code>, <code>twitter/x</code>, <code>telegram</code>, <code>discord</code>, <code>facebook</code>, <code>instagram</code>, <code>youtube</code>, <code>mint</code>, <code>ca</code></li>
+            <li>🛡️ Alleen admins mogen instellingen wijzigen</li>
+            <li>🧠 Anti-spam (max 1 botreactie / 30s per chat)</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Net gedrag</h3>
+          <ul>
+            <li>Neutrale toon, geen spam</li>
+            <li>Subtiele “community/sovereiniteit” zinnen (zelden)</li>
+            <li>Werkt in groepen & supergroepen</li>
+            <li>Geen persoonsgegevens: alleen groepsinstellingen</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Hoe toevoegen</h2>
+      <ol>
+        <li>Nodig <strong>@CBS_Coin_Bot</strong> uit in je groep.</li>
+        <li>In BotFather → Bot Settings: <strong>Allow Groups = Aan</strong>, <strong>Group Privacy = Uit</strong>.</li>
+        <li>Geef de bot rechten om berichten te lezen en te sturen.</li>
+      </ol>
+      <div class="callout muted">Tip: Supergroepen hebben chat-ID’s zoals <code>-100…</code>. Instellingen worden per chat opgeslagen, dus elke groep beheert z’n eigen links.</div>
+    </section>
+
+    <section class="card">
+      <h2>Commando’s (admins)</h2>
+      <p>Gebruik <code>/set &lt;key&gt; &lt;value&gt;</code> om links en teksten te zetten:</p>
+      <div class="grid">
+        <div class="card">
+          <h3>Links</h3>
+          <ul>
+            <li><code>/set website &lt;url&gt;</code></li>
+            <li><code>/set twitter &lt;url&gt;</code> of <code>/set x &lt;url&gt;</code></li>
+            <li><code>/set telegram &lt;url&gt;</code>, <code>/set discord &lt;url&gt;</code></li>
+            <li><code>/set facebook &lt;url&gt;</code>, <code>/set instagram &lt;url&gt;</code></li>
+            <li><code>/set youtube &lt;url&gt;</code></li>
+            <li><code>/set mint &lt;adres&gt;</code> (Solana)</li>
+            <li><code>/set ca &lt;adres&gt;</code> (EVM)</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>Chat & gedrag</h3>
+          <ul>
+            <li><code>/set rules &lt;tekst&gt;</code> – groepsregels</li>
+            <li><code>/set welcome &lt;tekst&gt;</code> – welkomtemplate (gebruik <code>{name}</code>)</li>
+            <li><code>/set autochat on</code> | <code>off</code> – periodieke berichten</li>
+            <li><code>/get</code> – bekijk huidige groepsinstellingen</li>
+            <li><code>/help</code> – toon overzicht</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Gebruik door leden (zonder commando’s)</h2>
+      <p>Leden kunnen met een trefwoord de ingestelde link/info opvragen (als die bestaat):</p>
+      <p><code>website</code> · <code>twitter</code>/<code>x</code> · <code>telegram</code> · <code>discord</code> · <code>facebook</code> · <code>instagram</code> · <code>youtube</code> · <code>mint</code> · <code>ca</code> · <code>rules</code></p>
+    </section>
+
+    <section class="card">
+      <h2>Privacy & Data</h2>
+      <ul>
+        <li><strong>Wat wordt opgeslagen:</strong> alleen groepsinstellingen (links, rules, welcome-tekst, autochat aan/uit).</li>
+        <li><strong>Geen persoonsgegevens</strong> worden opgeslagen of geprofileerd.</li>
+        <li>Instellingen blijven bewaard tot een admin ze wijzigt of de groep verdwijnt.</li>
+        <li>Striktere policy? Plaats een eigen pagina en vul de URL in bij BotFather → Privacy Policy.</li>
+      </ul>
+    </section>
+
+    <section class="card">
+      <h2>Contact</h2>
+      <p>Vragen of verzoeken? Telegram: <a href="https://t.me/CBS_Coin" target="_blank">@CBS_Coin</a> of e-mail: <a href="mailto:you@example.com">you@example.com</a>.</p>
+    </section>
+  </div>
+
+  <div class="footer">
+    <span class="muted">© <span id="y"></span> CBS Bot — Community Builds Sovereignty.</span>
+  </div>
+</div>
+
+<script>
+  const y=document.getElementById('y'); y.textContent=new Date().getFullYear();
+  const tabs=document.querySelectorAll('.tab');
+  const en=document.getElementById('lang-en');
+  const nl=document.getElementById('lang-nl');
+  tabs.forEach(t=>t.addEventListener('click',()=>{
+    tabs.forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    if(t.dataset.lang==='en'){ en.style.display='block'; nl.style.display='none'; }
+    else { en.style.display='none'; nl.style.display='block'; }
+  }));
+</script>
+</body>
+</html>
