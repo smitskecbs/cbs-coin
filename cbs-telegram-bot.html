@@ -4,45 +4,96 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>CBS Bot – Community Helper for Telegram (EN/NL)</title>
-<meta name="description" content="CBS Bot is a friendly community helper for Telegram groups. Welcomes members, replies to greetings, auto-messages, antibot radar, raid mode, invite contest, raid counters, and group-configured links.">
+<meta name="description" content="CBS Bot is a friendly community helper for Telegram groups. Welcomes members, replies to greetings, auto-messages, antibot radar, raid mode with counters, invite contest, and group-configured links.">
+
+<!-- Minimal, sleek, responsive design -->
 <style>
   :root{
-    --bg:#0b0f14; --card:#0f141b; --fg:#eaf2f9; --muted:#a9c1d6; --acc:#46e0c1; --call:#0b131a;
+    --bg:#0a0f14; --bg2:#0c1218; --card:#0e151c; --edge:#1a2230;
+    --fg:#eaf2f9; --muted:#a9c1d6; --acc:#46e0c1; --acc2:#7dd6ff; --call:#0b131a;
+    --shadow:0 20px 60px rgba(0,0,0,.35), 0 1px 0 rgba(255,255,255,.03) inset;
+    --radius:18px;
   }
   *{box-sizing:border-box}
-  body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial; background:linear-gradient(180deg,var(--bg),#0a0c10); color:var(--fg)}
-  .wrap{max-width:1000px; margin:0 auto; padding:28px 16px 80px}
-  .hero{padding:24px; background:linear-gradient(180deg,#0f151d,var(--card)); border:1px solid #18212a; border-radius:18px; box-shadow:0 25px 60px rgba(0,0,0,.35)}
-  h1{font-size:28px; margin:0 0 6px}
-  p.lead{margin:6px 0 0; color:var(--muted)}
-  .tabs{display:flex; gap:8px; margin:20px 0}
-  .tab{padding:10px 14px; border-radius:12px; border:1px solid #1a2230; cursor:pointer; background:#0e141c; color:var(--fg)}
-  .tab.active{outline:2px solid var(--acc)}
-  section.card{padding:18px; border:1px solid #18212a; border-radius:16px; background:rgba(20,26,33,.75); margin:14px 0}
-  h2{font-size:20px; margin:0 0 8px}
-  h3{margin:0 0 6px}
-  code,kbd{background:#0a121a; border:1px solid #1a2632; padding:.15em .35em; border-radius:6px}
-  ul{margin:8px 0 0 22px}
-  ol{margin:8px 0 0 22px}
+  html,body{height:100%}
+  body{
+    margin:0; font-family:Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+    color:var(--fg);
+    background:
+      radial-gradient(1000px 700px at -10% -10%, #132030 0%, transparent 60%),
+      radial-gradient(800px 600px at 110% -20%, #0f2440 0%, transparent 60%),
+      linear-gradient(180deg, var(--bg), var(--bg2) 50%, #070b10 100%);
+  }
+  .wrap{max-width:1100px; margin:0 auto; padding:28px 16px 88px}
+  .hero{
+    padding:28px; border:1px solid var(--edge); border-radius:var(--radius);
+    background:linear-gradient(180deg, rgba(18,24,32,.85), rgba(14,20,28,.8));
+    box-shadow:var(--shadow);
+    position:relative; overflow:hidden;
+  }
+  .hero::after{
+    content:""; position:absolute; inset:0;
+    background:radial-gradient(600px 200px at 20% -30%, rgba(70,224,193,.12), transparent 70%),
+               radial-gradient(500px 200px at 80% -20%, rgba(125,214,255,.12), transparent 70%);
+    pointer-events:none;
+  }
+  h1{margin:0 0 8px; font-size:32px; letter-spacing:.2px}
+  p.lead{margin:10px 0 0; color:var(--muted); line-height:1.5}
+  .badges{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
+  .tag{display:inline-flex; align-items:center; gap:6px; font-size:12px; padding:6px 10px; border:1px solid var(--edge); background:#0e141c; border-radius:999px; color:var(--muted)}
+  .tag i{font-style:normal; opacity:.8}
+  .tabs{display:flex; gap:8px; margin:18px 0}
+  .tab{
+    padding:10px 14px; border-radius:12px; border:1px solid var(--edge);
+    cursor:pointer; background:#0e141c; color:var(--fg); transition:.15s ease;
+  }
+  .tab:hover{transform:translateY(-1px)}
+  .tab.active{outline:2px solid var(--acc); background:linear-gradient(180deg,#101824,#0c1218)}
+  section.card{
+    padding:20px; border:1px solid var(--edge); border-radius:16px;
+    background:linear-gradient(180deg, rgba(16,22,30,.85), rgba(14,20,28,.9));
+    margin:14px 0; box-shadow:var(--shadow);
+  }
+  h2{font-size:22px; margin:0 0 10px; letter-spacing:.2px}
+  h3{margin:0 0 8px; font-size:16px; color:#d7e9f7}
+  p{line-height:1.6}
+  code,kbd{background:#0a121a; border:1px solid #1a2632; padding:.18em .45em; border-radius:6px}
+  ul,ol{margin:8px 0 0 22px; padding-left:0}
+  li{margin:6px 0}
   .muted{color:var(--muted)}
-  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:12px}
-  .footer{margin-top:24px; color:var(--muted); font-size:14px}
-  a{color:var(--acc); text-decoration:none}
-  .kbd{padding:.2em .4em; border-radius:6px; border:1px solid #1e2835}
-  .callout{border-left:4px solid var(--acc); padding:12px 14px; background:var(--call); border-radius:10px}
-  .qs{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px}
-  .qs .step{border:1px solid #1a2230; border-radius:10px; padding:10px 12px; background:#0f161e}
+  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px}
+  .two{display:grid; grid-template-columns:1fr; gap:16px}
+  @media(min-width:900px){ .two{grid-template-columns:1fr 1fr} }
+  .qs{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px}
+  .qs .step{
+    border:1px solid var(--edge); border-radius:12px; padding:12px 12px; background:#0f161e; transition:.15s ease;
+  }
+  .qs .step:hover{transform:translateY(-1px)}
   .qs .n{font-weight:700; color:var(--acc); margin-right:6px}
-  .tag{display:inline-block; font-size:12px; padding:2px 8px; border:1px solid #1a2230; background:#0e141c; border-radius:999px; color:var(--muted); margin-left:8px}
-  .two{display:grid; grid-template-columns:1fr; gap:12px}
-  @media(min-width:860px){ .two{grid-template-columns:1fr 1fr} }
+  .callout{border-left:4px solid var(--acc); padding:12px 14px; background:var(--call); border-radius:10px}
+  .pill{
+    display:inline-block; padding:2px 10px; border-radius:999px; border:1px solid var(--edge);
+    color:var(--muted); background:#0e141c; font-size:12px; margin-left:8px
+  }
+  .footer{margin-top:28px; color:var(--muted); font-size:14px; text-align:center}
+  a{color:var(--acc); text-decoration:none}
+  a:hover{text-decoration:underline}
+  .kbd{padding:.25em .5em; border-radius:6px; border:1px solid #1e2835}
+  .tick{color:var(--acc)}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="hero">
-    <h1>CBS Bot – Community Helper for Telegram <span class="tag">vNext</span></h1>
-    <p class="lead">Welcomes members • subtle replies • inspiring auto-messages • antibot radar • <strong>raid mode</strong> • <strong>invite contest</strong> • <strong>raid counters</strong> • per-group links (website, X/Twitter, Discord, Telegram, mint/CA, etc.).</p>
+    <h1>CBS Bot – Community Helper for Telegram</h1>
+    <p class="lead">Welcomes members • subtle replies • inspiring auto-messages • antibot radar • <strong>raid mode</strong> with counters • <strong>invite contest</strong> • per-group links (website, Twitter/X, Discord, Telegram, mint/CA, etc.).</p>
+    <div class="badges">
+      <span class="tag"><i>✨</i> Polished UI</span>
+      <span class="tag"><i>📊</i> Raid Counters</span>
+      <span class="tag"><i>🧮</i> Join-Raid Status</span>
+      <span class="tag"><i>🏆</i> Invite Contest</span>
+      <span class="tag"><i>🔧</i> Admin-only config</span>
+    </div>
     <div class="tabs">
       <button class="tab active" data-lang="en">English</button>
       <button class="tab" data-lang="nl">Nederlands</button>
@@ -56,33 +107,33 @@
       <div class="qs">
         <div class="step"><span class="n">1.</span>Invite <b>@CBS_Coin_bot</b> → BotFather: <b>Allow Groups = ON</b>, <b>Group Privacy = OFF</b>.</div>
         <div class="step"><span class="n">2.</span>Optional: Make bot <b>Admin</b> (needed for antibot bans & invite links).</div>
-        <div class="step"><span class="n">3.</span>Set links: <code>/set website &lt;url&gt;</code>, <code>/set x &lt;url&gt;</code>, …</div>
+        <div class="step"><span class="n">3.</span>Set links: <code>/set website &lt;url&gt;</code>, <code>/set twitter &lt;url&gt;</code>, …</div>
         <div class="step"><span class="n">4.</span>Autochat is <b>ON</b> by default. Toggle: <code>/set autochat off</code>.</div>
         <div class="step"><span class="n">5.</span>Raid mode (optional): <code>/set raid on</code> → <code>/raidtarget &lt;url&gt;</code> → <code>/raid</code>.</div>
         <div class="step"><span class="n">6.</span>Invite Contest (optional): <code>/set contest on</code> → members run <code>/mylink</code> → track with <code>/contest</code>.</div>
       </div>
       <div class="callout" style="margin-top:10px">
-        <strong>New:</strong> <em>Raid Counters</em> (Like/Repost/Comment), <em>Join-raid status</em>, and quick progress commands.
+        <strong>New:</strong> <em>Raid Counters</em> (Like/Repost/Comment), <em>Join-raid status</em>, and <code>/x</code> command (no more “x” keyword spam).
       </div>
     </section>
 
     <section class="card">
       <h2>What is CBS Bot?</h2>
-      <p>CBS Bot is a friendly, lightweight helper for any Telegram group. It keeps chats warm (welcome messages and subtle replies), shares occasional inspiring messages, lets admins configure group links, can block unwanted bots, supports <strong>raid mode</strong> for X/Twitter engagement, and provides an <strong>invite contest</strong> with personal links and a leaderboard.</p>
+      <p>CBS Bot keeps chats warm (welcome messages and subtle replies), shares occasional inspiring messages, lets admins configure group links, can block unwanted bots, supports <strong>raid mode</strong> for Twitter/X engagement, and offers an <strong>invite contest</strong> with personal links and a leaderboard.</p>
       <div class="grid">
         <div class="card">
           <h3>Key features</h3>
           <ul>
             <li>👋 Auto-welcome new members (customizable)</li>
-            <li>💬 Subtle replies to greetings / thanks / fun</li>
+            <li>💬 Subtle replies to greetings / thanks / fun <span class="pill">max 1/30s per chat</span></li>
             <li>✨ Auto-chat: inspiring messages every 30 min (on by default)</li>
-            <li>🛡️ Antibot radar: auto-block new bots (default off, per-group) + whitelist</li>
-            <li>🚩 <strong>Raid mode</strong>: drop a raid message with <code>/raid</code> (default off)</li>
+            <li>🛡️ Antibot radar: auto-block new bots (default off) + whitelist</li>
+            <li>🚩 <strong>Raid mode</strong>: post a raid message with <code>/raid</code></li>
             <li>📊 <strong>Raid Counters</strong>: Like / Repost / Comment buttons with live tally</li>
-            <li>🧮 <strong>Join-raid status</strong>: monitor burst joins over a time window</li>
+            <li>🧮 <strong>Join-raid status</strong>: monitor burst joins in a time window</li>
             <li>🏆 <strong>Invite contest</strong>: personal invite links, auto scoring, leaderboard</li>
-            <li>🔗 Per-group links: <code>website</code>, <code>twitter/x</code>, <code>telegram</code>, <code>discord</code>, <code>facebook</code>, <code>instagram</code>, <code>youtube</code>, <code>mint</code>, <code>ca</code></li>
-            <li>🛡️ Admin-only configuration • 🧠 30s reply throttle per chat</li>
+            <li>🔗 Group links: <code>website</code>, <code>twitter</code>, <code>telegram</code>, <code>discord</code>, <code>facebook</code>, <code>instagram</code>, <code>youtube</code>, <code>mint</code>, <code>ca</code></li>
+            <li>🔧 Admin-only configuration</li>
           </ul>
         </div>
         <div class="card">
@@ -104,19 +155,20 @@
           <h3>Setup</h3>
           <ul>
             <li><code>/set raid on</code> — enable raid mode</li>
-            <li><code>/raidtarget &lt;url&gt;</code> — set X/Twitter URL (post, profile, hashtag)</li>
+            <li><code>/raidtarget &lt;url&gt;</code> — set Twitter/X URL (post, profile, hashtag)</li>
             <li><code>/raidmsg &lt;text with {url}&gt;</code> — set template; <code>{url}</code> will be replaced</li>
             <li><code>/raid</code> — post raid message with <em>Like/Repost/Comment</em> buttons</li>
             <li><code>/raidnow</code> — admin shortcut to post regardless of raid mode</li>
           </ul>
-          <p class="muted">Members tap the buttons once each; bot counts unique users per action.</p>
+          <p class="muted">Members can tap each button once; the bot counts unique users per action.</p>
         </div>
         <div>
           <h3>Engagement goals & progress</h3>
           <ul>
-            <li><code>/raidsetreq &lt;likes&gt; &lt;reposts&gt; &lt;comments&gt;</code> — set targets<br><span class="muted">Example:</span> <code>/raidsetreq 50 40 30</code></li>
+            <li><code>/raidsetreq &lt;likes&gt; &lt;reposts&gt; &lt;comments&gt;</code> — set targets <br><span class="muted">Example:</span> <code>/raidsetreq 50 40 30</code></li>
             <li><code>/raidprogress</code> — show current totals vs targets</li>
             <li><code>/raidreset</code> — reset counters for a new raid</li>
+            <li><code>/x</code> — show the configured Twitter/X link</li>
           </ul>
           <div class="callout">
             <strong>FAQ:</strong> <em>“How do I know the raid is counting?”</em><br>
@@ -132,26 +184,25 @@
         <div>
           <h3>Configure</h3>
           <ul>
-            <li><code>/setraid &lt;joins&gt; &lt;minutes&gt;</code> — threshold window<br><span class="muted">Example:</span> <code>/setraid 10 5</code> (10 joins in 5 minutes)</li>
+            <li><code>/setraid &lt;joins&gt; &lt;minutes&gt;</code> — threshold window <br><span class="muted">Example:</span> <code>/setraid 10 5</code></li>
             <li><code>/raidstatus</code> — show recent joins vs threshold</li>
           </ul>
         </div>
         <div>
           <h3>How it works</h3>
-          <p>Each new join timestamps into a rolling window per chat. <code>/raidstatus</code> shows the count in the last <em>N</em> minutes and your set threshold. Use this to decide when to moderate or enable stricter rules.</p>
+          <p>Each new join timestamps into a rolling window per chat. <code>/raidstatus</code> shows the count in the last <em>N</em> minutes and your threshold. Use it to decide when to moderate stricter.</p>
         </div>
       </div>
     </section>
 
     <section class="card">
       <h2>Commands (admins)</h2>
-      <p>Use <code>/set &lt;key&gt; &lt;value&gt;</code> to configure links and texts:</p>
       <div class="grid">
         <div class="card">
           <h3>Links</h3>
           <ul>
             <li><code>/set website &lt;url&gt;</code></li>
-            <li><code>/set twitter &lt;url&gt;</code> or <code>/set x &lt;url&gt;</code></li>
+            <li><code>/set twitter &lt;url&gt;</code></li>
             <li><code>/set telegram &lt;url&gt;</code>, <code>/set discord &lt;url&gt;</code></li>
             <li><code>/set facebook &lt;url&gt;</code>, <code>/set instagram &lt;url&gt;</code></li>
             <li><code>/set youtube &lt;url&gt;</code></li>
@@ -166,8 +217,8 @@
             <li><code>/set welcome &lt;text&gt;</code> — welcome template (use <code>{name}</code>)</li>
             <li><code>/set autochat on</code> | <code>off</code> — periodic messages</li>
             <li><code>/set antibot on</code> | <code>off</code> — enable/disable bot blocking</li>
-            <li><code>/allowbot @username</code> / <code>/unallowbot @username</code> / <code>/whitelist</code></li>
-            <li><code>/unset &lt;key&gt;</code> — remove a stored key • <code>/get</code> — show settings • <code>/help</code></li>
+            <li><code>/allowbot @user</code> / <code>/unallowbot @user</code> / <code>/whitelist</code></li>
+            <li><code>/unset &lt;key&gt;</code> • <code>/get</code> • <code>/help</code></li>
           </ul>
         </div>
         <div class="card">
@@ -185,14 +236,6 @@
     </section>
 
     <section class="card">
-      <h2>Member usage (no commands)</h2>
-      <p>Members can type a keyword to get the group’s link/info (if set):</p>
-      <p><code>website</code> · <code>twitter</code>/<code>x</code> · <code>telegram</code> · <code>discord</code> · <code>facebook</code> · <code>instagram</code> · <code>youtube</code> · <code>mint</code> · <code>ca</code> · <code>rules</code></p>
-      <p><strong>Raid:</strong> when raid mode is ON, any member can run <code>/raid</code> to drop the current raid message with buttons.</p>
-      <p><strong>Invite Contest:</strong> members run <code>/mylink</code> to get their personal link; check standings with <code>/contest</code>.</p>
-    </section>
-
-    <section class="card">
       <h2>Troubleshooting & Ops</h2>
       <div class="two">
         <div>
@@ -202,17 +245,16 @@
             <li><code>sudo systemctl restart adje</code></li>
             <li>Logs: <code>journalctl -u adje -f</code></li>
           </ol>
-          <p class="muted">If you changed the service file: <code>sudo systemctl daemon-reload</code> then restart.</p>
+          <p class="muted">Changed the service file? <code>sudo systemctl daemon-reload</code> then restart.</p>
         </div>
         <div>
           <h3>Common issues</h3>
           <ul>
-            <li><em>Buttons not counting?</em> Use <code>/raidsetreq 0 0 0</code> to test; then <code>/raid</code> and tap buttons once.</li>
-            <li><em>“How to set comment & repost number?”</em> <code>/raidsetreq &lt;likes&gt; &lt;reposts&gt; &lt;comments&gt;</code></li>
-            <li><em>“How to see if raid is counting?”</em> <code>/raidprogress</code></li>
-            <li><em>Join-raid window?</em> <code>/setraid 10 5</code> then <code>/raidstatus</code></li>
-            <li><em>Bot can’t create invite links?</em> Make it Admin with “Invite users via link”.</li>
-            <li><em>NetworkError httpx.ReadError</em> Usually transient; bot will recover.</li>
+            <li><em>Buttons not counting?</em> Test with <code>/raidsetreq 0 0 0</code> then <code>/raid</code> and tap once.</li>
+            <li><em>“How to set comment & repost?”</em> <code>/raidsetreq &lt;likes&gt; &lt;reposts&gt; &lt;comments&gt;</code></li>
+            <li><em>“Is it counting?”</em> <code>/raidprogress</code></li>
+            <li><em>Join peaks?</em> <code>/setraid 10 5</code> → <code>/raidstatus</code></li>
+            <li><em>Invite link fails?</em> Make bot Admin with “Invite users via link”.</li>
           </ul>
         </div>
       </div>
@@ -240,33 +282,33 @@
       <div class="qs">
         <div class="step"><span class="n">1.</span>Nodig <b>@CBS_Coin_bot</b> uit → BotFather: <b>Allow Groups = Aan</b>, <b>Group Privacy = Uit</b>.</div>
         <div class="step"><span class="n">2.</span>Optioneel: maak de bot <b>Admin</b> (nodig voor antibot bans & invite links).</div>
-        <div class="step"><span class="n">3.</span>Zet links: <code>/set website &lt;url&gt;</code>, <code>/set x &lt;url&gt;</code>, …</div>
+        <div class="step"><span class="n">3.</span>Zet links: <code>/set website &lt;url&gt;</code>, <code>/set twitter &lt;url&gt;</code>, …</div>
         <div class="step"><span class="n">4.</span>Autochat staat <b>Aan</b>. Uitzetten: <code>/set autochat off</code>.</div>
         <div class="step"><span class="n">5.</span>Raid-modus (optioneel): <code>/set raid on</code> → <code>/raidtarget &lt;url&gt;</code> → <code>/raid</code>.</div>
         <div class="step"><span class="n">6.</span>Invite Contest (optioneel): <code>/set contest on</code> → leden gebruiken <code>/mylink</code> → overzicht met <code>/contest</code>.</div>
       </div>
       <div class="callout" style="margin-top:10px">
-        <strong>Nieuw:</strong> <em>Raid-tellers</em> (Like/Repost/Comment), <em>Join-raid status</em>, en snelle voortgangscommando’s.
+        <strong>Nieuw:</strong> <em>Raid-tellers</em> (Like/Repost/Comment), <em>Join-raid status</em>, en <code>/x</code> commando (geen “x”-keyword spam meer).
       </div>
     </section>
 
     <section class="card">
       <h2>Wat is CBS Bot?</h2>
-      <p>CBS Bot is een vriendelijke, lichte helper voor elke Telegram-groep. Hij houdt de chat levendig (welkomstberichten en subtiele reacties), deelt af en toe inspirerende berichten, laat admins groepslinks instellen, kan bots blokkeren, ondersteunt <strong>raid-modus</strong> en heeft een <strong>invite contest</strong> met persoonlijke links en leaderboard.</p>
+      <p>De bot houdt de chat levendig (welkom & subtiele reacties), deelt af en toe inspirerende berichten, laat admins links instellen, kan bots blokkeren, ondersteunt <strong>raid-modus</strong> voor Twitter/X-engagement en biedt een <strong>invite contest</strong> met persoonlijke links en leaderboard.</p>
       <div class="grid">
         <div class="card">
           <h3>Belangrijkste functies</h3>
           <ul>
             <li>👋 Automatisch nieuwe leden welkom heten (aanpasbaar)</li>
-            <li>💬 Subtiele reacties op begroetingen / dank / fun</li>
+            <li>💬 Subtiele reacties op begroetingen / dank / fun <span class="pill">max 1/30s per chat</span></li>
             <li>✨ Auto-chat: inspirerende berichten elke 30 min (standaard aan)</li>
-            <li>🛡️ Antibot radar: blokkeer nieuwe bots (standaard uit, per groep instelbaar) + whitelist</li>
-            <li>🚩 <strong>Raid-modus</strong>: laat leden met <code>/raid</code> het raid-bericht posten (standaard uit)</li>
+            <li>🛡️ Antibot radar: blokkeer nieuwe bots (standaard uit) + whitelist</li>
+            <li>🚩 <strong>Raid-modus</strong>: post met <code>/raid</code></li>
             <li>📊 <strong>Raid-tellers</strong>: Like / Repost / Comment knoppen met live telling</li>
             <li>🧮 <strong>Join-raid status</strong>: bekijk piek-joins binnen een tijdvenster</li>
             <li>🏆 <strong>Invite contest</strong>: persoonlijke invite links, auto-scoring, leaderboard</li>
-            <li>🔗 Per-groep links: <code>website</code>, <code>twitter/x</code>, <code>telegram</code>, <code>discord</code>, <code>facebook</code>, <code>instagram</code>, <code>youtube</code>, <code>mint</code>, <code>ca</code></li>
-            <li>🛡️ Alleen admins wijzigen instellingen • 🧠 30s throttling per chat</li>
+            <li>🔗 Groepslinks: <code>website</code>, <code>twitter</code>, <code>telegram</code>, <code>discord</code>, <code>facebook</code>, <code>instagram</code>, <code>youtube</code>, <code>mint</code>, <code>ca</code></li>
+            <li>🔧 Alleen admins kunnen instellen</li>
           </ul>
         </div>
         <div class="card">
@@ -288,7 +330,7 @@
           <h3>Instellen</h3>
           <ul>
             <li><code>/set raid on</code> — schakel raid-modus in</li>
-            <li><code>/raidtarget &lt;url&gt;</code> — X/Twitter-URL (post, profiel, hashtag)</li>
+            <li><code>/raidtarget &lt;url&gt;</code> — Twitter/X-URL (post, profiel, hashtag)</li>
             <li><code>/raidmsg &lt;tekst met {url}&gt;</code> — sjabloon; <code>{url}</code> wordt vervangen</li>
             <li><code>/raid</code> — post raid-bericht met <em>Like/Repost/Comment</em> knoppen</li>
             <li><code>/raidnow</code> — admin-snelcommando om direct te posten</li>
@@ -298,9 +340,10 @@
         <div>
           <h3>Doelen & voortgang</h3>
           <ul>
-            <li><code>/raidsetreq &lt;likes&gt; &lt;reposts&gt; &lt;comments&gt;</code> — stel doelen<br><span class="muted">Voorbeeld:</span> <code>/raidsetreq 50 40 30</code></li>
+            <li><code>/raidsetreq &lt;likes&gt; &lt;reposts&gt; &lt;comments&gt;</code> — stel doelen <br><span class="muted">Voorbeeld:</span> <code>/raidsetreq 50 40 30</code></li>
             <li><code>/raidprogress</code> — toon huidige stand vs doelen</li>
-            <li><code>/raidreset</code> — reset de tellers voor een nieuwe raid</li>
+            <li><code>/raidreset</code> — reset tellers voor een nieuwe raid</li>
+            <li><code>/x</code> — toon de ingestelde Twitter/X-link</li>
           </ul>
           <div class="callout">
             <strong>FAQ:</strong> <em>“Hoe weet ik dat de raid telt?”</em><br>
@@ -316,26 +359,25 @@
         <div>
           <h3>Instellen</h3>
           <ul>
-            <li><code>/setraid &lt;joins&gt; &lt;minuten&gt;</code> — drempelvenster<br><span class="muted">Voorbeeld:</span> <code>/setraid 10 5</code> (10 joins in 5 minuten)</li>
+            <li><code>/setraid &lt;joins&gt; &lt;minuten&gt;</code> — drempelvenster <br><span class="muted">Voorbeeld:</span> <code>/setraid 10 5</code></li>
             <li><code>/raidstatus</code> — recente joins vs drempel</li>
           </ul>
         </div>
         <div>
           <h3>Werking</h3>
-          <p>Elke nieuwe join krijgt een timestamp in een rollend venster per chat. <code>/raidstatus</code> toont de telling in de laatste <em>N</em> minuten en je ingestelde drempel. Handig om te bepalen wanneer je strenger moet modereren.</p>
+          <p>Elke nieuwe join krijgt een timestamp in een rollend venster per chat. <code>/raidstatus</code> toont de telling in de laatste <em>N</em> minuten en je drempel. Handig om te bepalen wanneer je strenger modereert.</p>
         </div>
       </div>
     </section>
 
     <section class="card">
       <h2>Commando’s (admins)</h2>
-      <p>Gebruik <code>/set &lt;key&gt; &lt;value&gt;</code> om links en teksten te zetten:</p>
       <div class="grid">
         <div class="card">
           <h3>Links</h3>
           <ul>
             <li><code>/set website &lt;url&gt;</code></li>
-            <li><code>/set twitter &lt;url&gt;</code> of <code>/set x &lt;url&gt;</code></li>
+            <li><code>/set twitter &lt;url&gt;</code></li>
             <li><code>/set telegram &lt;url&gt;</code>, <code>/set discord &lt;url&gt;</code></li>
             <li><code>/set facebook &lt;url&gt;</code>, <code>/set instagram &lt;url&gt;</code></li>
             <li><code>/set youtube &lt;url&gt;</code></li>
@@ -350,8 +392,8 @@
             <li><code>/set welcome &lt;tekst&gt;</code> — welkomsjabloon (gebruik <code>{name}</code>)</li>
             <li><code>/set autochat on</code> | <code>off</code> — periodieke berichten</li>
             <li><code>/set antibot on</code> | <code>off</code> — zet bot-blokkade aan/uit</li>
-            <li><code>/allowbot @username</code> / <code>/unallowbot @username</code> / <code>/whitelist</code></li>
-            <li><code>/unset &lt;key&gt;</code> — verwijder sleutel • <code>/get</code> — instellingen • <code>/help</code></li>
+            <li><code>/allowbot @user</code> / <code>/unallowbot @user</code> / <code>/whitelist</code></li>
+            <li><code>/unset &lt;key&gt;</code> • <code>/get</code> • <code>/help</code></li>
           </ul>
         </div>
         <div class="card">
@@ -369,14 +411,6 @@
     </section>
 
     <section class="card">
-      <h2>Gebruik door leden (zonder commando’s)</h2>
-      <p>Leden kunnen met een trefwoord de ingestelde link/info opvragen (als die bestaat):</p>
-      <p><code>website</code> · <code>twitter</code>/<code>x</code> · <code>telegram</code> · <code>discord</code> · <code>facebook</code> · <code>instagram</code> · <code>youtube</code> · <code>mint</code> · <code>ca</code> · <code>rules</code></p>
-      <p><strong>Raid:</strong> wanneer raid-modus aan staat, kan iedereen <code>/raid</code> gebruiken om het huidige raid-bericht met knoppen te posten.</p>
-      <p><strong>Invite Contest:</strong> leden gebruiken <code>/mylink</code> voor hun persoonlijke link; stand met <code>/contest</code>.</p>
-    </section>
-
-    <section class="card">
       <h2>Probleemoplossing & Beheer</h2>
       <div class="two">
         <div>
@@ -386,15 +420,16 @@
             <li><code>sudo systemctl restart adje</code></li>
             <li>Logs: <code>journalctl -u adje -f</code></li>
           </ol>
-          <p class="muted">Service aangepast? Doe eerst <code>sudo systemctl daemon-reload</code> en herstart dan.</p>
+          <p class="muted">Service gewijzigd? <code>sudo systemctl daemon-reload</code> en dan herstart.</p>
         </div>
         <div>
           <h3>Veelgestelde vragen</h3>
           <ul>
-            <li><em>“Hoe weet ik dat de raid telt?”</em> → <code>/raidprogress</code></li>
-            <li><em>“Hoe zet ik comment & repost aantal?”</em> → <code>/raidsetreq &lt;likes&gt; &lt;reposts&gt; &lt;comments&gt;</code></li>
-            <li><em>Join-pieken?</em> → <code>/setraid 10 5</code> en <code>/raidstatus</code></li>
-            <li><em>Invite link maken mislukt?</em> Maak de bot Admin met “Invite users via link”.</li>
+            <li><em>Tellers doen niets?</em> Test met <code>/raidsetreq 0 0 0</code> → <code>/raid</code> → één keer tikken.</li>
+            <li><em>Comment & repost aantal?</em> <code>/raidsetreq &lt;likes&gt; &lt;reposts&gt; &lt;comments&gt;</code></li>
+            <li><em>Telt ‘ie?</em> <code>/raidprogress</code></li>
+            <li><em>Join pieken?</em> <code>/setraid 10 5</code> → <code>/raidstatus</code></li>
+            <li><em>Invite link lukt niet?</em> Maak de bot Admin met “Invite users via link”.</li>
           </ul>
         </div>
       </div>
@@ -430,6 +465,7 @@
     t.classList.add('active');
     if(t.dataset.lang==='en'){ en.style.display='block'; nl.style.display='none'; }
     else { en.style.display='none'; nl.style.display='block'; }
+    window.scrollTo({top:0, behavior:'smooth'});
   }));
 </script>
 </body>
