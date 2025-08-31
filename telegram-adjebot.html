@@ -1,186 +1,282 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<title>Adje Telegram Bot — Guide (NL & EN)</title>
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Adje Telegram Bot — Guide (EN & NL)</title>
 <style>
-  :root{--bg:#0b0f14;--card:#121821;--muted:#9fb0c3;--text:#e8f0fb;--acc:#5cc8ff;--ok:#7ee787;--warn:#ffb86b;--err:#ff7b72}
+  :root{
+    --bg:#0b0f14;--card:#111826;--muted:#9fb0c3;--text:#e8f0fb;--line:#1e2633;
+    --acc:#5cc8ff;--ok:#7ee787;--warn:#ffb86b;--err:#ff7b72
+  }
   html,body{background:var(--bg);color:var(--text);font:16px/1.6 system-ui,Segoe UI,Arial,sans-serif;margin:0}
   .wrap{max-width:980px;margin:auto;padding:28px}
-  h1,h2,h3{line-height:1.2;margin:1.2em 0 .5em}
-  .muted{color:var(--muted)}
-  .card{background:var(--card);border:1px solid #1e2633;border-radius:14px;padding:18px;margin:18px 0}
+  header{display:flex;align-items:center;gap:16px;justify-content:space-between;margin-bottom:8px}
+  .brand{display:flex;align-items:center;gap:14px}
+  .brand img{height:48px;width:auto;display:block;border-radius:10px;background:#0f1622;border:1px solid var(--line)}
+  .title h1{font-size:1.6rem;margin:.2rem 0 0}
+  .title .muted{color:var(--muted);font-size:.95rem;margin-top:2px}
+  .langswitch{display:flex;gap:8px}
+  .langswitch button{background:#0f1622;color:var(--text);border:1px solid var(--line);padding:8px 10px;border-radius:10px;cursor:pointer}
+  .langswitch button.active{outline:2px solid var(--acc)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;margin:18px 0}
+  h2,h3{line-height:1.25;margin:1.2em 0 .5em}
   code,kbd,pre{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
   pre{background:#0a0f15;border:1px solid #1b2230;border-radius:10px;padding:12px;overflow:auto}
   .grid{display:grid;gap:14px}
   .grid.cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
   .tag{display:inline-block;background:#0f1622;border:1px solid #1c2433;color:#cfe6ff;border-radius:999px;padding:4px 10px;margin:2px 6px 2px 0}
-  a{color:var(--acc);text-decoration:none}
-  a:hover{text-decoration:underline}
+  a{color:var(--acc)} a:hover{text-decoration:underline}
   .ok{color:var(--ok)} .warn{color:var(--warn)} .err{color:var(--err)}
   .small{font-size:.95em}
+  .lang{display:none}
+  .lang.show{display:block}
+  .callout{border-left:4px solid var(--acc);padding:10px 12px;background:#0f1622;border:1px solid var(--line);border-radius:10px;margin:12px 0}
   @media (max-width:800px){.grid.cols-2{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <h1>Adje Telegram Bot</h1>
-  <p class="muted">Neutral, multi-group Telegram bot. English &amp; Dutch guide below.</p>
+  <!-- Place these two files next to this HTML: adje.png (bot avatar) and logo.png (your project logo). -->
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <img src="logo.png" alt="Project logo" />
+        <img src="adje.png" alt="Adje bot logo" />
+        <div class="title">
+          <h1>Adje Telegram Bot</h1>
+          <div class="muted">Official bot username: <b>@Adjecatbot</b> • Neutral, reusable, multi-group</div>
+        </div>
+      </div>
+      <div class="langswitch" aria-label="Language switch">
+        <button id="btn-en" class="active" type="button">English</button>
+        <button id="btn-nl" type="button">Nederlands</button>
+      </div>
+    </header>
 
-  <div class="card">
-    <h2>Quick Start</h2>
-    <div class="grid cols-2">
-      <div>
-        <h3>Everyone</h3>
-        <div class="tag">/links</div>
-        <div class="tag">/website</div>
-        <div class="tag">/telegram</div>
-        <div class="tag">/twitter</div>
-        <div class="tag">/x</div>
-        <div class="tag">/discord</div>
-        <div class="tag">/instagram</div>
-        <div class="tag">/facebook</div>
-        <div class="tag">/mint</div>
-        <div class="tag">/ca</div>
-        <div class="tag">/topic</div>
-        <div class="tag">/welcome</div>
-        <div class="tag">/rules</div>
-        <div class="tag">/gm</div>
-        <div class="tag">/streak</div>
-        <div class="tag">/autoreplies</div>
-        <div class="tag">/raid</div>
-        <div class="tag">/raid_status</div>
+    <!-- ================= ENGLISH ================= -->
+    <section id="lang-en" class="lang show" lang="en">
+      <div class="card">
+        <h2>What is Adje?</h2>
+        <p>Adje is a clean, neutral Telegram bot you can use in <b>any group</b> or DM. It shows your project links, welcome/rules, does a daily <b>/gm streak</b>, a light <b>auto‑chat</b> (slash triggers only), and simple <b>raid counters</b>.</p>
+        <div class="callout small">
+          <b>Bot handle:</b> <code>@Adjecatbot</code><br/>
+          <b>Tip:</b> In busy groups with other bots, mention Adje explicitly, e.g. <code>/set@Adjecatbot website https://…</code>
+        </div>
       </div>
-      <div>
-        <h3>Admins</h3>
-        <div class="tag">/set</div>
-        <div class="tag">/unset</div>
-        <div class="tag">/aset</div>
-        <div class="tag">/aunset</div>
-        <div class="tag">/enable_auto</div>
-        <div class="tag">/disable_auto</div>
-        <div class="tag">/addreply</div>
-        <div class="tag">/delreply</div>
-        <div class="tag">/clearreplies</div>
-        <div class="tag">/raid_add</div>
-        <div class="tag">/raid_set</div>
-        <div class="tag">/raid_end</div>
+
+      <div class="card">
+        <h2>Quick Start (Admin)</h2>
+        <ol>
+          <li><b>DM @Adjecatbot</b> → send <code>/start</code>. If you get a reply, the bot is online.</li>
+          <li><b>Add Adje to your group</b> (you must be admin). Group privacy can stay ON.</li>
+          <li><b>Set your links</b> inside the group (or DM):
+            <pre>/set@Adjecatbot website https://example.com
+/set@Adjecatbot x https://x.com/yourhandle
+/set@Adjecatbot telegram https://t.me/yourgroup
+/set@Adjecatbot mint https://solscan.io/token/YOUR_MINT
+/set@Adjecatbot ca YOUR_SOLANA_MINT_ADDRESS   (base58, no https)
+/set@Adjecatbot topic Layer-2, Airdrops, NFT, Staking</pre>
+          </li>
+          <li><b>Set texts</b>:
+            <pre>/set@Adjecatbot welcome Welcome aboard! Check /links, read /rules, and say /gm to start your streak. Enjoy!
+/set@Adjecatbot rules Be respectful | No scams/spam | No doxxing | No NSFW | DYOR | Mods’ decisions are final</pre>
+          </li>
+          <li><b>Test</b>:
+            <pre>/links@Adjecatbot
+/website@Adjecatbot   /x@Adjecatbot   /mint@Adjecatbot   /ca@Adjecatbot
+/welcome@Adjecatbot   /rules@Adjecatbot   /topic@Adjecatbot</pre>
+          </li>
+        </ol>
       </div>
+
+      <div class="card">
+        <h2>Everyone — Commands</h2>
+        <div class="grid cols-2">
+          <div>
+            <h3>Links & Info</h3>
+            <div class="tag">/links</div>
+            <div class="tag">/website</div>
+            <div class="tag">/telegram</div>
+            <div class="tag">/twitter</div>
+            <div class="tag">/x</div>
+            <div class="tag">/discord</div>
+            <div class="tag">/instagram</div>
+            <div class="tag">/facebook</div>
+            <div class="tag">/mint</div>
+            <div class="tag">/ca</div>
+            <div class="tag">/topic</div>
+            <div class="tag">/welcome</div>
+            <div class="tag">/rules</div>
+          </div>
+          <div>
+            <h3>Streaks & Auto‑chat</h3>
+            <p><b>/gm</b> once per calendar day increments your streak. <b>/streak</b> shows yours + top 5.</p>
+            <div class="tag">/gm</div>
+            <div class="tag">/streak</div>
+            <p class="small">Auto‑chat replies to slash triggers only (no spam). See what’s available:</p>
+            <div class="tag">/autoreplies</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Admins — Manage Settings</h2>
+        <h3>Set / Unset</h3>
+        <pre>/set &lt;key&gt; &lt;value&gt;         (alias: /aset)
+/unset &lt;key&gt;              (alias: /aunset)
+Keys: website, telegram, twitter (alias: x), discord, instagram, facebook, mint, ca, topic, welcome, rules</pre>
+        <p class="small">If another bot steals <code>/set</code>, use <code>/aset</code> or mention Adje: <code>/set@Adjecatbot …</code> or <code>/@Adjecatbot set …</code></p>
+
+        <h3>Auto‑chat</h3>
+        <pre>/enable_auto
+/autoreplies
+/addreply lfg LFG! 🚀
+/delreply lfg
+/clearreplies
+/disable_auto</pre>
+
+        <h3>Raids</h3>
+        <pre>/raid https://x.com/handle/status/12345 50 30 20
+/raid_status
+/raid_add likes 5
+/raid_set replies 10
+/raid_end</pre>
+      </div>
+
+      <div class="card">
+        <h2>Troubleshooting</h2>
+        <ul>
+          <li><b>No response?</b> Try in DM first: <code>@Adjecatbot</code> → <code>/start</code>. If it works in DM but not in your group, call the bot explicitly: <code>/links@Adjecatbot</code>.</li>
+          <li><b>Another bot grabs /set:</b> use <code>/aset</code> or <code>/set@Adjecatbot …</code>.</li>
+          <li><b>Solana CA:</b> it’s your <b>mint address</b> (base58, no <code>https://</code>).</li>
+          <li><b>Safety:</b> Never share your seed phrase. Admins never DM first.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ================= NEDERLANDS ================= -->
+    <section id="lang-nl" class="lang" lang="nl">
+      <div class="card">
+        <h2>Wat is Adje?</h2>
+        <p>Adje is een schone, neutrale Telegram‑bot die je in <b>elke groep</b> of DM kunt gebruiken. Toont projectlinks, welkom/regels, heeft een dagelijkse <b>/gm‑streak</b>, een lichte <b>auto‑chat</b> (alleen slash‑triggers) en simpele <b>raid‑tellers</b>.</p>
+        <div class="callout small">
+          <b>Botnaam:</b> <code>@Adjecatbot</code><br/>
+          <b>Tip:</b> In drukke groepen met andere bots kun je Adje expliciet aanspreken, bijv. <code>/set@Adjecatbot website https://…</code>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Snel starten (Admin)</h2>
+        <ol>
+          <li><b>DM @Adjecatbot</b> → stuur <code>/start</code>. Krijg je antwoord, dan is de bot online.</li>
+          <li><b>Voeg Adje toe aan je groep</b> (jij moet admin zijn). Group privacy mag AAN blijven.</li>
+          <li><b>Zet je links</b> in de groep (of DM):
+            <pre>/set@Adjecatbot website https://jouwsite.xyz
+/set@Adjecatbot x https://x.com/jouwhandle
+/set@Adjecatbot telegram https://t.me/jouwgroep
+/set@Adjecatbot mint https://solscan.io/token/JOUW_MINT
+/set@Adjecatbot ca JOUW_SOLANA_MINT_ADRES   (base58, geen https)
+/set@Adjecatbot topic Layer-2, Airdrops, NFT, Staking</pre>
+          </li>
+          <li><b>Zet teksten</b>:
+            <pre>/set@Adjecatbot welcome Welkom! Check /links, lees /rules en zeg /gm om je streak te starten.
+/set@Adjecatbot rules Wees respectvol | Geen scams/spam | Geen doxxing | Geen NSFW | DYOR | Beslissingen van mods zijn definitief</pre>
+          </li>
+          <li><b>Test</b>:
+            <pre>/links@Adjecatbot
+/website@Adjecatbot   /x@Adjecatbot   /mint@Adjecatbot   /ca@Adjecatbot
+/welcome@Adjecatbot   /rules@Adjecatbot   /topic@Adjecatbot</pre>
+          </li>
+        </ol>
+      </div>
+
+      <div class="card">
+        <h2>Iedereen — Commando’s</h2>
+        <div class="grid cols-2">
+          <div>
+            <h3>Links & Info</h3>
+            <div class="tag">/links</div>
+            <div class="tag">/website</div>
+            <div class="tag">/telegram</div>
+            <div class="tag">/twitter</div>
+            <div class="tag">/x</div>
+            <div class="tag">/discord</div>
+            <div class="tag">/instagram</div>
+            <div class="tag">/facebook</div>
+            <div class="tag">/mint</div>
+            <div class="tag">/ca</div>
+            <div class="tag">/topic</div>
+            <div class="tag">/welcome</div>
+            <div class="tag">/rules</div>
+          </div>
+          <div>
+            <h3>Streaks & Auto‑chat</h3>
+            <p><b>/gm</b> één keer per kalenderdag verhoogt je streak. <b>/streak</b> toont jouw score + top 5.</p>
+            <div class="tag">/gm</div>
+            <div class="tag">/streak</div>
+            <p class="small">Auto‑chat reageert alleen op slash‑triggers (geen spam). Overzicht:</p>
+            <div class="tag">/autoreplies</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Admins — Beheer</h2>
+        <h3>Set / Unset</h3>
+        <pre>/set &lt;key&gt; &lt;waarde&gt;        (alias: /aset)
+/unset &lt;key&gt;               (alias: /aunset)
+Keys: website, telegram, twitter (alias: x), discord, instagram, facebook, mint, ca, topic, welcome, rules</pre>
+        <p class="small">Neemt een andere bot <code>/set</code> over? Gebruik <code>/aset</code> of noem Adje: <code>/set@Adjecatbot …</code> of <code>/@Adjecatbot set …</code></p>
+
+        <h3>Auto‑chat</h3>
+        <pre>/enable_auto
+/autoreplies
+/addreply lfg LFG! 🚀
+/delreply lfg
+/clearreplies
+/disable_auto</pre>
+
+        <h3>Raids</h3>
+        <pre>/raid https://x.com/handle/status/12345 50 30 20
+/raid_status
+/raid_add likes 5
+/raid_set replies 10
+/raid_end</pre>
+      </div>
+
+      <div class="card">
+        <h2>Problemen oplossen</h2>
+        <ul>
+          <li><b>Geen reactie?</b> Probeer eerst in DM: <code>@Adjecatbot</code> → <code>/start</code>. Werkt DM wel maar groep niet? Spreek de bot expliciet aan: <code>/links@Adjecatbot</code>.</li>
+          <li><b>Andere bot kaapt /set:</b> gebruik <code>/aset</code> of <code>/set@Adjecatbot …</code>.</li>
+          <li><b>Solana CA:</b> dit is je <b>mint‑adres</b> (base58, geen <code>https://</code>).</li>
+          <li><b>Veiligheid:</b> Deel nooit je seed phrase. Admins DM’en nooit als eerste.</li>
+        </ul>
+      </div>
+    </section>
+
+    <div class="card small" style="opacity:.85">
+      <b>Note:</b> X is shown as “X” (no bird icon). This page is a static guide; keep <code>adje.png</code> and <code>logo.png</code> next to this HTML file.
     </div>
   </div>
 
-  <h2 id="en">English — How to use</h2>
-  <div class="card">
-    <h3>Links & Info</h3>
-    <p>Show everything with <code>/links</code> or use single commands:</p>
-    <pre>/website   /telegram   /twitter or /x   /discord   /instagram   /facebook
-/mint      /ca          /topic           /welcome    /rules</pre>
-    <p><b>Streaks:</b> <code>/gm</code> once per day increases your streak. Check with <code>/streak</code>.</p>
-  </div>
-
-  <div class="card">
-    <h3>Admins — setting values</h3>
-    <p>Set a key per chat:</p>
-    <pre>/set website https://example.com
-/set x https://x.com/yourhandle
-/set telegram https://t.me/yourgroup
-/set mint https://solscan.io/token/YOUR_MINT
-/set ca YOUR_SOLANA_MINT_ADDRESS  (base58, no https)
-/set topic Layer-2, Airdrops, NFT, Staking
-/set welcome Welcome aboard! Check /links, read /rules, claim /gm.
-/set rules Be respectful | No spam/scams | No doxxing | No NSFW | DYOR</pre>
-    <p class="small">If another bot grabs <code>/set</code>, use <code>/aset</code> or mention the bot:
-      <code>/set@Adjecatbot …</code> or <code>/@Adjecatbot set …</code></p>
-    <p>Unset a key (fallback to defaults): <code>/unset &lt;key&gt;</code> (or <code>/aunset</code>)</p>
-  </div>
-
-  <div class="card">
-    <h3>Auto chat</h3>
-    <p>Only reacts to slash triggers (no spam). Enable per chat:</p>
-    <pre>/enable_auto
-/autoreplies       (list)
-/addreply lfg LFG! 🚀
-/delreply lfg
-/clearreplies
-/disable_auto</pre>
-  </div>
-
-  <div class="card">
-    <h3>Raids</h3>
-    <p>Start or show a raid around an X post:</p>
-    <pre>/raid https://x.com/handle/status/12345 50 30 20
-/raid_status
-/raid_add likes 5
-/raid_set replies 10
-/raid_end</pre>
-    <p>Format shows progress like <code>done | goal [xx%]</code>.</p>
-  </div>
-
-  <div class="card">
-    <h3>Troubleshooting</h3>
-    <ul>
-      <li><b>Other bot intercepts /set:</b> use <code>/aset</code> or <code>/set@Adjecatbot …</code>.</li>
-      <li><b>Group privacy:</b> auto triggers are slash-based, so privacy can be ON. For <code>/@Adjecatbot …</code> syntax, prefer <code>/set@Adjecatbot …</code>.</li>
-      <li><b>Twitter icon:</b> bot shows <b>X</b>, no bird icon.</li>
-    </ul>
-  </div>
-
-  <h2 id="nl">Nederlands — Gebruik</h2>
-  <div class="card">
-    <h3>Links & info</h3>
-    <p>Alles tonen met <code>/links</code> of losse commando’s:</p>
-    <pre>/website   /telegram   /twitter of /x   /discord   /instagram   /facebook
-/mint      /ca         /topic            /welcome   /rules</pre>
-    <p><b>Streaks:</b> <code>/gm</code> eenmaal per dag verhoogt je streak. Check met <code>/streak</code>.</p>
-  </div>
-
-  <div class="card">
-    <h3>Admins — instellen</h3>
-    <pre>/set website https://jouwsite.xyz
-/set x https://x.com/jouwhandle
-/set telegram https://t.me/jouwgroep
-/set mint https://solscan.io/token/JOUW_MINT
-/set ca JOUW_SOLANA_MINT_ADRES  (base58, geen https)
-/set topic Layer-2, Airdrops, NFT, Staking
-/set welcome Welkom! Zie /links, lees /rules, claim /gm.
-/set rules Wees respectvol | Geen spam/scams | Geen doxxing | Geen NSFW | DYOR</pre>
-    <p class="small">Neemt een andere bot <code>/set</code> over? Gebruik <code>/aset</code> of
-      <code>/set@Adjecatbot …</code> / <code>/@Adjecatbot set …</code>.</p>
-    <p>Verwijderen (terug naar defaults): <code>/unset &lt;key&gt;</code> (of <code>/aunset</code>).</p>
-  </div>
-
-  <div class="card">
-    <h3>Auto chat</h3>
-    <p>Reageert alleen op slash-triggers (geen spam). Zet per chat aan:</p>
-    <pre>/enable_auto
-/autoreplies       (overzicht)
-/addreply lfg LFG! 🚀
-/delreply lfg
-/clearreplies
-/disable_auto</pre>
-  </div>
-
-  <div class="card">
-    <h3>Raids</h3>
-    <p>Start of toon een raid rond een X-bericht:</p>
-    <pre>/raid https://x.com/handle/status/12345 50 30 20
-/raid_status
-/raid_add likes 5
-/raid_set replies 10
-/raid_end</pre>
-  </div>
-
-  <div class="card">
-    <h3>Tips & Veiligheid</h3>
-    <ul>
-      <li>Gebruik altijd officiële links via <code>/links</code>.</li>
-      <li>Deel nooit je seed phrase. Admins DM’en nooit als eerste.</li>
-      <li>Solana: <b>CA</b> is je <b>mint address</b> (base58, geen <code>https://</code>).</li>
-    </ul>
-  </div>
-
-  <p class="muted small">© Adje-bot — neutral, reusable, no bird icon for X.</p>
-</div>
+<script>
+  const enBtn = document.getElementById('btn-en');
+  const nlBtn = document.getElementById('btn-nl');
+  const en = document.getElementById('lang-en');
+  const nl = document.getElementById('lang-nl');
+  function show(lang){
+    if(lang==='en'){ en.classList.add('show'); nl.classList.remove('show'); enBtn.classList.add('active'); nlBtn.classList.remove('active'); }
+    else { nl.classList.add('show'); en.classList.remove('show'); nlBtn.classList.add('active'); enBtn.classList.remove('active'); }
+    try{ localStorage.setItem('adje-lang', lang); }catch(e){}
+  }
+  enBtn.addEventListener('click',()=>show('en'));
+  nlBtn.addEventListener('click',()=>show('nl'));
+  // Persist last choice
+  try{
+    const saved = localStorage.getItem('adje-lang');
+    if(saved==='nl') show('nl');
+  }catch(e){}
+</script>
 </body>
 </html>
