@@ -1,496 +1,318 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>CBS Bot – Community Helper for Telegram (EN/NL)</title>
-<meta name="description" content="Public user guide for CBS Bot. Use in any Telegram group via slash commands: links, welcome, autochat, antibot, raid mode with counters, invite contest, and join-raid detector.">
-
-<style>
-  :root{
-    --bg:#0a0f14; --bg2:#0c1218; --card:#0e151c; --edge:#1a2230;
-    --fg:#eaf2f9; --muted:#a9c1d6; --acc:#46e0c1; --acc2:#7dd6ff; --call:#0b131a;
-    --shadow:0 20px 60px rgba(0,0,0,.35), 0 1px 0 rgba(255,255,255,.03) inset;
-    --radius:18px;
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0; font-family:Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-    color:var(--fg);
-    background:
-      radial-gradient(1000px 700px at -10% -10%, #132030 0%, transparent 60%),
-      radial-gradient(800px 600px at 110% -20%, #0f2440 0%, transparent 60%),
-      linear-gradient(180deg, var(--bg), var(--bg2) 50%, #070b10 100%);
-  }
-  .wrap{max-width:1100px; margin:0 auto; padding:28px 16px 88px}
-  .hero{
-    padding:28px; border:1px solid var(--edge); border-radius:var(--radius);
-    background:linear-gradient(180deg, rgba(18,24,32,.85), rgba(14,20,28,.8));
-    box-shadow:var(--shadow); position:relative; overflow:hidden;
-  }
-  .hero::after{
-    content:""; position:absolute; inset:0;
-    background:
-      radial-gradient(600px 200px at 20% -30%, rgba(70,224,193,.12), transparent 70%),
-      radial-gradient(500px 200px at 80% -20%, rgba(125,214,255,.12), transparent 70%);
-    pointer-events:none;
-  }
-  h1{margin:0 0 8px; font-size:32px; letter-spacing:.2px}
-  p.lead{margin:10px 0 0; color:var(--muted); line-height:1.5}
-  .badges{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
-  .tag{display:inline-flex; align-items:center; gap:6px; font-size:12px; padding:6px 10px; border:1px solid var(--edge); background:#0e141c; border-radius:999px; color:var(--muted)}
-  .tabs{display:flex; gap:8px; margin:18px 0}
-  .tab{padding:10px 14px; border-radius:12px; border:1px solid var(--edge); cursor:pointer; background:#0e141c; color:var(--fg); transition:.15s ease}
-  .tab:hover{transform:translateY(-1px)}
-  .tab.active{outline:2px solid var(--acc); background:linear-gradient(180deg,#101824,#0c1218)}
-
-  section.card{
-    padding:20px; border:1px solid var(--edge); border-radius:16px;
-    background:linear-gradient(180deg, rgba(16,22,30,.85), rgba(14,20,28,.9));
-    margin:14px 0; box-shadow:var(--shadow);
-  }
-  h2{font-size:22px; margin:0 0 10px; letter-spacing:.2px}
-  h3{margin:0 0 8px; font-size:16px; color:#d7e9f7}
-  p{line-height:1.6}
-  code,kbd{background:#0a121a; border:1px solid #1a2632; padding:.18em .45em; border-radius:6px}
-  ul,ol{margin:8px 0 0 22px; padding-left:0}
-  li{margin:6px 0}
-  .muted{color:var(--muted)}
-  .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px}
-  .two{display:grid; grid-template-columns:1fr; gap:16px}
-  @media(min-width:900px){ .two{grid-template-columns:1fr 1fr} }
-  .qs{display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:12px}
-  .qs .step{border:1px solid var(--edge); border-radius:12px; padding:12px 12px; background:#0f161e; transition:.15s ease}
-  .qs .step:hover{transform:translateY(-1px)}
-  .qs .n{font-weight:700; color:var(--acc); margin-right:6px}
-  .callout{border-left:4px solid var(--acc); padding:12px 14px; background:var(--call); border-radius:10px}
-  .pill{display:inline-block; padding:2px 10px; border-radius:999px; border:1px solid var(--edge); color:var(--muted); background:#0e141c; font-size:12px; margin-left:8px}
-  .footer{margin-top:28px; color:var(--muted); font-size:14px; text-align:center}
-  a{color:var(--acc); text-decoration:none}
-  a:hover{text-decoration:underline}
-
-  /* Cheatsheet blocks */
-  .copycard{border:1px solid var(--edge); border-radius:14px; background:#0f161e; padding:12px}
-  .copyrow{display:flex; gap:10px; align-items:center; margin:8px 0; flex-wrap:wrap}
-  .copyrow code{white-space:pre-wrap}
-  .copybtn{
-    margin-left:auto; padding:6px 10px; border-radius:10px; border:1px solid var(--edge);
-    background:#0d141c; color:var(--fg); cursor:pointer; transition:.15s ease; font-size:12px
-  }
-  .copybtn:hover{transform:translateY(-1px)}
-  .qrwrap{display:flex; gap:16px; align-items:center; flex-wrap:wrap}
-  .qrbox{border:1px solid var(--edge); border-radius:16px; padding:12px; background:#0f161e}
-  .qrbox img{display:block}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CBS Contest Bot — Guide / Handleiding</title>
+  <style>
+    :root{
+      --bg:#0b1220;--panel:#121a2b;--muted:#9fb0d0;--text:#e7ecf7;--accent:#6cc6ff;--ok:#31d07d;--warn:#f6c344;--err:#ff6b6b;
+      --border: #1e2a46; --code:#0f1728;
+    }
+    *{box-sizing:border-box}
+    html,body{background:var(--bg);color:var(--text);font:16px/1.6 system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";}
+    a{color:var(--accent);text-decoration:none} a:hover{text-decoration:underline}
+    .wrap{max-width:960px;margin:24px auto;padding:0 16px}
+    header{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:16px}
+    .title{font-size:24px;font-weight:700}
+    .chip{background:var(--panel);border:1px solid var(--border);padding:6px 10px;border-radius:999px;color:var(--muted)}
+    .lang{display:flex;gap:8px}
+    .lang button{border:1px solid var(--border);background:var(--panel);color:var(--text);padding:8px 12px;border-radius:10px;cursor:pointer}
+    .lang button[aria-pressed="true"]{outline:2px solid var(--accent)}
+    .grid{display:grid;gap:16px}
+    @media (min-width:900px){.grid{grid-template-columns:1fr 1fr}}
+    section{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:18px}
+    h2{font-size:18px;margin:0 0 8px}
+    h3{font-size:16px;margin:12px 0 8px;color:#d9e6ff}
+    p,li{color:#d3dbeb}
+    .muted{color:var(--muted)}
+    .kbd{font-weight:600;border:1px solid var(--border);background:var(--bg);padding:2px 6px;border-radius:6px}
+    pre{background:var(--code);border:1px solid var(--border);padding:12px;border-radius:12px;overflow:auto}
+    code{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;color:#cfe7ff}
+    .ok{color:var(--ok)} .warn{color:var(--warn)} .err{color:var(--err)}
+    .list-compact li{margin:2px 0}
+    .badge{display:inline-block;border:1px solid var(--border);background:var(--bg);padding:2px 8px;border-radius:8px;margin-left:8px;color:var(--muted)}
+    footer{color:var(--muted);margin:18px 0 40px}
+    .only{display:none}
+    [data-lang="en"].on .en, [data-lang="nl"].on .nl {display:block}
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="hero">
-    <h1>CBS Bot – Community Helper for Telegram</h1>
-    <p class="lead">Use this bot in <strong>any Telegram group</strong>. All actions via <strong>slash commands</strong> (no keyword triggers). Features: links, welcome, autochat, antibot, <strong>raid mode</strong> with counters, <strong>invite contest</strong>, join-raid detector.</p>
-    <div class="badges">
-      <span class="tag">✨ Slash-only (no spam)</span>
-      <span class="tag">📊 Raid counters</span>
-      <span class="tag">🛡️ Antibot & whitelist</span>
-      <span class="tag">🏆 Invite contest</span>
-      <span class="tag">🌐 EN / NL guide</span>
+  <div class="wrap" id="app" data-lang="en" class="on">
+    <header>
+      <div class="title">CBS Contest Bot</div>
+      <div class="lang" role="group" aria-label="Language">
+        <button id="btn-en" aria-pressed="true">English</button>
+        <button id="btn-nl" aria-pressed="false">Nederlands</button>
+      </div>
+    </header>
+
+    <!-- Intro -->
+    <section class="en">
+      <h2>Overview</h2>
+      <p>
+        Telegram bot for a holders-only community contest. Users register a Solana wallet, verify CBS holdings, and submit activity links.
+        This page explains how to use and operate the bot.
+      </p>
+      <p class="muted">This bot polls Telegram (no webhook) and stores data in a local SQLite database.</p>
+    </section>
+    <section class="nl only">
+      <h2>Overzicht</h2>
+      <p>
+        Telegram-bot voor een contest alleen voor holders. Gebruikers registreren een Solana-wallet, verifiëren hun CBS-bezit en dienen activiteiten in.
+        Deze pagina legt uit hoe je de bot gebruikt en beheert.
+      </p>
+      <p class="muted">De bot gebruikt polling (geen webhook) en slaat data op in een lokale SQLite-database.</p>
+    </section>
+
+    <div class="grid">
+      <!-- User quick start -->
+      <section class="en">
+        <h2>User — Quick Start</h2>
+        <ol>
+          <li>Send <span class="kbd">/start</span> in DM to the bot.</li>
+          <li>Register your wallet:
+            <pre><code>/join &lt;WALLET_ADDRESS&gt;</code></pre>
+            Example:
+            <pre><code>/join 8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd</code></pre>
+          </li>
+          <li>Verify you hold ≥1 CBS in that wallet:
+            <pre><code>/verify</code></pre>
+            You should see <span class="ok">holder ✅</span> if OK.
+          </li>
+          <li>Submit activity links during the contest window (see <span class="kbd">/settings</span>).</li>
+        </ol>
+        <h3>Submission commands</h3>
+        <ul class="list-compact">
+          <li><code>/tx &lt;link|signature&gt;</code> — CBS transfer/tx (+2)</li>
+          <li><code>/post &lt;x-link&gt;</code> — your CBS-related post (+3)</li>
+          <li><code>/tx &lt;x-link&gt;</code> — like/retweet of CBS-related post (+1)</li>
+          <li><code>/meme &lt;url&gt;</code> — meme (rate-limited) (+5)</li>
+          <li><code>/invite @user</code> — pending until user is holder (+3)</li>
+          <li><code>/me</code> — your score • <code>/score</code> — leaderboard</li>
+          <li><code>/ref</code> — referral explanation</li>
+        </ul>
+        <p class="muted">Links are strictly validated (domains, format, duplicates) to reduce spam/scams.</p>
+      </section>
+
+      <section class="nl only">
+        <h2>Gebruiker — Snel starten</h2>
+        <ol>
+          <li>Stuur <span class="kbd">/start</span> in DM naar de bot.</li>
+          <li>Registreer je wallet:
+            <pre><code>/join &lt;WALLET_ADRES&gt;</code></pre>
+            Voorbeeld:
+            <pre><code>/join 8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd</code></pre>
+          </li>
+          <li>Verifieer dat je ≥1 CBS houdt in die wallet:
+            <pre><code>/verify</code></pre>
+            Je ziet <span class="ok">holder ✅</span> als het goed is.
+          </li>
+          <li>Dien activiteit-links in binnen de contestperiode (zie <span class="kbd">/settings</span>).</li>
+        </ol>
+        <h3>Inzend-commando’s</h3>
+        <ul class="list-compact">
+          <li><code>/tx &lt;link|signature&gt;</code> — CBS transfer/tx (+2)</li>
+          <li><code>/post &lt;x-link&gt;</code> — je eigen CBS-post (+3)</li>
+          <li><code>/tx &lt;x-link&gt;</code> — like/retweet van CBS-post (+1)</li>
+          <li><code>/meme &lt;url&gt;</code> — meme (rate-limited) (+5)</li>
+          <li><code>/invite @user</code> — telt zodra user holder is (+3)</li>
+          <li><code>/me</code> — jouw punten • <code>/score</code> — leaderboard</li>
+          <li><code>/ref</code> — uitleg over invites</li>
+        </ul>
+        <p class="muted">Links worden streng gevalideerd (domeinen, formaat, dubbelen) om spam/scams te beperken.</p>
+      </section>
+
+      <!-- Owner setup -->
+      <section class="en">
+        <h2>Owner — Setup</h2>
+        <h3>Requirements</h3>
+        <ul>
+          <li>Python 3.12+</li>
+          <li>Packages: <code>python-telegram-bot==21.6</code>, <code>APScheduler==3.10.4</code>, <code>pytz</code>, <code>validators</code>, <code>requests</code></li>
+          <li>SQLite (bundled with Python)</li>
+        </ul>
+        <h3>Environment</h3>
+        <ul class="list-compact">
+          <li><code>BOT_TOKEN</code> — BotFather token (keep secret) <span class="badge">required</span></li>
+          <li><code>RPC_URL</code> — Solana RPC (Helius endpoint recommended) <span class="badge">required</span></li>
+          <li><code>ADMIN_IDS</code> — comma-separated Telegram user IDs (e.g. <code>11111,22222</code>)</li>
+        </ul>
+        <h3>Run locally (foreground)</h3>
+        <pre><code>cd ~/CBSbot2
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+export BOT_TOKEN="&lt;YOUR_TOKEN&gt>"
+export RPC_URL="https://mainnet.helius-rpc.com/?api-key=&lt;KEY&gt;"
+export ADMIN_IDS="12345,67890"
+python bot.py</code></pre>
+        <h3>Run as a systemd service</h3>
+        <pre><code>[Unit]
+Description=CBS Telegram bot
+After=network.target
+
+[Service]
+WorkingDirectory=/home/&lt;user&gt;/CBSbot2
+Environment=BOT_TOKEN=&lt;your token&gt;
+Environment=RPC_URL=https://mainnet.helius-rpc.com/?api-key=&lt;key&gt;
+Environment=ADMIN_IDS=12345,67890
+ExecStart=/home/&lt;user&gt;/CBSbot2/.venv/bin/python /home/&lt;user&gt;/CBSbot2/bot.py
+Restart=always
+RestartSec=5
+User=&lt;user&gt;
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+        <pre><code>sudo systemctl daemon-reload
+sudo systemctl enable --now cbsbot
+sudo journalctl -u cbsbot -n 50 --no-pager</code></pre>
+      </section>
+
+      <section class="nl only">
+        <h2>Beheer — Installatie</h2>
+        <h3>Vereisten</h3>
+        <ul>
+          <li>Python 3.12+</li>
+          <li>Pakketten: <code>python-telegram-bot==21.6</code>, <code>APScheduler==3.10.4</code>, <code>pytz</code>, <code>validators</code>, <code>requests</code></li>
+          <li>SQLite (bij Python inbegrepen)</li>
+        </ul>
+        <h3>Omgevingsvariabelen</h3>
+        <ul class="list-compact">
+          <li><code>BOT_TOKEN</code> — BotFather-token (geheim) <span class="badge">verplicht</span></li>
+          <li><code>RPC_URL</code> — Solana RPC (Helius endpoint aanbevolen) <span class="badge">verplicht</span></li>
+          <li><code>ADMIN_IDS</code> — komma-gescheiden Telegram IDs (bijv. <code>11111,22222</code>)</li>
+        </ul>
+        <h3>Lokaal draaien (foreground)</h3>
+        <pre><code>cd ~/CBSbot2
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+export BOT_TOKEN="&lt;JOUW_TOKEN&gt;"
+export RPC_URL="https://mainnet.helius-rpc.com/?api-key=&lt;KEY&gt;"
+export ADMIN_IDS="12345,67890"
+python bot.py</code></pre>
+        <h3>Als systemd-service</h3>
+        <pre><code>[Unit]
+Description=CBS Telegram bot
+After=network.target
+
+[Service]
+WorkingDirectory=/home/&lt;user&gt;/CBSbot2
+Environment=BOT_TOKEN=&lt;jouw token&gt;
+Environment=RPC_URL=https://mainnet.helius-rpc.com/?api-key=&lt;key&gt;
+Environment=ADMIN_IDS=12345,67890
+ExecStart=/home/&lt;user&gt;/CBSbot2/.venv/bin/python /home/&lt;user&gt;/CBSbot2/bot.py
+Restart=always
+RestartSec=5
+User=&lt;user&gt;
+
+[Install]
+WantedBy=multi-user.target</code></pre>
+        <pre><code>sudo systemctl daemon-reload
+sudo systemctl enable --now cbsbot
+sudo journalctl -u cbsbot -n 50 --no-pager</code></pre>
+      </section>
     </div>
-    <div class="tabs">
-      <button class="tab active" data-lang="en">English</button>
-      <button class="tab" data-lang="nl">Nederlands</button>
-    </div>
-  </div>
 
-  <!-- ENGLISH -->
-  <div id="lang-en">
-    <section class="card">
-      <h2>Quick Start (EN)</h2>
-      <div class="qs">
-        <div class="step"><span class="n">1.</span>Add <b>@CBS_Coin_bot</b> to your group.</div>
-        <div class="step"><span class="n">2.</span>In <b>BotFather → Bot Settings</b>: set <b>Allow Groups = ON</b> and <b>Group Privacy = OFF</b>.</div>
-        <div class="step"><span class="n">3.</span>(Recommended) Make the bot <b>Admin</b> to use Antibot and Invite Links.</div>
-        <div class="step"><span class="n">4.</span>Set links: <code>/set website &lt;url&gt;</code>, <code>/set twitter &lt;url&gt;</code>, …</div>
-        <div class="step"><span class="n">5.</span>Optional raid: <code>/set raid on</code> → <code>/raidtarget &lt;url&gt;</code> → <code>/raidtargets 15 5 10</code> → <code>/raid</code>.</div>
-        <div class="step"><span class="n">6.</span>Optional contest: <code>/set contest on</code> → users run <code>/mylink</code> → track via <code>/contest</code>.</div>
-      </div>
-      <div class="callout" style="margin-top:10px">
-        <strong>Slash-only:</strong> The bot answers only to <code>/commands</code> (e.g. <code>/x</code>, <code>/website</code>). Plain words like “x” do nothing.
-      </div>
+    <!-- Admin commands -->
+    <section class="en">
+      <h2>Admin commands</h2>
+      <ul class="list-compact">
+        <li><code>/snapshot</code> — show final snapshot time and schedule</li>
+        <li><code>/setwindow &lt;end&gt;</code> — set contest end (ISO or “Sat 23:59 CET”)</li>
+        <li><code>/start</code>, <code>/settings</code> — info & settings</li>
+        <li><code>/dupes</code> — find duplicate submissions</li>
+        <li><code>/clearwallet &lt;wallet&gt;</code> — unregister a wallet</li>
+        <li><code>/whohas &lt;wallet&gt;</code> — who registered this wallet</li>
+        <li><code>/myid</code> — prints your Telegram user ID</li>
+      </ul>
     </section>
-
-    <section class="card">
-      <h2>What it does</h2>
-      <div class="grid">
-        <div class="card">
-          <h3>Highlights</h3>
-          <ul>
-            <li>👋 Welcome new members (customizable)</li>
-            <li>💬 Subtle replies to greetings/thanks/fun <span class="pill">max 1 per 30s per chat</span></li>
-            <li>✨ Autochat every ~30 min (toggleable)</li>
-            <li>🛡️ Antibot (block new bots) + whitelist</li>
-            <li>🚩 <b>Raid mode</b> with Like/Repost/Comment counters</li>
-            <li>🏆 Invite contest (personal links + leaderboard)</li>
-            <li>🔗 Group links via slash: <code>/website</code> <code>/twitter</code> <code>/x</code> <code>/telegram</code> <code>/discord</code> <code>/facebook</code> <code>/instagram</code> <code>/youtube</code> <code>/mint</code> <code>/ca</code> <code>/rules</code></li>
-          </ul>
-        </div>
-        <div class="card">
-          <h3>Permissions you need in Telegram</h3>
-          <ul>
-            <li>Bot must read & send messages (<em>Group Privacy OFF</em>)</li>
-            <li><em>Antibot:</em> bot needs “Ban users”</li>
-            <li><em>Invite Contest:</em> bot needs “Invite users via link”</li>
-          </ul>
-        </div>
-      </div>
-    </section>
-
-    <section class="card">
-      <h2>Raid Mode — step by step</h2>
-      <div class="two">
-        <div>
-          <h3>Setup</h3>
-          <ol>
-            <li><code>/set raid on</code></li>
-            <li><code>/raidtarget &lt;url&gt;</code></li>
-            <li><code>/raidtargets &lt;likes&gt; &lt;reposts&gt; &lt;comments&gt;</code> (e.g. <code>/raidtargets 15 5 10</code>)</li>
-            <li>(Optional) <code>/raidmsg &lt;text with {url}&gt;</code></li>
-            <li><code>/raid</code> — post with Like / Repost / Comment buttons</li>
-          </ol>
-          <p class="muted">Members can tap each button once; the bot counts unique users per action.</p>
-        </div>
-        <div>
-          <h3>Monitor & control</h3>
-          <ul>
-            <li><code>/raidprogress</code></li>
-            <li><code>/raidreset</code></li>
-            <li><code>/x</code> — show configured X/Twitter link</li>
-            <li><code>/set raid off</code> — disable raid mode</li>
-          </ul>
-        </div>
-      </div>
-    </section>
-
-    <section class="card">
-      <h2>Join-Raid Detector</h2>
-      <div class="two">
-        <div>
-          <h3>Configure</h3>
-          <ul>
-            <li><code>/setraid &lt;joins&gt; &lt;minutes&gt;</code> — e.g. <code>/setraid 10 5</code></li>
-            <li><code>/raidstatus</code> — show last-N-minutes joins vs threshold</li>
-          </ul>
-        </div>
-        <div>
-          <h3>Use it</h3>
-          <p>It tracks recent joins in a rolling window. Helpful during hype/raids to decide when to moderate stricter.</p>
-        </div>
-      </div>
-    </section>
-
-    <!-- EN Cheatsheet + QR -->
-    <section class="card">
-      <h2>Copy/Paste Cheatsheet (EN)</h2>
-      <div class="two">
-        <div class="copycard">
-          <h3>Admin — common setup</h3>
-          <div class="copyrow">
-            <code id="en-admin-1">/set website https://example.com
-/set twitter https://x.com/CBS_Coin
-/set telegram https://t.me/CBS_Coin
-/set welcome Welcome {name}! 🚀
-/set autochat off
-/set antibot on
-/allowbot @ExampleBot
-/get</code>
-            <button class="copybtn" onclick="copyBlock('en-admin-1')">Copy</button>
-          </div>
-          <h3 style="margin-top:12px">Admin — raid quick start</h3>
-          <div class="copyrow">
-            <code id="en-admin-2">/set raid on
-/raidtarget https://x.com/CBS_Coin/status/1961864062012186928
-/raidtargets 15 5 10
-/raid</code>
-            <button class="copybtn" onclick="copyBlock('en-admin-2')">Copy</button>
-          </div>
-          <div class="copyrow">
-            <code id="en-admin-3">/raidprogress
-/raidreset
-/set raid off</code>
-            <button class="copybtn" onclick="copyBlock('en-admin-3')">Copy</button>
-          </div>
-          <h3 style="margin-top:12px">Admin — invite contest</h3>
-          <div class="copyrow">
-            <code id="en-admin-4">/set contest on
-/mylink
-/contest
-/resetcontest</code>
-            <button class="copybtn" onclick="copyBlock('en-admin-4')">Copy</button>
-          </div>
-        </div>
-
-        <div class="copycard">
-          <h3>Everyone — quick actions</h3>
-          <div class="copyrow">
-            <code id="en-user-1">/website
-/twitter
-/x
-/telegram
-/discord
-/youtube
-/mint
-/ca
-/rules</code>
-            <button class="copybtn" onclick="copyBlock('en-user-1')">Copy</button>
-          </div>
-          <div class="copyrow">
-            <code id="en-user-2">/raid
-/raidprogress
-/mylink
-/contest</code>
-            <button class="copybtn" onclick="copyBlock('en-user-2')">Copy</button>
-          </div>
-
-          <div class="qrwrap" style="margin-top:12px">
-            <div class="qrbox">
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=https%3A%2F%2Ft.me%2FCBS_Coin_bot" width="240" height="240" alt="QR to @CBS_Coin_bot" />
-            </div>
-            <div>
-              <h3>Open the bot</h3>
-              <p>Scan the QR or tap: <a href="https://t.me/CBS_Coin_bot" target="_blank">@CBS_Coin_bot</a></p>
-              <p class="muted">Add it to your group and start with <code>/help</code>.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="card">
-      <h2>FAQ / Troubleshooting</h2>
-      <ul>
-        <li><b>Bot doesn’t answer?</b> In BotFather set <em>Group Privacy = OFF</em>. Make sure the bot isn’t muted/restricted. Try <code>/help</code>.</li>
-        <li><b>Too chatty?</b> <code>/set autochat off</code>.</li>
-        <li><b>Raid buttons not counting?</b> <code>/raidtargets 0 0 0</code> → <code>/raid</code> → tap once → <code>/raidprogress</code>.</li>
-        <li><b>Invite link fails?</b> Bot must be Admin with “Invite users via link”.</li>
-        <li><b>Undo a value?</b> <code>/unset &lt;key&gt;</code> (e.g. <code>/unset website</code>). See all with <code>/get</code>.</li>
+    <section class="nl only">
+      <h2>Admin-commando’s</h2>
+      <ul class="list-compact">
+        <li><code>/snapshot</code> — toon gepland eindmoment/snapshot</li>
+        <li><code>/setwindow &lt;einde&gt;</code> — stel einde in (ISO of “za 23:59 CET”)</li>
+        <li><code>/start</code>, <code>/settings</code> — info & instellingen</li>
+        <li><code>/dupes</code> — zoek dubbele inzendingen</li>
+        <li><code>/clearwallet &lt;wallet&gt;</code> — schrijf wallet uit</li>
+        <li><code>/whohas &lt;wallet&gt;</code> — wie heeft deze wallet geregistreerd</li>
+        <li><code>/myid</code> — toont je Telegram user ID</li>
       </ul>
     </section>
 
-    <section class="card">
-      <h2>Privacy & Data</h2>
+    <!-- Safety -->
+    <section class="en">
+      <h2>Safety & Anti-Scam</h2>
       <ul>
-        <li><b>Stored:</b> per-group settings only (links, rules, welcome text, autochat, antibot + whitelist, raid mode/target/message, raid counters & goals, join-raid window, invite links/scores).</li>
-        <li><b>No personal data</b> is stored or profiled.</li>
-        <li>Settings persist until an admin changes them or the group is removed.</li>
+        <li>Wallet format is validated; only one wallet per user. Duplicate wallets are rejected.</li>
+        <li>Only <strong>x.com</strong>/<strong>twitter.com</strong> URLs are accepted for Twitter/X content; other domains are rejected.</li>
+        <li>Each external link/signature counts once (duplicate submissions are ignored).</li>
+        <li>Invite points are pending until the invited user verifies as a holder.</li>
+        <li>Outputs are plain text (no HTML parse in Telegram) to avoid formatting exploits.</li>
+      </ul>
+    </section>
+    <section class="nl only">
+      <h2>Veiligheid & Anti-scam</h2>
+      <ul>
+        <li>Wallet-formaat wordt gevalideerd; één wallet per gebruiker. Dubbelen worden geweigerd.</li>
+        <li>Alleen <strong>x.com</strong>/<strong>twitter.com</strong> links worden geaccepteerd voor Twitter/X-content; andere domeinen worden geweigerd.</li>
+        <li>Elke externe link/signature telt één keer (dubbele inzendingen worden genegeerd).</li>
+        <li>Invite-punten blijven “pending” tot de uitgenodigde user holder is.</li>
+        <li>Uitvoer is platte tekst (geen HTML-opmaak in Telegram) om parsing-fouten/exploits te voorkomen.</li>
       </ul>
     </section>
 
-    <section class="card">
-      <h2>Contact</h2>
-      <p>Telegram: <a href="https://t.me/CBS_Coin" target="_blank">@CBS_Coin</a> • Email: <a href="mailto:smitskecbs@gmail.com">smitskecbs@gmail.com</a></p>
-    </section>
-  </div>
-
-  <!-- NEDERLANDS -->
-  <div id="lang-nl" style="display:none">
-    <section class="card">
-      <h2>Quick Start (NL)</h2>
-      <div class="qs">
-        <div class="step"><span class="n">1.</span>Voeg <b>@CBS_Coin_bot</b> toe aan je groep.</div>
-        <div class="step"><span class="n">2.</span>In <b>BotFather → Bot Settings</b>: zet <b>Allow Groups = Aan</b> en <b>Group Privacy = Uit</b>.</div>
-        <div class="step"><span class="n">3.</span>(Aanrader) Maak de bot <b>Admin</b> voor Antibot en Invite Links.</div>
-        <div class="step"><span class="n">4.</span>Zet links: <code>/set website &lt;url&gt;</code>, <code>/set twitter &lt;url&gt;</code>, …</div>
-        <div class="step"><span class="n">5.</span>Optioneel raid: <code>/set raid on</code> → <code>/raidtarget &lt;url&gt;</code> → <code>/raidtargets 15 5 10</code> → <code>/raid</code>.</div>
-        <div class="step"><span class="n">6.</span>Optioneel contest: <code>/set contest on</code> → leden doen <code>/mylink</code> → overzicht via <code>/contest</code>.</div>
-      </div>
-      <div class="callout" style="margin-top:10px">
-        <strong>Alleen slash:</strong> De bot reageert alleen op <code>/commando’s</code> (bijv. <code>/x</code>, <code>/website</code>). Losse woorden zoals “x” doen niets.
-      </div>
-    </section>
-
-    <section class="card">
-      <h2>Wat doet de bot</h2>
-      <div class="grid">
-        <div class="card">
-          <h3>Highlights</h3>
-          <ul>
-            <li>👋 Welkom nieuwe leden (aanpasbaar)</li>
-            <li>💬 Subtiele reacties (max 1 per 30s per chat)</li>
-            <li>✨ Autochat ~elke 30 min (aan/uit te zetten)</li>
-            <li>🛡️ Antibot (nieuwe bots blokkeren) + whitelist</li>
-            <li>🚩 <b>Raid-modus</b> met Like/Repost/Comment-tellers</li>
-            <li>🏆 Invite contest (persoonlijke links + leaderboard)</li>
-            <li>🔗 Groepslinks via slash: <code>/website</code> <code>/twitter</code> <code>/x</code> <code>/telegram</code> <code>/discord</code> <code>/facebook</code> <code>/instagram</code> <code>/youtube</code> <code>/mint</code> <code>/ca</code> <code>/rules</code></li>
-          </ul>
-        </div>
-        <div class="card">
-          <h3>Benodigde rechten</h3>
-          <ul>
-            <li>Bot kan berichten lezen & sturen (<em>Group Privacy UIT</em>)</li>
-            <li><em>Antibot:</em> recht “Ban users”</li>
-            <li><em>Invite Contest:</em> recht “Invite users via link”</li>
-          </ul>
-        </div>
-      </div>
-    </section>
-
-    <section class="card">
-      <h2>Raid-modus — stap voor stap</h2>
-      <div class="two">
-        <div>
-          <h3>Instellen</h3>
-          <ol>
-            <li><code>/set raid on</code></li>
-            <li><code>/raidtarget &lt;url&gt;</code></li>
-            <li><code>/raidtargets &lt;likes&gt; &lt;reposts&gt; &lt;comments&gt;</code> (bijv. <code>/raidtargets 15 5 10</code>)</li>
-            <li>(Optioneel) <code>/raidmsg &lt;tekst met {url}&gt;</code></li>
-            <li><code>/raid</code> — posten met Like / Repost / Comment-knoppen</li>
-          </ol>
-          <p class="muted">Leden kunnen elke knop 1× tikken; de bot telt unieke gebruikers per actie.</p>
-        </div>
-        <div>
-          <h3>Volgen & beheren</h3>
-          <ul>
-            <li><code>/raidprogress</code></li>
-            <li><code>/raidreset</code></li>
-            <li><code>/x</code> — toon ingestelde X/Twitter-link</li>
-            <li><code>/set raid off</code> — zet raid-modus uit</li>
-          </ul>
-        </div>
-      </div>
-    </section>
-
-    <!-- NL Cheatsheet + QR -->
-    <section class="card">
-      <h2>Copy/Paste Snelgids (NL)</h2>
-      <div class="two">
-        <div class="copycard">
-          <h3>Admin — basisinstellingen</h3>
-          <div class="copyrow">
-            <code id="nl-admin-1">/set website https://example.com
-/set twitter https://x.com/CBS_Coin
-/set telegram https://t.me/CBS_Coin
-/set welcome Welkom {name}! 🚀
-/set autochat off
-/set antibot on
-/allowbot @ExampleBot
-/get</code>
-            <button class="copybtn" onclick="copyBlock('nl-admin-1')">Kopieer</button>
-          </div>
-          <h3 style="margin-top:12px">Admin — raid quickstart</h3>
-          <div class="copyrow">
-            <code id="nl-admin-2">/set raid on
-/raidtarget https://x.com/CBS_Coin/status/1961864062012186928
-/raidtargets 15 5 10
-/raid</code>
-            <button class="copybtn" onclick="copyBlock('nl-admin-2')">Kopieer</button>
-          </div>
-          <div class="copyrow">
-            <code id="nl-admin-3">/raidprogress
-/raidreset
-/set raid off</code>
-            <button class="copybtn" onclick="copyBlock('nl-admin-3')">Kopieer</button>
-          </div>
-          <h3 style="margin-top:12px">Admin — invite contest</h3>
-          <div class="copyrow">
-            <code id="nl-admin-4">/set contest on
-/mylink
-/contest
-/resetcontest</code>
-            <button class="copybtn" onclick="copyBlock('nl-admin-4')">Kopieer</button>
-          </div>
-        </div>
-
-        <div class="copycard">
-          <h3>Iedereen — snelcommando’s</h3>
-          <div class="copyrow">
-            <code id="nl-user-1">/website
-/twitter
-/x
-/telegram
-/discord
-/youtube
-/mint
-/ca
-/rules</code>
-            <button class="copybtn" onclick="copyBlock('nl-user-1')">Kopieer</button>
-          </div>
-          <div class="copyrow">
-            <code id="nl-user-2">/raid
-/raidprogress
-/mylink
-/contest</code>
-            <button class="copybtn" onclick="copyBlock('nl-user-2')">Kopieer</button>
-          </div>
-
-          <div class="qrwrap" style="margin-top:12px">
-            <div class="qrbox">
-              <img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=https%3A%2F%2Ft.me%2FCBS_Coin_bot" width="240" height="240" alt="QR naar @CBS_Coin_bot" />
-            </div>
-            <div>
-              <h3>Open de bot</h3>
-              <p>Scan de QR of tik: <a href="https://t.me/CBS_Coin_bot" target="_blank">@CBS_Coin_bot</a></p>
-              <p class="muted">Voeg ’m toe aan je groep en start met <code>/help</code>.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section class="card">
-      <h2>FAQ / Problemen</h2>
+    <!-- Troubleshooting -->
+    <section class="en">
+      <h2>Troubleshooting</h2>
       <ul>
-        <li><b>Bot reageert niet?</b> In BotFather: <em>Group Privacy = Uit</em>. Bot mag niet gemuted/restricted zijn. Probeer <code>/help</code>.</li>
-        <li><b>Te veel berichten?</b> <code>/set autochat off</code>.</li>
-        <li><b>Raid-knoppen tellen niet?</b> <code>/raidtargets 0 0 0</code> → <code>/raid</code> → 1× tikken → <code>/raidprogress</code>.</li>
-        <li><b>Invite link lukt niet?</b> Bot moet Admin zijn met “Invite users via link”.</li>
-        <li><b>Iets ongedaan maken?</b> <code>/unset &lt;key&gt;</code> (bv. <code>/unset website</code>). Alles zien: <code>/get</code>.</li>
+        <li><span class="err">InvalidToken</span> — check <code>BOT_TOKEN</code> in service/env.</li>
+        <li><span class="err">UNIQUE constraint failed</span> — dedupe the DB, then create a unique index on <code>(type, ref)</code>.</li>
+        <li><span class="warn">No holder</span> — ensure the registered wallet holds ≥1 CBS; try <span class="kbd">/verify</span> again.</li>
+        <li>Logs:
+          <pre><code>sudo journalctl -u cbsbot -n 100 --no-pager</code></pre>
+        </li>
+      </ul>
+    </section>
+    <section class="nl only">
+      <h2>Probleemoplossing</h2>
+      <ul>
+        <li><span class="err">InvalidToken</span> — controleer <code>BOT_TOKEN</code> in service/env.</li>
+        <li><span class="err">UNIQUE constraint failed</span> — dedupe de DB, maak daarna een unieke index op <code>(type, ref)</code>.</li>
+        <li><span class="warn">Geen holder</span> — zorg dat de geregistreerde wallet ≥1 CBS bezit; gebruik <span class="kbd">/verify</span> opnieuw.</li>
+        <li>Logs:
+          <pre><code>sudo journalctl -u cbsbot -n 100 --no-pager</code></pre>
+        </li>
       </ul>
     </section>
 
-    <section class="card">
-      <h2>Privacy & Data</h2>
-      <ul>
-        <li><b>Opgeslagen:</b> alleen groepsinstellingen (links, regels, welkomtekst, autochat, antibot + whitelist, raid-modus/target/bericht, raid-tellers & doelen, join-raid venster, invite links/scores).</li>
-        <li><b>Geen persoonsgegevens</b> worden opgeslagen of geprofileerd.</li>
-        <li>Instellingen blijven bewaard tot een admin ze wijzigt of de groep verdwijnt.</li>
-      </ul>
-    </section>
-
-    <section class="card">
-      <h2>Contact</h2>
-      <p>Telegram: <a href="https://t.me/CBS_Coin" target="_blank">@CBS_Coin</a> • E-mail: <a href="mailto:smitskecbs@gmail.com">smitskecbs@gmail.com</a></p>
-    </section>
+    <footer class="muted">
+      CBS Contest Bot — quick reference. Keep your token and RPC key secret. If you need a Markdown-enabled variant of the bot replies, enable Markdown safely (escape reserved characters).
+    </footer>
   </div>
 
-  <div class="footer">
-    <span class="muted">© <span id="y"></span> CBS Bot — Community Builds Sovereignty.</span>
-  </div>
-</div>
+  <script>
+    const app = document.getElementById('app');
+    const btnEn = document.getElementById('btn-en');
+    const btnNl = document.getElementById('btn-nl');
 
-<script>
-  const y=document.getElementById('y'); y.textContent=new Date().getFullYear();
-  const tabs=document.querySelectorAll('.tab');
-  const en=document.getElementById('lang-en');
-  const nl=document.getElementById('lang-nl');
-  tabs.forEach(t=>t.addEventListener('click',()=>{
-    tabs.forEach(x=>x.classList.remove('active'));
-    t.classList.add('active');
-    if(t.dataset.lang==='en'){ en.style.display='block'; nl.style.display='none'; }
-    else { en.style.display='none'; nl.style.display='block'; }
-    window.scrollTo({top:0, behavior:'smooth'});
-  }));
-
-  function copyBlock(id){
-    const el=document.getElementById(id);
-    const txt=el.innerText;
-    navigator.clipboard.writeText(txt).then(()=>{
-      const btn=el.parentElement.querySelector('.copybtn');
-      const old=btn.textContent; btn.textContent='Copied!';
-      setTimeout(()=>btn.textContent=old,900);
-    });
-  }
-</script>
+    function setLang(lang){
+      app.dataset.lang = lang;
+      // toggle visibility classes
+      document.querySelectorAll('.en, .nl').forEach(el=>{
+        if(lang === 'en'){
+          el.classList.toggle('only', !el.classList.contains('en'));
+        } else {
+          el.classList.toggle('only', !el.classList.contains('nl'));
+        }
+      });
+      btnEn.setAttribute('aria-pressed', lang==='en');
+      btnNl.setAttribute('aria-pressed', lang==='nl');
+    }
+    btnEn.addEventListener('click', ()=>setLang('en'));
+    btnNl.addEventListener('click', ()=>setLang('nl'));
+    setLang('en');
+  </script>
 </body>
 </html>
-
