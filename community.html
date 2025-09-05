@@ -3,30 +3,79 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>CBS Community — Chat & Webcam</title>
+  <title>CBS Community — Chat</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <style>
     :root{
-      --bg:#0a0c10; --fg:#eafffb; --muted:#a8d6cd; --line:rgba(0,255,240,.18);
-      --btnA:#5afff0; --btnB:#2bffe4; --card:#0f151c; --card2:#0c1016;
+      --bg:#0a0c10; --bg2:#0f141b;
+      --card:#0f151c; --card2:#0c1016;
+      --fg:#eafffb; --muted:#a8d6cd; --line:rgba(0,255,240,.18);
+      --btnA:#5afff0; --btnB:#2bffe4; --accent:#79ffee;
+      --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.06);
+      --radius:16px;
     }
     *{box-sizing:border-box}
-    body{margin:0; font-family:'Orbitron',sans-serif; background:linear-gradient(135deg,#0a0c10,#0f141b); color:var(--fg)}
-    header{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line)}
-    .brand{display:flex;align-items:center;gap:10px}
-    .brand img{width:36px;height:36px;border-radius:8px;filter:drop-shadow(0 0 8px rgba(0,255,230,.35))}
-    .badge{padding:8px 12px;border:1px solid var(--line);border-radius:999px;background:#0c1117;color:#bffef2}
-    .wrap{max-width:1100px;margin:16px auto;padding:0 16px}
-    .card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.06)}
-    .controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    .btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:12px;border:1px solid rgba(0,255,240,.7);
-         background:linear-gradient(180deg,var(--btnA),var(--btnB));color:#012022;font-weight:900;text-decoration:none;cursor:pointer}
-    .btn.secondary{background:#0f151c;color:#bffef2;border-color:var(--line)}
-    .btn.danger{background:#2b1116;color:#ffd2d6;border-color:#762e3a}
-    #stage{aspect-ratio:16/9;width:100%;min-height:60vh;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#000}
-    input[type="text"]{padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#0f151c;color:#f0ffff}
-    small.muted{color:var(--muted)}
-    footer{margin:20px auto 36px;text-align:center;color:var(--muted)}
+    body{
+      margin:0; font-family:'Orbitron',sans-serif; color:var(--fg);
+      background:
+        radial-gradient(900px 600px at 100% -10%, rgba(0,255,230,.10), transparent 60%),
+        radial-gradient(700px 500px at -10% 110%, rgba(0,170,255,.09), transparent 60%),
+        linear-gradient(135deg,var(--bg),var(--bg2));
+      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+    }
+    header{
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+      padding:12px 16px; border-bottom:1px solid var(--line); position:sticky; top:0; backdrop-filter:blur(6px);
+      background:linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0));
+    }
+    .brand{display:flex; align-items:center; gap:10px}
+    .brand img{width:36px; height:36px; border-radius:10px; filter:drop-shadow(0 0 8px rgba(0,255,230,.35))}
+    .brand h1{margin:0; font-size:1.05rem; color:#bffef2}
+    .wrap{max-width:980px; margin:14px auto; padding:0 14px}
+    .panel{
+      background:linear-gradient(180deg, var(--card), var(--card2));
+      border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);
+      padding:14px; margin-bottom:14px;
+    }
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center; gap:6px;
+      padding:10px 14px; border-radius:12px; text-decoration:none; cursor:pointer; font-weight:900; color:#012022;
+      background:linear-gradient(180deg, var(--btnA), var(--btnB)); border:1px solid rgba(0,255,240,.7);
+      box-shadow: 0 0 12px rgba(0,255,230,.4), inset 0 -8px 14px rgba(0,0,0,.14);
+    }
+    .btn.secondary{ background:#0f151c; color:#bffef2; border-color:var(--line) }
+    .badge{ padding:7px 10px; border:1px solid var(--line); border-radius:999px; background:#0c1117; color:#bffef2 }
+    input[type="text"]{
+      padding:10px 12px; border-radius:12px; border:1px solid var(--line);
+      background:#0f151c; color:#f0ffff; min-width:180px;
+    }
+    select{
+      padding:10px 12px; border-radius:12px; border:1px solid var(--line);
+      background:#0f151c; color:#f0ffff;
+    }
+    /* Chat layout */
+    .chat{
+      display:grid; grid-template-rows:auto 1fr auto; gap:12px; height:70vh; min-height:420px;
+    }
+    .messages{
+      overflow:auto; border:1px solid var(--line); border-radius:12px; padding:10px; background:#0a0f15;
+    }
+    .msg{
+      display:flex; gap:10px; padding:8px 10px; margin:6px 0;
+      background:linear-gradient(180deg,#0d141c,#0b1118);
+      border:1px solid rgba(0,255,240,.12); border-radius:12px;
+    }
+    .msg.me{ border-color: rgba(0,255,240,.3); box-shadow: inset 0 0 0 1px rgba(0,255,240,.06)}
+    .msg .who{color:#bffef2; font-weight:700}
+    .msg .time{color:var(--muted); font-size:.82rem}
+    .msg .text{white-space:pre-wrap; word-wrap:break-word}
+    .composer{display:flex; gap:10px; align-items:center}
+    .composer input[type="text"]{flex:1}
+    .hint{color:var(--muted); font-size:.9rem}
+    footer{margin:22px auto 36px; text-align:center; color:var(--muted)}
+    a.link{color:var(--accent); text-decoration:none}
+    a.link:hover{text-decoration:underline}
   </style>
 </head>
 <body>
@@ -34,118 +83,212 @@
     <div class="brand">
       <a class="btn secondary" href="index.html">← Home</a>
       <img src="logo.png" alt="CBS Logo" onerror="this.src='image/logo.png'">
-      <span class="badge">CBS Community — Live Chat</span>
+      <h1>CBS Community — Chat</h1>
     </div>
-    <div class="controls">
-      <input id="displayName" type="text" placeholder="Your name (optional)"/>
-      <button id="joinBtn" class="btn">Join room</button>
-      <button id="leaveBtn" class="btn danger" style="display:none">Leave</button>
+    <div class="row">
+      <span class="badge">No login • No wallet • Just chat</span>
     </div>
   </header>
 
   <main class="wrap">
-    <div class="card" style="margin-bottom:12px">
-      <div class="controls">
-        <button id="toggleCam" class="btn secondary" disabled>Toggle Camera</button>
-        <button id="toggleMic" class="btn secondary" disabled>Toggle Mic (muted by default)</button>
-        <button id="raiseHand" class="btn" disabled>Request to speak ✋</button>
-        <span class="badge">All mics start muted. Use ✋ to ask for the word.</span>
+    <!-- Top controls -->
+    <section class="panel">
+      <div class="row">
+        <input id="nickname" type="text" placeholder="Choose a name (e.g. Smitske)" />
+        <select id="room">
+          <option value="general">#general</option>
+          <option value="memes">#memes</option>
+          <option value="dev">#dev</option>
+          <option value="trading">#trading</option>
+        </select>
+        <button id="join" class="btn">Join room</button>
+        <button id="leave" class="btn secondary" disabled>Leave</button>
+        <span class="badge" id="status">Not connected</span>
       </div>
-      <small class="muted">Tip: gebruik een headset. Chat open je via de knop in de player.</small>
-    </div>
+      <p class="hint" style="margin:.6rem 0 0">
+        Be kind. No spam. No scams. Mods may purge content.
+      </p>
+    </section>
 
-    <div id="stage" class="card"></div>
+    <!-- Chat -->
+    <section class="panel chat">
+      <div class="row" style="justify-content:space-between">
+        <span class="badge" id="roomTitle">Room: #general</span>
+        <span class="badge" id="online">Peers: 0</span>
+      </div>
+
+      <div id="messages" class="messages" aria-live="polite"></div>
+
+      <div class="composer">
+        <input id="message" type="text" placeholder="Type your message… (Enter to send)" disabled />
+        <button id="send" class="btn" disabled>Send</button>
+        <button id="clear" class="btn secondary" title="Clear messages locally">Clear</button>
+      </div>
+    </section>
+
+    <section class="panel">
+      <p class="hint">
+        Tip: wissel van room via het dropdown. Berichten worden p2p gesynct via publieke **GUN** peers.
+        Voor performance tonen we lokaal **max 200** recente berichten per room.
+      </p>
+      <p class="hint">Telegram: <a class="link" href="https://t.me/CBS_Coin" target="_blank" rel="noopener">@CBS_Coin</a> · Buy on Raydium: <a class="link" href="https://raydium.io/swap/?inputMint=sol&outputMint=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk" target="_blank" rel="noopener">RAY swap</a></p>
+    </section>
   </main>
 
-  <footer>Community Builds Sovereignty · Chat & Webcam</footer>
+  <footer>Community Builds Sovereignty · CBS ©</footer>
 
-  <!-- Jitsi External API -->
-  <script src="https://meet.jit.si/external_api.js"></script>
+  <!-- GUN (p2p datastore) -->
+  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
   <script>
-    // === Basic settings ===
-    const ROOM_NAME = "CBSCommunityChat"; // wil je per dag? bv: "CBS-"+new Date().toISOString().slice(0,10)
-    const JITSI_DOMAIN = "meet.jit.si";
-    let api = null;
-    let joined = false;
+    // === Simple CBS Chat powered by GUN ===
+    const peers = [
+      // Publieke community-relays (GUN). Je kunt eigen peers toevoegen/hosten voor meer stabiliteit.
+      "https://gun-manhattan.herokuapp.com/gun",
+      "https://gunjs.herokuapp.com/gun"
+    ];
+    const gun = Gun({ peers });
 
     // UI refs
-    const joinBtn   = document.getElementById('joinBtn');
-    const leaveBtn  = document.getElementById('leaveBtn');
-    const toggleCam = document.getElementById('toggleCam');
-    const toggleMic = document.getElementById('toggleMic');
-    const raiseHand = document.getElementById('raiseHand');
-    const nameInput = document.getElementById('displayName');
-    const stage     = document.getElementById('stage');
+    const nicknameEl = document.getElementById('nickname');
+    const roomEl     = document.getElementById('room');
+    const joinBtn    = document.getElementById('join');
+    const leaveBtn   = document.getElementById('leave');
+    const statusEl   = document.getElementById('status');
+    const roomTitle  = document.getElementById('roomTitle');
+    const onlineEl   = document.getElementById('online');
+    const msgList    = document.getElementById('messages');
+    const inputEl    = document.getElementById('message');
+    const sendBtn    = document.getElementById('send');
+    const clearBtn   = document.getElementById('clear');
 
-    function enableControls(on){
-      toggleCam.disabled = !on;
-      toggleMic.disabled = !on;
-      raiseHand.disabled = !on;
+    // State
+    let me = localStorage.getItem('cbs_name') || "";
+    let room = localStorage.getItem('cbs_room') || "general";
+    let sub = null;           // subscription for current room
+    let lastSend = 0;         // anti-spam (ms)
+    let msgCache = [];        // local list to limit to 200
+
+    // init defaults
+    nicknameEl.value = me;
+    roomEl.value = room;
+    roomTitle.textContent = "Room: #"+room;
+
+    // connection status (approx)
+    function updatePeers(){
+      try {
+        const opt = gun.back('opt');
+        const peers = Object.keys(opt.peers || {});
+        onlineEl.textContent = "Peers: " + peers.length;
+      } catch(e){}
+    }
+    setInterval(updatePeers, 2000);
+
+    function setConnectedUI(on){
+      inputEl.disabled = !on;
+      sendBtn.disabled = !on;
+      leaveBtn.disabled = !on;
+      joinBtn.disabled = on;
+      statusEl.textContent = on ? "Connected" : "Not connected";
     }
 
-    function joinRoom(){
-      if (joined) return;
-      const userName = (nameInput.value || "CBS Member").replace(/[^ -~]/g,"");
+    function renderMessage(m, mine=false){
+      const wrap = document.createElement('div');
+      wrap.className = "msg" + (mine ? " me" : "");
+      const head = document.createElement('div');
+      head.style.display="flex"; head.style.flexDirection="column"; head.style.minWidth="140px"; head.style.maxWidth="40%";
+      const who = document.createElement('div'); who.className = "who"; who.textContent = m.name || "anon";
+      const t = document.createElement('div'); t.className = "time";
+      const d = new Date(m.ts || Date.now());
+      t.textContent = d.toLocaleString();
+      head.appendChild(who); head.appendChild(t);
+      const body = document.createElement('div'); body.className = "text"; body.textContent = m.text || "";
+      wrap.appendChild(head); wrap.appendChild(body);
+      msgList.appendChild(wrap);
+      msgList.scrollTop = msgList.scrollHeight;
+    }
 
-      const options = {
-        roomName: ROOM_NAME,
-        parentNode: stage,
-        width: "100%",
-        height: stage.clientHeight || 600,
-        interfaceConfigOverwrite: {
-          // Toon handige knoppen, chat en hand-raise
-          // (de toolbar in de embedded UI blijft beschikbaar)
-        },
-        configOverwrite: {
-          prejoinConfig: { enabled: true },
-          startWithAudioMuted: true,
-          startWithVideoMuted: true,  // camera uit bij start
-          disableDeepLinking: true,
-        },
-        userInfo: { displayName: userName }
-      };
+    function attachRoom(r){
+      // detach previous
+      if (sub && sub.off) sub.off();
+      msgList.innerHTML = "";
+      msgCache = [];
 
-      api = new JitsiMeetExternalAPI(JITSI_DOMAIN, options);
+      const node = gun.get("cbs.chat").get(r);
+      // stream messages
+      sub = node.map().on((data, key) => {
+        if (!data) return;
+        // basic guard
+        const m = {
+          id: key,
+          name: data.name || "anon",
+          text: data.text || "",
+          ts: Number(data.ts || 0)
+        };
+        if (!m.text.trim()) return;
 
-      // Zorg dat we gemuted starten (failsafe)
-      api.addEventListener('videoConferenceJoined', () => {
-        joined = true;
-        api.executeCommand('toggleAudio'); // mics default muted; if not muted, toggle
-        api.isAudioMuted().then(m => { if(!m) api.executeCommand('toggleAudio'); });
-        enableControls(true);
-        joinBtn.style.display = "none";
-        leaveBtn.style.display = "inline-flex";
+        // keep only recent 200 locally
+        msgCache.push(m);
+        msgCache.sort((a,b)=>a.ts-b.ts);
+        if (msgCache.length > 200) msgCache = msgCache.slice(-200);
+
+        // re-render all quickly (simple)
+        msgList.innerHTML = "";
+        for (const it of msgCache){
+          renderMessage(it, it.name === (nicknameEl.value || "anon"));
+        }
       });
-
-      api.addEventListener('readyToClose', () => { leaveRoom(); });
-
-      // Optioneel: laat bij raise-hand een chat bericht achter
-      raiseHand.addEventListener('click', () => {
-        api.executeCommand('toggleRaiseHand');
-        api.executeCommand('sendChatMessage', '✋ Request to speak, please.');
-      });
-
-      toggleCam.addEventListener('click', () => api.executeCommand('toggleVideo'));
-      toggleMic.addEventListener('click', () => api.executeCommand('toggleAudio'));
     }
 
-    function leaveRoom(){
-      try { api && api.dispose(); } catch(e){}
-      api = null; joined = false;
-      enableControls(false);
-      joinBtn.style.display = "inline-flex";
-      leaveBtn.style.display = "none";
-      // Cleanup stage
-      stage.innerHTML = "";
-      const holder = document.createElement('div');
-      holder.style.width = "100%";
-      holder.style.minHeight = "60vh";
-      stage.appendChild(holder);
+    function join(){
+      let name = nicknameEl.value.trim();
+      if (!name) name = "CBS Member";
+      localStorage.setItem('cbs_name', name);
+
+      const r = roomEl.value.trim() || "general";
+      localStorage.setItem('cbs_room', r);
+      room = r;
+      roomTitle.textContent = "Room: #"+r;
+
+      attachRoom(room);
+      setConnectedUI(true);
+      inputEl.focus();
     }
 
-    joinBtn.addEventListener('click', joinRoom);
-    leaveBtn.addEventListener('click', leaveRoom);
-    enableControls(false);
+    function leave(){
+      if (sub && sub.off) sub.off();
+      sub = null;
+      setConnectedUI(false);
+      msgList.innerHTML = "";
+    }
+
+    function send(){
+      const now = Date.now();
+      if (now - lastSend < 700) return; // anti-spam 0.7s
+      const text = inputEl.value.trim();
+      if (!text) return;
+      const name = nicknameEl.value.trim() || "CBS Member";
+      const msg = { name, text, ts: now };
+      // push to room
+      gun.get("cbs.chat").get(room).set(msg);
+      lastSend = now;
+      inputEl.value = "";
+    }
+
+    // events
+    joinBtn.addEventListener('click', join);
+    leaveBtn.addEventListener('click', leave);
+    sendBtn.addEventListener('click', send);
+    inputEl.addEventListener('keydown', e=>{
+      if (e.key === "Enter" && !e.shiftKey){ e.preventDefault(); send(); }
+    });
+    clearBtn.addEventListener('click', ()=>{
+      msgList.innerHTML = "";
+    });
+
+    // auto-join last room for convenience
+    // (comment uit als je dat niet wilt)
+    // join();
   </script>
 </body>
 </html>
+
