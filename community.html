@@ -96,7 +96,6 @@
 
 <script type="module">
 /** CONFIG **/
-const RPC_URL   = "https://api.mainnet-beta.solana.com";
 const CBS_MINT  = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"; // CBS mint
 const DECIMALS_BI = 10n ** 9n;
 const ENTRY_CBS = 1000;                 // pay if balance >= 1,000 and < 1,000,000
@@ -105,9 +104,21 @@ const TREASURY  = "2AfbvQCWz2CbuNfBfR4QdVxzjMs1twV8rHJCqME8LtSD";
 const ROOM_NAME = "CBSCommunityRoom";
 const MEMO_TEXT = "CBS-ENTRY:community";
 
+/** RPC fallback list (browser-friendly first) **/
+const RPCS = [
+  "https://rpc.ankr.com/solana",
+  // "https://rpc.helius.xyz/?api-key=YOUR_HELIUS_KEY",
+  // "https://solana-mainnet.g.alchemy.com/v2/YOUR_KEY",
+  "https://api.mainnet-beta.solana.com"
+];
+
 /** Imports **/
 import * as web3 from "https://esm.sh/@solana/web3.js@1.95.3";
 import * as spl  from "https://esm.sh/@solana/spl-token@0.4.8";
+
+/** Token program IDs (classic + 2022) **/
+const TOKEN_PROGRAM_ID      = new web3.PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
+const TOKEN_2022_PROGRAM_ID = new web3.PublicKey("TokenzQdBNbLqP5VEhDW42P9H7C6R2S7pqDgE3Dkq2");
 
 /** UI refs **/
 const connectBtn  = document.getElementById('connectBtn');
@@ -127,12 +138,12 @@ const lockBox     = document.getElementById('lockBox');
 const langNL      = document.getElementById('langNL');
 const langEN      = document.getElementById('langEN');
 
-const conn = new web3.Connection(RPC_URL, "confirmed");
 let walletPubkey = null;
 let lastBalance = 0;
 let LANG = "nl";
+let conn = null;
 
-/** i18n texts **/
+/** i18n **/
 const T = {
   nl: {
     back:"← Home",
@@ -158,7 +169,9 @@ const T = {
     tip:"Tip: gebruik een headset; push-to-talk muten kan in de UI.",
     stateFree:"Gratis toegang",
     statePay:"Betaalde toegang mogelijk (1.000 CBS)",
-    stateNo:"Niet genoeg CBS — geen toegang"
+    stateNo:"Niet genoeg CBS — geen toegang",
+    loading:"laden…",
+    paymentFailed:"Betaling mislukt: "
   },
   en: {
     back:"← Home",
@@ -184,18 +197,18 @@ const T = {
     tip:"Tip: use a headset; push-to-talk mute is available in the UI.",
     stateFree:"Free access",
     statePay:"Paid access available (1,000 CBS)",
-    stateNo:"Not enough CBS — no access"
+    stateNo:"Not enough CBS — no access",
+    loading:"loading…",
+    paymentFailed:"Payment failed: "
   }
 };
 
 function applyLang(){
   const t = T[LANG];
   document.querySelectorAll("[data-t]").forEach(el=>{
-    const key = el.getAttribute("data-t");
-    if (t[key] !== undefined) el.innerHTML = t[key];
+    el.innerHTML = t[ el.getAttribute("data-t") ];
   });
   document.documentElement.lang = LANG === "nl" ? "nl" : "en";
-  // Update dynamic status line too
   updateGateUI(lastBalance, true);
 }
 
@@ -205,43 +218,77 @@ langEN.addEventListener("click", ()=>{ LANG="en"; applyLang(); });
 function log(t){ logEl.textContent = (logEl.textContent? logEl.textContent+"\n":"") + t; }
 function short(pk){ return pk ? pk.slice(0,4)+"…"+pk.slice(-4) : "—"; }
 
+async function getConnection(){
+  if (conn) return conn;
+  for (const url of RPCS){
+    try{
+      const c = new web3.Connection(url, "confirmed");
+      await c.getSlot(); // probe
+      conn = c;
+      console.log("[CBS] RPC in use:", url);
+      return conn;
+    }catch(e){
+      console.warn("[CBS] RPC failed:", url, e?.message||e);
+    }
+  }
+  throw new Error("No RPC reachable");
+}
+
 async function connectPhantom(){
   const provider = window.solana ?? window.phantom?.solana;
   if (!provider || !provider.isPhantom){ alert(LANG==="nl"?"Phantom wallet niet gevonden.":"Phantom wallet not found."); return; }
   const res = await provider.connect();
   walletPubkey = res.publicKey.toBase58();
   walletShort.textContent = short(walletPubkey);
-  accessEl.textContent = T[LANG].statePay; // voorlopige tekst; wordt meteen herberekend
-  refreshBtn.disabled = false;
+  accessEl.textContent = T[LANG].statePay; // voorlopige tekst
+  refreshBtn.disabled = true; // wordt weer aan bij succesvolle refresh
   await refreshBalance();
 }
 
 async function refreshBalance(){
   if (!walletPubkey) return;
-  cbsBalEl.textContent = LANG==="nl"?"laden…":"loading…";
-  const owner = new web3.PublicKey(walletPubkey);
-  const mint  = new web3.PublicKey(CBS_MINT);
-  const { value } = await conn.getTokenAccountsByOwner(owner, { mint });
-  let total = 0;
-  for (const acc of value){
-    const bal = await conn.getTokenAccountBalance(acc.pubkey);
-    total += Number(bal.value.uiAmount || 0);
+  try{
+    cbsBalEl.textContent = T[LANG].loading;
+    const c     = await getConnection();
+    const owner = new web3.PublicKey(walletPubkey);
+    const mint  = new web3.PublicKey(CBS_MINT);
+
+    async function sumFor(programId){
+      const resp = await c.getParsedTokenAccountsByOwner(owner, { programId });
+      let sum = 0;
+      for (const { account } of resp.value){
+        const info = account.data.parsed.info;
+        if (info.mint === mint.toBase58()){
+          sum += Number(info.tokenAmount.uiAmount || 0);
+        }
+      }
+      return sum;
+    }
+
+    let total = 0;
+    try { total += await sumFor(TOKEN_PROGRAM_ID); }      catch(e){ log("SPL fail: "+(e.message||e)); }
+    try { total += await sumFor(TOKEN_2022_PROGRAM_ID); } catch(e){ log("2022 fail: "+(e.message||e)); }
+
+    lastBalance = total;
+    cbsBalEl.textContent = total.toLocaleString(undefined,{maximumFractionDigits:2}) + " CBS";
+    refreshBtn.disabled = false;
+    updateGateUI(total);
+    return total;
+  }catch(err){
+    console.error(err);
+    log("❌ Balance error: " + (err.message || err));
+    cbsBalEl.textContent = "—";
+    accessEl.textContent = LANG==="nl"?"Fout bij ophalen balans":"Failed to load balance";
+    updateGateUI(0);
+    refreshBtn.disabled = false;
   }
-  lastBalance = total;
-  cbsBalEl.textContent = total.toLocaleString(undefined,{maximumFractionDigits:2}) + " CBS";
-  updateGateUI(total);
-  return total;
 }
 
 function updateGateUI(total, keepStatus=false){
-  // Reset UI
   joinFreeBtn.style.display = "none";
   payBtn.disabled = true;
   lockBox.style.display = "none";
-
-  if (!keepStatus){
-    accessEl.textContent = T[LANG].notConnected;
-  }
+  if (!keepStatus) accessEl.textContent = T[LANG].notConnected;
 
   if (total >= FREE_THRESHOLD_CBS){
     accessEl.textContent = T[LANG].stateFree;
@@ -260,6 +307,8 @@ async function payAndOpen(){
   try{
     const provider = window.solana ?? window.phantom?.solana;
     if (!provider) throw new Error("Phantom not found");
+    const c = await getConnection();
+
     const payer = new web3.PublicKey(walletPubkey);
     const mintPk = new web3.PublicKey(CBS_MINT);
     const treas  = new web3.PublicKey(TREASURY);
@@ -269,17 +318,14 @@ async function payAndOpen(){
 
     const tx = new web3.Transaction();
 
-    // Create to-ATA if needed
-    const toInfo = await conn.getAccountInfo(toAta);
+    const toInfo = await c.getAccountInfo(toAta);
     if (!toInfo){
       tx.add(spl.createAssociatedTokenAccountInstruction(payer, toAta, treas, mintPk));
     }
 
-    // Transfer 1,000 CBS
     const amount = BigInt(ENTRY_CBS) * DECIMALS_BI;
     tx.add(spl.createTransferInstruction(fromAta, toAta, payer, amount));
 
-    // Memo
     const MEMO_PROGRAM_ID = new web3.PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr");
     tx.add(new web3.TransactionInstruction({
       keys: [{pubkey:payer, isSigner:true, isWritable:false}],
@@ -288,17 +334,17 @@ async function payAndOpen(){
     }));
 
     tx.feePayer = payer;
-    tx.recentBlockhash = (await conn.getLatestBlockhash()).blockhash;
+    tx.recentBlockhash = (await c.getLatestBlockhash()).blockhash;
 
     const signed = await provider.signTransaction(tx);
-    const sig = await conn.sendRawTransaction(signed.serialize(), { skipPreflight:false });
+    const sig = await c.sendRawTransaction(signed.serialize(), { skipPreflight:false });
     accessEl.textContent = LANG==="nl"?"Bevestigen…":"Confirming…";
-    await conn.confirmTransaction(sig, "confirmed");
+    await c.confirmTransaction(sig, "confirmed");
     log("✅ Paid: " + sig);
     openRoom();
   }catch(e){
     console.error(e);
-    alert((LANG==="nl"?"Betaling mislukt: ":"Payment failed: ") + (e.message || e));
+    alert(T[LANG].paymentFailed + (e.message || e));
     payBtn.disabled = false;
   }
 }
