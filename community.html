@@ -44,7 +44,6 @@
 </header>
 
 <div class="wrap">
-  <!-- Gate -->
   <div class="card" id="gate">
     <h2 style="margin:6px 0 10px" data-t="gateTitle">Access Gate</h2>
     <div class="row">
@@ -60,7 +59,6 @@
       <button id="refreshBtn" class="btn secondary" disabled data-t="refresh">↻ Refresh balance</button>
     </div>
 
-    <!-- Lock notice -->
     <div id="lockBox" class="lock" style="display:none; margin-top:12px">
       <div style="font-size:22px">🔒</div>
       <div>
@@ -84,7 +82,6 @@
     </p>
   </div>
 
-  <!-- Room -->
   <div class="card" id="room" style="display:none">
     <h2 style="margin:6px 0 10px" data-t="roomTitle">Community Room</h2>
     <div id="stage"></div>
@@ -96,7 +93,7 @@
 </div>
 
 <script type="module">
-/** CONFIG **/
+// ----- CONFIG -----
 const STR = {
   CBS_MINT:  "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk",
   TREASURY:  "2AfbvQCWz2CbuNfBfR4QdVxzjMs1twV8rHJCqME8LtSD",
@@ -109,16 +106,13 @@ const FREE_THRESHOLD_CBS = 1_000_000;
 const ROOM_NAME = "CBSCommunityRoom";
 const MEMO_TEXT = "CBS-ENTRY:community";
 
-/** RPC: jouw Helius endpoint */
-const RPCS = [
-  "https://rpc.helius.xyz/?api-key=8f28d7f3-77bd-4f3d-a95b-e05cf1ad3be3"
-];
+// Gebruik je eigen Worker-URL hier:
+const RPCS = ["https://WORKER_URL_HIER"];  // bv. https://cbs-rpc.yourname.workers.dev
 
-/** Imports **/
 import * as web3 from "https://esm.sh/@solana/web3.js@1.95.3";
 import * as spl  from "https://esm.sh/@solana/spl-token@0.4.8";
 
-/** UI refs **/
+// ----- UI refs -----
 const connectBtn  = document.getElementById('connectBtn');
 const payBtn      = document.getElementById('payBtn');
 const joinFreeBtn = document.getElementById('joinFreeBtn');
@@ -141,98 +135,42 @@ let lastBalance = 0;
 let LANG = "nl";
 let conn = null;
 
-/** i18n **/
+// ----- i18n -----
 const T = {
-  nl: {
-    back:"← Home",
-    title:"CBS Community — Live Chat",
-    feeBadge:"Gratis ≥ 1.000.000 CBS • Anders 1.000 CBS om te spreken",
-    connect:"Verbind Phantom",
-    gateTitle:"Toegangspoort",
-    wallet:"Wallet",
-    balance:"CBS balans",
-    status:"Status",
-    notConnected:"Niet verbonden",
-    joinHolder:"Ik ben holder — Join",
-    payBtn:"Betaal 1.000 CBS & Join",
-    refresh:"↻ Balans verversen",
-    holdersOnly:"Holders only",
-    requirement:"Toegang vereist: minimaal <b>1.000 CBS</b> (of <b>1.000.000 CBS</b> voor gratis toegang).",
-    motivation:"We bouwen samen aan soevereiniteit. Koop en houd CBS om mee te praten, chats bij te wonen en te helpen sturen.",
-    buyJup:"Koop op Jupiter",
-    buyRay:"Koop op Raydium",
-    memo:"Indien betaling nodig is: 1.000 CBS per sessie. On-chain memo: <code>CBS-ENTRY:community</code>.",
-    roomTitle:"Community Room",
-    leave:"Leave",
-    tip:"Tip: gebruik een headset; push-to-talk muten kan in de UI.",
-    stateFree:"Gratis toegang",
-    statePay:"Betaalde toegang mogelijk (1.000 CBS)",
-    stateNo:"Niet genoeg CBS — geen toegang",
-    loading:"laden…",
-    paymentFailed:"Betaling mislukt: "
-  },
-  en: {
-    back:"← Home",
-    title:"CBS Community — Live Chat",
-    feeBadge:"Free ≥ 1,000,000 CBS • Else 1,000 CBS to speak",
-    connect:"Connect Phantom",
-    gateTitle:"Access Gate",
-    wallet:"Wallet",
-    balance:"CBS balance",
-    status:"Status",
-    notConnected:"Not connected",
-    joinHolder:"I'm a holder — Join",
-    payBtn:"Pay 1,000 CBS & Join",
-    refresh:"↻ Refresh balance",
-    holdersOnly:"Holders only",
-    requirement:"Access requires at least <b>1,000 CBS</b> (or <b>1,000,000 CBS</b> for free access).",
-    motivation:"We build sovereignty together. Buy and hold CBS to join chats, speak up, and help steer the project.",
-    buyJup:"Buy on Jupiter",
-    buyRay:"Buy on Raydium",
-    memo:"If payment is required, it's 1,000 CBS per session. On-chain memo: <code>CBS-ENTRY:community</code>.",
-    roomTitle:"Community Room",
-    leave:"Leave",
-    tip:"Tip: use a headset; push-to-talk mute is available in the UI.",
-    stateFree:"Free access",
-    statePay:"Paid access available (1,000 CBS)",
-    stateNo:"Not enough CBS — no access",
-    loading:"loading…",
-    paymentFailed:"Payment failed: "
-  }
+  nl: { back:"← Home", title:"CBS Community — Live Chat", feeBadge:"Gratis ≥ 1.000.000 CBS • Anders 1.000 CBS om te spreken", connect:"Verbind Phantom",
+        gateTitle:"Toegangspoort", wallet:"Wallet", balance:"CBS balans", status:"Status", notConnected:"Niet verbonden",
+        joinHolder:"Ik ben holder — Join", payBtn:"Betaal 1.000 CBS & Join", refresh:"↻ Balans verversen", holdersOnly:"Holders only",
+        requirement:"Toegang vereist: minimaal <b>1.000 CBS</b> (of <b>1.000.000 CBS</b> voor gratis toegang).",
+        motivation:"We bouwen samen aan soevereiniteit. Koop en houd CBS om mee te praten, chats bij te wonen en te helpen sturen.",
+        buyJup:"Koop op Jupiter", buyRay:"Koop op Raydium",
+        memo:"Indien betaling nodig is: 1.000 CBS per sessie. On-chain memo: <code>CBS-ENTRY:community</code>.",
+        roomTitle:"Community Room", leave:"Leave",
+        tip:"Tip: gebruik een headset; push-to-talk muten kan in de UI.",
+        stateFree:"Gratis toegang", statePay:"Betaalde toegang mogelijk (1.000 CBS)", stateNo:"Niet genoeg CBS — geen toegang", loading:"laden…", paymentFailed:"Betaling mislukt: " },
+  en: { back:"← Home", title:"CBS Community — Live Chat", feeBadge:"Free ≥ 1,000,000 CBS • Else 1,000 CBS to speak", connect:"Connect Phantom",
+        gateTitle:"Access Gate", wallet:"Wallet", balance:"CBS balance", status:"Status", notConnected:"Not connected",
+        joinHolder:"I'm a holder — Join", payBtn:"Pay 1,000 CBS & Join", refresh:"↻ Refresh balance", holdersOnly:"Holders only",
+        requirement:"Access requires at least <b>1,000 CBS</b> (or <b>1,000,000 CBS</b> for free access).",
+        motivation:"We build sovereignty together. Buy and hold CBS to join chats, speak up, and help steer the project.",
+        buyJup:"Buy on Jupiter", buyRay:"Buy on Raydium",
+        memo:"If payment is required, it's 1,000 CBS per session. On-chain memo: <code>CBS-ENTRY:community</code>.",
+        roomTitle:"Community Room", leave:"Leave",
+        tip:"Tip: use a headset; push-to-talk mute is available in the UI.",
+        stateFree:"Free access", statePay:"Paid access available (1,000 CBS)", stateNo:"Not enough CBS — no access", loading:"loading…", paymentFailed:"Payment failed: " }
 };
-
-function applyLang(){
-  const t = T[LANG];
-  document.querySelectorAll("[data-t]").forEach(el=>{
-    el.innerHTML = t[ el.getAttribute("data-t") ];
-  });
-  document.documentElement.lang = (LANG === "nl" ? "nl" : "en");
-  updateGateUI(lastBalance, true);
-}
-
+function applyLang(){ const t=T[LANG]; document.querySelectorAll("[data-t]").forEach(el=>{ el.innerHTML=t[el.getAttribute("data-t")]; }); document.documentElement.lang=(LANG==="nl"?"nl":"en"); updateGateUI(lastBalance,true); }
 langNL.addEventListener("click", ()=>{ LANG="nl"; applyLang(); });
 langEN.addEventListener("click", ()=>{ LANG="en"; applyLang(); });
 
-function log(t){ logEl.textContent = (logEl.textContent? logEl.textContent+"\n":"") + t; }
+function log(t){ logEl.textContent=(logEl.textContent?logEl.textContent+"\n":"")+t; }
 function short(pk){ return pk ? pk.slice(0,4)+"…"+pk.slice(-4) : "—"; }
-
-function pkSafe(str){
-  try{ return new web3.PublicKey(String(str).trim()); }
-  catch(e){ log("❌ Invalid key: "+str); throw e; }
-}
+function pkSafe(str){ return new web3.PublicKey(String(str).trim()); }
 
 async function getConnection(){
   if (conn) return conn;
   for (const url of RPCS){
-    try{
-      const c = new web3.Connection(url, "confirmed");
-      await c.getSlot(); // probe
-      conn = c;
-      console.log("[CBS] RPC in use:", url);
-      return conn;
-    }catch(e){
-      console.warn("[CBS] RPC failed:", url, e?.message||e);
-    }
+    try{ const c=new web3.Connection(url,"confirmed"); await c.getSlot(); conn=c; console.log("[CBS] RPC via:",url); return conn; }
+    catch(e){ console.warn("[CBS] RPC failed:",url,e?.message||e); }
   }
   throw new Error("No RPC reachable");
 }
@@ -240,13 +178,12 @@ async function getConnection(){
 async function connectPhantom(){
   const provider = window.solana ?? window.phantom?.solana;
   if (!provider || !provider.isPhantom){
-    alert(LANG==="nl"?"Phantom wallet niet gevonden.":"Phantom wallet not found.");
-    return;
+    alert(LANG==="nl"?"Phantom wallet niet gevonden.":"Phantom wallet not found."); return;
   }
   const res = await provider.connect();
   walletPubkey = res.publicKey.toBase58();
   walletShort.textContent = short(walletPubkey);
-  accessEl.textContent = T[LANG].statePay; // voorlopige tekst
+  accessEl.textContent = T[LANG].statePay;
   refreshBtn.disabled = true;
   await refreshBalance();
 }
@@ -266,9 +203,7 @@ async function refreshBalance(){
       let sum = 0;
       for (const { account } of resp.value){
         const info = account.data.parsed.info;
-        if (info.mint === mint.toBase58()){
-          sum += Number(info.tokenAmount.uiAmount || 0);
-        }
+        if (info.mint === mint.toBase58()) sum += Number(info.tokenAmount.uiAmount || 0);
       }
       return sum;
     }
@@ -281,7 +216,6 @@ async function refreshBalance(){
     cbsBalEl.textContent = total.toLocaleString(undefined,{maximumFractionDigits:2}) + " CBS";
     refreshBtn.disabled = false;
     updateGateUI(total);
-    return total;
   }catch(err){
     console.error(err);
     log("❌ Balance error: " + (err.message || err));
@@ -293,28 +227,17 @@ async function refreshBalance(){
 }
 
 function updateGateUI(total, keepStatus=false){
-  joinFreeBtn.style.display = "none";
-  payBtn.disabled = true;
-  lockBox.style.display = "none";
+  joinFreeBtn.style.display = "none"; payBtn.disabled = true; lockBox.style.display = "none";
   if (!keepStatus) accessEl.textContent = T[LANG].notConnected;
-
-  if (total >= FREE_THRESHOLD_CBS){
-    accessEl.textContent = T[LANG].stateFree;
-    joinFreeBtn.style.display = "inline-flex";
-  } else if (total >= ENTRY_CBS){
-    accessEl.textContent = T[LANG].statePay;
-    payBtn.disabled = false;
-  } else {
-    accessEl.textContent = T[LANG].stateNo;
-    lockBox.style.display = "flex";
-  }
+  if (total >= FREE_THRESHOLD_CBS){ accessEl.textContent = T[LANG].stateFree; joinFreeBtn.style.display = "inline-flex"; }
+  else if (total >= ENTRY_CBS){ accessEl.textContent = T[LANG].statePay; payBtn.disabled = false; }
+  else { accessEl.textContent = T[LANG].stateNo; lockBox.style.display = "flex"; }
 }
 
 async function payAndOpen(){
   payBtn.disabled = true;
   try{
-    const provider = window.solana ?? window.phantom?.solana;
-    if (!provider) throw new Error("Phantom not found");
+    const provider = window.solana ?? window.phantom?.solana; if (!provider) throw new Error("Phantom not found");
     const c = await getConnection();
 
     const payer  = pkSafe(walletPubkey);
@@ -327,9 +250,7 @@ async function payAndOpen(){
     const tx = new web3.Transaction();
 
     const toInfo = await c.getAccountInfo(toAta);
-    if (!toInfo){
-      tx.add(spl.createAssociatedTokenAccountInstruction(payer, toAta, treas, mintPk));
-    }
+    if (!toInfo) tx.add(spl.createAssociatedTokenAccountInstruction(payer, toAta, treas, mintPk));
 
     const amount = BigInt(ENTRY_CBS) * DECIMALS_BI;
     tx.add(spl.createTransferInstruction(fromAta, toAta, payer, amount));
@@ -358,8 +279,7 @@ async function payAndOpen(){
 }
 
 function openRoom(){
-  gate.style.display = "none";
-  room.style.display = "block";
+  gate.style.display = "none"; room.style.display = "block";
   const url = `https://meet.jit.si/${encodeURIComponent(ROOM_NAME)}`;
   const ifr = document.createElement("iframe");
   ifr.src = url + "#config.prejoinConfig.enabled=true&interfaceConfig.TOOLBAR_BUTTONS=[\"microphone\",\"camera\",\"desktop\",\"chat\",\"raisehand\",\"tileview\",\"hangup\"]";
@@ -367,14 +287,9 @@ function openRoom(){
   ifr.style.width = "100%"; ifr.style.height = "70vh"; ifr.style.border = "0";
   stage.innerHTML = ""; stage.appendChild(ifr);
 }
+function leaveRoom(){ stage.innerHTML=""; room.style.display="none"; gate.style.display="block"; }
 
-function leaveRoom(){
-  stage.innerHTML = "";
-  room.style.display = "none";
-  gate.style.display = "block";
-}
-
-/** init **/
+// init
 applyLang();
 connectBtn.addEventListener('click', connectPhantom);
 refreshBtn.addEventListener('click', refreshBalance);
@@ -384,3 +299,4 @@ leaveBtn && leaveBtn.addEventListener('click', leaveRoom);
 </script>
 </body>
 </html>
+
