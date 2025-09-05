@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>CBS — Chain Breaker</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg1:#0a0c10; --bg2:#0f141b;
+    --fg:#eafffb; --muted:#a8d6cd; --accent:#2bffe4; --accent2:#7ee9dc;
+  }
+  html,body{height:100%}
+  body{
+    margin:0; font-family:'Orbitron',sans-serif; color:var(--fg);
+    background:
+      radial-gradient(900px 600px at 100% -10%, rgba(0,255,230,.10), transparent 60%),
+      radial-gradient(700px 500px at -10% 110%, rgba(0,170,255,.09), transparent 60%),
+      linear-gradient(135deg,var(--bg1),var(--bg2));
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+  }
+  header{width:100%; max-width:1100px; display:flex; align-items:center; justify-content:space-between; padding:10px 14px}
+  header a{color:#bffef2; text-decoration:none; display:flex; align-items:center; gap:10px}
+  header img{width:34px; height:34px; border-radius:8px}
+  .hud{width:100%; max-width:1100px; display:flex; flex-wrap:wrap; gap:10px; justify-content:space-between; padding:0 14px}
+  .pill{padding:8px 12px; border:1px solid rgba(0,255,240,.25); border-radius:999px; background:rgba(0,0,0,.25); color:var(--muted)}
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    padding:10px 14px; border-radius:10px; text-decoration:none; cursor:pointer;
+    color:#012022; background:linear-gradient(180deg,#5afff0,#2bffe4); border:1px solid rgba(0,255,240,.7);
+    font-weight:900;
+  }
+  .btn:disabled{opacity:.5; cursor:not-allowed}
+  .wrap{position:relative; width:min(92vw,900px); aspect-ratio:4/3; background:#0b1016; border:1px solid rgba(0,255,240,.18); border-radius:18px; box-shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10); overflow:hidden}
+  canvas{width:100%; height:100%; display:block; image-rendering:pixelated}
+  .panel{width:100%; max-width:1100px; display:flex; gap:10px; align-items:center; justify-content:space-between; padding:0 14px 14px}
+  select{padding:8px 12px; border-radius:10px; background:#0f151c; color:var(--fg); border:1px solid rgba(0,255,240,.25)}
+  .note{color:var(--muted); font-size:.92rem}
+  .pop{
+    position:absolute; inset:0; display:none; align-items:center; justify-content:center; backdrop-filter:blur(4px);
+    background:linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.5));
+  }
+  .card{
+    width:min(92vw,560px); background:linear-gradient(180deg,#0f151c,#0c1016);
+    border:1px solid rgba(0,255,240,.25); border-radius:16px; padding:16px; color:var(--fg);
+    box-shadow:0 20px 45px rgba(0,255,230,.10), inset 0 0 0 1px rgba(0,255,240,.08);
+  }
+  .flex{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+  .grow{flex:1}
+  code{background:#0f151c; padding:2px 6px; border-radius:6px; border:1px solid rgba(0,255,240,.18)}
+</style>
+</head>
+<body>
+  <header>
+    <a href="index.html"><img src="logo.png" alt="CBS"><strong>CBS Coin</strong></a>
+    <div class="flex">
+      <span class="pill">Seed: <span id="seedTxt"></span></span>
+      <a class="btn" href="games.html">← Games</a>
+    </div>
+  </header>
+
+  <div class="hud">
+    <span class="pill">Score: <b id="score">0</b></span>
+    <span class="pill">Combo: <b id="combo">0</b></span>
+    <span class="pill">Judgement: <b id="judge">—</b></span>
+    <span class="pill">BPM: <b id="bpm">120</b></span>
+    <span class="pill">Hits: <b id="hits">0</b>/<b id="total">0</b></span>
+  </div>
+
+  <div class="wrap">
+    <canvas id="game" width="900" height="675"></canvas>
+
+    <!-- Results -->
+    <div id="results" class="pop">
+      <div class="card">
+        <h2 style="margin:6px 0 10px; color:#7ee9dc">Run complete</h2>
+        <p class="note">Copy your stats or submit them later via API/bot.</p>
+        <div class="flex">
+          <div class="grow">
+            <div class="pill" style="display:inline-block;margin:4px 0">Score: <b id="rScore">0</b></div>
+            <div class="pill" style="display:inline-block;margin:4px 0">Max Combo: <b id="rCombo">0</b></div>
+            <div class="pill" style="display:inline-block;margin:4px 0">Perfect: <b id="rPerf">0</b> · Good: <b id="rGood">0</b> · Miss: <b id="rMiss">0</b></div>
+            <div class="pill" style="display:inline-block;margin:4px 0">Seed: <b id="rSeed"></b></div>
+          </div>
+          <button class="btn" id="copyBtn">Copy stats</button>
+          <button class="btn" id="againBtn">Play again</button>
+          <button class="btn" id="submitBtn">Submit (hook)</button>
+        </div>
+        <p class="note" style="margin-top:8px">
+          Submit-hook roept <code>submitScore(score, maxCombo, seed)</code> aan. Koppel dit later aan je backend/bot.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="flex">
+      <label class="pill" style="background:transparent;border:none;padding:0">Difficulty:</label>
+      <select id="diff">
+        <option value="easy">Easy (lenient)</option>
+        <option value="normal" selected>Normal</option>
+        <option value="hard">Hard (tight)</option>
+      </select>
+      <button class="btn" id="startBtn">▶ Start (Space)</button>
+    </div>
+    <div class="note">Press <b>Space</b> / Tap to hit. Short 60-beat run (~30s).</div>
+  </div>
+
+<script>
+(() => {
+  // === CONFIG ===
+  const BPM = 120;                 // beats per minute
+  const RUN_BEATS = 60;            // length of song (beats)
+  const RADIUS = 200;              // ring radius
+  const HIT_WINDOW = { easy: 120, normal: 90, hard: 65 }; // ms window total (±half)
+  const SCORE_PERF = 100, SCORE_GOOD = 50;
+
+  // === STATE ===
+  const cvs = document.getElementById('game');
+  const ctx = cvs.getContext('2d');
+  const W = cvs.width, H = cvs.height;
+  const center = { x: W/2, y: H/2 + 10 };
+
+  const ui = {
+    score: document.getElementById('score'),
+    combo: document.getElementById('combo'),
+    judge: document.getElementById('judge'),
+    bpm: document.getElementById('bpm'),
+    hits: document.getElementById('hits'),
+    total: document.getElementById('total'),
+    seedTxt: document.getElementById('seedTxt'),
+    diff: document.getElementById('diff'),
+    startBtn: document.getElementById('startBtn'),
+    pop: document.getElementById('results'),
+    rScore: document.getElementById('rScore'),
+    rCombo: document.getElementById('rCombo'),
+    rPerf: document.getElementById('rPerf'),
+    rGood: document.getElementById('rGood'),
+    rMiss: document.getElementById('rMiss'),
+    rSeed: document.getElementById('rSeed'),
+    copyBtn: document.getElementById('copyBtn'),
+    againBtn: document.getElementById('againBtn'),
+    submitBtn: document.getElementById('submitBtn'),
+  };
+
+  ui.bpm.textContent = BPM;
+
+  // Seed by day (simple & predictable)
+  const todaySeed = () => {
+    const d = new Date();
+    const ymd = d.toISOString().slice(0,10).replace(/-/g,'');
+    return `${ymd}-CHAIN`;
+  };
+  ui.seedTxt.textContent = todaySeed();
+
+  // Pseudo-random from seed (LCG)
+  function makeRNG(seedStr){
+    let h = 2166136261>>>0;
+    for (let i=0;i<seedStr.length;i++){ h ^= seedStr.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return () => (h = Math.imul(h, 48271) % 0x7fffffff) / 0x7fffffff;
+  }
+
+  // Build beat map (positions around ring, with occasional double-notes)
+  function buildMap(seed, beats, rng) {
+    const notes = [];
+    for (let i=0;i<beats;i++){
+      const angle = -Math.PI/2 + (i/beats)*Math.PI*2; // around circle
+      notes.push({ t: i * (60_000/BPM), angle, spawned:false, hit:false, judged:false });
+      // ~15% chance of small offset extra note
+      if (rng() < 0.15) {
+        const dt = (60_000/BPM) * (rng()*0.35+0.15);
+        const ang2 = angle + (rng()<0.5?-1:1)*(Math.PI/18);
+        notes.push({ t: i * (60_000/BPM)+dt, angle: ang2, spawned:false, hit:false, judged:false });
+      }
+    }
+    notes.sort((a,b)=>a.t-b.t);
+    return notes;
+  }
+
+  // Audio (optional): simple click on beat & small hit sfx
+  const audio = {
+    ctx: null,
+    click(){ try{
+      if(!this.ctx) this.ctx = new (window.AudioContext||window.webkitAudioContext)();
+      const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
+      o.type='square'; o.frequency.value=1000; g.gain.value=0.06; o.connect(g); g.connect(this.ctx.destination);
+      o.start(); o.stop(this.ctx.currentTime+0.05);
+    }catch{} },
+    hit(){ try{
+      if(!this.ctx) this.ctx = new (window.AudioContext||window.webkitAudioContext)();
+      const o = this.ctx.createOscillator(); const g = this.ctx.createGain();
+      o.type='triangle'; o.frequency.value=420; g.gain.value=0.08; o.connect(g); g.connect(this.ctx.destination);
+      o.start(); o.stop(this.ctx.currentTime+0.06);
+    }catch{} }
+  };
+
+  // Game vars
+  let notes = [];
+  let running = false, startTime = 0, now = 0, beatTimer = 0;
+  let score = 0, combo = 0, maxCombo = 0, hits = 0, total = 0;
+  let perf=0, good=0, miss=0;
+
+  function reset() {
+    const seed = todaySeed();
+    const rng = makeRNG(seed);
+    notes = buildMap(seed, RUN_BEATS, rng);
+    running = false; startTime = 0; now = 0; beatTimer=0;
+    score=0; combo=0; maxCombo=0; hits=0; total=notes.length; perf=0; good=0; miss=0;
+    ui.score.textContent = score;
+    ui.combo.textContent = combo;
+    ui.judge.textContent = '—';
+    ui.hits.textContent = hits; ui.total.textContent = total;
+    ui.pop.style.display = 'none';
+  }
+
+  reset();
+
+  // Drawing helpers
+  function drawRing(){
+    // background grid / ring
+    ctx.save();
+    ctx.translate(center.x, center.y);
+    ctx.strokeStyle = 'rgba(0,255,240,.18)';
+    ctx.lineWidth = 14;
+    ctx.beginPath();
+    ctx.arc(0,0,RADIUS,0,Math.PI*2);
+    ctx.stroke();
+    // hit lane
+    ctx.strokeStyle = 'rgba(120,255,240,.35)';
+    ctx.lineWidth = 4;
+    ctx.beginPath(); ctx.arc(0,0,RADIUS+22, -Math.PI*0.08, Math.PI*0.08); ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawNote(angle, progress){
+    // progress: 0 at spawn far away -> 1 at hit zone
+    const r = RADIUS + (1-progress)*200; // approach from outside
+    const x = center.x + Math.cos(angle)*r;
+    const y = center.y + Math.sin(angle)*r;
+    const alpha = Math.max(0, Math.min(1, progress+0.2));
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    // glow
+    const g = ctx.createRadialGradient(x,y,4, x,y,18);
+    g.addColorStop(0, 'rgba(43,255,228,0.9)');
+    g.addColorStop(1, 'rgba(43,255,228,0.0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(x,y,18,0,Math.PI*2); ctx.fill();
+    // core
+    ctx.fillStyle = '#2bffe4';
+    ctx.beginPath(); ctx.arc(x,y,6,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+
+  function drawJudgementText(){
+    const txt = ui.judge.textContent;
+    if (txt === '—') return;
+    ctx.save();
+    ctx.font = '700 28px Orbitron, system-ui';
+    ctx.textAlign = 'center';
+    ctx.shadowBlur = 10; ctx.shadowColor = '#2bffe4';
+    ctx.fillStyle = txt==='PERFECT' ? '#2bffe4' : (txt==='GOOD' ? '#7ee9dc' : '#ff6b6b');
+    ctx.fillText(txt, center.x, center.y - RADIUS - 30);
+    ctx.restore();
+  }
+
+  function drawInfo(){
+    ctx.save();
+    ctx.font = '700 20px Orbitron, system-ui';
+    ctx.fillStyle = 'rgba(255,255,255,.85)';
+    ctx.textAlign = 'center';
+    if (!running){
+      ctx.fillText('Press SPACE or Tap to start', center.x, center.y + RADIUS + 44);
+    } else {
+      // beat ticker
+      const elapsed = now - startTime;
+      const msPerBeat = 60_000 / BPM;
+      const beatPos = (elapsed % msPerBeat)/msPerBeat;
+      const x = center.x - RADIUS + beatPos * (RADIUS*2);
+      ctx.fillStyle = 'rgba(255,255,255,.35)';
+      ctx.fillRect(x-1, center.y + RADIUS + 18, 2, 18);
+    }
+    ctx.restore();
+  }
+
+  // Hit logic
+  function judgeHit() {
+    if (!running) return;
+    const msPerBeat = 60_000 / BPM;
+    const windowMs = HIT_WINDOW[ui.diff.value] || HIT_WINDOW.normal;
+    const half = windowMs/2;
+
+    // find nearest unjudged note by time distance to "hit line" (progress ~1)
+    const tNow = now - startTime;
+    let bestIdx = -1, bestDt = Infinity;
+    for (let i=0;i<notes.length;i++){
+      const n = notes[i];
+      if (n.judged) continue;
+      const dt = Math.abs((n.t + msPerBeat) - (tNow + msPerBeat)); // align to ring edge
+      if (dt < bestDt) { bestDt = dt; bestIdx = i; }
+    }
+
+    if (bestIdx === -1) return missCall();
+
+    const dt = bestDt;
+    if (dt <= half*0.45){ // Perfect
+      hitCall('PERFECT'); addScore(SCORE_PERF);
+      perf++; notes[bestIdx].judged = true; notes[bestIdx].hit = true; hits++;
+    } else if (dt <= half){ // Good
+      hitCall('GOOD'); addScore(SCORE_GOOD);
+      good++; notes[bestIdx].judged = true; notes[bestIdx].hit = true; hits++;
+    } else {
+      missCall();
+    }
+    ui.hits.textContent = hits;
+  }
+
+  function addScore(base){
+    combo++; if (combo>maxCombo) maxCombo=combo;
+    const mult = 1 + Math.floor(combo/10)*0.1; // +10% per 10 combo
+    score += Math.round(base*mult);
+    ui.score.textContent = score;
+    ui.combo.textContent = combo;
+    audio.hit();
+  }
+
+  function missCall(){
+    ui.judge.textContent = 'MISS';
+    miss++;
+    combo = 0; ui.combo.textContent = combo;
+  }
+  function hitCall(kind){
+    ui.judge.textContent = kind;
+  }
+
+  // Input
+  window.addEventListener('keydown', e=>{
+    if (e.code==='Space'){ e.preventDefault();
+      if (!running) startGame();
+      else judgeHit();
+    }
+  });
+  cvs.addEventListener('pointerdown', ()=>{
+    if (!running) startGame();
+    else judgeHit();
+  });
+
+  // Loop
+  function loop(ts){
+    now = performance.now();
+    ctx.clearRect(0,0,W,H);
+    // bg vignette
+    ctx.fillStyle = '#091017';
+    ctx.fillRect(0,0,W,H);
+    drawRing();
+
+    if (running){
+      const elapsed = now - startTime;
+      const msPerBeat = 60_000 / BPM;
+
+      // spawn clicks (metronome)
+      if (elapsed - beatTimer >= msPerBeat){
+        beatTimer += msPerBeat;
+        audio.click();
+      }
+
+      // auto-miss notes that passed window
+      const windowMs = HIT_WINDOW[ui.diff.value] || HIT_WINDOW.normal;
+      for (const n of notes){
+        if (n.judged) continue;
+        const dt = (elapsed - n.t);
+        // progress mapping: note flies from far to ring over ~700ms before target
+        const prog = Math.max(0, Math.min(1, (n.t + 650 - elapsed)/650 * -1 + 1));
+        drawNote(n.angle, prog);
+        // miss if too late beyond hit window
+        if (dt > windowMs && !n.hit){
+          n.judged = true;
+          miss++;
+          ui.judge.textContent = 'MISS';
+        }
+      }
+
+      // done?
+      if (elapsed > notes[notes.length-1].t + 1500){
+        endGame();
+      }
+    } else {
+      // idle fancy
+      const t = performance.now()/1000;
+      ctx.save();
+      ctx.translate(center.x, center.y);
+      ctx.strokeStyle = 'rgba(43,255,228,.18)';
+      ctx.lineWidth = 2;
+      for (let i=0;i<6;i++){
+        ctx.beginPath();
+        const r = RADIUS + 40 + i*10 + Math.sin(t+i)*6;
+        ctx.arc(0,0,r,0,Math.PI*2); ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    drawJudgementText();
+    drawInfo();
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+
+  function startGame(){
+    reset();
+    running = true;
+    startTime = performance.now();
+    beatTimer = 0;
+    ui.startBtn.disabled = true;
+  }
+
+  function endGame(){
+    running = false;
+    ui.startBtn.disabled = false;
+    // results
+    ui.rScore.textContent = score;
+    ui.rCombo.textContent = maxCombo;
+    ui.rPerf.textContent = perf;
+    ui.rGood.textContent = good;
+    ui.rMiss.textContent = miss;
+    ui.rSeed.textContent = todaySeed();
+    ui.pop.style.display = 'flex';
+  }
+
+  // Buttons
+  ui.startBtn.addEventListener('click',()=> { if(!running) startGame(); });
+  ui.againBtn.addEventListener('click',()=> { ui.pop.style.display='none'; reset(); });
+  ui.copyBtn.addEventListener('click', async ()=>{
+    const text = `CBS ChainBreaker — Score ${score}, MaxCombo ${maxCombo}, Perfect ${perf}, Good ${good}, Miss ${miss}, Seed ${todaySeed()}`;
+    try{ await navigator.clipboard.writeText(text); ui.copyBtn.textContent='Copied!'; setTimeout(()=>ui.copyBtn.textContent='Copy stats',1200);}catch{}
+  });
+  ui.submitBtn.addEventListener('click', ()=>{
+    // Hook: replace with your backend call (and Phantom sign if je wilt)
+    submitScore(score, maxCombo, todaySeed());
+  });
+
+  // === SUBMIT HOOK ===
+  // Koppel dit later aan jouw API (/score/submit). Nu logt het alleen.
+  async function submitScore(score, combo, seed){
+    console.log('[SUBMIT]', { score, combo, seed });
+    alert('Submit hook aangeroepen.\nKoppel later aan je API/bot.\nCheck console voor payload.');
+    // Voorbeeld payload:
+    // const res = await fetch('https://YOUR_API/score/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:'chain', wallet:'WALLET_BASE58', score, combo, seed, ts:Date.now(), sig:'…'})}).then(r=>r.json());
+  }
+})();
+</script>
+</body>
+</html>
