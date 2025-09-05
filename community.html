@@ -18,68 +18,78 @@
   .pill{padding:8px 12px;border:1px solid var(--line);border-radius:999px;color:var(--muted);background:#0c1117}
   #stage{aspect-ratio:16/9;width:100%;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#000}
   #log{font-size:.9rem;color:var(--muted);white-space:pre-wrap}
-  input[type="text"]{padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#0f151c;color:var(--fg)}
+  input[type="text"]{padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#0f151c;color:#f0ffff}
   .lock{display:flex;gap:14px;align-items:flex-start;background:linear-gradient(180deg,#101822,#0b1118);border:1px dashed rgba(0,255,240,.25);border-radius:14px;padding:14px}
+  .lang{display:flex;gap:8px}
+  .lang button{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:#0f151c;color:#bffef2;cursor:pointer}
 </style>
 </head>
 <body>
 <header>
   <div class="row">
-    <a class="btn" href="index.html">← Home</a>
-    <span class="pill">CBS Community — Live AMA</span>
+    <a class="btn" href="index.html" data-t="back">← Home</a>
+    <span class="pill" data-t="title">CBS Community — Live AMA</span>
   </div>
   <div class="row">
-    <span class="pill">Free ≥ 1,000,000 CBS • Else 1,000 CBS to speak</span>
-    <button id="connectBtn" class="btn">Connect Phantom</button>
+    <span class="pill" data-t="feeBadge">Free ≥ 1,000,000 CBS • Else 1,000 CBS to speak</span>
+    <div class="lang">
+      <button id="langNL">NL 🇳🇱</button>
+      <button id="langEN">EN 🇬🇧</button>
+    </div>
+    <button id="connectBtn" class="btn" data-t="connect">Connect Phantom</button>
   </div>
 </header>
 
 <div class="wrap">
   <!-- Gate -->
   <div class="card" id="gate">
-    <h2 style="margin:6px 0 10px">Toegangspoort</h2>
+    <h2 style="margin:6px 0 10px" data-t="gateTitle">Access Gate</h2>
     <div class="row">
-      <span class="pill">Wallet: <b id="walletShort">—</b></span>
-      <span class="pill">CBS balance: <b id="cbsBal">—</b></span>
-      <span class="pill">Status: <b id="accessStatus">Niet verbonden</b></span>
+      <span class="pill"><span data-t="wallet">Wallet</span>: <b id="walletShort">—</b></span>
+      <span class="pill"><span data-t="balance">CBS balance</span>: <b id="cbsBal">—</b></span>
+      <span class="pill"><span data-t="status">Status</span>: <b id="accessStatus" data-t="notConnected">Not connected</b></span>
     </div>
 
     <div class="row" style="margin-top:10px">
-      <input id="displayName" type="text" placeholder="Jouw naam in de call (optioneel)" />
-      <button id="joinFreeBtn" class="btn" style="display:none">Join (Free holder)</button>
-      <button id="payBtn" class="btn" disabled>Pay 1000 CBS & Join</button>
-      <button id="refreshBtn" class="btn secondary" disabled>↻ Refresh balance</button>
+      <input id="displayName" type="text" placeholder="Display name (optional)" />
+      <!-- appears only for holders ≥ 1,000,000 -->
+      <button id="joinFreeBtn" class="btn" style="display:none" data-t="joinHolder">I'm a holder — Join</button>
+      <!-- pay option for ≥ 1,000 and < 1,000,000 -->
+      <button id="payBtn" class="btn" disabled data-t="payBtn">Pay 1,000 CBS & Join</button>
+      <button id="refreshBtn" class="btn secondary" disabled data-t="refresh">↻ Refresh balance</button>
     </div>
 
-    <!-- Lock notice (shown if balance < 1000) -->
+    <!-- Lock notice (shown if balance < 1,000 CBS) -->
     <div id="lockBox" class="lock" style="display:none; margin-top:12px">
       <div style="font-size:22px">🔒</div>
       <div>
-        <div style="color:#bffef2;font-weight:700;margin-bottom:6px">Holders only</div>
-        <div class="pill" style="display:inline-block;margin-bottom:8px">
-          Toegang vereist: minimaal <b>1,000 CBS</b> (of <b>1,000,000 CBS</b> voor gratis toegang).
+        <div style="color:#bffef2;font-weight:700;margin-bottom:6px" data-t="holdersOnly">Holders only</div>
+        <div class="pill" style="display:inline-block;margin-bottom:8px" data-t="requirement">
+          Access requires at least <b>1,000 CBS</b> (or <b>1,000,000 CBS</b> for free access).
         </div>
-        <p class="muted" style="margin:.2rem 0">
-          Onze community bouwt aan soevereiniteit. Koop en houd CBS om mee te praten, AMA’s bij te wonen en te stemmen.
+        <p class="muted" style="margin:.2rem 0" data-t="motivation">
+          We build sovereignty together. Buy and hold CBS to join AMAs, speak up, and help steer the project.
         </p>
         <div class="row" style="margin-top:6px">
-          <a class="btn" href="https://jup.ag/swap/SOL-CBS" target="_blank" rel="noopener">Buy on Jupiter</a>
-          <a class="btn secondary" href="https://raydium.io/swap" target="_blank" rel="noopener">Buy on Raydium</a>
+          <a class="btn" href="https://jup.ag/swap/SOL-CBS" target="_blank" rel="noopener" data-t="buyJup">Buy on Jupiter</a>
+          <a class="btn secondary" href="https://raydium.io/swap" target="_blank" rel="noopener" data-t="buyRay">Buy on Raydium</a>
         </div>
       </div>
     </div>
 
     <div id="log" style="margin-top:10px"></div>
-    <p class="pill" style="margin-top:10px">Betaling (indien nodig) is 1,000 CBS per sessie. On-chain memo: <code>CBS-ENTRY:community</code>.</p>
+    <p class="pill" style="margin-top:10px" data-t="memo">
+      If payment is required, it's 1,000 CBS per session. On-chain memo: <code>CBS-ENTRY:community</code>.
+    </p>
   </div>
 
   <!-- Room -->
   <div class="card" id="room" style="display:none">
-    <h2 style="margin:6px 0 10px">Community Room</h2>
+    <h2 style="margin:6px 0 10px" data-t="roomTitle">Community Room</h2>
     <div id="stage"></div>
     <div class="row" style="margin-top:10px">
-      <button id="leaveBtn" class="btn">Leave</button>
-      <span class="pill">Tip: gebruik headset; push-to-talk muten kan in de UI.</span>
+      <button id="leaveBtn" class="btn" data-t="leave">Leave</button>
+      <span class="pill" data-t="tip">Tip: use a headset; push-to-talk mute is available in the UI.</span>
     </div>
   </div>
 </div>
@@ -88,10 +98,9 @@
 /** CONFIG **/
 const RPC_URL   = "https://api.mainnet-beta.solana.com";
 const CBS_MINT  = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"; // CBS mint
-const DECIMALS  = 9;
 const DECIMALS_BI = 10n ** 9n;
-const ENTRY_CBS = 1000;        // betalen als je < 1,000,000 CBS hebt maar ≥ 1,000
-const FREE_THRESHOLD_CBS = 1_000_000; // gratis drempel
+const ENTRY_CBS = 1000;                 // pay if balance >= 1,000 and < 1,000,000
+const FREE_THRESHOLD_CBS = 1_000_000;   // free if >= 1,000,000 CBS
 const TREASURY  = "2AfbvQCWz2CbuNfBfR4QdVxzjMs1twV8rHJCqME8LtSD";
 const ROOM_NAME = "CBSCommunityRoom";
 const MEMO_TEXT = "CBS-ENTRY:community";
@@ -115,27 +124,101 @@ const room        = document.getElementById('room');
 const logEl       = document.getElementById('log');
 const nameInput   = document.getElementById('displayName');
 const lockBox     = document.getElementById('lockBox');
+const langNL      = document.getElementById('langNL');
+const langEN      = document.getElementById('langEN');
 
 const conn = new web3.Connection(RPC_URL, "confirmed");
 let walletPubkey = null;
 let lastBalance = 0;
+let LANG = "nl";
+
+/** i18n texts **/
+const T = {
+  nl: {
+    back:"← Home",
+    title:"CBS Community — Live AMA",
+    feeBadge:"Gratis ≥ 1.000.000 CBS • Anders 1.000 CBS om te spreken",
+    connect:"Verbind Phantom",
+    gateTitle:"Toegangspoort",
+    wallet:"Wallet",
+    balance:"CBS balans",
+    status:"Status",
+    notConnected:"Niet verbonden",
+    joinHolder:"Ik ben holder — Join",
+    payBtn:"Betaal 1.000 CBS & Join",
+    refresh:"↻ Balans verversen",
+    holdersOnly:"Holders only",
+    requirement:"Toegang vereist: minimaal <b>1.000 CBS</b> (of <b>1.000.000 CBS</b> voor gratis toegang).",
+    motivation:"We bouwen samen aan soevereiniteit. Koop en houd CBS om mee te praten, AMA’s bij te wonen en te helpen sturen.",
+    buyJup:"Koop op Jupiter",
+    buyRay:"Koop op Raydium",
+    memo:"Indien betaling nodig is: 1.000 CBS per sessie. On-chain memo: <code>CBS-ENTRY:community</code>.",
+    roomTitle:"Community Room",
+    leave:"Leave",
+    tip:"Tip: gebruik een headset; push-to-talk muten kan in de UI.",
+    stateFree:"Gratis toegang",
+    statePay:"Betaalde toegang mogelijk (1.000 CBS)",
+    stateNo:"Niet genoeg CBS — geen toegang"
+  },
+  en: {
+    back:"← Home",
+    title:"CBS Community — Live AMA",
+    feeBadge:"Free ≥ 1,000,000 CBS • Else 1,000 CBS to speak",
+    connect:"Connect Phantom",
+    gateTitle:"Access Gate",
+    wallet:"Wallet",
+    balance:"CBS balance",
+    status:"Status",
+    notConnected:"Not connected",
+    joinHolder:"I'm a holder — Join",
+    payBtn:"Pay 1,000 CBS & Join",
+    refresh:"↻ Refresh balance",
+    holdersOnly:"Holders only",
+    requirement:"Access requires at least <b>1,000 CBS</b> (or <b>1,000,000 CBS</b> for free access).",
+    motivation:"We build sovereignty together. Buy and hold CBS to join AMAs, speak up, and help steer the project.",
+    buyJup:"Buy on Jupiter",
+    buyRay:"Buy on Raydium",
+    memo:"If payment is required, it's 1,000 CBS per session. On-chain memo: <code>CBS-ENTRY:community</code>.",
+    roomTitle:"Community Room",
+    leave:"Leave",
+    tip:"Tip: use a headset; push-to-talk mute is available in the UI.",
+    stateFree:"Free access",
+    statePay:"Paid access available (1,000 CBS)",
+    stateNo:"Not enough CBS — no access"
+  }
+};
+
+function applyLang(){
+  const t = T[LANG];
+  document.querySelectorAll("[data-t]").forEach(el=>{
+    const key = el.getAttribute("data-t");
+    if (t[key] !== undefined) el.innerHTML = t[key];
+  });
+  document.documentElement.lang = LANG === "nl" ? "nl" : "en";
+  // Update dynamic status line too
+  updateGateUI(lastBalance, true);
+}
+
+langNL.addEventListener("click", ()=>{ LANG="nl"; applyLang(); });
+langEN.addEventListener("click", ()=>{ LANG="en"; applyLang(); });
 
 function log(t){ logEl.textContent = (logEl.textContent? logEl.textContent+"\n":"") + t; }
 function short(pk){ return pk ? pk.slice(0,4)+"…"+pk.slice(-4) : "—"; }
 
 async function connectPhantom(){
   const provider = window.solana ?? window.phantom?.solana;
-  if (!provider || !provider.isPhantom){ alert("Phantom wallet niet gevonden."); return; }
+  if (!provider || !provider.isPhantom){ alert(LANG==="nl"?"Phantom wallet niet gevonden.":"Phantom wallet not found."); return; }
   const res = await provider.connect();
   walletPubkey = res.publicKey.toBase58();
   walletShort.textContent = short(walletPubkey);
-  accessEl.textContent = "Verbonden";
+  accessEl.textContent = T[LANG].statePay; // voorlopige tekst; wordt meteen herberekend
   refreshBtn.disabled = false;
   await refreshBalance();
 }
 
 async function refreshBalance(){
-  cbsBalEl.textContent = "laden…";
+  if (!walletPubkey) return;
+  cbsBalEl.textContent = LANG==="nl"?"laden…":"loading…";
   const owner = new web3.PublicKey(walletPubkey);
   const mint  = new web3.PublicKey(CBS_MINT);
   const { value } = await conn.getTokenAccountsByOwner(owner, { mint });
@@ -150,20 +233,24 @@ async function refreshBalance(){
   return total;
 }
 
-function updateGateUI(total){
+function updateGateUI(total, keepStatus=false){
   // Reset UI
   joinFreeBtn.style.display = "none";
   payBtn.disabled = true;
   lockBox.style.display = "none";
 
+  if (!keepStatus){
+    accessEl.textContent = T[LANG].notConnected;
+  }
+
   if (total >= FREE_THRESHOLD_CBS){
-    accessEl.textContent = "Gratis toegang";
+    accessEl.textContent = T[LANG].stateFree;
     joinFreeBtn.style.display = "inline-flex";
   } else if (total >= ENTRY_CBS){
-    accessEl.textContent = "Betaalde toegang mogelijk (1,000 CBS)";
+    accessEl.textContent = T[LANG].statePay;
     payBtn.disabled = false;
   } else {
-    accessEl.textContent = "Niet genoeg CBS — geen toegang";
+    accessEl.textContent = T[LANG].stateNo;
     lockBox.style.display = "flex";
   }
 }
@@ -172,12 +259,11 @@ async function payAndOpen(){
   payBtn.disabled = true;
   try{
     const provider = window.solana ?? window.phantom?.solana;
-    if (!provider) throw new Error("Phantom niet gevonden");
+    if (!provider) throw new Error("Phantom not found");
     const payer = new web3.PublicKey(walletPubkey);
     const mintPk = new web3.PublicKey(CBS_MINT);
     const treas  = new web3.PublicKey(TREASURY);
 
-    // ATAs
     const fromAta = spl.getAssociatedTokenAddressSync(mintPk, payer);
     const toAta   = spl.getAssociatedTokenAddressSync(mintPk, treas);
 
@@ -186,13 +272,11 @@ async function payAndOpen(){
     // Create to-ATA if needed
     const toInfo = await conn.getAccountInfo(toAta);
     if (!toInfo){
-      tx.add(spl.createAssociatedTokenAccountInstruction(
-        payer, toAta, treas, mintPk
-      ));
+      tx.add(spl.createAssociatedTokenAccountInstruction(payer, toAta, treas, mintPk));
     }
 
-    // Transfer 1000 CBS
-    const amount = BigInt(ENTRY_CBS) * DECIMALS_BI; // in base units
+    // Transfer 1,000 CBS
+    const amount = BigInt(ENTRY_CBS) * DECIMALS_BI;
     tx.add(spl.createTransferInstruction(fromAta, toAta, payer, amount));
 
     // Memo
@@ -208,13 +292,13 @@ async function payAndOpen(){
 
     const signed = await provider.signTransaction(tx);
     const sig = await conn.sendRawTransaction(signed.serialize(), { skipPreflight:false });
-    accessEl.textContent = "Bevestigen…";
+    accessEl.textContent = LANG==="nl"?"Bevestigen…":"Confirming…";
     await conn.confirmTransaction(sig, "confirmed");
-    log("✅ Betaald: " + sig);
+    log("✅ Paid: " + sig);
     openRoom();
   }catch(e){
     console.error(e);
-    alert("Betaling mislukt: " + (e.message || e));
+    alert((LANG==="nl"?"Betaling mislukt: ":"Payment failed: ") + (e.message || e));
     payBtn.disabled = false;
   }
 }
@@ -222,10 +306,9 @@ async function payAndOpen(){
 function openRoom(){
   gate.style.display = "none";
   room.style.display = "block";
-  const displayName = (nameInput.value || "CBS Member").replace(/[^ -~]/g,"");
+  const displayName = (nameInput.value || (LANG==="nl"?"CBS Lid":"CBS Member")).replace(/[^ -~]/g,"");
   const url = `https://meet.jit.si/${encodeURIComponent(ROOM_NAME)}`;
   const ifr = document.createElement("iframe");
-  // Prejoin aan; user kan zelf mic/cam kiezen.
   ifr.src = url + "#config.prejoinConfig.enabled=true&interfaceConfig.TOOLBAR_BUTTONS=[\"microphone\",\"camera\",\"desktop\",\"chat\",\"raisehand\",\"tileview\",\"hangup\"]";
   ifr.allow = "camera; microphone; fullscreen; display-capture; autoplay";
   ifr.style.width = "100%"; ifr.style.height = "70vh"; ifr.style.border = "0";
@@ -238,6 +321,8 @@ function leaveRoom(){
   gate.style.display = "block";
 }
 
+/** init **/
+applyLang();
 connectBtn.addEventListener('click', connectPhantom);
 refreshBtn.addEventListener('click', refreshBalance);
 joinFreeBtn.addEventListener('click', openRoom);
