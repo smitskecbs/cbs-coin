@@ -9,6 +9,8 @@
   :root{--bg:#0a0c10;--fg:#eafffb;--muted:#a8d6cd;--line:rgba(0,255,240,.18);--btnA:#5afff0;--btnB:#2bffe4}
   *{box-sizing:border-box} body{margin:0;font-family:'Orbitron',sans-serif;background:#0a0c10;color:var(--fg)}
   header{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+  .brand{display:flex;align-items:center;gap:10px}
+  .brand img{width:32px;height:32px;border-radius:8px;filter:drop-shadow(0 0 8px rgba(0,255,230,.35))}
   .btn{display:inline-flex;align-items:center;justify-content:center;padding:10px 14px;border-radius:12px;border:1px solid rgba(0,255,240,.7);
        background:linear-gradient(180deg,var(--btnA),var(--btnB));color:#012022;font-weight:900;text-decoration:none;cursor:pointer}
   .btn.secondary{background:#0f151c;color:#bffef2;border-color:var(--line)}
@@ -26,8 +28,9 @@
 </head>
 <body>
 <header>
-  <div class="row">
+  <div class="brand">
     <a class="btn" href="index.html" data-t="back">← Home</a>
+    <img src="logo.png" alt="CBS Logo" onerror="this.src='image/logo.png'">
     <span class="pill" data-t="title">CBS Community — Live Chat</span>
   </div>
   <div class="row">
@@ -52,14 +55,12 @@
 
     <div class="row" style="margin-top:10px">
       <input id="displayName" type="text" placeholder="Display name (optional)" />
-      <!-- appears only for holders ≥ 1,000,000 -->
       <button id="joinFreeBtn" class="btn" style="display:none" data-t="joinHolder">I'm a holder — Join</button>
-      <!-- pay option for ≥ 1,000 and < 1,000,000 -->
       <button id="payBtn" class="btn" disabled data-t="payBtn">Pay 1,000 CBS & Join</button>
       <button id="refreshBtn" class="btn secondary" disabled data-t="refresh">↻ Refresh balance</button>
     </div>
 
-    <!-- Lock notice (shown if balance < 1,000 CBS) -->
+    <!-- Lock notice -->
     <div id="lockBox" class="lock" style="display:none; margin-top:12px">
       <div style="font-size:22px">🔒</div>
       <div>
@@ -95,16 +96,20 @@
 </div>
 
 <script type="module">
-/** CONFIG **/
-const CBS_MINT  = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"; // CBS mint
+/** CONFIG (strings; PublicKey pas binnen functies maken) **/
+const STR = {
+  CBS_MINT:  "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk",
+  TREASURY:  "2AfbvQCWz2CbuNfBfR4QdVxzjMs1twV8rHJCqME8LtSD",
+  TOKEN:     "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+  TOKEN2022: "TokenzQdBNbLqP5VEhDW42P9H7C6R2s7pqTodZLw9ufk"
+};
 const DECIMALS_BI = 10n ** 9n;
-const ENTRY_CBS = 1000;                 // pay if balance >= 1,000 and < 1,000,000
-const FREE_THRESHOLD_CBS = 1_000_000;   // free if >= 1,000,000 CBS
-const TREASURY  = "2AfbvQCWz2CbuNfBfR4QdVxzjMs1twV8rHJCqME8LtSD";
+const ENTRY_CBS = 1000;
+const FREE_THRESHOLD_CBS = 1_000_000;
 const ROOM_NAME = "CBSCommunityRoom";
 const MEMO_TEXT = "CBS-ENTRY:community";
 
-/** RPC fallback list (browser-friendly first) **/
+/** RPC fallback list **/
 const RPCS = [
   "https://rpc.ankr.com/solana",
   // "https://rpc.helius.xyz/?api-key=YOUR_HELIUS_KEY",
@@ -115,10 +120,6 @@ const RPCS = [
 /** Imports **/
 import * as web3 from "https://esm.sh/@solana/web3.js@1.95.3";
 import * as spl  from "https://esm.sh/@solana/spl-token@0.4.8";
-
-/** Token program IDs (classic + 2022) — CORRECT IDs **/
-const TOKEN_PROGRAM_ID      = new web3.PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
-const TOKEN_2022_PROGRAM_ID = new web3.PublicKey("TokenzQdBNbLqP5VEhDW42P9H7C6R2s7pqTodZLw9ufk");
 
 /** UI refs **/
 const connectBtn  = document.getElementById('connectBtn');
@@ -218,6 +219,12 @@ langEN.addEventListener("click", ()=>{ LANG="en"; applyLang(); });
 function log(t){ logEl.textContent = (logEl.textContent? logEl.textContent+"\n":"") + t; }
 function short(pk){ return pk ? pk.slice(0,4)+"…"+pk.slice(-4) : "—"; }
 
+/** Safe constructor helpers */
+function pkSafe(str){
+  try{ return new web3.PublicKey(String(str).trim()); }
+  catch(e){ log("❌ Invalid key: "+str); throw e; }
+}
+
 async function getConnection(){
   if (conn) return conn;
   for (const url of RPCS){
@@ -236,12 +243,15 @@ async function getConnection(){
 
 async function connectPhantom(){
   const provider = window.solana ?? window.phantom?.solana;
-  if (!provider || !provider.isPhantom){ alert(LANG==="nl"?"Phantom wallet niet gevonden.":"Phantom wallet not found."); return; }
+  if (!provider || !provider.isPhantom){
+    alert(LANG==="nl"?"Phantom wallet niet gevonden.":"Phantom wallet not found.");
+    return;
+  }
   const res = await provider.connect();
   walletPubkey = res.publicKey.toBase58();
   walletShort.textContent = short(walletPubkey);
   accessEl.textContent = T[LANG].statePay; // voorlopige tekst
-  refreshBtn.disabled = true; // wordt weer aan bij succesvolle refresh
+  refreshBtn.disabled = true;
   await refreshBalance();
 }
 
@@ -250,8 +260,10 @@ async function refreshBalance(){
   try{
     cbsBalEl.textContent = T[LANG].loading;
     const c     = await getConnection();
-    const owner = new web3.PublicKey(walletPubkey);
-    const mint  = new web3.PublicKey(CBS_MINT);
+    const owner = pkSafe(walletPubkey);
+    const mint  = pkSafe(STR.CBS_MINT);
+    const progSPL  = pkSafe(STR.TOKEN);
+    const prog2022 = pkSafe(STR.TOKEN2022);
 
     async function sumFor(programId){
       const resp = await c.getParsedTokenAccountsByOwner(owner, { programId });
@@ -266,8 +278,8 @@ async function refreshBalance(){
     }
 
     let total = 0;
-    try { total += await sumFor(TOKEN_PROGRAM_ID); }      catch(e){ log("SPL fail: "+(e.message||e)); }
-    try { total += await sumFor(TOKEN_2022_PROGRAM_ID); } catch(e){ log("2022 fail: "+(e.message||e)); }
+    try { total += await sumFor(progSPL); }   catch(e){ log("SPL fail: "+(e.message||e)); }
+    try { total += await sumFor(prog2022); }  catch(e){ log("2022 fail: "+(e.message||e)); }
 
     lastBalance = total;
     cbsBalEl.textContent = total.toLocaleString(undefined,{maximumFractionDigits:2}) + " CBS";
@@ -309,9 +321,9 @@ async function payAndOpen(){
     if (!provider) throw new Error("Phantom not found");
     const c = await getConnection();
 
-    const payer = new web3.PublicKey(walletPubkey);
-    const mintPk = new web3.PublicKey(CBS_MINT);
-    const treas  = new web3.PublicKey(TREASURY);
+    const payer  = pkSafe(walletPubkey);
+    const mintPk = pkSafe(STR.CBS_MINT);
+    const treas  = pkSafe(STR.TREASURY);
 
     const fromAta = spl.getAssociatedTokenAddressSync(mintPk, payer);
     const toAta   = spl.getAssociatedTokenAddressSync(mintPk, treas);
@@ -326,7 +338,7 @@ async function payAndOpen(){
     const amount = BigInt(ENTRY_CBS) * DECIMALS_BI;
     tx.add(spl.createTransferInstruction(fromAta, toAta, payer, amount));
 
-    const MEMO_PROGRAM_ID = new web3.PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr");
+    const MEMO_PROGRAM_ID = pkSafe("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr");
     tx.add(new web3.TransactionInstruction({
       keys: [{pubkey:payer, isSigner:true, isWritable:false}],
       programId: MEMO_PROGRAM_ID,
@@ -352,7 +364,6 @@ async function payAndOpen(){
 function openRoom(){
   gate.style.display = "none";
   room.style.display = "block";
-  const displayName = (nameInput.value || (LANG==="nl"?"CBS Lid":"CBS Member")).replace(/[^ -~]/g,"");
   const url = `https://meet.jit.si/${encodeURIComponent(ROOM_NAME)}`;
   const ifr = document.createElement("iframe");
   ifr.src = url + "#config.prejoinConfig.enabled=true&interfaceConfig.TOOLBAR_BUTTONS=[\"microphone\",\"camera\",\"desktop\",\"chat\",\"raisehand\",\"tileview\",\"hangup\"]";
