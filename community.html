@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>CBS Community — Live</title>
+<title>CBS Community — Live Chat</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root{--bg:#0a0c10;--fg:#eafffb;--muted:#a8d6cd;--line:rgba(0,255,240,.18);--btnA:#5afff0;--btnB:#2bffe4}
@@ -28,7 +28,7 @@
 <header>
   <div class="row">
     <a class="btn" href="index.html" data-t="back">← Home</a>
-    <span class="pill" data-t="title">CBS Community — Live AMA</span>
+    <span class="pill" data-t="title">CBS Community — Live Chat</span>
   </div>
   <div class="row">
     <span class="pill" data-t="feeBadge">Free ≥ 1,000,000 CBS • Else 1,000 CBS to speak</span>
@@ -68,7 +68,7 @@
           Access requires at least <b>1,000 CBS</b> (or <b>1,000,000 CBS</b> for free access).
         </div>
         <p class="muted" style="margin:.2rem 0" data-t="motivation">
-          We build sovereignty together. Buy and hold CBS to join AMAs, speak up, and help steer the project.
+          We build sovereignty together. Buy and hold CBS to join chats, speak up, and help steer the project.
         </p>
         <div class="row" style="margin-top:6px">
           <a class="btn" href="https://jup.ag/swap/SOL-CBS" target="_blank" rel="noopener" data-t="buyJup">Buy on Jupiter</a>
@@ -116,9 +116,9 @@ const RPCS = [
 import * as web3 from "https://esm.sh/@solana/web3.js@1.95.3";
 import * as spl  from "https://esm.sh/@solana/spl-token@0.4.8";
 
-/** Token program IDs (classic + 2022) **/
+/** Token program IDs (classic + 2022) — CORRECT IDs **/
 const TOKEN_PROGRAM_ID      = new web3.PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
-const TOKEN_2022_PROGRAM_ID = new web3.PublicKey("TokenzQdBNbLqP5VEhDW42P9H7C6R2S7pqDgE3Dkq2");
+const TOKEN_2022_PROGRAM_ID = new web3.PublicKey("TokenzQdBNbLqP5VEhDW42P9H7C6R2s7pqTodZLw9ufk");
 
 /** UI refs **/
 const connectBtn  = document.getElementById('connectBtn');
@@ -147,7 +147,7 @@ let conn = null;
 const T = {
   nl: {
     back:"← Home",
-    title:"CBS Community — Live AMA",
+    title:"CBS Community — Live Chat",
     feeBadge:"Gratis ≥ 1.000.000 CBS • Anders 1.000 CBS om te spreken",
     connect:"Verbind Phantom",
     gateTitle:"Toegangspoort",
@@ -160,7 +160,7 @@ const T = {
     refresh:"↻ Balans verversen",
     holdersOnly:"Holders only",
     requirement:"Toegang vereist: minimaal <b>1.000 CBS</b> (of <b>1.000.000 CBS</b> voor gratis toegang).",
-    motivation:"We bouwen samen aan soevereiniteit. Koop en houd CBS om mee te praten, AMA’s bij te wonen en te helpen sturen.",
+    motivation:"We bouwen samen aan soevereiniteit. Koop en houd CBS om mee te praten, chats bij te wonen en te helpen sturen.",
     buyJup:"Koop op Jupiter",
     buyRay:"Koop op Raydium",
     memo:"Indien betaling nodig is: 1.000 CBS per sessie. On-chain memo: <code>CBS-ENTRY:community</code>.",
@@ -175,7 +175,7 @@ const T = {
   },
   en: {
     back:"← Home",
-    title:"CBS Community — Live AMA",
+    title:"CBS Community — Live Chat",
     feeBadge:"Free ≥ 1,000,000 CBS • Else 1,000 CBS to speak",
     connect:"Connect Phantom",
     gateTitle:"Access Gate",
@@ -188,7 +188,7 @@ const T = {
     refresh:"↻ Refresh balance",
     holdersOnly:"Holders only",
     requirement:"Access requires at least <b>1,000 CBS</b> (or <b>1,000,000 CBS</b> for free access).",
-    motivation:"We build sovereignty together. Buy and hold CBS to join AMAs, speak up, and help steer the project.",
+    motivation:"We build sovereignty together. Buy and hold CBS to join chats, speak up, and help steer the project.",
     buyJup:"Buy on Jupiter",
     buyRay:"Buy on Raydium",
     memo:"If payment is required, it's 1,000 CBS per session. On-chain memo: <code>CBS-ENTRY:community</code>.",
@@ -208,7 +208,7 @@ function applyLang(){
   document.querySelectorAll("[data-t]").forEach(el=>{
     el.innerHTML = t[ el.getAttribute("data-t") ];
   });
-  document.documentElement.lang = LANG === "nl" ? "nl" : "en";
+  document.documentElement.lang = (LANG === "nl" ? "nl" : "en");
   updateGateUI(lastBalance, true);
 }
 
