@@ -1,294 +1,433 @@
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>CBS Community — Chat</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
-  <style>
-    :root{
-      --bg:#0a0c10; --bg2:#0f141b;
-      --card:#0f151c; --card2:#0c1016;
-      --fg:#eafffb; --muted:#a8d6cd; --line:rgba(0,255,240,.18);
-      --btnA:#5afff0; --btnB:#2bffe4; --accent:#79ffee;
-      --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.06);
-      --radius:16px;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0; font-family:'Orbitron',sans-serif; color:var(--fg);
-      background:
-        radial-gradient(900px 600px at 100% -10%, rgba(0,255,230,.10), transparent 60%),
-        radial-gradient(700px 500px at -10% 110%, rgba(0,170,255,.09), transparent 60%),
-        linear-gradient(135deg,var(--bg),var(--bg2));
-      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
-    }
-    header{
-      display:flex; align-items:center; justify-content:space-between; gap:12px;
-      padding:12px 16px; border-bottom:1px solid var(--line); position:sticky; top:0; backdrop-filter:blur(6px);
-      background:linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0));
-    }
-    .brand{display:flex; align-items:center; gap:10px}
-    .brand img{width:36px; height:36px; border-radius:10px; filter:drop-shadow(0 0 8px rgba(0,255,230,.35))}
-    .brand h1{margin:0; font-size:1.05rem; color:#bffef2}
-    .wrap{max-width:980px; margin:14px auto; padding:0 14px}
-    .panel{
-      background:linear-gradient(180deg, var(--card), var(--card2));
-      border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow);
-      padding:14px; margin-bottom:14px;
-    }
-    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
-    .btn{
-      display:inline-flex; align-items:center; justify-content:center; gap:6px;
-      padding:10px 14px; border-radius:12px; text-decoration:none; cursor:pointer; font-weight:900; color:#012022;
-      background:linear-gradient(180deg, var(--btnA), var(--btnB)); border:1px solid rgba(0,255,240,.7);
-      box-shadow: 0 0 12px rgba(0,255,230,.4), inset 0 -8px 14px rgba(0,0,0,.14);
-    }
-    .btn.secondary{ background:#0f151c; color:#bffef2; border-color:var(--line) }
-    .badge{ padding:7px 10px; border:1px solid var(--line); border-radius:999px; background:#0c1117; color:#bffef2 }
-    input[type="text"]{
-      padding:10px 12px; border-radius:12px; border:1px solid var(--line);
-      background:#0f151c; color:#f0ffff; min-width:180px;
-    }
-    select{
-      padding:10px 12px; border-radius:12px; border:1px solid var(--line);
-      background:#0f151c; color:#f0ffff;
-    }
-    /* Chat layout */
-    .chat{
-      display:grid; grid-template-rows:auto 1fr auto; gap:12px; height:70vh; min-height:420px;
-    }
-    .messages{
-      overflow:auto; border:1px solid var(--line); border-radius:12px; padding:10px; background:#0a0f15;
-    }
-    .msg{
-      display:flex; gap:10px; padding:8px 10px; margin:6px 0;
-      background:linear-gradient(180deg,#0d141c,#0b1118);
-      border:1px solid rgba(0,255,240,.12); border-radius:12px;
-    }
-    .msg.me{ border-color: rgba(0,255,240,.3); box-shadow: inset 0 0 0 1px rgba(0,255,240,.06)}
-    .msg .who{color:#bffef2; font-weight:700}
-    .msg .time{color:var(--muted); font-size:.82rem}
-    .msg .text{white-space:pre-wrap; word-wrap:break-word}
-    .composer{display:flex; gap:10px; align-items:center}
-    .composer input[type="text"]{flex:1}
-    .hint{color:var(--muted); font-size:.9rem}
-    footer{margin:22px auto 36px; text-align:center; color:var(--muted)}
-    a.link{color:var(--accent); text-decoration:none}
-    a.link:hover{text-decoration:underline}
-  </style>
-</head>
-<body>
-  <header>
-    <div class="brand">
-      <a class="btn secondary" href="index.html">← Home</a>
-      <img src="logo.png" alt="CBS Logo" onerror="this.src='image/logo.png'">
-      <h1>CBS Community — Chat</h1>
+import React, { useMemo, useState } from "react";
+import {
+  Trophy,
+  Users,
+  Rocket,
+  Newspaper,
+  ArrowUpRight,
+  Star,
+  MessageCircle,
+  ShieldCheck,
+  Wallet,
+  Image as ImageIcon,
+  PlayCircle,
+  Activity,
+  Flame,
+  ExternalLink,
+  Calendar,
+} from "lucide-react";
+
+// --- Quick config (edit these) --------------------------------------------
+const LINKS = {
+  telegram: "https://t.me/CBS_Coin",
+  x: "https://x.com/CBS_Coin",
+  buyRaydium: "https://raydium.io/",
+  litepaper: "/litepaper.html",
+  dao: "/dao.html",
+};
+
+const COMMUNITY_RULES = [
+  "Respect each other – zero tolerance for hate, spam, or scams.",
+  "Keep alpha and support in the right threads.",
+  "No misleading price talk or fake giveaways.",
+  "Mods may remove content that breaks these rules.",
+];
+
+const ANNOUNCEMENTS = [
+  {
+    id: "a1",
+    title: "Final day: Activity Contest!",
+    body:
+      "Last push! Log your points by 23:59 CET today. Winners announced tomorrow.",
+    cta: { label: "View details", href: "/contests/activity" },
+    tag: "Contest",
+    date: "2025-09-06",
+  },
+  {
+    id: "a2",
+    title: "CBS DAO live on mainnet",
+    body:
+      "Vote, propose and shape the roadmap together. Connect wallet to participate.",
+    cta: { label: "Open DAO", href: LINKS.dao },
+    tag: "DAO",
+    date: "2025-08-11",
+  },
+];
+
+const UPCOMING = [
+  {
+    id: "e1",
+    title: "Community Call #7",
+    date: "2025-09-12 20:00 CET",
+    where: "Telegram Voice",
+    href: LINKS.telegram,
+  },
+  {
+    id: "e2",
+    title: "Meme Contest – Round 4 Deadline",
+    date: "2025-09-27 23:59 CET",
+    where: "Website submissions",
+    href: "/contests/meme",
+  },
+];
+
+const LEADERBOARD = [
+  { wallet: "Cbs...1x3", points: 12850, badges: ["Builder", "Early"] },
+  { wallet: "5z5...kWN", points: 10240, badges: ["Artist"] },
+  { wallet: "76S...mEg", points: 9775, badges: ["Raider"] },
+  { wallet: "B9z...fkk", points: 8200, badges: ["Holder"] },
+];
+
+const GALLERY = [
+  {
+    id: "g1",
+    title: "Freedom Dragon Poster",
+    thumb: "/assets/community/memes/dragon.jpg",
+    author: "@pixelforge",
+    href: "/memes/g1",
+  },
+  {
+    id: "g2",
+    title: "CBS Runner",
+    thumb: "/assets/community/memes/runner.jpg",
+    author: "@solsprinter",
+    href: "/memes/g2",
+  },
+  {
+    id: "g3",
+    title: "Chain Breaker",
+    thumb: "/assets/community/memes/chainbreaker.jpg",
+    author: "@adje",
+    href: "/memes/g3",
+  },
+  {
+    id: "g4",
+    title: "CBS Army Collage",
+    thumb: "/assets/community/memes/army.jpg",
+    author: "@mashup",
+    href: "/memes/g4",
+  },
+];
+
+const QUICK_STATS = [
+  { label: "Community members", value: "4,218", icon: Users },
+  { label: "Active contests", value: "2", icon: Trophy },
+  { label: "DAO proposals", value: "1 live", icon: Activity },
+  { label: "Unique holders", value: "1,137", icon: Wallet },
+];
+
+// --- UI primitives (Tailwind + minimal components) ------------------------
+const Card = ({ children, className = "" }) => (
+  <div className={`rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-5 shadow-sm ${className}`}>
+    {children}
+  </div>
+);
+
+const Tag = ({ children }) => (
+  <span className="inline-flex items-center rounded-full border border-white/15 px-2 py-0.5 text-xs/5">
+    {children}
+  </span>
+);
+
+const ButtonLink = ({ href, children }) => (
+  <a
+    href={href}
+    className="inline-flex items-center gap-2 rounded-2xl border border-white/15 px-4 py-2 hover:bg-white/10 transition"
+  >
+    {children}
+    <ArrowUpRight className="size-4" />
+  </a>
+);
+
+const Badge = ({ children }) => (
+  <span className="rounded-lg bg-white/10 px-2 py-0.5 text-xs">{children}</span>
+);
+
+const Divider = () => (
+  <div className="my-6 h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+);
+
+// --- Page -----------------------------------------------------------------
+export default function CommunityPage() {
+  const [filter, setFilter] = useState("all");
+
+  const filteredGallery = useMemo(() => {
+    if (filter === "all") return GALLERY;
+    if (filter === "memes") return GALLERY; // extend when more types exist
+    return GALLERY;
+  }, [filter]);
+
+  return (
+    <div className="relative min-h-screen w-full bg-gradient-to-b from-zinc-950 via-zinc-950 to-black text-zinc-100">
+      {/* Glow */}
+      <div className="pointer-events-none absolute inset-0 [background:radial-gradient(60%_40%_at_50%_0%,rgba(255,255,255,0.08),transparent_60%)]" />
+
+      {/* Container */}
+      <div className="mx-auto max-w-7xl px-4 py-10 md:py-14">
+        {/* Hero */}
+        <header className="mb-10 md:mb-14">
+          <div className="flex items-center gap-3 text-sm text-white/70">
+            <ShieldCheck className="size-4" />
+            <span>Community Built • 100% On‑Chain • Can’t Be Stopped</span>
+          </div>
+          <h1 className="mt-4 text-3xl font-semibold tracking-tight md:text-5xl">
+            CBS Community Hub
+          </h1>
+          <p className="mt-3 max-w-2xl text-white/70">
+            One place for updates, contests, leaderboards, events and how to get
+            involved. No clutter, no noise—only the good stuff.
+          </p>
+
+          {/* Quick actions */}
+          <div className="mt-6 flex flex-wrap gap-3">
+            <ButtonLink href={LINKS.telegram}>
+              <MessageCircle className="size-4" /> Join Telegram
+            </ButtonLink>
+            <ButtonLink href={LINKS.x}>
+              <ExternalLink className="size-4" /> Follow on X
+            </ButtonLink>
+            <ButtonLink href={LINKS.buyRaydium}>
+              <Flame className="size-4" /> Buy on Raydium
+            </ButtonLink>
+            <ButtonLink href={LINKS.litepaper}>
+              <Newspaper className="size-4" /> Read Litepaper
+            </ButtonLink>
+          </div>
+        </header>
+
+        {/* Stats */}
+        <section className="mb-10 grid grid-cols-2 gap-3 md:grid-cols-4">
+          {QUICK_STATS.map(({ label, value, icon: Icon }) => (
+            <Card key={label} className="flex items-center gap-3">
+              <div className="rounded-xl bg-white/10 p-2">
+                <Icon className="size-5" />
+              </div>
+              <div>
+                <div className="text-xl font-semibold">{value}</div>
+                <div className="text-xs text-white/60">{label}</div>
+              </div>
+            </Card>
+          ))}
+        </section>
+
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* Announcements */}
+          <section className="lg:col-span-2">
+            <Card className="p-0">
+              <div className="flex items-center justify-between px-5 py-4">
+                <h2 className="text-lg font-semibold flex items-center gap-2">
+                  <Rocket className="size-5" /> Announcements
+                </h2>
+                <a href="#" className="text-sm text-white/70 hover:text-white">
+                  View all
+                </a>
+              </div>
+              <Divider />
+              <ul className="px-5 pb-4">
+                {ANNOUNCEMENTS.map((a) => (
+                  <li
+                    key={a.id}
+                    className="group mb-4 flex items-start justify-between gap-4 rounded-xl p-3 hover:bg-white/5"
+                  >
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <Tag>{a.tag}</Tag>
+                        <span className="text-xs text-white/60">{a.date}</span>
+                      </div>
+                      <h3 className="mt-2 text-base font-medium">{a.title}</h3>
+                      <p className="mt-1 text-sm text-white/70">{a.body}</p>
+                      {a.cta && (
+                        <a
+                          className="mt-2 inline-flex items-center gap-1 text-sm text-white/80 hover:text-white"
+                          href={a.cta.href}
+                        >
+                          {a.cta.label}
+                          <ArrowUpRight className="size-3" />
+                        </a>
+                      )}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </Card>
+          </section>
+
+          {/* Rules */}
+          <aside>
+            <Card>
+              <h2 className="text-lg font-semibold">House Rules</h2>
+              <ul className="mt-3 space-y-2 text-sm text-white/75">
+                {COMMUNITY_RULES.map((r, i) => (
+                  <li key={i} className="flex items-start gap-2">
+                    <Star className="mt-0.5 size-4 shrink-0" />
+                    <span>{r}</span>
+                  </li>
+                ))}
+              </ul>
+              <Divider />
+              <div className="text-sm text-white/70">
+                Want to help moderate? Holders with strong activity can apply.
+              </div>
+            </Card>
+          </aside>
+        </div>
+
+        {/* Gallery / Submissions */}
+        <section className="mt-6">
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <ImageIcon className="size-5" /> Community Submissions
+            </h2>
+            <div className="flex gap-2 text-sm">
+              {[
+                { key: "all", label: "All" },
+                { key: "memes", label: "Memes" },
+              ].map((f) => (
+                <button
+                  key={f.key}
+                  onClick={() => setFilter(f.key)}
+                  className={`rounded-xl border px-3 py-1.5 transition ${
+                    filter === f.key
+                      ? "border-white/40 bg-white/10"
+                      : "border-white/10 hover:border-white/20 hover:bg-white/5"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
+            {filteredGallery.map((g) => (
+              <a
+                key={g.id}
+                href={g.href}
+                className="group overflow-hidden rounded-2xl border border-white/10 bg-black/20"
+              >
+                <img
+                  src={g.thumb}
+                  alt={g.title}
+                  className="aspect-[4/3] w-full object-cover transition-transform group-hover:scale-[1.03]"
+                />
+                <div className="p-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="truncate text-white/80">{g.title}</span>
+                    <span className="text-white/60">{g.author}</span>
+                  </div>
+                </div>
+              </a>
+            ))}
+          </div>
+
+          <div className="mt-4 flex items-center justify-between">
+            <div className="text-sm text-white/70">
+              Submit yours → JPG/PNG, max 5MB. Keep it original.
+            </div>
+            <ButtonLink href="/submit">
+              <PlayCircle className="size-4" /> Submit entry
+            </ButtonLink>
+          </div>
+        </section>
+
+        {/* Leaderboard */}
+        <section className="mt-10">
+          <Card>
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <Trophy className="size-5" /> Leaderboard
+              </h2>
+              <a href="/leaderboard" className="text-sm text-white/70 hover:text-white">
+                Full board
+              </a>
+            </div>
+            <Divider />
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+              {LEADERBOARD.map((row, idx) => (
+                <div key={row.wallet} className="flex items-center justify-between rounded-xl bg-white/5 p-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex size-9 items-center justify-center rounded-xl bg-white/10 font-semibold">
+                      {idx + 1}
+                    </div>
+                    <div>
+                      <div className="text-sm font-medium">{row.wallet}</div>
+                      <div className="text-xs text-white/60">{row.points} pts</div>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    {row.badges.map((b) => (
+                      <Badge key={b}>{b}</Badge>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </section>
+
+        {/* Upcoming events */}
+        <section className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <Card className="lg:col-span-2">
+            <h2 className="text-lg font-semibold flex items-center gap-2">
+              <Calendar className="size-5" /> Upcoming Events
+            </h2>
+            <Divider />
+            <ul className="space-y-3">
+              {UPCOMING.map((e) => (
+                <li key={e.id} className="flex items-center justify-between rounded-xl bg-white/5 p-3">
+                  <div>
+                    <div className="text-sm font-medium">{e.title}</div>
+                    <div className="text-xs text-white/60">{e.date} • {e.where}</div>
+                  </div>
+                  <ButtonLink href={e.href}>Open</ButtonLink>
+                </li>
+              ))}
+            </ul>
+          </Card>
+
+          {/* Get involved */}
+          <Card>
+            <h2 className="text-lg font-semibold">Get Involved</h2>
+            <p className="mt-2 text-sm text-white/75">
+              Hold, vote, build. Pick a track to start contributing—no permission needed.
+            </p>
+            <div className="mt-4 grid gap-3">
+              <a className="block rounded-xl border border-white/10 bg-white/5 p-3 hover:bg-white/10" href="/quests">
+                🧭 Starter Quests <span className="text-white/60">• 15–30 min</span>
+              </a>
+              <a className="block rounded-xl border border-white/10 bg-white/5 p-3 hover:bg-white/10" href="/bounties">
+                💎 Bounties <span className="text-white/60">• Earn CBS</span>
+              </a>
+              <a className="block rounded-xl border border-white/10 bg-white/5 p-3 hover:bg-white/10" href="/roles">
+                🛡️ Mod & Team Roles <span className="text-white/60">• Apply</span>
+              </a>
+              <a className="block rounded-xl border border-white/10 bg-white/5 p-3 hover:bg-white/10" href={LINKS.dao}>
+                🗳️ Vote in the DAO <span className="text-white/60">• Hold to vote</span>
+              </a>
+            </div>
+          </Card>
+        </section>
+
+        {/* Footer CTA */}
+        <section className="mt-10">
+          <Card className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+            <div>
+              <h3 className="text-xl font-semibold">Verify Holder → Unlock perks</h3>
+              <p className="mt-1 text-sm text-white/70">
+                Connect your wallet to verify CBS balance and unlock private channels, early drops, and role applications.
+              </p>
+            </div>
+            <ButtonLink href="/connect">
+              <Wallet className="size-4" /> Connect wallet
+            </ButtonLink>
+          </Card>
+        </section>
+
+        {/* Tiny footer */}
+        <footer className="mt-10 text-center text-xs text-white/50">
+          © {new Date().getFullYear()} CBS Coin • Community Builds Sovereignty
+        </footer>
+      </div>
     </div>
-    <div class="row">
-      <span class="badge">No login • No wallet • Just chat</span>
-    </div>
-  </header>
-
-  <main class="wrap">
-    <!-- Top controls -->
-    <section class="panel">
-      <div class="row">
-        <input id="nickname" type="text" placeholder="Choose a name (e.g. Smitske)" />
-        <select id="room">
-          <option value="general">#general</option>
-          <option value="memes">#memes</option>
-          <option value="dev">#dev</option>
-          <option value="trading">#trading</option>
-        </select>
-        <button id="join" class="btn">Join room</button>
-        <button id="leave" class="btn secondary" disabled>Leave</button>
-        <span class="badge" id="status">Not connected</span>
-      </div>
-      <p class="hint" style="margin:.6rem 0 0">
-        Be kind. No spam. No scams. Mods may purge content.
-      </p>
-    </section>
-
-    <!-- Chat -->
-    <section class="panel chat">
-      <div class="row" style="justify-content:space-between">
-        <span class="badge" id="roomTitle">Room: #general</span>
-        <span class="badge" id="online">Peers: 0</span>
-      </div>
-
-      <div id="messages" class="messages" aria-live="polite"></div>
-
-      <div class="composer">
-        <input id="message" type="text" placeholder="Type your message… (Enter to send)" disabled />
-        <button id="send" class="btn" disabled>Send</button>
-        <button id="clear" class="btn secondary" title="Clear messages locally">Clear</button>
-      </div>
-    </section>
-
-    <section class="panel">
-      <p class="hint">
-        Tip: wissel van room via het dropdown. Berichten worden p2p gesynct via publieke **GUN** peers.
-        Voor performance tonen we lokaal **max 200** recente berichten per room.
-      </p>
-      <p class="hint">Telegram: <a class="link" href="https://t.me/CBS_Coin" target="_blank" rel="noopener">@CBS_Coin</a> · Buy on Raydium: <a class="link" href="https://raydium.io/swap/?inputMint=sol&outputMint=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk" target="_blank" rel="noopener">RAY swap</a></p>
-    </section>
-  </main>
-
-  <footer>Community Builds Sovereignty · CBS ©</footer>
-
-  <!-- GUN (p2p datastore) -->
-  <script src="https://cdn.jsdelivr.net/npm/gun/gun.js"></script>
-  <script>
-    // === Simple CBS Chat powered by GUN ===
-    const peers = [
-      // Publieke community-relays (GUN). Je kunt eigen peers toevoegen/hosten voor meer stabiliteit.
-      "https://gun-manhattan.herokuapp.com/gun",
-      "https://gunjs.herokuapp.com/gun"
-    ];
-    const gun = Gun({ peers });
-
-    // UI refs
-    const nicknameEl = document.getElementById('nickname');
-    const roomEl     = document.getElementById('room');
-    const joinBtn    = document.getElementById('join');
-    const leaveBtn   = document.getElementById('leave');
-    const statusEl   = document.getElementById('status');
-    const roomTitle  = document.getElementById('roomTitle');
-    const onlineEl   = document.getElementById('online');
-    const msgList    = document.getElementById('messages');
-    const inputEl    = document.getElementById('message');
-    const sendBtn    = document.getElementById('send');
-    const clearBtn   = document.getElementById('clear');
-
-    // State
-    let me = localStorage.getItem('cbs_name') || "";
-    let room = localStorage.getItem('cbs_room') || "general";
-    let sub = null;           // subscription for current room
-    let lastSend = 0;         // anti-spam (ms)
-    let msgCache = [];        // local list to limit to 200
-
-    // init defaults
-    nicknameEl.value = me;
-    roomEl.value = room;
-    roomTitle.textContent = "Room: #"+room;
-
-    // connection status (approx)
-    function updatePeers(){
-      try {
-        const opt = gun.back('opt');
-        const peers = Object.keys(opt.peers || {});
-        onlineEl.textContent = "Peers: " + peers.length;
-      } catch(e){}
-    }
-    setInterval(updatePeers, 2000);
-
-    function setConnectedUI(on){
-      inputEl.disabled = !on;
-      sendBtn.disabled = !on;
-      leaveBtn.disabled = !on;
-      joinBtn.disabled = on;
-      statusEl.textContent = on ? "Connected" : "Not connected";
-    }
-
-    function renderMessage(m, mine=false){
-      const wrap = document.createElement('div');
-      wrap.className = "msg" + (mine ? " me" : "");
-      const head = document.createElement('div');
-      head.style.display="flex"; head.style.flexDirection="column"; head.style.minWidth="140px"; head.style.maxWidth="40%";
-      const who = document.createElement('div'); who.className = "who"; who.textContent = m.name || "anon";
-      const t = document.createElement('div'); t.className = "time";
-      const d = new Date(m.ts || Date.now());
-      t.textContent = d.toLocaleString();
-      head.appendChild(who); head.appendChild(t);
-      const body = document.createElement('div'); body.className = "text"; body.textContent = m.text || "";
-      wrap.appendChild(head); wrap.appendChild(body);
-      msgList.appendChild(wrap);
-      msgList.scrollTop = msgList.scrollHeight;
-    }
-
-    function attachRoom(r){
-      // detach previous
-      if (sub && sub.off) sub.off();
-      msgList.innerHTML = "";
-      msgCache = [];
-
-      const node = gun.get("cbs.chat").get(r);
-      // stream messages
-      sub = node.map().on((data, key) => {
-        if (!data) return;
-        // basic guard
-        const m = {
-          id: key,
-          name: data.name || "anon",
-          text: data.text || "",
-          ts: Number(data.ts || 0)
-        };
-        if (!m.text.trim()) return;
-
-        // keep only recent 200 locally
-        msgCache.push(m);
-        msgCache.sort((a,b)=>a.ts-b.ts);
-        if (msgCache.length > 200) msgCache = msgCache.slice(-200);
-
-        // re-render all quickly (simple)
-        msgList.innerHTML = "";
-        for (const it of msgCache){
-          renderMessage(it, it.name === (nicknameEl.value || "anon"));
-        }
-      });
-    }
-
-    function join(){
-      let name = nicknameEl.value.trim();
-      if (!name) name = "CBS Member";
-      localStorage.setItem('cbs_name', name);
-
-      const r = roomEl.value.trim() || "general";
-      localStorage.setItem('cbs_room', r);
-      room = r;
-      roomTitle.textContent = "Room: #"+r;
-
-      attachRoom(room);
-      setConnectedUI(true);
-      inputEl.focus();
-    }
-
-    function leave(){
-      if (sub && sub.off) sub.off();
-      sub = null;
-      setConnectedUI(false);
-      msgList.innerHTML = "";
-    }
-
-    function send(){
-      const now = Date.now();
-      if (now - lastSend < 700) return; // anti-spam 0.7s
-      const text = inputEl.value.trim();
-      if (!text) return;
-      const name = nicknameEl.value.trim() || "CBS Member";
-      const msg = { name, text, ts: now };
-      // push to room
-      gun.get("cbs.chat").get(room).set(msg);
-      lastSend = now;
-      inputEl.value = "";
-    }
-
-    // events
-    joinBtn.addEventListener('click', join);
-    leaveBtn.addEventListener('click', leave);
-    sendBtn.addEventListener('click', send);
-    inputEl.addEventListener('keydown', e=>{
-      if (e.key === "Enter" && !e.shiftKey){ e.preventDefault(); send(); }
-    });
-    clearBtn.addEventListener('click', ()=>{
-      msgList.innerHTML = "";
-    });
-
-    // auto-join last room for convenience
-    // (comment uit als je dat niet wilt)
-    // join();
-  </script>
-</body>
-</html>
-
+  );
+}
