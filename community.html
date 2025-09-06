@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CBS Community — Top Holders</title>
-  <meta name="description" content="Officiële CBS Community-pagina: top holders, wallet-verify en naam claimen." />
+  <title>CBS Community — Best Submissions Leaderboard</title>
+  <meta name="description" content="Leaderboard met de beste community-inzendingen voor CBS Coin." />
   <style>
     :root{--bg:#0b0c10;--panel:#13141a;--ink:#f2f3f7;--dim:#b9bac4;--line:#262838;--brand:#e0b15a}
     *{box-sizing:border-box}body{margin:0;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:radial-gradient(60% 40% at 50% 0%,rgba(255,255,255,.06),transparent 60%),var(--bg);color:var(--ink)}
@@ -18,217 +18,166 @@
     .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:#171826;color:var(--ink);text-decoration:none;cursor:pointer}
     .btn:hover{border-color:#35364a}
     .btn.brand{background:linear-gradient(180deg,#2a2215,#1e1a12);border-color:#3a2f1b}
-    .btn.danger{background:#2a1717;border-color:#4a2b2b}
+    .select{background:#0f1020;border:1px solid var(--line);border-radius:10px;padding:8px 10px;color:var(--ink)}
     .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:14px}
     .muted{color:var(--dim)}
-    .holders{width:100%;border-collapse:separate;border-spacing:0 8px}
-    .holders th,.holders td{padding:10px 12px;text-align:left;font-size:14px}
-    .holders thead th{color:var(--dim)}
-    .holders tbody tr{background:#151621;border:1px solid var(--line)}
-    .holders tbody td:first-child{border-top-left-radius:10px;border-bottom-left-radius:10px}
-    .holders tbody td:last-child{border-top-right-radius:10px;border-bottom-right-radius:10px}
-    .addr{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+    table{width:100%;border-collapse:separate;border-spacing:0 10px}
+    th,td{padding:10px 12px;text-align:left;font-size:14px}
+    thead th{color:var(--dim)}
+    tbody tr{background:#151621;border:1px solid var(--line)}
+    tbody td:first-child{border-top-left-radius:10px;border-bottom-left-radius:10px}
+    tbody td:last-child{border-top-right-radius:10px;border-bottom-right-radius:10px}
+    .rank{width:56px;text-align:center;font-weight:700}
+    .medal{display:inline-block;width:28px;height:28px;border-radius:999px;line-height:28px;text-align:center;font-weight:800}
+    .gold{background:linear-gradient(180deg,#f8e28a,#caa94b);color:#2b220d;border:1px solid #a58534}
+    .silver{background:linear-gradient(180deg,#e6e9ef,#bfc6d6);color:#1e2430;border:1px solid #96a0b5}
+    .bronze{background:linear-gradient(180deg,#e9c7a4,#b38352);color:#2b2118;border:1px solid #8d6845}
+    .thumb{width:80px;height:60px;border-radius:8px;object-fit:cover;border:1px solid var(--line);background:#0f1020}
+    .title{font-weight:600}
+    .author{color:var(--dim);font-size:12px}
+    .addr{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;color:var(--dim);font-size:12px}
+    .score{font-weight:700}
+    .tags{display:flex;gap:6px;flex-wrap:wrap}
     .tag{display:inline-block;padding:2px 6px;border:1px solid var(--line);border-radius:8px;font-size:12px;color:var(--dim)}
-    .ok{color:#9ff59f}
-    .warn{color:#ffd27a}
-    .error{color:#ff9f9f}
-    .inline{display:flex;gap:8px;align-items:center}
-    input[type="text"]{background:#0f1020;border:1px solid var(--line);border-radius:10px;padding:8px 10px;color:var(--ink);min-width:220px}
-    .save{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:#1a1b2a;color:var(--ink);cursor:pointer}
-    .save:hover{border-color:#3a3c54}
-    footer{margin:24px 0;text-align:center;color:#8b8d98;font-size:12px}
     .hr{height:1px;background:linear-gradient(90deg,transparent,#303045,transparent);margin:16px 0}
+    footer{margin:24px 0;text-align:center;color:#8b8d98;font-size:12px}
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
       <div class="brand">
-        <!-- Vervang met je echte logo -->
-        <img src="/assets/logo.png" alt="CBS Coin logo" />
+        <!-- vervang met je echte logo -->
+        <img src="/assets/logo.png" alt="CBS Coin" />
         <div>
-          <h1>CBS Community — Top Holders</h1>
-          <div class="sub">Verbind je wallet. Als je in de top staat, kun je je **naam** claimen.</div>
+          <h1>Best Submissions — Leaderboard</h1>
+          <div class="sub">Alleen de beste inzendingen. Handmatig door jou geselecteerd, geen backend nodig.</div>
         </div>
       </div>
       <div class="row">
-        <button id="connectBtn" class="btn brand">🔐 Wallet verbinden</button>
-        <button id="refreshBtn" class="btn">🔄 Opnieuw laden</button>
-        <button id="exportBtn" class="btn">📤 Exporteer namen (JSON)</button>
-        <button id="clearBtn" class="btn danger">🧹 Wis lokale namen</button>
+        <label><span class="muted">Top&nbsp;</span>
+          <select id="topN" class="select">
+            <option value="10">10</option>
+            <option value="25" selected>25</option>
+            <option value="50">50</option>
+          </select>
+        </label>
+        <select id="sortBy" class="select">
+          <option value="score" selected>Sorteren: Score</option>
+          <option value="date">Sorteren: Datum</option>
+          <option value="title">Sorteren: Titel</option>
+        </select>
+        <button id="exportBtn" class="btn">📤 Exporteer CSV</button>
       </div>
     </header>
 
-    <div class="card">
-      <div class="inline"><strong>Status:</strong> <span id="status" class="muted">Bezig met laden…</span></div>
-      <div class="inline" style="margin-top:6px"><strong>Wallet:</strong> <span id="connInfo" class="muted">Niet verbonden</span></div>
-      <div class="hr"></div>
-      <table class="holders" id="holdersTbl">
+    <section class="card">
+      <table>
         <thead>
           <tr>
-            <th style="width:60px">#</th>
-            <th>Owner (wallet)</th>
-            <th style="width:200px">Token balance</th>
-            <th style="width:320px">Naam (claim)</th>
+            <th class="rank">#</th>
+            <th>Inzending</th>
+            <th style="width:120px">Score</th>
+            <th style="width:160px">Datum</th>
           </tr>
         </thead>
-        <tbody id="holdersBody"></tbody>
+        <tbody id="tbody"></tbody>
       </table>
       <div class="hr"></div>
-      <div class="muted">Bron: Solana JSON‑RPC (<code>getTokenLargestAccounts</code> → <code>getParsedAccountInfo</code>). Namen worden nu <strong>alleen lokaal</strong> opgeslagen (localStorage). Later kunnen we dit publiek maken via een JSON-bestand in je repo of een lichte database.</div>
-    </div>
-
-    <div class="card">
-      <h3>Hoe werkt het?</h3>
-      <ol>
-        <li>Klik <em>Wallet verbinden</em> (Phantom vereist).</li>
-        <li>De pagina haalt de top token‑accounts op voor de CBS Coin mint en toont de <strong>owners</strong>.</li>
-        <li>Als jouw wallet gelijk is aan een owner in de tabel, kun je een <strong>naam claimen</strong> (veld + Opslaan).</li>
-        <li>Je naam wordt lokaal onthouden. Wil je zichtbaarheid voor iedereen? Gebruik de export en zet het JSON‑bestand publiek, of koppel een kleine webhook.</li>
-      </ol>
-    </div>
+      <div class="muted">Tip: verander de data onderin dit bestand (SUBMISSIONS[]) om de lijst te updaten. Scores zijn vrij in te vullen (bijv. jurypunten + community‑stemmen). Alleen door jou toegevoegde items worden getoond.</div>
+    </section>
 
     <footer>© <span id="y"></span> CBS Coin — Community Builds Sovereignty</footer>
   </div>
 
   <script>
-  (function(){
-    // ====== CONFIG ======
-    const MINT = 'B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk'; // CBS Coin mint (bevestigd)
-    const RPC = 'https://api.mainnet-beta.solana.com'; // later eventueel Helius
-    const LIMIT = 25; // top N token accounts
+  // ======= 1) DATA — PAS DIT AAN =======
+  // Voeg hier handmatig de beste inzendingen toe
+  // velden: id, title, author, wallet, thumb, url, tags[], score (number), date (YYYY‑MM‑DD)
+  const SUBMISSIONS = [
+    { id:'g1', title:'Freedom Dragon', author:'@pixelforge', wallet:'Cbs…1x3', thumb:'/assets/community/memes/dragon.jpg', url:'/memes/g1', tags:['poster','classic'], score:98, date:'2025-09-04' },
+    { id:'g2', title:'CBS Runner', author:'@solsprinter', wallet:'5z5…kWN', thumb:'/assets/community/memes/runner.jpg', url:'/memes/g2', tags:['meme'], score:94, date:'2025-09-03' },
+    { id:'g3', title:'Chain Breaker', author:'@adje', wallet:'76S…mEg', thumb:'/assets/community/memes/chainbreaker.jpg', url:'/memes/g3', tags:['meme','3D'], score:91, date:'2025-09-02' },
+    { id:'g4', title:'CBS Army Collage', author:'@mashup', wallet:'B9z…fkk', thumb:'/assets/community/memes/army.jpg', url:'/memes/g4', tags:['collage'], score:89, date:'2025-09-01' },
+  ];
 
-    // ====== STATE ======
-    const state = {
-      connectedPubkey: null,
-      holders: [], // { rank, owner, tokenAccount, uiAmount }
-      names: loadNames(),
-    };
+  // ======= 2) UI LOGICA (simpel) =======
+  const $ = (id) => document.getElementById(id);
+  const tbody = $('tbody');
+  const topN = $('topN');
+  const sortBy = $('sortBy');
+  const exportBtn = $('exportBtn');
+  $('y').textContent = new Date().getFullYear();
 
-    // ====== DOM ======
-    const $ = (id) => document.getElementById(id);
-    const statusEl = $('status');
-    const bodyEl = $('holdersBody');
-    const connInfoEl = $('connInfo');
+  topN.addEventListener('change', render);
+  sortBy.addEventListener('change', render);
+  exportBtn.addEventListener('click', exportCSV);
 
-    $('connectBtn').addEventListener('click', connectWallet);
-    $('refreshBtn').addEventListener('click', () => init());
-    $('exportBtn').addEventListener('click', exportNames);
-    $('clearBtn').addEventListener('click', clearNames);
+  function render(){
+    tbody.innerHTML = '';
+    // sort
+    let arr = [...SUBMISSIONS];
+    const key = sortBy.value;
+    if(key === 'score') arr.sort((a,b)=> b.score - a.score);
+    else if(key === 'date') arr.sort((a,b)=> (a.date < b.date ? 1 : -1));
+    else if(key === 'title') arr.sort((a,b)=> a.title.localeCompare(b.title));
 
-    $('y').textContent = new Date().getFullYear();
-    init();
+    // slice
+    arr = arr.slice(0, Number(topN.value));
 
-    // ====== INIT: haal top holders ======
-    async function init(){
-      setStatus('Bezig met ophalen van top holders…');
-      try{
-        const largest = await rpc({
-          method: 'getTokenLargestAccounts',
-          params: [MINT, { commitment: 'confirmed' }]
-        });
-        const list = (largest?.value || []).slice(0, LIMIT);
-        const holders = [];
-        let rank = 1;
-        for(const entry of list){
-          const tokenAcc = entry.address;
-          const info = await rpc({
-            method: 'getParsedAccountInfo',
-            params: [tokenAcc, { commitment: 'confirmed' }]
-          });
-          const owner = info?.value?.data?.parsed?.info?.owner || null;
-          const uiAmount = entry?.uiAmount ?? Number(entry?.amount || 0) / Math.pow(10, Number(entry?.decimals || 0));
-          holders.push({ rank: rank++, owner, tokenAccount: tokenAcc, uiAmount });
-        }
-        state.holders = holders;
-        render();
-        setStatus('Klaar.');
-      }catch(err){
-        console.error(err);
-        setStatus('Fout bij ophalen. Open de console voor details.', 'error');
-      }
-    }
-
-    // ====== WALLET ======
-    async function connectWallet(){
-      try{
-        const provider = window.solana || window.phantom?.solana;
-        if(!provider){
-          alert('Geen Phantom wallet gevonden. Installeer Phantom of open in een browser met Phantom.');
-          return;
-        }
-        const res = await provider.connect();
-        state.connectedPubkey = res.publicKey?.toString?.() || null;
-        connInfoEl.textContent = state.connectedPubkey ? `Verbonden: ${short(state.connectedPubkey)}` : 'Niet verbonden';
-        render();
-      }catch(err){
-        console.warn('Wallet connect geannuleerd of fout', err);
-      }
-    }
-
-    // ====== RENDER ======
-    function render(){
-      bodyEl.innerHTML = '';
-      const you = state.connectedPubkey;
-      for(const row of state.holders){
-        const tr = document.createElement('tr');
-        const match = you && row.owner && you === row.owner;
-        tr.innerHTML = `
-          <td>${row.rank}</td>
-          <td class="addr">${short(row.owner || '-')}${match ? ' <span class="tag ok">jij</span>' : ''}</td>
-          <td>${fmt(row.uiAmount)} <span class="muted">CBS</span></td>
-          <td>${claimCell(row.owner, match)}</td>
-        `;
-        bodyEl.appendChild(tr);
-        if(match){ attachClaimHandlers(row.owner); }
-      }
-    }
-
-    function claimCell(owner, match){
-      const existing = state.names[owner] || '';
-      if(!match){
-        return existing ? `<span>${escapeHtml(existing)}</span>` : `<span class="muted">—</span>`;
-      }
-      return `
-        <div class="inline">
-          <input type="text" id="name_${owner}" placeholder="Jouw naam (publiek)" value="${escapeHtml(existing)}" />
-          <button class="save" data-owner="${owner}">Opslaan</button>
-        </div>
+    // render rows
+    arr.forEach((item, idx) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="rank">${rankBadge(idx)}</td>
+        <td>
+          <div style="display:flex; gap:12px; align-items:center">
+            <a href="${item.url}" target="_blank" rel="noopener"><img src="${item.thumb}" class="thumb" alt="${escapeHtml(item.title)}" /></a>
+            <div>
+              <div class="title"><a href="${item.url}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit">${escapeHtml(item.title)}</a></div>
+              <div class="author">${escapeHtml(item.author)} <span class="addr">(${escapeHtml(item.wallet)})</span></div>
+              <div class="tags">${(item.tags||[]).map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>
+            </div>
+          </div>
+        </td>
+        <td class="score">${Number(item.score).toLocaleString('nl-NL')}</td>
+        <td>${item.date}</td>
       `;
-    }
+      tbody.appendChild(tr);
+    });
+  }
 
-    function attachClaimHandlers(owner){
-      const btn = document.querySelector(`button.save[data-owner="${css(owner)}"]`);
-      if(!btn) return;
-      btn.addEventListener('click', () => {
-        const inp = document.getElementById(`name_${owner}`);
-        const val = (inp?.value || '').trim();
-        state.names[owner] = val;
-        saveNames(state.names);
-        render();
-      });
-    }
+  function rankBadge(idx){
+    const n = idx + 1;
+    if(n===1) return `<span class="medal gold">1</span>`;
+    if(n===2) return `<span class="medal silver">2</span>`;
+    if(n===3) return `<span class="medal bronze">3</span>`;
+    return n;
+  }
 
-    // ====== HELPERS ======
-    async function rpc(body){
-      const resp = await fetch(RPC, {
-        method: 'POST', headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 1, ...body })
-      });
-      const json = await resp.json();
-      if(json.error) throw new Error(json.error.message || 'RPC error');
-      return json.result;
-    }
-    function short(a){ if(!a) return '-'; return a.slice(0,4)+'…'+a.slice(-4); }
-    function fmt(n){ try{ return Number(n).toLocaleString(); }catch{ return n; } }
-    function loadNames(){ try{ return JSON.parse(localStorage.getItem('cbs_names')||'{}'); }catch{ return {}; } }
-    function saveNames(obj){ localStorage.setItem('cbs_names', JSON.stringify(obj)); }
-    function clearNames(){ if(confirm('Weet je zeker dat je alle lokale namen wil wissen?')){ localStorage.removeItem('cbs_names'); state.names = {}; render(); } }
-    function exportNames(){ const blob = new Blob([JSON.stringify(state.names, null, 2)], {type:'application/json'}); const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='cbs_names.json'; a.click(); URL.revokeObjectURL(url); }
-    function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c])); }
-    function css(s){ return (s||'').replace(/"/g,'\\"'); }
-    function setStatus(msg, cls){ statusEl.textContent = msg; statusEl.className = cls ? cls : 'muted'; }
-  })();
+  function exportCSV(){
+    const headers = ['rank','id','title','author','wallet','score','date','tags'];
+    let arr = [...SUBMISSIONS];
+    if(sortBy.value === 'score') arr.sort((a,b)=> b.score - a.score);
+    else if(sortBy.value === 'date') arr.sort((a,b)=> (a.date < b.date ? 1 : -1));
+    else arr.sort((a,b)=> a.title.localeCompare(b.title));
+    arr = arr.slice(0, Number(topN.value));
+
+    const rows = arr.map((it, i) => [i+1, it.id, it.title, it.author, it.wallet, it.score, it.date, (it.tags||[]).join('|')]);
+    const csv = [headers.join(','), ...rows.map(r=>r.map(csvEscape).join(','))].join('\n');
+    const blob = new Blob([csv], {type:'text/csv'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'cbs_leaderboard.csv'; a.click(); URL.revokeObjectURL(url);
+  }
+
+  function csvEscape(v){
+    const s = String(v ?? '');
+    if(/[",\n]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
+    return s;
+  }
+  function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c])); }
+
+  render();
   </script>
 </body>
 </html>
