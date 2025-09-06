@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>CBS Stack – Holders ≥1000 CBS (10 tries, cumulative score)</title>
+  <title>CBS Stack – Holders ≥1000 CBS (5 tries, cumulative score)</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet"/>
 
@@ -152,8 +152,7 @@
           <h3>How to play</h3>
           <p>Tap / Click / Space / Enter to drop the moving neon block on the stack.</p>
           <p>Only the overlapping part stays. Miss entirely → next attempt automatically.</p>
-          <p>Perfect alignment (±2px) glows and grants a combo bonus.</p>
-          <p><b>10 tries cumulative:</b> your score keeps adding up through 10 attempts; then we save it.</p>
+          <p><b>5 tries cumulative:</b> score keeps adding up through 5 attempts; then we save it.</p>
         </div>
         <div class="panel" style="text-align:center">
           <a href="index.html" class="btn">← Back to Home</a>
@@ -207,7 +206,7 @@
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const LB_TABLE = "leaderboard";
     const STACK_NORMALIZE_MUL = 5;      // fairness to Snake
-    const MAX_ATTEMPTS = 10;
+    const MAX_ATTEMPTS = 5;             // ← 5 tries
 
     const $ = (id)=>document.getElementById(id);
     const tbody   = $("leaderboardBody");
@@ -239,7 +238,7 @@
     }
   </script>
 
-  <!-- Game logic (Stack) – 10 tries, cumulative total in one screen -->
+  <!-- Game logic (Stack) – 5 tries, cumulative total; camera keeps action in view -->
   <script>
     const startBtn   = document.getElementById("startBtn");
     const playOverlay= document.getElementById("playOverlay");
@@ -256,14 +255,14 @@
     const BLOCK_H=24, START_W=Math.floor(W*0.74);
     const SPEED_START=2.2, SPEED_INC=0.08;
 
-    // Session: 10 attempts cumulative
+    // Session: 5 attempts cumulative
     let attemptsLeft = MAX_ATTEMPTS;
     let attemptNo = 1;
-    let totalScore = 0;         // cumulative over all tries
+    let totalScore = 0;   // cumulative over all tries
 
     // Game state (per attempt)
     let blocks=[], mover=null, camY=0, speed=SPEED_START;
-    let running=false, rafId=null, score=0, combo=0;
+    let running=false, rafId=null, score=0;
     let intermission=false, interTimer=null;
 
     // Name Modal refs
@@ -296,10 +295,12 @@
 
     function resetGame(){
       cancelAnim(); ctx.clearRect(0,0,W,H);
-      blocks=[]; camY=0; speed=SPEED_START; score=0; combo=0;
+      blocks=[]; camY=0; speed=SPEED_START; score=0;
       const baseW=START_W, baseX=(W-baseW)/2, baseY=H-BLOCK_H;
       blocks.push({x:baseX,y:baseY,w:baseW,h:BLOCK_H,perfect:false});
       mover={x:-baseW,y:baseY-BLOCK_H,w:baseW,h:BLOCK_H,dir:+1};
+      // keep action comfortable from the start
+      adjustCamera(mover.y);
     }
 
     function cancelAnim(){ if(rafId) cancelAnimationFrame(rafId); rafId=null; }
@@ -325,22 +326,36 @@
       const right=Math.min(mover.x+mover.w,prev.x+prev.w);
       const overlap=Math.floor(right-left);
       if(overlap<=0){ gameOver(); return; }
+
+      // perfect check (we tonen nog wel glow, maar score is vast +3)
       const tol=2;
       const perfect=Math.abs(mover.x-prev.x)<=tol && Math.abs((mover.x+mover.w)-(prev.x+prev.w))<=tol;
+
       let newX=left,newW=overlap;
-      if(perfect){ newX=prev.x; newW=prev.w; combo++; score+=2+Math.min(combo,5); if(navigator.vibrate) navigator.vibrate(15); }
-      else{ combo=0; score++; }
+      if(perfect){ newX=prev.x; newW=prev.w; if(navigator.vibrate) navigator.vibrate(12); }
+      score += 3; // ← vast 3 punten per succesvolle drop
+
       const newY=mover.y;
       blocks.push({x:newX,y:newY,w:newW,h:BLOCK_H,perfect});
-      if(newY-camY<H*0.35) camY-=BLOCK_H;
+      // camera: houd de actie rond ~65% van het scherm
+      adjustCamera(newY);
+
+      // volgende mover
       const nextY=newY-BLOCK_H, dir=(mover.dir===1?-1:1);
       mover={x:(dir===1?-newW:W),y:nextY,w:newW,h:BLOCK_H,dir};
       SPEED_INC>0 && (speed+=SPEED_INC);
     }
 
+    function adjustCamera(latestY){
+      // plaats de nieuwste blokpositie rond 65% schermhoogte
+      const target = H * 0.65;
+      const desired = target - latestY;  // camY is negatief (omhoog scrollen)
+      camY = Math.min(0, desired);
+    }
+
     function gameOver(){
       running=false;
-      totalScore += Math.max(0, score);   // add attempt score to cumulative
+      totalScore += Math.max(0, score);   // tel poging-score op bij totaal
       attemptsLeft = Math.max(0, attemptsLeft - 1);
       intermission = true;
       draw(true);
@@ -349,11 +364,11 @@
         const thisAttempt = attemptNo;
         interTimer = setTimeout(()=>{
           attemptNo = thisAttempt + 1;
-          startAttempt();                 // auto next try, stay in overlay
-        }, 900);
+          startAttempt();                 // auto next try, blijf in overlay
+        }, 800);
       }else{
-        // After 10 tries → ask name with TOTAL score
-        setTimeout(()=> openNameModal(totalScore), 600);
+        // 5 pogingen klaar → naam + opslaan (totaal)
+        setTimeout(()=> openNameModal(totalScore), 550);
       }
     }
 
@@ -435,7 +450,7 @@
     }
     cancelBtn.addEventListener("click", ()=>{
       overlay.style.display="none";
-      // start a fresh cumulative session right away (stays in overlay)
+      // start a fresh cumulative session right away (stay in play)
       resetSession();
       startAttempt();
     });
@@ -532,4 +547,3 @@
   </script>
 </body>
 </html>
-
