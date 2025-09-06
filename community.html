@@ -32,6 +32,7 @@
     .gold{background:linear-gradient(180deg,#f8e28a,#caa94b);color:#2b220d;border:1px solid #a58534}
     .silver{background:linear-gradient(180deg,#e6e9ef,#bfc6d6);color:#1e2430;border:1px solid #96a0b5}
     .bronze{background:linear-gradient(180deg,#e9c7a4,#b38352);color:#2b2118;border:1px solid #8d6845}
+    .trophy{font-size:20px;margin-left:6px;color:var(--brand)}
     .thumb{width:80px;height:60px;border-radius:8px;object-fit:cover;border:1px solid var(--line);background:#0f1020}
     .title{font-weight:600}
     .author{color:var(--dim);font-size:12px}
@@ -51,23 +52,8 @@
         <img src="/assets/logo.png" alt="CBS Coin" />
         <div>
           <h1>Best Submissions — Leaderboard</h1>
-          <div class="sub">Alleen de beste inzendingen. Handmatig door jou geselecteerd, geen backend nodig.</div>
+          <div class="sub">Winnaars van de mini meme contests. Elke winnaar wordt hier gepubliceerd 🏆</div>
         </div>
-      </div>
-      <div class="row">
-        <label><span class="muted">Top&nbsp;</span>
-          <select id="topN" class="select">
-            <option value="10">10</option>
-            <option value="25" selected>25</option>
-            <option value="50">50</option>
-          </select>
-        </label>
-        <select id="sortBy" class="select">
-          <option value="score" selected>Sorteren: Score</option>
-          <option value="date">Sorteren: Datum</option>
-          <option value="title">Sorteren: Titel</option>
-        </select>
-        <button id="exportBtn" class="btn">📤 Exporteer CSV</button>
       </div>
     </header>
 
@@ -84,97 +70,46 @@
         <tbody id="tbody"></tbody>
       </table>
       <div class="hr"></div>
-      <div class="muted">Tip: verander de data onderin dit bestand (SUBMISSIONS[]) om de lijst te updaten. Scores zijn vrij in te vullen (bijv. jurypunten + community‑stemmen). Alleen door jou toegevoegde items worden getoond.</div>
+      <div class="muted">Nieuwe winnaars worden handmatig toegevoegd. Dit is onze officiële Wall of Fame.</div>
     </section>
 
     <footer>© <span id="y"></span> CBS Coin — Community Builds Sovereignty</footer>
   </div>
 
   <script>
-  // ======= 1) DATA — PAS DIT AAN =======
-  // Voeg hier handmatig de beste inzendingen toe
-  // velden: id, title, author, wallet, thumb, url, tags[], score (number), date (YYYY‑MM‑DD)
+  // ======= 1) DATA — WINNAARS =======
   const SUBMISSIONS = [
-    { id:'g1', title:'Freedom Dragon', author:'@pixelforge', wallet:'Cbs…1x3', thumb:'/assets/community/memes/dragon.jpg', url:'/memes/g1', tags:['poster','classic'], score:98, date:'2025-09-04' },
-    { id:'g2', title:'CBS Runner', author:'@solsprinter', wallet:'5z5…kWN', thumb:'/assets/community/memes/runner.jpg', url:'/memes/g2', tags:['meme'], score:94, date:'2025-09-03' },
-    { id:'g3', title:'Chain Breaker', author:'@adje', wallet:'76S…mEg', thumb:'/assets/community/memes/chainbreaker.jpg', url:'/memes/g3', tags:['meme','3D'], score:91, date:'2025-09-02' },
-    { id:'g4', title:'CBS Army Collage', author:'@mashup', wallet:'B9z…fkk', thumb:'/assets/community/memes/army.jpg', url:'/memes/g4', tags:['collage'], score:89, date:'2025-09-01' },
+    { id:'w1', title:'Mini Meme Contest #1', author:'Creator link hier', wallet:'—', thumb:'/assets/community/winners/w1.jpg', url:'https://link-naar-meme-of-creator', tags:['winner'], score:'🏆', date:'2025-09-06' }
   ];
 
-  // ======= 2) UI LOGICA (simpel) =======
+  // ======= 2) RENDER LOGICA =======
   const $ = (id) => document.getElementById(id);
   const tbody = $('tbody');
-  const topN = $('topN');
-  const sortBy = $('sortBy');
-  const exportBtn = $('exportBtn');
   $('y').textContent = new Date().getFullYear();
-
-  topN.addEventListener('change', render);
-  sortBy.addEventListener('change', render);
-  exportBtn.addEventListener('click', exportCSV);
 
   function render(){
     tbody.innerHTML = '';
-    // sort
-    let arr = [...SUBMISSIONS];
-    const key = sortBy.value;
-    if(key === 'score') arr.sort((a,b)=> b.score - a.score);
-    else if(key === 'date') arr.sort((a,b)=> (a.date < b.date ? 1 : -1));
-    else if(key === 'title') arr.sort((a,b)=> a.title.localeCompare(b.title));
-
-    // slice
-    arr = arr.slice(0, Number(topN.value));
-
-    // render rows
-    arr.forEach((item, idx) => {
+    SUBMISSIONS.forEach((item, idx) => {
       const tr = document.createElement('tr');
       tr.innerHTML = `
-        <td class="rank">${rankBadge(idx)}</td>
+        <td class="rank">${idx+1} <span class="trophy">🏆</span></td>
         <td>
           <div style="display:flex; gap:12px; align-items:center">
             <a href="${item.url}" target="_blank" rel="noopener"><img src="${item.thumb}" class="thumb" alt="${escapeHtml(item.title)}" /></a>
             <div>
               <div class="title"><a href="${item.url}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit">${escapeHtml(item.title)}</a></div>
-              <div class="author">${escapeHtml(item.author)} <span class="addr">(${escapeHtml(item.wallet)})</span></div>
+              <div class="author">${escapeHtml(item.author)} <span class="addr">${escapeHtml(item.wallet)}</span></div>
               <div class="tags">${(item.tags||[]).map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>
             </div>
           </div>
         </td>
-        <td class="score">${Number(item.score).toLocaleString('nl-NL')}</td>
+        <td class="score">${item.score}</td>
         <td>${item.date}</td>
       `;
       tbody.appendChild(tr);
     });
   }
 
-  function rankBadge(idx){
-    const n = idx + 1;
-    if(n===1) return `<span class="medal gold">1</span>`;
-    if(n===2) return `<span class="medal silver">2</span>`;
-    if(n===3) return `<span class="medal bronze">3</span>`;
-    return n;
-  }
-
-  function exportCSV(){
-    const headers = ['rank','id','title','author','wallet','score','date','tags'];
-    let arr = [...SUBMISSIONS];
-    if(sortBy.value === 'score') arr.sort((a,b)=> b.score - a.score);
-    else if(sortBy.value === 'date') arr.sort((a,b)=> (a.date < b.date ? 1 : -1));
-    else arr.sort((a,b)=> a.title.localeCompare(b.title));
-    arr = arr.slice(0, Number(topN.value));
-
-    const rows = arr.map((it, i) => [i+1, it.id, it.title, it.author, it.wallet, it.score, it.date, (it.tags||[]).join('|')]);
-    const csv = [headers.join(','), ...rows.map(r=>r.map(csvEscape).join(','))].join('\n');
-    const blob = new Blob([csv], {type:'text/csv'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'cbs_leaderboard.csv'; a.click(); URL.revokeObjectURL(url);
-  }
-
-  function csvEscape(v){
-    const s = String(v ?? '');
-    if(/[",\n]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
-    return s;
-  }
   function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c])); }
 
   render();
