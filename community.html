@@ -1,173 +1,216 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CBS Coin — Community</title>
-  <meta name="description" content="CBS Coin community hub: announcements, actions, featured submissions, leaderboard, and rules." />
+  <title>CBS Coin — Top Holders Verify</title>
+  <meta name="description" content="Koppel je wallet en claim een naam als je bij de top holders hoort." />
   <style>
-    :root{
-      --bg:#0b0b0e; --panel:#131319; --ink:#f3f4f6; --ink-dim:#c9cad1; --line:#262632; --brand:#e0b15a;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Helvetica,Arial,sans-serif;
-      color:var(--ink); background:radial-gradient(60% 40% at 50% 0%,rgba(255,255,255,0.06),transparent 60%), var(--bg);
-    }
-    a{color:inherit}
-    .wrap{max-width:1100px; margin:auto; padding:20px}
-    header{display:flex; flex-wrap:wrap; align-items:center; gap:16px; justify-content:space-between}
-    .logo{display:flex; align-items:center; gap:10px}
-    .logo img{width:40px;height:40px; border-radius:8px}
-    .title{font-size:clamp(22px,3.2vw,36px); font-weight:700; letter-spacing:.2px}
-    .sub{color:var(--ink-dim); font-size:14px}
-
-    .grid{display:grid; gap:14px}
-    .g-2{grid-template-columns:repeat(2,1fr)}
-    .g-3{grid-template-columns:repeat(3,1fr)}
-    .g-4{grid-template-columns:repeat(4,1fr)}
-    @media (max-width:900px){.g-3,.g-4{grid-template-columns:repeat(2,1fr)}}
-    @media (max-width:640px){.g-2,.g-3,.g-4{grid-template-columns:1fr}}
-
-    .card{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px; box-shadow:0 0 0 1px rgba(255,255,255,.02) inset}
-    .card h2{font-size:16px; margin:0 0 8px}
-    .muted{color:var(--ink-dim)}
-    .cta-row{display:flex; flex-wrap:wrap; gap:10px}
-    .btn{display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border:1px solid var(--line); border-radius:12px; text-decoration:none; background:#171722}
-    .btn:hover{border-color:#343446}
-    .btn.brand{background:linear-gradient(180deg,#2a2215,#1e1a12); border-color:#3a2f1b}
-
-    ul.clean{list-style:none; padding:0; margin:0}
-    .ann li{padding:10px; border:1px solid var(--line); border-radius:12px; background:#15151d}
-    .ann time{color:var(--ink-dim); font-size:12px}
-
-    .gallery figure{margin:0; overflow:hidden; border-radius:12px; border:1px solid var(--line); background:#0f0f15}
-    .gallery img{width:100%; aspect-ratio:4/3; object-fit:cover; display:block}
-    .gallery figcaption{display:flex; justify-content:space-between; gap:8px; padding:8px 10px; font-size:13px; color:var(--ink-dim)}
-
-    table{width:100%; border-collapse:separate; border-spacing:0 8px}
-    th,td{font-size:14px; text-align:left; padding:10px 12px}
-    thead th{color:var(--ink-dim); font-weight:600}
-    tbody tr{background:#15151d; border:1px solid var(--line)}
-    tbody tr td:first-child{border-top-left-radius:10px; border-bottom-left-radius:10px}
-    tbody tr td:last-child{border-top-right-radius:10px; border-bottom-right-radius:10px}
-
-    .rules li{padding-left:10px; border-left:2px solid #2d2d3a}
-    footer{margin:20px 0; text-align:center; color:#8b8d98; font-size:12px}
-    .hr{height:1px; background:linear-gradient(90deg,transparent,#303045,transparent); margin:16px 0}
+    :root{--bg:#0b0c10;--panel:#13141a;--ink:#f2f3f7;--dim:#b9bac4;--line:#262838;--brand:#e0b15a}
+    *{box-sizing:border-box}body{margin:0;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:radial-gradient(60% 40% at 50% 0%,rgba(255,255,255,.06),transparent 60%),var(--bg);color:var(--ink)}
+    .wrap{max-width:960px;margin:auto;padding:20px}
+    h1{font-size:clamp(22px,3.5vw,34px);margin:0 0 6px}
+    .sub{color:var(--dim)}
+    .row{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:#171826;color:var(--ink);text-decoration:none}
+    .btn:hover{border-color:#35364a}
+    .btn.brand{background:linear-gradient(180deg,#2a2215,#1e1a12);border-color:#3a2f1b}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:14px}
+    .muted{color:var(--dim)}
+    .holders{width:100%;border-collapse:separate;border-spacing:0 8px}
+    .holders th,.holders td{padding:10px 12px;text-align:left;font-size:14px}
+    .holders thead th{color:var(--dim)}
+    .holders tbody tr{background:#151621;border:1px solid var(--line)}
+    .holders tbody td:first-child{border-top-left-radius:10px;border-bottom-left-radius:10px}
+    .holders tbody td:last-child{border-top-right-radius:10px;border-bottom-right-radius:10px}
+    .addr{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace}
+    .tag{display:inline-block;padding:2px 6px;border:1px solid var(--line);border-radius:8px;font-size:12px;color:var(--dim)}
+    .ok{color:#9ff59f}
+    .warn{color:#ffd27a}
+    .error{color:#ff9f9f}
+    .inline{display:flex;gap:8px;align-items:center}
+    input[type="text"]{background:#0f1020;border:1px solid var(--line);border-radius:10px;padding:8px 10px;color:var(--ink);min-width:220px}
+    .save{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:#1a1b2a;color:var(--ink)}
+    .save:hover{border-color:#3a3c54}
+    .hr{height:1px;background:linear-gradient(90deg,transparent,#303045,transparent);margin:16px 0}
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <div class="logo">
-        <!-- Swap with your real logo path -->
-        <img src="/assets/logo.png" alt="CBS Coin logo" />
-        <div>
-          <div class="title">CBS Community Hub</div>
-          <div class="sub">Simple. Fast. Focused on action — not clutter.</div>
-        </div>
-      </div>
-      <div class="cta-row">
-        <a class="btn" href="https://t.me/CBS_Coin" target="_blank" rel="noopener">Join Telegram</a>
-        <a class="btn" href="/submit">Submit Meme</a>
-        <a class="btn" href="/contests">Contests</a>
-        <a class="btn brand" href="https://raydium.io/" target="_blank" rel="noopener">Buy on Raydium</a>
+      <h1>Top Holders — Verify & Claim Name</h1>
+      <div class="sub">Koppel je wallet. Als je bij de top holders staat, kun je je **naam** achter je adres zetten. <span class="muted">(Lokaal opgeslagen voor nu)</span></div>
+      <div class="row">
+        <button id="connectBtn" class="btn brand">🔐 Wallet verbinden</button>
+        <button id="refreshBtn" class="btn">🔄 Opnieuw laden</button>
+        <span id="connInfo" class="muted"></span>
       </div>
     </header>
 
-    <div class="hr"></div>
-
-    <!-- Row: Announcements + Rules -->
-    <section class="grid g-2">
-      <div class="card">
-        <h2>Announcements</h2>
-        <ul class="clean ann">
-          <!-- Edit these items manually, keep it lean -->
-          <li>
-            <div><strong>Final day: Activity Contest</strong></div>
-            <time>2025‑09‑06</time>
-            <div class="muted">Last push! Log your points by 23:59 CET. Winners announced tomorrow.</div>
-            <div style="margin-top:6px"><a class="btn" href="/contests/activity">View details</a></div>
-          </li>
-          <li>
-            <div><strong>Meme Contest — Round 4</strong></div>
-            <time>Deadline: 2025‑09‑27</time>
-            <div class="muted">Submit up to 3 entries. Keep the original CBS logo intact.</div>
-            <div style="margin-top:6px"><a class="btn" href="/contests/meme">Submit now</a></div>
-          </li>
-        </ul>
-      </div>
-      <div class="card">
-        <h2>House Rules</h2>
-        <ul class="clean rules" style="display:grid; gap:10px">
-          <li>Respect each other. No hate, no spam, no scams.</li>
-          <li>Keep support/questions in the right channel.</li>
-          <li>No fake giveaways or price manipulation talk.</li>
-          <li>Mods may remove off‑topic/low‑effort posts.</li>
-        </ul>
-      </div>
-    </section>
-
-    <!-- Row: Featured submissions (light gallery) -->
-    <section class="card" style="margin-top:14px">
-      <h2>Featured Submissions</h2>
-      <div class="grid g-4 gallery">
-        <!-- Replace thumbs with your files under /assets/community/... -->
-        <figure>
-          <img src="/assets/community/memes/dragon.jpg" alt="Freedom Dragon Poster" />
-          <figcaption><span>Freedom Dragon</span><span>@pixelforge</span></figcaption>
-        </figure>
-        <figure>
-          <img src="/assets/community/memes/runner.jpg" alt="CBS Runner" />
-          <figcaption><span>CBS Runner</span><span>@solsprinter</span></figcaption>
-        </figure>
-        <figure>
-          <img src="/assets/community/memes/chainbreaker.jpg" alt="Chain Breaker" />
-          <figcaption><span>Chain Breaker</span><span>@adje</span></figcaption>
-        </figure>
-        <figure>
-          <img src="/assets/community/memes/army.jpg" alt="CBS Army Collage" />
-          <figcaption><span>CBS Army</span><span>@mashup</span></figcaption>
-        </figure>
-      </div>
-      <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center">
-        <div class="muted">How to get featured: keep it original, high‑quality, CBS logo intact.</div>
-        <a class="btn" href="/gallery">View all</a>
-      </div>
-    </section>
-
-    <!-- Row: Leaderboard (manual mini) -->
-    <section class="card" style="margin-top:14px">
-      <h2>Leaderboard</h2>
-      <table>
+    <div class="card">
+      <div class="inline"><strong>Status:</strong> <span id="status" class="muted">Bezig met laden…</span></div>
+      <div class="hr"></div>
+      <table class="holders" id="holdersTbl">
         <thead>
-          <tr><th style="width:60px">#</th><th>Wallet</th><th>Points</th><th>Badges</th></tr>
+          <tr>
+            <th style="width:60px">#</th>
+            <th>Owner (wallet)</th>
+            <th style="width:180px">Token balance</th>
+            <th style="width:260px">Naam (claim)</th>
+          </tr>
         </thead>
-        <tbody>
-          <tr><td>1</td><td>Cbs…1x3</td><td>12,850</td><td>Builder, Early</td></tr>
-          <tr><td>2</td><td>5z5…kWN</td><td>10,240</td><td>Artist</td></tr>
-          <tr><td>3</td><td>76S…mEg</td><td>9,775</td><td>Raider</td></tr>
-          <tr><td>4</td><td>B9z…fkk</td><td>8,200</td><td>Holder</td></tr>
-        </tbody>
+        <tbody id="holdersBody"></tbody>
       </table>
-      <div style="text-align:right"><a class="btn" href="/leaderboard">Full board</a></div>
-    </section>
+      <div class="hr"></div>
+      <div class="muted">Bron: Solana RPC → <code>getTokenLargestAccounts</code> + <code>getParsedAccountInfo</code>. Geen backend nodig. Voor nu bewaren we namen in <strong>localStorage</strong>. Later kunnen we overschakelen op een publieke JSON of kleine database.</div>
+    </div>
 
-    <!-- Row: Get involved (simple links) -->
-    <section class="grid g-3" style="margin-top:14px">
-      <a class="card" href="/quests"><h2>Starter Quests</h2><div class="muted">15–30 min tasks to get involved.</div></a>
-      <a class="card" href="/bounties"><h2>Bounties</h2><div class="muted">Earn CBS for useful work.</div></a>
-      <a class="card" href="/roles"><h2>Team & Mod Roles</h2><div class="muted">Requirements & application.</div></a>
-    </section>
-
-    <footer>© <span id="y"></span> CBS Coin — Community Builds Sovereignty</footer>
+    <div class="card">
+      <h3>Uitleg (simpel)</h3>
+      <ol>
+        <li>Klik <em>Wallet verbinden</em> (Phantom/oké-keuring).</li>
+        <li>We halen top token-accounts op voor de CBS Coin mint en tonen de <strong>owners</strong>.</li>
+        <li>Als jouw wallet-adres overeenkomt met een owner in de lijst, kun je een <strong>naam claimen</strong>.</li>
+        <li>Namen worden lokaal onthouden. Wil je het publiek maken? Dan voegen we later een klein JSON-bestand of webhook toe.</li>
+      </ol>
+    </div>
   </div>
 
   <script>
-    // keep JS tiny; only dynamic year.
-    document.getElementById('y').textContent = new Date().getFullYear();
+  (function(){
+    const MINT = 'B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk'; // CBS Coin mint
+    const RPC = 'https://api.mainnet-beta.solana.com'; // publiek; eventueel later Helius/Switchboard
+    const LIMIT = 20; // houd het klein voor snelheid
+
+    const state = {
+      connectedPubkey: null,
+      holders: [], // { rank, owner, tokenAccount, uiAmount }
+      names: loadNames(),
+    };
+
+    const el = (id) => document.getElementById(id);
+    const statusEl = el('status');
+    const bodyEl = el('holdersBody');
+    const connInfoEl = el('connInfo');
+
+    el('connectBtn').addEventListener('click', connectWallet);
+    el('refreshBtn').addEventListener('click', () => init());
+
+    init();
+
+    async function init(){
+      status('Bezig met ophalen van top holders…');
+      try{
+        const largest = await rpc({
+          method: 'getTokenLargestAccounts',
+          params: [MINT, { commitment: 'confirmed' }]
+        });
+        const list = (largest?.value || []).slice(0, LIMIT);
+        // per token account owner ophalen via getParsedAccountInfo
+        const holders = [];
+        let rank = 1;
+        for(const entry of list){
+          const tokenAcc = entry.address;
+          const info = await rpc({
+            method: 'getParsedAccountInfo',
+            params: [tokenAcc, { commitment: 'confirmed' }]
+          });
+          // parsed.data.info.owner bevat de wallet van de token account owner
+          const owner = info?.value?.data?.parsed?.info?.owner || null;
+          const uiAmount = entry?.uiAmount || 0;
+          holders.push({ rank: rank++, owner, tokenAccount: tokenAcc, uiAmount });
+        }
+        state.holders = holders;
+        render();
+        status('Klaar.');
+      }catch(err){
+        console.error(err);
+        status('Fout bij ophalen. Zie console.', 'error');
+      }
+    }
+
+    function status(msg, kind){
+      statusEl.textContent = msg;
+      statusEl.className = kind ? kind : 'muted';
+    }
+
+    async function connectWallet(){
+      try{
+        const provider = window.solana || window.phantom?.solana;
+        if(!provider){
+          alert('Geen Phantom wallet gevonden. Installeer Phantom of open in een browser met Phantom.');
+          return;
+        }
+        const res = await provider.connect();
+        state.connectedPubkey = res.publicKey?.toString?.() || null;
+        connInfoEl.textContent = state.connectedPubkey ? `Verbonden: ${short(state.connectedPubkey)}` : '';
+        render();
+      }catch(err){
+        console.warn('Wallet connect geannuleerd of fout', err);
+      }
+    }
+
+    function render(){
+      bodyEl.innerHTML = '';
+      const you = state.connectedPubkey;
+      for(const row of state.holders){
+        const tr = document.createElement('tr');
+        const match = you && row.owner && you === row.owner;
+        tr.innerHTML = `
+          <td>${row.rank}</td>
+          <td class="addr">${short(row.owner || '-')}${match ? ' <span class="tag ok">jij</span>' : ''}</td>
+          <td>${fmt(row.uiAmount)} <span class="muted">CBS</span></td>
+          <td>${claimCell(row.owner, match)}</td>
+        `;
+        bodyEl.appendChild(tr);
+        if(match){ attachClaimHandlers(row.owner); }
+      }
+    }
+
+    function claimCell(owner, match){
+      const existing = state.names[owner] || '';
+      if(!match){
+        return existing ? `<span>${escapeHtml(existing)}</span>` : `<span class="muted">—</span>`;
+      }
+      return `
+        <div class="inline">
+          <input type="text" id="name_${owner}" placeholder="Jouw naam (publiek)" value="${escapeHtml(existing)}" />
+          <button class="save" data-owner="${owner}">Opslaan</button>
+        </div>
+      `;
+    }
+
+    function attachClaimHandlers(owner){
+      const btn = document.querySelector(`button.save[data-owner="${css(owner)}"]`);
+      if(!btn) return;
+      btn.addEventListener('click', () => {
+        const inp = document.getElementById(`name_${owner}`);
+        const val = (inp?.value || '').trim();
+        state.names[owner] = val;
+        saveNames(state.names);
+        render();
+      });
+    }
+
+    // helpers ---------------------------------------------------------------
+    async function rpc(body){
+      const resp = await fetch(RPC, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, ...body })
+      });
+      const json = await resp.json();
+      if(json.error) throw new Error(json.error.message || 'RPC error');
+      return json.result;
+    }
+    function short(a){ if(!a) return '-'; return a.slice(0,4)+'…'+a.slice(-4); }
+    function fmt(n){ try{ return Number(n).toLocaleString(); }catch{ return n; } }
+    function loadNames(){ try{ return JSON.parse(localStorage.getItem('cbs_names')||'{}'); }catch{ return {}; } }
+    function saveNames(obj){ localStorage.setItem('cbs_names', JSON.stringify(obj)); }
+    function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c])); }
+    function css(s){ return (s||'').replace(/"/g,'\\"'); }
+  })();
   </script>
 </body>
 </html>
+
