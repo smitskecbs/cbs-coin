@@ -75,7 +75,7 @@
       touch-action:none;
     }
 
-    /* Fullscreen play */
+    /* Fullscreen play overlay */
     .play-overlay{
       position:fixed; inset:0; z-index:50; display:none;
       background:
@@ -135,7 +135,6 @@
     <p class="muted" style="margin:.5rem 0">
       Holders-only: unlocked for wallets holding <b>≥ 1000 CBS</b>.
     </p>
-    <div id="sessionInfo" class="muted" style="margin-top:.25rem">Session: Best 0 • Attempts left 10</div>
   </div>
 
   <main class="container">
@@ -151,10 +150,10 @@
       <div class="side">
         <div class="panel">
           <h3>How to play</h3>
-          <p>A moving neon block slides horizontally. Tap (or press Space/Enter) to drop it on the stack.</p>
-          <p>Only the overlapping part stays. Miss entirely → game over.</p>
+          <p>Tap / Click / Space / Enter to drop the moving neon block on the stack.</p>
+          <p>Only the overlapping part stays. Miss entirely → next attempt.</p>
           <p>Perfect alignment (±2px) glows and grants a combo bonus.</p>
-          <p><b>Best-of-10:</b> you get 10 attempts per session; only your <b>best</b> score is saved.</p>
+          <p><b>Best-of-10:</b> 10 attempts in one run; we save your <b>best</b> score.</p>
         </div>
         <div class="panel" style="text-align:center">
           <a href="index.html" class="btn">← Back to Home</a>
@@ -201,37 +200,22 @@
   <!-- Supabase UMD -->
   <script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 
-  <!-- Supabase + Leaderboard (same table as Snake/Arkanoid) -->
+  <!-- Supabase + Leaderboard (same table) -->
   <script>
     const SUPABASE_URL = "https://aiawteejixsgsunmefpi.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpYXd0ZWVqaXhzZ3N1bm1lZnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NDExODIsImV4cCI6MjA3MTAxNzE4Mn0.aMbRUM0YebNMfZhSLb9PFdSHAZ-D5WpACPefCfjSLqI";
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const LB_TABLE = "leaderboard";
-    const STACK_NORMALIZE_MUL = 5;            // fairness to Snake
+    const STACK_NORMALIZE_MUL = 5;      // fairness to Snake
     const MAX_ATTEMPTS = 10;
 
     const $ = (id)=>document.getElementById(id);
     const tbody   = $("leaderboardBody");
     const lbNote  = $("lbNote");
     const toast   = $("toast");
-    const sessionInfo = $("sessionInfo");
 
-    let attemptsLeft = MAX_ATTEMPTS;
-    let bestRaw = 0;
-
-    function showToast(msg="Saved ✓"){
-      toast.textContent=msg; toast.style.display="block";
-      setTimeout(()=>toast.style.display="none", 1500);
-    }
-    function escapeHtml(s){ return (s||"").toString().replace(/[&<>\"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
-    function updateSessionUI(){
-      sessionInfo.textContent = `Session: Best ${bestRaw} • Attempts left ${attemptsLeft}`;
-    }
-    function resetSession(){
-      attemptsLeft = MAX_ATTEMPTS;
-      bestRaw = 0;
-      updateSessionUI();
-    }
+    function showToast(msg="Saved ✓"){ toast.textContent=msg; toast.style.display="block"; setTimeout(()=>toast.style.display="none", 1500); }
+    function escapeHtml(s){ return (s||"").toString().replace(/[&<>\"']/g,m=>({"&":"&amp;","<":"&lt;"," >":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
 
     async function renderTop3(){
       tbody.innerHTML = "<tr><td colspan='3' class='muted'>Loading…</td></tr>"; lbNote.style.display="none";
@@ -251,7 +235,7 @@
     }
   </script>
 
-  <!-- Game logic (Stack) + Best-of-10 + Save Name Modal -->
+  <!-- Game logic (Stack) – best-of-10 in one screen -->
   <script>
     const startBtn   = document.getElementById("startBtn");
     const playOverlay= document.getElementById("playOverlay");
@@ -268,8 +252,15 @@
     const BLOCK_H=24, START_W=Math.floor(W*0.74);
     const SPEED_START=2.2, SPEED_INC=0.08;
 
+    // Session state (best-of-10 within overlay)
+    let attemptsLeft = 10;
+    let attemptNo = 1;
+    let bestRaw = 0;
+
+    // Game state
     let blocks=[], mover=null, camY=0, speed=SPEED_START;
     let running=false, rafId=null, score=0, combo=0;
+    let intermission=false, interTimer=null;
 
     // Name Modal refs
     const overlay = document.getElementById('nameOverlay');
@@ -278,58 +269,112 @@
     const saveBtn = document.getElementById('saveBtn');
     const cancelBtn = document.getElementById('cancelBtn');
 
-    function startGame(){ reset(); running=true; loop(); }
-    function stopGame(){ running=false; if(rafId) cancelAnimationFrame(rafId); }
-    function reset(){
-      stopGame(); ctx.clearRect(0,0,W,H);
+    function resetSession(){
+      attemptsLeft = MAX_ATTEMPTS;
+      attemptNo = 1;
+      bestRaw = 0;
+    }
+
+    function startRun(){
+      // first time entering overlay: move canvas and begin play
+      if(playStage && canvas && canvas.parentElement !== playStage) playStage.appendChild(canvas);
+      document.body.classList.add('play-mode');
+      playOverlay.setAttribute('aria-hidden','false');
+      startAttempt(); // attempt 1
+    }
+
+    function startAttempt(){
+      intermission = false;
+      clearTimeout(interTimer); interTimer=null;
+      resetGame();
+      running=true;
+      loop();
+    }
+
+    function resetGame(){
+      cancelAnim(); ctx.clearRect(0,0,W,H);
       blocks=[]; camY=0; speed=SPEED_START; score=0; combo=0;
       const baseW=START_W, baseX=(W-baseW)/2, baseY=H-BLOCK_H;
       blocks.push({x:baseX,y:baseY,w:baseW,h:BLOCK_H,perfect:false});
       mover={x:-baseW,y:baseY-BLOCK_H,w:baseW,h:BLOCK_H,dir:+1};
-      running=true; loop();
+    }
+
+    function cancelAnim(){ if(rafId) cancelAnimationFrame(rafId); rafId=null; }
+
+    // Controls (drop)
+    window.addEventListener('pointerdown', globalPress, {passive:true});
+    window.addEventListener('keydown', keyPress);
+    function keyPress(e){
+      if(!document.body.classList.contains('play-mode')) return;
+      if(e.key===' '||e.key==='Enter'){ e.preventDefault(); drop(); }
+      if(e.key==='Escape'){ stopAll(); }
+    }
+    function globalPress(e){
+      if(!document.body.classList.contains('play-mode')) return;
+      if(e.target.closest('button')||e.target.closest('input')) return;
+      drop();
     }
 
     function drop(){
-      if(!running)return;
+      if(!running || intermission) return;
       const prev=blocks[blocks.length-1];
       const left=Math.max(mover.x,prev.x);
       const right=Math.min(mover.x+mover.w,prev.x+prev.w);
       const overlap=Math.floor(right-left);
-      if(overlap<=0){gameOver();return;}
+      if(overlap<=0){ gameOver(); return; }
       const tol=2;
       const perfect=Math.abs(mover.x-prev.x)<=tol && Math.abs((mover.x+mover.w)-(prev.x+prev.w))<=tol;
       let newX=left,newW=overlap;
-      if(perfect){newX=prev.x;newW=prev.w;combo++;score+=2+Math.min(combo,5);if(navigator.vibrate)navigator.vibrate(15);}
-      else{combo=0;score++;}
+      if(perfect){ newX=prev.x; newW=prev.w; combo++; score+=2+Math.min(combo,5); if(navigator.vibrate) navigator.vibrate(15); }
+      else{ combo=0; score++; }
       const newY=mover.y;
       blocks.push({x:newX,y:newY,w:newW,h:BLOCK_H,perfect});
       if(newY-camY<H*0.35) camY-=BLOCK_H;
       const nextY=newY-BLOCK_H, dir=(mover.dir===1?-1:1);
       mover={x:(dir===1?-newW:W),y:nextY,w:newW,h:BLOCK_H,dir};
-      speed+=SPEED_INC;
+      SPEED_INC>0 && (speed+=SPEED_INC);
     }
 
     function gameOver(){
-      running=false; draw(true);
-      setTimeout(()=>{ afterAttempt(score); }, 450);
-    }
-
-    function afterAttempt(sc){
-      // Update session state
-      bestRaw = Math.max(bestRaw, sc);
+      running=false;
+      bestRaw = Math.max(bestRaw, score);
       attemptsLeft = Math.max(0, attemptsLeft - 1);
-      updateSessionUI();
-
-      // Exit play overlay back to controls
-      exitPlayScreen();
+      intermission = true;
+      draw(true); // draw one last frame with end HUD
 
       if(attemptsLeft > 0){
-        // Allow next try
-        startBtn.disabled = !window._canStart;
+        // brief pause, then next attempt in the SAME overlay
+        const thisAttempt = attemptNo;
+        interTimer = setTimeout(()=>{
+          attemptNo = thisAttempt + 1;
+          startAttempt();
+        }, 900);
       }else{
-        // Ask name once with best score
-        openNameModal(bestRaw);
+        // session complete -> ask for name with BEST score
+        setTimeout(()=> openNameModal(bestRaw), 600);
       }
+    }
+
+    function stopAll(){
+      cancelAnim(); intermission=false; clearTimeout(interTimer); interTimer=null;
+      document.body.classList.remove('play-mode');
+      playOverlay.setAttribute('aria-hidden','true');
+      if(canvasHome && canvas && canvas.parentElement !== canvasHome) canvasHome.appendChild(canvas);
+    }
+
+    // Loop
+    function loop(){
+      if(!running){ return; }
+      update();
+      draw();
+      rafId=requestAnimationFrame(loop);
+    }
+
+    function update(){
+      // mover step
+      mover.x += speed * mover.dir;
+      if(mover.dir===1 && mover.x>W) mover.x = -mover.w;
+      if(mover.dir===-1 && mover.x+mover.w<0) mover.x = W;
     }
 
     function draw(ending=false){
@@ -337,71 +382,51 @@
       const grad=ctx.createLinearGradient(0,0,0,H);
       grad.addColorStop(0,"#071017"); grad.addColorStop(1,"#09131a");
       ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
+
       if(logoReady){
         const size=Math.min(W,H)*0.72; const x=(W-size)/2,y=(H-size)/2;
         ctx.save(); ctx.globalAlpha=0.085; ctx.shadowColor="#00fff0"; ctx.shadowBlur=24;
         ctx.drawImage(logo,x,y,size,size); ctx.restore();
       }
+
       ctx.save(); ctx.translate(0,camY);
-      for(const b of blocks) drawBlock(b.x,b.y,b.w,b.h,b.perfect);
-      if(running||ending) drawBlock(mover.x,mover.y,mover.w,mover.h,false,true);
+      for(const b of blocks){ drawBlock(b.x,b.y,b.w,b.h,b.perfect); }
+      if(running || ending){ drawBlock(mover.x,mover.y,mover.w,mover.h,false,true); }
       ctx.restore();
 
-      // HUD
+      // HUD (attempts/current/best)
       ctx.save(); ctx.fillStyle="#fff"; ctx.font="16px Orbitron"; ctx.textAlign="left";
-      ctx.fillText(`Score: ${score}`, 14, 24);
+      ctx.fillText(`Attempt ${attemptNo}/${MAX_ATTEMPTS}`, 14, 22);
+      ctx.fillText(`Current: ${score}`, 14, 42);
+      ctx.fillText(`Best: ${bestRaw}`, 14, 62);
       ctx.restore();
+
+      if(intermission){
+        // center text "Next attempt..."
+        ctx.save();
+        ctx.font="20px Orbitron"; ctx.textAlign="center"; ctx.fillStyle="#bffef2";
+        ctx.fillText(attemptsLeft>0 ? "Next attempt…" : "Session complete!", W/2, H/2);
+        ctx.restore();
+      }
     }
+
     function drawBlock(x,y,w,h,perfect=false,isMover=false){
-      ctx.save(); ctx.shadowColor=perfect?"#7dffe9":"#38f8ff"; ctx.shadowBlur=perfect?22:14;
+      ctx.save();
+      ctx.shadowColor=perfect?"#7dffe9":"#38f8ff"; ctx.shadowBlur=perfect?22:14;
       const hue=perfect?168:192, g=ctx.createLinearGradient(x,y,x,y+h);
       g.addColorStop(0,`hsl(${hue} 100% 60% / .95)`); g.addColorStop(1,`hsl(${hue} 100% 50% / .95)`);
       ctx.fillStyle=g; ctx.fillRect(x,y,w,h);
       ctx.shadowBlur=0; ctx.lineWidth=1.5; ctx.strokeStyle="rgba(0,255,240,.7)";
       ctx.strokeRect(x+0.5,y+0.5,w-1,h-1);
-      if(perfect){ctx.globalAlpha=0.25;ctx.fillStyle="#cff";ctx.fillRect(x,y,w,4);ctx.globalAlpha=1;}
-      if(isMover){const t=performance.now()/400,a=0.18+0.12*Math.sin(t*2*Math.PI);
-        ctx.globalAlpha=a; ctx.fillStyle="#7dffe9"; ctx.fillRect(x-4,y-4,w+8,h+8); ctx.globalAlpha=1;}
+      if(perfect){ ctx.globalAlpha=0.25; ctx.fillStyle="#cff"; ctx.fillRect(x,y,w,4); ctx.globalAlpha=1; }
+      if(isMover){
+        const t=performance.now()/400, a=0.18+0.12*Math.sin(t*2*Math.PI);
+        ctx.globalAlpha=a; ctx.fillStyle="#7dffe9"; ctx.fillRect(x-4,y-4,w+8,h+8); ctx.globalAlpha=1;
+      }
       ctx.restore();
     }
-    function update(){
-      mover.x+=speed*mover.dir;
-      if(mover.dir===1&&mover.x>W) mover.x=-mover.w;
-      if(mover.dir===-1&&mover.x+mover.w<0) mover.x=W;
-    }
-    function loop(){ if(!running)return; update(); draw(); rafId=requestAnimationFrame(loop); }
 
-    // Play overlay enter/exit
-    function enterPlayScreen(){
-      if(playStage&&canvas&&canvas.parentElement!==playStage) playStage.appendChild(canvas);
-      document.body.classList.add('play-mode'); playOverlay.setAttribute('aria-hidden','false');
-      window.addEventListener('pointerdown',globalPress,{passive:true});
-      window.addEventListener('keydown',keyPress);
-    }
-    function exitPlayScreen(){
-      if(canvasHome&&canvas&&canvas.parentElement!==canvasHome) canvasHome.appendChild(canvas);
-      document.body.classList.remove('play-mode'); playOverlay.setAttribute('aria-hidden','true');
-      window.removeEventListener('pointerdown',globalPress,{passive:true});
-      window.removeEventListener('keydown',keyPress);
-    }
-    function keyPress(e){
-      if(e.key===' '||e.key==='Enter'){e.preventDefault(); if(document.body.classList.contains('play-mode')) drop();}
-      if(e.key==='Escape'){stopGame();exitPlayScreen();}
-    }
-    function globalPress(e){
-      if(e.target.closest('button')||e.target.closest('input')) return;
-      if(document.body.classList.contains('play-mode')) drop();
-    }
-
-    startBtn.addEventListener('click',()=>{
-      if(!window._canStart){ alert('Holders only — need ≥ 1000 CBS.'); return; }
-      // If previous session ended/saved, start a fresh session
-      if(attemptsLeft === 0) resetSession();
-      enterPlayScreen(); startGame();
-    });
-    exitBtn.addEventListener('click',()=>{ stopGame(); exitPlayScreen(); });
-
-    // ===== Name Modal (save best to Supabase) =====
+    // Name Modal
     function openNameModal(bestRawScore){
       overlay.style.display="flex";
       nameInput.value=""; err.style.display="none";
@@ -410,9 +435,10 @@
     }
     cancelBtn.addEventListener("click", ()=>{
       overlay.style.display="none";
-      // session finished but canceled; allow new session
+      // Start a fresh session immediately (stay in overlay)
       resetSession();
-      startBtn.disabled = !window._canStart;
+      attemptNo = 1;
+      startAttempt();
     });
 
     async function submitName(){
@@ -424,7 +450,8 @@
       try{
         const { error } = await sb.from("leaderboard").insert({ name, score: scoreNorm });
         if(error) throw error;
-        overlay.style.display="none"; showToast("Saved ✓");
+        overlay.style.display="none";
+        showToast("Saved ✓");
       }catch(e){
         console.error("Supabase insert failed:", e);
         err.textContent="Saving failed. Check Supabase policies or network.";
@@ -433,16 +460,27 @@
         return;
       }finally{
         saveBtn.disabled=false; saveBtn.textContent="Save";
-        // After saving, start a fresh session
-        resetSession();
         renderTop3();
+        // New session starts instantly in the SAME overlay
+        resetSession();
+        attemptNo = 1;
+        startAttempt();
       }
     }
     nameInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); submitName(); } });
     saveBtn.addEventListener("click", submitName);
 
+    // Start button
+    startBtn.addEventListener('click', ()=>{
+      if(!window._canStart){ alert('Holders only — need ≥ 1000 CBS.'); return; }
+      resetSession();
+      startRun();
+    });
+
+    exitBtn.addEventListener('click', ()=>{ stopAll(); });
+
     // Boot
-    (function init(){ renderTop3(); updateSessionUI(); })();
+    (function init(){ renderTop3(); })();
   </script>
 
   <!-- Holders-only gating (Solana ≥1000 CBS) -->
