@@ -1,433 +1,173 @@
-import React, { useMemo, useState } from "react";
-import {
-  Trophy,
-  Users,
-  Rocket,
-  Newspaper,
-  ArrowUpRight,
-  Star,
-  MessageCircle,
-  ShieldCheck,
-  Wallet,
-  Image as ImageIcon,
-  PlayCircle,
-  Activity,
-  Flame,
-  ExternalLink,
-  Calendar,
-} from "lucide-react";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CBS Coin — Community</title>
+  <meta name="description" content="CBS Coin community hub: announcements, actions, featured submissions, leaderboard, and rules." />
+  <style>
+    :root{
+      --bg:#0b0b0e; --panel:#131319; --ink:#f3f4f6; --ink-dim:#c9cad1; --line:#262632; --brand:#e0b15a;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Helvetica,Arial,sans-serif;
+      color:var(--ink); background:radial-gradient(60% 40% at 50% 0%,rgba(255,255,255,0.06),transparent 60%), var(--bg);
+    }
+    a{color:inherit}
+    .wrap{max-width:1100px; margin:auto; padding:20px}
+    header{display:flex; flex-wrap:wrap; align-items:center; gap:16px; justify-content:space-between}
+    .logo{display:flex; align-items:center; gap:10px}
+    .logo img{width:40px;height:40px; border-radius:8px}
+    .title{font-size:clamp(22px,3.2vw,36px); font-weight:700; letter-spacing:.2px}
+    .sub{color:var(--ink-dim); font-size:14px}
 
-// --- Quick config (edit these) --------------------------------------------
-const LINKS = {
-  telegram: "https://t.me/CBS_Coin",
-  x: "https://x.com/CBS_Coin",
-  buyRaydium: "https://raydium.io/",
-  litepaper: "/litepaper.html",
-  dao: "/dao.html",
-};
+    .grid{display:grid; gap:14px}
+    .g-2{grid-template-columns:repeat(2,1fr)}
+    .g-3{grid-template-columns:repeat(3,1fr)}
+    .g-4{grid-template-columns:repeat(4,1fr)}
+    @media (max-width:900px){.g-3,.g-4{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:640px){.g-2,.g-3,.g-4{grid-template-columns:1fr}}
 
-const COMMUNITY_RULES = [
-  "Respect each other – zero tolerance for hate, spam, or scams.",
-  "Keep alpha and support in the right threads.",
-  "No misleading price talk or fake giveaways.",
-  "Mods may remove content that breaks these rules.",
-];
+    .card{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:14px; box-shadow:0 0 0 1px rgba(255,255,255,.02) inset}
+    .card h2{font-size:16px; margin:0 0 8px}
+    .muted{color:var(--ink-dim)}
+    .cta-row{display:flex; flex-wrap:wrap; gap:10px}
+    .btn{display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border:1px solid var(--line); border-radius:12px; text-decoration:none; background:#171722}
+    .btn:hover{border-color:#343446}
+    .btn.brand{background:linear-gradient(180deg,#2a2215,#1e1a12); border-color:#3a2f1b}
 
-const ANNOUNCEMENTS = [
-  {
-    id: "a1",
-    title: "Final day: Activity Contest!",
-    body:
-      "Last push! Log your points by 23:59 CET today. Winners announced tomorrow.",
-    cta: { label: "View details", href: "/contests/activity" },
-    tag: "Contest",
-    date: "2025-09-06",
-  },
-  {
-    id: "a2",
-    title: "CBS DAO live on mainnet",
-    body:
-      "Vote, propose and shape the roadmap together. Connect wallet to participate.",
-    cta: { label: "Open DAO", href: LINKS.dao },
-    tag: "DAO",
-    date: "2025-08-11",
-  },
-];
+    ul.clean{list-style:none; padding:0; margin:0}
+    .ann li{padding:10px; border:1px solid var(--line); border-radius:12px; background:#15151d}
+    .ann time{color:var(--ink-dim); font-size:12px}
 
-const UPCOMING = [
-  {
-    id: "e1",
-    title: "Community Call #7",
-    date: "2025-09-12 20:00 CET",
-    where: "Telegram Voice",
-    href: LINKS.telegram,
-  },
-  {
-    id: "e2",
-    title: "Meme Contest – Round 4 Deadline",
-    date: "2025-09-27 23:59 CET",
-    where: "Website submissions",
-    href: "/contests/meme",
-  },
-];
+    .gallery figure{margin:0; overflow:hidden; border-radius:12px; border:1px solid var(--line); background:#0f0f15}
+    .gallery img{width:100%; aspect-ratio:4/3; object-fit:cover; display:block}
+    .gallery figcaption{display:flex; justify-content:space-between; gap:8px; padding:8px 10px; font-size:13px; color:var(--ink-dim)}
 
-const LEADERBOARD = [
-  { wallet: "Cbs...1x3", points: 12850, badges: ["Builder", "Early"] },
-  { wallet: "5z5...kWN", points: 10240, badges: ["Artist"] },
-  { wallet: "76S...mEg", points: 9775, badges: ["Raider"] },
-  { wallet: "B9z...fkk", points: 8200, badges: ["Holder"] },
-];
+    table{width:100%; border-collapse:separate; border-spacing:0 8px}
+    th,td{font-size:14px; text-align:left; padding:10px 12px}
+    thead th{color:var(--ink-dim); font-weight:600}
+    tbody tr{background:#15151d; border:1px solid var(--line)}
+    tbody tr td:first-child{border-top-left-radius:10px; border-bottom-left-radius:10px}
+    tbody tr td:last-child{border-top-right-radius:10px; border-bottom-right-radius:10px}
 
-const GALLERY = [
-  {
-    id: "g1",
-    title: "Freedom Dragon Poster",
-    thumb: "/assets/community/memes/dragon.jpg",
-    author: "@pixelforge",
-    href: "/memes/g1",
-  },
-  {
-    id: "g2",
-    title: "CBS Runner",
-    thumb: "/assets/community/memes/runner.jpg",
-    author: "@solsprinter",
-    href: "/memes/g2",
-  },
-  {
-    id: "g3",
-    title: "Chain Breaker",
-    thumb: "/assets/community/memes/chainbreaker.jpg",
-    author: "@adje",
-    href: "/memes/g3",
-  },
-  {
-    id: "g4",
-    title: "CBS Army Collage",
-    thumb: "/assets/community/memes/army.jpg",
-    author: "@mashup",
-    href: "/memes/g4",
-  },
-];
-
-const QUICK_STATS = [
-  { label: "Community members", value: "4,218", icon: Users },
-  { label: "Active contests", value: "2", icon: Trophy },
-  { label: "DAO proposals", value: "1 live", icon: Activity },
-  { label: "Unique holders", value: "1,137", icon: Wallet },
-];
-
-// --- UI primitives (Tailwind + minimal components) ------------------------
-const Card = ({ children, className = "" }) => (
-  <div className={`rounded-2xl border border-white/10 bg-white/5 backdrop-blur p-5 shadow-sm ${className}`}>
-    {children}
-  </div>
-);
-
-const Tag = ({ children }) => (
-  <span className="inline-flex items-center rounded-full border border-white/15 px-2 py-0.5 text-xs/5">
-    {children}
-  </span>
-);
-
-const ButtonLink = ({ href, children }) => (
-  <a
-    href={href}
-    className="inline-flex items-center gap-2 rounded-2xl border border-white/15 px-4 py-2 hover:bg-white/10 transition"
-  >
-    {children}
-    <ArrowUpRight className="size-4" />
-  </a>
-);
-
-const Badge = ({ children }) => (
-  <span className="rounded-lg bg-white/10 px-2 py-0.5 text-xs">{children}</span>
-);
-
-const Divider = () => (
-  <div className="my-6 h-px w-full bg-gradient-to-r from-transparent via-white/20 to-transparent" />
-);
-
-// --- Page -----------------------------------------------------------------
-export default function CommunityPage() {
-  const [filter, setFilter] = useState("all");
-
-  const filteredGallery = useMemo(() => {
-    if (filter === "all") return GALLERY;
-    if (filter === "memes") return GALLERY; // extend when more types exist
-    return GALLERY;
-  }, [filter]);
-
-  return (
-    <div className="relative min-h-screen w-full bg-gradient-to-b from-zinc-950 via-zinc-950 to-black text-zinc-100">
-      {/* Glow */}
-      <div className="pointer-events-none absolute inset-0 [background:radial-gradient(60%_40%_at_50%_0%,rgba(255,255,255,0.08),transparent_60%)]" />
-
-      {/* Container */}
-      <div className="mx-auto max-w-7xl px-4 py-10 md:py-14">
-        {/* Hero */}
-        <header className="mb-10 md:mb-14">
-          <div className="flex items-center gap-3 text-sm text-white/70">
-            <ShieldCheck className="size-4" />
-            <span>Community Built • 100% On‑Chain • Can’t Be Stopped</span>
-          </div>
-          <h1 className="mt-4 text-3xl font-semibold tracking-tight md:text-5xl">
-            CBS Community Hub
-          </h1>
-          <p className="mt-3 max-w-2xl text-white/70">
-            One place for updates, contests, leaderboards, events and how to get
-            involved. No clutter, no noise—only the good stuff.
-          </p>
-
-          {/* Quick actions */}
-          <div className="mt-6 flex flex-wrap gap-3">
-            <ButtonLink href={LINKS.telegram}>
-              <MessageCircle className="size-4" /> Join Telegram
-            </ButtonLink>
-            <ButtonLink href={LINKS.x}>
-              <ExternalLink className="size-4" /> Follow on X
-            </ButtonLink>
-            <ButtonLink href={LINKS.buyRaydium}>
-              <Flame className="size-4" /> Buy on Raydium
-            </ButtonLink>
-            <ButtonLink href={LINKS.litepaper}>
-              <Newspaper className="size-4" /> Read Litepaper
-            </ButtonLink>
-          </div>
-        </header>
-
-        {/* Stats */}
-        <section className="mb-10 grid grid-cols-2 gap-3 md:grid-cols-4">
-          {QUICK_STATS.map(({ label, value, icon: Icon }) => (
-            <Card key={label} className="flex items-center gap-3">
-              <div className="rounded-xl bg-white/10 p-2">
-                <Icon className="size-5" />
-              </div>
-              <div>
-                <div className="text-xl font-semibold">{value}</div>
-                <div className="text-xs text-white/60">{label}</div>
-              </div>
-            </Card>
-          ))}
-        </section>
-
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          {/* Announcements */}
-          <section className="lg:col-span-2">
-            <Card className="p-0">
-              <div className="flex items-center justify-between px-5 py-4">
-                <h2 className="text-lg font-semibold flex items-center gap-2">
-                  <Rocket className="size-5" /> Announcements
-                </h2>
-                <a href="#" className="text-sm text-white/70 hover:text-white">
-                  View all
-                </a>
-              </div>
-              <Divider />
-              <ul className="px-5 pb-4">
-                {ANNOUNCEMENTS.map((a) => (
-                  <li
-                    key={a.id}
-                    className="group mb-4 flex items-start justify-between gap-4 rounded-xl p-3 hover:bg-white/5"
-                  >
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <Tag>{a.tag}</Tag>
-                        <span className="text-xs text-white/60">{a.date}</span>
-                      </div>
-                      <h3 className="mt-2 text-base font-medium">{a.title}</h3>
-                      <p className="mt-1 text-sm text-white/70">{a.body}</p>
-                      {a.cta && (
-                        <a
-                          className="mt-2 inline-flex items-center gap-1 text-sm text-white/80 hover:text-white"
-                          href={a.cta.href}
-                        >
-                          {a.cta.label}
-                          <ArrowUpRight className="size-3" />
-                        </a>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-          </section>
-
-          {/* Rules */}
-          <aside>
-            <Card>
-              <h2 className="text-lg font-semibold">House Rules</h2>
-              <ul className="mt-3 space-y-2 text-sm text-white/75">
-                {COMMUNITY_RULES.map((r, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <Star className="mt-0.5 size-4 shrink-0" />
-                    <span>{r}</span>
-                  </li>
-                ))}
-              </ul>
-              <Divider />
-              <div className="text-sm text-white/70">
-                Want to help moderate? Holders with strong activity can apply.
-              </div>
-            </Card>
-          </aside>
+    .rules li{padding-left:10px; border-left:2px solid #2d2d3a}
+    footer{margin:20px 0; text-align:center; color:#8b8d98; font-size:12px}
+    .hr{height:1px; background:linear-gradient(90deg,transparent,#303045,transparent); margin:16px 0}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">
+        <!-- Swap with your real logo path -->
+        <img src="/assets/logo.png" alt="CBS Coin logo" />
+        <div>
+          <div class="title">CBS Community Hub</div>
+          <div class="sub">Simple. Fast. Focused on action — not clutter.</div>
         </div>
-
-        {/* Gallery / Submissions */}
-        <section className="mt-6">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <ImageIcon className="size-5" /> Community Submissions
-            </h2>
-            <div className="flex gap-2 text-sm">
-              {[
-                { key: "all", label: "All" },
-                { key: "memes", label: "Memes" },
-              ].map((f) => (
-                <button
-                  key={f.key}
-                  onClick={() => setFilter(f.key)}
-                  className={`rounded-xl border px-3 py-1.5 transition ${
-                    filter === f.key
-                      ? "border-white/40 bg-white/10"
-                      : "border-white/10 hover:border-white/20 hover:bg-white/5"
-                  }`}
-                >
-                  {f.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
-            {filteredGallery.map((g) => (
-              <a
-                key={g.id}
-                href={g.href}
-                className="group overflow-hidden rounded-2xl border border-white/10 bg-black/20"
-              >
-                <img
-                  src={g.thumb}
-                  alt={g.title}
-                  className="aspect-[4/3] w-full object-cover transition-transform group-hover:scale-[1.03]"
-                />
-                <div className="p-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="truncate text-white/80">{g.title}</span>
-                    <span className="text-white/60">{g.author}</span>
-                  </div>
-                </div>
-              </a>
-            ))}
-          </div>
-
-          <div className="mt-4 flex items-center justify-between">
-            <div className="text-sm text-white/70">
-              Submit yours → JPG/PNG, max 5MB. Keep it original.
-            </div>
-            <ButtonLink href="/submit">
-              <PlayCircle className="size-4" /> Submit entry
-            </ButtonLink>
-          </div>
-        </section>
-
-        {/* Leaderboard */}
-        <section className="mt-10">
-          <Card>
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold flex items-center gap-2">
-                <Trophy className="size-5" /> Leaderboard
-              </h2>
-              <a href="/leaderboard" className="text-sm text-white/70 hover:text-white">
-                Full board
-              </a>
-            </div>
-            <Divider />
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-              {LEADERBOARD.map((row, idx) => (
-                <div key={row.wallet} className="flex items-center justify-between rounded-xl bg-white/5 p-3">
-                  <div className="flex items-center gap-3">
-                    <div className="flex size-9 items-center justify-center rounded-xl bg-white/10 font-semibold">
-                      {idx + 1}
-                    </div>
-                    <div>
-                      <div className="text-sm font-medium">{row.wallet}</div>
-                      <div className="text-xs text-white/60">{row.points} pts</div>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {row.badges.map((b) => (
-                      <Badge key={b}>{b}</Badge>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </section>
-
-        {/* Upcoming events */}
-        <section className="mt-10 grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <Card className="lg:col-span-2">
-            <h2 className="text-lg font-semibold flex items-center gap-2">
-              <Calendar className="size-5" /> Upcoming Events
-            </h2>
-            <Divider />
-            <ul className="space-y-3">
-              {UPCOMING.map((e) => (
-                <li key={e.id} className="flex items-center justify-between rounded-xl bg-white/5 p-3">
-                  <div>
-                    <div className="text-sm font-medium">{e.title}</div>
-                    <div className="text-xs text-white/60">{e.date} • {e.where}</div>
-                  </div>
-                  <ButtonLink href={e.href}>Open</ButtonLink>
-                </li>
-              ))}
-            </ul>
-          </Card>
-
-          {/* Get involved */}
-          <Card>
-            <h2 className="text-lg font-semibold">Get Involved</h2>
-            <p className="mt-2 text-sm text-white/75">
-              Hold, vote, build. Pick a track to start contributing—no permission needed.
-            </p>
-            <div className="mt-4 grid gap-3">
-              <a className="block rounded-xl border border-white/10 bg-white/5 p-3 hover:bg-white/10" href="/quests">
-                🧭 Starter Quests <span className="text-white/60">• 15–30 min</span>
-              </a>
-              <a className="block rounded-xl border border-white/10 bg-white/5 p-3 hover:bg-white/10" href="/bounties">
-                💎 Bounties <span className="text-white/60">• Earn CBS</span>
-              </a>
-              <a className="block rounded-xl border border-white/10 bg-white/5 p-3 hover:bg-white/10" href="/roles">
-                🛡️ Mod & Team Roles <span className="text-white/60">• Apply</span>
-              </a>
-              <a className="block rounded-xl border border-white/10 bg-white/5 p-3 hover:bg-white/10" href={LINKS.dao}>
-                🗳️ Vote in the DAO <span className="text-white/60">• Hold to vote</span>
-              </a>
-            </div>
-          </Card>
-        </section>
-
-        {/* Footer CTA */}
-        <section className="mt-10">
-          <Card className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-            <div>
-              <h3 className="text-xl font-semibold">Verify Holder → Unlock perks</h3>
-              <p className="mt-1 text-sm text-white/70">
-                Connect your wallet to verify CBS balance and unlock private channels, early drops, and role applications.
-              </p>
-            </div>
-            <ButtonLink href="/connect">
-              <Wallet className="size-4" /> Connect wallet
-            </ButtonLink>
-          </Card>
-        </section>
-
-        {/* Tiny footer */}
-        <footer className="mt-10 text-center text-xs text-white/50">
-          © {new Date().getFullYear()} CBS Coin • Community Builds Sovereignty
-        </footer>
       </div>
-    </div>
-  );
-}
+      <div class="cta-row">
+        <a class="btn" href="https://t.me/CBS_Coin" target="_blank" rel="noopener">Join Telegram</a>
+        <a class="btn" href="/submit">Submit Meme</a>
+        <a class="btn" href="/contests">Contests</a>
+        <a class="btn brand" href="https://raydium.io/" target="_blank" rel="noopener">Buy on Raydium</a>
+      </div>
+    </header>
+
+    <div class="hr"></div>
+
+    <!-- Row: Announcements + Rules -->
+    <section class="grid g-2">
+      <div class="card">
+        <h2>Announcements</h2>
+        <ul class="clean ann">
+          <!-- Edit these items manually, keep it lean -->
+          <li>
+            <div><strong>Final day: Activity Contest</strong></div>
+            <time>2025‑09‑06</time>
+            <div class="muted">Last push! Log your points by 23:59 CET. Winners announced tomorrow.</div>
+            <div style="margin-top:6px"><a class="btn" href="/contests/activity">View details</a></div>
+          </li>
+          <li>
+            <div><strong>Meme Contest — Round 4</strong></div>
+            <time>Deadline: 2025‑09‑27</time>
+            <div class="muted">Submit up to 3 entries. Keep the original CBS logo intact.</div>
+            <div style="margin-top:6px"><a class="btn" href="/contests/meme">Submit now</a></div>
+          </li>
+        </ul>
+      </div>
+      <div class="card">
+        <h2>House Rules</h2>
+        <ul class="clean rules" style="display:grid; gap:10px">
+          <li>Respect each other. No hate, no spam, no scams.</li>
+          <li>Keep support/questions in the right channel.</li>
+          <li>No fake giveaways or price manipulation talk.</li>
+          <li>Mods may remove off‑topic/low‑effort posts.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Row: Featured submissions (light gallery) -->
+    <section class="card" style="margin-top:14px">
+      <h2>Featured Submissions</h2>
+      <div class="grid g-4 gallery">
+        <!-- Replace thumbs with your files under /assets/community/... -->
+        <figure>
+          <img src="/assets/community/memes/dragon.jpg" alt="Freedom Dragon Poster" />
+          <figcaption><span>Freedom Dragon</span><span>@pixelforge</span></figcaption>
+        </figure>
+        <figure>
+          <img src="/assets/community/memes/runner.jpg" alt="CBS Runner" />
+          <figcaption><span>CBS Runner</span><span>@solsprinter</span></figcaption>
+        </figure>
+        <figure>
+          <img src="/assets/community/memes/chainbreaker.jpg" alt="Chain Breaker" />
+          <figcaption><span>Chain Breaker</span><span>@adje</span></figcaption>
+        </figure>
+        <figure>
+          <img src="/assets/community/memes/army.jpg" alt="CBS Army Collage" />
+          <figcaption><span>CBS Army</span><span>@mashup</span></figcaption>
+        </figure>
+      </div>
+      <div style="margin-top:10px; display:flex; justify-content:space-between; align-items:center">
+        <div class="muted">How to get featured: keep it original, high‑quality, CBS logo intact.</div>
+        <a class="btn" href="/gallery">View all</a>
+      </div>
+    </section>
+
+    <!-- Row: Leaderboard (manual mini) -->
+    <section class="card" style="margin-top:14px">
+      <h2>Leaderboard</h2>
+      <table>
+        <thead>
+          <tr><th style="width:60px">#</th><th>Wallet</th><th>Points</th><th>Badges</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>Cbs…1x3</td><td>12,850</td><td>Builder, Early</td></tr>
+          <tr><td>2</td><td>5z5…kWN</td><td>10,240</td><td>Artist</td></tr>
+          <tr><td>3</td><td>76S…mEg</td><td>9,775</td><td>Raider</td></tr>
+          <tr><td>4</td><td>B9z…fkk</td><td>8,200</td><td>Holder</td></tr>
+        </tbody>
+      </table>
+      <div style="text-align:right"><a class="btn" href="/leaderboard">Full board</a></div>
+    </section>
+
+    <!-- Row: Get involved (simple links) -->
+    <section class="grid g-3" style="margin-top:14px">
+      <a class="card" href="/quests"><h2>Starter Quests</h2><div class="muted">15–30 min tasks to get involved.</div></a>
+      <a class="card" href="/bounties"><h2>Bounties</h2><div class="muted">Earn CBS for useful work.</div></a>
+      <a class="card" href="/roles"><h2>Team & Mod Roles</h2><div class="muted">Requirements & application.</div></a>
+    </section>
+
+    <footer>© <span id="y"></span> CBS Coin — Community Builds Sovereignty</footer>
+  </div>
+
+  <script>
+    // keep JS tiny; only dynamic year.
+    document.getElementById('y').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
