@@ -299,7 +299,7 @@
     const lbNote  = $("lbNote");
     const toast   = $("toast");
     function showToast(msg="Saved ✓"){ toast.textContent=msg; toast.style.display="block"; setTimeout(()=>toast.style.display="none", 1500); }
-    function escapeHtml(s){ return (s||"").toString().replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+    function escapeHtml(s){ return (s||"").toString().replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;","&gt;":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
 
     async function renderTop3(){
       tbody.innerHTML = "<tr><td colspan='3' class='muted'>Loading…</td></tr>"; lbNote.style.display="none";
@@ -357,7 +357,6 @@
 
     // Scoring / level
     let score=0, lines=0, level=1;
-    const LINE_SCORES=[0,100,300,500,800];
     function levelSpeedMs(){ return Math.max(80, 800 - (level-1)*70); }
     function updateHUD(){ if(hudBar) hudBar.textContent = `Score ${score} • Lines ${lines} • Level ${level}`; }
     function updateStats(){ statsEl.textContent = `Score ${score}\nLines ${lines}\nLevel ${level}`; updateHUD(); }
@@ -407,8 +406,6 @@
       drawNext();
     }
 
-    function hardDropDist(){ let d=0; while(!collides(px, py+d+1, pm)) d++; return d; }
-
     function collides(x, y, m){
       for(let r=0;r<m.length;r++){
         for(let c=0;c<m[r].length;c++){
@@ -443,8 +440,7 @@
         cleared++; y++;
       }
       if(cleared>0){
-        const gained = LINE_SCORES[cleared] * Math.max(1, level);
-        score += gained;                 // <<< punten ALLEEN bij lijnen
+        score += 5 * cleared;     // <<< 5 punten per verwijderde rij (flat)
         lines += cleared;
         const newLevel = 1 + Math.floor(lines/10);
         if(newLevel !== level){ level = newLevel; dropInterval = levelSpeedMs(); }
@@ -479,20 +475,7 @@
 
       for(let y=0;y<ROWS;y++) for(let x=0;x<COLS;x++){ if(board[y][x]) drawCell(x,y,board[y][x]); }
 
-      // ghost
-      const d = hardDropDist();
-      if(d>0){
-        for(let r=0;r<pm.length;r++) for(let c=0;c<pm[r].length;c++){
-          if(!pm[r][c]) continue;
-          const gx=px+c, gy=py+d+r;
-          if(gy>=0) {
-            const px2=gx*SIZE, py2=gy*SIZE;
-            ctx.save(); ctx.strokeStyle="rgba(200,255,255,.25)"; ctx.setLineDash([4,4]); ctx.lineWidth=1;
-            ctx.strokeRect(px2+3,py2+3,SIZE-6,SIZE-6); ctx.restore();
-          }
-        }
-      }
-      // active piece
+      // active piece (geen ghost)
       for(let r=0;r<pm.length;r++) for(let c=0;c<pm[r].length;c++){
         if(!pm[r][c]) continue;
         const nx=px+c, ny=py+r; if(ny<0) continue;
@@ -529,7 +512,6 @@
     }
 
     function tryMove(dx,dy){ if(!collides(px+dx, py+dy, pm)){ px+=dx; py+=dy; return true; } return false; }
-
     function lockPiece(){ merge(); clearLines(); spawn(); }
 
     function attemptRotate(ccw=false){
@@ -540,9 +522,8 @@
     }
 
     function hardDrop(){
-      const d = hardDropDist();
-      if(d>0){ py += d; }   // <<< geen punten voor hard drop
-      updateStats();
+      // Geen ghost tekenen; enkel instant laten vallen + locken
+      while(tryMove(0,1)){}
       if(py < 0){ gameOver(); return; }
       lockPiece();
     }
@@ -619,7 +600,7 @@
 
     // Touch controls helpers (hold-to-repeat)
     function holdRepeat(el, onStart, onRepeat, onEnd, interval=110){
-      let t=null, r=null, active=false;
+      let r=null, active=false;
       const start=(e)=>{ e.preventDefault(); if(active) return; active=true; onStart?.(); r=setInterval(()=>onRepeat?.(), interval); };
       const end=()=>{ if(!active) return; active=false; if(r) clearInterval(r); r=null; onEnd?.(); };
       el.addEventListener('pointerdown', start, {passive:false});
@@ -646,7 +627,7 @@
     btnRotateCCW.addEventListener('click', (e)=>{ e.preventDefault(); attemptRotate(true); drawBoard(); }, {passive:false});
     btnHard.addEventListener('click', (e)=>{ e.preventDefault(); hardDrop(); }, {passive:false});
 
-    // Tap canvas to rotate (quick mobile gesture)
+    // Tap canvas to rotate / hard drop
     canvas.addEventListener('pointerup', (e)=>{
       if(!document.body.classList.contains('play-mode')) return;
       const rect = canvas.getBoundingClientRect();
@@ -771,3 +752,4 @@
   </script>
 </body>
 </html>
+
