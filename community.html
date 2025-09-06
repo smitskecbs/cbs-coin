@@ -6,46 +6,78 @@
   <title>CBS Community — Best Submissions Leaderboard</title>
   <meta name="description" content="Leaderboard met de beste community-inzendingen voor CBS Coin." />
   <style>
-    :root{--bg:#0b0c10;--panel:#13141a;--ink:#f2f3f7;--dim:#b9bac4;--line:#262838;--brand:#e0b15a}
-    *{box-sizing:border-box}body{margin:0;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:radial-gradient(60% 40% at 50% 0%,rgba(255,255,255,.06),transparent 60%),var(--bg);color:var(--ink)}
-    .wrap{max-width:1000px;margin:auto;padding:20px}
-    header{display:flex;flex-direction:column;gap:12px}
-    .brand{display:flex;align-items:center;gap:10px}
-    .brand img{width:40px;height:40px;border-radius:8px}
-    h1{font-size:clamp(22px,3.6vw,34px);margin:0}
-    .sub{color:var(--dim)}
-    .row{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
-    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:#171826;color:var(--ink);text-decoration:none;cursor:pointer}
-    .btn:hover{border-color:#35364a}
-    .btn.brand{background:linear-gradient(180deg,#2a2215,#1e1a12);border-color:#3a2f1b}
-    .select{background:#0f1020;border:1px solid var(--line);border-radius:10px;padding:8px 10px;color:var(--ink)}
-    .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:14px}
-    .muted{color:var(--dim)}
+    :root{
+      --bg:#0b0c10; --panel:#12131a; --ink:#f4f5f7; --muted:#b7b9c4; --line:#262838; --ac:#e0b15a;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Helvetica,Arial,sans-serif;color:var(--ink);
+      background:
+        radial-gradient(60% 40% at 50% 0%, rgba(255,255,255,.06), transparent 60%),
+        linear-gradient(180deg, #0b0c10 0%, #0a0b10 60%, #07080d 100%);
+    }
+    a{color:inherit}
+    .wrap{max-width:1060px;margin:auto;padding:22px}
+
+    /* Header */
+    header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:14px}
+    .brand{display:flex;align-items:center;gap:12px}
+    .brand .logo{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:#0f1020}
+    h1{margin:0;font-size:clamp(22px,3.6vw,34px);letter-spacing:.2px}
+    .sub{margin-top:4px;color:var(--muted);font-size:14px}
+
+    /* Toolbar */
+    .toolbar{display:flex;flex-wrap:wrap;gap:10px}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#191b26,#141624);cursor:pointer;box-shadow:0 1px 0 rgba(255,255,255,.05) inset}
+    .btn:hover{border-color:#3b3e57}
+    .btn.brand{background:linear-gradient(180deg,#2a2215,#1d1a11);border-color:#3a2f1b}
+    .select{appearance:none;background:#0f1020;border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--ink)}
+    label.muted{color:var(--muted);display:flex;align-items:center;gap:6px}
+
+    /* Cards */
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 0 0 1px rgba(255,255,255,.02) inset}
+    .hr{height:1px;background:linear-gradient(90deg,transparent,#303045,transparent);margin:14px 0}
+
+    /* Winner hero */
+    .hero{padding:0;overflow:hidden}
+    .heroBox{position:relative}
+    .heroImg{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
+    .heroOver{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.0) 40%, rgba(0,0,0,.55) 100%)}
+    .heroInfo{position:absolute;left:16px;right:16px;bottom:14px;display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+    .heroText{max-width:70%}
+    .heroTitle{font-size:18px;font-weight:700}
+    .heroMeta{color:var(--muted);font-size:13px}
+    .trophyBadge{position:absolute;top:12px;left:12px;background:linear-gradient(180deg,#f8e28a,#caa94b);color:#2b220d;border:1px solid #a58534;border-radius:999px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800}
+    .heroLogo{position:absolute;top:12px;right:12px;width:28px;height:28px;border-radius:8px;border:1px solid var(--line);background:#0f1020}
+
+    /* Table */
     table{width:100%;border-collapse:separate;border-spacing:0 10px}
-    th,td{padding:10px 12px;text-align:left;font-size:14px}
-    thead th{color:var(--dim)}
+    th,td{padding:12px 14px;text-align:left;font-size:14px}
+    thead th{color:var(--muted);font-weight:600}
     tbody tr{background:#151621;border:1px solid var(--line)}
     tbody td:first-child{border-top-left-radius:10px;border-bottom-left-radius:10px}
     tbody td:last-child{border-top-right-radius:10px;border-bottom-right-radius:10px}
-    .rank{width:56px;text-align:center;font-weight:700}
+    .rank{width:64px;text-align:center;font-weight:700}
     .medal{display:inline-block;width:28px;height:28px;border-radius:999px;line-height:28px;text-align:center;font-weight:800}
     .gold{background:linear-gradient(180deg,#f8e28a,#caa94b);color:#2b220d;border:1px solid #a58534}
     .silver{background:linear-gradient(180deg,#e6e9ef,#bfc6d6);color:#1e2430;border:1px solid #96a0b5}
     .bronze{background:linear-gradient(180deg,#e9c7a4,#b38352);color:#2b2118;border:1px solid #8d6845}
-    .thumb{width:80px;height:60px;border-radius:8px;object-fit:cover;border:1px solid var(--line);background:#0f1020}
+    .thumb{width:88px;height:64px;border-radius:10px;object-fit:cover;border:1px solid var(--line);background:#0f1020}
     .thumbWrap{position:relative;display:inline-block}
     .logoBadge{position:absolute;right:6px;top:6px;width:20px;height:20px;border-radius:6px;border:1px solid var(--line);background:#0f1020}
+    .logoFallback{position:absolute;right:6px;top:6px;display:none;align-items:center;justify-content:center;width:20px;height:20px;border-radius:6px;border:1px solid var(--line);background:#0f1020;font-size:10px;color:var(--ink)}
     .title{font-weight:600}
-    .author{color:var(--dim);font-size:12px}
-    .addr{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;color:var(--dim);font-size:12px}
-    .score{font-weight:700}
+    .author{color:var(--muted);font-size:12px}
+    .addr{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;color:var(--muted);font-size:12px}
     .tags{display:flex;gap:6px;flex-wrap:wrap}
-    .tag{display:inline-block;padding:2px 6px;border:1px solid var(--line);border-radius:8px;font-size:12px;color:var(--dim)}
-    .hr{height:1px;background:linear-gradient(90deg,transparent,#303045,transparent);margin:16px 0}
-    footer{margin:24px 0;text-align:center;color:#8b8d98;font-size:12px}
-    .langToggle{margin-left:auto}
-  .langSwitch{position:fixed;top:12px;right:12px;display:flex;gap:6px;z-index:50}
+    .tag{display:inline-block;padding:2px 6px;border:1px solid var(--line);border-radius:8px;font-size:12px;color:var(--muted)}
+    .score{font-weight:700}
+
+    /* Lang switch */
+    .langSwitch{position:fixed;top:12px;right:12px;display:flex;gap:6px;z-index:50}
     .langSwitch .btn{padding:6px 10px}
+
+    footer{margin:24px 0;text-align:center;color:#8b8d98;font-size:12px}
   </style>
 </head>
 <body>
@@ -56,18 +88,14 @@
     </div>
     <header>
       <div class="brand">
-        <img src="logo.png" alt="CBS Coin" />
+        <img src="logo.png" alt="CBS Coin" class="logo"/>
         <div>
-          <h1 id="title">CBS Community — Best Submissions Leaderboard</h1>
-          <div class="sub" id="subtitle">Winnaars & beste inzendingen — strak en simpel.</div>
+          <h1>Best Submissions — Leaderboard</h1>
+          <div class="sub">Winners & top entries — clean and simple.</div>
         </div>
-        <select id="lang" class="select langToggle">
-          <option value="en">English</option>
-          <option value="nl" selected>Nederlands</option>
-        </select>
       </div>
-      <div class="row">
-        <label class="muted">Top&nbsp;
+      <div class="toolbar">
+        <label class="muted">Top
           <select id="topN" class="select">
             <option value="10">10</option>
             <option value="25" selected>25</option>
@@ -75,13 +103,20 @@
           </select>
         </label>
         <select id="sortBy" class="select">
-          <option value="score" selected>Sorteren: Score</option>
-          <option value="date">Sorteren: Datum</option>
-          <option value="title">Sorteren: Titel</option>
+          <option value="score" selected>Sort by: Score</option>
+          <option value="date">Sort by: Date</option>
+          <option value="title">Sort by: Title</option>
         </select>
         <button id="exportBtn" class="btn">📤 Export CSV</button>
       </div>
     </header>
+
+    <div class="langSwitch">
+      <button id="langNL" class="btn">NL</button>
+      <button id="langEN" class="btn brand">EN</button>
+    </div>
+
+    <section class="card hero" id="winnerHero"></section>
 
     <section class="card">
       <table>
@@ -107,6 +142,7 @@
 
   const $ = (id) => document.getElementById(id);
   const tbody = $('tbody');
+  const heroEl = document.getElementById('winnerHero');
   const topN = $('topN');
   const sortBy = $('sortBy');
   const exportBtn = $('exportBtn');
@@ -146,6 +182,7 @@
 
   // render table
   function render(){
+    try{ renderHero(); }catch(e){}
     tbody.innerHTML='';
     let arr=[...SUBMISSIONS];
     arr.forEach((item,idx)=>{
@@ -173,7 +210,32 @@
 
   render();
   applyLang(langSel.value);
-    // ====== Language toggle (EN/NL) ======
+    // ====== Winner Hero ======
+  function renderHero(){
+    if(!heroEl) return;
+    const item = SUBMISSIONS[0];
+    if(!item){ heroEl.style.display='none'; return; }
+    const dest = item.url || item.authorUrl || '#';
+    const authorLink = item.authorUrl || dest;
+    heroEl.innerHTML = `
+      <div class="heroBox">
+        <a href="${dest}" target="_blank" rel="noopener">
+          <img src="${item.thumb}" class="heroImg" alt="${escapeHtml(item.title)}" onerror="this.style.display='none'" />
+          <div class="heroOver"></div>
+        </a>
+        <div class="trophyBadge">🏆</div>
+        <img src="logo.png" alt="CBS" class="heroLogo" />
+        <div class="heroInfo">
+          <div class="heroText">
+            <div class="heroTitle">${escapeHtml(item.title)}</div>
+            <div class="heroMeta"><a href="${authorLink}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">${escapeHtml(item.author || 'Creator')}</a> • ${item.date}</div>
+          </div>
+          <a href="${dest}" target="_blank" rel="noopener" class="btn">Open</a>
+        </div>
+      </div>`;
+  }
+
+  // ====== Language toggle (EN/NL) ======
   const LANG_KEY = 'cbs_lang';
   let currentLang = localStorage.getItem(LANG_KEY) || (typeof getParam==='function' ? (getParam('lang')||'nl') : 'nl');
   const langNL = document.getElementById('langNL');
