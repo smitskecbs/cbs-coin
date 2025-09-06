@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>CBS Stack – Holders ≥1000 CBS (5 tries, cumulative score)</title>
+  <title>CBS Stack – Holders ≥1000 CBS (3 tries, cumulative score)</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet"/>
 
@@ -152,7 +152,7 @@
           <h3>How to play</h3>
           <p>Tap / Click / Space / Enter to drop the moving neon block on the stack.</p>
           <p>Only the overlapping part stays. Miss entirely → next attempt automatically.</p>
-          <p><b>5 tries cumulative:</b> score keeps adding up through 5 attempts; then we save it.</p>
+          <p><b>3 tries cumulative:</b> score keeps adding up through 3 attempts; then we save it.</p>
         </div>
         <div class="panel" style="text-align:center">
           <a href="index.html" class="btn">← Back to Home</a>
@@ -206,7 +206,7 @@
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const LB_TABLE = "leaderboard";
     const STACK_NORMALIZE_MUL = 5;      // fairness to Snake
-    const MAX_ATTEMPTS = 5;             // ← 5 tries
+    const MAX_ATTEMPTS = 3;             // ← 3 tries
 
     const $ = (id)=>document.getElementById(id);
     const tbody   = $("leaderboardBody");
@@ -238,7 +238,7 @@
     }
   </script>
 
-  <!-- Game logic (Stack) – 5 tries, cumulative total; camera keeps action in view -->
+  <!-- Game logic (Stack) – 3 tries, cumulative total; camera follows top block -->
   <script>
     const startBtn   = document.getElementById("startBtn");
     const playOverlay= document.getElementById("playOverlay");
@@ -255,7 +255,7 @@
     const BLOCK_H=24, START_W=Math.floor(W*0.74);
     const SPEED_START=2.2, SPEED_INC=0.08;
 
-    // Session: 5 attempts cumulative
+    // Session: 3 attempts cumulative
     let attemptsLeft = MAX_ATTEMPTS;
     let attemptNo = 1;
     let totalScore = 0;   // cumulative over all tries
@@ -299,8 +299,8 @@
       const baseW=START_W, baseX=(W-baseW)/2, baseY=H-BLOCK_H;
       blocks.push({x:baseX,y:baseY,w:baseW,h:BLOCK_H,perfect:false});
       mover={x:-baseW,y:baseY-BLOCK_H,w:baseW,h:BLOCK_H,dir:+1};
-      // keep action comfortable from the start
-      adjustCamera(mover.y);
+      // center the action from the start
+      adjustCameraTo(mover.y);
     }
 
     function cancelAnim(){ if(rafId) cancelAnimationFrame(rafId); rafId=null; }
@@ -327,18 +327,19 @@
       const overlap=Math.floor(right-left);
       if(overlap<=0){ gameOver(); return; }
 
-      // perfect check (we tonen nog wel glow, maar score is vast +3)
+      // perfect (alleen glow; punten zijn vast +3)
       const tol=2;
       const perfect=Math.abs(mover.x-prev.x)<=tol && Math.abs((mover.x+mover.w)-(prev.x+prev.w))<=tol;
 
       let newX=left,newW=overlap;
       if(perfect){ newX=prev.x; newW=prev.w; if(navigator.vibrate) navigator.vibrate(12); }
-      score += 3; // ← vast 3 punten per succesvolle drop
+      score += 3; // ← 3 punten per succesvolle drop
 
       const newY=mover.y;
       blocks.push({x:newX,y:newY,w:newW,h:BLOCK_H,perfect});
-      // camera: houd de actie rond ~65% van het scherm
-      adjustCamera(newY);
+
+      // follow the action
+      adjustCameraTo(newY);
 
       // volgende mover
       const nextY=newY-BLOCK_H, dir=(mover.dir===1?-1:1);
@@ -346,11 +347,10 @@
       SPEED_INC>0 && (speed+=SPEED_INC);
     }
 
-    function adjustCamera(latestY){
-      // plaats de nieuwste blokpositie rond 65% schermhoogte
+    // keeps the top block around ~65% of the screen, continuously
+    function adjustCameraTo(y){
       const target = H * 0.65;
-      const desired = target - latestY;  // camY is negatief (omhoog scrollen)
-      camY = Math.min(0, desired);
+      camY = target - y; // direct follow → nooit uit beeld
     }
 
     function gameOver(){
@@ -367,7 +367,7 @@
           startAttempt();                 // auto next try, blijf in overlay
         }, 800);
       }else{
-        // 5 pogingen klaar → naam + opslaan (totaal)
+        // 3 pogingen klaar → naam + opslaan (totaal)
         setTimeout(()=> openNameModal(totalScore), 550);
       }
     }
@@ -391,6 +391,9 @@
       mover.x += speed * mover.dir;
       if(mover.dir===1 && mover.x>W) mover.x = -mover.w;
       if(mover.dir===-1 && mover.x+mover.w<0) mover.x = W;
+
+      // camera volgt ook tijdens bewegen, zodat de mover altijd zichtbaar blijft
+      adjustCameraTo(mover.y);
     }
 
     function draw(ending=false){
@@ -475,7 +478,7 @@
       }finally{
         saveBtn.disabled=false; saveBtn.textContent="Save";
         renderTop3();
-        // New cumulative session begins immediately (stay in play)
+        // Nieuwe sessie mag direct weer
         resetSession();
         startAttempt();
       }
