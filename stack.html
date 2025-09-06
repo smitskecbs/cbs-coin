@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>CBS Stack – Holders ≥1000 CBS (best-of-10, unified leaderboard)</title>
+  <title>CBS Stack – Holders ≥1000 CBS (10 tries, cumulative score)</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet"/>
 
@@ -151,9 +151,9 @@
         <div class="panel">
           <h3>How to play</h3>
           <p>Tap / Click / Space / Enter to drop the moving neon block on the stack.</p>
-          <p>Only the overlapping part stays. Miss entirely → next attempt.</p>
+          <p>Only the overlapping part stays. Miss entirely → next attempt automatically.</p>
           <p>Perfect alignment (±2px) glows and grants a combo bonus.</p>
-          <p><b>Best-of-10:</b> 10 attempts in one run; we save your <b>best</b> score.</p>
+          <p><b>10 tries cumulative:</b> your score keeps adding up through 10 attempts; then we save it.</p>
         </div>
         <div class="panel" style="text-align:center">
           <a href="index.html" class="btn">← Back to Home</a>
@@ -184,7 +184,7 @@
   <!-- Save Name Modal -->
   <div id="nameOverlay">
     <div id="nameCard">
-      <h3>Save your best score</h3>
+      <h3>Save your total score</h3>
       <p class="muted" style="margin:.1rem 0 .6rem">Type your name and press <b>Enter</b> to submit.</p>
       <input id="nameInput" maxlength="30" placeholder="Your name or wallet…" autocomplete="off" />
       <div id="error">Name is required.</div>
@@ -215,7 +215,11 @@
     const toast   = $("toast");
 
     function showToast(msg="Saved ✓"){ toast.textContent=msg; toast.style.display="block"; setTimeout(()=>toast.style.display="none", 1500); }
-    function escapeHtml(s){ return (s||"").toString().replace(/[&<>\"']/g,m=>({"&":"&amp;","<":"&lt;"," >":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+    function escapeHtml(s){
+      return (s||"").toString().replace(/[&<>\"']/g, m => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
+      })[m]);
+    }
 
     async function renderTop3(){
       tbody.innerHTML = "<tr><td colspan='3' class='muted'>Loading…</td></tr>"; lbNote.style.display="none";
@@ -235,7 +239,7 @@
     }
   </script>
 
-  <!-- Game logic (Stack) – best-of-10 in one screen -->
+  <!-- Game logic (Stack) – 10 tries, cumulative total in one screen -->
   <script>
     const startBtn   = document.getElementById("startBtn");
     const playOverlay= document.getElementById("playOverlay");
@@ -252,12 +256,12 @@
     const BLOCK_H=24, START_W=Math.floor(W*0.74);
     const SPEED_START=2.2, SPEED_INC=0.08;
 
-    // Session state (best-of-10 within overlay)
-    let attemptsLeft = 10;
+    // Session: 10 attempts cumulative
+    let attemptsLeft = MAX_ATTEMPTS;
     let attemptNo = 1;
-    let bestRaw = 0;
+    let totalScore = 0;         // cumulative over all tries
 
-    // Game state
+    // Game state (per attempt)
     let blocks=[], mover=null, camY=0, speed=SPEED_START;
     let running=false, rafId=null, score=0, combo=0;
     let intermission=false, interTimer=null;
@@ -272,15 +276,14 @@
     function resetSession(){
       attemptsLeft = MAX_ATTEMPTS;
       attemptNo = 1;
-      bestRaw = 0;
+      totalScore = 0;
     }
 
     function startRun(){
-      // first time entering overlay: move canvas and begin play
       if(playStage && canvas && canvas.parentElement !== playStage) playStage.appendChild(canvas);
       document.body.classList.add('play-mode');
       playOverlay.setAttribute('aria-hidden','false');
-      startAttempt(); // attempt 1
+      startAttempt();
     }
 
     function startAttempt(){
@@ -337,21 +340,20 @@
 
     function gameOver(){
       running=false;
-      bestRaw = Math.max(bestRaw, score);
+      totalScore += Math.max(0, score);   // add attempt score to cumulative
       attemptsLeft = Math.max(0, attemptsLeft - 1);
       intermission = true;
-      draw(true); // draw one last frame with end HUD
+      draw(true);
 
       if(attemptsLeft > 0){
-        // brief pause, then next attempt in the SAME overlay
         const thisAttempt = attemptNo;
         interTimer = setTimeout(()=>{
           attemptNo = thisAttempt + 1;
-          startAttempt();
+          startAttempt();                 // auto next try, stay in overlay
         }, 900);
       }else{
-        // session complete -> ask for name with BEST score
-        setTimeout(()=> openNameModal(bestRaw), 600);
+        // After 10 tries → ask name with TOTAL score
+        setTimeout(()=> openNameModal(totalScore), 600);
       }
     }
 
@@ -371,7 +373,6 @@
     }
 
     function update(){
-      // mover step
       mover.x += speed * mover.dir;
       if(mover.dir===1 && mover.x>W) mover.x = -mover.w;
       if(mover.dir===-1 && mover.x+mover.w<0) mover.x = W;
@@ -394,15 +395,14 @@
       if(running || ending){ drawBlock(mover.x,mover.y,mover.w,mover.h,false,true); }
       ctx.restore();
 
-      // HUD (attempts/current/best)
+      // HUD
       ctx.save(); ctx.fillStyle="#fff"; ctx.font="16px Orbitron"; ctx.textAlign="left";
       ctx.fillText(`Attempt ${attemptNo}/${MAX_ATTEMPTS}`, 14, 22);
-      ctx.fillText(`Current: ${score}`, 14, 42);
-      ctx.fillText(`Best: ${bestRaw}`, 14, 62);
+      ctx.fillText(`Attempt score: ${score}`, 14, 42);
+      ctx.fillText(`Total: ${totalScore}`, 14, 62);
       ctx.restore();
 
       if(intermission){
-        // center text "Next attempt..."
         ctx.save();
         ctx.font="20px Orbitron"; ctx.textAlign="center"; ctx.fillStyle="#bffef2";
         ctx.fillText(attemptsLeft>0 ? "Next attempt…" : "Session complete!", W/2, H/2);
@@ -426,26 +426,25 @@
       ctx.restore();
     }
 
-    // Name Modal
-    function openNameModal(bestRawScore){
+    // Name Modal (save TOTAL to Supabase)
+    function openNameModal(total){
       overlay.style.display="flex";
       nameInput.value=""; err.style.display="none";
       saveBtn.disabled=false; saveBtn.textContent="Save"; nameInput.focus();
-      overlay.dataset.best = String(bestRawScore ?? 0);
+      overlay.dataset.total = String(total ?? 0);
     }
     cancelBtn.addEventListener("click", ()=>{
       overlay.style.display="none";
-      // Start a fresh session immediately (stay in overlay)
+      // start a fresh cumulative session right away (stays in overlay)
       resetSession();
-      attemptNo = 1;
       startAttempt();
     });
 
     async function submitName(){
       const name=(nameInput.value||"").trim();
       if(!name){ err.textContent="Name is required."; err.style.display="block"; return; }
-      const bestRawScore = Number(overlay.dataset.best||0);
-      const scoreNorm = Math.max(0, Math.round(bestRawScore * STACK_NORMALIZE_MUL));
+      const total = Number(overlay.dataset.total||0);
+      const scoreNorm = Math.max(0, Math.round(total * STACK_NORMALIZE_MUL));
       saveBtn.disabled=true; saveBtn.textContent="Saving…";
       try{
         const { error } = await sb.from("leaderboard").insert({ name, score: scoreNorm });
@@ -461,9 +460,8 @@
       }finally{
         saveBtn.disabled=false; saveBtn.textContent="Save";
         renderTop3();
-        // New session starts instantly in the SAME overlay
+        // New cumulative session begins immediately (stay in play)
         resetSession();
-        attemptNo = 1;
         startAttempt();
       }
     }
