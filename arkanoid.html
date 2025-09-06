@@ -19,34 +19,18 @@
     }
     *{box-sizing:border-box}
     html,body{height:100%}
-    body{
-      margin:0; font-family:'Orbitron',sans-serif; color:var(--fg);
+    body{ margin:0; font-family:'Orbitron',sans-serif; color:var(--fg);
       background:
         radial-gradient(900px 600px at 100% -10%, rgba(0,255,230,.10), transparent 60%),
         radial-gradient(700px 500px at -10% 110%, rgba(0,170,255,.09), transparent 60%),
-        linear-gradient(135deg,var(--bg1),var(--bg2));
-    }
+        linear-gradient(135deg,var(--bg1),var(--bg2)); }
 
-    header.topbar{
-      position:sticky; top:0; z-index:10;
-      display:flex; align-items:center; justify-content:space-between;
-      padding:.8rem 1rem;
-      background:linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0));
-      border-bottom:1px solid rgba(0,255,240,.08);
-    }
+    header.topbar{ position:sticky; top:0; z-index:10; display:flex; align-items:center; justify-content:space-between; padding:.8rem 1rem; background:linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0)); border-bottom:1px solid rgba(0,255,240,.08) }
     .brand{display:flex; align-items:center; gap:.7rem}
     .brand img{width:38px;height:38px;border-radius:10px;filter:drop-shadow(0 0 10px rgba(0,255,230,.35))}
     .brand h1{margin:0; font-size:1.05rem; color:#bffef2; letter-spacing:.4px}
 
-    .btn{
-      display:inline-flex; align-items:center; justify-content:center;
-      min-width:120px; padding:12px 18px; border-radius:10px;
-      text-decoration:none; font-weight:900; font-size:.94rem;
-      color:#001010; background:linear-gradient(180deg, var(--btnA), var(--btnB));
-      border:1px solid rgba(0,255,240,.7);
-      box-shadow:0 0 12px rgba(0,255,230,.55), 0 0 24px rgba(0,255,230,.25), inset 0 -8px 14px rgba(0,0,0,.14);
-      cursor:pointer; transition:transform .15s ease, box-shadow .15s ease;
-    }
+    .btn{ display:inline-flex; align-items:center; justify-content:center; min-width:120px; padding:12px 18px; border-radius:10px; text-decoration:none; font-weight:900; font-size:.94rem; color:#001010; background:linear-gradient(180deg, var(--btnA), var(--btnB)); border:1px solid rgba(0,255,240,.7); box-shadow:0 0 12px rgba(0,255,230,.55), 0 0 24px rgba(0,255,230,.25), inset 0 -8px 14px rgba(0,0,0,.14); cursor:pointer; transition:transform .15s ease, box-shadow .15s ease }
     .btn:hover{ transform:translateY(-2px) scale(1.03) }
     .btn[disabled]{opacity:.6;cursor:not-allowed;filter:saturate(.7)}
 
@@ -127,7 +111,7 @@
   <!-- Leaderboard Top 3 (shared with Snake) -->
   <div class="panel" id="leaderPanel" style="max-width:880px;margin-top:-6px">
     <h2 style="margin:.2rem 0 .6rem; color:#bffef2; text-align:center">🏆 Top 3</h2>
-    <p class="muted" style="text-align:center;margin-top:-.25rem">Scores are normalized to match Snake (Arkanoid ÷ 20).</p>
+    <p class="muted" style="text-align:center;margin-top:-.25rem">Scores are normalized to match Snake (Arkanoid ÷ 5).</p>
     <table>
       <thead><tr><th>Rank</th><th>Player</th><th>Score</th></tr></thead>
       <tbody id="leaderboardBody"></tbody>
@@ -164,7 +148,7 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpYXd0ZWVqaXhzZ3N1bm1lZnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NDExODIsImV4cCI6MjA3MTAxNzE4Mn0.aMbRUM0YebNMfZhSLb9PFdSHAZ-D5WpACPefCfjSLqI";
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const LB_TABLE = "leaderboard";             // same table as Snake
-    const NORMALIZE_DIV = 20;                    // Arkanoid raw / 20 → shared scale
+    const NORMALIZE_DIV = 5;                     // Arkanoid raw / 5 → similar to Snake
 
     const $ = (id)=>document.getElementById(id);
     const tbody = $("leaderboardBody");
@@ -315,7 +299,28 @@
     function openNameModal(sc){ overlay.style.display="flex"; nameInput.value=""; err.style.display="none"; saveBtn.disabled=false; saveBtn.textContent="Save"; nameInput.focus(); overlay.dataset.score = String(sc ?? 0); }
     cancelBtn.addEventListener("click", ()=>{ overlay.style.display="none"; startBtn.disabled = !window._canStart; exitPlayScreen(); });
 
-    async function submitName(){ const name = (nameInput.value||"").trim(); if(!name){ err.textContent="Name is required."; err.style.display="block"; return; } const scRaw = Number(overlay.dataset.score||0); const scoreNorm = Math.max(0, Math.round(scRaw / NORMALIZE_DIV)); saveBtn.disabled = true; saveBtn.textContent = "Saving…"; try{ const { error } = await sb.from(LB_TABLE).insert({ name, score: scoreNorm }); if(error) throw error; overlay.style.display="none"; }catch(e){ err.textContent = "Saving failed. Server not accepting inserts."; err.style.display = "block"; console.warn("Supabase insert failed:", e); return; }finally{ saveBtn.disabled = false; saveBtn.textContent = "Save"; startBtn.disabled = !window._canStart; exitPlayScreen(); renderTop3(); } }
+    async function submitName(){
+      const name = (nameInput.value||"").trim();
+      if(!name){ err.textContent="Name is required."; err.style.display="block"; return; }
+      const scRaw = Number(overlay.dataset.score||0);
+      const scoreNorm = Math.max(0, Math.round(scRaw / NORMALIZE_DIV));
+      saveBtn.disabled = true; saveBtn.textContent = "Saving…";
+      try{
+        const { error } = await sb.from(LB_TABLE).insert({ name, score: scoreNorm });
+        if(error) throw error;
+        overlay.style.display="none";
+      }catch(e){
+        err.textContent = "Saving failed. Server not accepting inserts.";
+        err.style.display = "block";
+        console.warn("Supabase insert failed:", e);
+        return;
+      }finally{
+        saveBtn.disabled = false; saveBtn.textContent = "Save";
+        startBtn.disabled = !window._canStart;
+        exitPlayScreen();
+        renderTop3();
+      }
+    }
     nameInput.addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ e.preventDefault(); submitName(); } });
     saveBtn.addEventListener("click", submitName);
 
@@ -356,4 +361,3 @@
   </script>
 </body>
 </html>
-
