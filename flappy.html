@@ -77,7 +77,7 @@
       box-shadow: inset 0 0 0 1px rgba(0,255,240,.05);
       touch-action:none;
     }
-    #board{ width:100%; max-width:420px; height:auto; }
+    #board{ width:100%; max-width:360px; height:auto; }
 
     .muted{color:var(--muted)}
 
@@ -95,14 +95,13 @@
     .play-overlay .stage{
       width: min(92vw, 520px);
       max-width: 520px;
-      max-height: calc(var(--vh) * 100 - 190px); /* ruimte voor HUD + controls */
+      max-height: calc(var(--vh) * 100 - 190px);
       display:flex; align-items:center; justify-content:center;
       background:linear-gradient(180deg,#0b1217,#0a1015);
       border:1px solid rgba(0,255,240,.22);
       border-radius:16px; padding:10px;
       box-shadow:0 22px 48px rgba(0,255,230,.10), inset 0 0 0 1px rgba(0,255,240,.06);
-      overflow:hidden;
-      position:relative;
+      overflow:hidden; position:relative;
     }
     .play-overlay .stage canvas{
       width:100%; height:auto;
@@ -111,13 +110,18 @@
       background:#05090d;
     }
 
-    /* Overlay HUD boven canvas */
+    /* HUD boven canvas */
     .hudbar{
       position:absolute; top:10px; left:10px; z-index:5;
       pointer-events:none; background:rgba(0,15,20,.55);
       border:1px solid rgba(0,255,240,.25); border-radius:10px;
       padding:6px 10px; font-weight:700;
       text-shadow:0 0 12px rgba(0,255,240,.25);
+    }
+    .hintbar{
+      position:absolute; bottom:12px; left:50%; transform:translateX(-50%);
+      background:rgba(0,15,20,.55); border:1px solid rgba(0,255,240,.25);
+      border-radius:10px; padding:6px 10px; font-weight:700; color:#dff;
     }
 
     /* Touch controls */
@@ -134,10 +138,7 @@
       touch-action:none;
     }
     .tbtn:active{ transform:translateY(1px); }
-
-    @media (max-width: 460px){
-      .tbtn{ min-width:96px; }
-    }
+    @media (max-width: 460px){ .tbtn{ min-width:96px; } }
 
     body.play-mode header,
     body.play-mode #controlsPanel,
@@ -222,6 +223,7 @@
   <div id="playOverlay" class="play-overlay" aria-hidden="true">
     <div class="stage">
       <div class="hudbar" id="hudBar">Score 0</div>
+      <div class="hintbar" id="hintBar">Tap / Space to start</div>
       <div id="playStage"></div>
     </div>
 
@@ -289,6 +291,7 @@
     const canvas = document.getElementById('board');
     const ctx    = canvas.getContext('2d');
     const hudBar = document.getElementById('hudBar');
+    const hintBar= document.getElementById('hintBar');
     const exitBtn= document.getElementById('exitBtn');
     const startBtn= document.getElementById('startBtn');
     const canvasHome = document.getElementById('canvasHome');
@@ -330,6 +333,9 @@
     let running=false, rafId=null;
     let last=0, spawnT=0, speed=SPEED_START;
 
+    // Waiting-for-first-flap state
+    let waiting=false, idleRaf=null, idleT=0;
+
     function rngGap(){ return Math.floor(PIPE_GAP_MIN + Math.random()*(PIPE_GAP_MAX-PIPE_GAP_MIN)); }
     function rngTop(hGap){
       const pad=40;
@@ -337,12 +343,37 @@
       return Math.floor(pad + Math.random() * Math.max(1, maxTop - pad));
     }
 
-    function reset(){
+    function resetCore(){
       birdY=H/2; birdVy=0;
       pipes=[]; score=0; speed=SPEED_START; last=0; spawnT=0;
-      addPipe();
       updateHUD();
-      draw();
+      drawIdleFrame(0);
+    }
+
+    function prepareGame(){
+      stopGame();
+      waiting=true; idleT=0;
+      resetCore();
+      hintBar.textContent = "Tap / Space to start";
+      idleStep(performance.now());
+    }
+
+    function idleStep(ts){
+      if(!waiting) return;
+      const t = ts * 0.004; // zachte bob
+      drawIdleFrame(Math.sin(t)*2); // ±2px
+      idleRaf = requestAnimationFrame(idleStep);
+    }
+
+    function startLoopFromFirstFlap(){
+      waiting=false;
+      if(idleRaf){ cancelAnimationFrame(idleRaf); idleRaf=null; }
+      // maak eerste pipe en start physics
+      pipes=[]; spawnT=0; addPipe();
+      birdVy = FLAP_VY;
+      running=true; last=0;
+      hintBar.textContent = "";
+      rafId=requestAnimationFrame(loop);
     }
 
     function addPipe(){
@@ -352,6 +383,10 @@
     }
 
     function flap(){
+      if(waiting){
+        startLoopFromFirstFlap();
+        return;
+      }
       if(!running) return;
       birdVy = FLAP_VY;
     }
@@ -372,14 +407,14 @@
       // Spawn & move pipes
       spawnT += dt;
       if(spawnT >= PIPE_SPAWN_MS){ spawnT = 0; addPipe(); }
-      speed += SPEED_INC * dtSec * 1000; // beetje versnellen over tijd
+      speed += SPEED_INC * dtSec * 1000;
 
       for(const p of pipes){ p.x -= speed * dtSec; }
 
       // Remove off-screen
       while(pipes.length && pipes[0].x + PIPE_W < -20) pipes.shift();
 
-      // Scoring: +1 wanneer volledig gepasseerd
+      // Scoring
       for(const p of pipes){
         if(!p.passed && (p.x + PIPE_W) < (BIRD_X - BIRD_R)){
           p.passed = true;
@@ -391,9 +426,7 @@
       // Collisions
       if(birdY - BIRD_R <= 0 || birdY + BIRD_R >= H){ return gameOver(); }
       for(const p of pipes){
-        // top rect: x..x+W, y:0..p.top
         if(circleRect(BIRD_X, birdY, BIRD_R, p.x, 0, PIPE_W, p.top)) return gameOver();
-        // bottom rect: y: p.top + gap .. H
         const by = p.top + p.gap;
         if(circleRect(BIRD_X, birdY, BIRD_R, p.x, by, PIPE_W, H-by)) return gameOver();
       }
@@ -409,30 +442,37 @@
       return (dx*dx + dy*dy) <= cr*cr;
     }
 
-    function draw(){
-      ctx.clearRect(0,0,W,H);
+    function drawBG(){
       const bg=ctx.createLinearGradient(0,0,0,H);
       bg.addColorStop(0,"#071017"); bg.addColorStop(1,"#09131a");
       ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
-
-      // watermark
       if(logoReady){
         const size=Math.min(W,H)*0.9; const x=(W-size)/2, y=(H-size)/2;
         ctx.save(); ctx.globalAlpha=0.05; ctx.shadowColor="#00fff0"; ctx.shadowBlur=24;
         ctx.drawImage(logo,x,y,size,size); ctx.restore();
       }
+    }
 
-      // pipes
+    function draw(){
+      ctx.clearRect(0,0,W,H);
+      drawBG();
       for(const p of pipes){
         drawPipe(p.x, 0, PIPE_W, p.top);
         const y2 = p.top + p.gap;
         drawPipe(p.x, y2, PIPE_W, H - y2);
       }
-
-      // bird
       drawBird(BIRD_X, birdY, BIRD_R);
+      drawFrame();
+    }
 
-      // frame
+    function drawIdleFrame(offsetY){
+      ctx.clearRect(0,0,W,H);
+      drawBG();
+      drawBird(BIRD_X, H/2 + (offsetY||0), BIRD_R);
+      drawFrame();
+    }
+
+    function drawFrame(){
       ctx.save();
       ctx.strokeStyle="rgba(0,255,240,.35)"; ctx.lineWidth=3; ctx.shadowColor="#38f8ff"; ctx.shadowBlur=10;
       ctx.strokeRect(1,1,W-2,H-2);
@@ -448,7 +488,6 @@
       ctx.fillStyle=g; ctx.fillRect(x,y,w,h);
       ctx.shadowBlur=0; ctx.lineWidth=1.6; ctx.strokeStyle="rgba(0,255,240,.7)";
       ctx.strokeRect(x+0.5,y+0.5,w-1,h-1);
-      // top shine
       ctx.globalAlpha=0.22; ctx.fillStyle="#e6ffff"; ctx.fillRect(x,y,w,3); ctx.globalAlpha=1;
       ctx.restore();
     }
@@ -462,12 +501,10 @@
       ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
       ctx.shadowBlur=0; ctx.lineWidth=1.6; ctx.strokeStyle="rgba(0,255,240,.7)";
       ctx.beginPath(); ctx.arc(x,y,r-0.8,0,Math.PI*2); ctx.stroke();
-      // small eye
       ctx.fillStyle="#001"; ctx.beginPath(); ctx.arc(x+r*0.35, y-r*0.2, 2.6, 0, Math.PI*2); ctx.fill();
       ctx.restore();
     }
 
-    function startGame(){ reset(); running=true; rafId=requestAnimationFrame(loop); }
     function stopGame(){ running=false; if(rafId) cancelAnimationFrame(rafId); rafId=null; }
     function gameOver(){ running=false; draw(); setTimeout(()=> openNameModal(score), 350); }
 
@@ -479,13 +516,14 @@
       updateHUD();
     }
     function exitPlay(){
-      stopGame();
+      stopGame(); waiting=false;
+      if(idleRaf){ cancelAnimationFrame(idleRaf); idleRaf=null; }
       if(canvasHome && canvas && canvas.parentElement!==canvasHome) canvasHome.appendChild(canvas);
       document.body.classList.remove('play-mode');
       playOverlay.setAttribute('aria-hidden','true');
     }
 
-    // Mouse/touch/keys
+    // Inputs
     function doFlap(){ flap(); }
     btnFlap.addEventListener('click', (e)=>{ e.preventDefault(); doFlap(); }, {passive:false});
     canvas.addEventListener('pointerup', ()=>{ if(document.body.classList.contains('play-mode')) doFlap(); }, {passive:true});
@@ -498,7 +536,7 @@
     // Start / Exit
     startBtn.addEventListener('click', ()=>{
       if(!window._canStart){ alert('Holders only — need ≥ 1000 CBS.'); return; }
-      enterPlay(); startGame();
+      enterPlay(); prepareGame();
     });
     exitBtn.addEventListener('click', ()=> exitPlay());
 
@@ -511,7 +549,8 @@
     }
     cancelBtn.addEventListener("click", ()=>{
       overlay.style.display="none";
-      enterPlay(); startGame();
+      // ready to play again (idle)
+      enterPlay(); prepareGame();
     });
     async function submitName(){
       const name=(nameInput.value||"").trim();
@@ -523,6 +562,8 @@
         if(error) throw error;
         overlay.style.display="none";
         showToast("Saved ✓");
+        // klaar voor nieuwe run
+        enterPlay(); prepareGame();
       }catch(e){
         console.error("Supabase insert failed:", e);
         err.textContent="Saving failed. Check Supabase policies or network.";
@@ -538,7 +579,7 @@
     saveBtn.addEventListener("click", submitName);
 
     // Init
-    (function init(){ renderTop3(); reset(); })();
+    (function init(){ renderTop3(); prepareGame(); })();
   </script>
 
   <!-- Holders-only gating (Solana ≥1000 CBS) -->
