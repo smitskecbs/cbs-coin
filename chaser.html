@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>CBS Coin Chaser – Holders Only</title>
+  <title>CBS Chaser – Holders Only</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet"/>
 
@@ -11,12 +11,11 @@
     :root{
       --bg1:#0a0c10; --bg2:#0f141b;
       --card:#0f151c; --card2:#0c1016;
-      --fg:#eafffb; --muted:#a8d6cd;
+      --fg:#eafffb; --muted:#a8d6cd; --note:#7ee9dc;
       --line:rgba(0,255,240,.18);
       --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
       --radius:18px;
       --btnA:#5afff0; --btnB:#2bffe4;
-      --warn:#ffde6b; --bad:#ff7d7d; --good:#7dffe9;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -47,7 +46,6 @@
       border:1px solid rgba(0,255,240,.7);
       box-shadow:0 0 12px rgba(0,255,230,.55), 0 0 24px rgba(0,255,230,.25), inset 0 -8px 14px rgba(0,0,0,.14);
       cursor:pointer;
-      transition:transform .15s ease, box-shadow .15s ease;
     }
     .btn:hover{ transform:translateY(-2px) scale(1.03) }
     .btn[disabled]{opacity:.6;cursor:not-allowed;filter:saturate(.7)}
@@ -77,7 +75,21 @@
       touch-action:none;
     }
 
-    /* Fullscreen Play */
+    /* D-pad mobile */
+    #dpad{ display:none; justify-content:center; margin-top:12px; }
+    #dpad .pad{
+      display:grid; grid-template-columns:64px 64px 64px; grid-template-rows:64px 64px 64px; gap:12px;
+      opacity:.7; filter:drop-shadow(0 0 6px rgba(0,255,240,.4));
+    }
+    #dpad button{
+      background:rgba(0,255,255,.10);
+      border:1px solid rgba(0,255,240,.45); color:#cff;
+      border-radius:15px; backdrop-filter:blur(2px); font-weight:800
+    }
+    #dpad button:active{background:rgba(0,255,255,.22)}
+    @media (max-width:680px){ #dpad{display:flex} }
+
+    /* Fullscreen play */
     .play-overlay{
       position:fixed; inset:0; z-index:50; display:none;
       background:
@@ -99,30 +111,52 @@
     body.play-mode main { display:none; }
     body.play-mode .play-overlay{ display:flex; }
 
-    .muted{color:var(--muted)}
-    .status{margin-top:.4rem;font-size:.92rem}
-    .status .ok{color:var(--good)}
-    .status .warn{color:var(--warn)}
-    .status .bad{color:var(--bad)}
+    /* Scoreboard */
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    th,td{padding:.65rem;border-bottom:1px solid rgba(0,255,240,.20);text-align:center}
+    thead th{color:#bffef2}
+    tbody td{color:var(--fg)}
+    h2{margin:.2rem 0 .6rem; color:#bffef2}
+
+    /* Name Modal */
+    #nameOverlay{
+      position:fixed; inset:0; background:rgba(0,0,0,.6);
+      display:none; align-items:center; justify-content:center; z-index:60;
+      backdrop-filter: blur(2px);
+    }
+    #nameCard{
+      width:min(92vw,480px);
+      background:linear-gradient(180deg, var(--card), var(--card2));
+      border:1px solid var(--line); border-radius:14px;
+      padding:18px 18px 14px;
+      box-shadow:var(--shadow);
+    }
+    #nameCard h3{ margin:.2rem 0 .6rem; color:#bffef2 }
+    #nameInput{
+      width:100%; padding:.85rem 1rem; border:1px solid rgba(0,255,240,.35);
+      border-radius:10px; background:#000; color:#fff; font-family:inherit; font-size:1rem;
+      box-shadow:inset 0 0 0 1px rgba(0,255,240,.06);
+    }
+    #error{color:#ff6b7a;font-size:.85rem;margin-top:.35rem;display:none}
   </style>
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
       <img src="logo.png" alt="CBS Logo">
-      <h1>CBS Coin Chaser</h1>
+      <h1>CBS Chaser</h1>
     </div>
   </header>
 
   <!-- Controls -->
-  <div id="controlsPanel" class="panel" style="max-width:880px">
-    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center">
+  <div id="controlsPanel" class="panel" style="max-width:820px; text-align:center">
+    <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center">
       <button id="connectBtn" class="btn">🔗 Connect Wallet</button>
-      <button id="verifyBtn"  class="btn" disabled>✅ Verify Holdings</button>
-      <button id="startBtn"   class="btn" disabled>▶️ Start</button>
+      <button id="verifyBtn" class="btn" disabled>✅ Verify Holdings</button>
+      <button id="startBtn" class="btn" disabled>▶️ Start</button>
     </div>
-    <p class="muted status" id="holdStatus" style="text-align:center">
-      Holders-only: require <b>≥ 1,000 CBS</b> in your wallet.
+    <p class="muted" id="holdMsg" style="margin-top:.5rem">
+      Holders-only: need <b>≥ 1,000 CBS</b> in your wallet to play.
     </p>
   </div>
 
@@ -131,21 +165,36 @@
       <div id="gamePanel" class="panel">
         <div class="card">
           <div id="canvasHome">
-            <canvas id="game" width="420" height="560"></canvas>
+            <canvas id="game" width="420" height="420"></canvas>
+          </div>
+          <div id="dpad" aria-label="On-screen controls">
+            <div class="pad">
+              <div></div>     <button data-dir="UP">▲</button>     <div></div>
+              <button data-dir="LEFT">◄</button> <div></div> <button data-dir="RIGHT">►</button>
+              <div></div>     <button data-dir="DOWN">▼</button>   <div></div>
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="side">
-        <div class="panel">
-          <h3>How to play</h3>
-          <p>Move the CBS orb, collect coins (+10), and dodge the chaser. Each coin makes the chaser a bit faster.</p>
-          <p class="muted">Desktop: WASD / Arrow keys (Space = dash). Mobile: tap/drag to move.</p>
-        </div>
-        <div class="panel" style="text-align:center">
+      <div class="panel">
+        <h3>How to play</h3>
+        <p>Move with <b>arrow keys</b> or the on-screen D-pad. The neon enemy <i>chases</i> you. Survive as long as possible.</p>
+        <p>Score = survival time. One hit = game over.</p>
+
+        <div class="panel" style="text-align:center; margin-top:12px">
           <a href="index.html" class="btn">← Back to Home</a>
         </div>
       </div>
+    </div>
+
+    <div class="panel" id="leaderPanel" style="max-width:820px; margin-top:12px">
+      <h2 style="text-align:center">🏆 Top 10 — Chaser</h2>
+      <table>
+        <thead><tr><th>Rank</th><th>Player</th><th>Score</th></tr></thead>
+        <tbody id="leaderboardBody"></tbody>
+      </table>
+      <p id="lbNote" class="muted" style="display:none;margin-top:.5rem;text-align:center">Showing local scores (cloud unavailable).</p>
     </div>
   </main>
 
@@ -153,252 +202,229 @@
   <div id="playOverlay" class="play-overlay" aria-hidden="true">
     <div class="stage"><div id="playStage"></div></div>
     <button id="exitBtn" class="btn">⏹ Exit</button>
-    <div class="muted">Tap/drag to move • Space to dash</div>
   </div>
 
-  <!-- Solana web3 (ESM) -->
+  <!-- Name Modal -->
+  <div id="nameOverlay">
+    <div id="nameCard">
+      <h3>Save your score</h3>
+      <p class="muted" style="margin:.1rem 0 .6rem">Type your name and press <b>Enter</b> to submit.</p>
+      <input id="nameInput" maxlength="30" placeholder="Your name or wallet…" autocomplete="off" />
+      <div id="error">Name is required.</div>
+      <div style="margin-top:.8rem;text-align:right;display:flex;gap:10px;justify-content:flex-end">
+        <button id="cancelBtn" class="btn" style="background:#1a242c;color:#d9fffb;border:1px solid rgba(0,255,240,.25)">Cancel</button>
+        <button id="saveBtn" class="btn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Libs -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
   <script type="module">
     import { Connection, PublicKey } from "https://esm.sh/@solana/web3.js@1.95.8";
 
     /******** CONFIG ********/
+    const SUPABASE_URL = "https://aiawteejixsgsunmefpi.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpYXd0ZWVqaXhzZ3N1bm1lZnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NDExODIsImV4cCI6MjA3MTAxNzE4Mn0.aMbRUM0YebNMfZhSLb9PFdSHAZ-D5WpACPefCfjSLqI";
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    const TABLE = "scores";          // unified table with a `game` column
+    const GAME  = "chaser";
+
+    // Solana holder check
     const RPC_URL = "https://rpc.helius.xyz/?api-key=453a64a5-31dd-4c21-9619-6f0c69c74ff9";
     const connection = new Connection(RPC_URL, "confirmed");
     const CBS_MINT = new PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
-    const MIN_HOLD = 1000; // CBS (uses parsed uiAmount)
+    const MIN_HOLD = 1000;
 
     /******** DOM ********/
     const $ = (id)=>document.getElementById(id);
     const connectBtn = $("connectBtn");
     const verifyBtn  = $("verifyBtn");
     const startBtn   = $("startBtn");
-    const statusEl   = $("holdStatus");
+    const holdMsg    = $("holdMsg");
 
-    const playOverlay= $("playOverlay");
-    const playStage  = $("playStage");
-    const exitBtn    = $("exitBtn");
-    const canvas     = $("game");
-    const canvasHome = $("canvasHome");
-    const ctx        = canvas.getContext("2d");
+    const playOverlay = $("playOverlay");
+    const playStage   = document.getElementById("playStage");
+    const exitBtn     = $("exitBtn");
+    const canvas      = document.getElementById("game");
+    const canvasHome  = document.getElementById("canvasHome");
+    const ctx         = canvas.getContext("2d");
 
-    // CBS logo watermark
-    const logo = new Image(); logo.src = "logo.png";
-    let logoReady=false; logo.onload=()=>{logoReady=true};
+    const dpad = document.getElementById('dpad');
 
-    const W = canvas.width, H = canvas.height;
+    const tbody = $("leaderboardBody");
+    const lbNote= $("lbNote");
 
-    // ==== Wallet / holder check ====
+    const overlay   = $("nameOverlay");
+    const nameInput = $("nameInput");
+    const err       = $("error");
+    const saveBtn   = $("saveBtn");
+    const cancelBtn = $("cancelBtn");
+
+    /******** STATE ********/
     let walletPK = null;
     let isHolder = false;
 
+    // Game state
+    const W = canvas.width, H = canvas.height;
+    const player = { x: W/2, y: H/2, r: 10, speed: 2.1 };
+    const enemy  = { x: 40,  y: 40,  r: 12, speed: 1.6, accel: 0.0006 };
+    let keys = { left:false, right:false, up:false, down:false };
+    let touchDir = null;
+    let running=false, rafId=null, last=0, score=0, started=false;
+
+    // Watermark (CBS)
+    const logo = new Image();
+    logo.src = "logo.png";
+    let logoReady = false;
+    logo.onload = ()=>{ logoReady = true; };
+
+    /******** HELPERS ********/
     function provider(){ return window.solana?.isPhantom ? window.solana : (window.phantom?.solana || null); }
+    const short = (a)=> a ? a.slice(0,4)+'…'+a.slice(-4) : '-';
 
-    function setStatus(html){ statusEl.innerHTML = html; }
+    function enterPlayScreen(){
+      if(playStage && canvas && canvas.parentElement !== playStage) playStage.appendChild(canvas);
+      document.body.classList.add('play-mode'); playOverlay.setAttribute('aria-hidden','false');
+      started = true;
+      resetGame();
+      loop(performance.now());
+    }
+    function exitPlayScreen(){
+      cancelAnim();
+      if(canvasHome && canvas && canvas.parentElement !== canvasHome) canvasHome.appendChild(canvas);
+      document.body.classList.remove('play-mode'); playOverlay.setAttribute('aria-hidden','true');
+    }
+    function cancelAnim(){ if(rafId) cancelAnimationFrame(rafId); rafId=null; running=false; }
 
+    function resetGame(){
+      player.x = W/2; player.y = H/2; player.speed = 2.1;
+      enemy.x = Math.random()<.5 ? 20 : W-20;
+      enemy.y = Math.random()<.5 ? 20 : H-20;
+      enemy.speed = 1.6;
+      score = 0; last = performance.now(); running = true;
+    }
+
+    /******** CONNECT + VERIFY ********/
     connectBtn.addEventListener("click", async ()=>{
       try{
-        const p = provider(); if(!p){ alert("Phantom Wallet not found."); return; }
-        const { publicKey } = await p.connect();
-        walletPK = publicKey;
-        connectBtn.textContent = `✅ ${publicKey.toBase58().slice(0,4)}…${publicKey.toBase58().slice(-4)}`;
+        const p = provider(); if(!p) return alert("Phantom Wallet not found.");
+        const { publicKey } = await p.connect(); walletPK = publicKey;
+        connectBtn.textContent = `✅ ${short(publicKey.toString())}`;
         verifyBtn.disabled = false;
-        // Auto verify after connect
-        await doVerify();
-      }catch(e){
-        console.warn(e); setStatus(`<span class="bad">Not connected.</span> Holders-only: need ≥ <b>${MIN_HOLD}</b> CBS.`);
-      }
+      }catch(e){ console.warn(e); }
     });
 
-    verifyBtn.addEventListener("click", async ()=>{ await doVerify(); });
-
-    async function doVerify(){
-      if(!walletPK){ setStatus(`<span class="bad">Connect your wallet first.</span>`); return; }
+    verifyBtn.addEventListener("click", async ()=>{
+      if(!walletPK) return;
       verifyBtn.disabled = true; verifyBtn.textContent = "Checking…";
       try{
-        // Get parsed token accounts for this mint
         const res = await connection.getParsedTokenAccountsByOwner(walletPK, { mint: CBS_MINT });
         let total = 0;
         for(const it of (res?.value||[])){
           const amt = it.account?.data?.parsed?.info?.tokenAmount?.uiAmount || 0;
           total += Number(amt)||0;
         }
-        if(total >= MIN_HOLD){
-          isHolder = true;
-          setStatus(`✅ <span class="ok">Verified holder</span>: you have <b>${Math.floor(total)}</b>+ CBS. You can start!`);
+        isHolder = total >= MIN_HOLD;
+        if(isHolder){
+          holdMsg.innerHTML = `✅ Holder verified — balance: <b>${Math.floor(total)}</b> CBS`;
           startBtn.disabled = false;
         }else{
-          isHolder = false;
+          holdMsg.innerHTML = `❌ Not enough CBS — you have <b>${total.toFixed(2)}</b>, need <b>${MIN_HOLD}</b>+`;
           startBtn.disabled = true;
-          setStatus(`❌ <span class="bad">Not enough CBS</span> — you have <b>${total.toFixed(2)}</b>, need <b>${MIN_HOLD}</b>+ CBS.`);
         }
       }catch(e){
-        console.error(e);
-        setStatus(`<span class="warn">RPC check failed.</span> Try again or later.`);
+        console.warn(e);
+        holdMsg.textContent = "RPC check failed. Try again later.";
       }finally{
         verifyBtn.disabled = false; verifyBtn.textContent = "✅ Verify Holdings";
       }
-    }
-
-    /******** GAME STATE ********/
-    const PLAYER_R = 10;
-    const COIN_R   = 7;
-    const ENEMY_R  = 12;
-
-    const SPEED_PLAYER = 220;      // px/s
-    let speedEnemyBase = 90;       // grows per coin
-    let speedEnemy     = speedEnemyBase;
-
-    let player = { x: W*0.5, y: H*0.75, vx: 0, vy: 0 };
-    let enemy  = { x: W*0.5, y: H*0.25 };
-    let coin   = null;
-
-    let keys = { left:false, right:false, up:false, down:false };
-    let dragging = false;
-
-    let score = 0;
-    let running = false;
-    let rafId = null;
-    let last = 0;
-
-    function spawnCoin(){
-      const m = 20;
-      return { x: m + Math.random()*(W - 2*m), y: m + Math.random()*(H - 2*m) };
-    }
-
-    function resetGame(){
-      player = { x: W*0.5, y: H*0.75, vx: 0, vy: 0 };
-      enemy  = { x: W*0.5, y: H*0.25 };
-      coin   = spawnCoin();
-      score = 0;
-      speedEnemyBase = 90;
-      speedEnemy = speedEnemyBase;
-      last = performance.now();
-    }
-
-    function startGame(){
-      if(!isHolder){ alert("Holders-only. Verify your CBS balance first."); return; }
-      resetGame();
-      running = true;
-      rafId = requestAnimationFrame(loop);
-    }
-
-    function stopGame(){ running=false; if(rafId) cancelAnimationFrame(rafId); rafId=null; }
-
-    // ==== Input ====
-    window.addEventListener('keydown', e=>{
-      if(!document.body.classList.contains('play-mode')) return;
-      if(e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = true;
-      if(e.key === 'ArrowRight'|| e.key === 'd' || e.key === 'D') keys.right = true;
-      if(e.key === 'ArrowUp'   || e.key === 'w' || e.key === 'W') keys.up = true;
-      if(e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') keys.down = true;
-      if(e.key === ' '){ dash(); }
-      if(e.key === 'Escape'){ stopGame(); exitPlayScreen(); }
-    });
-    window.addEventListener('keyup', e=>{
-      if(e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = false;
-      if(e.key === 'ArrowRight'|| e.key === 'd' || e.key === 'D') keys.right = false;
-      if(e.key === 'ArrowUp'   || e.key === 'w' || e.key === 'W') keys.up = false;
-      if(e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') keys.down = false;
     });
 
-    function localFromPointer(clientX, clientY){
-      const r = canvas.getBoundingClientRect();
-      const sx = canvas.width / r.width;
-      const sy = canvas.height / r.height;
-      return { x: (clientX - r.left) * sx, y: (clientY - r.top) * sy };
-    }
-    window.addEventListener('pointerdown', e=>{
+    startBtn.addEventListener('click', ()=>{
+      if(!walletPK) return alert("Connect your wallet first.");
+      if(!isHolder)  return alert("Holders-only: need ≥ 1,000 CBS.");
+      enterPlayScreen();
+    });
+    exitBtn.addEventListener('click', ()=>{ exitPlayScreen(); });
+
+    /******** INPUT ********/
+    window.addEventListener('keydown', (e)=>{
       if(!document.body.classList.contains('play-mode')) return;
-      if(e.target.closest('button')) return;
-      dragging = true;
-      const p = localFromPointer(e.clientX, e.clientY);
-      steerToward(p.x, p.y);
-    }, {passive:true});
-    window.addEventListener('pointermove', e=>{
-      if(!document.body.classList.contains('play-mode') || !dragging) return;
-      const p = localFromPointer(e.clientX, e.clientY);
-      steerToward(p.x, p.y);
-    }, {passive:true});
-    window.addEventListener('pointerup', ()=>{ dragging = false; }, {passive:true});
+      if(e.key==='ArrowLeft' || e.key==='a')  keys.left=true;
+      if(e.key==='ArrowRight'|| e.key==='d')  keys.right=true;
+      if(e.key==='ArrowUp'   || e.key==='w')  keys.up=true;
+      if(e.key==='ArrowDown' || e.key==='s')  keys.down=true;
+      if(e.key==='Escape'){ exitPlayScreen(); }
+    });
+    window.addEventListener('keyup', (e)=>{
+      if(e.key==='ArrowLeft' || e.key==='a')  keys.left=false;
+      if(e.key==='ArrowRight'|| e.key==='d')  keys.right=false;
+      if(e.key==='ArrowUp'   || e.key==='w')  keys.up=false;
+      if(e.key==='ArrowDown' || e.key==='s')  keys.down=false;
+    });
 
-    function steerToward(tx, ty){
-      const dx = tx - player.x, dy = ty - player.y;
-      const d = Math.hypot(dx, dy) || 1;
-      player.vx = (dx / d) * SPEED_PLAYER;
-      player.vy = (dy / d) * SPEED_PLAYER;
-    }
-    function dash(){
-      const mag = Math.hypot(player.vx, player.vy);
-      const boost = 180;
-      if(mag < 1){
-        const dx = player.x - enemy.x, dy = player.y - enemy.y;
-        const d = Math.hypot(dx, dy) || 1;
-        player.vx = (dx/d) * (SPEED_PLAYER + boost);
-        player.vy = (dy/d) * (SPEED_PLAYER + boost);
-      }else{
-        const fx = player.vx / mag, fy = player.vy / mag;
-        player.vx = fx * (SPEED_PLAYER + boost);
-        player.vy = fy * (SPEED_PLAYER + boost);
-      }
-      if(navigator.vibrate) navigator.vibrate(10);
-    }
+    // D-pad
+    document.querySelectorAll('#dpad button').forEach(b=>{
+      b.addEventListener('touchstart', e=>{ e.preventDefault(); touchDir=b.dataset.dir; }, {passive:false});
+      b.addEventListener('touchend',   e=>{ e.preventDefault(); touchDir=null; }, {passive:false});
+      b.addEventListener('mousedown', ()=>{ touchDir=b.dataset.dir; });
+      b.addEventListener('mouseup',   ()=>{ touchDir=null; });
+      b.addEventListener('mouseleave',()=>{ touchDir=null; });
+    });
 
-    // ==== Loop ====
+    /******** GAME LOOP ********/
     function loop(now){
       if(!running) return;
       const dt = Math.min(0.033, (now - last)/1000); last = now;
-
-      // keyboard move
-      let ax=0, ay=0;
-      if(keys.left)  ax -= 1;
-      if(keys.right) ax += 1;
-      if(keys.up)    ay -= 1;
-      if(keys.down)  ay += 1;
-      if(ax || ay){
-        const n = Math.hypot(ax, ay) || 1;
-        player.vx = (ax/n) * SPEED_PLAYER;
-        player.vy = (ay/n) * SPEED_PLAYER;
-      }else if(!dragging){
-        player.vx *= 0.96; player.vy *= 0.96;
-        if(Math.abs(player.vx) < 4) player.vx = 0;
-        if(Math.abs(player.vy) < 4) player.vy = 0;
-      }
-
-      // move player
-      player.x += player.vx * dt;
-      player.y += player.vy * dt;
-      const pad = 10;
-      player.x = Math.max(PLAYER_R+pad, Math.min(W-PLAYER_R-pad, player.x));
-      player.y = Math.max(PLAYER_R+pad, Math.min(H-PLAYER_R-pad, player.y));
-
-      // enemy chase
-      const edx = player.x - enemy.x, edy = player.y - enemy.y;
-      const ed  = Math.hypot(edx, edy) || 1;
-      enemy.x += (edx/ed) * speedEnemy * dt;
-      enemy.y += (edy/ed) * speedEnemy * dt;
-
-      // coin
-      if(coin && Math.hypot(player.x - coin.x, player.y - coin.y) < PLAYER_R + COIN_R){
-        score += 10;
-        coin = spawnCoin();
-        speedEnemyBase *= 1.04;
-        speedEnemy = Math.min(speedEnemyBase, 300);
-        if(navigator.vibrate) navigator.vibrate(6);
-      }
-
-      // hit → game over
-      if(Math.hypot(player.x - enemy.x, player.y - enemy.y) < PLAYER_R + ENEMY_R - 2){
-        gameOver();
-        return;
-      }
-
+      update(dt);
       draw();
       rafId = requestAnimationFrame(loop);
     }
 
-    // ==== Render ====
+    function update(dt){
+      // move player
+      let vx=0, vy=0;
+      if(keys.left)  vx -= 1;
+      if(keys.right) vx += 1;
+      if(keys.up)    vy -= 1;
+      if(keys.down)  vy += 1;
+      if(touchDir){
+        if(touchDir==='LEFT')  vx=-1;
+        if(touchDir==='RIGHT') vx=+1;
+        if(touchDir==='UP')    vy=-1;
+        if(touchDir==='DOWN')  vy=+1;
+      }
+      if(vx||vy){
+        const n = Math.hypot(vx,vy)||1;
+        player.x += (vx/n) * player.speed * 120 * dt;
+        player.y += (vy/n) * player.speed * 120 * dt;
+      }
+
+      // clamp player in bounds
+      player.x = Math.max(player.r, Math.min(W-player.r, player.x));
+      player.y = Math.max(player.r, Math.min(H-player.r, player.y));
+
+      // enemy homes in
+      const dx = player.x - enemy.x, dy = player.y - enemy.y;
+      const d  = Math.hypot(dx,dy)||1;
+      enemy.x += (dx/d) * enemy.speed * 100 * dt;
+      enemy.y += (dy/d) * enemy.speed * 100 * dt;
+      enemy.speed += enemy.accel * (dt*1000); // gradual ramp
+
+      // score = time survive (per 0.1s => +1)
+      score += dt * 10;
+
+      // collision
+      if( d <= player.r + enemy.r + 1 ){
+        running=false;
+        draw();
+        openNameModal( Math.floor(score) );
+      }
+    }
+
     function draw(){
       ctx.clearRect(0,0,W,H);
-
       // bg
       const grad=ctx.createLinearGradient(0,0,0,H);
       grad.addColorStop(0,"#071017"); grad.addColorStop(1,"#09131a");
@@ -411,77 +437,116 @@
         ctx.drawImage(logo,x,y,size,size); ctx.restore();
       }
 
-      // arena
+      // bounds glow
       ctx.save();
       ctx.strokeStyle="rgba(0,255,240,.35)"; ctx.lineWidth=3; ctx.shadowColor="#38f8ff"; ctx.shadowBlur=10;
-      ctx.strokeRect(8,8,W-16,H-16);
+      ctx.strokeRect(2,2,W-4,H-4);
       ctx.restore();
 
-      // coin
-      if(coin){ drawCoin(coin.x, coin.y, COIN_R*2); }
+      // player
+      drawGlowCircle(player.x,player.y,player.r,"#7dffe9","#38f8ff");
+      // enemy
+      drawGlowCircle(enemy.x,enemy.y,enemy.r,"#ff9aa2","#ff6b7a");
 
-      // enemy & player
-      drawGlowCircle(enemy.x, enemy.y, ENEMY_R, "hsl(6 100% 60%)", "rgba(255,120,120,.8)");
-      drawGlowCircle(player.x, player.y, PLAYER_R, "hsl(190 100% 60%)", "rgba(0,255,240,.8)");
-
-      // HUD
-      ctx.font = "16px Orbitron";
-      ctx.fillStyle = "#eafffb";
-      ctx.fillText("Score: " + score, 16, 26);
+      // score text
+      ctx.fillStyle="#fff"; ctx.font="18px Orbitron";
+      ctx.fillText("Score: "+Math.floor(score), 12, 24);
     }
-
-    function drawGlowCircle(x,y,r,fill,glow){
+    function drawGlowCircle(x,y,r,c1,c2){
       ctx.save();
-      ctx.shadowColor = glow; ctx.shadowBlur = 16;
-      const g = ctx.createRadialGradient(x-r*0.4,y-r*0.4,r*0.2, x,y,r);
-      g.addColorStop(0, "#eaffff");
-      g.addColorStop(1, fill);
-      ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
-      ctx.shadowBlur = 0;
-      ctx.lineWidth = 1.3; ctx.strokeStyle = "rgba(0,255,240,.7)";
-      ctx.beginPath(); ctx.arc(x,y,r-0.8,0,Math.PI*2); ctx.stroke();
+      ctx.shadowColor=c2; ctx.shadowBlur=18;
+      const g = ctx.createRadialGradient(x-r*0.3,y-r*0.3,r*0.2,x,y,r);
+      g.addColorStop(0,c1); g.addColorStop(1,c2);
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+      ctx.shadowBlur=0; ctx.lineWidth=1.3; ctx.strokeStyle="rgba(255,255,255,.35)";
+      ctx.beginPath(); ctx.arc(x,y,r-0.7,0,Math.PI*2); ctx.stroke();
       ctx.restore();
     }
 
-    function drawCoin(x,y,size){
-      const r = size/2;
-      ctx.save();
-      ctx.shadowColor="#ffd54d"; ctx.shadowBlur=14;
-      const g=ctx.createRadialGradient(x-r*0.2,y-r*0.2,r*0.3, x,y,r);
-      g.addColorStop(0,"#ffe27a"); g.addColorStop(0.6,"#ffca28"); g.addColorStop(1,"#ffb300");
-      ctx.beginPath(); ctx.arc(x,y,r-1.2,0,Math.PI*2); ctx.fillStyle=g; ctx.fill();
-      ctx.shadowBlur=0; ctx.lineWidth=1.6; ctx.strokeStyle="rgba(255,255,255,.35)"; ctx.stroke();
-      ctx.restore();
+    /******** NAME / SAVE ********/
+    function openNameModal(sc){
+      overlay.style.display="flex";
+      nameInput.value=""; err.style.display="none"; saveBtn.disabled = false; saveBtn.textContent = "Save"; nameInput.focus();
+      overlay.dataset.score = String(sc ?? 0);
     }
-
-    function gameOver(){
-      running = false;
-      draw();
-      setTimeout(()=>{ exitPlayScreen(); }, 800);
-    }
-
-    // ==== Overlay helpers ====
-    function enterPlayScreen(){
-      if(playStage && canvas && canvas.parentElement !== playStage) playStage.appendChild(canvas);
-      document.body.classList.add('play-mode'); playOverlay.setAttribute('aria-hidden','false');
-    }
-    function exitPlayScreen(){
-      stopGame();
-      if(canvasHome && canvas && canvas.parentElement !== canvasHome) canvasHome.appendChild(canvas);
-      document.body.classList.remove('play-mode'); playOverlay.setAttribute('aria-hidden','true');
-    }
-
-    // Buttons
-    startBtn.addEventListener('click', ()=>{ 
-      if(!isHolder){ alert("Holders-only. Verify your CBS balance first."); return; }
-      enterPlayScreen(); 
-      startGame(); 
+    cancelBtn.addEventListener("click", ()=>{
+      overlay.style.display="none";
+      startBtn.disabled = !isHolder;
+      exitPlayScreen();
+      renderTop();
     });
-    exitBtn.addEventListener('click', ()=>{ exitPlayScreen(); });
 
-    // Initial static render
-    (function init(){ draw(); })();
+    async function submitName(){
+      const name = (nameInput.value||"").trim();
+      if(!name){ err.textContent="Name is required."; err.style.display="block"; return; }
+      const sc = Number(overlay.dataset.score||0);
+
+      saveBtn.disabled = true; saveBtn.textContent = "Saving…";
+      try{
+        // try Supabase
+        let ok = false;
+        try{
+          const { error } = await sb.from(TABLE).insert({ name, score: sc, game: GAME });
+          if(error) throw error;
+          ok = true;
+        }catch(e){
+          console.warn("Cloud save failed, switching to local", e);
+          // local fallback
+          const KEY = "cbs_chaser_local_scores";
+          const arr = JSON.parse(localStorage.getItem(KEY)||"[]");
+          arr.push({ name, score: sc, created_at: Date.now() });
+          localStorage.setItem(KEY, JSON.stringify(arr));
+          ok = true;
+          lbNote.style.display="block";
+        }
+        if(ok){
+          overlay.style.display="none";
+          exitPlayScreen();
+          renderTop();
+        }
+      }finally{
+        saveBtn.disabled = false; saveBtn.textContent = "Save";
+      }
+    }
+    nameInput.addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ e.preventDefault(); submitName(); } });
+    saveBtn.addEventListener("click", submitName);
+
+    /******** LEADERBOARD ********/
+    async function renderTop(){
+      tbody.innerHTML = "<tr><td colspan='3' class='muted'>Loading…</td></tr>"; lbNote.style.display="none";
+      try{
+        const { data, error } = await sb.from(TABLE)
+          .select("name,score,created_at")
+          .eq("game", GAME)
+          .order("score",{ascending:false})
+          .order("created_at",{ascending:true})
+          .limit(10);
+        if(error) throw error;
+        fillRows(data||[]);
+      }catch(e){
+        console.warn("Cloud leaderboard failed; using local", e);
+        lbNote.style.display="block";
+        const KEY = "cbs_chaser_local_scores";
+        const arr = JSON.parse(localStorage.getItem(KEY)||"[]")
+          .sort((a,b)=> (b.score||0)-(a.score||0))
+          .slice(0,10);
+        fillRows(arr);
+      }
+    }
+    function escapeHtml(s){ return (s??"").toString().replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+    function fillRows(rows){
+      tbody.innerHTML = "";
+      if(!rows.length){ tbody.innerHTML = "<tr><td colspan='3' class='muted'>No scores yet</td></tr>"; return; }
+      rows.forEach((r,i)=>{
+        const tr=document.createElement("tr");
+        tr.innerHTML = `<td>${i+1}</td><td>${escapeHtml((r.name||"").slice(0,30)||"Anonymous")}</td><td>${Number(r.score)||0}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    /******** INIT ********/
+    renderTop();
+
   </script>
 </body>
 </html>
