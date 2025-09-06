@@ -3,18 +3,22 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CBS Coin — Top Holders Verify</title>
-  <meta name="description" content="Koppel je wallet en claim een naam als je bij de top holders hoort." />
+  <title>CBS Community — Top Holders</title>
+  <meta name="description" content="Officiële CBS Community-pagina: top holders, wallet-verify en naam claimen." />
   <style>
     :root{--bg:#0b0c10;--panel:#13141a;--ink:#f2f3f7;--dim:#b9bac4;--line:#262838;--brand:#e0b15a}
     *{box-sizing:border-box}body{margin:0;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:radial-gradient(60% 40% at 50% 0%,rgba(255,255,255,.06),transparent 60%),var(--bg);color:var(--ink)}
-    .wrap{max-width:960px;margin:auto;padding:20px}
-    h1{font-size:clamp(22px,3.5vw,34px);margin:0 0 6px}
+    .wrap{max-width:1000px;margin:auto;padding:20px}
+    header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand img{width:40px;height:40px;border-radius:8px}
+    h1{font-size:clamp(22px,3.6vw,34px);margin:0}
     .sub{color:var(--dim)}
-    .row{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
-    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:#171826;color:var(--ink);text-decoration:none}
+    .row{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:#171826;color:var(--ink);text-decoration:none;cursor:pointer}
     .btn:hover{border-color:#35364a}
     .btn.brand{background:linear-gradient(180deg,#2a2215,#1e1a12);border-color:#3a2f1b}
+    .btn.danger{background:#2a1717;border-color:#4a2b2b}
     .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;margin-top:14px}
     .muted{color:var(--dim)}
     .holders{width:100%;border-collapse:separate;border-spacing:0 8px}
@@ -30,83 +34,100 @@
     .error{color:#ff9f9f}
     .inline{display:flex;gap:8px;align-items:center}
     input[type="text"]{background:#0f1020;border:1px solid var(--line);border-radius:10px;padding:8px 10px;color:var(--ink);min-width:220px}
-    .save{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:#1a1b2a;color:var(--ink)}
+    .save{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:#1a1b2a;color:var(--ink);cursor:pointer}
     .save:hover{border-color:#3a3c54}
+    footer{margin:24px 0;text-align:center;color:#8b8d98;font-size:12px}
     .hr{height:1px;background:linear-gradient(90deg,transparent,#303045,transparent);margin:16px 0}
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <h1>Top Holders — Verify & Claim Name</h1>
-      <div class="sub">Koppel je wallet. Als je bij de top holders staat, kun je je **naam** achter je adres zetten. <span class="muted">(Lokaal opgeslagen voor nu)</span></div>
+      <div class="brand">
+        <!-- Vervang met je echte logo -->
+        <img src="/assets/logo.png" alt="CBS Coin logo" />
+        <div>
+          <h1>CBS Community — Top Holders</h1>
+          <div class="sub">Verbind je wallet. Als je in de top staat, kun je je **naam** claimen.</div>
+        </div>
+      </div>
       <div class="row">
         <button id="connectBtn" class="btn brand">🔐 Wallet verbinden</button>
         <button id="refreshBtn" class="btn">🔄 Opnieuw laden</button>
-        <span id="connInfo" class="muted"></span>
+        <button id="exportBtn" class="btn">📤 Exporteer namen (JSON)</button>
+        <button id="clearBtn" class="btn danger">🧹 Wis lokale namen</button>
       </div>
     </header>
 
     <div class="card">
       <div class="inline"><strong>Status:</strong> <span id="status" class="muted">Bezig met laden…</span></div>
+      <div class="inline" style="margin-top:6px"><strong>Wallet:</strong> <span id="connInfo" class="muted">Niet verbonden</span></div>
       <div class="hr"></div>
       <table class="holders" id="holdersTbl">
         <thead>
           <tr>
             <th style="width:60px">#</th>
             <th>Owner (wallet)</th>
-            <th style="width:180px">Token balance</th>
-            <th style="width:260px">Naam (claim)</th>
+            <th style="width:200px">Token balance</th>
+            <th style="width:320px">Naam (claim)</th>
           </tr>
         </thead>
         <tbody id="holdersBody"></tbody>
       </table>
       <div class="hr"></div>
-      <div class="muted">Bron: Solana RPC → <code>getTokenLargestAccounts</code> + <code>getParsedAccountInfo</code>. Geen backend nodig. Voor nu bewaren we namen in <strong>localStorage</strong>. Later kunnen we overschakelen op een publieke JSON of kleine database.</div>
+      <div class="muted">Bron: Solana JSON‑RPC (<code>getTokenLargestAccounts</code> → <code>getParsedAccountInfo</code>). Namen worden nu <strong>alleen lokaal</strong> opgeslagen (localStorage). Later kunnen we dit publiek maken via een JSON-bestand in je repo of een lichte database.</div>
     </div>
 
     <div class="card">
-      <h3>Uitleg (simpel)</h3>
+      <h3>Hoe werkt het?</h3>
       <ol>
-        <li>Klik <em>Wallet verbinden</em> (Phantom/oké-keuring).</li>
-        <li>We halen top token-accounts op voor de CBS Coin mint en tonen de <strong>owners</strong>.</li>
-        <li>Als jouw wallet-adres overeenkomt met een owner in de lijst, kun je een <strong>naam claimen</strong>.</li>
-        <li>Namen worden lokaal onthouden. Wil je het publiek maken? Dan voegen we later een klein JSON-bestand of webhook toe.</li>
+        <li>Klik <em>Wallet verbinden</em> (Phantom vereist).</li>
+        <li>De pagina haalt de top token‑accounts op voor de CBS Coin mint en toont de <strong>owners</strong>.</li>
+        <li>Als jouw wallet gelijk is aan een owner in de tabel, kun je een <strong>naam claimen</strong> (veld + Opslaan).</li>
+        <li>Je naam wordt lokaal onthouden. Wil je zichtbaarheid voor iedereen? Gebruik de export en zet het JSON‑bestand publiek, of koppel een kleine webhook.</li>
       </ol>
     </div>
+
+    <footer>© <span id="y"></span> CBS Coin — Community Builds Sovereignty</footer>
   </div>
 
   <script>
   (function(){
-    const MINT = 'B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk'; // CBS Coin mint
-    const RPC = 'https://api.mainnet-beta.solana.com'; // publiek; eventueel later Helius/Switchboard
-    const LIMIT = 20; // houd het klein voor snelheid
+    // ====== CONFIG ======
+    const MINT = 'B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk'; // CBS Coin mint (bevestigd)
+    const RPC = 'https://api.mainnet-beta.solana.com'; // later eventueel Helius
+    const LIMIT = 25; // top N token accounts
 
+    // ====== STATE ======
     const state = {
       connectedPubkey: null,
       holders: [], // { rank, owner, tokenAccount, uiAmount }
       names: loadNames(),
     };
 
-    const el = (id) => document.getElementById(id);
-    const statusEl = el('status');
-    const bodyEl = el('holdersBody');
-    const connInfoEl = el('connInfo');
+    // ====== DOM ======
+    const $ = (id) => document.getElementById(id);
+    const statusEl = $('status');
+    const bodyEl = $('holdersBody');
+    const connInfoEl = $('connInfo');
 
-    el('connectBtn').addEventListener('click', connectWallet);
-    el('refreshBtn').addEventListener('click', () => init());
+    $('connectBtn').addEventListener('click', connectWallet);
+    $('refreshBtn').addEventListener('click', () => init());
+    $('exportBtn').addEventListener('click', exportNames);
+    $('clearBtn').addEventListener('click', clearNames);
 
+    $('y').textContent = new Date().getFullYear();
     init();
 
+    // ====== INIT: haal top holders ======
     async function init(){
-      status('Bezig met ophalen van top holders…');
+      setStatus('Bezig met ophalen van top holders…');
       try{
         const largest = await rpc({
           method: 'getTokenLargestAccounts',
           params: [MINT, { commitment: 'confirmed' }]
         });
         const list = (largest?.value || []).slice(0, LIMIT);
-        // per token account owner ophalen via getParsedAccountInfo
         const holders = [];
         let rank = 1;
         for(const entry of list){
@@ -115,25 +136,20 @@
             method: 'getParsedAccountInfo',
             params: [tokenAcc, { commitment: 'confirmed' }]
           });
-          // parsed.data.info.owner bevat de wallet van de token account owner
           const owner = info?.value?.data?.parsed?.info?.owner || null;
-          const uiAmount = entry?.uiAmount || 0;
+          const uiAmount = entry?.uiAmount ?? Number(entry?.amount || 0) / Math.pow(10, Number(entry?.decimals || 0));
           holders.push({ rank: rank++, owner, tokenAccount: tokenAcc, uiAmount });
         }
         state.holders = holders;
         render();
-        status('Klaar.');
+        setStatus('Klaar.');
       }catch(err){
         console.error(err);
-        status('Fout bij ophalen. Zie console.', 'error');
+        setStatus('Fout bij ophalen. Open de console voor details.', 'error');
       }
     }
 
-    function status(msg, kind){
-      statusEl.textContent = msg;
-      statusEl.className = kind ? kind : 'muted';
-    }
-
+    // ====== WALLET ======
     async function connectWallet(){
       try{
         const provider = window.solana || window.phantom?.solana;
@@ -143,13 +159,14 @@
         }
         const res = await provider.connect();
         state.connectedPubkey = res.publicKey?.toString?.() || null;
-        connInfoEl.textContent = state.connectedPubkey ? `Verbonden: ${short(state.connectedPubkey)}` : '';
+        connInfoEl.textContent = state.connectedPubkey ? `Verbonden: ${short(state.connectedPubkey)}` : 'Niet verbonden';
         render();
       }catch(err){
         console.warn('Wallet connect geannuleerd of fout', err);
       }
     }
 
+    // ====== RENDER ======
     function render(){
       bodyEl.innerHTML = '';
       const you = state.connectedPubkey;
@@ -192,11 +209,10 @@
       });
     }
 
-    // helpers ---------------------------------------------------------------
+    // ====== HELPERS ======
     async function rpc(body){
       const resp = await fetch(RPC, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        method: 'POST', headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ jsonrpc: '2.0', id: 1, ...body })
       });
       const json = await resp.json();
@@ -207,10 +223,12 @@
     function fmt(n){ try{ return Number(n).toLocaleString(); }catch{ return n; } }
     function loadNames(){ try{ return JSON.parse(localStorage.getItem('cbs_names')||'{}'); }catch{ return {}; } }
     function saveNames(obj){ localStorage.setItem('cbs_names', JSON.stringify(obj)); }
+    function clearNames(){ if(confirm('Weet je zeker dat je alle lokale namen wil wissen?')){ localStorage.removeItem('cbs_names'); state.names = {}; render(); } }
+    function exportNames(){ const blob = new Blob([JSON.stringify(state.names, null, 2)], {type:'application/json'}); const url = URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='cbs_names.json'; a.click(); URL.revokeObjectURL(url); }
     function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c])); }
     function css(s){ return (s||'').replace(/"/g,'\\"'); }
+    function setStatus(msg, cls){ statusEl.textContent = msg; statusEl.className = cls ? cls : 'muted'; }
   })();
   </script>
 </body>
 </html>
-
