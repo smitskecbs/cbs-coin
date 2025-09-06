@@ -165,7 +165,7 @@
   <div class="panel" id="leaderPanel" style="max-width:880px;margin-top:-6px">
     <h2 style="margin:.2rem 0 .6rem; color:#bffef2; text-align:center">🏆 Top 3</h2>
     <p class="muted" style="text-align:center;margin-top:-.25rem">
-      Scores normalized to match Snake (<b>Stack ×5</b>, Arkanoid ÷5).
+      Top scores from all games.
     </p>
     <table>
       <thead><tr><th>Rank</th><th>Player</th><th>Score</th></tr></thead>
@@ -199,14 +199,13 @@
   <!-- Supabase UMD -->
   <script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 
-  <!-- Supabase + Leaderboard (same table) -->
+  <!-- Supabase + Leaderboard -->
   <script>
     const SUPABASE_URL = "https://aiawteejixsgsunmefpi.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpYXd0ZWVqaXhzZ3N1bm1lZnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NDExODIsImV4cCI6MjA3MTAxNzE4Mn0.aMbRUM0YebNMfZhSLb9PFdSHAZ-D5WpACPefCfjSLqI";
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const LB_TABLE = "leaderboard";
-    const STACK_NORMALIZE_MUL = 5;      // fairness to Snake
-    const MAX_ATTEMPTS = 3;             // ← 3 tries
+    const MAX_ATTEMPTS = 3; // 3 tries
 
     const $ = (id)=>document.getElementById(id);
     const tbody   = $("leaderboardBody");
@@ -238,7 +237,7 @@
     }
   </script>
 
-  <!-- Game logic (Stack) – 3 tries, cumulative total; camera follows top block -->
+  <!-- Game logic (Stack) – 3 tries, +3 points/drop; camera follows top block -->
   <script>
     const startBtn   = document.getElementById("startBtn");
     const playOverlay= document.getElementById("playOverlay");
@@ -327,13 +326,13 @@
       const overlap=Math.floor(right-left);
       if(overlap<=0){ gameOver(); return; }
 
-      // perfect (alleen glow; punten zijn vast +3)
+      // perfect (glow only; points are fixed +3)
       const tol=2;
       const perfect=Math.abs(mover.x-prev.x)<=tol && Math.abs((mover.x+mover.w)-(prev.x+prev.w))<=tol;
 
       let newX=left,newW=overlap;
       if(perfect){ newX=prev.x; newW=prev.w; if(navigator.vibrate) navigator.vibrate(12); }
-      score += 3; // ← 3 punten per succesvolle drop
+      score += 3; // +3 points per successful drop
 
       const newY=mover.y;
       blocks.push({x:newX,y:newY,w:newW,h:BLOCK_H,perfect});
@@ -341,7 +340,7 @@
       // follow the action
       adjustCameraTo(newY);
 
-      // volgende mover
+      // next mover
       const nextY=newY-BLOCK_H, dir=(mover.dir===1?-1:1);
       mover={x:(dir===1?-newW:W),y:nextY,w:newW,h:BLOCK_H,dir};
       SPEED_INC>0 && (speed+=SPEED_INC);
@@ -350,12 +349,12 @@
     // keeps the top block around ~65% of the screen, continuously
     function adjustCameraTo(y){
       const target = H * 0.65;
-      camY = target - y; // direct follow → nooit uit beeld
+      camY = target - y; // direct follow → never out of view
     }
 
     function gameOver(){
       running=false;
-      totalScore += Math.max(0, score);   // tel poging-score op bij totaal
+      totalScore += Math.max(0, score);   // add attempt score to total
       attemptsLeft = Math.max(0, attemptsLeft - 1);
       intermission = true;
       draw(true);
@@ -364,10 +363,10 @@
         const thisAttempt = attemptNo;
         interTimer = setTimeout(()=>{
           attemptNo = thisAttempt + 1;
-          startAttempt();                 // auto next try, blijf in overlay
+          startAttempt();                 // auto next try, stay in overlay
         }, 800);
       }else{
-        // 3 pogingen klaar → naam + opslaan (totaal)
+        // 3 tries done → name + save (total)
         setTimeout(()=> openNameModal(totalScore), 550);
       }
     }
@@ -392,7 +391,7 @@
       if(mover.dir===1 && mover.x>W) mover.x = -mover.w;
       if(mover.dir===-1 && mover.x+mover.w<0) mover.x = W;
 
-      // camera volgt ook tijdens bewegen, zodat de mover altijd zichtbaar blijft
+      // camera follows while moving, so mover stays visible
       adjustCameraTo(mover.y);
     }
 
@@ -444,7 +443,7 @@
       ctx.restore();
     }
 
-    // Name Modal (save TOTAL to Supabase)
+    // Name Modal (save TOTAL to Supabase, no scaling)
     function openNameModal(total){
       overlay.style.display="flex";
       nameInput.value=""; err.style.display="none";
@@ -462,7 +461,7 @@
       const name=(nameInput.value||"").trim();
       if(!name){ err.textContent="Name is required."; err.style.display="block"; return; }
       const total = Number(overlay.dataset.total||0);
-      const scoreNorm = Math.max(0, Math.round(total * STACK_NORMALIZE_MUL));
+      const scoreNorm = Math.max(0, Math.round(total)); // 1:1 — no scaling
       saveBtn.disabled=true; saveBtn.textContent="Saving…";
       try{
         const { error } = await sb.from("leaderboard").insert({ name, score: scoreNorm });
@@ -478,7 +477,7 @@
       }finally{
         saveBtn.disabled=false; saveBtn.textContent="Save";
         renderTop3();
-        // Nieuwe sessie mag direct weer
+        // New session can start immediately
         resetSession();
         startAttempt();
       }
