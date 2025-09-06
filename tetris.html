@@ -134,8 +134,8 @@
       display:grid; gap:8px; width:min(92vw,520px);
       grid-template-columns:1fr 1fr; align-items:center;
     }
-    .controls .left{ display:flex; gap:8px; justify-content:flex-start; }
-    .controls .right{ display:flex; gap:8px; justify-content:flex-end; }
+    .controls .left{ display:flex; gap:8px; justify-content:flex-start; flex-wrap:nowrap; }
+    .controls .right{ display:flex; gap:8px; justify-content:flex-end;   flex-wrap:nowrap; }
     .tbtn{
       flex:0 0 auto; min-width:64px; min-height:48px; padding:10px 14px;
       border-radius:12px; border:1px solid rgba(0,255,240,.35);
@@ -145,6 +145,13 @@
       touch-action:none;
     }
     .tbtn:active{ transform:translateY(1px); }
+
+    /* MOBIEL FIX: stapel controls onder elkaar en knoppen iets smaller */
+    @media (max-width: 460px){
+      .controls{ grid-template-columns:1fr; }
+      .controls .left, .controls .right{ justify-content:center; flex-wrap:wrap; }
+      .tbtn{ min-width:56px; padding:10px 12px; }
+    }
 
     body.play-mode header,
     body.play-mode #controlsPanel,
@@ -292,7 +299,7 @@
     const lbNote  = $("lbNote");
     const toast   = $("toast");
     function showToast(msg="Saved ✓"){ toast.textContent=msg; toast.style.display="block"; setTimeout(()=>toast.style.display="none", 1500); }
-    function escapeHtml(s){ return (s||"").toString().replace(/[&<>\"']/g, m=>({"&":"&amp;","<":"&lt;"," >":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+    function escapeHtml(s){ return (s||"").toString().replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
 
     async function renderTop3(){
       tbody.innerHTML = "<tr><td colspan='3' class='muted'>Loading…</td></tr>"; lbNote.style.display="none";
@@ -437,7 +444,7 @@
       }
       if(cleared>0){
         const gained = LINE_SCORES[cleared] * Math.max(1, level);
-        score += gained;
+        score += gained;                 // <<< punten ALLEEN bij lijnen
         lines += cleared;
         const newLevel = 1 + Math.floor(lines/10);
         if(newLevel !== level){ level = newLevel; dropInterval = levelSpeedMs(); }
@@ -534,13 +541,14 @@
 
     function hardDrop(){
       const d = hardDropDist();
-      if(d>0){ py+=d; score += d * 2; updateStats(); }
+      if(d>0){ py += d; }   // <<< geen punten voor hard drop
+      updateStats();
       if(py < 0){ gameOver(); return; }
       lockPiece();
     }
 
     function softStep(){
-      if(tryMove(0,1)){ score += 1; updateStats(); }
+      if(tryMove(0,1)){ /* geen punten voor soft drop */ }
       else {
         if(py < 0){ gameOver(); return; }
         lockPiece();
@@ -641,7 +649,6 @@
     // Tap canvas to rotate (quick mobile gesture)
     canvas.addEventListener('pointerup', (e)=>{
       if(!document.body.classList.contains('play-mode')) return;
-      // tik bovenste helft -> rotate, onderste -> hard drop
       const rect = canvas.getBoundingClientRect();
       const y = e.clientY - rect.top;
       if(y < rect.height * 0.6) attemptRotate(false); else hardDrop();
