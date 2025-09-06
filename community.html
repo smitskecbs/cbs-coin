@@ -1,6 +1,4 @@
-const authorLink = item.authorUrl || getParam('creator') || item.url || '#';
-      const memeParam = getParam('meme');
-      const dest = item.url || memeParam || authorLink || '#';<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="nl">
 <head>
   <meta charset="utf-8" />
@@ -11,12 +9,12 @@ const authorLink = item.authorUrl || getParam('creator') || item.url || '#';
     :root{--bg:#0b0c10;--panel:#13141a;--ink:#f2f3f7;--dim:#b9bac4;--line:#262838;--brand:#e0b15a}
     *{box-sizing:border-box}body{margin:0;font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:radial-gradient(60% 40% at 50% 0%,rgba(255,255,255,.06),transparent 60%),var(--bg);color:var(--ink)}
     .wrap{max-width:1000px;margin:auto;padding:20px}
-    header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+    header{display:flex;flex-direction:column;gap:12px}
     .brand{display:flex;align-items:center;gap:10px}
     .brand img{width:40px;height:40px;border-radius:8px}
     h1{font-size:clamp(22px,3.6vw,34px);margin:0}
     .sub{color:var(--dim)}
-    .row{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+    .row{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
     .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:#171826;color:var(--ink);text-decoration:none;cursor:pointer}
     .btn:hover{border-color:#35364a}
     .btn.brand{background:linear-gradient(180deg,#2a2215,#1e1a12);border-color:#3a2f1b}
@@ -34,7 +32,6 @@ const authorLink = item.authorUrl || getParam('creator') || item.url || '#';
     .gold{background:linear-gradient(180deg,#f8e28a,#caa94b);color:#2b220d;border:1px solid #a58534}
     .silver{background:linear-gradient(180deg,#e6e9ef,#bfc6d6);color:#1e2430;border:1px solid #96a0b5}
     .bronze{background:linear-gradient(180deg,#e9c7a4,#b38352);color:#2b2118;border:1px solid #8d6845}
-    .trophy{font-size:20px;margin-left:6px;color:var(--brand)}
     .thumb{width:80px;height:60px;border-radius:8px;object-fit:cover;border:1px solid var(--line);background:#0f1020}
     .thumbWrap{position:relative;display:inline-block}
     .logoBadge{position:absolute;right:6px;top:6px;width:20px;height:20px;border-radius:6px;border:1px solid var(--line);background:#0f1020}
@@ -46,17 +43,43 @@ const authorLink = item.authorUrl || getParam('creator') || item.url || '#';
     .tag{display:inline-block;padding:2px 6px;border:1px solid var(--line);border-radius:8px;font-size:12px;color:var(--dim)}
     .hr{height:1px;background:linear-gradient(90deg,transparent,#303045,transparent);margin:16px 0}
     footer{margin:24px 0;text-align:center;color:#8b8d98;font-size:12px}
+    .langToggle{margin-left:auto}
+  .langSwitch{position:fixed;top:12px;right:12px;display:flex;gap:6px;z-index:50}
+    .langSwitch .btn{padding:6px 10px}
   </style>
 </head>
 <body>
   <div class="wrap">
+    <div class="langSwitch">
+      <button id="langNL" class="btn">NL</button>
+      <button id="langEN" class="btn brand">EN</button>
+    </div>
     <header>
       <div class="brand">
         <img src="logo.png" alt="CBS Coin" />
         <div>
-          <h1>Best Submissions — Leaderboard</h1>
-          <div class="sub">Winnaars & beste inzendingen — strak en simpel.</div>
+          <h1 id="title">CBS Community — Best Submissions Leaderboard</h1>
+          <div class="sub" id="subtitle">Winnaars & beste inzendingen — strak en simpel.</div>
         </div>
+        <select id="lang" class="select langToggle">
+          <option value="en">English</option>
+          <option value="nl" selected>Nederlands</option>
+        </select>
+      </div>
+      <div class="row">
+        <label class="muted">Top&nbsp;
+          <select id="topN" class="select">
+            <option value="10">10</option>
+            <option value="25" selected>25</option>
+            <option value="50">50</option>
+          </select>
+        </label>
+        <select id="sortBy" class="select">
+          <option value="score" selected>Sorteren: Score</option>
+          <option value="date">Sorteren: Datum</option>
+          <option value="title">Sorteren: Titel</option>
+        </select>
+        <button id="exportBtn" class="btn">📤 Export CSV</button>
       </div>
     </header>
 
@@ -65,15 +88,13 @@ const authorLink = item.authorUrl || getParam('creator') || item.url || '#';
         <thead>
           <tr>
             <th class="rank">#</th>
-            <th>Inzending</th>
-            <th style="width:120px">Score</th>
-            <th style="width:160px">Datum</th>
+            <th id="colSubmission">Inzending</th>
+            <th style="width:120px" id="colScore">Score</th>
+            <th style="width:160px" id="colDate">Datum</th>
           </tr>
         </thead>
         <tbody id="tbody"></tbody>
       </table>
-      <div class="hr"></div>
-      <div class="muted">Nieuwe winnaars worden handmatig toegevoegd. Dit is onze officiële Wall of Fame.</div>
     </section>
 
     <footer>© <span id="y"></span> CBS Coin — Community Builds Sovereignty</footer>
@@ -81,46 +102,103 @@ const authorLink = item.authorUrl || getParam('creator') || item.url || '#';
 
   <script>
   const SUBMISSIONS = [
-    { id:'w1', title:'Mini Meme Contest #1', author:'@maestropicknava', authorUrl:'https://x.com/maestropicknava', wallet:'', thumb:'/assets/community/winners/w1.jpg', url:'https://x.com/i/status/1961731121353216216', tags:['winner'], score:'🏆', date:'2025-08-30', winner:true }
+    { id:'w1', title:'Mini Meme Contest #1', author:'@maestropicknava', authorUrl:'https://x.com/maestropicknava', wallet:'', thumb:'winner1.jpg', url:'https://x.com/i/status/1961731121353216216', tags:['winner'], score:'🏆', date:'2025-08-30', winner:true }
   ];
 
   const $ = (id) => document.getElementById(id);
   const tbody = $('tbody');
+  const topN = $('topN');
+  const sortBy = $('sortBy');
+  const exportBtn = $('exportBtn');
+  const langSel = $('lang');
   $('y').textContent = new Date().getFullYear();
-  const CBS_LOGO = 'logo.png';
-  function getParam(k){ try{ return new URLSearchParams(location.search).get(k) || ''; }catch{ return ''; } }
 
+  const i18n = {
+    en:{
+      title:"CBS Community — Best Submissions Leaderboard",
+      subtitle:"Winners & best entries — clean and simple.",
+      colSubmission:"Submission",colScore:"Score",colDate:"Date",
+      sortScore:"Sort: Score",sortDate:"Sort: Date",sortTitle:"Sort: Title",
+      export:"📤 Export CSV"
+    },
+    nl:{
+      title:"CBS Community — Beste Inzendingen Leaderboard",
+      subtitle:"Winnaars & beste inzendingen — strak en simpel.",
+      colSubmission:"Inzending",colScore:"Score",colDate:"Datum",
+      sortScore:"Sorteren: Score",sortDate:"Sorteren: Datum",sortTitle:"Sorteren: Titel",
+      export:"📤 Exporteer CSV"
+    }
+  };
+
+  langSel.addEventListener('change',()=>applyLang(langSel.value));
+  function applyLang(l){
+    const t=i18n[l];
+    $('title').textContent=t.title;
+    $('subtitle').textContent=t.subtitle;
+    $('colSubmission').textContent=t.colSubmission;
+    $('colScore').textContent=t.colScore;
+    $('colDate').textContent=t.colDate;
+    sortBy.options[0].text=t.sortScore;
+    sortBy.options[1].text=t.sortDate;
+    sortBy.options[2].text=t.sortTitle;
+    exportBtn.textContent=t.export;
+  }
+
+  // render table
   function render(){
-    tbody.innerHTML = '';
-    SUBMISSIONS.forEach((item, idx) => {
-      const tr = document.createElement('tr');
-      const authorLink = item.authorUrl || getParam('creator') || item.url || '#';
-      const dest = item.url || authorLink || '#';
-      tr.innerHTML = `
+    tbody.innerHTML='';
+    let arr=[...SUBMISSIONS];
+    arr.forEach((item,idx)=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=`
         <td class="rank">${idx+1} <span class="trophy">🏆</span></td>
         <td>
           <div style="display:flex; gap:12px; align-items:center">
-            <a href="${dest}" target="_blank" rel="noopener" class="thumbWrap">
-              <img src="${item.thumb}" class="thumb" alt="${escapeHtml(item.title)}" />
-              <img src="${CBS_LOGO}" alt="CBS" class="logoBadge" />
+            <a href="${item.url}" target="_blank" rel="noopener" class="thumbWrap">
+              <img src="${item.thumb}" class="thumb" alt="${item.title}" />
+              <img src="logo.png" alt="CBS" class="logoBadge" />
             </a>
             <div>
-              <div class="title"><a href="${dest}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit">${escapeHtml(item.title)}</a></div>
-              <div class="author"><a href="${authorLink}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">${escapeHtml(item.author)}</a> <span class="addr">${escapeHtml(item.wallet)}</span></div>
-              <div class="tags">${(item.tags||[]).map(t=>`<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>
+              <div class="title"><a href="${item.url}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit">${item.title}</a></div>
+              <div class="author"><a href="${item.authorUrl}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">${item.author}</a></div>
+              <div class="tags">${(item.tags||[]).map(t=>`<span class=\"tag\">${t}</span>`).join('')}</div>
             </div>
           </div>
         </td>
         <td class="score">${item.score}</td>
-        <td>${item.date}</td>
-      `;
+        <td>${item.date}</td>`;
       tbody.appendChild(tr);
     });
   }
 
-  function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;','\'':'&#39;'}[c])); }
-
   render();
-  </script>
+  applyLang(langSel.value);
+    // ====== Language toggle (EN/NL) ======
+  const LANG_KEY = 'cbs_lang';
+  let currentLang = localStorage.getItem(LANG_KEY) || (typeof getParam==='function' ? (getParam('lang')||'nl') : 'nl');
+  const langNL = document.getElementById('langNL');
+  const langEN = document.getElementById('langEN');
+  function setLang(lang){ currentLang = lang; localStorage.setItem(LANG_KEY, lang); applyLang(); }
+  if(langNL) langNL.addEventListener('click', ()=> setLang('nl'));
+  if(langEN) langEN.addEventListener('click', ()=> setLang('en'));
+  function applyLang(){
+    const dict = {
+      nl: { title:'Beste inzendingen — Leaderboard', subtitle:'Winnaars & beste inzendingen — strak en simpel.', thRank:'#', thEntry:'Inzending', thScore:'Score', thDate:'Datum', export:'Exporteer CSV', sortScore:'Sorteren: Score', sortDate:'Sorteren: Datum', sortTitle:'Sorteren: Titel', topLabel:'Top' },
+      en: { title:'Best Submissions — Leaderboard', subtitle:'Winners & top entries — clean and simple.', thRank:'#', thEntry:'Entry', thScore:'Score', thDate:'Date', export:'Export CSV', sortScore:'Sort by: Score', sortDate:'Sort by: Date', sortTitle:'Sort by: Title', topLabel:'Top' }
+    }[currentLang];
+    const h1 = document.querySelector('h1'); if(h1) h1.textContent = dict.title;
+    const sub = document.querySelector('.sub'); if(sub) sub.textContent = dict.subtitle;
+    const ths = document.querySelectorAll('thead th'); if(ths.length>=4){ ths[0].textContent=dict.thRank; ths[1].textContent=dict.thEntry; ths[2].textContent=dict.thScore; ths[3].textContent=dict.thDate; }
+    const exp = document.getElementById('exportBtn'); if(exp) exp.textContent = '📤 ' + dict.export;
+    const sortSel = document.getElementById('sortBy'); if(sortSel && sortSel.options.length>=3){ sortSel.options[0].textContent=dict.sortScore; sortSel.options[1].textContent=dict.sortDate; sortSel.options[2].textContent=dict.sortTitle; }
+    const topLabelSpan = document.querySelector('label .muted'); if(topLabelSpan) topLabelSpan.textContent = dict.topLabel + ' ';
+    // toggle button emphasis
+    if(langNL) langNL.className = 'btn' + (currentLang==='nl'?' brand':'');
+    if(langEN) langEN.className = 'btn' + (currentLang==='en'?' brand':'');
+  }
+  // apply once at load and after each render call
+  try{ applyLang(); }catch{}
+</script>
 </body>
 </html>
+
