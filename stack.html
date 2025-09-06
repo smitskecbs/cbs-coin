@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>CBS Stack – Holders ≥1000 CBS (unified leaderboard)</title>
+  <title>CBS Stack – Holders ≥1000 CBS (best-of-10, unified leaderboard)</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet"/>
 
@@ -132,10 +132,10 @@
       <button id="startBtn" class="btn" disabled>▶️ Start</button>
       <span id="eligibility" class="muted" style="align-self:center">Not connected</span>
     </div>
-    <p class="muted" style="margin-top:.5rem">
-      Holders-only: unlocked for wallets holding <b>≥ 1000 CBS</b>.<br>
-      Tap / Click / Space / Enter to drop a block.
+    <p class="muted" style="margin:.5rem 0">
+      Holders-only: unlocked for wallets holding <b>≥ 1000 CBS</b>.
     </p>
+    <div id="sessionInfo" class="muted" style="margin-top:.25rem">Session: Best 0 • Attempts left 10</div>
   </div>
 
   <main class="container">
@@ -154,6 +154,7 @@
           <p>A moving neon block slides horizontally. Tap (or press Space/Enter) to drop it on the stack.</p>
           <p>Only the overlapping part stays. Miss entirely → game over.</p>
           <p>Perfect alignment (±2px) glows and grants a combo bonus.</p>
+          <p><b>Best-of-10:</b> you get 10 attempts per session; only your <b>best</b> score is saved.</p>
         </div>
         <div class="panel" style="text-align:center">
           <a href="index.html" class="btn">← Back to Home</a>
@@ -162,7 +163,7 @@
     </div>
   </main>
 
-  <!-- Leaderboard Top 3 (shared with Snake/Arkanoid) -->
+  <!-- Leaderboard Top 3 (shared) -->
   <div class="panel" id="leaderPanel" style="max-width:880px;margin-top:-6px">
     <h2 style="margin:.2rem 0 .6rem; color:#bffef2; text-align:center">🏆 Top 3</h2>
     <p class="muted" style="text-align:center;margin-top:-.25rem">
@@ -184,7 +185,7 @@
   <!-- Save Name Modal -->
   <div id="nameOverlay">
     <div id="nameCard">
-      <h3>Save your score</h3>
+      <h3>Save your best score</h3>
       <p class="muted" style="margin:.1rem 0 .6rem">Type your name and press <b>Enter</b> to submit.</p>
       <input id="nameInput" maxlength="30" placeholder="Your name or wallet…" autocomplete="off" />
       <div id="error">Name is required.</div>
@@ -206,15 +207,31 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpYXd0ZWVqaXhzZ3N1bm1lZnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NDExODIsImV4cCI6MjA3MTAxNzE4Mn0.aMbRUM0YebNMfZhSLb9PFdSHAZ-D5WpACPefCfjSLqI";
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const LB_TABLE = "leaderboard";
-    const STACK_NORMALIZE_MUL = 5; // ← fair scaling to match Snake
+    const STACK_NORMALIZE_MUL = 5;            // fairness to Snake
+    const MAX_ATTEMPTS = 10;
 
     const $ = (id)=>document.getElementById(id);
-    const tbody = $("leaderboardBody");
-    const lbNote= $("lbNote");
-    const toast = $("toast");
+    const tbody   = $("leaderboardBody");
+    const lbNote  = $("lbNote");
+    const toast   = $("toast");
+    const sessionInfo = $("sessionInfo");
 
-    function showToast(msg="Saved ✓"){ toast.textContent=msg; toast.style.display="block"; setTimeout(()=>toast.style.display="none", 1500); }
+    let attemptsLeft = MAX_ATTEMPTS;
+    let bestRaw = 0;
+
+    function showToast(msg="Saved ✓"){
+      toast.textContent=msg; toast.style.display="block";
+      setTimeout(()=>toast.style.display="none", 1500);
+    }
     function escapeHtml(s){ return (s||"").toString().replace(/[&<>\"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+    function updateSessionUI(){
+      sessionInfo.textContent = `Session: Best ${bestRaw} • Attempts left ${attemptsLeft}`;
+    }
+    function resetSession(){
+      attemptsLeft = MAX_ATTEMPTS;
+      bestRaw = 0;
+      updateSessionUI();
+    }
 
     async function renderTop3(){
       tbody.innerHTML = "<tr><td colspan='3' class='muted'>Loading…</td></tr>"; lbNote.style.display="none";
@@ -234,7 +251,7 @@
     }
   </script>
 
-  <!-- Game logic (Stack) + Save Name Modal -->
+  <!-- Game logic (Stack) + Best-of-10 + Save Name Modal -->
   <script>
     const startBtn   = document.getElementById("startBtn");
     const playOverlay= document.getElementById("playOverlay");
@@ -294,7 +311,25 @@
 
     function gameOver(){
       running=false; draw(true);
-      setTimeout(()=>{ openNameModal(score); }, 500);
+      setTimeout(()=>{ afterAttempt(score); }, 450);
+    }
+
+    function afterAttempt(sc){
+      // Update session state
+      bestRaw = Math.max(bestRaw, sc);
+      attemptsLeft = Math.max(0, attemptsLeft - 1);
+      updateSessionUI();
+
+      // Exit play overlay back to controls
+      exitPlayScreen();
+
+      if(attemptsLeft > 0){
+        // Allow next try
+        startBtn.disabled = !window._canStart;
+      }else{
+        // Ask name once with best score
+        openNameModal(bestRaw);
+      }
     }
 
     function draw(ending=false){
@@ -314,7 +349,8 @@
 
       // HUD
       ctx.save(); ctx.fillStyle="#fff"; ctx.font="16px Orbitron"; ctx.textAlign="left";
-      ctx.fillText(`Score: ${score}`, 14, 24); ctx.restore();
+      ctx.fillText(`Score: ${score}`, 14, 24);
+      ctx.restore();
     }
     function drawBlock(x,y,w,h,perfect=false,isMover=false){
       ctx.save(); ctx.shadowColor=perfect?"#7dffe9":"#38f8ff"; ctx.shadowBlur=perfect?22:14;
@@ -356,23 +392,34 @@
       if(e.target.closest('button')||e.target.closest('input')) return;
       if(document.body.classList.contains('play-mode')) drop();
     }
-    startBtn.addEventListener('click',()=>{ if(!window._canStart){ alert('Holders only — need ≥ 1000 CBS.'); return; } enterPlayScreen(); startGame(); });
+
+    startBtn.addEventListener('click',()=>{
+      if(!window._canStart){ alert('Holders only — need ≥ 1000 CBS.'); return; }
+      // If previous session ended/saved, start a fresh session
+      if(attemptsLeft === 0) resetSession();
+      enterPlayScreen(); startGame();
+    });
     exitBtn.addEventListener('click',()=>{ stopGame(); exitPlayScreen(); });
 
-    // ===== Name Modal (save to Supabase) =====
-    function openNameModal(sc){
+    // ===== Name Modal (save best to Supabase) =====
+    function openNameModal(bestRawScore){
       overlay.style.display="flex";
       nameInput.value=""; err.style.display="none";
       saveBtn.disabled=false; saveBtn.textContent="Save"; nameInput.focus();
-      overlay.dataset.score = String(sc ?? 0);
+      overlay.dataset.best = String(bestRawScore ?? 0);
     }
-    cancelBtn.addEventListener("click", ()=>{ overlay.style.display="none"; startBtn.disabled=!window._canStart; exitPlayScreen(); });
+    cancelBtn.addEventListener("click", ()=>{
+      overlay.style.display="none";
+      // session finished but canceled; allow new session
+      resetSession();
+      startBtn.disabled = !window._canStart;
+    });
 
     async function submitName(){
       const name=(nameInput.value||"").trim();
       if(!name){ err.textContent="Name is required."; err.style.display="block"; return; }
-      const scRaw = Number(overlay.dataset.score||0);
-      const scoreNorm = Math.max(0, Math.round(scRaw * STACK_NORMALIZE_MUL)); // ← normalize
+      const bestRawScore = Number(overlay.dataset.best||0);
+      const scoreNorm = Math.max(0, Math.round(bestRawScore * STACK_NORMALIZE_MUL));
       saveBtn.disabled=true; saveBtn.textContent="Saving…";
       try{
         const { error } = await sb.from("leaderboard").insert({ name, score: scoreNorm });
@@ -386,15 +433,16 @@
         return;
       }finally{
         saveBtn.disabled=false; saveBtn.textContent="Save";
-        startBtn.disabled=!window._canStart;
-        exitPlayScreen(); renderTop3();
+        // After saving, start a fresh session
+        resetSession();
+        renderTop3();
       }
     }
     nameInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); submitName(); } });
     saveBtn.addEventListener("click", submitName);
 
     // Boot
-    (function init(){ renderTop3(); })();
+    (function init(){ renderTop3(); updateSessionUI(); })();
   </script>
 
   <!-- Holders-only gating (Solana ≥1000 CBS) -->
