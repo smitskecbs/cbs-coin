@@ -23,7 +23,6 @@
 
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet" />
   <style>
-    /* ===== Theme (aligned with your homepage/litepaper) ===== */
     :root{
       --bg1:#0a0c10; --bg2:#0f141b;
       --card:#0f151c; --card2:#0c1016;
@@ -47,73 +46,31 @@
       display:flex; flex-direction:column; align-items:center; padding:16px;
     }
 
-    /* Hide chrome when playing (unchanged behavior) */
     body.play-mode header,
     body.play-mode #controlsPanel,
     body.play-mode #leaderPanel{ display:none; }
 
-    /* ===== Header ===== */
     header{
-      width:100%; max-width:900px;
-      display:flex; align-items:center; gap:.9rem;
-      margin:10px auto 14px;
-      padding:12px 16px;
+      width:100%; max-width:900px; display:flex; align-items:center; gap:.9rem;
+      margin:10px auto 14px; padding:12px 16px;
       background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35));
-      border:1px solid var(--line);
-      border-radius:16px;
-      box-shadow:var(--shadow);
-      backdrop-filter:blur(6px);
+      border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); backdrop-filter:blur(6px);
     }
     header img{height:44px; width:auto; border-radius:10px; filter:drop-shadow(0 0 10px rgba(0,255,230,.35))}
-    h1{
-      margin:0;
-      font-size:clamp(1.4rem,3.3vw,2.1rem);
-      color:#bffef2;
-      text-shadow:0 0 10px rgba(0,255,240,.25);
-    }
+    h1{ margin:0; font-size:clamp(1.4rem,3.3vw,2.1rem); color:#bffef2; text-shadow:0 0 10px rgba(0,255,240,.25) }
 
-    /* ===== Panels ===== */
-    .panel{
-      width:100%; max-width:900px;
-      background:linear-gradient(180deg, var(--card), var(--card2));
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      padding:18px;
-      margin:12px auto;
-      box-shadow:var(--shadow);
-      backdrop-filter: blur(6px);
-    }
+    .panel{ width:100%; max-width:900px; background:linear-gradient(180deg, var(--card), var(--card2)); border:1px solid var(--line); border-radius:var(--radius); padding:18px; margin:12px auto; box-shadow:var(--shadow); backdrop-filter: blur(6px) }
     .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
     .muted{color:var(--muted)}
 
-    /* ===== Buttons (high-contrast neon) ===== */
-    .btn{
-      background:linear-gradient(180deg, var(--glowBtnA), var(--glowBtnB));
-      color:#001013; cursor:pointer; border:none;
-      border-radius:12px; padding:.9rem 1.35rem; font-weight:900; letter-spacing:.3px;
-      border:1px solid rgba(0,255,240,.7);
-      box-shadow:
-        0 0 12px rgba(0,255,230,.55),
-        0 0 24px rgba(0,255,230,.25),
-        inset 0 -8px 14px rgba(0,0,0,.14);
-      transition:transform .15s ease, box-shadow .15s ease, filter .15s ease;
-      white-space:nowrap;
-    }
+    .btn{ background:linear-gradient(180deg, var(--glowBtnA), var(--glowBtnB)); color:#001013; cursor:pointer; border:none; border-radius:12px; padding:.9rem 1.35rem; font-weight:900; letter-spacing:.3px; border:1px solid rgba(0,255,240,.7); box-shadow: 0 0 12px rgba(0,255,230,.55), 0 0 24px rgba(0,255,230,.25), inset 0 -8px 14px rgba(0,0,0,.14); transition:transform .15s ease, box-shadow .15s ease, filter .15s ease; white-space:nowrap }
     .btn:hover{ transform:translateY(-2px) scale(1.03); box-shadow:0 0 16px rgba(0,255,230,.75), 0 0 32px rgba(0,255,230,.35) }
     .btn:active{ transform:translateY(0) scale(.99) }
     .btn[disabled]{opacity:.6;cursor:not-allowed;filter:saturate(.7)}
-    #payBtn{ box-shadow:0 0 12px rgba(0,255,230,.65), 0 0 34px rgba(0,255,230,.35) }
 
-    /* ===== Game Canvas ===== */
     #gameWrap{max-width:520px;margin:10px auto}
-    canvas{
-      display:block;margin:0 auto;border:1px solid rgba(0,255,240,.35);
-      width:100%;max-width:520px;height:auto;background:#000;border-radius:14px;
-      box-shadow:0 0 22px rgba(0,255,240,.12), inset 0 0 0 1px rgba(0,255,240,.06);
-      touch-action:none;
-    }
+    canvas{ display:block;margin:0 auto;border:1px solid rgba(0,255,240,.35); width:100%;max-width:520px;height:auto;background:#000;border-radius:14px; box-shadow:0 0 22px rgba(0,255,240,.12), inset 0 0 0 1px rgba(0,255,240,.06); touch-action:none }
 
-    /* ===== Table (Top 3) ===== */
     table{width:100%;border-collapse:collapse;margin-top:8px}
     th,td{padding:.65rem;border-bottom:1px solid rgba(0,255,240,.20);text-align:center}
     thead th{color:#bffef2}
@@ -121,38 +78,15 @@
 
     h2{margin:.2rem 0 .6rem; color:#bffef2}
 
-    /* ===== Name Modal ===== */
-    #nameOverlay{
-      position:fixed; inset:0; background:rgba(0,0,0,.6);
-      display:none; align-items:center; justify-content:center; z-index:50;
-      backdrop-filter: blur(2px);
-    }
-    #nameCard{
-      width:min(92vw,480px);
-      background:linear-gradient(180deg, var(--card), var(--card2));
-      border:1px solid var(--line); border-radius:14px;
-      padding:18px 18px 14px;
-      box-shadow:var(--shadow);
-    }
+    #nameOverlay{ position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:50; backdrop-filter: blur(2px) }
+    #nameCard{ width:min(92vw,480px); background:linear-gradient(180deg, var(--card), var(--card2)); border:1px solid var(--line); border-radius:14px; padding:18px 18px 14px; box-shadow:var(--shadow) }
     #nameCard h3{ margin:.2rem 0 .6rem; color:#bffef2 }
-    #nameInput{
-      width:100%; padding:.85rem 1rem; border:1px solid rgba(0,255,240,.35);
-      border-radius:10px; background:#000; color:#fff; font-family:inherit; font-size:1rem;
-      box-shadow:inset 0 0 0 1px rgba(0,255,240,.06);
-    }
+    #nameInput{ width:100%; padding:.85rem 1rem; border:1px solid rgba(0,255,240,.35); border-radius:10px; background:#000; color:#fff; font-family:inherit; font-size:1rem; box-shadow:inset 0 0 0 1px rgba(0,255,240,.06) }
     #error{color:#ff6b7a;font-size:.85rem;margin-top:.35rem;display:none}
 
-    /* ===== D-Pad (mobile) ===== */
-    #dpad{ position:static; display:none; justify-content:center; margin-top:12px; }
-    #dpad .pad{
-      display:grid; grid-template-columns:64px 64px 64px; grid-template-rows:64px 64px 64px; gap:12px;
-      opacity:.55; filter:drop-shadow(0 0 6px rgba(0,255,240,.4));
-    }
-    #dpad button{
-      pointer-events:auto; background:rgba(0,255,255,.10);
-      border:1px solid rgba(0,255,240,.45); color:#cff;
-      border-radius:15px; backdrop-filter:blur(2px); font-weight:800
-    }
+    #dpad{ position:static; display:none; justify-content:center; margin-top:12px }
+    #dpad .pad{ display:grid; grid-template-columns:64px 64px 64px; grid-template-rows:64px 64px 64px; gap:12px; opacity:.55; filter:drop-shadow(0 0 6px rgba(0,255,240,.4)) }
+    #dpad button{ pointer-events:auto; background:rgba(0,255,255,.10); border:1px solid rgba(0,255,240,.45); color:#cff; border-radius:15px; backdrop-filter:blur(2px); font-weight:800 }
     #dpad button:active{background:rgba(0,255,255,.22)}
     @media (max-width:680px){ #dpad{display:flex} }
   </style>
@@ -166,11 +100,11 @@
   <div id="controlsPanel" class="panel">
     <div class="row" style="justify-content:center;margin-bottom:.3rem">
       <button id="connectBtn" class="btn">🔗 Connect Wallet</button>
-      <button id="payBtn" class="btn" disabled>💳 Pay 10 CBS</button>
       <button id="startBtn" class="btn" disabled>▶️ Start</button>
+      <span id="eligibility" class="muted" style="align-self:center">Not connected</span>
     </div>
     <p class="muted" style="text-align:center;margin:.2rem 0 0 0">
-      Entry fee: <b>10 CBS</b> • Monthly prize for best score<br>
+      Holders‑only access: play is unlocked for wallets holding <b>≥ 1000 CBS</b>.<br>
       <b>Playable on mobile in the Phantom browser or on desktop.</b>
     </p>
   </div>
@@ -211,36 +145,35 @@
     </div>
   </div>
 
-  <!-- Supabase -->
   <script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 
-  <!-- Game + Solana logic (ongewijzigd) -->
   <script type="module">
     /******** CONFIG ********/
     const SUPABASE_URL = "https://aiawteejixsgsunmefpi.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpYXd0ZWVqaXhzZ3N1bm1lZnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NDExODIsImV4cCI6MjA3MTAxNzE4Mn0.aMbRUM0YebNMfZhSLb9PFdSHAZ-D5WpACPefCfjSLqI";
     const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     const TABLE = "leaderboard";
-    const EDGE_FN_URL = "https://aiawteejixsgsunmefpi.supabase.co/functions/v1/quick-service";
 
     // Solana
-    import { Connection, PublicKey, Transaction } from "https://esm.sh/@solana/web3.js@1.95.8";
-    import { getAssociatedTokenAddress, createTransferInstruction, TOKEN_PROGRAM_ID } from "https://esm.sh/@solana/spl-token@0.4.7";
+    import { Connection, PublicKey } from "https://esm.sh/@solana/web3.js@1.95.8";
+    import { getAssociatedTokenAddress } from "https://esm.sh/@solana/spl-token@0.4.7";
 
     const RPC_URL = "https://rpc.helius.xyz/?api-key=453a64a5-31dd-4c21-9619-6f0c69c74ff9";
     const connection = new Connection(RPC_URL, "confirmed");
     const CBS_MINT = new PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
-    const TREASURY = new PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
+
+    // Eligibility threshold
     const CBS_DECIMALS = 9;
-    const ENTRY_CBS = 10;
+    const CBS_MIN_UNITS = 1000; // 1000 CBS (display units)
+    const CBS_MIN_RAW = 1000n * 1_000_000_000n; // 1000 * 10^9
+
     let walletPK = null;
-    let paidSig  = null;
-    let roundSig = null;
+    let eligible = false;
+    let holderRaw = 0n; // raw amount
 
     /******** DOM ********/
     const $ = (id)=>document.getElementById(id);
     const connectBtn = $("connectBtn");
-    const payBtn     = $("payBtn");
     const startBtn   = $("startBtn");
     const overlay    = $("nameOverlay");
     const nameInput  = $("nameInput");
@@ -252,22 +185,18 @@
     const gameWrap   = $("gameWrap");
     const canvas     = $("gameCanvas");
     const ctx        = canvas.getContext("2d");
-
-    payBtn.disabled = true;
-    startBtn.disabled = true;
+    const eligibility= $("eligibility");
 
     /******** GAME ********/
     const box = 20;
     let snake, direction, food, score, loopId;
 
-    // Watermark (achtergrond)
     const watermark = new Image();
     watermark.crossOrigin = "anonymous";
     watermark.src = "https://cyan-persistent-stork-902.mypinata.cloud/ipfs/bafybeia7qejzloll6teyt4o4orvd7bnvkg4thrfajv4rgb3fmm2odeweoa/logo.png";
 
-    // POWER-UP (groot CBS-logo)
     const BONUS_POINTS = 10;
-    let powerUp = null;        // {x,y} linkerbovenhoek (2x2 tiles)
+    let powerUp = null;        // {x,y}
     let coinsEaten = 0;
     let powerUpTimeout = null;
     const powerUpImg = new Image();
@@ -297,7 +226,6 @@
     function start(){ clearInterval(loopId); initGame(); loopId=setInterval(tick,100); }
     function stop(){ clearInterval(loopId); if (powerUpTimeout){ clearTimeout(powerUpTimeout); powerUpTimeout=null; } }
 
-    // Snake segment
     function drawSegmentCircle(x,y,isHead=false){
       ctx.save();
       ctx.shadowColor = '#00e5ff';
@@ -406,7 +334,6 @@
       b.addEventListener('touchstart',e=>{ e.preventDefault(); set(b.dataset.dir); },{passive:false});
     });
 
-    /* ===== Scroll / play-mode helpers ===== */
     function scrollToGame(){
       requestAnimationFrame(()=>{
         canvas.scrollIntoView({ block: 'center', behavior: 'smooth' });
@@ -420,147 +347,78 @@
     function enterPlayMode(){ document.body.classList.add('play-mode'); scrollToGame(); }
     function exitPlayMode(){ document.body.classList.remove('play-mode'); }
 
-    /* ===== Wallet / payment ===== */
+    /* ===== Wallet / eligibility ===== */
     function provider(){ return window.solana?.isPhantom ? window.solana : null; }
-    function showError(prefix, err){
-      const msg = (err && err.message) ? err.message : String(err || 'Unknown error');
-      console.error(prefix, err);
-      alert(`${prefix}\n\n${msg}`);
+    function short(pk){ const s = pk?.toString?.()||''; return s ? s.slice(0,4)+'…'+s.slice(-4) : '-'; }
+    function showError(prefix, err){ const msg = (err && err.message) ? err.message : String(err || 'Unknown error'); console.error(prefix, err); alert(`${prefix}\n\n${msg}`); }
+    function fmtCbs(raw){ return (Number(raw)/1e9).toLocaleString(undefined,{maximumFractionDigits:9}); }
+
+    async function getCbsRawBalance(owner){
+      try{
+        const ata = await getAssociatedTokenAddress(CBS_MINT, owner);
+        const bal = await connection.getTokenAccountBalance(ata).catch(()=>null);
+        if(!bal) return 0n;
+        return BigInt(bal.value.amount || '0');
+      }catch{ return 0n; }
     }
 
-    async function waitForConfirmation(signature, latest, timeoutMs=120000){
-      const start = Date.now();
-      while (Date.now() - start < timeoutMs){
-        const st = await connection.getSignatureStatuses([signature], { searchTransactionHistory: true }).then(r => r.value[0]).catch(()=>null);
-        if (st){
-          if (st.err) throw new Error("On-chain transaction error");
-          const conf = st.confirmationStatus || (st.confirmations != null ? (st.confirmations>0 ? 'confirmed' : null) : null);
-          if (conf === 'confirmed' || 'finalized') return st;
-        }
-        if (latest?.lastValidBlockHeight){
-          const h = await connection.getBlockHeight('finalized').catch(()=>null);
-          if (h && h > latest.lastValidBlockHeight) throw new Error("Blockhash expired before confirmation");
-        }
-        await new Promise(r=>setTimeout(r, 1500));
+    async function verifyEligibility(){
+      if(!walletPK){ eligible=false; holderRaw=0n; eligibility.textContent='Not connected'; startBtn.disabled=true; return; }
+      holderRaw = await getCbsRawBalance(walletPK);
+      if(holderRaw >= CBS_MIN_RAW){
+        eligible = true;
+        eligibility.textContent = `Eligible ✅ — You hold ${fmtCbs(holderRaw)} CBS (≥ ${CBS_MIN_UNITS})`;
+        startBtn.disabled = false;
+      }else{
+        eligible = false;
+        eligibility.textContent = `Not eligible — need ≥ ${CBS_MIN_UNITS} CBS (you hold ${fmtCbs(holderRaw)})`;
+        startBtn.disabled = true;
       }
-      const res = await connection.confirmTransaction({ signature, blockhash: latest.blockhash, lastValidBlockHeight: latest.lastValidBlockHeight }, 'finalized').catch(()=>null);
-      if (res && !res.value.err) return res.value;
-      throw new Error(`Confirmation timed out. You can check on Solscan:\nhttps://solscan.io/tx/${signature}`);
     }
 
     connectBtn.addEventListener("click", async ()=>{
       try{
         const p = provider(); if(!p) return alert("Phantom Wallet not found.");
         const { publicKey } = await p.connect(); walletPK = publicKey;
-        connectBtn.textContent = `✅ ${publicKey.toString().slice(0,4)}…${publicKey.toString().slice(-4)}`;
-        payBtn.disabled = false;
+        connectBtn.textContent = `✅ ${short(publicKey)}`;
+        await verifyEligibility();
       }catch(e){ showError("Wallet connect failed.", e); }
-    });
-
-    payBtn.addEventListener("click", async ()=>{
-      try{
-        const p = provider(); if(!p) return alert("Phantom Wallet not found.");
-        if(!walletPK){ const { publicKey } = await p.connect(); walletPK=publicKey; connectBtn.textContent=`✅ ${publicKey.toString().slice(0,4)}…${publicKey.toString().slice(-4)}`; }
-        payBtn.disabled = true; payBtn.textContent = "Processing…";
-
-        const fromATA = await getAssociatedTokenAddress(CBS_MINT, walletPK);
-        const toATA   = await getAssociatedTokenAddress(CBS_MINT, TREASURY);
-
-        const balInfo = await connection.getTokenAccountBalance(fromATA).catch(()=>null);
-        const needRaw = 10 * (10 ** 9);
-        if(!balInfo || Number(balInfo.value.amount) < needRaw){
-          payBtn.disabled=false; payBtn.textContent="💳 Pay 10 CBS";
-          return alert("Not enough CBS to play (need 10 CBS).");
-        }
-
-        const toInfo = await connection.getAccountInfo(toATA);
-        if(!toInfo){
-          payBtn.disabled=false; payBtn.textContent="💳 Pay 10 CBS";
-          return alert("Payment cannot proceed: Treasury CBS account does not exist yet.\nAsk the admin to create the CBS associated token account for the treasury once.");
-        }
-
-        const ix = createTransferInstruction(fromATA, toATA, walletPK, needRaw, [], TOKEN_PROGRAM_ID);
-
-        const latest = await connection.getLatestBlockhash('confirmed');
-        const tx = new Transaction({ feePayer: walletPK, recentBlockhash: latest.blockhash });
-        tx.add(ix);
-
-        const { signature } = await p.signAndSendTransaction(tx);
-
-        payBtn.textContent = "Waiting confirmation…";
-        await waitForConfirmation(signature, latest);
-
-        paidSig = signature;
-        roundSig = paidSig;
-        paidSig = null;
-
-        document.body.classList.add('play-mode');
-        startBtn.disabled = true;
-        start();
-        scrollToGame();
-      }catch(e){
-        showError("Payment failed.", e);
-      }finally{
-        payBtn.disabled=false; payBtn.textContent="💳 Pay 10 CBS";
-      }
     });
 
     startBtn.addEventListener("click", ()=>{
       if(!walletPK) return alert("Connect your wallet first.");
-      if(!paidSig)  return alert("Please pay 10 CBS first.");
-      roundSig = paidSig; paidSig = null;
-      startBtn.disabled = true;
+      if(!eligible) return alert(`Holders only — need ≥ ${CBS_MIN_UNITS} CBS.`);
       document.body.classList.add('play-mode');
       start();
       scrollToGame();
     });
 
     /* ===== Name / save ===== */
-    function openNameModal(sc){
-      overlay.style.display="flex";
-      nameInput.value=""; err.style.display="none"; saveBtn.disabled = false; saveBtn.textContent = "Save"; nameInput.focus();
-      overlay.dataset.score = String(sc ?? 0);
-    }
+    function openNameModal(sc){ overlay.style.display="flex"; nameInput.value=""; err.style.display="none"; saveBtn.disabled = false; saveBtn.textContent = "Save"; nameInput.focus(); overlay.dataset.score = String(sc ?? 0); }
 
-    cancelBtn.addEventListener("click", ()=>{
-      overlay.style.display="none";
-      roundSig = null;
-      startBtn.disabled = true;
-      exitPlayMode();
-    });
+    cancelBtn.addEventListener("click", ()=>{ overlay.style.display="none"; startBtn.disabled = !eligible; exitPlayMode(); });
 
     async function submitName(){
       const name = (nameInput.value||"").trim();
       if(!name){ err.textContent="Name is required."; err.style.display="block"; return; }
-      if(!roundSig || typeof roundSig !== 'string' || roundSig.length < 43){
-        err.textContent = "Payment proof missing or expired. Please pay 10 CBS again.";
-        err.style.display = "block";
-        return;
-      }
+      if(!walletPK){ err.textContent = "Connect wallet first."; err.style.display = "block"; return; }
+      await verifyEligibility();
+      if(!eligible){ err.textContent = `Holders only — need ≥ ${CBS_MIN_UNITS} CBS.`; err.style.display = "block"; return; }
       const sc = Number(overlay.dataset.score||0);
 
       saveBtn.disabled = true; saveBtn.textContent = "Saving…";
       try{
-        const resp = await fetch(EDGE_FN_URL, {
-          method:"POST",
-          headers:{ "content-type":"application/json", "authorization":"Bearer " + SUPABASE_ANON_KEY },
-          body: JSON.stringify({ name, score: sc, tx_sig: roundSig })
-        });
-        let out = null; try { out = await resp.json(); } catch {}
-        if(!resp.ok || !out || out.ok !== true){
-          const serverMsg = out && (out.error || out.message) ? ` (server: ${out.error || out.message})` : "";
-          throw new Error("submit-score failed" + serverMsg);
-        }
+        const { error } = await sb.from(TABLE).insert({ name, score: sc });
+        if(error) throw error;
         overlay.style.display="none";
       }catch(e){
-        err.textContent = "Saving failed. Check your payment and try again.";
+        err.textContent = "Saving failed. Server not accepting inserts.";
         err.style.display = "block";
-        showError("Saving failed (payment proof required).", e);
+        console.warn("Supabase insert failed:", e);
         return;
       }finally{
-        roundSig = null;
         saveBtn.disabled = false; saveBtn.textContent = "Save";
-        startBtn.disabled = true;
+        startBtn.disabled = !eligible;
         exitPlayMode();
         renderTop3();
       }
@@ -591,3 +449,4 @@
   </script>
 </body>
 </html>
+
