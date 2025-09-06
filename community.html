@@ -78,6 +78,21 @@
     .langSwitch .btn{padding:6px 10px}
 
     footer{margin:24px 0;text-align:center;color:#8b8d98;font-size:12px}
+
+    /* Tip + Signature Wall */
+    .grid{display:grid;gap:12px}
+    .tipGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+    @media (max-width:720px){.tipGrid{grid-template-columns:1fr}}
+    .input{background:#0f1020;border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--ink);width:100%}
+    .miniBtn{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:linear-gradient(180deg,#191b26,#141624);cursor:pointer}
+    .miniBtn:hover{border-color:#3b3e57}
+    .wallList{display:grid;gap:10px}
+    .wallItem{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;background:#151621;border:1px solid var(--line);border-radius:12px;padding:10px}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;color:var(--muted)}
+  .heroFallback{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg,#0e1018,#0a0c14)}
+    .heroFallbackInner{display:flex;flex-direction:column;align-items:center;gap:6px;opacity:.9}
+    .heroFallbackInner img{width:52px;height:52px;border-radius:12px;border:1px solid var(--line);background:#0f1020}
+    .heroFallbackInner .label{font-size:12px;color:var(--muted)}
   </style>
 </head>
 <body>
@@ -111,12 +126,55 @@
       </div>
     </header>
 
-    <div class="langSwitch">
-      <button id="langNL" class="btn">NL</button>
-      <button id="langEN" class="btn brand">EN</button>
-    </div>
-
     <section class="card hero" id="winnerHero"></section>
+
+    <!-- Tip the Winner -->
+    <section class="card" id="tipCard">
+      <h2 style="margin:0 0 10px">Tip the Winner</h2>
+      <div class="grid tipGrid">
+        <div>
+          <label class="muted">Recipient (SOL address)</label>
+          <input id="tipRecipient" class="input" placeholder="Recipient wallet address" />
+        </div>
+        <div>
+          <label class="muted">Amount (SOL)</label>
+          <input id="tipAmount" class="input" placeholder="0.05" />
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <a id="tipOpen" class="btn brand" href="#" target="_blank" rel="noopener">Open in wallet</a>
+        <button id="tipCopyLink" class="btn">Copy link</button>
+        <button id="tipCopyAddr" class="btn">Copy address</button>
+        <span id="tipMsg" class="muted"></span>
+      </div>
+      <div class="hr"></div>
+      <div class="muted" id="tipHelp">Use Solana-compatible wallets (Phantom, Solflare). On desktop, the browser wallet should handle the <code>solana:</code> link.</div>
+    </section>
+
+    <!-- Signature Wall -->
+    <section class="card" id="wallCard">
+      <h2 style="margin:0 0 10px">Signature Wall</h2>
+      <div class="row">
+        <button id="wConnect" class="btn brand">🔐 Connect Wallet</button>
+        <span id="wConn" class="muted">Not connected</span>
+      </div>
+      <div class="grid tipGrid" style="margin-top:10px">
+        <div>
+          <label class="muted">Your name (optional)</label>
+          <input id="wName" class="input" placeholder="Display name" />
+        </div>
+        <div>
+          <label class="muted">Message</label>
+          <input id="wMsg" class="input" placeholder="Say something to the community" />
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button id="wSign" class="btn">✍️ Sign & Post</button>
+        <span id="wInfo" class="muted"></span>
+      </div>
+      <div class="hr"></div>
+      <div class="wallList" id="wList"></div>
+    </section>
 
     <section class="card">
       <table>
@@ -137,79 +195,30 @@
 
   <script>
   const SUBMISSIONS = [
-    { id:'w1', title:'Mini Meme Contest #1', author:'@maestropicknava', authorUrl:'https://x.com/maestropicknava', wallet:'', thumb:'winner1.jpg', url:'https://x.com/i/status/1961731121353216216', tags:['winner'], score:'🏆', date:'2025-08-30', winner:true }
+    { id:'w1', title:'Mini Meme Contest #1', author:'@maestropicknava', authorUrl:'https://x.com/maestropicknava', wallet:'', thumb:'logo.png', url:'https://x.com/i/status/1961731121353216216', tags:['winner'], score:'🏆', date:'2025-08-30', winner:true }
   ];
 
   const $ = (id) => document.getElementById(id);
   const tbody = $('tbody');
   const heroEl = document.getElementById('winnerHero');
+  // Tip refs
+  const tipRecipient = document.getElementById('tipRecipient');
+  const tipAmount = document.getElementById('tipAmount');
+  const tipOpen = document.getElementById('tipOpen');
+  const tipCopyLink = document.getElementById('tipCopyLink');
+  const tipCopyAddr = document.getElementById('tipCopyAddr');
+  const tipMsg = document.getElementById('tipMsg');
+  // Wall refs
+  const wConnect = document.getElementById('wConnect');
+  const wConn = document.getElementById('wConn');
+  const wName = document.getElementById('wName');
+  const wMsg = document.getElementById('wMsg');
+  const wSign = document.getElementById('wSign');
+  const wList = document.getElementById('wList');
   const topN = $('topN');
   const sortBy = $('sortBy');
   const exportBtn = $('exportBtn');
-  const langSel = $('lang');
-  $('y').textContent = new Date().getFullYear();
-
-  const i18n = {
-    en:{
-      title:"CBS Community — Best Submissions Leaderboard",
-      subtitle:"Winners & best entries — clean and simple.",
-      colSubmission:"Submission",colScore:"Score",colDate:"Date",
-      sortScore:"Sort: Score",sortDate:"Sort: Date",sortTitle:"Sort: Title",
-      export:"📤 Export CSV"
-    },
-    nl:{
-      title:"CBS Community — Beste Inzendingen Leaderboard",
-      subtitle:"Winnaars & beste inzendingen — strak en simpel.",
-      colSubmission:"Inzending",colScore:"Score",colDate:"Datum",
-      sortScore:"Sorteren: Score",sortDate:"Sorteren: Datum",sortTitle:"Sorteren: Titel",
-      export:"📤 Exporteer CSV"
-    }
-  };
-
-  langSel.addEventListener('change',()=>applyLang(langSel.value));
-  function applyLang(l){
-    const t=i18n[l];
-    $('title').textContent=t.title;
-    $('subtitle').textContent=t.subtitle;
-    $('colSubmission').textContent=t.colSubmission;
-    $('colScore').textContent=t.colScore;
-    $('colDate').textContent=t.colDate;
-    sortBy.options[0].text=t.sortScore;
-    sortBy.options[1].text=t.sortDate;
-    sortBy.options[2].text=t.sortTitle;
-    exportBtn.textContent=t.export;
-  }
-
-  // render table
-  function render(){
-    try{ renderHero(); }catch(e){}
-    tbody.innerHTML='';
-    let arr=[...SUBMISSIONS];
-    arr.forEach((item,idx)=>{
-      const tr=document.createElement('tr');
-      tr.innerHTML=`
-        <td class="rank">${idx+1} <span class="trophy">🏆</span></td>
-        <td>
-          <div style="display:flex; gap:12px; align-items:center">
-            <a href="${item.url}" target="_blank" rel="noopener" class="thumbWrap">
-              <img src="${item.thumb}" class="thumb" alt="${item.title}" />
-              <img src="logo.png" alt="CBS" class="logoBadge" />
-            </a>
-            <div>
-              <div class="title"><a href="${item.url}" target="_blank" rel="noopener" style="text-decoration:none;color:inherit">${item.title}</a></div>
-              <div class="author"><a href="${item.authorUrl}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">${item.author}</a></div>
-              <div class="tags">${(item.tags||[]).map(t=>`<span class=\"tag\">${t}</span>`).join('')}</div>
-            </div>
-          </div>
-        </td>
-        <td class="score">${item.score}</td>
-        <td>${item.date}</td>`;
-      tbody.appendChild(tr);
-    });
-  }
-
-  render();
-  applyLang(langSel.value);
+  
     // ====== Winner Hero ======
   function renderHero(){
     if(!heroEl) return;
@@ -220,8 +229,121 @@
     heroEl.innerHTML = `
       <div class="heroBox">
         <a href="${dest}" target="_blank" rel="noopener">
-          <img src="${item.thumb}" class="heroImg" alt="${escapeHtml(item.title)}" onerror="this.style.display='none'" />
+          <img src="${item.thumb}" class="heroImg" alt="${escapeHtml(item.title)}" onerror="this.style.display='none'; var f=this.parentNode.parentNode.querySelector('.heroFallback'); if(f){f.style.display='flex';}" />
           <div class="heroOver"></div>
+          <div class="heroFallback"><div class="heroFallbackInner"><img src="logo.png" alt="CBS"/><div class="label">WINNER</div></div></div>
+        </a>
+        <div class="trophyBadge">🏆</div>
+        <img src="logo.png" alt="CBS" class="heroLogo" />
+        <div class="heroInfo">
+          <div class="heroText">
+            <div class="heroTitle">${escapeHtml(item.title)}</div>
+            <div class="heroMeta"><a href="${authorLink}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">${escapeHtml(item.author || 'Creator')}</a> • ${item.date}</div>
+          </div>
+          <a href="${dest}" target="_blank" rel="noopener" class="btn">Open</a>
+        </div>
+      </div>`;
+  }
+
+  // ====== Tip logic ======
+  const TIP_STORE = 'cbs_tip_cfg_v1';
+  function loadTip(){ try{ return JSON.parse(localStorage.getItem(TIP_STORE)||'{}'); }catch{ return {}; } }
+  function saveTip(o){ localStorage.setItem(TIP_STORE, JSON.stringify(o)); }
+  function buildSolanaURI(address, amount, label, message){
+    if(!address) return '#';
+    let u = `solana:${encodeURIComponent(address)}`;
+    const q = [];
+    if(amount) q.push(`amount=${encodeURIComponent(amount)}`);
+    if(label) q.push(`label=${encodeURIComponent(label)}`);
+    if(message) q.push(`message=${encodeURIComponent(message)}`);
+    if(q.length) u += `?${q.join('&')}`;
+    return u;
+  }
+  function setupTip(){
+    if(!tipRecipient || !tipOpen) return;
+    const tipCfg = loadTip();
+    tipRecipient.value = tipCfg.address || '';
+    tipAmount.value = tipCfg.amount || '0.05';
+    const refresh = ()=>{
+      const uri = buildSolanaURI(tipRecipient.value.trim(), tipAmount.value.trim(), 'CBS Tip', 'Thank you!');
+      tipOpen.href = uri;
+    };
+    refresh();
+    tipRecipient.addEventListener('input', ()=>{ saveTip({address:tipRecipient.value.trim(), amount:tipAmount.value.trim()}); refresh(); });
+    tipAmount.addEventListener('input', ()=>{ saveTip({address:tipRecipient.value.trim(), amount:tipAmount.value.trim()}); refresh(); });
+    tipCopyLink?.addEventListener('click', async()=>{ try{ await navigator.clipboard.writeText(tipOpen.href); tipMsg.textContent='Link copied'; setTimeout(()=> tipMsg.textContent='',1500);}catch{ alert('Copy failed'); } });
+    tipCopyAddr?.addEventListener('click', async()=>{ try{ await navigator.clipboard.writeText(tipRecipient.value.trim()); tipMsg.textContent='Address copied'; setTimeout(()=> tipMsg.textContent='',1500);}catch{ alert('Copy failed'); } });
+  }
+
+  // ====== Signature Wall ======
+  const WALL_STORE = 'cbs_wall_entries_v1';
+  function loadWall(){ try{ return JSON.parse(localStorage.getItem(WALL_STORE)||'[]'); }catch{ return []; } }
+  function saveWall(list){ localStorage.setItem(WALL_STORE, JSON.stringify(list)); }
+  function short(a){ if(!a) return '-'; return a.slice(0,4)+'…'+a.slice(-4); }
+  async function connect(){
+    try{
+      const provider = window.solana || window.phantom?.solana;
+      if(!provider){ alert('Install Phantom wallet'); return null; }
+      const res = await provider.connect();
+      return res.publicKey?.toString?.() || null;
+    }catch{ return null; }
+  }
+  async function signMessage(provider, message){
+    const enc = new TextEncoder();
+    const msgBytes = enc.encode(message);
+    const { signature } = await provider.signMessage(msgBytes, 'utf8');
+    return Array.from(signature).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+  function renderWall(){
+    const list = loadWall().slice().reverse();
+    wList.innerHTML = '';
+    if(list.length===0){ wList.innerHTML = `<div class="muted">No signatures yet.</div>`; return; }
+    list.forEach(it=>{
+      const row = document.createElement('div');
+      row.className = 'wallItem';
+      row.innerHTML = `
+        <div>
+          <div class="title">${escapeHtml(it.name || 'Anonymous')}</div>
+          <div class="author">${escapeHtml(it.msg || '')}</div>
+        </div>
+        <div class="mono">${escapeHtml(short(it.pubkey))}<br><span class="author">${new Date(it.ts).toLocaleString()}</span></div>`;
+      wList.appendChild(row);
+    });
+  }
+  function setupWall(){
+    if(!wConnect) return;
+    const provider = window.solana || window.phantom?.solana;
+    wConnect.addEventListener('click', async()=>{
+      const pk = await connect();
+      wConn.textContent = pk ? `Connected: ${short(pk)}` : 'Not connected';
+    });
+    wSign.addEventListener('click', async()=>{
+      try{
+        const provider = window.solana || window.phantom?.solana;
+        if(!provider){ alert('Install Phantom'); return; }
+        const acc = await connect(); if(!acc){ return; }
+        const name = wName.value.trim();
+        const msg = wMsg.value.trim(); if(!msg){ wInfo.textContent = 'Message required'; setTimeout(()=> wInfo.textContent='',1500); return; }
+        const payload = `CBS Signature Wall | ${acc} | ${msg} | ${Date.now()}`;
+        await signMessage(provider, payload);
+        const list = loadWall();
+        list.push({ pubkey: acc, name, msg, ts: Date.now() });
+        saveWall(list);
+        wName.value=''; wMsg.value='';
+        wInfo.textContent = 'Posted!'; setTimeout(()=> wInfo.textContent='',1500);
+        renderWall();
+      }catch(e){ console.warn(e); wInfo.textContent='Canceled'; setTimeout(()=> wInfo.textContent='',1500); }
+    });
+    renderWall();
+  }
+    const dest = item.url || item.authorUrl || '#';
+    const authorLink = item.authorUrl || dest;
+    heroEl.innerHTML = `
+      <div class="heroBox">
+        <a href="${dest}" target="_blank" rel="noopener">
+          <img src="${item.thumb}" class="heroImg" alt="${escapeHtml(item.title)}" onerror="this.style.display='none'; var f=this.parentNode.parentNode.querySelector('.heroFallback'); if(f){f.style.display='flex';}" />
+          <div class="heroOver"></div>
+          <div class="heroFallback"><div class="heroFallbackInner"><img src="logo.png" alt="CBS"/><div class="label">WINNER</div></div></div>
         </a>
         <div class="trophyBadge">🏆</div>
         <img src="logo.png" alt="CBS" class="heroLogo" />
@@ -263,4 +385,3 @@
 </script>
 </body>
 </html>
-
