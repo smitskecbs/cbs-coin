@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>CBS Coin Chaser – Neon</title>
+  <title>CBS Coin Chaser – Holders Only</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet"/>
 
@@ -16,7 +16,7 @@
       --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
       --radius:18px;
       --btnA:#5afff0; --btnB:#2bffe4;
-      --good:#7dffe9; --warn:#ffde6b; --bad:#ff7d7d;
+      --warn:#ffde6b; --bad:#ff7d7d; --good:#7dffe9;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -47,8 +47,10 @@
       border:1px solid rgba(0,255,240,.7);
       box-shadow:0 0 12px rgba(0,255,230,.55), 0 0 24px rgba(0,255,230,.25), inset 0 -8px 14px rgba(0,0,0,.14);
       cursor:pointer;
+      transition:transform .15s ease, box-shadow .15s ease;
     }
     .btn:hover{ transform:translateY(-2px) scale(1.03) }
+    .btn[disabled]{opacity:.6;cursor:not-allowed;filter:saturate(.7)}
 
     .container{ max-width:1100px; margin:0 auto; padding:1.2rem 1rem 2.2rem }
     .panel{
@@ -98,11 +100,10 @@
     body.play-mode .play-overlay{ display:flex; }
 
     .muted{color:var(--muted)}
-
-    /* On-screen hint */
-    .hint{
-      text-align:center; font-size:.9rem; color:var(--muted)
-    }
+    .status{margin-top:.4rem;font-size:.92rem}
+    .status .ok{color:var(--good)}
+    .status .warn{color:var(--warn)}
+    .status .bad{color:var(--bad)}
   </style>
 </head>
 <body>
@@ -114,10 +115,14 @@
   </header>
 
   <!-- Controls -->
-  <div id="controlsPanel" class="panel" style="max-width:820px; text-align:center">
-    <button id="startBtn" class="btn">▶️ Start</button>
-    <p class="muted" style="margin-top:.5rem">
-      WASD / Arrow keys • Tap/drag to move • Collect coins, avoid the chaser.
+  <div id="controlsPanel" class="panel" style="max-width:880px">
+    <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center">
+      <button id="connectBtn" class="btn">🔗 Connect Wallet</button>
+      <button id="verifyBtn"  class="btn" disabled>✅ Verify Holdings</button>
+      <button id="startBtn"   class="btn" disabled>▶️ Start</button>
+    </div>
+    <p class="muted status" id="holdStatus" style="text-align:center">
+      Holders-only: require <b>≥ 1,000 CBS</b> in your wallet.
     </p>
   </div>
 
@@ -135,7 +140,7 @@
         <div class="panel">
           <h3>How to play</h3>
           <p>Move the CBS orb, collect coins (+10), and dodge the chaser. Each coin makes the chaser a bit faster.</p>
-          <p class="muted">Tip: use short taps/drags on mobile to micro-adjust.</p>
+          <p class="muted">Desktop: WASD / Arrow keys (Space = dash). Mobile: tap/drag to move.</p>
         </div>
         <div class="panel" style="text-align:center">
           <a href="index.html" class="btn">← Back to Home</a>
@@ -148,26 +153,92 @@
   <div id="playOverlay" class="play-overlay" aria-hidden="true">
     <div class="stage"><div id="playStage"></div></div>
     <button id="exitBtn" class="btn">⏹ Exit</button>
-    <div class="hint">Tap/drag to move • Space to dash</div>
+    <div class="muted">Tap/drag to move • Space to dash</div>
   </div>
 
-  <script>
-    // ==== DOM ====
-    const startBtn    = document.getElementById("startBtn");
-    const playOverlay = document.getElementById("playOverlay");
-    const playStage   = document.getElementById("playStage");
-    const exitBtn     = document.getElementById("exitBtn");
-    const canvas      = document.getElementById("game");
-    const canvasHome  = document.getElementById("canvasHome");
-    const ctx         = canvas.getContext("2d");
+  <!-- Solana web3 (ESM) -->
+  <script type="module">
+    import { Connection, PublicKey } from "https://esm.sh/@solana/web3.js@1.95.8";
 
-    // CBS logo for watermark
+    /******** CONFIG ********/
+    const RPC_URL = "https://rpc.helius.xyz/?api-key=453a64a5-31dd-4c21-9619-6f0c69c74ff9";
+    const connection = new Connection(RPC_URL, "confirmed");
+    const CBS_MINT = new PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
+    const MIN_HOLD = 1000; // CBS (uses parsed uiAmount)
+
+    /******** DOM ********/
+    const $ = (id)=>document.getElementById(id);
+    const connectBtn = $("connectBtn");
+    const verifyBtn  = $("verifyBtn");
+    const startBtn   = $("startBtn");
+    const statusEl   = $("holdStatus");
+
+    const playOverlay= $("playOverlay");
+    const playStage  = $("playStage");
+    const exitBtn    = $("exitBtn");
+    const canvas     = $("game");
+    const canvasHome = $("canvasHome");
+    const ctx        = canvas.getContext("2d");
+
+    // CBS logo watermark
     const logo = new Image(); logo.src = "logo.png";
-    let logoReady = false; logo.onload = ()=>{ logoReady = true; };
+    let logoReady=false; logo.onload=()=>{logoReady=true};
 
     const W = canvas.width, H = canvas.height;
 
-    // ==== Game State ====
+    // ==== Wallet / holder check ====
+    let walletPK = null;
+    let isHolder = false;
+
+    function provider(){ return window.solana?.isPhantom ? window.solana : (window.phantom?.solana || null); }
+
+    function setStatus(html){ statusEl.innerHTML = html; }
+
+    connectBtn.addEventListener("click", async ()=>{
+      try{
+        const p = provider(); if(!p){ alert("Phantom Wallet not found."); return; }
+        const { publicKey } = await p.connect();
+        walletPK = publicKey;
+        connectBtn.textContent = `✅ ${publicKey.toBase58().slice(0,4)}…${publicKey.toBase58().slice(-4)}`;
+        verifyBtn.disabled = false;
+        // Auto verify after connect
+        await doVerify();
+      }catch(e){
+        console.warn(e); setStatus(`<span class="bad">Not connected.</span> Holders-only: need ≥ <b>${MIN_HOLD}</b> CBS.`);
+      }
+    });
+
+    verifyBtn.addEventListener("click", async ()=>{ await doVerify(); });
+
+    async function doVerify(){
+      if(!walletPK){ setStatus(`<span class="bad">Connect your wallet first.</span>`); return; }
+      verifyBtn.disabled = true; verifyBtn.textContent = "Checking…";
+      try{
+        // Get parsed token accounts for this mint
+        const res = await connection.getParsedTokenAccountsByOwner(walletPK, { mint: CBS_MINT });
+        let total = 0;
+        for(const it of (res?.value||[])){
+          const amt = it.account?.data?.parsed?.info?.tokenAmount?.uiAmount || 0;
+          total += Number(amt)||0;
+        }
+        if(total >= MIN_HOLD){
+          isHolder = true;
+          setStatus(`✅ <span class="ok">Verified holder</span>: you have <b>${Math.floor(total)}</b>+ CBS. You can start!`);
+          startBtn.disabled = false;
+        }else{
+          isHolder = false;
+          startBtn.disabled = true;
+          setStatus(`❌ <span class="bad">Not enough CBS</span> — you have <b>${total.toFixed(2)}</b>, need <b>${MIN_HOLD}</b>+ CBS.`);
+        }
+      }catch(e){
+        console.error(e);
+        setStatus(`<span class="warn">RPC check failed.</span> Try again or later.`);
+      }finally{
+        verifyBtn.disabled = false; verifyBtn.textContent = "✅ Verify Holdings";
+      }
+    }
+
+    /******** GAME STATE ********/
     const PLAYER_R = 10;
     const COIN_R   = 7;
     const ENEMY_R  = 12;
@@ -185,32 +256,32 @@
 
     let score = 0;
     let running = false;
-    let launched = false; // only true after pressing Start
     let rafId = null;
     let last = 0;
 
-    // ==== Lifecycle ====
-    function startGame(){
-      // fresh state
+    function spawnCoin(){
+      const m = 20;
+      return { x: m + Math.random()*(W - 2*m), y: m + Math.random()*(H - 2*m) };
+    }
+
+    function resetGame(){
       player = { x: W*0.5, y: H*0.75, vx: 0, vy: 0 };
       enemy  = { x: W*0.5, y: H*0.25 };
       coin   = spawnCoin();
       score = 0;
       speedEnemyBase = 90;
       speedEnemy = speedEnemyBase;
-      running = true; launched = true; last = performance.now();
+      last = performance.now();
+    }
+
+    function startGame(){
+      if(!isHolder){ alert("Holders-only. Verify your CBS balance first."); return; }
+      resetGame();
+      running = true;
       rafId = requestAnimationFrame(loop);
     }
-    function stopGame(){ running = false; if (rafId) cancelAnimationFrame(rafId); rafId = null; }
 
-    function spawnCoin(){
-      // keep coin away from edges
-      const m = 20;
-      return {
-        x: m + Math.random()*(W - 2*m),
-        y: m + Math.random()*(H - 2*m)
-      };
-    }
+    function stopGame(){ running=false; if(rafId) cancelAnimationFrame(rafId); rafId=null; }
 
     // ==== Input ====
     window.addEventListener('keydown', e=>{
@@ -219,9 +290,7 @@
       if(e.key === 'ArrowRight'|| e.key === 'd' || e.key === 'D') keys.right = true;
       if(e.key === 'ArrowUp'   || e.key === 'w' || e.key === 'W') keys.up = true;
       if(e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') keys.down = true;
-      if(e.key === ' '){ // dash
-        dash();
-      }
+      if(e.key === ' '){ dash(); }
       if(e.key === 'Escape'){ stopGame(); exitPlayScreen(); }
     });
     window.addEventListener('keyup', e=>{
@@ -231,7 +300,6 @@
       if(e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') keys.down = false;
     });
 
-    // Mobile/Pointer: drag to move
     function localFromPointer(clientX, clientY){
       const r = canvas.getBoundingClientRect();
       const sx = canvas.width / r.width;
@@ -259,11 +327,9 @@
       player.vy = (dy / d) * SPEED_PLAYER;
     }
     function dash(){
-      // small burst in current velocity or towards enemy opposite
       const mag = Math.hypot(player.vx, player.vy);
       const boost = 180;
       if(mag < 1){
-        // dash away from enemy if stationary
         const dx = player.x - enemy.x, dy = player.y - enemy.y;
         const d = Math.hypot(dx, dy) || 1;
         player.vx = (dx/d) * (SPEED_PLAYER + boost);
@@ -281,8 +347,8 @@
       if(!running) return;
       const dt = Math.min(0.033, (now - last)/1000); last = now;
 
-      // keyboard movement
-      let ax = 0, ay = 0;
+      // keyboard move
+      let ax=0, ay=0;
       if(keys.left)  ax -= 1;
       if(keys.right) ax += 1;
       if(keys.up)    ay -= 1;
@@ -292,7 +358,6 @@
         player.vx = (ax/n) * SPEED_PLAYER;
         player.vy = (ay/n) * SPEED_PLAYER;
       }else if(!dragging){
-        // small friction if no input
         player.vx *= 0.96; player.vy *= 0.96;
         if(Math.abs(player.vx) < 4) player.vx = 0;
         if(Math.abs(player.vy) < 4) player.vy = 0;
@@ -301,7 +366,6 @@
       // move player
       player.x += player.vx * dt;
       player.y += player.vy * dt;
-      // clamp to field
       const pad = 10;
       player.x = Math.max(PLAYER_R+pad, Math.min(W-PLAYER_R-pad, player.x));
       player.y = Math.max(PLAYER_R+pad, Math.min(H-PLAYER_R-pad, player.y));
@@ -312,7 +376,7 @@
       enemy.x += (edx/ed) * speedEnemy * dt;
       enemy.y += (edy/ed) * speedEnemy * dt;
 
-      // coin collect
+      // coin
       if(coin && Math.hypot(player.x - coin.x, player.y - coin.y) < PLAYER_R + COIN_R){
         score += 10;
         coin = spawnCoin();
@@ -321,7 +385,7 @@
         if(navigator.vibrate) navigator.vibrate(6);
       }
 
-      // collision with enemy → game over
+      // hit → game over
       if(Math.hypot(player.x - enemy.x, player.y - enemy.y) < PLAYER_R + ENEMY_R - 2){
         gameOver();
         return;
@@ -347,21 +411,17 @@
         ctx.drawImage(logo,x,y,size,size); ctx.restore();
       }
 
-      // arena glow
+      // arena
       ctx.save();
       ctx.strokeStyle="rgba(0,255,240,.35)"; ctx.lineWidth=3; ctx.shadowColor="#38f8ff"; ctx.shadowBlur=10;
       ctx.strokeRect(8,8,W-16,H-16);
       ctx.restore();
 
       // coin
-      if(coin){
-        drawCoin(coin.x, coin.y, COIN_R*2);
-      }
+      if(coin){ drawCoin(coin.x, coin.y, COIN_R*2); }
 
-      // enemy
+      // enemy & player
       drawGlowCircle(enemy.x, enemy.y, ENEMY_R, "hsl(6 100% 60%)", "rgba(255,120,120,.8)");
-
-      // player
       drawGlowCircle(player.x, player.y, PLAYER_R, "hsl(190 100% 60%)", "rgba(0,255,240,.8)");
 
       // HUD
@@ -398,7 +458,6 @@
     function gameOver(){
       running = false;
       draw();
-      // small flash / pause then exit overlay (or you can show a modal)
       setTimeout(()=>{ exitPlayScreen(); }, 800);
     }
 
@@ -414,9 +473,10 @@
     }
 
     // Buttons
-    startBtn.addEventListener('click', ()=>{
-      enterPlayScreen();
-      startGame(); // <-- ensures the game actually starts on Start
+    startBtn.addEventListener('click', ()=>{ 
+      if(!isHolder){ alert("Holders-only. Verify your CBS balance first."); return; }
+      enterPlayScreen(); 
+      startGame(); 
     });
     exitBtn.addEventListener('click', ()=>{ exitPlayScreen(); });
 
