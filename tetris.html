@@ -16,7 +16,7 @@
       --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
       --radius:18px;
       --btnA:#5afff0; --btnB:#2bffe4;
-      --vh: 1vh; /* wordt in JS gezet voor mobiel */
+      --vh: 1vh; /* via JS gezet */
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -71,19 +71,13 @@
       box-shadow:inset 0 0 0 1px rgba(0,255,240,.05), 0 8px 18px rgba(0,255,230,.08);
     }
 
-    /* Canvas in pagina */
     canvas{
       display:block; margin:0 auto;
       background:#05090d; border-radius:12px; border:1px solid rgba(0,255,240,.12);
       box-shadow: inset 0 0 0 1px rgba(0,255,240,.05);
       touch-action:none;
     }
-    /* Tetris board formaat */
-    #board{
-      width:100%;
-      max-width:360px;   /* 240px basisbreedte schaalt omhoog */
-      height:auto;       /* behoud aspect, top blijft zichtbaar */
-    }
+    #board{ width:100%; max-width:360px; height:auto; }
 
     .hud{ display:grid; gap:12px; }
     .mini{ display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:12px; }
@@ -96,35 +90,61 @@
     .stat{font-size:0.95rem;color:#bffef2;margin:0}
     .muted{color:var(--muted)}
 
-    /* Fullscreen speel-overlay met safe-area fix */
+    /* Fullscreen overlay + safe-area fix */
     .play-overlay{
       position:fixed; inset:0; z-index:50; display:none;
       background:
         radial-gradient(70% 60% at 50% 0%, rgba(0,255,240,.07), transparent 60%),
         linear-gradient(180deg, rgba(0,0,0,.65), rgba(0,0,0,.85));
-      align-items:center; justify-content:center; flex-direction:column; gap:14px;
+      align-items:center; justify-content:center; flex-direction:column; gap:12px;
       touch-action:none;
-      padding: calc(env(safe-area-inset-top) + 12px) 12px calc(env(safe-area-inset-bottom) + 12px);
+      padding: calc(env(safe-area-inset-top) + 10px) 10px calc(env(safe-area-inset-bottom) + 10px);
       min-height: calc(var(--vh) * 100);
     }
     .play-overlay .stage{
       width: min(92vw, 520px);
       max-width: 520px;
-      max-height: calc(var(--vh) * 100 - 120px);
+      max-height: calc(var(--vh) * 100 - 190px); /* ruimte voor HUD + controls */
       display:flex; align-items:center; justify-content:center;
       background:linear-gradient(180deg,#0b1217,#0a1015);
       border:1px solid rgba(0,255,240,.22);
-      border-radius:16px; padding:12px;
+      border-radius:16px; padding:10px;
       box-shadow:0 22px 48px rgba(0,255,230,.10), inset 0 0 0 1px rgba(0,255,240,.06);
       overflow:hidden;
+      position:relative;
     }
     .play-overlay .stage canvas{
-      width:100%;
-      height:auto;
-      max-height: calc(var(--vh) * 100 - 160px);
+      width:100%; height:auto;
+      max-height: calc(var(--vh) * 100 - 230px);
       border-radius:12px; border:1px solid rgba(0,255,240,.12);
       background:#05090d;
     }
+
+    /* Overlay HUD boven canvas */
+    .hudbar{
+      position:absolute; top:10px; left:10px; z-index:5;
+      pointer-events:none; background:rgba(0,15,20,.55);
+      border:1px solid rgba(0,255,240,.25); border-radius:10px;
+      padding:6px 10px; font-weight:700;
+      text-shadow:0 0 12px rgba(0,255,240,.25);
+    }
+
+    /* Touch controls */
+    .controls{
+      display:grid; gap:8px; width:min(92vw,520px);
+      grid-template-columns:1fr 1fr; align-items:center;
+    }
+    .controls .left{ display:flex; gap:8px; justify-content:flex-start; }
+    .controls .right{ display:flex; gap:8px; justify-content:flex-end; }
+    .tbtn{
+      flex:0 0 auto; min-width:64px; min-height:48px; padding:10px 14px;
+      border-radius:12px; border:1px solid rgba(0,255,240,.35);
+      background:linear-gradient(180deg,#14222a,#0f1a20); color:#dff;
+      font-weight:900; font-size:16px;
+      box-shadow:0 10px 22px rgba(0,0,0,.25), inset 0 0 0 1px rgba(0,255,240,.06);
+      touch-action:none;
+    }
+    .tbtn:active{ transform:translateY(1px); }
 
     body.play-mode header,
     body.play-mode #controlsPanel,
@@ -219,7 +239,25 @@
 
   <!-- Fullscreen Play -->
   <div id="playOverlay" class="play-overlay" aria-hidden="true">
-    <div class="stage"><div id="playStage"></div></div>
+    <div class="stage">
+      <div class="hudbar" id="hudBar">Score 0 • Lines 0 • Level 1</div>
+      <div id="playStage"></div>
+    </div>
+
+    <!-- Touch controls -->
+    <div class="controls">
+      <div class="left">
+        <button class="tbtn" id="btnLeft">◄</button>
+        <button class="tbtn" id="btnDown">▼</button>
+        <button class="tbtn" id="btnRight">►</button>
+      </div>
+      <div class="right">
+        <button class="tbtn" id="btnRotateCCW">⟲</button>
+        <button class="tbtn" id="btnRotate">⟳</button>
+        <button class="tbtn" id="btnHard">⤓</button>
+      </div>
+    </div>
+
     <button id="exitBtn" class="btn">⏹ Exit</button>
   </div>
 
@@ -281,11 +319,20 @@
     const nextCv = document.getElementById('next');
     const nctx   = nextCv.getContext('2d');
     const statsEl= document.getElementById('stats');
+    const hudBar = document.getElementById('hudBar');
     const exitBtn= document.getElementById('exitBtn');
     const startBtn= document.getElementById('startBtn');
     const canvasHome = document.getElementById('canvasHome');
     const playOverlay= document.getElementById('playOverlay');
     const playStage  = document.getElementById('playStage');
+
+    // Touch buttons
+    const btnLeft = document.getElementById('btnLeft');
+    const btnRight= document.getElementById('btnRight');
+    const btnDown = document.getElementById('btnDown');
+    const btnRotate = document.getElementById('btnRotate');
+    const btnRotateCCW = document.getElementById('btnRotateCCW');
+    const btnHard = document.getElementById('btnHard');
 
     // Name modal
     const overlay   = document.getElementById('nameOverlay');
@@ -303,13 +350,12 @@
 
     // Scoring / level
     let score=0, lines=0, level=1;
-    const LINE_SCORES=[0,100,300,500,800]; // index = lines cleared in one placement
-    const SOFT_DROP_P = 1;   // per row
-    const HARD_DROP_P = 2;   // per row
-    function levelSpeedMs(){ return Math.max(80, 800 - (level-1)*70); } // faster each level
-    function updateStats(){ statsEl.textContent = `Score ${score}\nLines ${lines}\nLevel ${level}`; }
+    const LINE_SCORES=[0,100,300,500,800];
+    function levelSpeedMs(){ return Math.max(80, 800 - (level-1)*70); }
+    function updateHUD(){ if(hudBar) hudBar.textContent = `Score ${score} • Lines ${lines} • Level ${level}`; }
+    function updateStats(){ statsEl.textContent = `Score ${score}\nLines ${lines}\nLevel ${level}`; updateHUD(); }
 
-    // RNG bag of tetrominoes
+    // RNG bag
     const TETROS = {
       I: {color:'#78eaf0',m:[[1,1,1,1]]},
       J: {color:'#7de0ff',m:[[1,0,0],[1,1,1]]},
@@ -348,10 +394,9 @@
 
       pm = def.m.map(r=>r.slice());
       px = Math.floor((COLS - pm[0].length)/2);
-      py = -pm.length; // spawn boven het bord, valt in
+      py = -pm.length;
       piece = {name, color:def.color};
 
-      if(collides(px, py, pm)){ gameOver(); return; }
       drawNext();
     }
 
@@ -362,7 +407,7 @@
         for(let c=0;c<m[r].length;c++){
           if(!m[r][c]) continue;
           const nx=x+c, ny=y+r;
-          if(ny<0) continue;
+          if(ny<0) continue;           // boven veld is ok bij spawn
           if(nx<0||nx>=COLS||ny>=ROWS) return true;
           if(board[ny][nx]) return true;
         }
@@ -391,7 +436,8 @@
         cleared++; y++;
       }
       if(cleared>0){
-        score += LINE_SCORES[cleared] * Math.max(1, level);
+        const gained = LINE_SCORES[cleared] * Math.max(1, level);
+        score += gained;
         lines += cleared;
         const newLevel = 1 + Math.floor(lines/10);
         if(newLevel !== level){ level = newLevel; dropInterval = levelSpeedMs(); }
@@ -400,14 +446,14 @@
     }
 
     function drawCell(x,y,color){
-      const px=x*SIZE, py=y*SIZE;
+      const pxp=x*SIZE, pyp=y*SIZE;
       ctx.save();
       ctx.shadowColor="rgba(0,255,240,.6)"; ctx.shadowBlur=10;
-      const g=ctx.createLinearGradient(px,py,px,py+SIZE);
+      const g=ctx.createLinearGradient(pxp,pyp,pxp,pyp+SIZE);
       g.addColorStop(0, color); g.addColorStop(1, "rgba(0,0,0,.2)");
-      ctx.fillStyle=g; ctx.fillRect(px+1,py+1,SIZE-2,SIZE-2);
+      ctx.fillStyle=g; ctx.fillRect(pxp+1,pyp+1,SIZE-2,SIZE-2);
       ctx.shadowBlur=0; ctx.lineWidth=1; ctx.strokeStyle="rgba(0,255,240,.35)";
-      ctx.strokeRect(px+0.5,py+0.5,SIZE-1, SIZE-1);
+      ctx.strokeRect(pxp+0.5,pyp+0.5,SIZE-1, SIZE-1);
       ctx.restore();
     }
 
@@ -476,6 +522,7 @@
     }
 
     function tryMove(dx,dy){ if(!collides(px+dx, py+dy, pm)){ px+=dx; py+=dy; return true; } return false; }
+
     function lockPiece(){ merge(); clearLines(); spawn(); }
 
     function attemptRotate(ccw=false){
@@ -485,13 +532,31 @@
       if(!collides(px, py-1, rm)){ pm=rm; py-=1; }
     }
 
-    function hardDrop(){ const d = hardDropDist(); if(d>0){ py+=d; score += d * 2; updateStats(); } lockPiece(); }
-    function softStep(){ if(tryMove(0,1)){ score += 1; updateStats(); } else lockPiece(); }
+    function hardDrop(){
+      const d = hardDropDist();
+      if(d>0){ py+=d; score += d * 2; updateStats(); }
+      if(py < 0){ gameOver(); return; }
+      lockPiece();
+    }
+
+    function softStep(){
+      if(tryMove(0,1)){ score += 1; updateStats(); }
+      else {
+        if(py < 0){ gameOver(); return; }
+        lockPiece();
+      }
+    }
 
     function step(dt){
       dropTimer += dt;
       const interval = dropInterval * (softDrop?0.12:1);
-      if(dropTimer >= interval){ dropTimer = 0; if(!tryMove(0,1)) lockPiece(); }
+      if(dropTimer >= interval){
+        dropTimer = 0;
+        if(!tryMove(0,1)){
+          if(py < 0){ gameOver(); return; }
+          lockPiece();
+        }
+      }
     }
 
     function loop(ts){
@@ -521,15 +586,17 @@
       if(playStage && canvas && canvas.parentElement!==playStage) playStage.appendChild(canvas);
       document.body.classList.add('play-mode');
       playOverlay.setAttribute('aria-hidden','false');
+      updateHUD();
     }
     function exitPlay(){
       stopGame();
       if(canvasHome && canvas && canvas.parentElement!==canvasHome) canvasHome.appendChild(canvas);
       document.body.classList.remove('play-mode');
       playOverlay.setAttribute('aria-hidden','true');
+      softDrop=false;
     }
 
-    // Controls
+    // Keyboard
     window.addEventListener('keydown', (e)=>{
       if(!document.body.classList.contains('play-mode')) return;
       if(e.key==='ArrowLeft'){ e.preventDefault(); tryMove(-1,0); drawBoard(); }
@@ -541,6 +608,45 @@
       else if(e.key==='Escape'){ e.preventDefault(); exitPlay(); }
     });
     window.addEventListener('keyup', (e)=>{ if(e.key==='ArrowDown') softDrop=false; });
+
+    // Touch controls helpers (hold-to-repeat)
+    function holdRepeat(el, onStart, onRepeat, onEnd, interval=110){
+      let t=null, r=null, active=false;
+      const start=(e)=>{ e.preventDefault(); if(active) return; active=true; onStart?.(); r=setInterval(()=>onRepeat?.(), interval); };
+      const end=()=>{ if(!active) return; active=false; if(r) clearInterval(r); r=null; onEnd?.(); };
+      el.addEventListener('pointerdown', start, {passive:false});
+      el.addEventListener('pointerup', end);
+      el.addEventListener('pointerleave', end);
+      el.addEventListener('pointercancel', end);
+    }
+
+    // Bind touch buttons
+    holdRepeat(btnLeft,
+      ()=>{ tryMove(-1,0); drawBoard(); },
+      ()=>{ tryMove(-1,0); drawBoard(); }
+    );
+    holdRepeat(btnRight,
+      ()=>{ tryMove(1,0); drawBoard(); },
+      ()=>{ tryMove(1,0); drawBoard(); }
+    );
+    holdRepeat(btnDown,
+      ()=>{ softDrop=true; softStep(); },
+      ()=>{ softStep(); },
+      ()=>{ softDrop=false; }
+    );
+    btnRotate.addEventListener('click', (e)=>{ e.preventDefault(); attemptRotate(false); drawBoard(); }, {passive:false});
+    btnRotateCCW.addEventListener('click', (e)=>{ e.preventDefault(); attemptRotate(true); drawBoard(); }, {passive:false});
+    btnHard.addEventListener('click', (e)=>{ e.preventDefault(); hardDrop(); }, {passive:false});
+
+    // Tap canvas to rotate (quick mobile gesture)
+    canvas.addEventListener('pointerup', (e)=>{
+      if(!document.body.classList.contains('play-mode')) return;
+      // tik bovenste helft -> rotate, onderste -> hard drop
+      const rect = canvas.getBoundingClientRect();
+      const y = e.clientY - rect.top;
+      if(y < rect.height * 0.6) attemptRotate(false); else hardDrop();
+      drawBoard();
+    }, {passive:true});
 
     // Start / Exit
     startBtn.addEventListener('click', ()=>{
@@ -558,7 +664,6 @@
     }
     cancelBtn.addEventListener("click", ()=>{
       overlay.style.display="none";
-      // direct herstarten
       enterPlay(); startGame();
     });
     async function submitName(){
@@ -597,7 +702,7 @@
     const RPC_URL = "https://rpc.helius.xyz/?api-key=453a64a5-31dd-4c21-9619-6f0c69c74ff9";
     const connection = new Connection(RPC_URL, "confirmed");
     const CBS_MINT = new PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
-    const CBS_MIN_RAW = 1000n * 1_000_000_000n; // 1000 CBS * 10^9
+    const CBS_MIN_RAW = 1000n * 1_000_000_000n;
 
     const connectBtn = document.getElementById("connectBtn");
     const startBtn   = document.getElementById("startBtn");
@@ -638,7 +743,6 @@
       }catch(e){ console.warn("Wallet connect failed", e); }
     });
 
-    // Als wallet verandert, eligibility opnieuw checken
     if (window.solana) {
       window.solana.on?.('accountChanged', async (pk)=>{
         walletPK = pk || null;
@@ -648,7 +752,7 @@
     }
   </script>
 
-  <!-- Mobiele 100vh fix (safe-area / URL-balk) -->
+  <!-- Mobiele 100vh fix -->
   <script>
     function setDocVH(){
       const vh = window.innerHeight * 0.01;
