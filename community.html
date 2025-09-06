@@ -1,387 +1,203 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CBS Community — Best Submissions Leaderboard</title>
-  <meta name="description" content="Leaderboard met de beste community-inzendingen voor CBS Coin." />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CBS Coin – Community</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <style>
     :root{
-      --bg:#0b0c10; --panel:#12131a; --ink:#f4f5f7; --muted:#b7b9c4; --line:#262838; --ac:#e0b15a;
+      --bg1:#0a0c10; --bg2:#0f141b;
+      --card:#0f151c; --card2:#0c1016;
+      --fg:#eafffb; --muted:#a8d6cd; --note:#7ee9dc;
+      --accent:#5afff0; --accent2:#2bffe4;
+      --shadow: 0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
+      --radius:18px;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Helvetica,Arial,sans-serif;color:var(--ink);
+    body{margin:0;font-family:'Orbitron',sans-serif;color:var(--fg);
       background:
-        radial-gradient(60% 40% at 50% 0%, rgba(255,255,255,.06), transparent 60%),
-        linear-gradient(180deg, #0b0c10 0%, #0a0b10 60%, #07080d 100%);
+        radial-gradient(900px 600px at 100% -10%, rgba(0,255,230,.10), transparent 60%),
+        radial-gradient(700px 500px at -10% 110%, rgba(0,170,255,.09), transparent 60%),
+        linear-gradient(135deg,var(--bg1),var(--bg2));
+      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
     }
     a{color:inherit}
-    .wrap{max-width:1060px;margin:auto;padding:22px}
 
     /* Header */
-    header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:14px}
-    .brand{display:flex;align-items:center;gap:12px}
-    .brand .logo{width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:#0f1020}
-    h1{margin:0;font-size:clamp(22px,3.6vw,34px);letter-spacing:.2px}
-    .sub{margin-top:4px;color:var(--muted);font-size:14px}
+    .topbar{position:sticky;top:0;z-index:20;display:flex;justify-content:space-between;align-items:center;padding:.8rem 1rem;border-bottom:1px solid rgba(0,255,240,.08);background:linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0));backdrop-filter:blur(6px)}
+    .brand{display:flex;gap:.7rem;align-items:center}
+    .brand img{width:38px;height:38px;border-radius:10px;filter:drop-shadow(0 0 10px rgba(0,255,230,.35))}
+    .brand strong{color:#bffef2;letter-spacing:.4px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;min-width:120px;padding:12px 18px;border-radius:10px;text-decoration:none;font-weight:900;font-size:.94rem;color:#001010;background:linear-gradient(180deg,var(--accent),var(--accent2));border:1px solid rgba(0,255,240,.7);box-shadow:0 0 12px rgba(0,255,230,.55),0 0 24px rgba(0,255,230,.25),inset 0 -8px 14px rgba(0,0,0,.14);transition:transform .15s ease, box-shadow .15s ease}
+    .btn:hover{transform:translateY(-2px) scale(1.03);box-shadow:0 0 16px rgba(0,255,230,.75),0 0 32px rgba(0,255,230,.35)}
+    #langSwitch{background:linear-gradient(180deg,#7dffe9,#55f1e7);color:#012022;font-weight:900;border:1px solid rgba(0,255,240,.45);padding:.55rem .9rem;border-radius:12px;cursor:pointer;box-shadow:0 8px 18px rgba(0,255,230,.18), inset 0 -6px 10px rgba(0,0,0,.15)}
 
-    /* Toolbar */
-    .toolbar{display:flex;flex-wrap:wrap;gap:10px}
-    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#191b26,#141624);cursor:pointer;box-shadow:0 1px 0 rgba(255,255,255,.05) inset}
-    .btn:hover{border-color:#3b3e57}
-    .btn.brand{background:linear-gradient(180deg,#2a2215,#1d1a11);border-color:#3a2f1b}
-    .select{appearance:none;background:#0f1020;border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--ink)}
-    label.muted{color:var(--muted);display:flex;align-items:center;gap:6px}
+    /* Layout */
+    .container{max-width:1100px;margin:0 auto;padding:1.2rem 1rem 2.2rem}
+    .hero{display:grid;grid-template-columns:120px 1fr;gap:1.2rem;align-items:center;padding:1.2rem;margin:10px auto 18px;border-radius:var(--radius);background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35));border:1px solid rgba(0,255,240,.18);box-shadow:var(--shadow)}
+    .logo-wrap{position:relative;width:120px;height:120px;border-radius:16px;overflow:hidden;background:radial-gradient(closest-side, rgba(0,255,230,.18), rgba(0,255,230,.04) 58%, transparent 62%);display:grid;place-items:center}
+    .logo-wrap::after{content:"";position:absolute;inset:-8%;border-radius:18px;box-shadow:0 0 0 2px rgba(0,255,230,.18), inset 0 0 30px rgba(0,255,230,.14);pointer-events:none}
+    .logo{width:86%;height:86%;object-fit:contain}
+    .hero h2{margin:.15rem 0 0;color:var(--note);font-size:1.05rem;font-weight:600}
+    .hero p{margin:.35rem 0 0;color:var(--muted);font-size:.95rem}
 
-    /* Cards */
-    .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 0 0 1px rgba(255,255,255,.02) inset}
-    .hr{height:1px;background:linear-gradient(90deg,transparent,#303045,transparent);margin:14px 0}
-
-    /* Winner hero */
-    .hero{padding:0;overflow:hidden}
-    .heroBox{position:relative}
-    .heroImg{width:100%;aspect-ratio:16/9;object-fit:cover;display:block}
-    .heroOver{position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,.0) 40%, rgba(0,0,0,.55) 100%)}
-    .heroInfo{position:absolute;left:16px;right:16px;bottom:14px;display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
-    .heroText{max-width:70%}
-    .heroTitle{font-size:18px;font-weight:700}
-    .heroMeta{color:var(--muted);font-size:13px}
-    .trophyBadge{position:absolute;top:12px;left:12px;background:linear-gradient(180deg,#f8e28a,#caa94b);color:#2b220d;border:1px solid #a58534;border-radius:999px;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:800}
-    .heroLogo{position:absolute;top:12px;right:12px;width:28px;height:28px;border-radius:8px;border:1px solid var(--line);background:#0f1020}
-
-    /* Table */
-    table{width:100%;border-collapse:separate;border-spacing:0 10px}
-    th,td{padding:12px 14px;text-align:left;font-size:14px}
-    thead th{color:var(--muted);font-weight:600}
-    tbody tr{background:#151621;border:1px solid var(--line)}
-    tbody td:first-child{border-top-left-radius:10px;border-bottom-left-radius:10px}
-    tbody td:last-child{border-top-right-radius:10px;border-bottom-right-radius:10px}
-    .rank{width:64px;text-align:center;font-weight:700}
-    .medal{display:inline-block;width:28px;height:28px;border-radius:999px;line-height:28px;text-align:center;font-weight:800}
-    .gold{background:linear-gradient(180deg,#f8e28a,#caa94b);color:#2b220d;border:1px solid #a58534}
-    .silver{background:linear-gradient(180deg,#e6e9ef,#bfc6d6);color:#1e2430;border:1px solid #96a0b5}
-    .bronze{background:linear-gradient(180deg,#e9c7a4,#b38352);color:#2b2118;border:1px solid #8d6845}
-    .thumb{width:88px;height:64px;border-radius:10px;object-fit:cover;border:1px solid var(--line);background:#0f1020}
-    .thumbWrap{position:relative;display:inline-block}
-    .logoBadge{position:absolute;right:6px;top:6px;width:20px;height:20px;border-radius:6px;border:1px solid var(--line);background:#0f1020}
-    .logoFallback{position:absolute;right:6px;top:6px;display:none;align-items:center;justify-content:center;width:20px;height:20px;border-radius:6px;border:1px solid var(--line);background:#0f1020;font-size:10px;color:var(--ink)}
-    .title{font-weight:600}
-    .author{color:var(--muted);font-size:12px}
-    .addr{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;color:var(--muted);font-size:12px}
+    /* Sections */
+    .card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid rgba(0,255,240,.14);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+    .grid{display:grid;gap:14px;grid-template-columns:repeat(12,1fr)}
+    .tiles{display:grid;gap:14px;grid-template-columns:repeat(12,1fr)}
+    .tile{grid-column:span 12;display:flex;flex-direction:column;gap:10px;padding:12px;border-radius:14px;background:linear-gradient(180deg,#081015,#0a1118);border:1px solid rgba(0,255,240,.16);box-shadow:inset 0 0 0 1px rgba(0,255,240,.05),0 8px 18px rgba(0,255,230,.08)}
+    .thumb{width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:10px;border:1px solid rgba(0,255,240,.12)}
+    .meta{display:flex;justify-content:space-between;align-items:center;gap:10px}
+    .title{margin:0;color:#d9fffb;font-size:1rem}
+    .muted{color:var(--muted)}
     .tags{display:flex;gap:6px;flex-wrap:wrap}
-    .tag{display:inline-block;padding:2px 6px;border:1px solid var(--line);border-radius:8px;font-size:12px;color:var(--muted)}
-    .score{font-weight:700}
+    .tag{display:inline-block;padding:2px 6px;border-radius:8px;border:1px solid rgba(0,255,240,.18);color:var(--muted);font-size:12px}
+    .trophy{position:absolute;top:8px;left:8px;background:linear-gradient(180deg,#f8e28a,#caa94b);color:#2b220d;border:1px solid #a58534;border-radius:999px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-weight:800}
+    .thumbWrap{position:relative}
 
-    /* Lang switch */
-    .langSwitch{position:fixed;top:12px;right:12px;display:flex;gap:6px;z-index:50}
-    .langSwitch .btn{padding:6px 10px}
+    .filters{display:flex;gap:8px;flex-wrap:wrap}
+    .seg{display:inline-flex;background:linear-gradient(180deg,#0d1218,#0a1016);border:1px solid rgba(0,255,240,.16);border-radius:12px;padding:4px}
+    .seg button{border:0;background:transparent;color:var(--muted);padding:8px 12px;border-radius:8px;font-weight:700;cursor:pointer}
+    .seg button.active{background:linear-gradient(180deg,var(--accent),var(--accent2));color:#001010}
 
-    footer{margin:24px 0;text-align:center;color:#8b8d98;font-size:12px}
+    footer{margin:24px auto 40px;text-align:center;color:var(--muted)}
+    footer a{color:#79ffee;text-decoration:none}
+    footer a:hover{text-decoration:underline}
 
-    /* Tip + Signature Wall */
-    .grid{display:grid;gap:12px}
-    .tipGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
-    @media (max-width:720px){.tipGrid{grid-template-columns:1fr}}
-    .input{background:#0f1020;border:1px solid var(--line);border-radius:10px;padding:10px 12px;color:var(--ink);width:100%}
-    .miniBtn{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:linear-gradient(180deg,#191b26,#141624);cursor:pointer}
-    .miniBtn:hover{border-color:#3b3e57}
-    .wallList{display:grid;gap:10px}
-    .wallItem{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;background:#151621;border:1px solid var(--line);border-radius:12px;padding:10px}
-    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;color:var(--muted)}
-  .heroFallback{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:linear-gradient(180deg,#0e1018,#0a0c14)}
-    .heroFallbackInner{display:flex;flex-direction:column;align-items:center;gap:6px;opacity:.9}
-    .heroFallbackInner img{width:52px;height:52px;border-radius:12px;border:1px solid var(--line);background:#0f1020}
-    .heroFallbackInner .label{font-size:12px;color:var(--muted)}
+    @media(min-width:640px){ .tile{grid-column:span 6} }
+    @media(min-width:980px){ .tile{grid-column:span 4} }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="langSwitch">
-      <button id="langNL" class="btn">NL</button>
-      <button id="langEN" class="btn brand">EN</button>
+  <header class="topbar">
+    <div class="brand">
+      <a href="https://smitskecbs.github.io/cbs-coin" style="display:flex;align-items:center;gap:.7rem;text-decoration:none">
+        <img src="logo.png" alt="CBS Logo"><strong>CBS Coin</strong>
+      </a>
     </div>
-    <header>
-      <div class="brand">
-        <img src="logo.png" alt="CBS Coin" class="logo"/>
-        <div>
-          <h1>Best Submissions — Leaderboard</h1>
-          <div class="sub">Winners & top entries — clean and simple.</div>
-        </div>
-      </div>
-      <div class="toolbar">
-        <label class="muted">Top
-          <select id="topN" class="select">
-            <option value="10">10</option>
-            <option value="25" selected>25</option>
-            <option value="50">50</option>
-          </select>
-        </label>
-        <select id="sortBy" class="select">
-          <option value="score" selected>Sort by: Score</option>
-          <option value="date">Sort by: Date</option>
-          <option value="title">Sort by: Title</option>
-        </select>
-        <button id="exportBtn" class="btn">📤 Export CSV</button>
-      </div>
-    </header>
+    <div style="display:flex;gap:10px;align-items:center">
+      <a class="btn" href="https://smitskecbs.github.io/cbs-coin">← Home</a>
+      <button id="langSwitch">NL 🇳🇱</button>
+    </div>
+  </header>
 
-    <section class="card hero" id="winnerHero"></section>
-
-    <!-- Tip the Winner -->
-    <section class="card" id="tipCard">
-      <h2 style="margin:0 0 10px">Tip the Winner</h2>
-      <div class="grid tipGrid">
-        <div>
-          <label class="muted">Recipient (SOL address)</label>
-          <input id="tipRecipient" class="input" placeholder="Recipient wallet address" />
-        </div>
-        <div>
-          <label class="muted">Amount (SOL)</label>
-          <input id="tipAmount" class="input" placeholder="0.05" />
-        </div>
+  <div class="container">
+    <section class="hero">
+      <div class="logo-wrap"><img class="logo" src="logo.png" alt="CBS Logo"></div>
+      <div>
+        <h2 id="hTitle">Community</h2>
+        <p id="hSub">Winners, memes and creations from the CBS army.</p>
       </div>
-      <div class="row" style="margin-top:10px">
-        <a id="tipOpen" class="btn brand" href="#" target="_blank" rel="noopener">Open in wallet</a>
-        <button id="tipCopyLink" class="btn">Copy link</button>
-        <button id="tipCopyAddr" class="btn">Copy address</button>
-        <span id="tipMsg" class="muted"></span>
-      </div>
-      <div class="hr"></div>
-      <div class="muted" id="tipHelp">Use Solana-compatible wallets (Phantom, Solflare). On desktop, the browser wallet should handle the <code>solana:</code> link.</div>
     </section>
 
-    <!-- Signature Wall -->
-    <section class="card" id="wallCard">
-      <h2 style="margin:0 0 10px">Signature Wall</h2>
-      <div class="row">
-        <button id="wConnect" class="btn brand">🔐 Connect Wallet</button>
-        <span id="wConn" class="muted">Not connected</span>
-      </div>
-      <div class="grid tipGrid" style="margin-top:10px">
-        <div>
-          <label class="muted">Your name (optional)</label>
-          <input id="wName" class="input" placeholder="Display name" />
-        </div>
-        <div>
-          <label class="muted">Message</label>
-          <input id="wMsg" class="input" placeholder="Say something to the community" />
-        </div>
-      </div>
-      <div class="row" style="margin-top:10px">
-        <button id="wSign" class="btn">✍️ Sign & Post</button>
-        <span id="wInfo" class="muted"></span>
-      </div>
-      <div class="hr"></div>
-      <div class="wallList" id="wList"></div>
-    </section>
-
+    <!-- Winners -->
     <section class="card">
-      <table>
-        <thead>
-          <tr>
-            <th class="rank">#</th>
-            <th id="colSubmission">Inzending</th>
-            <th style="width:120px" id="colScore">Score</th>
-            <th style="width:160px" id="colDate">Datum</th>
-          </tr>
-        </thead>
-        <tbody id="tbody"></tbody>
-      </table>
+      <h3 id="winHead" style="margin:.2rem 0 .6rem">🏆 Winners</h3>
+      <div class="tiles" id="winners"></div>
     </section>
 
-    <footer>© <span id="y"></span> CBS Coin — Community Builds Sovereignty</footer>
+    <!-- Gallery controls -->
+    <section class="card">
+      <div class="filters" style="justify-content:space-between;align-items:center">
+        <div class="seg">
+          <button id="btnBest" class="active">Best</button>
+          <button id="btnAll">All</button>
+        </div>
+        <div class="muted" id="countTxt"></div>
+      </div>
+      <div class="tiles" id="gallery" style="margin-top:12px"></div>
+    </section>
+
+    <footer>
+      Join the community:
+      <a href="https://t.me/CBS_Coin" target="_blank" rel="noopener">Telegram</a> ·
+      <a href="https://x.com/CBS_Coin" target="_blank" rel="noopener">X (Twitter)</a>
+    </footer>
   </div>
 
   <script>
-  const SUBMISSIONS = [
-    { id:'w1', title:'Mini Meme Contest #1', author:'@maestropicknava', authorUrl:'https://x.com/maestropicknava', wallet:'', thumb:'logo.png', url:'https://x.com/i/status/1961731121353216216', tags:['winner'], score:'🏆', date:'2025-08-30', winner:true }
-  ];
+    // ===== Data (edit this) =====
+    const SUBMISSIONS = [
+      { id:'w1', title:'Mini Meme Contest #1', author:'@maestropicknava', authorUrl:'https://x.com/maestropicknava', url:'https://x.com/i/status/1961731121353216216', thumb:'logo.png', tags:['winner','meme'], date:'2025-08-30', score:100, winner:true, best:true },
+      { id:'g2', title:'CBS Runner', author:'@solsprinter', authorUrl:'#', url:'#', thumb:'logo.png', tags:['meme'], date:'2025-09-03', score:94, best:true },
+      { id:'g3', title:'Chain Breaker Poster', author:'@adje', authorUrl:'#', url:'#', thumb:'logo.png', tags:['poster'], date:'2025-09-02', score:91 },
+    ];
 
-  const $ = (id) => document.getElementById(id);
-  const tbody = $('tbody');
-  const heroEl = document.getElementById('winnerHero');
-  // Tip refs
-  const tipRecipient = document.getElementById('tipRecipient');
-  const tipAmount = document.getElementById('tipAmount');
-  const tipOpen = document.getElementById('tipOpen');
-  const tipCopyLink = document.getElementById('tipCopyLink');
-  const tipCopyAddr = document.getElementById('tipCopyAddr');
-  const tipMsg = document.getElementById('tipMsg');
-  // Wall refs
-  const wConnect = document.getElementById('wConnect');
-  const wConn = document.getElementById('wConn');
-  const wName = document.getElementById('wName');
-  const wMsg = document.getElementById('wMsg');
-  const wSign = document.getElementById('wSign');
-  const wList = document.getElementById('wList');
-  const topN = $('topN');
-  const sortBy = $('sortBy');
-  const exportBtn = $('exportBtn');
-  
-    // ====== Winner Hero ======
-  function renderHero(){
-    if(!heroEl) return;
-    const item = SUBMISSIONS[0];
-    if(!item){ heroEl.style.display='none'; return; }
-    const dest = item.url || item.authorUrl || '#';
-    const authorLink = item.authorUrl || dest;
-    heroEl.innerHTML = `
-      <div class="heroBox">
-        <a href="${dest}" target="_blank" rel="noopener">
-          <img src="${item.thumb}" class="heroImg" alt="${escapeHtml(item.title)}" onerror="this.style.display='none'; var f=this.parentNode.parentNode.querySelector('.heroFallback'); if(f){f.style.display='flex';}" />
-          <div class="heroOver"></div>
-          <div class="heroFallback"><div class="heroFallbackInner"><img src="logo.png" alt="CBS"/><div class="label">WINNER</div></div></div>
-        </a>
-        <div class="trophyBadge">🏆</div>
-        <img src="logo.png" alt="CBS" class="heroLogo" />
-        <div class="heroInfo">
-          <div class="heroText">
-            <div class="heroTitle">${escapeHtml(item.title)}</div>
-            <div class="heroMeta"><a href="${authorLink}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">${escapeHtml(item.author || 'Creator')}</a> • ${item.date}</div>
-          </div>
-          <a href="${dest}" target="_blank" rel="noopener" class="btn">Open</a>
-        </div>
-      </div>`;
-  }
+    // ===== Elements =====
+    const winnersEl = document.getElementById('winners');
+    const galleryEl = document.getElementById('gallery');
+    const btnBest = document.getElementById('btnBest');
+    const btnAll = document.getElementById('btnAll');
+    const countTxt = document.getElementById('countTxt');
+    const langBtn = document.getElementById('langSwitch');
 
-  // ====== Tip logic ======
-  const TIP_STORE = 'cbs_tip_cfg_v1';
-  function loadTip(){ try{ return JSON.parse(localStorage.getItem(TIP_STORE)||'{}'); }catch{ return {}; } }
-  function saveTip(o){ localStorage.setItem(TIP_STORE, JSON.stringify(o)); }
-  function buildSolanaURI(address, amount, label, message){
-    if(!address) return '#';
-    let u = `solana:${encodeURIComponent(address)}`;
-    const q = [];
-    if(amount) q.push(`amount=${encodeURIComponent(amount)}`);
-    if(label) q.push(`label=${encodeURIComponent(label)}`);
-    if(message) q.push(`message=${encodeURIComponent(message)}`);
-    if(q.length) u += `?${q.join('&')}`;
-    return u;
-  }
-  function setupTip(){
-    if(!tipRecipient || !tipOpen) return;
-    const tipCfg = loadTip();
-    tipRecipient.value = tipCfg.address || '';
-    tipAmount.value = tipCfg.amount || '0.05';
-    const refresh = ()=>{
-      const uri = buildSolanaURI(tipRecipient.value.trim(), tipAmount.value.trim(), 'CBS Tip', 'Thank you!');
-      tipOpen.href = uri;
-    };
-    refresh();
-    tipRecipient.addEventListener('input', ()=>{ saveTip({address:tipRecipient.value.trim(), amount:tipAmount.value.trim()}); refresh(); });
-    tipAmount.addEventListener('input', ()=>{ saveTip({address:tipRecipient.value.trim(), amount:tipAmount.value.trim()}); refresh(); });
-    tipCopyLink?.addEventListener('click', async()=>{ try{ await navigator.clipboard.writeText(tipOpen.href); tipMsg.textContent='Link copied'; setTimeout(()=> tipMsg.textContent='',1500);}catch{ alert('Copy failed'); } });
-    tipCopyAddr?.addEventListener('click', async()=>{ try{ await navigator.clipboard.writeText(tipRecipient.value.trim()); tipMsg.textContent='Address copied'; setTimeout(()=> tipMsg.textContent='',1500);}catch{ alert('Copy failed'); } });
-  }
-
-  // ====== Signature Wall ======
-  const WALL_STORE = 'cbs_wall_entries_v1';
-  function loadWall(){ try{ return JSON.parse(localStorage.getItem(WALL_STORE)||'[]'); }catch{ return []; } }
-  function saveWall(list){ localStorage.setItem(WALL_STORE, JSON.stringify(list)); }
-  function short(a){ if(!a) return '-'; return a.slice(0,4)+'…'+a.slice(-4); }
-  async function connect(){
-    try{
-      const provider = window.solana || window.phantom?.solana;
-      if(!provider){ alert('Install Phantom wallet'); return null; }
-      const res = await provider.connect();
-      return res.publicKey?.toString?.() || null;
-    }catch{ return null; }
-  }
-  async function signMessage(provider, message){
-    const enc = new TextEncoder();
-    const msgBytes = enc.encode(message);
-    const { signature } = await provider.signMessage(msgBytes, 'utf8');
-    return Array.from(signature).map(b=>b.toString(16).padStart(2,'0')).join('');
-  }
-  function renderWall(){
-    const list = loadWall().slice().reverse();
-    wList.innerHTML = '';
-    if(list.length===0){ wList.innerHTML = `<div class="muted">No signatures yet.</div>`; return; }
-    list.forEach(it=>{
-      const row = document.createElement('div');
-      row.className = 'wallItem';
-      row.innerHTML = `
-        <div>
-          <div class="title">${escapeHtml(it.name || 'Anonymous')}</div>
-          <div class="author">${escapeHtml(it.msg || '')}</div>
-        </div>
-        <div class="mono">${escapeHtml(short(it.pubkey))}<br><span class="author">${new Date(it.ts).toLocaleString()}</span></div>`;
-      wList.appendChild(row);
-    });
-  }
-  function setupWall(){
-    if(!wConnect) return;
-    const provider = window.solana || window.phantom?.solana;
-    wConnect.addEventListener('click', async()=>{
-      const pk = await connect();
-      wConn.textContent = pk ? `Connected: ${short(pk)}` : 'Not connected';
-    });
-    wSign.addEventListener('click', async()=>{
-      try{
-        const provider = window.solana || window.phantom?.solana;
-        if(!provider){ alert('Install Phantom'); return; }
-        const acc = await connect(); if(!acc){ return; }
-        const name = wName.value.trim();
-        const msg = wMsg.value.trim(); if(!msg){ wInfo.textContent = 'Message required'; setTimeout(()=> wInfo.textContent='',1500); return; }
-        const payload = `CBS Signature Wall | ${acc} | ${msg} | ${Date.now()}`;
-        await signMessage(provider, payload);
-        const list = loadWall();
-        list.push({ pubkey: acc, name, msg, ts: Date.now() });
-        saveWall(list);
-        wName.value=''; wMsg.value='';
-        wInfo.textContent = 'Posted!'; setTimeout(()=> wInfo.textContent='',1500);
-        renderWall();
-      }catch(e){ console.warn(e); wInfo.textContent='Canceled'; setTimeout(()=> wInfo.textContent='',1500); }
-    });
-    renderWall();
-  }
-    const dest = item.url || item.authorUrl || '#';
-    const authorLink = item.authorUrl || dest;
-    heroEl.innerHTML = `
-      <div class="heroBox">
-        <a href="${dest}" target="_blank" rel="noopener">
-          <img src="${item.thumb}" class="heroImg" alt="${escapeHtml(item.title)}" onerror="this.style.display='none'; var f=this.parentNode.parentNode.querySelector('.heroFallback'); if(f){f.style.display='flex';}" />
-          <div class="heroOver"></div>
-          <div class="heroFallback"><div class="heroFallbackInner"><img src="logo.png" alt="CBS"/><div class="label">WINNER</div></div></div>
-        </a>
-        <div class="trophyBadge">🏆</div>
-        <img src="logo.png" alt="CBS" class="heroLogo" />
-        <div class="heroInfo">
-          <div class="heroText">
-            <div class="heroTitle">${escapeHtml(item.title)}</div>
-            <div class="heroMeta"><a href="${authorLink}" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline">${escapeHtml(item.author || 'Creator')}</a> • ${item.date}</div>
-          </div>
-          <a href="${dest}" target="_blank" rel="noopener" class="btn">Open</a>
-        </div>
-      </div>`;
-  }
-
-  // ====== Language toggle (EN/NL) ======
-  const LANG_KEY = 'cbs_lang';
-  let currentLang = localStorage.getItem(LANG_KEY) || (typeof getParam==='function' ? (getParam('lang')||'nl') : 'nl');
-  const langNL = document.getElementById('langNL');
-  const langEN = document.getElementById('langEN');
-  function setLang(lang){ currentLang = lang; localStorage.setItem(LANG_KEY, lang); applyLang(); }
-  if(langNL) langNL.addEventListener('click', ()=> setLang('nl'));
-  if(langEN) langEN.addEventListener('click', ()=> setLang('en'));
-  function applyLang(){
+    // ===== Language =====
+    const LANG_KEY='cbs_lang';
+    let currentLang = localStorage.getItem(LANG_KEY) || 'en';
     const dict = {
-      nl: { title:'Beste inzendingen — Leaderboard', subtitle:'Winnaars & beste inzendingen — strak en simpel.', thRank:'#', thEntry:'Inzending', thScore:'Score', thDate:'Datum', export:'Exporteer CSV', sortScore:'Sorteren: Score', sortDate:'Sorteren: Datum', sortTitle:'Sorteren: Titel', topLabel:'Top' },
-      en: { title:'Best Submissions — Leaderboard', subtitle:'Winners & top entries — clean and simple.', thRank:'#', thEntry:'Entry', thScore:'Score', thDate:'Date', export:'Export CSV', sortScore:'Sort by: Score', sortDate:'Sort by: Date', sortTitle:'Sort by: Title', topLabel:'Top' }
-    }[currentLang];
-    const h1 = document.querySelector('h1'); if(h1) h1.textContent = dict.title;
-    const sub = document.querySelector('.sub'); if(sub) sub.textContent = dict.subtitle;
-    const ths = document.querySelectorAll('thead th'); if(ths.length>=4){ ths[0].textContent=dict.thRank; ths[1].textContent=dict.thEntry; ths[2].textContent=dict.thScore; ths[3].textContent=dict.thDate; }
-    const exp = document.getElementById('exportBtn'); if(exp) exp.textContent = '📤 ' + dict.export;
-    const sortSel = document.getElementById('sortBy'); if(sortSel && sortSel.options.length>=3){ sortSel.options[0].textContent=dict.sortScore; sortSel.options[1].textContent=dict.sortDate; sortSel.options[2].textContent=dict.sortTitle; }
-    const topLabelSpan = document.querySelector('label .muted'); if(topLabelSpan) topLabelSpan.textContent = dict.topLabel + ' ';
-    // toggle button emphasis
-    if(langNL) langNL.className = 'btn' + (currentLang==='nl'?' brand':'');
-    if(langEN) langEN.className = 'btn' + (currentLang==='en'?' brand':'');
-  }
-  // apply once at load and after each render call
-  try{ applyLang(); }catch{}
-</script>
+      en: { community:'Community', sub:'Winners, memes and creations from the CBS army.', winners:'🏆 Winners', best:'Best', all:'All', open:'Open', of:'of' },
+      nl: { community:'Community', sub:'Winnaars, memes en creaties van het CBS-leger.', winners:'🏆 Winnaars', best:'Beste', all:'Alles', open:'Openen', of:'van' }
+    };
+    function t(k){ return (dict[currentLang]||dict.en)[k] || k }
+    function applyLang(){
+      document.getElementById('hTitle').textContent = t('community');
+      document.getElementById('hSub').textContent = t('sub');
+      document.getElementById('winHead').textContent = t('winners');
+      btnBest.textContent = t('best');
+      btnAll.textContent = t('all');
+      langBtn.textContent = currentLang==='en' ? 'NL 🇳🇱' : 'EN 🇬🇧';
+    }
+    langBtn.addEventListener('click',()=>{ currentLang = currentLang==='en'?'nl':'en'; localStorage.setItem(LANG_KEY,currentLang); applyLang(); render(); window.scrollTo({top:0,behavior:'smooth'}); });
+
+    // ===== Render =====
+    function imgTag(src, alt){ return `<img class="thumb" src="${src}" alt="${alt}" onerror="this.onerror=null;this.src='logo.png'"/>`; }
+    function card(item){
+      const dest = item.url || item.authorUrl || '#';
+      return `
+        <article class="tile">
+          <div class="thumbWrap">
+            ${imgTag(item.thumb||'logo.png', item.title)}
+            ${item.winner?'<div class="trophy">🏆</div>':''}
+          </div>
+          <div class="meta">
+            <div>
+              <h4 class="title">${escapeHtml(item.title)}</h4>
+              <div class="muted">${escapeHtml(item.author||'')} ${item.date?`• ${item.date}`:''}</div>
+              <div class="tags">${(item.tags||[]).map(x=>`<span class="tag">${escapeHtml(x)}</span>`).join('')}</div>
+            </div>
+            <a class="btn" href="${dest}" target="_blank" rel="noopener">${t('open')}</a>
+          </div>
+        </article>`
+    }
+
+    function renderWinners(){
+      const wins = SUBMISSIONS.filter(s=>s.winner);
+      winnersEl.innerHTML = wins.length ? wins.map(card).join('') : `<div class="muted">—</div>`;
+    }
+
+    let showBest = true;
+    function renderGallery(){
+      const list = SUBMISSIONS
+        .filter(s=> showBest ? s.best : true)
+        .sort((a,b)=> (b.score||0)-(a.score||0) || (b.date||'').localeCompare(a.date||''));
+      galleryEl.innerHTML = list.length ? list.map(card).join('') : `<div class="muted">—</div>`;
+      const total = SUBMISSIONS.length; const shown = list.length;
+      countTxt.textContent = `${shown} ${t('of')} ${total}`;
+    }
+
+    btnBest.addEventListener('click',()=>{ showBest=true; btnBest.classList.add('active'); btnAll.classList.remove('active'); renderGallery(); });
+    btnAll.addEventListener('click',()=>{ showBest=false; btnAll.classList.add('active'); btnBest.classList.remove('active'); renderGallery(); });
+
+    // utils
+    function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c])); }
+
+    function render(){ renderWinners(); renderGallery(); }
+
+    // init
+    applyLang();
+    render();
+  </script>
 </body>
 </html>
