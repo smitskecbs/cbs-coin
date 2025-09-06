@@ -3,7 +3,8 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>CBS Coin Chaser — Holders ≥1000 CBS</title>
+  <title>CBS Coin Chaser – Neon</title>
+
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet"/>
 
   <style>
@@ -15,11 +16,7 @@
       --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
       --radius:18px;
       --btnA:#5afff0; --btnB:#2bffe4;
-      --vh:1vh;
-      --glow:#38f8ff;
-      --guard:#ff6b7a;
-      --guardVuln:#6bd3ff;
-      --coin:#ffd54d;
+      --good:#7dffe9; --warn:#ffde6b; --bad:#ff7d7d;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -37,7 +34,6 @@
       padding:.8rem 1rem;
       background:linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0));
       border-bottom:1px solid rgba(0,255,240,.08);
-      backdrop-filter:blur(6px);
     }
     .brand{display:flex; align-items:center; gap:.7rem}
     .brand img{width:38px;height:38px;border-radius:10px;filter:drop-shadow(0 0 10px rgba(0,255,230,.35))}
@@ -50,10 +46,9 @@
       color:#001010; background:linear-gradient(180deg, var(--btnA), var(--btnB));
       border:1px solid rgba(0,255,240,.7);
       box-shadow:0 0 12px rgba(0,255,230,.55), 0 0 24px rgba(0,255,230,.25), inset 0 -8px 14px rgba(0,0,0,.14);
-      cursor:pointer; transition:transform .15s ease, box-shadow .15s ease;
+      cursor:pointer;
     }
     .btn:hover{ transform:translateY(-2px) scale(1.03) }
-    .btn[disabled]{opacity:.6;cursor:not-allowed;filter:saturate(.7)}
 
     .container{ max-width:1100px; margin:0 auto; padding:1.2rem 1rem 2.2rem }
     .panel{
@@ -65,7 +60,7 @@
     }
 
     .game-wrap{ display:grid; grid-template-columns:1fr 1fr; gap:16px; align-items:start }
-    @media (max-width:980px){ .game-wrap{ grid-template-columns:1fr } }
+    @media (max-width:900px){ .game-wrap{ grid-template-columns:1fr } }
 
     #gamePanel .card{
       background:linear-gradient(180deg,#0b1217,#0a1015);
@@ -73,101 +68,41 @@
       border-radius:16px; padding:12px;
       box-shadow:inset 0 0 0 1px rgba(0,255,240,.05), 0 8px 18px rgba(0,255,230,.08);
     }
-
     canvas{
-      display:block; margin:0 auto;
+      display:block; margin:0 auto; width:100%; max-width:480px; height:auto;
       background:#05090d; border-radius:12px; border:1px solid rgba(0,255,240,.12);
       box-shadow: inset 0 0 0 1px rgba(0,255,240,.05);
       touch-action:none;
     }
-    #board{ width:100%; max-width:420px; height:auto; }
 
-    .muted{color:var(--muted)}
-
-    /* Fullscreen overlay */
+    /* Fullscreen Play */
     .play-overlay{
       position:fixed; inset:0; z-index:50; display:none;
       background:
         radial-gradient(70% 60% at 50% 0%, rgba(0,255,240,.07), transparent 60%),
         linear-gradient(180deg, rgba(0,0,0,.65), rgba(0,0,0,.85));
-      align-items:center; justify-content:center; flex-direction:column; gap:12px;
+      align-items:center; justify-content:center; flex-direction:column; gap:14px;
       touch-action:none;
-      padding: calc(env(safe-area-inset-top) + 10px) 10px calc(env(safe-area-inset-bottom) + 10px);
-      min-height: calc(var(--vh) * 100);
     }
     .play-overlay .stage{
-      width: min(92vw, 540px);
-      max-width: 540px;
-      max-height: calc(var(--vh) * 100 - 190px);
-      display:flex; align-items:center; justify-content:center;
+      width:min(92vw,520px);
       background:linear-gradient(180deg,#0b1217,#0a1015);
       border:1px solid rgba(0,255,240,.22);
-      border-radius:16px; padding:10px;
+      border-radius:16px; padding:12px;
       box-shadow:0 22px 48px rgba(0,255,230,.10), inset 0 0 0 1px rgba(0,255,240,.06);
-      overflow:hidden; position:relative;
     }
-    .play-overlay .stage canvas{
-      width:100%; height:auto;
-      max-height: calc(var(--vh) * 100 - 230px);
-      border-radius:12px; border:1px solid rgba(0,255,240,.12);
-      background:#05090d;
-    }
-
-    .hudbar{
-      position:absolute; top:10px; left:10px; z-index:5;
-      pointer-events:none; background:rgba(0,15,20,.55);
-      border:1px solid rgba(0,255,240,.25); border-radius:10px;
-      padding:6px 10px; font-weight:700;
-      text-shadow:0 0 12px rgba(0,255,240,.25);
-    }
-    .hintbar{
-      position:absolute; bottom:12px; left:50%; transform:translateX(-50%);
-      background:rgba(0,15,20,.55); border:1px solid rgba(0,255,240,.25);
-      border-radius:10px; padding:6px 10px; font-weight:700; color:#dff;
-    }
-
-    .controls{
-      display:flex; gap:8px; width:min(92vw,520px);
-      justify-content:center; flex-wrap:wrap;
-    }
-    .dpad{
-      display:grid; grid-template-columns:64px 64px 64px;
-      grid-template-rows:64px 64px 64px; gap:10px;
-    }
-    .tbtn{
-      min-width:64px; min-height:64px; padding:0;
-      border-radius:12px; border:1px solid rgba(0,255,240,.35);
-      background:linear-gradient(180deg,#14222a,#0f1a20); color:#dff;
-      font-weight:900; font-size:20px;
-      box-shadow:0 10px 22px rgba(0,0,0,.25), inset 0 0 0 1px rgba(0,255,240,.06);
-      touch-action:none;
-    }
-    .tbtn:active{ transform:translateY(1px); }
-    @media (max-width:460px){ .dpad{ transform:scale(.9); } }
 
     body.play-mode header,
     body.play-mode #controlsPanel,
     body.play-mode main { display:none; }
     body.play-mode .play-overlay{ display:flex; }
 
-    /* Name Modal */
-    #nameOverlay{ position:fixed; inset:0; background:rgba(0,0,0,.6);
-      display:none; align-items:center; justify-content:center; z-index:60; backdrop-filter: blur(2px) }
-    #nameCard{ width:min(92vw,480px); background:linear-gradient(180deg, var(--card), var(--card2));
-      border:1px solid var(--line); border-radius:14px; padding:18px 18px 14px; box-shadow:var(--shadow) }
-    #nameCard h3{ margin:.2rem 0 .6rem; color:#bffef2 }
-    #nameInput{ width:100%; padding:.85rem 1rem; border:1px solid rgba(0,255,240,.35);
-      border-radius:10px; background:#000; color:#fff; font-family:inherit; font-size:1rem;
-      box-shadow:inset 0 0 0 1px rgba(0,255,240,.06) }
-    #error{color:#ff6b7a;font-size:.85rem;margin-top:.35rem;display:none}
+    .muted{color:var(--muted)}
 
-    /* Leaderboard */
-    table{width:100%;border-collapse:collapse;margin-top:8px}
-    th,td{padding:.65rem;border-bottom:1px solid rgba(0,255,240,.20);text-align:center}
-    thead th{color:#bffef2}
-    tbody td{color:var(--fg)}
-
-    .toast{position:fixed;right:12px;bottom:12px;background:#0f1720;border:1px solid rgba(0,255,240,.25);color:#dff; padding:10px 12px;border-radius:10px;box-shadow:0 10px 24px rgba(0,0,0,.35);display:none;z-index:70}
+    /* On-screen hint */
+    .hint{
+      text-align:center; font-size:.9rem; color:var(--muted)
+    }
   </style>
 </head>
 <body>
@@ -179,14 +114,10 @@
   </header>
 
   <!-- Controls -->
-  <div id="controlsPanel" class="panel" style="max-width:880px; text-align:center">
-    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-      <button id="connectBtn" class="btn">🔗 Connect Wallet</button>
-      <button id="startBtn" class="btn" disabled>▶️ Start</button>
-      <span id="eligibility" class="muted" style="align-self:center">Not connected</span>
-    </div>
-    <p class="muted" style="margin:.5rem 0">
-      Holders-only: unlocked for wallets holding <b>≥ 1000 CBS</b>. Controls: arrows/WASD or D-pad. 1 life, quick rounds.
+  <div id="controlsPanel" class="panel" style="max-width:820px; text-align:center">
+    <button id="startBtn" class="btn">▶️ Start</button>
+    <p class="muted" style="margin-top:.5rem">
+      WASD / Arrow keys • Tap/drag to move • Collect coins, avoid the chaser.
     </p>
   </div>
 
@@ -194,8 +125,8 @@
     <div class="game-wrap">
       <div id="gamePanel" class="panel">
         <div class="card">
-          <div id="canvasHome" style="display:grid;place-items:center">
-            <canvas id="board" width="420" height="560"></canvas>
+          <div id="canvasHome">
+            <canvas id="game" width="420" height="560"></canvas>
           </div>
         </div>
       </div>
@@ -203,8 +134,8 @@
       <div class="side">
         <div class="panel">
           <h3>How to play</h3>
-          <p>Eat coins (+1), power coins (+3), and — only while powered — tag the guard (+5). Touch the guard unpowered → game over.</p>
-          <p>Typical scores land ~30–150 so it matches the shared leaderboard scale.</p>
+          <p>Move the CBS orb, collect coins (+10), and dodge the chaser. Each coin makes the chaser a bit faster.</p>
+          <p class="muted">Tip: use short taps/drags on mobile to micro-adjust.</p>
         </div>
         <div class="panel" style="text-align:center">
           <a href="index.html" class="btn">← Back to Home</a>
@@ -213,598 +144,284 @@
     </div>
   </main>
 
-  <!-- Leaderboard Top 3 (shared) -->
-  <div class="panel" id="leaderPanel" style="max-width:880px;margin-top:-6px">
-    <h2 style="margin:.2rem 0 .6rem; color:#bffef2; text-align:center">🏆 Top 3</h2>
-    <p class="muted" style="text-align:center;margin-top:-.25rem">Top scores from all games.</p>
-    <table>
-      <thead><tr><th>Rank</th><th>Player</th><th>Score</th></tr></thead>
-      <tbody id="leaderboardBody"></tbody>
-    </table>
-    <p id="lbNote" class="muted" style="display:none;margin-top:.5rem;text-align:center">Showing local scores (cloud unavailable).</p>
-  </div>
-
   <!-- Fullscreen Play -->
   <div id="playOverlay" class="play-overlay" aria-hidden="true">
-    <div class="stage">
-      <div class="hudbar" id="hudBar">Score 0</div>
-      <div class="hintbar" id="hintBar">Press a direction to start</div>
-      <div id="playStage"></div>
-    </div>
-
-    <!-- Touch D-pad -->
-    <div class="controls">
-      <div class="dpad" aria-label="D-pad">
-        <div></div>  <button class="tbtn" data-dir="UP">▲</button>  <div></div>
-        <button class="tbtn" data-dir="LEFT">◄</button> <div></div> <button class="tbtn" data-dir="RIGHT">►</button>
-        <div></div>  <button class="tbtn" data-dir="DOWN">▼</button> <div></div>
-      </div>
-    </div>
-
+    <div class="stage"><div id="playStage"></div></div>
     <button id="exitBtn" class="btn">⏹ Exit</button>
+    <div class="hint">Tap/drag to move • Space to dash</div>
   </div>
 
-  <!-- Save Name Modal -->
-  <div id="nameOverlay">
-    <div id="nameCard">
-      <h3>Save your score</h3>
-      <p class="muted" style="margin:.1rem 0 .6rem">Type your name and press <b>Enter</b> to submit.</p>
-      <input id="nameInput" maxlength="30" placeholder="Your name or wallet…" autocomplete="off" />
-      <div id="error">Name is required.</div>
-      <div style="margin-top:.8rem;display:flex;gap:10px;justify-content:flex-end">
-        <button id="cancelBtn" class="btn" style="background:#1a242c;color:#d9fffb;border:1px solid rgba(0,255,240,.25)">Cancel</button>
-        <button id="saveBtn" class="btn">Save</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="toast" class="toast">Saved ✓</div>
-
-  <!-- Supabase UMD -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-
-  <!-- Supabase + Leaderboard helpers -->
   <script>
-    const SUPABASE_URL = "https://aiawteejixsgsunmefpi.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpYXd0ZWVqaXhzZ3N1bm1lZnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NDExODIsImV4cCI6MjA3MTAxNzE4Mn0.aMbRUM0YebNMfZhSLb9PFdSHAZ-D5WpACPefCfjSLqI";
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const $ = (id)=>document.getElementById(id);
-    const tbody   = $("leaderboardBody");
-    const lbNote  = $("lbNote");
-    const toast   = $("toast");
-    function showToast(msg="Saved ✓"){ toast.textContent=msg; toast.style.display="block"; setTimeout(()=>toast.style.display="none", 1500); }
-    function escapeHtml(s){ return (s||"").toString().replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;","&gt;":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
+    // ==== DOM ====
+    const startBtn    = document.getElementById("startBtn");
+    const playOverlay = document.getElementById("playOverlay");
+    const playStage   = document.getElementById("playStage");
+    const exitBtn     = document.getElementById("exitBtn");
+    const canvas      = document.getElementById("game");
+    const canvasHome  = document.getElementById("canvasHome");
+    const ctx         = canvas.getContext("2d");
 
-    async function renderTop3(){
-      tbody.innerHTML = "<tr><td colspan='3' class='muted'>Loading…</td></tr>"; lbNote.style.display="none";
-      try{
-        const { data, error } = await sb.from("leaderboard").select("*").order("score",{ascending:false}).order("created_at",{ascending:true}).limit(3);
-        if(error) throw error;
-        tbody.innerHTML="";
-        (data||[]).forEach((r,i)=>{
-          const tr=document.createElement("tr");
-          tr.innerHTML = `<td>${i+1}</td><td>${escapeHtml((r.name||"").toString().slice(0,30)||"Anonymous")}</td><td>${Number(r.score)||0}</td>`;
-          tbody.appendChild(tr);
-        });
-      }catch(e){
-        console.warn("Cloud leaderboard failed:", e);
-        lbNote.style.display="block"; tbody.innerHTML = "<tr><td colspan='3' class='muted'>No data</td></tr>";
-      }
-    }
-  </script>
+    // CBS logo for watermark
+    const logo = new Image(); logo.src = "logo.png";
+    let logoReady = false; logo.onload = ()=>{ logoReady = true; };
 
-  <!-- Game -->
-  <script>
-    const canvas = document.getElementById('board');
-    const ctx    = canvas.getContext('2d');
-    const hudBar = document.getElementById('hudBar');
-    const hintBar= document.getElementById('hintBar');
-    const exitBtn= document.getElementById('exitBtn');
-    const startBtn= document.getElementById('startBtn');
-    const canvasHome = document.getElementById('canvasHome');
-    const playOverlay= document.getElementById('playOverlay');
-    const playStage  = document.getElementById('playStage');
-
-    // Name modal
-    const overlay   = document.getElementById('nameOverlay');
-    const nameInput = document.getElementById('nameInput');
-    const err       = document.getElementById('error');
-    const saveBtn   = document.getElementById('saveBtn');
-    const cancelBtn = document.getElementById('cancelBtn');
-
-    // Logo watermark
-    const logo = new Image(); logo.src="logo.png"; let logoReady=false; logo.onload=()=>{logoReady=true};
-
-    // Grid / world
-    const TILE=20, COLS=Math.floor(canvas.width/TILE), ROWS=Math.floor(canvas.height/TILE); // 21 x 28
     const W = canvas.width, H = canvas.height;
 
-    // Score
-    let score=0;
-    function updateHUD(){ hudBar.textContent = `Score ${score}`; }
+    // ==== Game State ====
+    const PLAYER_R = 10;
+    const COIN_R   = 7;
+    const ENEMY_R  = 12;
 
-    // States
-    let running=false, rafId=null, last=0;
-    let started=false; // first move yet?
-    let powerMs=0, guardRespawnMs=0;
+    const SPEED_PLAYER = 220;      // px/s
+    let speedEnemyBase = 90;       // grows per coin
+    let speedEnemy     = speedEnemyBase;
 
-    // Player/guard
-    const SPEED = 120; // px/s
-    const GUARD_SPEED = 105;
-    const POWER_TIME = 8000; // ms
-    const RESPAWN_TIME = 2000;
+    let player = { x: W*0.5, y: H*0.75, vx: 0, vy: 0 };
+    let enemy  = { x: W*0.5, y: H*0.25 };
+    let coin   = null;
 
-    const DIRS = { LEFT:{x:-1,y:0}, RIGHT:{x:1,y:0}, UP:{x:0,y:-1}, DOWN:{x:0,y:1} };
-    const OPP = { LEFT:'RIGHT', RIGHT:'LEFT', UP:'DOWN', DOWN:'UP' };
+    let keys = { left:false, right:false, up:false, down:false };
+    let dragging = false;
 
-    const player = { x: (1+0.5)*TILE, y:(1+0.5)*TILE, dir:null, want:null };
-    const guardHome = { c: Math.floor(COLS/2), r: Math.floor(ROWS/2)+1 };
-    const guard = { x:(guardHome.c+0.5)*TILE, y:(guardHome.r+0.5)*TILE, dir:'LEFT', alive:true };
+    let score = 0;
+    let running = false;
+    let launched = false; // only true after pressing Start
+    let rafId = null;
+    let last = 0;
 
-    // Grid data
-    const walls = makeWalls();
-    const coins = makeCoins();
-    const powerCoins = [
-      {c:1, r:1}, {c:COLS-2, r:1}, {c:1, r:ROWS-2}, {c:COLS-2, r:ROWS-2}
-    ].filter(p=>!walls[p.r][p.c]);
-
-    function makeEmptyGrid(def=false){
-      const g=new Array(ROWS);
-      for(let r=0;r<ROWS;r++){ g[r]=new Array(COLS).fill(def); }
-      return g;
+    // ==== Lifecycle ====
+    function startGame(){
+      // fresh state
+      player = { x: W*0.5, y: H*0.75, vx: 0, vy: 0 };
+      enemy  = { x: W*0.5, y: H*0.25 };
+      coin   = spawnCoin();
+      score = 0;
+      speedEnemyBase = 90;
+      speedEnemy = speedEnemyBase;
+      running = true; launched = true; last = performance.now();
+      rafId = requestAnimationFrame(loop);
     }
-    function makeWalls(){
-      const g=makeEmptyGrid(false);
-      // Borders
-      for(let c=0;c<COLS;c++){ g[0][c]=true; g[ROWS-1][c]=true; }
-      for(let r=0;r<ROWS;r++){ g[r][0]=true; g[r][COLS-1]=true; }
-      // Inner bars (simple symmetrical layout)
-      lineH(g,5,3,COLS-4);
-      lineH(g,9,2,COLS-3);
-      lineH(g,13,3,COLS-4);
-      lineH(g,17,2,COLS-3);
-      lineH(g,21,3,COLS-4);
-      lineV(g,5,3,ROWS-4);
-      lineV(g,15,3,ROWS-4);
-      // vertical middle with gates
-      for(let r=7;r<ROWS-7;r++){ if(r%5!==0) g[r][10]=true; } // gaps
-      // gates across center
-      g[13][10]=false; g[14][10]=false;
-      // clear start / home areas
-      g[1][1]=false; g[1][2]=false; g[2][1]=false;
-      g[guardHome.r][guardHome.c]=false; g[guardHome.r][guardHome.c-1]=false; g[guardHome.r][guardHome.c+1]=false;
-      return g;
-    }
-    function lineH(g, r, c1, c2){ for(let c=c1;c<=c2;c++) g[r][c]=true; }
-    function lineV(g, c, r1, r2){ for(let r=r1;r<=r2;r++) g[r][c]=true; }
+    function stopGame(){ running = false; if (rafId) cancelAnimationFrame(rafId); rafId = null; }
 
-    function makeCoins(){
-      const g=makeEmptyGrid(false);
-      for(let r=1;r<ROWS-1;r++){
-        for(let c=1;c<COLS-1;c++){
-          if(!walls[r][c]) g[r][c]=true;
-        }
-      }
-      // no coin on start/home
-      g[1][1]=false; g[guardHome.r][guardHome.c]=false;
-      // no coin on power coin tiles (they have their own draw/collect logic)
-      for(const pc of powerCoins){ g[pc.r][pc.c]=false; }
-      return g;
+    function spawnCoin(){
+      // keep coin away from edges
+      const m = 20;
+      return {
+        x: m + Math.random()*(W - 2*m),
+        y: m + Math.random()*(H - 2*m)
+      };
     }
 
-    // Helpers
-    function posToCell(x,y){ return { c: Math.floor(x/TILE), r: Math.floor(y/TILE) }; }
-    function centerOf(c,r){ return { x: c*TILE+TILE/2, y: r*TILE+TILE/2 }; }
-    function atCenter(x,y){ const c=posToCell(x,y); const ctr=centerOf(c.c,c.r); return Math.abs(x-ctr.x)<0.5 && Math.abs(y-ctr.y)<0.5; }
-    function canEnter(c,r){ return c>=0 && r>=0 && c<COLS && r<ROWS && !walls[r][c]; }
-    function nextCell(c,r,dir){ const d=DIRS[dir]; return { c:c+d.x, r:r+d.y }; }
-    function distMan(a,b){ return Math.abs(a.c-b.c)+Math.abs(a.r-b.r); }
-
-    // Input
-    const keys = {left:false,right:false,up:false,down:false};
-    window.addEventListener('keydown', (e)=>{
+    // ==== Input ====
+    window.addEventListener('keydown', e=>{
       if(!document.body.classList.contains('play-mode')) return;
-      if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A'){ e.preventDefault(); setWant('LEFT'); }
-      if(e.key==='ArrowRight'||e.key==='d'||e.key==='D'){ e.preventDefault(); setWant('RIGHT'); }
-      if(e.key==='ArrowUp'||e.key==='w'||e.key==='W'){ e.preventDefault(); setWant('UP'); }
-      if(e.key==='ArrowDown'||e.key==='s'||e.key==='S'){ e.preventDefault(); setWant('DOWN'); }
-      if(e.key==='Escape'){ e.preventDefault(); exitPlay(); }
+      if(e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = true;
+      if(e.key === 'ArrowRight'|| e.key === 'd' || e.key === 'D') keys.right = true;
+      if(e.key === 'ArrowUp'   || e.key === 'w' || e.key === 'W') keys.up = true;
+      if(e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') keys.down = true;
+      if(e.key === ' '){ // dash
+        dash();
+      }
+      if(e.key === 'Escape'){ stopGame(); exitPlayScreen(); }
     });
-    document.querySelectorAll('.tbtn[data-dir]').forEach(btn=>{
-      btn.addEventListener('click', ()=> setWant(btn.dataset.dir));
-      btn.addEventListener('touchstart', (e)=>{ e.preventDefault(); setWant(btn.dataset.dir); }, {passive:false});
+    window.addEventListener('keyup', e=>{
+      if(e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = false;
+      if(e.key === 'ArrowRight'|| e.key === 'd' || e.key === 'D') keys.right = false;
+      if(e.key === 'ArrowUp'   || e.key === 'w' || e.key === 'W') keys.up = false;
+      if(e.key === 'ArrowDown' || e.key === 's' || e.key === 'S') keys.down = false;
     });
-    function setWant(dir){
-      player.want = dir;
-      if(!started){ started=true; hintBar.textContent=''; }
+
+    // Mobile/Pointer: drag to move
+    function localFromPointer(clientX, clientY){
+      const r = canvas.getBoundingClientRect();
+      const sx = canvas.width / r.width;
+      const sy = canvas.height / r.height;
+      return { x: (clientX - r.left) * sx, y: (clientY - r.top) * sy };
+    }
+    window.addEventListener('pointerdown', e=>{
+      if(!document.body.classList.contains('play-mode')) return;
+      if(e.target.closest('button')) return;
+      dragging = true;
+      const p = localFromPointer(e.clientX, e.clientY);
+      steerToward(p.x, p.y);
+    }, {passive:true});
+    window.addEventListener('pointermove', e=>{
+      if(!document.body.classList.contains('play-mode') || !dragging) return;
+      const p = localFromPointer(e.clientX, e.clientY);
+      steerToward(p.x, p.y);
+    }, {passive:true});
+    window.addEventListener('pointerup', ()=>{ dragging = false; }, {passive:true});
+
+    function steerToward(tx, ty){
+      const dx = tx - player.x, dy = ty - player.y;
+      const d = Math.hypot(dx, dy) || 1;
+      player.vx = (dx / d) * SPEED_PLAYER;
+      player.vy = (dy / d) * SPEED_PLAYER;
+    }
+    function dash(){
+      // small burst in current velocity or towards enemy opposite
+      const mag = Math.hypot(player.vx, player.vy);
+      const boost = 180;
+      if(mag < 1){
+        // dash away from enemy if stationary
+        const dx = player.x - enemy.x, dy = player.y - enemy.y;
+        const d = Math.hypot(dx, dy) || 1;
+        player.vx = (dx/d) * (SPEED_PLAYER + boost);
+        player.vy = (dy/d) * (SPEED_PLAYER + boost);
+      }else{
+        const fx = player.vx / mag, fy = player.vy / mag;
+        player.vx = fx * (SPEED_PLAYER + boost);
+        player.vy = fy * (SPEED_PLAYER + boost);
+      }
+      if(navigator.vibrate) navigator.vibrate(10);
     }
 
-    // Game flow
-    function prepareGame(){
-      running=false; started=false; score=0; updateHUD();
-      powerMs=0; guardRespawnMs=0;
-      // reset positions
-      player.x = (1+0.5)*TILE; player.y=(1+0.5)*TILE; player.dir=null; player.want=null;
-      guard.x = (guardHome.c+0.5)*TILE; guard.y=(guardHome.r+0.5)*TILE; guard.dir='LEFT'; guard.alive=true;
-      // reset map
-      for(let r=0;r<ROWS;r++){ for(let c=0;c<COLS;c++){ if(!walls[r][c]) coins[r][c]=true; } }
-      coins[1][1]=false; coins[guardHome.r][guardHome.c]=false;
-      running=true; last=0;
-      draw(); // static
-      requestAnimationFrame(loop);
-    }
+    // ==== Loop ====
+    function loop(now){
+      if(!running) return;
+      const dt = Math.min(0.033, (now - last)/1000); last = now;
 
-    function loop(ts){
-      if(!running){ return; }
-      if(!last) last = ts;
-      const dtSec = Math.min(0.033, (ts-last)/1000); last = ts;
+      // keyboard movement
+      let ax = 0, ay = 0;
+      if(keys.left)  ax -= 1;
+      if(keys.right) ax += 1;
+      if(keys.up)    ay -= 1;
+      if(keys.down)  ay += 1;
+      if(ax || ay){
+        const n = Math.hypot(ax, ay) || 1;
+        player.vx = (ax/n) * SPEED_PLAYER;
+        player.vy = (ay/n) * SPEED_PLAYER;
+      }else if(!dragging){
+        // small friction if no input
+        player.vx *= 0.96; player.vy *= 0.96;
+        if(Math.abs(player.vx) < 4) player.vx = 0;
+        if(Math.abs(player.vy) < 4) player.vy = 0;
+      }
 
-      // update only after a direction was chosen
-      if(started){
-        stepPlayer(dtSec);
-        stepGuard(dtSec);
-        if(powerMs>0) powerMs = Math.max(0, powerMs - dtSec*1000);
-        if(guardRespawnMs>0){
-          guardRespawnMs = Math.max(0, guardRespawnMs - dtSec*1000);
-          if(guardRespawnMs===0){ // respawn
-            guard.x = (guardHome.c+0.5)*TILE; guard.y=(guardHome.r+0.5)*TILE;
-            guard.dir='LEFT'; guard.alive=true;
-          }
-        }
-        // collisions
-        if(guard.alive){
-          const dx = player.x - guard.x, dy = player.y - guard.y;
-          const d2 = dx*dx + dy*dy;
-          if(d2 < (TILE*0.6)*(TILE*0.6)){
-            if(powerMs>0){
-              score += 5; updateHUD();
-              guard.alive=false; guardRespawnMs = RESPAWN_TIME;
-            }else{
-              return gameOver();
-            }
-          }
-        }
+      // move player
+      player.x += player.vx * dt;
+      player.y += player.vy * dt;
+      // clamp to field
+      const pad = 10;
+      player.x = Math.max(PLAYER_R+pad, Math.min(W-PLAYER_R-pad, player.x));
+      player.y = Math.max(PLAYER_R+pad, Math.min(H-PLAYER_R-pad, player.y));
+
+      // enemy chase
+      const edx = player.x - enemy.x, edy = player.y - enemy.y;
+      const ed  = Math.hypot(edx, edy) || 1;
+      enemy.x += (edx/ed) * speedEnemy * dt;
+      enemy.y += (edy/ed) * speedEnemy * dt;
+
+      // coin collect
+      if(coin && Math.hypot(player.x - coin.x, player.y - coin.y) < PLAYER_R + COIN_R){
+        score += 10;
+        coin = spawnCoin();
+        speedEnemyBase *= 1.04;
+        speedEnemy = Math.min(speedEnemyBase, 300);
+        if(navigator.vibrate) navigator.vibrate(6);
+      }
+
+      // collision with enemy → game over
+      if(Math.hypot(player.x - enemy.x, player.y - enemy.y) < PLAYER_R + ENEMY_R - 2){
+        gameOver();
+        return;
       }
 
       draw();
       rafId = requestAnimationFrame(loop);
     }
 
-    function stepPlayer(dt){
-      // turn if possible at center
-      const pc = posToCell(player.x, player.y);
-      const ctr = centerOf(pc.c, pc.r);
-      const atCtr = atCenter(player.x, player.y);
-      if(player.want && atCtr){
-        const n = nextCell(pc.c, pc.r, player.want);
-        if(canEnter(n.c,n.r)){ player.dir = player.want; }
-      }
-      // if current dir blocked, stop at center
-      if(player.dir){
-        const n = nextCell(pc.c, pc.r, player.dir);
-        if(!canEnter(n.c,n.r)){
-          // snap to center
-          player.x = ctr.x; player.y = ctr.y; player.dir=null;
-        }
-      }
-      // move
-      if(player.dir){
-        const d = DIRS[player.dir];
-        const sp = SPEED * dt;
-        player.x += d.x * sp; player.y += d.y * sp;
-      }
-      // collect coins
-      const cell = posToCell(player.x, player.y);
-      const close = Math.abs(player.x - (cell.c*TILE+TILE/2)) < 7 && Math.abs(player.y - (cell.r*TILE+TILE/2)) < 7;
-      if(close){
-        if(coins[cell.r][cell.c]){ coins[cell.r][cell.c]=false; score += 1; updateHUD(); }
-        // power coins
-        for(let i=0;i<powerCoins.length;i++){
-          const p = powerCoins[i];
-          if(p.c===cell.c && p.r===cell.r){
-            if(p.present!==false){
-              score += 3; updateHUD();
-              powerMs = POWER_TIME;
-              p.present = false;
-              // respawn power coin later a bit
-              setTimeout(()=>{ p.present=true; }, 20000);
-            }
-          }
-        }
-      }
-      // win condition (all normal coins eaten)
-      if(allCoinsEaten()){
-        return gameOver(true);
-      }
-    }
-
-    function stepGuard(dt){
-      if(!guard.alive) return;
-      const gc = posToCell(guard.x, guard.y);
-      const atCtr = atCenter(guard.x, guard.y);
-      if(atCtr){
-        // choose direction
-        const opts = [];
-        for(const d of ['LEFT','RIGHT','UP','DOWN']){
-          if(OPP[guard.dir]===d) continue; // avoid reversing unless forced
-          const n = nextCell(gc.c, gc.r, d);
-          if(canEnter(n.c,n.r)) opts.push(d);
-        }
-        if(opts.length===0){
-          // must reverse
-          const rev = OPP[guard.dir];
-          const n = nextCell(gc.c,gc.r,rev);
-          if(canEnter(n.c,n.r)) guard.dir = rev;
-        }else{
-          // target selection
-          const pc = posToCell(player.x, player.y);
-          let best = null, bestScore = powerMs>0 ? -1e9 : 1e9; // flee if powered
-          for(const d of opts){
-            const n = nextCell(gc.c, gc.r, d);
-            const dist = distMan(n, pc);
-            if(powerMs>0){
-              if(dist > bestScore){ bestScore = dist; best = d; }
-            }else{
-              if(dist < bestScore){ bestScore = dist; best = d; }
-            }
-          }
-          if(best) guard.dir = best;
-        }
-      }
-      // move
-      const sp = GUARD_SPEED * dt * (powerMs>0?0.8:1.0);
-      const d = DIRS[guard.dir] || DIRS.LEFT;
-      guard.x += d.x * sp; guard.y += d.y * sp;
-    }
-
-    function allCoinsEaten(){
-      for(let r=1;r<ROWS-1;r++){
-        for(let c=1;c<COLS-1;c++){
-          if(coins[r][c]) return false;
-        }
-      }
-      return true;
-    }
-
-    // Rendering
-    function drawBG(){
-      const bg=ctx.createLinearGradient(0,0,0,H);
-      bg.addColorStop(0,"#071017"); bg.addColorStop(1,"#09131a");
-      ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
-      if(logoReady){
-        const size=Math.min(W,H)*0.9; const x=(W-size)/2, y=(H-size)/2;
-        ctx.save(); ctx.globalAlpha=0.05; ctx.shadowColor="#00fff0"; ctx.shadowBlur=24;
-        ctx.drawImage(logo,x,y,size,size); ctx.restore();
-      }
-    }
-    function drawWalls(){
-      for(let r=0;r<ROWS;r++){
-        for(let c=0;c<COLS;c++){
-          if(!walls[r][c]) continue;
-          const x=c*TILE, y=r*TILE;
-          ctx.save();
-          ctx.shadowColor=varGet('--glow'); ctx.shadowBlur=10;
-          const g=ctx.createLinearGradient(x,y,x,y+TILE);
-          g.addColorStop(0,"hsl(190 100% 60% / .95)");
-          g.addColorStop(1,"hsl(190 100% 48% / .95)");
-          ctx.fillStyle=g;
-          ctx.fillRect(x+1,y+1,TILE-2,TILE-2);
-          ctx.shadowBlur=0; ctx.lineWidth=1.6; ctx.strokeStyle="rgba(0,255,240,.7)";
-          ctx.strokeRect(x+0.5,y+0.5,TILE-1,TILE-1);
-          ctx.restore();
-        }
-      }
-    }
-    function varGet(n){ return getComputedStyle(document.documentElement).getPropertyValue(n); }
-
-    function drawCoins(){
-      for(let r=1;r<ROWS-1;r++){
-        for(let c=1;c<COLS-1;c++){
-          if(!coins[r][c]) continue;
-          const x=c*TILE+TILE/2, y=r*TILE+TILE/2;
-          drawCoin(x,y,4,false);
-        }
-      }
-      for(const p of powerCoins){
-        if(p.present!==false){
-          const x=p.c*TILE+TILE/2, y=p.r*TILE+TILE/2;
-          drawCoin(x,y,7,true);
-        }
-      }
-    }
-    function drawCoin(x,y,rad,big){
-      ctx.save();
-      ctx.shadowColor = big ? "#ffee88" : "#ffd54d";
-      ctx.shadowBlur  = big ? 16 : 10;
-      const g=ctx.createRadialGradient(x-rad*0.3,y-rad*0.3,rad*0.2,x,y,rad);
-      g.addColorStop(0, big ? "#fff3a6" : "#ffe27a");
-      g.addColorStop(1, big ? "#ffcf33" : "#ffb300");
-      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,rad,0,Math.PI*2); ctx.fill();
-      ctx.shadowBlur=0; ctx.lineWidth=1.2; ctx.strokeStyle="rgba(255,255,255,.35)";
-      ctx.beginPath(); ctx.arc(x,y,rad-0.7,0,Math.PI*2); ctx.stroke();
-      ctx.restore();
-    }
-
-    function drawPlayer(){
-      const r = 8.5;
-      ctx.save();
-      ctx.shadowColor="#7dffe9"; ctx.shadowBlur=18;
-      const g=ctx.createRadialGradient(player.x-r*0.3, player.y-r*0.3, r*0.2, player.x, player.y, r);
-      g.addColorStop(0,"#eaffff"); g.addColorStop(1,"#78eaf0");
-      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(player.x,player.y,r,0,Math.PI*2); ctx.fill();
-      ctx.shadowBlur=0; ctx.lineWidth=1.6; ctx.strokeStyle="rgba(0,255,240,.7)";
-      ctx.beginPath(); ctx.arc(player.x,player.y,r-0.8,0,Math.PI*2); ctx.stroke();
-      ctx.restore();
-    }
-    function drawGuard(){
-      if(!guard.alive) return;
-      const r=9;
-      const vuln = powerMs>0;
-      ctx.save();
-      ctx.shadowColor = vuln ? varGet('--guardVuln') : varGet('--guard');
-      ctx.shadowBlur  = 16;
-      const g=ctx.createRadialGradient(guard.x-r*0.3, guard.y-r*0.3, r*0.2, guard.x, guard.y, r);
-      g.addColorStop(0, vuln ? "#dff2ff" : "#ffdfe2");
-      g.addColorStop(1, vuln ? "#6bd3ff" : "#ff6b7a");
-      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(guard.x,guard.y,r,0,Math.PI*2); ctx.fill();
-      ctx.shadowBlur=0; ctx.lineWidth=1.6; ctx.strokeStyle= vuln ? "rgba(120,230,255,.8)" : "rgba(255,120,150,.8)";
-      ctx.beginPath(); ctx.arc(guard.x,guard.y,r-0.8,0,Math.PI*2); ctx.stroke();
-      ctx.restore();
-    }
-
-    function drawFrame(){
-      ctx.save();
-      ctx.strokeStyle="rgba(0,255,240,.35)"; ctx.lineWidth=3; ctx.shadowColor="#38f8ff"; ctx.shadowBlur=10;
-      ctx.strokeRect(1,1,W-2,H-2);
-      ctx.restore();
-    }
-
+    // ==== Render ====
     function draw(){
       ctx.clearRect(0,0,W,H);
-      drawBG();
-      drawWalls();
-      drawCoins();
-      drawPlayer();
-      drawGuard();
-      drawFrame();
+
+      // bg
+      const grad=ctx.createLinearGradient(0,0,0,H);
+      grad.addColorStop(0,"#071017"); grad.addColorStop(1,"#09131a");
+      ctx.fillStyle=grad; ctx.fillRect(0,0,W,H);
+
+      // watermark
+      if(logoReady){
+        const size=Math.min(W,H)*0.72; const x=(W-size)/2,y=(H-size)/2;
+        ctx.save(); ctx.globalAlpha=0.085; ctx.shadowColor="#00fff0"; ctx.shadowBlur=24;
+        ctx.drawImage(logo,x,y,size,size); ctx.restore();
+      }
+
+      // arena glow
+      ctx.save();
+      ctx.strokeStyle="rgba(0,255,240,.35)"; ctx.lineWidth=3; ctx.shadowColor="#38f8ff"; ctx.shadowBlur=10;
+      ctx.strokeRect(8,8,W-16,H-16);
+      ctx.restore();
+
+      // coin
+      if(coin){
+        drawCoin(coin.x, coin.y, COIN_R*2);
+      }
+
+      // enemy
+      drawGlowCircle(enemy.x, enemy.y, ENEMY_R, "hsl(6 100% 60%)", "rgba(255,120,120,.8)");
+
+      // player
+      drawGlowCircle(player.x, player.y, PLAYER_R, "hsl(190 100% 60%)", "rgba(0,255,240,.8)");
+
+      // HUD
+      ctx.font = "16px Orbitron";
+      ctx.fillStyle = "#eafffb";
+      ctx.fillText("Score: " + score, 16, 26);
     }
 
-    function gameOver(win=false){
-      running=false;
+    function drawGlowCircle(x,y,r,fill,glow){
+      ctx.save();
+      ctx.shadowColor = glow; ctx.shadowBlur = 16;
+      const g = ctx.createRadialGradient(x-r*0.4,y-r*0.4,r*0.2, x,y,r);
+      g.addColorStop(0, "#eaffff");
+      g.addColorStop(1, fill);
+      ctx.fillStyle = g;
+      ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+      ctx.shadowBlur = 0;
+      ctx.lineWidth = 1.3; ctx.strokeStyle = "rgba(0,255,240,.7)";
+      ctx.beginPath(); ctx.arc(x,y,r-0.8,0,Math.PI*2); ctx.stroke();
+      ctx.restore();
+    }
+
+    function drawCoin(x,y,size){
+      const r = size/2;
+      ctx.save();
+      ctx.shadowColor="#ffd54d"; ctx.shadowBlur=14;
+      const g=ctx.createRadialGradient(x-r*0.2,y-r*0.2,r*0.3, x,y,r);
+      g.addColorStop(0,"#ffe27a"); g.addColorStop(0.6,"#ffca28"); g.addColorStop(1,"#ffb300");
+      ctx.beginPath(); ctx.arc(x,y,r-1.2,0,Math.PI*2); ctx.fillStyle=g; ctx.fill();
+      ctx.shadowBlur=0; ctx.lineWidth=1.6; ctx.strokeStyle="rgba(255,255,255,.35)"; ctx.stroke();
+      ctx.restore();
+    }
+
+    function gameOver(){
+      running = false;
       draw();
-      setTimeout(()=> openNameModal(score, win), 400);
+      // small flash / pause then exit overlay (or you can show a modal)
+      setTimeout(()=>{ exitPlayScreen(); }, 800);
     }
 
-    // Overlay enter/exit
-    function enterPlay(){
-      if(playStage && canvas && canvas.parentElement!==playStage) playStage.appendChild(canvas);
-      document.body.classList.add('play-mode');
-      playOverlay.setAttribute('aria-hidden','false');
-      updateHUD();
+    // ==== Overlay helpers ====
+    function enterPlayScreen(){
+      if(playStage && canvas && canvas.parentElement !== playStage) playStage.appendChild(canvas);
+      document.body.classList.add('play-mode'); playOverlay.setAttribute('aria-hidden','false');
     }
-    function exitPlay(){
-      running=false; if(rafId) cancelAnimationFrame(rafId); rafId=null;
-      if(canvasHome && canvas && canvas.parentElement!==canvasHome) canvasHome.appendChild(canvas);
-      document.body.classList.remove('play-mode');
-      playOverlay.setAttribute('aria-hidden','true');
+    function exitPlayScreen(){
+      stopGame();
+      if(canvasHome && canvas && canvas.parentElement !== canvasHome) canvasHome.appendChild(canvas);
+      document.body.classList.remove('play-mode'); playOverlay.setAttribute('aria-hidden','true');
     }
 
-    // Start / Exit
+    // Buttons
     startBtn.addEventListener('click', ()=>{
-      if(!window._canStart){ alert('Holders only — need ≥ 1000 CBS.'); return; }
-      enterPlay(); prepareGame();
+      enterPlayScreen();
+      startGame(); // <-- ensures the game actually starts on Start
     });
-    exitBtn.addEventListener('click', ()=> exitPlay());
+    exitBtn.addEventListener('click', ()=>{ exitPlayScreen(); });
 
-    // Save name modal
-    function openNameModal(sc, win=false){
-      overlay.style.display="flex";
-      nameInput.value=""; err.style.display="none";
-      saveBtn.disabled=false; saveBtn.textContent="Save"; nameInput.focus();
-      overlay.dataset.score = String(sc ?? 0);
-    }
-    cancelBtn.addEventListener("click", ()=>{
-      overlay.style.display="none";
-      // ready for another run
-      enterPlay(); prepareGame();
-    });
-    async function submitName(){
-      const name=(nameInput.value||"").trim();
-      if(!name){ err.textContent="Name is required."; err.style.display="block"; return; }
-      const sc = Math.max(0, Math.round(Number(overlay.dataset.score||0)));
-      saveBtn.disabled=true; saveBtn.textContent="Saving…";
-      try{
-        const { error } = await sb.from("leaderboard").insert({ name, score: sc });
-        if(error) throw error;
-        overlay.style.display="none";
-        showToast("Saved ✓");
-        // new run
-        enterPlay(); prepareGame();
-      }catch(e){
-        console.error("Supabase insert failed:", e);
-        err.textContent="Saving failed. Check Supabase policies or network.";
-        err.style.display="block";
-        alert("Saving failed:\n" + (e?.message||e));
-        return;
-      }finally{
-        saveBtn.disabled=false; saveBtn.textContent="Save";
-        renderTop3();
-      }
-    }
-    nameInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); submitName(); } });
-    saveBtn.addEventListener("click", submitName);
-
-    // Init
-    (function init(){ renderTop3(); })();
-  </script>
-
-  <!-- Holders-only gating (Solana ≥1000 CBS) -->
-  <script type="module">
-    import { Connection, PublicKey } from "https://esm.sh/@solana/web3.js@1.95.8";
-    import { getAssociatedTokenAddress } from "https://esm.sh/@solana/spl-token@0.4.7";
-
-    const RPC_URL = "https://rpc.helius.xyz/?api-key=453a64a5-31dd-4c21-9619-6f0c69c74ff9";
-    const connection = new Connection(RPC_URL, "confirmed");
-    const CBS_MINT = new PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
-    const CBS_MIN_RAW = 1000n * 1_000_000_000n;
-
-    const connectBtn = document.getElementById("connectBtn");
-    const startBtn   = document.getElementById("startBtn");
-    const eligibility= document.getElementById("eligibility");
-
-    let walletPK = null;
-    window._canStart = false;
-
-    function provider(){ return window.solana?.isPhantom ? window.solana : (window.solana || window.phantom?.solana); }
-    function short(pk){ const s=pk?.toString?.()||""; return s ? s.slice(0,4)+"…"+s.slice(-4) : "-"; }
-    function fmtCbs(raw){ return (Number(raw)/1e9).toLocaleString(undefined,{maximumFractionDigits:9}); }
-
-    async function getCbsRawBalance(owner){
-      try{
-        const ata = await getAssociatedTokenAddress(CBS_MINT, owner);
-        const bal = await connection.getTokenAccountBalance(ata).catch(()=>null);
-        if(!bal) return 0n; return BigInt(bal.value.amount || "0");
-      }catch{ return 0n; }
-    }
-    async function verifyEligibility(){
-      if(!walletPK){ window._canStart=false; eligibility.textContent="Not connected"; startBtn.disabled=true; return; }
-      const raw = await getCbsRawBalance(walletPK);
-      if(raw >= CBS_MIN_RAW){
-        window._canStart=true; startBtn.disabled=false;
-        eligibility.textContent = `Eligible ✅ — You hold ${fmtCbs(raw)} CBS (≥ 1000)`;
-      }else{
-        window._canStart=false; startBtn.disabled=true;
-        eligibility.textContent = `Not eligible — need ≥ 1000 CBS (you hold ${fmtCbs(raw)})`;
-      }
-    }
-
-    connectBtn.addEventListener("click", async()=>{
-      try{
-        const p = provider(); if(!p) return alert("Phantom Wallet not found.");
-        const { publicKey } = await p.connect(); walletPK = publicKey;
-        connectBtn.textContent = `✅ ${short(publicKey)}`;
-        await verifyEligibility();
-      }catch(e){ console.warn("Wallet connect failed", e); }
-    });
-
-    if (window.solana) {
-      window.solana.on?.('accountChanged', async (pk)=>{
-        walletPK = pk || null;
-        connectBtn.textContent = pk ? `✅ ${short(pk)}` : '🔗 Connect Wallet';
-        await verifyEligibility();
-      });
-    }
-  </script>
-
-  <!-- Mobiele 100vh fix -->
-  <script>
-    function setDocVH(){
-      const vh = window.innerHeight * 0.01;
-      document.documentElement.style.setProperty('--vh', `${vh}px`);
-    }
-    setDocVH();
-    window.addEventListener('resize', setDocVH);
-    window.addEventListener('orientationchange', setDocVH);
+    // Initial static render
+    (function init(){ draw(); })();
   </script>
 </body>
 </html>
