@@ -1,411 +1,221 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>CBS Poll – Team Wallet</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet"/>
-<style>
-  :root{
-    --bg1:#0a0c10; --bg2:#0f141b;
-    --card:#0f151c; --card2:#0c1016;
-    --line:#0afbe0; --line2:#38f8ff;
-    --fg:#eafffb; --muted:#a8d6cd; --note:#7ee9dc;
-    --shadow: 0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
-    --radius:18px;
-    --btnA:#5afff0; --btnB:#2bffe4;
-    --bad:#ff7d7d; --ok:#7dffe9; --warn:#ffd56b;
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0; font-family:'Orbitron',sans-serif; color:var(--fg);
-    background:
-      radial-gradient(900px 600px at 100% -10%, rgba(0,255,230,.10), transparent 60%),
-      radial-gradient(700px 500px at -10% 110%, rgba(0,170,255,.09), transparent 60%),
-      linear-gradient(135deg,var(--bg1),var(--bg2));
-    -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
-  }
-
-  .topbar{position:sticky; top:0; z-index:20; display:flex; justify-content:space-between; align-items:center; padding:.8rem 1rem; border-bottom:1px solid rgba(0,255,240,.08); background:linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0)); backdrop-filter:blur(6px)}
-  .brand{display:flex; gap:.7rem; align-items:center}
-  .brand img{width:38px; height:38px; border-radius:10px; filter:drop-shadow(0 0 10px rgba(0,255,230,.35))}
-  .brand strong{color:#bffef2; letter-spacing:.4px}
-  .btn{display:inline-flex; align-items:center; justify-content:center; min-width:120px; padding:12px 18px; border-radius:10px; text-decoration:none; font-weight:900; font-size:.94rem; color:#001010; background:linear-gradient(180deg, var(--btnA), var(--btnB)); border:1px solid rgba(0,255,240,.7); box-shadow: 0 0 12px rgba(0,255,230,.55), 0 0 24px rgba(0,255,230,.25), inset 0 -8px 14px rgba(0,0,0,.14); transition:transform .15s ease, box-shadow .15s ease, filter .15s ease; white-space:nowrap; cursor:pointer}
-  .btn:hover{ transform:translateY(-2px) scale(1.03); box-shadow:0 0 16px rgba(0,255,230,.75), 0 0 32px rgba(0,255,230,.35) }
-  .btn[disabled]{opacity:.6;cursor:not-allowed;filter:saturate(.7)}
-
-  .container{ max-width:1100px; margin:0 auto; padding:1.2rem 1rem 2.2rem }
-  .hero{ display:grid; grid-template-columns:120px 1fr; gap:1.2rem; align-items:center; padding:1.2rem; margin:10px auto 18px; border-radius:var(--radius); background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35)); border:1px solid rgba(0,255,240,.18); box-shadow:var(--shadow) }
-  .hero .logo-wrap{ position:relative; width:120px; height:120px; border-radius:16px; overflow:hidden; background:radial-gradient(closest-side, rgba(0,255,230,.18), rgba(0,255,230,.04) 58%, transparent 62%); display:grid; place-items:center }
-  .hero .logo-wrap::after{ content:""; position:absolute; inset:-8%; border-radius:18px; box-shadow:0 0 0 2px rgba(0,255,230,.18), inset 0 0 30px rgba(0,255,230,.14); pointer-events:none }
-  .hero .logo{ width:86%; height:86%; object-fit:contain }
-  .hero h2{ margin:.15rem 0 0; color:var(--note); font-size:1.05rem; font-weight:600 }
-  .hero p{ margin:.35rem 0 0; color:var(--muted); font-size:.95rem }
-
-  .grid{ display:grid; gap:16px; grid-template-columns:repeat(12,1fr) }
-  .card{ grid-column:span 12; background:linear-gradient(180deg, var(--card), var(--card2)); border:1px solid rgba(0,255,240,.14); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px }
-  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-  .muted{color:var(--muted)}
-  .status{margin-top:.3rem;font-size:.95rem}
-  .ok{color:var(--ok)} .bad{color:var(--bad)} .warn{color:var(--warn)}
-
-  .options{display:grid;gap:12px}
-  .opt{display:flex; gap:12px; align-items:flex-start; padding:12px; border-radius:12px; border:1px solid rgba(0,255,240,.14); background:linear-gradient(180deg, #0b1218, #0a1015)}
-  .opt input{transform:scale(1.2); margin-top:2px}
-  .opt h4{margin:.1rem 0 .2rem; color:#d9fffb}
-  .opt p{margin:0; color:var(--muted); font-size:.92rem}
-
-  .bar{height:18px; border-radius:10px; background:#0a1016; border:1px solid rgba(0,255,240,.12); overflow:hidden}
-  .fill{height:100%; background:linear-gradient(90deg, #5afff0, #2bffe4); box-shadow:inset 0 -6px 10px rgba(0,0,0,.14)}
-  .resRow{display:grid; grid-template-columns:1fr 80px; align-items:center; gap:10px}
-  .resHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
-
-  .twoCol{display:grid; gap:16px; grid-template-columns:repeat(12,1fr)}
-  @media(min-width:880px){ .col{grid-column:span 6} }
-  @media(max-width:879px){ .col{grid-column:span 12} }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CBS Poll — Team Wallet</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{ --bg1:#0a0c10; --bg2:#0f141b; --card:#0f151c; --card2:#0c1016; --fg:#eafffb; --muted:#a8d6cd; --note:#7ee9dc; --line:rgba(0,255,240,.14); --radius:18px }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0; font-family:'Orbitron',sans-serif; color:var(--fg); background: radial-gradient(900px 600px at 100% -10%, rgba(0,255,230,.10), transparent 60%), radial-gradient(700px 500px at -10% 110%, rgba(0,170,255,.09), transparent 60%), linear-gradient(135deg,var(--bg1),var(--bg2)); -webkit-font-smoothing:antialiased }
+    .wrap{max-width:1080px;margin:0 auto;padding:16px}
+    /* header */
+    .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+    .brand{display:flex;gap:.7rem;align-items:center}
+    .brand img{width:40px;height:40px;border-radius:10px}
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 16px;border-radius:12px;border:1px solid rgba(0,255,240,.45);background:linear-gradient(180deg,#7dffe9,#55f1e7);color:#012022;font-weight:900;cursor:pointer;box-shadow:0 10px 18px rgba(0,255,230,.16), inset 0 -6px 10px rgba(0,0,0,.15)}
+    .btn[disabled]{opacity:.6;filter:saturate(.7);cursor:not-allowed}
+    .ghost{background:linear-gradient(180deg,#122028,#0e1820);color:var(--fg);border-color:var(--line)}
+    /* cards */
+    .grid{display:grid;gap:16px;grid-template-columns:repeat(12,1fr)}
+    .card{grid-column:span 12;background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10)}
+    .hero{display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:center}
+    .logoBox{width:120px;height:120px;border-radius:16px;display:grid;place-items:center;background:radial-gradient(closest-side, rgba(0,255,230,.18), rgba(0,255,230,.04) 58%, transparent 62%)}
+    .muted{color:var(--muted)}
+    .two{display:grid;gap:16px;grid-template-columns:repeat(12,1fr)}
+    @media(min-width:900px){ .col{grid-column:span 6} } @media(max-width:899px){ .col{grid-column:span 12} }
+    /* bars */
+    .bar{height:18px;border-radius:10px;background:#0a1016;border:1px solid rgba(0,255,240,.12);overflow:hidden}
+    .fill{height:100%;background:linear-gradient(90deg,#5afff0,#2bffe4);box-shadow:inset 0 -6px 10px rgba(0,0,0,.14)}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .opt{display:flex;gap:10px;align-items:flex-start;padding:12px;border-radius:12px;border:1px solid var(--line);background:linear-gradient(180deg,#0b1218,#0a1015)}
+    .note{margin-top:.3rem}
+  </style>
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">
-      <a href="https://smitskecbs.github.io/cbs-coin" style="display:flex;align-items:center;gap:.7rem;text-decoration:none;color:#bffef2">
-        <img src="logo.png" alt="CBS Logo"><strong>CBS Coin</strong>
-      </a>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <img src="logo.png" alt="CBS"/> <strong style="color:#bffef2;letter-spacing:.4px">CBS Coin</strong>
+      </div>
+      <div class="row">
+        <button id="lang" class="btn ghost">NL 🇳🇱</button>
+      </div>
     </div>
-    <div style="display:flex; gap:10px; align-items:center">
-      <a class="btn" href="https://smitskecbs.github.io/cbs-coin">← Home</a>
-      <button id="langSwitch">NL 🇳🇱</button>
-    </div>
-  </header>
 
-  <!-- EN -->
-  <div id="content-en">
-    <div class="container">
-      <section class="hero">
-        <div class="logo-wrap"><img class="logo" src="logo.png" alt="CBS Logo"></div>
-        <div>
-          <h2>Community Poll — Team Wallet</h2>
-          <p>Should the team wallet be used to <b>increase liquidity</b>, <b>reward loyal holders</b>, or <b>burn</b> a portion of the supply? Holders (≥10,000 CBS) can vote. Everyone can view results.</p>
+    <section class="card hero">
+      <div class="logoBox"><img src="logo.png" alt="CBS" style="width:86%;height:86%;object-fit:contain"></div>
+      <div>
+        <h2 id="hTitle" style="margin:0 0 6px;color:#7ee9dc">Community Poll — Team Wallet</h2>
+        <p id="hDesc" class="muted" style="margin:0">Should the team wallet be used to <b>increase liquidity</b>, <b>reward loyal holders</b>, or <b>burn</b> a portion? Holders (≥10,000 CBS) can vote. Everyone can view results.</p>
+      </div>
+    </section>
+
+    <section class="two" style="margin-top:12px">
+      <!-- Vote -->
+      <div class="card col">
+        <h3 style="margin:.2rem 0 .6rem">Vote</h3>
+        <div class="row">
+          <button id="connectBtn" class="btn">🔗 Connect Wallet</button>
+          <button id="verifyBtn" class="btn ghost" disabled>✅ Verify Holdings</button>
+          <button id="voteBtn" class="btn" disabled>🗳 Submit Vote</button>
         </div>
-      </section>
-
-      <section class="twoCol">
-        <!-- Voting -->
-        <div class="card col">
-          <h3 style="margin:.2rem 0 .6rem">Vote</h3>
-          <div class="row">
-            <button id="connectBtn" class="btn">🔗 Connect Wallet</button>
-            <button id="verifyBtn" class="btn" disabled>✅ Verify Holdings</button>
-            <button id="voteBtn" class="btn" disabled>🗳 Submit Vote</button>
-          </div>
-          <div id="statusEN" class="status muted">Holders-only voting: requires <b>≥ 10,000 CBS</b> in your wallet.</div>
-          <div class="options" style="margin-top:12px">
-            <label class="opt"><input type="radio" name="choice" value="liquidity"><div><h4>Increase Liquidity</h4><p>Allocate part of the team wallet to deepen DEX liquidity.</p></div></label>
-            <label class="opt"><input type="radio" name="choice" value="rewards"><div><h4>Reward Holders</h4><p>Use funds to reward long-term CBS holders.</p></div></label>
-            <label class="opt"><input type="radio" name="choice" value="burn"><div><h4>Burn a Portion</h4><p>Reduce supply by burning part of the team wallet holdings.</p></div></label>
-          </div>
+        <div id="status" class="note muted">Holders-only voting: requires <b>≥ 10,000 CBS</b>.</div>
+        <div style="height:10px"></div>
+        <div class="opt">
+          <input type="radio" id="opt1" name="choice" value="liquidity">
+          <label for="opt1"><b>Increase Liquidity</b><br><span class="muted">Use part of the team wallet to deepen DEX liquidity.</span></label>
         </div>
-
-        <!-- Results -->
-        <div class="card col">
-          <h3 style="margin:.2rem 0 .6rem">Live Results</h3>
-          <div id="totEN" class="muted" style="margin-bottom:10px">Total votes: <b id="totalEN">0</b></div>
-
-          <div class="resHead"><div>Liquidity</div><div id="p1EN">0%</div></div>
-          <div class="resRow"><div class="bar"><div id="b1" class="fill" style="width:0%"></div></div><div id="c1EN" style="text-align:right">0</div></div>
-
-          <div class="resHead" style="margin-top:10px"><div>Rewards</div><div id="p2EN">0%</div></div>
-          <div class="resRow"><div class="bar"><div id="b2" class="fill" style="width:0%"></div></div><div id="c2EN" style="text-align:right">0</div></div>
-
-          <div class="resHead" style="margin-top:10px"><div>Burn</div><div id="p3EN">0%</div></div>
-          <div class="resRow"><div class="bar"><div id="b3" class="fill" style="width:0%"></div></div><div id="c3EN" style="text-align:right">0</div></div>
-
-          <div id="modeEN" class="muted" style="margin-top:8px">Live via Edge Function</div>
+        <div class="opt" style="margin-top:10px">
+          <input type="radio" id="opt2" name="choice" value="rewards">
+          <label for="opt2"><b>Reward Holders</b><br><span class="muted">Reward long-term CBS holders (perks/airdrop).</span></label>
         </div>
-      </section>
-    </div>
+        <div class="opt" style="margin-top:10px">
+          <input type="radio" id="opt3" name="choice" value="burn">
+          <label for="opt3"><b>Burn a Portion</b><br><span class="muted">Reduce supply by burning part of the team wallet.</span></label>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div class="card col">
+        <h3 style="margin:.2rem 0 .6rem">Live Results</h3>
+        <div class="muted" style="margin-bottom:8px">Total votes: <b id="tot">0</b></div>
+        <div class="row" style="justify-content:space-between"><div>Liquidity</div><div id="p1">0%</div></div>
+        <div class="bar"><div id="b1" class="fill" style="width:0%"></div></div>
+        <div class="muted" id="c1">0</div>
+        <div style="height:8px"></div>
+        <div class="row" style="justify-content:space-between"><div>Rewards</div><div id="p2">0%</div></div>
+        <div class="bar"><div id="b2" class="fill" style="width:0%"></div></div>
+        <div class="muted" id="c2">0</div>
+        <div style="height:8px"></div>
+        <div class="row" style="justify-content:space-between"><div>Burn</div><div id="p3">0%</div></div>
+        <div class="bar"><div id="b3" class="fill" style="width:0%"></div></div>
+        <div class="muted" id="c3">0</div>
+        <div class="muted" id="mode" style="margin-top:8px">Live via Edge Function</div>
+      </div>
+    </section>
   </div>
 
-  <!-- NL -->
-  <div id="content-nl" style="display:none">
-    <div class="container">
-      <section class="hero">
-        <div class="logo-wrap"><img class="logo" src="logo.png" alt="CBS Logo"></div>
-        <div>
-          <h2>Community-poll — Teamwallet</h2>
-          <p>Moeten we de teamwallet gebruiken om <b>liquiditeit te verhogen</b>, <b>vaste holders te belonen</b> of een deel te <b>branden</b>? Holders (≥10.000 CBS) mogen stemmen. Iedereen kan de uitslag zien.</p>
-        </div>
-      </section>
-
-      <section class="twoCol">
-        <!-- Stemmen -->
-        <div class="card col">
-          <h3 style="margin:.2rem 0 .6rem">Stemmen</h3>
-          <div class="row">
-            <button id="connectBtnNL" class="btn">🔗 Wallet verbinden</button>
-            <button id="verifyBtnNL" class="btn" disabled>✅ Holdings checken</button>
-            <button id="voteBtnNL" class="btn" disabled>🗳 Stem indienen</button>
-          </div>
-          <div id="statusNL" class="status muted">Alleen holders: vereist <b>≥ 10.000 CBS</b> in je wallet.</div>
-          <div class="options" style="margin-top:12px">
-            <label class="opt"><input type="radio" name="choice-nl" value="liquidity"><div><h4>Liquiditeit verhogen</h4><p>Een deel van de teamwallet inzetten om DEX-liquiditeit te versterken.</p></div></label>
-            <label class="opt"><input type="radio" name="choice-nl" value="rewards"><div><h4>Holders belonen</h4><p>Funds gebruiken om langetermijn-holders te belonen.</p></div></label>
-            <label class="opt"><input type="radio" name="choice-nl" value="burn"><div><h4>Deel branden</h4><p>Voorraad verkleinen door een deel te burnen.</p></div></label>
-          </div>
-        </div>
-
-        <!-- Resultaten -->
-        <div class="card col">
-          <h3 style="margin:.2rem 0 .6rem">Live resultaten</h3>
-          <div id="totNL" class="muted" style="margin-bottom:10px">Totaal stemmen: <b id="totalNL">0</b></div>
-
-          <div class="resHead"><div>Liquiditeit</div><div id="p1NL">0%</div></div>
-          <div class="resRow"><div class="bar"><div id="b1nl" class="fill" style="width:0%"></div></div><div id="c1NL" style="text-align:right">0</div></div>
-
-          <div class="resHead" style="margin-top:10px"><div>Beloningen</div><div id="p2NL">0%</div></div>
-          <div class="resRow"><div class="bar"><div id="b2nl" class="fill" style="width:0%"></div></div><div id="c2NL" style="text-align:right">0</div></div>
-
-          <div class="resHead" style="margin-top:10px"><div>Burn</div><div id="p3NL">0%</div></div>
-          <div class="resRow"><div class="bar"><div id="b3nl" class="fill" style="width:0%"></div></div><div id="c3NL" style="text-align:right">0</div></div>
-
-          <div id="modeNL" class="muted" style="margin-top:8px">Live via Edge Function</div>
-        </div>
-      </section>
-    </div>
-  </div>
-
-  <!-- Libs -->
+  <!-- libs -->
   <script type="module">
     import { Connection, PublicKey } from "https://esm.sh/@solana/web3.js@1.95.8";
 
     /******** CONFIG ********/
-    // Supabase Edge Function
-    const EDGE_URL  = "https://khjajkhggqoxyxaglroz.supabase.co/functions/v1/cast_vote";
+    const EDGE = "https://khjajkhggqoxyxaglroz.supabase.co/functions/v1/cast_vote";
+    const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtoamFqa2hnZ3FveHl4YWdscm96Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxODA2NzEsImV4cCI6MjA3Mjc1NjY3MX0.64hBtTcdF9zDotpXZVhjr9ZxT8PejHoM08DUu1HT8qQ"; // Supabase anon key
     const POLL_SLUG = "teamwallet";
-    // Door jou gedeelde anon key (publiek) voor Authorization header richting de Edge Function:
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtoamFqa2hnZ3FveHl4YWdscm96Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTcxODA2NzEsImV4cCI6MjA3Mjc1NjY3MX0.64hBtTcdF9zDotpXZVhjr9ZxT8PejHoM08DUu1HT8qQ";
-    const AUTH_HDR  = { "Authorization": "Bearer " + SUPABASE_ANON_KEY };
 
-    // Client-side check (optioneel; server beslist definitief)
-    const RPC_URL = "https://rpc.helius.xyz/?api-key=453a64a5-31dd-4c21-9619-6f0c69c74ff9";
+    // (Optional) holder verify via RPC
+    const RPC_URL = "https://rpc.helius.xyz/?api-key=453a64a5-31dd-4c21-9619-6f0c69c74ff9"; // jouw publieke RPC
     const connection = new Connection(RPC_URL, "confirmed");
     const CBS_MINT = new PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
     const MIN_HOLD = 10_000;
 
-    /******** LANG TOGGLE ********/
-    const btnLang = document.getElementById('langSwitch');
-    const en = document.getElementById('content-en');
-    const nl = document.getElementById('content-nl');
-    let isEN = true;
-    btnLang.addEventListener('click', ()=>{
-      isEN = !isEN;
-      en.style.display = isEN ? 'block' : 'none';
-      nl.style.display = isEN ? 'none'  : 'block';
-      btnLang.textContent = isEN ? 'NL 🇳🇱' : 'EN 🇬🇧';
-      window.scrollTo({ top:0, behavior:'smooth' });
-    });
-
-    /******** DOM SHORTCUTS ********/
+    /******** DOM ********/
     const $ = (id)=>document.getElementById(id);
-
-    // EN controls
     const connectBtn = $("connectBtn");
     const verifyBtn  = $("verifyBtn");
     const voteBtn    = $("voteBtn");
-    const statusEN   = $("statusEN");
+    const status     = $("status");
+    const b1=$("b1"), b2=$("b2"), b3=$("b3");
+    const p1=$("p1"), p2=$("p2"), p3=$("p3");
+    const c1=$("c1"), c2=$("c2"), c3=$("c3");
+    const tot=$("tot");
+    const mode=$("mode");
 
-    // NL controls
-    const connectBtnNL = $("connectBtnNL");
-    const verifyBtnNL  = $("verifyBtnNL");
-    const voteBtnNL    = $("voteBtnNL");
-    const statusNL     = $("statusNL");
-
-    // EN result refs
-    const b1 = $("b1"), b2 = $("b2"), b3 = $("b3");
-    const p1EN = $("p1EN"), p2EN = $("p2EN"), p3EN = $("p3EN");
-    const c1EN = $("c1EN"), c2EN = $("c2EN"), c3EN = $("c3EN");
-    const totalEN = $("totalEN");
-    const modeEN  = $("modeEN");
-    // NL results
-    const b1nl = $("b1nl"), b2nl = $("b2nl"), b3nl = $("b3nl");
-    const p1NL = $("p1NL"), p2NL = $("p2NL"), p3NL = $("p3NL");
-    const c1NL = $("c1NL"), c2NL = $("c2NL"), c3NL = $("c3NL");
-    const totalNL = $("totalNL");
-    const modeNL  = $("modeNL");
-
-    /******** STATE ********/
     let walletPK = null;
     let isHolder = false;
 
     function provider(){ return window.solana?.isPhantom ? window.solana : (window.phantom?.solana || null); }
     const short = (a)=> a ? a.slice(0,4)+'…'+a.slice(-4) : '-';
 
+    /******** LANG (EN/NL swap) ********/
+    const langBtn = document.getElementById('lang');
+    let isEN = true;
+    langBtn.addEventListener('click',()=>{
+      isEN = !isEN;
+      langBtn.textContent = isEN ? 'NL 🇳🇱' : 'EN 🇬🇧';
+      document.getElementById('hTitle').textContent = isEN ? 'Community Poll — Team Wallet' : 'Community-poll — Teamwallet';
+      document.getElementById('hDesc').innerHTML = isEN
+        ? 'Should the team wallet be used to <b>increase liquidity</b>, <b>reward loyal holders</b>, or <b>burn</b> a portion? Holders (≥10,000 CBS) can vote. Everyone can view results.'
+        : 'Moeten we de teamwallet gebruiken om <b>liquiditeit te verhogen</b>, <b>vaste holders te belonen</b> of een deel te <b>branden</b>? Holders (≥10.000 CBS) mogen stemmen. Iedereen kan de uitslag zien.';
+    });
+
     /******** CONNECT & VERIFY ********/
-    async function connect(enMode=true){
+    async function connect(){
       try{
-        const p = provider(); if(!p) return alert(isEN ? "Phantom Wallet not found." : "Phantom Wallet niet gevonden.");
+        const p = provider(); if(!p){ alert(isEN? 'Phantom Wallet not found.' : 'Phantom Wallet niet gevonden.'); return; }
         const { publicKey } = await p.connect();
         walletPK = publicKey;
-        (enMode ? connectBtn : connectBtnNL).textContent = `✅ ${short(publicKey.toBase58())}`;
-        (enMode ? verifyBtn  : verifyBtnNL).disabled = false;
-        // Auto-verify
-        await verify(enMode);
-      }catch(e){
-        console.warn(e);
-        (enMode ? statusEN : statusNL).innerHTML = enMode
-          ? `<span class="bad">Not connected.</span>`
-          : `<span class="bad">Niet verbonden.</span>`;
-      }
+        connectBtn.textContent = `✅ ${short(publicKey.toBase58())}`;
+        verifyBtn.disabled = false;
+      }catch(e){ console.warn(e); }
     }
 
-    async function verify(enMode=true){
+    async function verify(){
       if(!walletPK){ return; }
-      const setUI = (ok, amt)=>{
-        if (ok){
-          (enMode ? statusEN : statusNL).innerHTML = enMode
-            ? `✅ <span class="ok">Holder verified</span> — balance: <b>${Math.floor(amt)}</b> CBS`
-            : `✅ <span class="ok">Holder geverifieerd</span> — saldo: <b>${Math.floor(amt)}</b> CBS`;
-          (enMode ? voteBtn : voteBtnNL).disabled = false;
-        }else{
-          (enMode ? statusEN : statusNL).innerHTML = enMode
-            ? `❌ <span class="bad">Not enough CBS</span> — you have <b>${amt.toFixed(2)}</b>, need <b>${MIN_HOLD}</b>+`
-            : `❌ <span class="bad">Te weinig CBS</span> — je hebt <b>${amt.toFixed(2)}</b>, vereist <b>${MIN_HOLD}</b>+`;
-          (enMode ? voteBtn : voteBtnNL).disabled = true;
-        }
-      };
-      (enMode ? verifyBtn : verifyBtnNL).disabled = true;
-      (enMode ? verifyBtn : verifyBtnNL).textContent = enMode ? "Checking…" : "Controleren…";
+      verifyBtn.disabled = true; verifyBtn.textContent = isEN ? 'Checking…' : 'Controleren…';
       try{
         const res = await connection.getParsedTokenAccountsByOwner(walletPK, { mint: CBS_MINT });
-        let total = 0;
-        for(const it of (res?.value||[])){
-          const amt = it.account?.data?.parsed?.info?.tokenAmount?.uiAmount || 0;
-          total += Number(amt)||0;
-        }
+        let total = 0; for(const it of (res?.value||[])){ total += Number(it.account?.data?.parsed?.info?.tokenAmount?.uiAmount || 0) }
         isHolder = total >= MIN_HOLD;
-        setUI(isHolder, total);
-      }catch(e){
-        console.warn(e);
-        (enMode ? statusEN : statusNL).innerHTML = enMode
-          ? `<span class="warn">RPC check failed.</span> Try again later.`
-          : `<span class="warn">RPC-check mislukt.</span> Probeer later opnieuw.`;
-      }finally{
-        (enMode ? verifyBtn : verifyBtnNL).disabled = false;
-        (enMode ? verifyBtn : verifyBtnNL).textContent = enMode ? "✅ Verify Holdings" : "✅ Holdings checken";
-      }
+        status.innerHTML = isHolder
+          ? (isEN? `✅ <b>Holder verified</b> — balance: <b>${Math.floor(total)}</b> CBS` : `✅ <b>Holder geverifieerd</b> — saldo: <b>${Math.floor(total)}</b> CBS`)
+          : (isEN? `❌ Not enough CBS — you have <b>${total.toFixed(2)}</b>, need <b>${MIN_HOLD}</b>+` : `❌ Te weinig CBS — je hebt <b>${total.toFixed(2)}</b>, vereist <b>${MIN_HOLD}</b>+`);
+        voteBtn.disabled = !isHolder;
+      }catch(e){ console.warn(e); status.innerHTML = isEN? '<span class="muted">RPC check failed.</span>' : '<span class="muted">RPC-check mislukt.</span>'; }
+      finally{ verifyBtn.disabled=false; verifyBtn.textContent = isEN ? '✅ Verify Holdings' : '✅ Holdings checken'; }
     }
 
-    connectBtn?.addEventListener('click', ()=>connect(true));
-    verifyBtn?.addEventListener('click', ()=>verify(true));
-    connectBtnNL?.addEventListener('click', ()=>connect(false));
-    verifyBtnNL?.addEventListener('click', ()=>verify(false));
+    connectBtn.addEventListener('click', connect);
+    verifyBtn.addEventListener('click', verify);
 
-    /******** HELPERS ********/
-    function getChoice(enMode=true){
-      const sel = enMode ? document.querySelector('input[name="choice"]:checked')
-                         : document.querySelector('input[name="choice-nl"]:checked');
-      return sel?.value || null;
-    }
-    function choiceToIndex(v){
-      return v === "liquidity" ? 0 : v === "rewards" ? 1 : 2; // burn=2
+    /******** CHOICE MAPPING ********/
+    function getChoiceIdx(){
+      const map = { liquidity:0, rewards:1, burn:2 };
+      const sel = document.querySelector('input[name="choice"]:checked');
+      return sel ? map[sel.value] : null;
     }
 
-    /******** EDGE: RESULTS (AGGREGATES) ********/
+    /******** API: vote & results ********/
+    async function submitVote(){
+      if(!walletPK){ alert(isEN? 'Connect your wallet first.' : 'Verbind eerst je wallet.'); return; }
+      const idx = getChoiceIdx();
+      if(idx === null){ alert(isEN? 'Pick one option before submitting.' : 'Kies eerst een optie.'); return; }
+      voteBtn.disabled = true; voteBtn.textContent = isEN? 'Submitting…' : 'Indienen…';
+      try{
+        const body = { poll_slug: POLL_SLUG, voter_pubkey: walletPK.toBase58(), option_idx: idx };
+        const res = await fetch(EDGE, { method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':`Bearer ${ANON}`, 'apikey': ANON }, body: JSON.stringify(body) });
+        if(!res.ok){ const m = await res.text().catch(()=> ''); console.error('cast_vote failed', res.status, m); alert(isEN? 'Could not save vote.' : 'Stem opslaan mislukt.'); }
+        else { alert(isEN? 'Vote recorded. Thank you!' : 'Stem opgeslagen. Bedankt!'); await refreshResults(); }
+      }catch(e){ console.warn(e); alert(isEN? 'Could not save vote.' : 'Stem opslaan mislukt.'); }
+      finally{ voteBtn.disabled = false; voteBtn.textContent = isEN? '🗳 Submit Vote' : '🗳 Stem indienen'; }
+    }
+
     async function fetchResults(){
-      const res = await fetch(`${EDGE_URL}?results=1&slug=${encodeURIComponent(POLL_SLUG)}`, {
-        method: "GET",
-        headers: AUTH_HDR
-      });
-      const data = await res.json().catch(()=> ({}));
-      if (!res.ok || !data?.ok) throw new Error(data?.error || res.statusText);
-      return data.totals || { liquidity:0, rewards:0, burn:0, total:0 };
+      const url = `${EDGE}?results=${encodeURIComponent(POLL_SLUG)}`;
+      const res = await fetch(url, { headers:{ 'Authorization':`Bearer ${ANON}`, 'apikey': ANON } });
+      if(!res.ok){ const m = await res.text().catch(()=> ''); console.error('fetch results failed', res.status, m); return { liquidity:0, rewards:0, burn:0, total:0 }; }
+      return await res.json();
     }
 
-    function renderTotals(t){
-      const total = t.total || 0;
-      const pct = n => total>0 ? Math.round((n/total)*100) : 0;
-
-      // EN
-      b1.style.width = pct(t.liquidity) + "%";
-      b2.style.width = pct(t.rewards)  + "%";
-      b3.style.width = pct(t.burn)     + "%";
-      p1EN.textContent = pct(t.liquidity) + "%";
-      p2EN.textContent = pct(t.rewards)  + "%";
-      p3EN.textContent = pct(t.burn)     + "%";
-      c1EN.textContent = t.liquidity;
-      c2EN.textContent = t.rewards;
-      c3EN.textContent = t.burn;
-      totalEN.textContent = total;
-
-      // NL
-      b1nl.style.width = pct(t.liquidity) + "%";
-      b2nl.style.width = pct(t.rewards)  + "%";
-      b3nl.style.width = pct(t.burn)     + "%";
-      p1NL.textContent = pct(t.liquidity) + "%";
-      p2NL.textContent = pct(t.rewards)  + "%";
-      p3NL.textContent = pct(t.burn)     + "%";
-      c1NL.textContent = t.liquidity;
-      c2NL.textContent = t.rewards;
-      c3NL.textContent = t.burn;
-      totalNL.textContent = total;
-
-      modeEN.textContent = "Live via Edge Function";
-      modeNL.textContent = "Live via Edge Function";
+    function renderResults(o){
+      const total = Number(o.total||0); const L=Number(o.liquidity||0), R=Number(o.rewards||0), B=Number(o.burn||0);
+      const pct = (n)=> total>0 ? Math.round((n/total)*100) : 0;
+      b1.style.width = pct(L)+"%"; p1.textContent = pct(L)+"%"; c1.textContent=L;
+      b2.style.width = pct(R)+"%"; p2.textContent = pct(R)+"%"; c2.textContent=R;
+      b3.style.width = pct(B)+"%"; p3.textContent = pct(B)+"%"; c3.textContent=B;
+      tot.textContent = total;
     }
 
-    async function refreshResults(){
-      try{
-        const totals = await fetchResults();
-        renderTotals(totals);
-      }catch(e){
-        console.error("fetch results failed", e);
-      }
-    }
+    async function refreshResults(){ const data = await fetchResults(); renderResults(data); }
 
-    setInterval(refreshResults, 10000);
+    voteBtn.addEventListener('click', submitVote);
+
+    // initial
     refreshResults();
-
-    /******** EDGE: CAST VOTE ********/
-    async function submitVote(enMode=true){
-      const btn = enMode ? voteBtn : voteBtnNL;
-      if(!walletPK){ return alert(enMode ? "Connect your wallet first." : "Verbind eerst je wallet."); }
-      if(!isHolder){ return alert(enMode ? "Holders-only: need ≥ 10,000 CBS." : "Alleen holders: ≥ 10.000 CBS vereist."); }
-      const choice = getChoice(enMode);
-      if(!choice){ return alert(enMode ? "Pick one option before submitting." : "Kies eerst een optie."); }
-
-      btn.disabled = true; btn.textContent = enMode ? "Submitting…" : "Indienen…";
-      try{
-        const body = {
-          voter_pubkey: walletPK.toBase58(),
-          option_idx: choiceToIndex(choice),
-          slug: POLL_SLUG
-        };
-
-        const res = await fetch(EDGE_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", ...AUTH_HDR },
-          body: JSON.stringify(body)
-        });
-        const data = await res.json().catch(()=> ({}));
-
-        if(res.ok && data?.ok){
-          alert(enMode ? "Vote recorded. Thank you!" : "Stem opgeslagen. Bedankt!");
-          await refreshResults();
-        }else{
-          alert((data?.error) || (enMode ? "Could not save vote." : "Stem opslaan mislukt."));
-        }
-      }catch(e){
-        console.warn(e);
-        alert(enMode ? "Something went wrong." : "Er ging iets mis.");
-      }finally{
-        btn.disabled = false; btn.textContent = enMode ? "🗳 Submit Vote" : "🗳 Stem indienen";
-      }
-    }
-
-    voteBtn?.addEventListener('click', ()=>submitVote(true));
-    voteBtnNL?.addEventListener('click', ()=>submitVote(false));
+    setInterval(refreshResults, 10000);
   </script>
 </body>
 </html>
-
