@@ -13,6 +13,7 @@
       --card:#0f151c; --card2:#0c1016;
       --line:#0afbe0; --line2:#38f8ff;
       --fg:#eafffb; --muted:#a8d6cd; --note:#7ee9dc;
+      --accent:#79ffee;
       --shadow: 0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
       --radius:18px;
     }
@@ -30,17 +31,35 @@
     /* ===== Header ===== */
     .topbar{
       position:sticky; top:0; z-index:20;
-      display:flex; align-items:center; justify-content:space-between;
+      display:flex; align-items:center; gap:.8rem; justify-content:space-between;
       padding:.8rem 1rem; backdrop-filter:blur(6px);
       background:linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0));
       border-bottom:1px solid rgba(0,255,240,.08);
     }
     .brand{display:flex; align-items:center; gap:.7rem}
     .brand img{width:38px; height:38px; border-radius:10px; filter:drop-shadow(0 0 10px rgba(0,255,230,.35))}
-    .brand h1{
-      margin:0; font-size:1.05rem; letter-spacing:.4px; font-weight:700;
-      color:#bffef2;
+    .brand h1{margin:0; font-size:1.05rem; letter-spacing:.4px; font-weight:700; color:#bffef2;}
+
+    .right-bar{display:flex; align-items:center; gap:.8rem}
+
+    /* Social icons */
+    .socials{display:flex; align-items:center; gap:.45rem}
+    .icon{
+      display:inline-grid; place-items:center;
+      width:36px; height:36px; border-radius:10px;
+      background:linear-gradient(180deg, rgba(0,255,230,.06), rgba(0,255,230,.02));
+      border:1px solid rgba(0,255,240,.25);
+      box-shadow:inset 0 0 0 1px rgba(0,255,240,.05);
+      transition:transform .12s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease;
     }
+    .icon svg{width:20px; height:20px; fill:var(--accent)}
+    .icon:hover{
+      transform:translateY(-1px);
+      border-color:rgba(0,255,240,.5);
+      box-shadow:0 8px 20px rgba(0,255,230,.12), inset 0 0 0 1px rgba(0,255,240,.08);
+      background:linear-gradient(180deg, rgba(0,255,230,.10), rgba(0,255,230,.04));
+    }
+
     #langSwitch{
       background:linear-gradient(180deg, #7dffe9, #55f1e7);
       color:#012022; font-weight:900; border:1px solid rgba(0,255,240,.45);
@@ -54,7 +73,7 @@
     .container{ max-width:1100px; margin:0 auto; padding:1.2rem 1rem 2.2rem }
 
     .hero{
-      display:grid; grid-template-columns:120px 1fr; gap:1.2rem; align-items:center;
+      display:grid; grid-template-columns:120px 1fr 96px; gap:1.2rem; align-items:center;
       padding:1.2rem; margin:10px auto 18px; border-radius:var(--radius);
       background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35));
       border:1px solid rgba(0,255,240,.18); box-shadow:var(--shadow);
@@ -74,6 +93,15 @@
     .hero h2{ margin:.15rem 0 0; color:var(--note); font-size:1.05rem; font-weight:600 }
     .hero p{ margin:.35rem 0 0; color:var(--muted); font-size:.95rem }
 
+    .adje-chip{
+      width:96px; height:96px; border-radius:14px; overflow:hidden;
+      border:1px solid rgba(0,255,240,.22);
+      background:#0c1218;
+      display:grid; place-items:center;
+      box-shadow:inset 0 0 0 1px rgba(0,255,240,.06);
+    }
+    .adje-chip img{width:88%; height:88%; object-fit:contain}
+
     /* ===== Cards ===== */
     .grid{ display:grid; gap:16px; grid-template-columns:repeat(12,1fr) }
     .card{
@@ -86,7 +114,7 @@
     .card h3{ margin:.2rem 0 .6rem; color:#bffef2; font-size:1.05rem }
     .card p{ margin:0 0 .9rem; color:var(--muted); font-size:.95rem }
 
-    /* Primary actions as large tiles */
+    /* Primary actions */
     .cta-grid{ display:grid; gap:14px; grid-template-columns:repeat(12,1fr) }
     .cta{
       grid-column:span 12;
@@ -102,7 +130,7 @@
     .cta h4{ margin:0 0 .25rem; font-size:1.05rem }
     .cta small{ color:var(--muted) }
 
-    /* ===== Buttons ===== */
+    /* Buttons */
     .btn{
       display:inline-flex; align-items:center; justify-content:center;
       min-width:120px; padding:12px 18px; border-radius:10px;
@@ -121,9 +149,8 @@
       transform:translateY(-2px) scale(1.03);
       box-shadow:0 0 16px rgba(0,255,230,.75), 0 0 32px rgba(0,255,230,.35);
     }
-    .btn:active{ transform:translateY(0) scale(.99) }
 
-    /* ===== More pages tiles ===== */
+    /* Tiles */
     .tiles{ display:grid; gap:14px; grid-template-columns:repeat(12,1fr) }
     .tile{
       grid-column:span 12;
@@ -140,10 +167,12 @@
 
     /* Footer */
     footer{ margin:24px auto 40px; text-align:center; color:var(--muted) }
-    footer a{ color:#79ffee; text-decoration:none }
-    footer a:hover{ text-decoration:underline }
+    footer .socials{justify-content:center; gap:.55rem; margin-top:.5rem}
+    footer p{margin:.4rem 0 0}
+    footer a.mail{ color:#79ffee; text-decoration:none }
+    footer a.mail:hover{ text-decoration:underline }
 
-    /* Responsive columns */
+    /* Responsive */
     @media (min-width:640px){
       .cta{ grid-column:span 6 }
       .tile{ grid-column:span 6 }
@@ -151,6 +180,11 @@
     @media (min-width:980px){
       .cta{ grid-column:span 6 }
       .tile{ grid-column:span 3 }
+    }
+    @media (max-width:560px){
+      .hero{grid-template-columns:88px 1fr 72px}
+      .hero .logo-wrap{width:88px;height:88px}
+      .adje-chip{width:72px;height:72px}
     }
   </style>
 </head>
@@ -161,7 +195,32 @@
       <img src="logo.png" alt="CBS Logo">
       <h1>CBS Coin</h1>
     </div>
-    <button id="langSwitch">NL 🇳🇱</button>
+
+    <div class="right-bar">
+      <!-- Clickable social icons -->
+      <nav class="socials" aria-label="Social links">
+        <!-- Telegram -->
+        <a class="icon" href="https://t.me/CBS_Coin" target="_blank" rel="noopener noreferrer" title="Telegram">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9.03 15.5 8.9 19.1c.41 0 .59-.18.8-.4l1.92-1.86 3.98 2.92c.73.4 1.25.19 1.45-.68l2.63-12.35c.23-1.07-.41-1.5-1.11-1.24L3.6 9.4c-1.05.41-1.04 1-.19 1.26l4.57 1.43 10.62-6.69c.5-.3.95-.14.57.19l-9.15 8.9Z"/>
+          </svg>
+        </a>
+        <!-- X (Twitter) -->
+        <a class="icon" href="https://x.com/CBS_Coin" target="_blank" rel="noopener noreferrer" title="X (Twitter)">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M3 3h4.6l5.1 7.4L17.8 3H21l-7.6 10.5L21 21h-4.6l-5.4-7.8L6.2 21H3l7.9-10.9L3 3Z"/>
+          </svg>
+        </a>
+        <!-- Discord -->
+        <a class="icon" href="https://discord.gg/DxSB3ERQ" target="_blank" rel="noopener noreferrer" title="Discord">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M19.6 5.2A15.7 15.7 0 0 0 15.9 4l-.2.3c1.9.6 2.7 1.4 2.7 1.4a8.2 8.2 0 0 0-3.2-1 10 10 0 0 0-2.4 0 8.2 8.2 0 0 0-3.2 1s.8-.8 2.7-1.4l-.2-.3a15.7 15.7 0 0 0-3.7 1.2C4.2 7.4 3 11 3 11a13.9 13.9 0 0 0 4.7 4.8l.4-.6c-.7-.3-1.4-.7-2-1.2l.5-.4c3.9 1.8 8.1 1.8 12 0l.5.4c-.6.5-1.3.9-2 1.2l.4.6A13.9 13.9 0 0 0 21 11s-1.2-3.6-1.4-5.8ZM9.4 13.8c-.8 0-1.5-.8-1.5-1.7s.7-1.7 1.5-1.7 1.5.8 1.5 1.7-.7 1.7-1.5 1.7Zm5.2 0c-.8 0-1.5-.8-1.5-1.7s.7-1.7 1.5-1.7 1.5.8 1.5 1.7-.7 1.7-1.5 1.7Z"/>
+          </svg>
+        </a>
+      </nav>
+
+      <button id="langSwitch" aria-label="Switch language">NL 🇳🇱</button>
+    </div>
   </header>
 
   <!-- ===== EN Content ===== -->
@@ -173,6 +232,10 @@
           <h2>Community Builds Sovereignty</h2>
           <p>CBS Coin is a community-driven token on Solana. Breaking chains together.</p>
         </div>
+        <!-- Adje cat badge -->
+        <div class="adje-chip" title="@Adjecatbot">
+          <img src="adje.png" alt="Adje Cat Bot logo">
+        </div>
       </section>
 
       <!-- Primary actions -->
@@ -180,7 +243,6 @@
         <div class="card">
           <h3>Start here</h3>
           <div class="cta-grid">
-            <!-- REPLACED: all individual game tiles → one Games Hub button -->
             <div class="cta">
               <div>
                 <h4>🎮 Games Hub</h4>
@@ -249,11 +311,18 @@
       </section>
 
       <footer>
-        Join the community:
-        <a href="https://t.me/CBS_Coin" target="_blank" rel="noopener">Telegram</a> ·
-        <a href="https://x.com/CBS_Coin" target="_blank" rel="noopener">X (Twitter)</a>
-        <br>
-        Contact: <a href="mailto:cbs.coin12@gmail.com">cbs.coin12@gmail.com</a>
+        <div class="socials" aria-label="Social links">
+          <a class="icon" href="https://t.me/CBS_Coin" target="_blank" rel="noopener noreferrer" title="Telegram (join)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.03 15.5 8.9 19.1c.41 0 .59-.18.8-.4l1.92-1.86 3.98 2.92c.73.4 1.25.19 1.45-.68l2.63-12.35c.23-1.07-.41-1.5-1.11-1.24L3.6 9.4c-1.05.41-1.04 1-.19 1.26l4.57 1.43 10.62-6.69c.5-.3.95-.14.57.19l-9.15 8.9Z"/></svg>
+          </a>
+          <a class="icon" href="https://x.com/CBS_Coin" target="_blank" rel="noopener noreferrer" title="X (follow)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h4.6l5.1 7.4L17.8 3H21l-7.6 10.5L21 21h-4.6l-5.4-7.8L6.2 21H3l7.9-10.9L3 3Z"/></svg>
+          </a>
+          <a class="icon" href="https://discord.gg/DxSB3ERQ" target="_blank" rel="noopener noreferrer" title="Discord (join)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.6 5.2A15.7 15.7 0 0 0 15.9 4l-.2.3c1.9.6 2.7 1.4 2.7 1.4a8.2 8.2 0 0 0-3.2-1 10 10 0 0 0-2.4 0 8.2 8.2 0 0 0-3.2 1s.8-.8 2.7-1.4l-.2-.3a15.7 15.7 0 0 0-3.7 1.2C4.2 7.4 3 11 3 11a13.9 13.9 0 0 0 4.7 4.8l.4-.6c-.7-.3-1.4-.7-2-1.2l.5-.4c3.9 1.8 8.1 1.8 12 0l.5.4c-.6.5-1.3.9-2 1.2l.4.6A13.9 13.9 0 0 0 21 11s-1.2-3.6-1.4-5.8ZM9.4 13.8c-.8 0-1.5-.8-1.5-1.7s.7-1.7 1.5-1.7 1.5.8 1.5 1.7-.7 1.7-1.5 1.7Zm5.2 0c-.8 0-1.5-.8-1.5-1.7s.7-1.7 1.5-1.7 1.5.8 1.5 1.7-.7 1.7-1.5 1.7Z"/></svg>
+          </a>
+        </div>
+        <p>Contact: <a class="mail" href="mailto:cbs.coin12@gmail.com">cbs.coin12@gmail.com</a></p>
       </footer>
     </div>
   </div>
@@ -267,6 +336,9 @@
           <h2>Community Builds Sovereignty</h2>
           <p>CBS Coin is een door de community gedreven token op Solana. Samen de ketens breken.</p>
         </div>
+        <div class="adje-chip" title="@Adjecatbot">
+          <img src="adje.png" alt="Adje Cat Bot logo">
+        </div>
       </section>
 
       <!-- Primaire acties -->
@@ -274,7 +346,6 @@
         <div class="card">
           <h3>Begin hier</h3>
           <div class="cta-grid">
-            <!-- VERVANGEN: losse games → één knop naar hub -->
             <div class="cta">
               <div>
                 <h4>🎮 Games Hub</h4>
@@ -286,7 +357,7 @@
             <div class="cta">
               <div>
                 <h4>🛒 Koop CBS</h4>
-                <small>Haal je eerste CBS‑tokens in enkele klikken.</small>
+                <small>Haal je eerste CBS-tokens in enkele klikken.</small>
               </div>
               <a class="btn" href="buy.html">Koop CBS</a>
             </div>
@@ -294,12 +365,67 @@
         </div>
       </section>
 
+      <!-- Extra pagina's -->
+      <section class="grid">
+        <div class="card">
+          <h3>Meer pagina’s</h3>
+          <div class="tiles">
+            <div class="tile">
+              <div>
+                <h5>📜 Litepaper 2.0</h5>
+                <small>Overzicht & principes</small>
+              </div>
+              <a class="btn" href="litepaper2.0.html">Openen</a>
+            </div>
+
+            <div class="tile">
+              <div>
+                <h5>🗺️ Roadmap</h5>
+                <small>Wat we hierna bouwen</small>
+              </div>
+              <a class="btn" href="roadmap.html">Openen</a>
+            </div>
+
+            <div class="tile">
+              <div>
+                <h5>📊 Tokenomics</h5>
+                <small>Supply & distributie</small>
+              </div>
+              <a class="btn" href="tokenomics.html">Openen</a>
+            </div>
+
+            <div class="tile">
+              <div>
+                <h5>🌐 Community</h5>
+                <small>Memes, updates & links</small>
+              </div>
+              <a class="btn" href="community.html">Openen</a>
+            </div>
+
+            <div class="tile">
+              <div>
+                <h5>❓ FAQ</h5>
+                <small>Antwoorden op veelgestelde vragen</small>
+              </div>
+              <a class="btn" href="faq.html">Openen</a>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <footer>
-        Sluit je aan bij de community:
-        <a href="https://t.me/CBS_Coin" target="_blank" rel="noopener">Telegram</a> ·
-        <a href="https://x.com/CBS_Coin" target="_blank" rel="noopener">X (Twitter)</a>
-        <br>
-        Contact: <a href="mailto:cbs.coin12@gmail.com">cbs.coin12@gmail.com</a>
+        <div class="socials" aria-label="Social links">
+          <a class="icon" href="https://t.me/CBS_Coin" target="_blank" rel="noopener noreferrer" title="Telegram (join)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.03 15.5 8.9 19.1c.41 0 .59-.18.8-.4l1.92-1.86 3.98 2.92c.73.4 1.25.19 1.45-.68l2.63-12.35c.23-1.07-.41-1.5-1.11-1.24L3.6 9.4c-1.05.41-1.04 1-.19 1.26l4.57 1.43 10.62-6.69c.5-.3.95-.14.57.19l-9.15 8.9Z"/></svg>
+          </a>
+          <a class="icon" href="https://x.com/CBS_Coin" target="_blank" rel="noopener noreferrer" title="X (volgen)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h4.6l5.1 7.4L17.8 3H21l-7.6 10.5L21 21h-4.6l-5.4-7.8L6.2 21H3l7.9-10.9L3 3Z"/></svg>
+          </a>
+          <a class="icon" href="https://discord.gg/DxSB3ERQ" target="_blank" rel="noopener noreferrer" title="Discord (join)">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.6 5.2A15.7 15.7 0 0 0 15.9 4l-.2.3c1.9.6 2.7 1.4 2.7 1.4a8.2 8.2 0 0 0-3.2-1 10 10 0 0 0-2.4 0 8.2 8.2 0 0 0-3.2 1s.8-.8 2.7-1.4l-.2-.3a15.7 15.7 0 0 0-3.7 1.2C4.2 7.4 3 11 3 11a13.9 13.9 0 0 0 4.7 4.8l.4-.6c-.7-.3-1.4-.7-2-1.2l.5-.4c3.9 1.8 8.1 1.8 12 0l.5.4c-.6.5-1.3.9-2 1.2l.4.6A13.9 13.9 0 0 0 21 11s-1.2-3.6-1.4-5.8ZM9.4 13.8c-.8 0-1.5-.8-1.5-1.7s.7-1.7 1.5-1.7 1.5.8 1.5 1.7-.7 1.7-1.5 1.7Zm5.2 0c-.8 0-1.5-.8-1.5-1.7s.7-1.7 1.5-1.7 1.5.8 1.5 1.7-.7 1.7-1.5 1.7Z"/></svg>
+          </a>
+        </div>
+        <p>Contact: <a class="mail" href="mailto:cbs.coin12@gmail.com">cbs.coin12@gmail.com</a></p>
       </footer>
     </div>
   </div>
