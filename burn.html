@@ -104,6 +104,7 @@
           <p><b>Mint:</b> <span id="mintLbl" class="mono">B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</span></p>
           <p><b>Decimals:</b> <span id="decimals">…</span></p>
           <p><b>Total supply:</b> <span id="supply">…</span> CBS</p>
+          <p><b>Mint authority:</b> <span id="mintAuth">…</span></p>
           <p><b>Your CBS balance:</b> <span id="yourBal">—</span> CBS</p>
           <div class="row"><button id="refreshBtn" class="btn">Refresh</button></div>
         </div>
@@ -127,13 +128,10 @@
 
         <div class="card" style="grid-column:span 6">
           <h3>🔥 Burn Counter</h3>
-          <p class="muted">All-time sum of on-chain <span class="mono">burn/burnChecked</span> for this mint.</p>
-          <p><b>Total burned (all-time):</b> <span id="totalBurned">…</span> CBS</p>
-          <div class="row">
-            <button id="scanQuick" class="btn">Quick scan</button>
-            <button id="scanFull" class="btn">Full history</button>
-            <span id="scanStatus" class="muted"></span>
-          </div>
+          <p class="muted">Computed as <span class="mono">initialSupply − currentSupply</span>. Exact when mint authority is disabled.</p>
+          <p><b>Initial supply:</b> <span id="initialSupplyUi">—</span> CBS</p>
+          <p><b>Total burned (since launch):</b> <span id="burnedDelta">…</span> CBS</p>
+          <small id="burnNote" class="muted"></small>
         </div>
       </section>
 
@@ -164,6 +162,7 @@
           <p><b>Mint:</b> <span class="mono">B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</span></p>
           <p><b>Decimals:</b> <span id="decimals_nl">…</span></p>
           <p><b>Totale supply:</b> <span id="supply_nl">…</span> CBS</p>
+          <p><b>Mint authority:</b> <span id="mintAuth_nl">…</span></p>
           <p><b>Jouw CBS-saldo:</b> <span id="yourBal_nl">—</span> CBS</p>
           <div class="row"><button id="refreshBtn_nl" class="btn">Verversen</button></div>
         </div>
@@ -187,13 +186,10 @@
 
         <div class="card" style="grid-column:span 6">
           <h3>🔥 Burn Teller</h3>
-          <p class="muted">Totaal van alle on-chain <span class="mono">burn/burnChecked</span> voor deze mint.</p>
-          <p><b>Totale burn (all-time):</b> <span id="totalBurned_nl">…</span> CBS</p>
-          <div class="row">
-            <button id="scanQuick_nl" class="btn">Snelle scan</button>
-            <button id="scanFull_nl" class="btn">Volledige historie</button>
-            <span id="scanStatus_nl" class="muted"></span>
-          </div>
+          <p class="muted">Berekend als <span class="mono">initiële supply − huidige supply</span>. Exact als de mint authority uit staat.</p>
+          <p><b>Initiële supply:</b> <span id="initialSupplyUi_nl">—</span> CBS</p>
+          <p><b>Totale burn (sinds start):</b> <span id="burnedDelta_nl">…</span> CBS</p>
+          <small id="burnNote_nl" class="muted"></small>
         </div>
       </section>
 
@@ -220,218 +216,155 @@
     const { Connection, clusterApiUrl, PublicKey, Transaction } = web3;
     const { getMint, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, createBurnCheckedInstruction } = spl;
 
-    /* ===== Config ===== */
+    /* ===== CONFIG =====
+       Zet dit op jullie INITIËLE supply in CBS (UI units, dus met decimals toegepast).
+       Voorbeeld: 100_000_000_000 (100 miljard CBS).
+    */
+    const INITIAL_SUPPLY_UI = 100_000_000_000;
+
+    // Mint & RPC
     const CBS_MINT = new PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
     const TOKEN_PROGRAM = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
-    const DEFAULT_RPC = "https://mainnet.helius-rpc.com/?api-key=0053b3c9-a47d-4e7e-b76b-dbdc46f36189"; // niet tonen in UI
+    const DEFAULT_RPC = "https://mainnet.helius-rpc.com/?api-key=0053b3c9-a47d-4e7e-b76b-dbdc46f36189";
     const urlRpc = new URLSearchParams(location.search).get("rpc");
     const RPC_URL = urlRpc || DEFAULT_RPC || clusterApiUrl("mainnet-beta");
-    const connection = new Connection(RPC_URL, "confirmed"); // voor burn/supply
+    const connection = new Connection(RPC_URL, "confirmed");
 
     /* ===== UI ===== */
     const H=(id)=>document.getElementById(id);
-    const decimalsEl=H("decimals"), supplyEl=H("supply"), yourBalEl=H("yourBal");
-    const decimalsEl_nl=H("decimals_nl"), supplyEl_nl=H("supply_nl"), yourBalEl_nl=H("yourBal_nl");
+    const decimalsEl=H("decimals"), supplyEl=H("supply"), yourBalEl=H("yourBal"), mintAuthEl=H("mintAuth");
+    const decimalsEl_nl=H("decimals_nl"), supplyEl_nl=H("supply_nl"), yourBalEl_nl=H("yourBal_nl"), mintAuthEl_nl=H("mintAuth_nl");
+
+    const initialUiEl   = H("initialSupplyUi");
+    const initialUiEl_nl= H("initialSupplyUi_nl");
+    const burnedEl      = H("burnedDelta");
+    const burnedEl_nl   = H("burnedDelta_nl");
+    const burnNote      = H("burnNote");
+    const burnNote_nl   = H("burnNote_nl");
+
     const msgEl=H("msg"), msgEl_nl=H("msg_nl");
-    const scanStatus=H("scanStatus"), scanStatus_nl=H("scanStatus_nl");
-    const totalBurnedEl=H("totalBurned"), totalBurnedEl_nl=H("totalBurned_nl");
     if (location.protocol!=="https:" && location.hostname!=="localhost") { H("httpsWarn")?.style && (H("httpsWarn").style.display="inline"); H("httpsWarn_nl")?.style && (H("httpsWarn_nl").style.display="inline"); }
 
-    /* ===== State & utils ===== */
-    let provider=null, mintDecimals=0;
+    let provider=null, mintDecimals=0, lastSupplyUi=0;
+
     const fmt=(n)=>Number(n).toLocaleString("nl-NL");
     const setMsg=(el,t,type="info")=>{ if(!el)return; el.textContent=t||""; el.className= type==="ok"?"ok":type==="warn"?"warn":"muted"; };
+
     function detectProvider(){ const any=window.solana; if(any?.isPhantom) return any; if(any) return any; return null; }
     async function signAndSend(tx){ const res=await provider.signAndSendTransaction(tx); const sig= typeof res==="string"?res:res?.signature; if(!sig) throw new Error("No signature."); await connection.confirmTransaction(sig,"confirmed"); return sig; }
     function uiToRawBigint(ui,dec){ const s=String(ui); if(!/^\d+(\.\d+)?$/.test(s)) throw new Error("Invalid amount."); const [a,b=""]=s.split("."); const pad=b.padEnd(dec,"0").slice(0,dec); return BigInt((a||"0")+pad); }
-    async function ensureAta(owner){ const ata=await getAssociatedTokenAddress(CBS_MINT,owner,false); const info=await connection.getAccountInfo(ata); if(!info){ const tx=new Transaction().add(createAssociatedTokenAccountInstruction(provider.publicKey,ata,owner,CBS_MINT)); tx.feePayer=provider.publicKey; tx.recentBlockhash=(await connection.getLatestBlockhash()).blockhash; await signAndSend(tx);} return ata; }
+
+    async function ensureAta(owner){
+      const ata=await getAssociatedTokenAddress(CBS_MINT,owner,false);
+      const info=await connection.getAccountInfo(ata);
+      if(!info){
+        const tx=new Transaction().add(createAssociatedTokenAccountInstruction(provider.publicKey,ata,owner,CBS_MINT));
+        tx.feePayer=provider.publicKey; tx.recentBlockhash=(await connection.getLatestBlockhash()).blockhash;
+        await signAndSend(tx);
+      }
+      return ata;
+    }
+
+    function renderDelta(){
+      if (!mintDecimals) return;
+      initialUiEl   && (initialUiEl.textContent   = fmt(INITIAL_SUPPLY_UI));
+      initialUiEl_nl&& (initialUiEl_nl.textContent = fmt(INITIAL_SUPPLY_UI));
+      const burnedUi = Math.max(0, INITIAL_SUPPLY_UI - lastSupplyUi);
+      burnedEl    && (burnedEl.textContent    = fmt(burnedUi));
+      burnedEl_nl && (burnedEl_nl.textContent = fmt(burnedUi));
+    }
 
     async function refreshStats(){
       try{
         const mint=await getMint(connection,CBS_MINT);
         mintDecimals=mint.decimals??0;
-        const sup= Number( (typeof mint.supply==="bigint")? mint.supply : BigInt(mint.supply.toString()) ) / (10**mintDecimals);
-        decimalsEl && (decimalsEl.textContent=String(mintDecimals));
-        decimalsEl_nl && (decimalsEl_nl.textContent=String(mintDecimals));
-        supplyEl && (supplyEl.textContent=fmt(sup));
-        supplyEl_nl && (supplyEl_nl.textContent=fmt(sup));
 
+        // Total supply (ui)
+        const supplyBig = (typeof mint.supply==="bigint") ? mint.supply : BigInt(mint.supply.toString());
+        lastSupplyUi = Number(supplyBig) / (10 ** mintDecimals);
+
+        // Mint authority status
+        const mintAuthority = mint.mintAuthority ? mint.mintAuthority.toBase58?.() || String(mint.mintAuthority) : null;
+        const locked = !mintAuthority;
+        mintAuthEl   && (mintAuthEl.textContent   = locked ? "Disabled ✅ (exact counter)" : ("Enabled ⚠️ (counter is an estimate)"));
+        mintAuthEl_nl&& (mintAuthEl_nl.textContent= locked ? "Uitgeschakeld ✅ (teller exact)" : ("Ingeschakeld ⚠️ (teller is een schatting)"));
+        burnNote     && (burnNote.textContent     = locked ? "" : "If new tokens were minted after launch, burned total is an estimate.");
+        burnNote_nl  && (burnNote_nl.textContent  = locked ? "" : "Als er na de start nieuw is gemint, is de burn-teller een schatting.");
+
+        // Decimals/supply UI
+        decimalsEl    && (decimalsEl.textContent    = String(mintDecimals));
+        decimalsEl_nl && (decimalsEl_nl.textContent = String(mintDecimals));
+        supplyEl      && (supplyEl.textContent      = fmt(lastSupplyUi));
+        supplyEl_nl   && (supplyEl_nl.textContent   = fmt(lastSupplyUi));
+
+        // Wallet balance (indien verbonden)
         if (provider?.publicKey){
           const ata=await getAssociatedTokenAddress(CBS_MINT, provider.publicKey,false);
           const acc=await connection.getParsedAccountInfo(ata);
           const parsed=acc.value?.data?.parsed;
           const ui = parsed ? (parsed.info?.tokenAmount?.uiAmount || 0) : 0;
-          yourBalEl && (yourBalEl.textContent=fmt(ui));
-          yourBalEl_nl && (yourBalEl_nl.textContent=fmt(ui));
+          yourBalEl    && (yourBalEl.textContent    = fmt(ui));
+          yourBalEl_nl && (yourBalEl_nl.textContent = fmt(ui));
         }
+
+        // Delta weergeven
+        renderDelta();
       }catch(e){
-        setMsg(msgEl,"Failed to load supply/decimals.","warn");
-        setMsg(msgEl_nl,"Kon supply/decimals niet laden.","warn");
+        setMsg(msgEl,"Failed to load stats.","warn");
+        setMsg(msgEl_nl,"Statistieken laden mislukt.","warn");
       }
-    }
-
-    /* ===== SCAN: RPC-pool + throttling (alleen voor teller) ===== */
-    const SCAN_RPCS = [
-      RPC_URL,                                   // 1) Helius (voorkeur)
-      "https://api.mainnet-beta.solana.com",     // 2) Public Solana RPC
-      "https://rpc.ankr.com/solana",             // 3) Ankr
-      "https://rpc.publicnode.com/solana"        // 4) PublicNode
-    ];
-    let scanRpcIndex = 0;
-    let scanConn = new Connection(SCAN_RPCS[scanRpcIndex], "confirmed");
-    const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
-    const isRateLimited=(e)=>{ const m=(e && (e.message||e.toString()))||""; return m.includes("429")||m.toLowerCase().includes("too many requests")||m.toLowerCase().includes("rate"); };
-    async function rotateScanRpc(){
-      scanRpcIndex = (scanRpcIndex + 1) % SCAN_RPCS.length;
-      scanConn = new Connection(SCAN_RPCS[scanRpcIndex], "confirmed");
-      const t = `RPC switch ${scanRpcIndex+1}/${SCAN_RPCS.length}`;
-      scanStatus && (scanStatus.textContent = t);
-      scanStatus_nl && (scanStatus_nl.textContent = t);
-      await sleep(300 + Math.random()*200);
-    }
-
-    async function getParsedTransactionsChunked(signatures,{chunk=20,retries=4}={}){
-      const out=[];
-      for(let i=0;i<signatures.length;i+=chunk){
-        const part=signatures.slice(i,i+chunk).map(s=>s.signature);
-        let attempt=0;
-        for(;;){
-          try{ const res=await scanConn.getParsedTransactions(part,{maxSupportedTransactionVersion:0}); out.push(...res); break; }
-          catch(e){ attempt++; if(isRateLimited(e)){ await rotateScanRpc(); continue; } if(attempt>retries) throw e; await sleep(250*attempt + Math.random()*200); }
-        }
-        await sleep(120);
-      }
-      return out;
-    }
-
-    async function scanAllBurns({pagesCap=5, perPage=150, onProgress}={}){
-      const mintStr=CBS_MINT.toBase58(); const tokenProg=TOKEN_PROGRAM.toBase58();
-      let before, pages=0, totalRaw=0n;
-
-      while(pages<pagesCap){
-        pages++;
-        let sigs;
-        for(;;){
-          try{ sigs=await scanConn.getSignaturesForAddress(CBS_MINT,{limit:perPage,before}); break; }
-          catch(e){ if(isRateLimited(e)){ await rotateScanRpc(); continue; } throw e; }
-        }
-        if(!sigs.length) break;
-        before = sigs[sigs.length-1].signature;
-
-        const txs = await getParsedTransactionsChunked(sigs,{chunk:20,retries:4});
-        for(const tx of txs){
-          if(!tx) continue;
-          const toCheck=[...(tx.transaction?.message?.instructions||[])];
-          const inners=tx.meta?.innerInstructions||[]; for(const grp of inners) toCheck.push(...(grp.instructions||[]));
-
-          for(const ix of toCheck){
-            const pid=ix.programId?.toBase58?.() || ix.programId || ix.program || "";
-            const parsed=ix.parsed; if(!parsed) continue;
-            const typ=parsed.type || parsed?.info?.type;
-            if(!typ || (pid!==tokenProg && pid!=="spl-token")) continue;
-            const info=parsed.info||{}; const m=info.mint || info.mintAddress; if(m!==mintStr) continue;
-            if(typ!=="burn" && typ!=="burnChecked") continue;
-
-            let raw=0n;
-            if(typeof info.amount!=="undefined"){
-              const s=String(info.amount);
-              if(s.includes(".") && typeof info.decimals==="number"){ const [a,b=""]=s.split("."); raw=BigInt((a||"0")+b.padEnd(info.decimals,"0").slice(0,info.decimals)); }
-              else raw=BigInt(s);
-            }else{
-              const pre=tx.meta?.preTokenBalances||[], post=tx.meta?.postTokenBalances||[];
-              const owners=new Set(); pre.forEach(b=>{if(b.mint===mintStr) owners.add(b.owner)}); post.forEach(b=>{if(b.mint===mintStr) owners.add(b.owner)});
-              for(const o of owners){ const p=pre.find(b=>b.mint===mintStr&&b.owner===o); const q=post.find(b=>b.mint===mintStr&&b.owner===o);
-                const pRaw=p?BigInt(p.uiTokenAmount.amount):0n; const qRaw=q?BigInt(q.uiTokenAmount.amount):0n; if(pRaw>qRaw) raw+=(pRaw-qRaw); }
-            }
-            totalRaw += raw;
-          }
-        }
-        onProgress && onProgress({pages,totalRaw});
-        await sleep(200 + Math.random()*150);
-        if(sigs.length < perPage) break;
-      }
-      return totalRaw;
-    }
-
-    function renderBurnTotal(totalRaw){
-      const ui = Number(totalRaw) / (10**(mintDecimals||0));
-      totalBurnedEl && (totalBurnedEl.textContent = fmt(ui));
-      totalBurnedEl_nl && (totalBurnedEl_nl.textContent = fmt(ui));
     }
 
     /* ===== EN handlers ===== */
-    H("connectBtn")?.addEventListener("click", async ()=>{
+    document.getElementById("mintLbl").textContent = CBS_MINT.toBase58();
+
+    document.getElementById("connectBtn")?.addEventListener("click", async ()=>{
       try{
         provider=detectProvider(); if(!provider){ setMsg(msgEl,"No wallet found.","warn"); return; }
         const resp=await provider.connect(); const pk=(resp?.publicKey||provider.publicKey).toBase58();
-        H("walletStatus").textContent=`Connected: ${pk.slice(0,6)}…${pk.slice(-6)}`;
-        H("burnBtn").disabled=false; setMsg(msgEl,"","info"); await refreshStats();
+        document.getElementById("walletStatus").textContent=`Connected: ${pk.slice(0,6)}…${pk.slice(-6)}`;
+        document.getElementById("burnBtn").disabled=false; setMsg(msgEl,"","info"); await refreshStats();
       }catch{ setMsg(msgEl,"Connect failed.","warn"); }
     });
-    H("refreshBtn")?.addEventListener("click", ()=>refreshStats());
-    H("burnBtn")?.addEventListener("click", async ()=>{
+    document.getElementById("refreshBtn")?.addEventListener("click", ()=>refreshStats());
+
+    document.getElementById("burnBtn")?.addEventListener("click", async ()=>{
       try{
         if(!provider?.publicKey) return setMsg(msgEl,"Connect wallet first.","warn");
-        const v=(H("amount")?.value||"").trim(); if(!v||Number(v)<=0) return setMsg(msgEl,"Enter a valid amount.","warn");
+        const v=(document.getElementById("amount")?.value||"").trim(); if(!v||Number(v)<=0) return setMsg(msgEl,"Enter a valid amount.","warn");
         const fromAta=await ensureAta(provider.publicKey); const raw=uiToRawBigint(v,mintDecimals);
         const tx=new Transaction().add(createBurnCheckedInstruction(fromAta,CBS_MINT,provider.publicKey,raw,mintDecimals));
         tx.feePayer=provider.publicKey; tx.recentBlockhash=(await connection.getLatestBlockhash()).blockhash;
-        setMsg(msgEl,"Sending burn…"); await signAndSend(tx); setMsg(msgEl,"Burn confirmed ✅","ok"); H("amount").value=""; await refreshStats();
+        setMsg(msgEl,"Sending burn…"); await signAndSend(tx); setMsg(msgEl,"Burn confirmed ✅","ok");
+        document.getElementById("amount").value=""; await refreshStats();
       }catch{ setMsg(msgEl,"Burn failed.","warn"); }
     });
 
     /* ===== NL handlers ===== */
-    H("connectBtn_nl")?.addEventListener("click", async ()=>{
+    document.getElementById("connectBtn_nl")?.addEventListener("click", async ()=>{
       try{
         provider=detectProvider(); if(!provider){ setMsg(msgEl_nl,"Geen wallet gevonden.","warn"); return; }
         const resp=await provider.connect(); const pk=(resp?.publicKey||provider.publicKey).toBase58();
-        H("walletStatus_nl").textContent=`Verbonden: ${pk.slice(0,6)}…${pk.slice(-6)}`;
-        H("burnBtn_nl").disabled=false; setMsg(msgEl_nl,"","info"); await refreshStats();
+        document.getElementById("walletStatus_nl").textContent=`Verbonden: ${pk.slice(0,6)}…${pk.slice(-6)}`;
+        document.getElementById("burnBtn_nl").disabled=false; setMsg(msgEl_nl,"","info"); await refreshStats();
       }catch{ setMsg(msgEl_nl,"Verbinden mislukt.","warn"); }
     });
-    H("refreshBtn_nl")?.addEventListener("click", ()=>refreshStats());
-    H("burnBtn_nl")?.addEventListener("click", async ()=>{
+    document.getElementById("refreshBtn_nl")?.addEventListener("click", ()=>refreshStats());
+
+    document.getElementById("burnBtn_nl")?.addEventListener("click", async ()=>{
       try{
         if(!provider?.publicKey) return setMsg(msgEl_nl,"Verbind eerst je wallet.","warn");
-        const v=(H("amount_nl")?.value||"").trim(); if(!v||Number(v)<=0) return setMsg(msgEl_nl,"Vul een geldig bedrag in.","warn");
+        const v=(document.getElementById("amount_nl")?.value||"").trim(); if(!v||Number(v)<=0) return setMsg(msgEl_nl,"Vul een geldig bedrag in.","warn");
         const fromAta=await ensureAta(provider.publicKey); const raw=uiToRawBigint(v,mintDecimals);
         const tx=new Transaction().add(createBurnCheckedInstruction(fromAta,CBS_MINT,provider.publicKey,raw,mintDecimals));
         tx.feePayer=provider.publicKey; tx.recentBlockhash=(await connection.getLatestBlockhash()).blockhash;
-        setMsg(msgEl_nl,"Burn verzonden…"); await signAndSend(tx); setMsg(msgEl_nl,"Burn bevestigd ✅","ok"); H("amount_nl").value=""; await refreshStats();
+        setMsg(msgEl_nl,"Burn verzonden…"); await signAndSend(tx); setMsg(msgEl_nl,"Burn bevestigd ✅","ok");
+        document.getElementById("amount_nl").value=""; await refreshStats();
       }catch{ setMsg(msgEl_nl,"Burn mislukt.","warn"); }
     });
 
-    /* ===== Scan knoppen ===== */
-    async function runScan({full=false}={}){
-      const status = scanStatus || scanStatus_nl;
-      const btnQ  = H(full?"scanFull":"scanQuick") || H(full?"scanFull_nl":"scanQuick_nl");
-      const btnO  = H(!full?"scanFull":"scanQuick") || H(!full?"scanFull_nl":"scanQuick_nl");
-      try{
-        btnQ && (btnQ.disabled=true); btnO && (btnO.disabled=true);
-        status && (status.textContent="Scanning…");
-        if(!mintDecimals) await refreshStats();
-        const totalRaw = await scanAllBurns({
-          pagesCap: full ? 50 : 5,
-          perPage: 150,
-          onProgress: ({pages})=>{ status && (status.textContent = `Scanning page ${pages}…`); }
-        });
-        renderBurnTotal(totalRaw);
-        status && (status.textContent="Done");
-      }catch(e){
-        status && (status.textContent="Failed to scan");
-      }finally{
-        btnQ && (btnQ.disabled=false); btnO && (btnO.disabled=false);
-      }
-    }
-    H("scanQuick")?.addEventListener("click", ()=>runScan({full:false}));
-    H("scanFull")?.addEventListener("click", ()=>runScan({full:true}));
-    H("scanQuick_nl")?.addEventListener("click", ()=>runScan({full:false}));
-    H("scanFull_nl")?.addEventListener("click", ()=>runScan({full:true}));
-
     /* Init */
-    document.getElementById("mintLbl").textContent = CBS_MINT.toBase58();
     await refreshStats();
-    H("scanQuick")?.click(); H("scanQuick_nl")?.click();
   </script>
 </body>
 </html>
