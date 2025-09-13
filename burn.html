@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CBS Coin — Burn</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; max-width: 760px; margin: 24px auto; padding: 0 16px; }
+    .card { border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px; box-shadow: 0 2px 10px rgba(0,0,0,.04); margin: 16px 0; }
+    button { padding: 10px 14px; border-radius: 10px; border: 1px solid #e5e7eb; cursor: pointer; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    input { padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 10px; width: 220px; }
+    code { background: #f6f7f8; padding: 2px 6px; border-radius: 6px; }
+    .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+    .muted { color: #6b7280; font-size: 0.95rem; }
+    .ok { color: #065f46; }
+    .warn { color: #7c2d12; }
+  </style>
+</head>
+<body>
+  <h1>🔥 CBS Coin — Burnpagina</h1>
+  <p class="muted">Verbind je wallet, kies een bedrag, en <b>brand CBS écht</b> (supply daalt) of <b>stuur naar de publieke burn-wallet</b> (supply blijft gelijk, maar is onbereikbaar).</p>
+
+  <div class="card">
+    <div class="row">
+      <button id="connectBtn">Wallet verbinden</button>
+      <span id="walletStatus" class="muted">Niet verbonden</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>📊 Statistiek</h2>
+    <p><b>Mint:</b> <code id="mintLbl">B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code></p>
+    <p><b>Decimals:</b> <span id="decimals">…</span></p>
+    <p><b>Huidige totale supply:</b> <span id="supply">…</span> CBS</p>
+    <p><b>Burn-wallet (dead wallet) balans:</b> <span id="burnBalance">…</span> CBS</p>
+    <p class="muted">Let op: “totale supply” daalt alléén bij een <b>echte burn</b>. Transfers naar de burn-wallet blijven meetellen in de supply, maar zijn economisch onbereikbaar.</p>
+  </div>
+
+  <div class="card">
+    <h2>🧯 Burn / Transfer</h2>
+    <p><b>Burn-wallet owner:</b> <code id="burnOwnerLabel"></code></p>
+    <div class="row" style="margin:10px 0 14px;">
+      <label for="amount">Bedrag (CBS):</label>
+      <input id="amount" type="number" min="0" step="0.000001" placeholder="bijv. 10000" />
+    </div>
+    <div class="row">
+      <button id="burnBtn" disabled>Echte burn (supply ↓)</button>
+      <button id="sendBtn" disabled>Transfer naar burn-wallet</button>
+    </div>
+    <p id="msg" class="muted" style="margin-top:10px;"></p>
+  </div>
+
+  <div class="card">
+    <h2>ℹ️ Uitleg</h2>
+    <ul>
+      <li><b>Echte burn:</b> gebruikt de SPL-Token <code>burnChecked</code> instructie. Vereist dat jij eigenaar bent van de CBS-tokenaccount waaruit je brandt.</li>
+      <li><b>Transfer naar burn-wallet:</b> stuurt tokens naar een publiek adres zonder sleutel (<i>dead wallet</i>). Supply daalt niet, maar iedereen ziet de vastgezette hoeveelheid.</li>
+    </ul>
+    <p class="warn"><b>Belangrijk:</b> Het Solana “incinerator” adres verbrandt géén SPL-tokens via een gewone transfer.</p>
+  </div>
+
+  <script type="module">
+    import {
+      Connection, clusterApiUrl, PublicKey, Transaction
+    } from "https://esm.sh/@solana/web3.js@1.95.3";
+    import {
+      getMint,
+      getAssociatedTokenAddress,
+      createAssociatedTokenAccountInstruction,
+      createBurnCheckedInstruction,
+      createTransferInstruction
+    } from "https://esm.sh/@solana/spl-token@0.4.7";
+
+    // ======= CONFIG =======
+    // CBS Coin mint:
+    const CBS_MINT = new PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
+
+    // Jouw gekozen dead wallet (incinerator):
+    const BURN_OWNER_STR = "1nc1nerator11111111111111111111111111111111";
+
+    // Incinerator is "off-curve"; laat dit op true zodat de ATA aangemaakt kan worden.
+    const ALLOW_OWNER_OFF_CURVE = true;
+    // ======= EINDE CONFIG =======
+
+    const burnOwner = new PublicKey(BURN_OWNER_STR);
+    document.getElementById("burnOwnerLabel").textContent = burnOwner.toBase58();
+
+    const connection = new Connection(clusterApiUrl("mainnet-beta"), "confirmed");
+
+    // UI refs
+    const connectBtn = document.getElementById("connectBtn");
+    const walletStatus = document.getElementById("walletStatus");
+    const decimalsEl = document.getElementById("decimals");
+    const supplyEl = document.getElementById("supply");
+    const burnBalanceEl = document.getElementById("burnBalance");
+    const burnBtn = document.getElementById("burnBtn");
+    const sendBtn = document.getElementById("sendBtn");
+    const amountInput = document.getElementById("amount");
+    const msgEl = document.getElementById("msg");
+
+    let wallet = null;
+    let mintDecimals = 0;
+
+    function setMsg(text, type="info") {
+      msgEl.textContent = text;
+      msgEl.className = type === "ok" ? "ok" : type === "warn" ? "warn" : "muted";
+    }
+
+    async function refreshStats() {
+      try {
+        const mintInfo = await getMint(connection, CBS_MINT);
+        mintDecimals = mintInfo.decimals;
+        decimalsEl.textContent = String(mintDecimals);
+
+        const currentSupply = Number(mintInfo.supply) / (10 ** mintDecimals);
+        supplyEl.textContent = currentSupply.toLocaleString("nl-NL");
+
+        // Som van alle tokenaccounts voor de burn-owner
+        const parsed = await connection.getParsedTokenAccountsByOwner(burnOwner, { mint: CBS_MINT });
+        let sum = 0;
+        for (const it of parsed.value) {
+          const ui = it.account.data.parsed.info.tokenAmount.uiAmount || 0;
+          sum += ui;
+        }
+        burnBalanceEl.textContent = sum.toLocaleString("nl-NL");
+      } catch (e) {
+        console.error(e);
+        setMsg("Kon statistiek niet laden. Ververs de pagina of controleer RPC.", "warn");
+      }
+    }
+
+    async function ensureAta(ownerPubkey) {
+      // Bepaal en maak indien nodig de ATA voor de CBS mint
+      const ata = await getAssociatedTokenAddress(CBS_MINT, ownerPubkey, ALLOW_OWNER_OFF_CURVE);
+      const info = await connection.getAccountInfo(ata);
+      if (!info) {
+        const tx = new Transaction().add(
+          createAssociatedTokenAccountInstruction(
+            wallet.publicKey, // payer
+            ata,              // associated token account
+            ownerPubkey,      // owner van de tokenaccount
+            CBS_MINT
+          )
+        );
+        tx.feePayer = wallet.publicKey;
+        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+        const { signature } = await window.solana.signAndSendTransaction(tx);
+        await connection.confirmTransaction(signature, "confirmed");
+      }
+      return ata;
+    }
+
+    connectBtn.onclick = async () => {
+      try {
+        if (!window.solana) {
+          setMsg("Geen wallet gevonden. Installeer Phantom of een andere Solana wallet.", "warn");
+          return;
+        }
+        const resp = await window.solana.connect();
+        wallet = resp;
+        const pk = wallet.publicKey.toBase58();
+        walletStatus.textContent = `Verbonden: ${pk.slice(0, 6)}…${pk.slice(-6)}`;
+        burnBtn.disabled = false;
+        sendBtn.disabled = false;
+        setMsg("Wallet verbonden.", "ok");
+      } catch (e) {
+        console.error(e);
+        setMsg("Verbinden geannuleerd of mislukt.", "warn");
+      }
+    };
+
+    burnBtn.onclick = async () => {
+      try {
+        if (!wallet) return setMsg("Verbind eerst je wallet.", "warn");
+        const amt = Number(amountInput.value);
+        if (!amt || amt <= 0) return setMsg("Vul een geldig bedrag in.", "warn");
+
+        const fromAta = await ensureAta(wallet.publicKey);
+        const raw = BigInt(Math.round(amt * (10 ** mintDecimals)));
+
+        const tx = new Transaction().add(
+          createBurnCheckedInstruction(
+            fromAta,
+            CBS_MINT,
+            wallet.publicKey,  // owner tekent
+            raw,
+            mintDecimals
+          )
+        );
+        tx.feePayer = wallet.publicKey;
+        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+        const { signature } = await window.solana.signAndSendTransaction(tx);
+        setMsg("Burn verzonden. Wachten op bevestiging…");
+        await connection.confirmTransaction(signature, "confirmed");
+        setMsg("Burn bevestigd ✅", "ok");
+        await refreshStats();
+      } catch (e) {
+        console.error(e);
+        setMsg("Burn mislukt. Check je saldo/handtekening/logs.", "warn");
+      }
+    };
+
+    sendBtn.onclick = async () => {
+      try {
+        if (!wallet) return setMsg("Verbind eerst je wallet.", "warn");
+        const amt = Number(amountInput.value);
+        if (!amt || amt <= 0) return setMsg("Vul een geldig bedrag in.", "warn");
+
+        const fromAta = await ensureAta(wallet.publicKey);
+        const toAta = await ensureAta(burnOwner);
+        const raw = BigInt(Math.round(amt * (10 ** mintDecimals)));
+
+        const tx = new Transaction().add(
+          createTransferInstruction(
+            fromAta,
+            toAta,
+            wallet.publicKey,
+            raw
+          )
+        );
+        tx.feePayer = wallet.publicKey;
+        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+        const { signature } = await window.solana.signAndSendTransaction(tx);
+        setMsg("Transfer verzonden. Wachten op bevestiging…");
+        await connection.confirmTransaction(signature, "confirmed");
+        setMsg("Transfer bevestigd ✅", "ok");
+        await refreshStats();
+      } catch (e) {
+        console.error(e);
+        setMsg("Transfer mislukt. Check je saldo/handtekening/logs.", "warn");
+      }
+    };
+
+    // Init
+    refreshStats();
+  </script>
+</body>
+</html>
