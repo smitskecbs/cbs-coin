@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mister Horse – Mint</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg1:#0a0c10; --bg2:#0f141b;
+      --card:#0f151c; --card2:#0c1016;
+      --fg:#eafffb; --muted:#a8d6cd; --note:#7ee9dc;
+      --line:#0afbe0; --line2:#38f8ff;
+      --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
+      --radius:18px; --ok:#24e6b5; --warn:#ffad7a;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:'Orbitron',sans-serif; color:var(--fg);
+      background:
+        radial-gradient(900px 600px at 100% -10%, rgba(0,255,230,.10), transparent 60%),
+        radial-gradient(700px 500px at -10% 110%, rgba(0,170,255,.09), transparent 60%),
+        linear-gradient(135deg,var(--bg1),var(--bg2));
+      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+    }
+
+    /* Header */
+    .topbar{
+      position:sticky; top:0; z-index:20;
+      display:flex; align-items:center; justify-content:space-between; gap:.75rem;
+      padding:.8rem 1rem; backdrop-filter:blur(6px);
+      background:linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0));
+      border-bottom:1px solid rgba(0,255,240,.08);
+    }
+    .brand{display:flex; align-items:center; gap:.7rem}
+    .brand img{width:38px; height:38px; border-radius:10px; filter:drop-shadow(0 0 10px rgba(0,255,230,.35))}
+    .brand h1{margin:0; font-size:1.05rem; letter-spacing:.4px; font-weight:700; color:#bffef2}
+    .social{display:flex; align-items:center; gap:.6rem; padding:.25rem .4rem; border-radius:12px; background:linear-gradient(180deg, rgba(0,255,230,.05), rgba(0,255,230,.02)); border:1px solid rgba(0,255,240,.12);}
+    .icon-link{display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:10px; background:linear-gradient(180deg, rgba(0,255,230,.06), rgba(0,255,230,.02)); border:1px solid rgba(0,255,240,.18); box-shadow:inset 0 0 0 1px rgba(0,255,240,.06); text-decoration:none;}
+    .icon{width:20px; height:20px; display:block}
+    #langSwitch{
+      background:linear-gradient(180deg, #7dffe9, #55f1e7); color:#012022; font-weight:900; border:1px solid rgba(0,255,240,.45);
+      padding:.55rem .9rem; border-radius:12px; cursor:pointer; box-shadow:0 8px 18px rgba(0,255,230,.18), inset 0 -6px 10px rgba(0,0,0,.15);
+    }
+
+    /* Layout */
+    .container{ max-width:1100px; margin:0 auto; padding:1.2rem 1rem 2.2rem }
+    .hero{
+      display:grid; grid-template-columns:120px 1fr; gap:1.2rem; align-items:center;
+      padding:1.2rem; margin:10px auto 18px; border-radius:var(--radius);
+      background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35));
+      border:1px solid rgba(0,255,240,.18); box-shadow:var(--shadow);
+    }
+    .hero .logo-wrap{ position:relative; width:120px; height:120px; border-radius:16px; overflow:hidden; background:radial-gradient(closest-side, rgba(0,255,230,.18), rgba(0,255,230,.04) 58%, transparent 62%); display:grid; place-items:center; }
+    .hero .logo{ width:86%; height:86%; object-fit:contain }
+    .hero h2{ margin:.15rem 0 0; color:var(--note); font-size:1.05rem; font-weight:600 }
+    .hero p{ margin:.35rem 0 0; color:var(--muted); font-size:.95rem }
+
+    .grid{ display:grid; gap:16px; grid-template-columns:repeat(12,1fr) }
+    .card{ grid-column:span 12; background:linear-gradient(180deg, var(--card), var(--card2)); border:1px solid rgba(0,255,240,.14); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px; }
+    .card h3{ margin:.2rem 0 .6rem; color:#bffef2; font-size:1.05rem }
+    .row{display:flex; flex-wrap:wrap; gap:12px; align-items:center}
+    .muted{ color:var(--muted) } .ok{ color:var(--ok) } .warn{ color:var(--warn) }
+    .mono{font-family:ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", monospace}
+
+    .btn{ display:inline-flex; align-items:center; justify-content:center; min-width:140px; padding:12px 18px; border-radius:10px; text-decoration:none; font-weight:900; font-size:.94rem; color:#001010; background:linear-gradient(180deg, #5afff0, #2bffe4); border:1px solid rgba(0,255,240,.7); box-shadow:0 0 12px rgba(0,255,230,.55), 0 0 24px rgba(0,255,230,.25), inset 0 -8px 14px rgba(0,0,0,.14); cursor:pointer; }
+    .btn:disabled{ opacity:.55; cursor:not-allowed }
+
+    .pill{padding:8px 12px; border:1px solid rgba(0,255,240,.25); border-radius:999px; background:linear-gradient(180deg, rgba(0,255,230,.06), rgba(0,255,230,.02));}
+
+    footer{ margin:24px auto 40px; text-align:center; color:var(--muted) } footer a{ color:#79ffee; text-decoration:none } footer a:hover{ text-decoration:underline }
+
+    @media (min-width:980px){
+      .col-6{ grid-column:span 6 }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><img src="logo.png" alt="CBS Logo"><h1>CBS Coin</h1></div>
+    <div class="social" aria-label="Social links">
+      <a class="icon-link" href="https://x.com/CBS_Coin" target="_blank" rel="noopener" aria-label="X">
+        <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M4 4h3.7l4.6 6 5.3-6H22l-7.5 8.4L22 20h-3.7l-5-6.5L7.4 20H2.1l8.3-9.3L4 4Z" fill="currentColor"/></svg>
+      </a>
+      <a class="icon-link" href="https://t.me/CBS_Coin" target="_blank" rel="noopener" aria-label="Telegram">
+        <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M21.9 4.6c.3-.9-.5-1.3-1.3-1L2.5 10.3c-.9.4-.9 1 .2 1.3l4.8 1.5 1.8 5.8c.2.9.7 1 .9 0l1.3-4.2 5.1 3.8c.7.5 1.3.2 1.5-.7l3.8-13.2Z" fill="currentColor"/></svg>
+      </a>
+      <a class="icon-link" href="https://discord.gg/DxSB3ERQ" target="_blank" rel="noopener" aria-label="Discord">
+        <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M19.6 5.1A16 16 0 0 0 15.8 4l-.2.3c1 .2 1.9.6 2.8 1.2a8.7 8.7 0 0 0-3.2-1c-.3 0-.5.2-.6.4a12 12 0 0 0-5.6 0c-.2 0-.4-.3-.6-.4-1 .1-2 .5-3 1a13 13 0 0 1 2.7-1.2L8 4a16 16 0 0 0-3.8 1.1C1.6 8.7.9 12 1.1 15.2c1.4 1 2.9 1.7 4.5 2.1l.8-1.3c-.4-.1-.9-.3-1.3-.5l.3-.3c2.6 1.2 5.5 1.2 8 0l.3.3c-.4.2-.8.4-1.2.5l.7 1.3c1.6-.4 3.2-1.1 4.6-2.1.3-3.6-.5-6.9-2-10.5ZM9.1 13.6c-.8 0-1.5-.7-1.5-1.6 0-.8.7-1.5 1.5-1.5s1.5.7 1.5 1.5c0 .9-.7 1.6-1.5 1.6Zm5.8 0c-.8 0-1.5-.7-1.5-1.6 0-.8.7-1.5 1.5-1.5s1.6.7 1.6 1.5c0 .9-.8 1.6-1.6 1.6Z" fill="currentColor"/></svg>
+      </a>
+    </div>
+    <button id="langSwitch">NL 🇳🇱</button>
+  </header>
+
+  <!-- EN -->
+  <div id="content-en">
+    <div class="container">
+      <section class="hero">
+        <div class="logo-wrap"><img class="logo" src="logo.png" alt="CBS Logo"></div>
+        <div>
+          <h2>Mister Horse – NFT Mint</h2>
+          <p class="muted">Choose your route: <span class="pill">SOL</span> or <span class="pill">CBS pay/burn</span>. Fair on-chain mint via Candy Machine.</p>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="card col-6">
+          <h3>🎟️ Mint</h3>
+          <div class="row">
+            <button id="connectBtn" class="btn">Connect Wallet</button>
+            <span id="walletStatus" class="muted">Not connected</span>
+          </div>
+
+          <div class="row" style="margin-top:10px;">
+            <label class="pill"><input type="radio" name="route" value="SOL" checked> Pay in SOL</label>
+            <label class="pill"><input type="radio" name="route" value="CBS_PAY"> Pay in CBS</label>
+            <label class="pill"><input type="radio" name="route" value="CBS_BURN"> Burn CBS</label>
+          </div>
+
+          <div class="row" style="margin-top:10px;">
+            <button id="mintBtn" class="btn" disabled>Mint NFT</button>
+            <button id="refreshBtn" class="btn">Refresh</button>
+          </div>
+          <p id="msg" class="muted" style="margin-top:6px;"></p>
+        </div>
+
+        <div class="card col-6">
+          <h3>📊 Drop stats</h3>
+          <p><b>Candy Machine:</b> <span id="cmLbl" class="mono">—</span></p>
+          <p><b>Items minted:</b> <span id="minted">…</span> / <span id="available">…</span></p>
+          <p><b>Selected route:</b> <span id="routeLbl">SOL</span></p>
+          <p><b>Price:</b> <span id="priceLbl">—</span></p>
+          <small id="guardLbl" class="muted">Guard group label resolves price & rules.</small>
+        </div>
+      </section>
+
+      <footer>Questions? <a href="mailto:cbs.coin12@gmail.com">cbs.coin12@gmail.com</a></footer>
+    </div>
+  </div>
+
+  <!-- NL -->
+  <div id="content-nl" style="display:none">
+    <div class="container">
+      <section class="hero">
+        <div class="logo-wrap"><img class="logo" src="logo.png" alt="CBS Logo"></div>
+        <div>
+          <h2>Mister Horse – NFT Mint</h2>
+          <p class="muted">Kies je route: <span class="pill">SOL</span> of <span class="pill">CBS betalen/burnen</span>. Eerlijke on-chain mint via Candy Machine.</p>
+        </div>
+      </section>
+
+      <section class="grid">
+        <div class="card col-6">
+          <h3>🎟️ Mint</h3>
+          <div class="row">
+            <button id="connectBtn_nl" class="btn">Wallet verbinden</button>
+            <span id="walletStatus_nl" class="muted">Niet verbonden</span>
+          </div>
+
+          <div class="row" style="margin-top:10px;">
+            <label class="pill"><input type="radio" name="route_nl" value="SOL" checked> Betalen in SOL</label>
+            <label class="pill"><input type="radio" name="route_nl" value="CBS_PAY"> Betalen in CBS</label>
+            <label class="pill"><input type="radio" name="route_nl" value="CBS_BURN"> CBS burnen</label>
+          </div>
+
+          <div class="row" style="margin-top:10px;">
+            <button id="mintBtn_nl" class="btn" disabled>Mint NFT</button>
+            <button id="refreshBtn_nl" class="btn">Verversen</button>
+          </div>
+          <p id="msg_nl" class="muted" style="margin-top:6px;"></p>
+        </div>
+
+        <div class="card col-6">
+          <h3>📊 Dropstatistiek</h3>
+          <p><b>Candy Machine:</b> <span id="cmLbl_nl" class="mono">—</span></p>
+          <p><b>Gemintrd:</b> <span id="minted_nl">…</span> / <span id="available_nl">…</span></p>
+          <p><b>Gekozen route:</b> <span id="routeLbl_nl">SOL</span></p>
+          <p><b>Prijs:</b> <span id="priceLbl_nl">—</span></p>
+          <small class="muted">De guard-groep bepaalt prijs & regels.</small>
+        </div>
+      </section>
+
+      <footer>Vragen? <a href="mailto:cbs.coin12@gmail.com">cbs.coin12@gmail.com</a></footer>
+    </div>
+  </div>
+
+  <!-- Language toggle -->
+  <script>
+    const btn = document.getElementById("langSwitch");
+    const EN = document.getElementById("content-en");
+    const NL = document.getElementById("content-nl");
+    let isEN = true;
+    btn.addEventListener("click", ()=>{ isEN=!isEN; EN.style.display=isEN?"block":"none"; NL.style.display=isEN?"none":"block"; btn.textContent=isEN?"NL 🇳🇱":"EN 🇬🇧"; window.scrollTo({top:0,behavior:'smooth'}); });
+  </script>
+
+  <!-- Mint logic -->
+  <script type="module">
+    // ===== Imports (ESM over CDN) =====
+    // Umi core + helpers
+    import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
+    import { publicKey, generateSigner, transactionBuilder, some } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
+    // Wallet adapter identity
+    import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
+    // Candy Machine & Token Metadata
+    import { mplCandyMachine, fetchCandyMachine, fetchCandyGuard, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
+    import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.2.0";
+    // Toolbox (compute units helper)
+    import { setComputeUnitLimit } from "https://esm.sh/@metaplex-foundation/mpl-toolbox@0.10.1";
+    // Phantom wallet adapter
+    import { PhantomWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-phantom@0.9.25";
+
+    // Optional SPL to fetch CBS decimals for display of tokenPayment/tokenBurn amounts.
+    import { Connection, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.95.3";
+    import { getMint } from "https://esm.sh/@solana/spl-token@0.4.7";
+
+    // ===== Config =====
+    const DEFAULTS = {
+      // 1) Your Candy Machine address (can be overridden by ?cm=...)
+      CM: "11111111111111111111111111111111", // <-- replace after deploy, or set via URL
+      // 2) Default group label to use/preview (can be overridden by ?group=SOL|CBS_PAY|CBS_BURN)
+      GROUP: "SOL",
+      // 3) CBS mint (for guard price display)
+      CBS_MINT: "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk",
+      // 4) RPC endpoint (domain-restricted Helius key recommended)
+      RPC: "https://mainnet.helius-rpc.com/?api-key=0053b3c9-a47d-4e7e-b76b-dbdc46f36189"
+    };
+
+    const params = new URLSearchParams(location.search);
+    const CM_ADDR = params.get("cm") || DEFAULTS.CM;
+    const START_GROUP = params.get("group") || DEFAULTS.GROUP;
+    const RPC_URL = params.get("rpc") || DEFAULTS.RPC;
+
+    // ===== State/UI helpers =====
+    const $ = (id)=>document.getElementById(id);
+    const set = (id, val)=>{ const el=$(id); if(el) el.textContent = val; };
+    const note = (el, text, kind="info")=>{
+      if(!el) return;
+      el.textContent = text || "";
+      el.className = kind==="ok" ? "ok" : kind==="warn" ? "warn" : "muted";
+    };
+    const fmt = (n)=> Number(n ?? 0).toLocaleString("nl-NL");
+    const fmtFixed = (n, d=6)=> (Number(n ?? 0)).toLocaleString("nl-NL", { minimumFractionDigits:d, maximumFractionDigits:d });
+
+    // EN elements
+    const msgEN = $("msg"), msgNL = $("msg_nl");
+    const routeLblEN = $("routeLbl"), routeLblNL = $("routeLbl_nl");
+    const priceLblEN = $("priceLbl"), priceLblNL = $("priceLbl_nl");
+
+    // ===== Umi + wallet =====
+    const umi = createUmi(RPC_URL)
+      .use(mplCandyMachine())
+      .use(mplTokenMetadata());
+
+    const web3Conn = new Connection(RPC_URL, "confirmed");
+
+    let wallet, connected = false;
+    async function connectWalletEN(){
+      try{
+        wallet = new PhantomWalletAdapter();
+        await wallet.connect();
+        umi.use(walletAdapterIdentity(wallet));
+        connected = true;
+        $("walletStatus").textContent = `Connected: ${wallet.publicKey.toBase58().slice(0,6)}…${wallet.publicKey.toBase58().slice(-6)}`;
+        $("mintBtn").disabled = false;
+        note(msgEN, "");
+      }catch(e){ note(msgEN, "Connect failed.", "warn"); }
+    }
+    async function connectWalletNL(){
+      try{
+        wallet = new PhantomWalletAdapter();
+        await wallet.connect();
+        umi.use(walletAdapterIdentity(wallet));
+        connected = true;
+        $("walletStatus_nl").textContent = `Verbonden: ${wallet.publicKey.toBase58().slice(0,6)}…${wallet.publicKey.toBase58().slice(-6)}`;
+        $("mintBtn_nl").disabled = false;
+        note(msgNL, "");
+      }catch(e){ note(msgNL, "Verbinden mislukt.", "warn"); }
+    }
+
+    // ===== Candy data =====
+    let cm, guard, currentGroup = START_GROUP, cbsDecimals = 0;
+
+    function getSelectedGroupLabel(){
+      const en = document.querySelector('input[name="route"]:checked')?.value;
+      const nl = document.querySelector('input[name="route_nl"]:checked')?.value;
+      return en || nl || currentGroup || "SOL";
+    }
+
+    function resolveGroup(guardAccount, label){
+      if (!guardAccount) return null;
+      const groups = guardAccount.groups ?? [];
+      const g = groups.find(x => x.label === label);
+      return g ? g.guards : guardAccount.guards ?? null;
+    }
+
+    async function fetchCbsDecimals(){
+      try{
+        const info = await getMint(web3Conn, new (await import("https://esm.sh/@solana/web3.js@1.95.3")).PublicKey(DEFAULTS.CBS_MINT));
+        cbsDecimals = info.decimals ?? 0;
+      }catch{ cbsDecimals = 6; } // sane fallback
+    }
+
+    function humanPriceFromGuards(guards){
+      if(!guards) return { text: "—", raw: 0 };
+      // SOL price
+      const solPay = guards.solPayment?.__option === "Some" ? guards.solPayment.value : guards.solPayment;
+      if (solPay?.lamports !== undefined){
+        const lamports = Number(solPay.lamports ?? 0);
+        return { text: `${(lamports / LAMPORTS_PER_SOL).toFixed(3)} SOL`, raw: lamports };
+      }
+      // tokenPayment amount
+      const tokenPay = guards.tokenPayment?.__option === "Some" ? guards.tokenPayment.value : guards.tokenPayment;
+      if (tokenPay?.amount !== undefined){
+        const ui = Number(tokenPay.amount ?? 0) / (10 ** cbsDecimals);
+        return { text: `${fmtFixed(ui, 6)} CBS`, raw: Number(tokenPay.amount ?? 0) };
+      }
+      // tokenBurn amount
+      const tokenBurn = guards.tokenBurn?.__option === "Some" ? guards.tokenBurn.value : guards.tokenBurn;
+      if (tokenBurn?.amount !== undefined){
+        const ui = Number(tokenBurn.amount ?? 0) / (10 ** cbsDecimals);
+        return { text: `Burn ${fmtFixed(ui, 6)} CBS`, raw: Number(tokenBurn.amount ?? 0) };
+      }
+      return { text: "—", raw: 0 };
+    }
+
+    async function refresh(){
+      try{
+        set("cmLbl", CM_ADDR); set("cmLbl_nl", CM_ADDR);
+        cm = await fetchCandyMachine(umi, publicKey(CM_ADDR));
+        guard = await fetchCandyGuard(umi, cm.mintAuthority);
+
+        const minted = Number(cm.itemsRedeemed ?? cm.itemsMinted ?? 0);
+        const available = Number(cm.itemsAvailable ?? 0);
+        set("minted", fmt(minted)); set("available", fmt(available));
+        set("minted_nl", fmt(minted)); set("available_nl", fmt(available));
+
+        await fetchCbsDecimals();
+        currentGroup = getSelectedGroupLabel();
+        const guards = resolveGroup(guard, currentGroup);
+        const price = humanPriceFromGuards(guards);
+
+        set("routeLbl", currentGroup); set("routeLbl_nl", currentGroup);
+        priceLblEN.textContent = price.text; priceLblNL.textContent = price.text;
+
+      }catch(e){
+        note(msgEN, "Failed to load Candy Machine / Guard.", "warn");
+        note(msgNL, "Candy Machine / Guard laden mislukt.", "warn");
+      }
+    }
+
+    async function doMintEN(){
+      try{
+        if(!connected) return note(msgEN, "Connect wallet first.", "warn");
+        const groupLabel = getSelectedGroupLabel();
+        const nftMint = generateSigner(umi);
+
+        note(msgEN, "Sending mint…");
+        const tx = transactionBuilder()
+          .add(setComputeUnitLimit(umi, { units: 800_000 }))
+          .add(mintV2(umi, {
+            candyMachine: publicKey(CM_ADDR),
+            nftMint,
+            // Use CM’s own collection data (no extra secret keys needed)
+            collectionMint: cm.collectionMint,
+            collectionUpdateAuthority: cm.authority,
+            group: some(groupLabel),      // guard group label
+            mintArgs: {}                  // tokenPayment/tokenBurn need no args
+          }));
+        const sig = await tx.sendAndConfirm(umi);
+        note(msgEN, `Mint confirmed ✅ ${sig}`, "ok");
+        await refresh();
+      }catch(e){ note(msgEN, "Mint failed.", "warn"); }
+    }
+
+    async function doMintNL(){
+      try{
+        if(!connected) return note(msgNL, "Verbind eerst je wallet.", "warn");
+        const groupLabel = getSelectedGroupLabel();
+        const nftMint = generateSigner(umi);
+
+        note(msgNL, "Mint wordt verzonden…");
+        const tx = transactionBuilder()
+          .add(setComputeUnitLimit(umi, { units: 800_000 }))
+          .add(mintV2(umi, {
+            candyMachine: publicKey(CM_ADDR),
+            nftMint,
+            collectionMint: cm.collectionMint,
+            collectionUpdateAuthority: cm.authority,
+            group: some(groupLabel),
+            mintArgs: {}
+          }));
+        const sig = await tx.sendAndConfirm(umi);
+        note(msgNL, `Mint bevestigd ✅ ${sig}`, "ok");
+        await refresh();
+      }catch(e){ note(msgNL, "Mint mislukt.", "warn"); }
+    }
+
+    // ===== Wire up UI =====
+    $("connectBtn")?.addEventListener("click", connectWalletEN);
+    $("connectBtn_nl")?.addEventListener("click", connectWalletNL);
+    $("refreshBtn")?.addEventListener("click", refresh);
+    $("refreshBtn_nl")?.addEventListener("click", refresh);
+    $("mintBtn")?.addEventListener("click", doMintEN);
+    $("mintBtn_nl")?.addEventListener("click", doMintNL);
+    // route radios update price live
+    document.querySelectorAll('input[name="route"],input[name="route_nl"]').forEach(r=>{
+      r.addEventListener("change", refresh);
+    });
+
+    await refresh();
+  </script>
+</body>
+</html>
