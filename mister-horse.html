@@ -92,7 +92,7 @@
         <p><b>Candy Machine:</b> <span id="cmLbl" class="mono">—</span></p>
         <p><b>Gemintrd:</b> <span id="minted">…</span> / <span id="available">…</span></p>
         <p><b>Prijs (SOL):</b> <span id="priceSol">—</span></p>
-        <small class="muted">Deze pagina verwacht een Candy Guard met <span class="mono">solPayment</span>.</small>
+        <small class="muted">Werkt met gratis mint (geen guard) of met <span class="mono">solPayment</span>. </small>
       </div>
     </section>
 
@@ -101,11 +101,11 @@
     </footer>
   </div>
 
-  <!-- Mint logic (ALLEEN SOL) -->
+  <!-- Mint logic -->
   <script type="module">
-    // ========== 1) LIBS ==========
+    // ===== 1) LIBS =====
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
-    import { publicKey, generateSigner, transactionBuilder, some } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
+    import { publicKey, generateSigner, some, none } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
     import { mplCandyMachine, fetchCandyMachine, fetchCandyGuard, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.2.0";
@@ -113,19 +113,22 @@
     import { PhantomWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-phantom@0.9.25";
     import { Connection, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.95.3";
 
-    // ========== 2) CONFIG ==========
+    // ===== 2) CONFIG (veilige defaults) =====
     const DEFAULTS = {
-      // vervang dit na je CM-deploy, of geef ?cm=<pubkey> mee in de URL
-      CM: "11111111111111111111111111111111",
-      GROUP: "SOL", // guard label met solPayment
-      RPC: "https://mainnet.helius-rpc.com/?api-key=0053b3c9-a47d-4e7e-b76b-dbdc46f36189"
+      CM: "8eCCZv9fooitnF9JyXjPdNXBtk4b2jGwx27mDJFsWvSV",   // jouw devnet CM
+      GROUP: "",                                         // leeg = geen label forceren
+      RPC: "https://api.devnet.solana.com"               // devnet (geen zichtbare API key)
     };
     const qs = new URLSearchParams(location.search);
     const CM_ADDR = qs.get("cm") || DEFAULTS.CM;
-    const GROUP   = qs.get("group") || DEFAULTS.GROUP;
+    const GROUP_REQ = qs.get("group") || DEFAULTS.GROUP;
     const RPC_URL = qs.get("rpc") || DEFAULTS.RPC;
 
-    // ========== 3) UI HELPERS ==========
+    if (location.protocol === "file:") {
+      document.getElementById("msg").textContent = "Open deze pagina via http(s) (niet file://) om modules & wallets te laten werken.";
+    }
+
+    // ===== 3) UI helpers =====
     const $ = (id)=>document.getElementById(id);
     const setTxt = (id, v)=>{ const el=$(id); if(el) el.textContent = v; };
     const note = (msg, kind="info")=>{
@@ -135,10 +138,10 @@
     };
     const fmt = (n)=> Number(n ?? 0).toLocaleString("nl-NL");
 
-    // ========== 4) UMI / WALLET ==========
+    // ===== 4) Umi / Wallet =====
     const umi = createUmi(RPC_URL).use(mplCandyMachine()).use(mplTokenMetadata());
     const web3Conn = new Connection(RPC_URL, "confirmed");
-    let wallet, connected=false, cm, guard;
+    let wallet, connected=false, cm, guardAcc, chosenGroupLabel=null;
 
     async function connectWallet(){
       try{
@@ -153,59 +156,97 @@
       }catch{ note("Verbinden mislukt.","warn"); }
     }
 
-    // ========== 5) LOAD CM/PRICE ==========
-    function guardGroup(guardAcc, label){
-      const g = (guardAcc.groups||[]).find(x=>x.label===label);
-      return g ? g.guards : guardAcc.guards || null;
-    }
-    function solPriceText(guards){
-      const g = guards?.solPayment?.__option==="Some" ? guards.solPayment.value : guards?.solPayment;
-      if(!g?.lamports && g?.lamports!==0) return "—";
-      return (Number(g.lamports)/LAMPORTS_PER_SOL).toFixed(3)+" SOL";
+    // ===== 5) Guard helpers =====
+    function readOption(opt){
+      // umi Options may be { __option:"Some", value: {...} } or direct object/null
+      if (!opt) return null;
+      if (typeof opt === "object" && "__option" in opt) {
+        return opt.__option === "Some" ? opt.value : null;
+      }
+      return opt;
     }
 
+    function pickGroup(guardAcc, requestedLabel){
+      // If requested label exists, use it; else if groups exist pick first; else return null (no group).
+      const groups = Array.isArray(guardAcc?.groups) ? guardAcc.groups : [];
+      if (requestedLabel) {
+        const match = groups.find(g => g?.label === requestedLabel);
+        if (match) return match.label;
+      }
+      if (groups.length > 0) return groups[0].label;
+      return null;
+    }
+
+    function extractGuards(guardAcc, label){
+      if (!guardAcc) return null;
+      if (label){
+        const grp = (guardAcc.groups||[]).find(g => g.label === label);
+        return grp ? grp.guards : null;
+      }
+      return guardAcc.guards || null;
+    }
+
+    function solPriceText(guards){
+      const g = readOption(guards?.solPayment);
+      if (!g) return "Free";
+      const lam = Number(g.lamports ?? 0);
+      return lam === 0 ? "Free" : (lam / LAMPORTS_PER_SOL).toFixed(3) + " SOL";
+    }
+
+    // ===== 6) Refresh CM state =====
     async function refresh(){
       try{
         setTxt("cmLbl", CM_ADDR);
         cm = await fetchCandyMachine(umi, publicKey(CM_ADDR));
-        guard = await fetchCandyGuard(umi, cm.mintAuthority);
+        try {
+          guardAcc = await fetchCandyGuard(umi, cm.mintAuthority);
+        } catch {
+          guardAcc = null; // no guard -> free mint
+        }
 
-        const minted = Number(cm.itemsRedeemed ?? cm.itemsMinted ?? 0);
+        const minted = Number(cm.itemsRedeemed ?? 0);
         const avail  = Number(cm.itemsAvailable ?? 0);
         setTxt("minted", fmt(minted)); setTxt("available", fmt(avail));
 
-        const g = guardGroup(guard, GROUP);
-        setTxt("priceSol", solPriceText(g));
+        chosenGroupLabel = pickGroup(guardAcc, GROUP_REQ);
+        const guards = extractGuards(guardAcc, chosenGroupLabel);
+        setTxt("priceSol", solPriceText(guards));
         note("");
       }catch(e){
         note("Candy Machine of Guard laden mislukt.","warn");
       }
     }
 
-    // ========== 6) MINT ==========
+    // ===== 7) Mint =====
     async function doMint(){
       try{
         if(!connected) return note("Verbind eerst je wallet.","warn");
+        if(!cm)       return note("Candy Machine nog niet geladen.","warn");
         note("Mint wordt verzonden…");
         const nftMint = generateSigner(umi);
+
+        const args = {
+          candyMachine: publicKey(CM_ADDR),
+          nftMint,
+          collectionMint: cm.collectionMint,
+          collectionUpdateAuthority: cm.authority,
+          mintArgs: {}
+        };
+        // alleen group meegeven als we er eentje hebben gevonden
+        if (chosenGroupLabel) args.group = some(chosenGroupLabel);
+
         const tx = setComputeUnitLimit(umi, { units: 800_000 })
-          .add(mintV2(umi, {
-            candyMachine: publicKey(CM_ADDR),
-            nftMint,
-            collectionMint: cm.collectionMint,
-            collectionUpdateAuthority: cm.authority,
-            group: some(GROUP),
-            mintArgs: {}
-          }));
+          .add(mintV2(umi, args));
+
         const sig = await tx.sendAndConfirm(umi);
-        note(`Mint bevestigd ✅ ${sig}`,"ok");
+        note(`Mint bevestigd ✅ ${sig}`, "ok");
         await refresh();
       }catch(e){
         note("Mint mislukt.","warn");
       }
     }
 
-    // ========== 7) WIRE UP ==========
+    // ===== 8) Wire up =====
     $("connectBtn")?.addEventListener("click", connectWallet);
     $("refreshBtn")?.addEventListener("click", refresh);
     $("mintBtn")?.addEventListener("click", doMint);
