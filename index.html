@@ -102,6 +102,7 @@
       border:1px solid rgba(255,150,0,.35);
       box-shadow:0 10px 24px rgba(255,120,0,.12), inset 0 0 0 1px rgba(255,160,0,.12);
       font-weight:800; color:#ffe8d6; letter-spacing:.2px;
+      width:max-content;
     }
     .burn-pill svg{ width:18px; height:18px; filter:drop-shadow(0 0 6px rgba(255,120,0,.35)) }
 
@@ -257,6 +258,15 @@
               </div>
               <a class="btn" href="buy.html">Buy CBS</a>
             </div>
+
+            <!-- NEW: Burn CTA -->
+            <div class="cta">
+              <div>
+                <h4>🔥 Burn & Stats</h4>
+                <small>Burn CBS and see the live counter.</small>
+              </div>
+              <a class="btn" href="burn.html">Open burn</a>
+            </div>
           </div>
         </div>
       </section>
@@ -382,6 +392,15 @@
               </div>
               <a class="btn" href="buy.html">Koop CBS</a>
             </div>
+
+            <!-- NIEUW: Burn CTA -->
+            <div class="cta">
+              <div>
+                <h4>🔥 Burn & Teller</h4>
+                <small>Brand CBS en bekijk de live teller.</small>
+              </div>
+              <a class="btn" href="burn.html">Openen</a>
+            </div>
           </div>
         </div>
       </section>
@@ -489,15 +508,15 @@
 
   <!-- ===== Burn badge logic (lightweight, no heavy scan) ===== -->
   <script type="module">
-    // ---- CONFIG: zet hier jullie initiële supply in CBS (UI units) ----
-    const INITIAL_SUPPLY_UI = 100_000_000_000; // <— pas aan indien anders
+    // ---- CONFIG: initiële supply in CBS (UI units) ----
+    const INITIAL_SUPPLY_UI = 100_000_000; // 100 miljoen
 
     import * as web3 from "https://esm.sh/@solana/web3.js@1.95.3";
     const { Connection, PublicKey, clusterApiUrl } = web3;
 
     const CBS_MINT = new PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
 
-    // Gebruik Helius key + eenvoudige fallbacks; 1-2 calls max, dus geen rate-limit issues.
+    // Simpele RPC fallback-lijst; we doen slechts 1 call.
     const RPCS = [
       "https://mainnet.helius-rpc.com/?api-key=0053b3c9-a47d-4e7e-b76b-dbdc46f36189",
       "https://api.mainnet-beta.solana.com",
@@ -512,6 +531,7 @@
         try{
           const conn = new Connection(url, "confirmed");
           const t = await conn.getTokenSupply(CBS_MINT);
+          // uiAmount kan number of string zijn; fallback naar string
           const ui = (typeof t?.value?.uiAmount === "number" && !Number.isNaN(t.value.uiAmount))
                       ? t.value.uiAmount
                       : parseFloat(t?.value?.uiAmountString ?? "0");
@@ -525,11 +545,10 @@
           // probeer volgende RPC
         }
       }
-      // als alles faalt, laat streepje staan
+      // als alles faalt blijft de badge op …
     }
 
     loadBurnBadge();
   </script>
 </body>
 </html>
-
