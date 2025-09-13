@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
@@ -104,7 +104,7 @@
   </div>
 
   <script type="module">
-    // ===== Libs =====
+    // ===== Libraries =====
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
     import { publicKey, generateSigner, some } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
@@ -115,13 +115,13 @@
     import { Connection, PublicKey, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.95.3";
     import { getMint } from "https://esm.sh/@solana/spl-token@0.4.7";
 
-    // ===== Config =====
+    // ===== Config (devnet defaults) =====
     const DEFAULTS = {
-      CM:  "8eCCZv9fooitnF9JyXjPdNXBtk4b2jGwx27mDJFsWvSV",  // jouw devnet CM
+      CM:  "8eCCZv9fooitnF9JyXjPdNXBtk4b2jGwx27mDJFsWvSV",  // jouw devnet Candy Machine ID
       RPC: "https://api.devnet.solana.com",
       CBS_MINT: "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk",
-      GROUP_SOL:  "SOL",
-      GROUP_BURN: "BURN"
+      GROUP_SOL:  "SOL",   // guard label voor solPayment
+      GROUP_BURN: "BURN"   // guard label voor tokenBurn
     };
     const qs = new URLSearchParams(location.search);
     const CM_ADDR   = qs.get("cm")   || DEFAULTS.CM;
@@ -140,25 +140,72 @@
     };
     const fmt = (n)=> Number(n ?? 0).toLocaleString("nl-NL");
 
+    if (location.protocol === "file:") {
+      note("Open deze pagina via http(s) (niet file://), anders kunnen modules & wallets niet laden.","warn");
+    }
+
     // ===== State =====
     const umi = createUmi(RPC_URL).use(mplCandyMachine()).use(mplTokenMetadata());
     const conn = new Connection(RPC_URL, "confirmed");
-    let wallet, connected=false, cm, guardAcc, cbsDecimals=0;
+    let walletAdapter = null, provider = null, connected=false, cm, guardAcc, cbsDecimals=0;
+
+    // ===== Provider/adapter detection =====
+    function getProvider(){
+      const any = window.solana;
+      return (any && any.isPhantom) ? any : null;
+    }
+
+    async function setUmiIdentityFromProvider(){
+      try{
+        const adapter = new PhantomWalletAdapter();
+        if (!adapter.connected) await adapter.connect();
+        walletAdapter = adapter;
+        umi.use(walletAdapterIdentity(walletAdapter));
+        return;
+      }catch(_){}
+      const p = provider;
+      if (!p?.publicKey) throw new Error("Geen provider publicKey.");
+      const fallbackAdapter = {
+        publicKey: p.publicKey,
+        connected: true,
+        connect: async()=>{},
+        disconnect: async()=>{ try{ await p.disconnect(); }catch{} },
+        signTransaction: async (tx)=> await p.signTransaction(tx),
+        signAllTransactions: async (txs)=> await p.signAllTransactions(txs),
+        sendTransaction: async (tx, connection, opts)=>{
+          if (p.signAndSendTransaction) {
+            const res = await p.signAndSendTransaction(tx, opts);
+            return typeof res === "string" ? res : res.signature;
+          }
+          const signed = await p.signTransaction(tx);
+          return connection.sendRawTransaction(signed.serialize(), opts);
+        }
+      };
+      walletAdapter = fallbackAdapter;
+      umi.use(walletAdapterIdentity(walletAdapter));
+    }
 
     async function connectWallet(){
       try{
-        wallet = new PhantomWalletAdapter();
-        await wallet.connect();
-        umi.use(walletAdapterIdentity(wallet));
+        provider = getProvider();
+        if(!provider){
+          note("Phantom niet gevonden. Installeer Phantom en zet ‘Devnet’ aan (Settings → Developer).","warn");
+          return;
+        }
+        await provider.connect();                 // opent Phantom-popup
+        await setUmiIdentityFromProvider();       // koppel aan Umi
         connected = true;
-        const pk = wallet.publicKey.toBase58();
+        const pk = provider.publicKey.toBase58();
         $("walletStatus").textContent = `Verbonden: ${pk.slice(0,6)}…${pk.slice(-6)}`;
-        $("mintSolBtn").disabled = false;
-        $("mintBurnBtn").disabled = false;
+        $("mintSolBtn")?.removeAttribute("disabled");
+        $("mintBurnBtn")?.removeAttribute("disabled");
         note("");
-      }catch{ note("Verbinden mislukt.","warn"); }
+      }catch(e){
+        note("Verbinden mislukt.","warn");
+      }
     }
 
+    // ===== Guard helpers =====
     function readOption(opt){
       if (!opt) return null;
       if (typeof opt === "object" && "__option" in opt) {
@@ -166,25 +213,23 @@
       }
       return opt;
     }
-
     function getGroup(guardAcc, label){
       const groups = Array.isArray(guardAcc?.groups) ? guardAcc.groups : [];
       return groups.find(g => g?.label === label) || null;
     }
-
     function solPriceText(guards){
       const g = readOption(guards?.solPayment);
       if (!g) return "—";
       const lam = Number(g.lamports ?? 0);
       return lam === 0 ? "Free" : (lam / LAMPORTS_PER_SOL).toFixed(3) + " SOL";
     }
-
     function tokenBurnInfo(guards){
       const g = readOption(guards?.tokenBurn);
       if (!g) return null;
       return { amount: Number(g.amount ?? 0), mint: g.mint?.toString?.() || String(g.mint) };
     }
 
+    // ===== Refresh CM state =====
     async function refresh(){
       try{
         setTxt("cmLbl", CM_ADDR);
@@ -195,24 +240,20 @@
         const avail  = Number(cm.itemsAvailable ?? 0);
         setTxt("minted", fmt(minted)); setTxt("available", fmt(avail));
 
-        // SOL price (group SOL)
+        // SOL prijs (groep SOL)
         if (guardAcc){
           const solGrp = getGroup(guardAcc, GROUP_SOL);
           const solGuards = solGrp ? solGrp.guards : guardAcc.guards || null;
           setTxt("priceSol", solPriceText(solGuards));
-        } else {
-          setTxt("priceSol", "Free");
-        }
+        } else setTxt("priceSol", "Free");
 
-        // CBS burn price (group BURN)
-        let txt = "—";
-        let mintShort = "";
+        // CBS burn prijs (groep BURN)
+        let txt = "—", mintShort = "";
         if (guardAcc){
           const burnGrp = getGroup(guardAcc, GROUP_BRN);
           const guards = burnGrp ? burnGrp.guards : null;
           const info = tokenBurnInfo(guards);
           if (info){
-            // fetch decimals only once
             if (!cbsDecimals){
               const mintAcc = await getMint(conn, CBS_MINT);
               cbsDecimals = mintAcc.decimals || 0;
@@ -223,13 +264,14 @@
           }
         }
         setTxt("priceCbs", txt);
-        $("cbsMintShort").textContent = mintShort;
+        const ms = document.getElementById("cbsMintShort"); if(ms) ms.textContent = mintShort;
         note("");
-      }catch(e){
+      }catch{
         note("Candy Machine of Guard laden mislukt.","warn");
       }
     }
 
+    // ===== Mints =====
     async function doMint(groupLabel){
       try{
         if(!connected) return note("Verbind eerst je wallet.","warn");
@@ -248,12 +290,12 @@
         const sig = await tx.sendAndConfirm(umi);
         note(`Mint bevestigd ✅ ${sig}`, "ok");
         await refresh();
-      }catch(e){
+      }catch{
         note("Mint mislukt.","warn");
       }
     }
 
-    // Wire up
+    // ===== Wire up =====
     $("connectBtn")?.addEventListener("click", connectWallet);
     $("refreshBtn")?.addEventListener("click", refresh);
     $("mintSolBtn")?.addEventListener("click", ()=>doMint(GROUP_SOL));
