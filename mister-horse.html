@@ -3,68 +3,60 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Mister Horse — Mint (SOL)</title>
+  <title>Mister Horse — Mint</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    :root{ --bg1:#0a0c10; --bg2:#0f141b; --card:#0f151c; --card2:#0c1016;
-      --fg:#eafffb; --muted:#a8d6cd; --note:#7ee9dc; --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
-      --radius:18px; --ok:#24e6b5; --warn:#ffad7a; }
-    *{box-sizing:border-box} html,body{height:100%}
-    body{margin:0; font-family:'Orbitron',sans-serif; color:var(--fg);
-      background: radial-gradient(900px 600px at 100% -10%, rgba(0,255,230,.10), transparent 60%),
-                 radial-gradient(700px 500px at -10% 110%, rgba(0,170,255,.09), transparent 60%),
-                 linear-gradient(135deg,var(--bg1),var(--bg2));}
-    .topbar{position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between; gap:.75rem;
-      padding:.8rem 1rem; backdrop-filter:blur(6px); background:linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0));
-      border-bottom:1px solid rgba(0,255,240,.08);}
+    :root{
+      --bg1:#0a0c10; --bg2:#0f141b;
+      --card:#0f151c; --card2:#0c1016;
+      --fg:#eafffb; --muted:#a8d6cd; --note:#7ee9dc;
+      --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
+      --radius:18px; --ok:#24e6b5; --warn:#ffad7a;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:'Orbitron',sans-serif; color:var(--fg);
+      background:
+        radial-gradient(900px 600px at 100% -10%, rgba(0,255,230,.10), transparent 60%),
+        radial-gradient(700px 500px at -10% 110%, rgba(0,170,255,.09), transparent 60%),
+        linear-gradient(135deg,var(--bg1),var(--bg2));
+      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+    }
+    .topbar{position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:.8rem 1rem; backdrop-filter:blur(6px); background:linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0)); border-bottom:1px solid rgba(0,255,240,.08);}
     .brand{display:flex; align-items:center; gap:.7rem}
     .brand img{width:38px; height:38px; border-radius:10px; filter:drop-shadow(0 0 10px rgba(0,255,230,.35))}
     .brand h1{margin:0; font-size:1.05rem; letter-spacing:.4px; font-weight:700; color:#bffef2}
-    .social{display:flex; align-items:center; gap:.6rem; padding:.25rem .4rem; border-radius:12px;
-      background:linear-gradient(180deg, rgba(0,255,230,.05), rgba(0,255,230,.02)); border:1px solid rgba(0,255,240,.12);}
-    .icon-link{display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:10px;
-      background:linear-gradient(180deg, rgba(0,255,230,.06), rgba(0,255,230,.02)); border:1px solid rgba(0,255,240,.18);
-      box-shadow:inset 0 0 0 1px rgba(0,255,240,.06); text-decoration:none;}
-    .icon{width:20px; height:20px}
+
     .container{ max-width:1100px; margin:0 auto; padding:1.2rem 1rem 2.2rem }
-    .hero{ display:grid; grid-template-columns:120px 1fr; gap:1.2rem; align-items:center; padding:1.2rem; margin:10px auto 18px;
-      border-radius:var(--radius); background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35));
-      border:1px solid rgba(0,255,240,.18); box-shadow:var(--shadow); }
-    .hero .logo-wrap{ position:relative; width:120px; height:120px; border-radius:16px; overflow:hidden;
-      background:radial-gradient(closest-side, rgba(0,255,230,.18), rgba(0,255,230,.04) 58%, transparent 62%); display:grid; place-items:center; }
+    .hero{ display:grid; grid-template-columns:120px 1fr; gap:1.2rem; align-items:center; padding:1.2rem; margin:10px auto 18px; border-radius:var(--radius); background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35)); border:1px solid rgba(0,255,240,.18); box-shadow:var(--shadow); }
+    .hero .logo-wrap{ position:relative; width:120px; height:120px; border-radius:16px; overflow:hidden; background:radial-gradient(closest-side, rgba(0,255,230,.18), rgba(0,255,230,.04) 58%, transparent 62%); display:grid; place-items:center; }
     .hero .logo{ width:86%; height:86%; object-fit:contain }
     .hero h2{ margin:.15rem 0 0; color:var(--note); font-size:1.05rem; font-weight:600 }
     .hero p{ margin:.35rem 0 0; color:var(--muted); font-size:.95rem }
+
     .grid{ display:grid; gap:16px; grid-template-columns:repeat(12,1fr) }
-    .card{ grid-column:span 12; background:linear-gradient(180deg, var(--card), var(--card2)); border:1px solid rgba(0,255,240,.14);
-      border-radius:var(--radius); box-shadow:var(--shadow); padding:18px; }
+    .card{ grid-column:span 12; background:linear-gradient(180deg, var(--card), var(--card2)); border:1px solid rgba(0,255,240,.14); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px; }
+    @media (min-width:980px){ .col-6{ grid-column:span 6 } }
     .card h3{ margin:.2rem 0 .6rem; color:#bffef2; font-size:1.05rem }
     .row{display:flex; flex-wrap:wrap; gap:12px; align-items:center}
+
     .btn{ display:inline-flex; align-items:center; justify-content:center; min-width:140px; padding:12px 18px; border-radius:10px;
       text-decoration:none; font-weight:900; font-size:.94rem; color:#001010; background:linear-gradient(180deg, #5afff0, #2bffe4);
       border:1px solid rgba(0,255,240,.7); box-shadow:0 0 12px rgba(0,255,230,.55), 0 0 24px rgba(0,255,230,.25), inset 0 -8px 14px rgba(0,0,0,.14); cursor:pointer; }
     .btn:disabled{ opacity:.55; cursor:not-allowed }
+
     .muted{color:var(--muted)} .ok{color:var(--ok)} .warn{color:var(--warn)} .mono{font-family:ui-monospace,Menlo,Monaco,Consolas,monospace}
-    @media (min-width:980px){ .col-6{ grid-column:span 6 } }
+
+    footer{ text-align:center; color:#a8d6cd; margin-top:24px; }
+    footer a{ color:#79ffee; text-decoration:none } footer a:hover{ text-decoration:underline }
   </style>
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
-      <!-- Plaats optioneel /logo.png in dezelfde map, of laat de img weg -->
       <img src="logo.png" alt="CBS Logo" onerror="this.style.display='none'">
       <h1>CBS Coin</h1>
-    </div>
-    <div class="social" aria-label="Social links">
-      <a class="icon-link" href="https://x.com/CBS_Coin" target="_blank" rel="noopener" aria-label="X">
-        <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M4 4h3.7l4.6 6 5.3-6H22l-7.5 8.4L22 20h-3.7l-5-6.5L7.4 20H2.1l8.3-9.3L4 4Z" fill="currentColor"/></svg>
-      </a>
-      <a class="icon-link" href="https://t.me/CBS_Coin" target="_blank" rel="noopener" aria-label="Telegram">
-        <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M21.9 4.6c.3-.9-.5-1.3-1.3-1L2.5 10.3c-.9.4-.9 1 .2 1.3l4.8 1.5 1.8 5.8c.2.9.7 1 .9 0l1.3-4.2 5.1 3.8c.7.5 1.3.2 1.5-.7l3.8-13.2Z" fill="currentColor"/></svg>
-      </a>
-      <a class="icon-link" href="https://discord.gg/DxSB3ERQ" target="_blank" rel="noopener" aria-label="Discord">
-        <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M19.6 5.1A16 16 0 0 0 15.8 4l-.2.3c1 .2 1.9 .6 2.8 1.2a8.7 8.7 0 0 0-3.2-1c-.3 0-.5 .2-.6 .4a12 12 0 0 0-5.6 0c-.2 0-.4 -.3-.6 -.4-1 .1-2 .5-3 1a13 13 0 0 1 2.7-1.2L8 4a16 16 0 0 0-3.8 1.1C1.6 8.7 .9 12 1.1 15.2c1.4 1 2.9 1.7 4.5 2.1l.8-1.3c-.4 -.1-.9 -.3-1.3 -.5l.3 -.3c2.6 1.2 5.5 1.2 8 0l.3 .3c-.4 .2-.8 .4-1.2 .5l.7 1.3c1.6 -.4 3.2 -1.1 4.6 -2.1.3 -3.6 -.5 -6.9 -2 -10.5ZM9.1 13.6c-.8 0 -1.5 -.7 -1.5 -1.6 0 -.8 .7 -1.5 1.5 -1.5s1.5 .7 1.5 1.5c0 .9 -.7 1.6 -1.5 1.6Zm5.8 0c-.8 0 -1.5 -.7 -1.5 -1.6 0 -.8 .7 -1.5 1.5 -1.5s1.6 .7 1.6 1.5c0 .9 -.8 1.6 -1.6 1.6Z" fill="currentColor"/></svg>
-      </a>
     </div>
   </header>
 
@@ -72,8 +64,8 @@
     <section class="hero">
       <div class="logo-wrap"><img class="logo" src="logo.png" alt="Mister Horse" onerror="this.style.display='none'"></div>
       <div>
-        <h2>Mister Horse – NFT Mint (SOL)</h2>
-        <p class="muted">Kies: betalen in SOL. (Devnet test)</p>
+        <h2>Mister Horse – NFT Mint</h2>
+        <p class="muted">Gebruik Devnet of Mainnet, afhankelijk van de <span class="mono">rpc</span> in de URL. Je kunt optioneel <span class="mono">group</span> meegeven voor een gelabelde Candy Guard.</p>
       </div>
     </section>
 
@@ -85,147 +77,168 @@
           <span id="walletStatus" class="muted">Niet verbonden</span>
         </div>
         <div class="row" style="margin-top:10px;">
-          <button id="mintBtn" class="btn" disabled>Mint NFT (SOL)</button>
+          <button id="mintBtn" class="btn" disabled>Mint NFT</button>
           <button id="refreshBtn" class="btn">Verversen</button>
         </div>
         <p id="msg" class="muted" style="margin-top:8px;"></p>
-        <small class="muted">Tip: Zet Phantom op <b>Devnet</b> (Settings → Developer).</small>
+        <small class="muted">Tip: voor Devnet → Phantom: Settings → Developer → Devnet. Je hebt wat Devnet SOL nodig voor fees.</small>
       </div>
 
       <div class="card col-6">
         <h3>📊 Drop</h3>
         <p><b>Candy Machine:</b> <span id="cmLbl" class="mono">—</span></p>
+        <p><b>Guard label (actief):</b> <span id="groupLbl" class="mono">—</span></p>
         <p><b>Gemintrd:</b> <span id="minted">…</span> / <span id="available">…</span></p>
         <p><b>Prijs (SOL):</b> <span id="priceSol">—</span></p>
-        <small class="muted">Deze pagina verwacht een Candy Guard met <span class="mono">solPayment</span>.</small>
+        <small class="muted">Prijs verschijnt als er een <span class="mono">solPayment</span> guard actief is. Zonder guard is de mint “gratis” (alleen netwerkfees).</small>
       </div>
     </section>
 
-    <footer style="text-align:center; color:#a8d6cd; margin-top:24px;">
-      Vragen? <a href="mailto:cbs.coin12@gmail.com" style="color:#79ffee;">cbs.coin12@gmail.com</a>
+    <footer>
+      Vragen? <a href="mailto:cbs.coin12@gmail.com">cbs.coin12@gmail.com</a>
     </footer>
   </div>
 
-  <!-- Mint logic (ALLEEN SOL) -->
+  <!-- Mint logic (CM v3, auto guard/label fallback) -->
   <script type="module">
-    // ========== LIBS ==========
+    // ===== 1) LIBS =====
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
-    import { publicKey, generateSigner, some } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
+    import { publicKey, generateSigner, some, none } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
     import { mplCandyMachine, fetchCandyMachine, fetchCandyGuard, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.2.0";
+    import { setComputeUnitLimit } from "https://esm.sh/@metaplex-foundation/mpl-toolbox@0.10.1";
     import { PhantomWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-phantom@0.9.25";
     import { Connection, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.95.3";
 
-    // ========== CONFIG ==========
-    const DEFAULTS = {
-      CM: "11111111111111111111111111111111",   // override via ?cm=
-      GROUP: "SOL",                             // guard label met solPayment
-      RPC: "https://api.devnet.solana.com"      // voor testen op Devnet
-    };
-    const qs      = new URLSearchParams(location.search);
-    const CM_ADDR = qs.get("cm")   || DEFAULTS.CM;
-    const GROUP   = qs.get("group")|| DEFAULTS.GROUP;
-    const RPC_URL = qs.get("rpc")  || DEFAULTS.RPC;
+    // ===== 2) CONFIG VIA URL =====
+    const qs = new URLSearchParams(location.search);
+    const CM_ADDR = qs.get("cm") || "11111111111111111111111111111111"; // verplicht, anders faalt het laden
+    const RPC_URL = qs.get("rpc") || "https://api.devnet.solana.com";   // devnet standaard
+    const GROUP_PARAM = qs.has("group") ? (qs.get("group") || null) : null;
 
-    // ========== UI HELPERS ==========
+    // ===== 3) UI HELPERS =====
     const $ = (id)=>document.getElementById(id);
     const setTxt = (id, v)=>{ const el=$(id); if(el) el.textContent = v; };
     const note = (msg, kind="info")=>{
-      const el = $("msg"); if(!el) return;
-      el.textContent = msg || "";
+      const el=$("msg"); if(!el) return;
+      el.textContent=msg||"";
       el.className = kind==="ok"?"ok":kind==="warn"?"warn":"muted";
     };
     const fmt = (n)=> Number(n ?? 0).toLocaleString("nl-NL");
 
-    // ========== UMI / WALLET ==========
+    // ===== 4) INIT UMI / WEB3 =====
     const umi = createUmi(RPC_URL).use(mplCandyMachine()).use(mplTokenMetadata());
     const web3Conn = new Connection(RPC_URL, "confirmed");
-    let wallet, connected=false, cm, guard;
 
-    function phantomAvailable(){
-      return !!(window.solana && window.solana.isPhantom);
-    }
+    // ===== 5) WALLET =====
+    let wallet=null, connected=false, cm=null, guard=null, activeGroupLabel=null;
 
     async function connectWallet(){
       try{
-        if(!phantomAvailable()){
-          note("Phantom niet gevonden. Installeer de extensie en ververs.", "warn");
-          return;
+        if(!("solana" in window)){
+          note("Geen wallet gevonden (installeer Phantom).","warn"); return;
         }
         wallet = new PhantomWalletAdapter();
-        await wallet.connect();                // user gesture (button)
+        await wallet.connect();
         umi.use(walletAdapterIdentity(wallet));
         connected = true;
         const pk = wallet.publicKey.toBase58();
-        $("walletStatus").textContent = `Verbonden: ${pk.slice(0,6)}…${pk.slice(-6)}`;
+        setTxt("walletStatus", `Verbonden: ${pk.slice(0,6)}…${pk.slice(-6)}`);
         $("mintBtn").disabled = false;
         note("");
       }catch(e){
-        note("Verbinden mislukt.", "warn");
+        console.error(e);
+        note("Verbinden mislukt.","warn");
       }
     }
 
-    // ========== CM LADEN ==========
-    function guardGroup(guardAcc, label){
-      const g = (guardAcc.groups||[]).find(x=>x.label===label);
-      return g ? g.guards : guardAcc.guards || null;
+    // ===== 6) GUARD HELPERS =====
+    function pickActiveLabel(guardAcc, wantedLabel){
+      if(!guardAcc) return null;
+      const labels = (guardAcc.groups || []).map(g => g.label);
+      return (wantedLabel && labels.includes(wantedLabel)) ? wantedLabel : null;
+    }
+    function guardsForActiveLabel(guardAcc, label){
+      if(!guardAcc) return null;
+      if(label){
+        const g=(guardAcc.groups||[]).find(x=>x.label===label);
+        return g ? g.guards : null;
+      }
+      return guardAcc.guards || null;
     }
     function solPriceText(guards){
       const opt = guards?.solPayment;
-      const g = opt && (opt.__option==="Some" ? opt.value : opt);
-      if(!g?.lamports && g?.lamports!==0) return "—";
-      return (Number(g.lamports)/LAMPORTS_PER_SOL).toFixed(3)+" SOL";
+      const node = opt?.__option==="Some" ? opt.value : opt;
+      if(!node?.lamports && node?.lamports!==0) return "—";
+      return (Number(node.lamports)/LAMPORTS_PER_SOL).toFixed(3)+" SOL";
     }
 
+    // ===== 7) REFRESH (load CM, guard, stats) =====
     async function refresh(){
       try{
         setTxt("cmLbl", CM_ADDR);
-        cm    = await fetchCandyMachine(umi, publicKey(CM_ADDR));
-        guard = await fetchCandyGuard(umi, cm.mintAuthority);
+        cm = await fetchCandyMachine(umi, publicKey(CM_ADDR));
+
+        // Candy Guard kan ontbreken → try/catch
+        try{
+          guard = await fetchCandyGuard(umi, cm.mintAuthority);
+        }catch{
+          guard = null;
+        }
+
+        activeGroupLabel = pickActiveLabel(guard, GROUP_PARAM);
+        setTxt("groupLbl", activeGroupLabel ?? "—");
 
         const minted = Number(cm.itemsRedeemed ?? cm.itemsMinted ?? 0);
         const avail  = Number(cm.itemsAvailable ?? 0);
-        setTxt("minted", fmt(minted)); setTxt("available", fmt(avail));
+        setTxt("minted", fmt(minted));
+        setTxt("available", fmt(avail));
 
-        const g = guardGroup(guard, GROUP);
+        const g = guardsForActiveLabel(guard, activeGroupLabel);
         setTxt("priceSol", solPriceText(g));
         note("");
       }catch(e){
-        note("Candy Machine of Guard laden mislukt.", "warn");
+        console.error(e);
+        note("Candy Machine of Guard laden mislukt.","warn");
       }
     }
 
-    // ========== MINT ==========
+    // ===== 8) MINT =====
     async function doMint(){
       try{
-        if(!connected) return note("Verbind eerst je wallet.", "warn");
+        if(!connected) return note("Verbind eerst je wallet.","warn");
         note("Mint wordt verzonden…");
+
         const nftMint = generateSigner(umi);
-        const txb = mintV2(umi, {
-          candyMachine: publicKey(CM_ADDR),
-          nftMint,
-          collectionMint: cm.collectionMint,
-          collectionUpdateAuthority: cm.authority,
-          group: some(GROUP),
-          mintArgs: {}
-        });
-        const sig = await txb.sendAndConfirm(umi);
-        note(`Mint bevestigd ✅ ${sig}`, "ok");
+        const builder = setComputeUnitLimit(umi, { units: 800_000 }).add(
+          mintV2(umi, {
+            candyMachine: publicKey(CM_ADDR),
+            nftMint,
+            collectionMint: cm.collectionMint,
+            collectionUpdateAuthority: cm.authority,
+            group: activeGroupLabel ? some(activeGroupLabel) : none(),
+            mintArgs: {}
+          })
+        );
+
+        const sig = await builder.sendAndConfirm(umi);
+        note(`Mint bevestigd ✅ ${sig}`,"ok");
         await refresh();
       }catch(e){
-        note("Mint mislukt.", "warn");
+        console.error(e);
+        const msg = e?.cause?.message || e?.message || "";
+        note(`Mint mislukt. ${msg}`, "warn");
       }
     }
 
-    // ========== LISTENERS ==========
+    // ===== 9) EVENTS =====
     $("connectBtn")?.addEventListener("click", connectWallet);
     $("refreshBtn")?.addEventListener("click", refresh);
     $("mintBtn")?.addEventListener("click", doMint);
 
+    // Start
     await refresh();
   </script>
 </body>
 </html>
-
-
