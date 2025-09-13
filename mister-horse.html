@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Mister Horse – NFT Mint (free)</title>
+  <title>Mister Horse – NFT Mint (free / Devnet)</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <style>
     :root{ --bg1:#0a0c10; --bg2:#0f141b; --card:#0f151c; --card2:#0c1016;
@@ -40,8 +40,8 @@
     <section class="hero">
       <div class="logo"><img src="logo.png" alt="CBS"></div>
       <div>
-        <h2>Mister Horse – NFT Mint</h2>
-        <p class="muted">Free mint (alleen netwerkfee). Zet Phantom op Devnet/Mainnet en geef je CM via de URL (bv. <span class="mono">?cm=…</span>).</p>
+        <h2>Mister Horse – NFT Mint (Devnet / Free)</h2>
+        <p class="muted">Zet Phantom op Devnet. Deze drop is free mint (alleen netwerkfee).</p>
       </div>
     </section>
 
@@ -57,16 +57,15 @@
           <button id="refreshBtn" class="btn">Verversen</button>
         </div>
         <p id="msg" class="muted" style="margin-top:8px;"></p>
-        <small class="muted">Tip Devnet → Phantom: <b>Settings → Developer → Devnet</b>.</small>
       </div>
 
       <div class="card col-6">
         <h3>📊 Drop</h3>
         <p><b>Candy Machine:</b> <span id="cmLbl" class="mono">—</span></p>
-        <p><b>Guard label (actief):</b> <span id="groupLbl">—</span></p>
+        <p><b>Candy Guard (op CM):</b> <span id="guardStatus">—</span></p>
         <p><b>Gemintrd:</b> <span id="minted">…</span> / <span id="available">…</span></p>
         <p><b>Prijs (SOL):</b> <span id="priceSol">—</span></p>
-        <small class="muted">Prijs verschijnt als er een <span class="mono">solPayment</span> guard actief is. Zonder guard is de mint “gratis” (alleen netwerkfees).</small>
+        <small class="muted">Als er geen <span class="mono">solPayment</span> guard is, is dit een free mint.</small>
       </div>
     </section>
 
@@ -76,7 +75,6 @@
   </div>
 
   <script type="module">
-    // ===== Imports (browser via esm.sh)
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
     import { publicKey, generateSigner, some, none } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
@@ -86,19 +84,16 @@
     import { PhantomWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-phantom@0.9.25";
     import { LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.95.3";
 
-    // ===== Config via URL
     const qs = new URLSearchParams(location.search);
-    const DEFAULT_CM   = "8eCCZv9fooitnF9JyXjPdNXBtk4b2jGwx27mDJFsWvSV"; // Devnet demo
-    const CM_ADDR = qs.get("cm")   || DEFAULT_CM;
-    const RPC_URL = qs.get("rpc")  || "https://api.devnet.solana.com";
-    const GROUP   = qs.get("group")|| ""; // optioneel label, bv. SOL
+    const CM_ADDR = qs.get("cm") || "8eCCZv9fooitnF9JyXjPdNXBtk4b2jGwx27mDJFsWvSV"; // devnet
+    const RPC_URL = qs.get("rpc") || "https://api.devnet.solana.com";
+    const GROUP   = qs.get("group") || ""; // optioneel
 
     const $ = (id)=>document.getElementById(id);
-    const fmt = (n)=>Number(n ?? 0).toLocaleString("nl-NL");
-    const msg = (t,k="info")=>{ const el=$("msg"); if(!el) return; el.textContent=t||""; el.className=(k==="ok"?"ok":k==="warn"?"warn":"muted"); };
-    const setTxt = (id,v)=>{ const el=$(id); if(el) el.textContent = v; };
+    const setTxt = (id,v)=>{ const el=$(id); if(el) el.textContent=v; };
+    const fmt = (n)=>Number(n??0).toLocaleString("nl-NL");
+    const note=(t,k="info")=>{ const el=$("msg"); if(!el) return; el.textContent=t||""; el.className=(k==="ok"?"ok":k==="warn"?"warn":"muted"); };
 
-    // ===== Umi + wallet
     const umi = createUmi(RPC_URL).use(mplCandyMachine()).use(mplTokenMetadata());
     let wallet, connected=false, cm=null, guard=null;
 
@@ -106,28 +101,25 @@
       try{
         wallet = new PhantomWalletAdapter();
         await wallet.connect();
-        umi.use( walletAdapterIdentity(wallet) );
-        connected = true;
+        umi.use(walletAdapterIdentity(wallet));
+        connected=true;
         const pk = wallet.publicKey.toBase58();
         setTxt("walletStatus", `Verbonden: ${pk.slice(0,6)}…${pk.slice(-6)}`);
-        $("mintBtn").disabled = false;
-        msg("");
-      }catch(e){
-        msg("Verbinden mislukt.","warn");
-      }
+        $("mintBtn").disabled=false;
+        note("");
+      }catch{ note("Verbinden mislukt.","warn"); }
     }
 
     function guardGroup(guardAcc, label){
       if(!guardAcc) return null;
       if(label){
-        const g = (guardAcc.groups||[]).find(x=>x.label===label);
+        const g=(guardAcc.groups||[]).find(x=>x.label===label);
         return g ? g.guards : null;
       }
-      return guardAcc.guards || null; // default guards
+      return guardAcc.guards||null;
     }
     function priceFromGuards(g){
-      // toont SOL-prijs als solPayment aanwezig is
-      const opt = g?.solPayment;
+      const opt=g?.solPayment;
       const v = opt?.__option==="Some" ? opt.value : opt;
       if(!v?.lamports && v?.lamports!==0) return null;
       return Number(v.lamports)/LAMPORTS_PER_SOL;
@@ -136,54 +128,54 @@
     async function loadDrop(){
       try{
         setTxt("cmLbl", CM_ADDR);
-        setTxt("groupLbl", GROUP || "—");
-
         cm = await fetchCandyMachine(umi, publicKey(CM_ADDR));
-        guard = await fetchCandyGuard(umi, cm.mintAuthority);
+        // Candy Guard ophalen op basis van cm.mintAuthority
+        try{
+          guard = await fetchCandyGuard(umi, cm.mintAuthority);
+          setTxt("guardStatus", "✅ gekoppeld");
+        }catch{
+          guard = null;
+          setTxt("guardStatus", "❌ niet gevonden");
+        }
 
         const minted = Number(cm.itemsRedeemed ?? cm.itemsMinted ?? 0);
         const avail  = Number(cm.itemsAvailable ?? 0);
-        setTxt("minted", fmt(minted));
-        setTxt("available", fmt(avail));
+        setTxt("minted", fmt(minted)); setTxt("available", fmt(avail));
 
-        // prijs tonen (alleen als solPayment bestaat)
         const g = GROUP ? guardGroup(guard, GROUP) : guardGroup(guard, null);
         const p = priceFromGuards(g);
         setTxt("priceSol", p==null ? "— (free mint)" : p.toFixed(3)+" SOL");
-        msg("");
-        return {cm,guard};
+        note("");
       }catch(e){
-        msg("Candy Machine of Guard laden mislukt.","warn");
-        return {cm:null,guard:null};
+        note("Candy Machine of Guard laden mislukt.","warn");
       }
     }
 
     async function doMint(){
       try{
-        if(!connected) return msg("Verbind eerst je wallet.","warn");
+        if(!connected) return note("Verbind eerst je wallet.","warn");
+        // verse fetch
+        await loadDrop();
+        if(!cm) return note("Mint mislukt: Candy Machine niet gevonden.","warn");
 
-        // verse state ophalen
-        const { cm, guard } = await loadDrop();
-        if(!cm) return msg("Mint mislukt: Candy Machine niet gevonden.","warn");
-
-        msg("Mint wordt verzonden…");
+        note("Mint wordt verzonden…");
 
         const nftMint = generateSigner(umi);
 
-        // Als de opgegeven group bestaat, gebruik die; anders géén group (free mint met default/no guard)
+        // Gebruik alleen group als die echt bestaat
         let groupParam = none();
-        if (GROUP && guard && (guard.groups||[]).some(g => g.label === GROUP)) {
-          groupParam = some(GROUP);
-        }
+        if (GROUP && guard && (guard.groups||[]).some(g => g.label===GROUP)) groupParam = some(GROUP);
 
+        // ⬇️ Belangrijk: geef expliciet de Candy Guard mee (fix voor 0xbc4)
         const args = {
           candyMachine: publicKey(CM_ADDR),
+          candyGuard: cm.mintAuthority,                 // <<<<<<<<<<
           nftMint,
           group: groupParam,
           mintArgs: {}
         };
 
-        // Alleen meesturen als collectie werkelijk aanwezig is (anders krijg je 'collectionMint' null errors)
+        // Alleen meesturen als collectie gezet is
         if (cm.collectionMint){
           args.collectionMint = cm.collectionMint;
           args.collectionUpdateAuthority = cm.authority;
@@ -192,19 +184,16 @@
         const tx = setComputeUnitLimit(umi, { units: 800_000 }).add(mintV2(umi, args));
         const sig = await tx.sendAndConfirm(umi);
 
-        msg(`Mint bevestigd ✅ ${sig}`,"ok");
+        note(`Mint bevestigd ✅ ${sig}`,"ok");
         await loadDrop();
       }catch(e){
-        msg(`Mint mislukt. ${e?.message||e}`,"warn");
+        note(`Mint mislukt. ${e?.message||e}`,"warn");
       }
     }
 
-    // events
     $("connectBtn")?.addEventListener("click", connectWallet);
     $("refreshBtn")?.addEventListener("click", loadDrop);
     $("mintBtn")?.addEventListener("click", doMint);
-
-    // init
     await loadDrop();
   </script>
 </body>
