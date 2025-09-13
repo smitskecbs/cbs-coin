@@ -56,27 +56,23 @@
   </div>
 
   <script type="module">
-    // ====== Imports ======
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
     import { publicKey, generateSigner, transactionBuilder, some } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
     import { mplCandyMachine, fetchCandyMachine, fetchCandyGuard, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.2.0";
-    import { setComputeUnitLimit } from "https://esm.sh/@metaplex-foundation/mpl-toolbox@0.10.1";
     import { PhantomWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-phantom@0.9.25";
 
-    // ====== Config via URL ======
+    // URL-params / defaults
     const qs    = new URLSearchParams(location.search);
-    const CM    = qs.get("cm")  || "8ZQgf6goaJaqgB1rtPoVcLd2KEo359NKqwTK5UEk5v9s"; // jouw nieuwe CM
+    const CM    = qs.get("cm")  || "8ZQgf6goaJaqgB1rtPoVcLd2KEo359NKqwTK5UEk5v9s";
     const RPC   = qs.get("rpc") || "https://api.devnet.solana.com";
     const GROUP = qs.get("group") || ""; // leeg = default guard (FREE)
 
-    // ====== UI helpers ======
     const $ = (id)=>document.getElementById(id);
     const fmt = (n)=>Number(n??0).toLocaleString("nl-NL");
     const note = (t,k="info")=>{ const el=$("msg"); if(!el) return; el.textContent=t||""; el.className= k==="ok"?"ok":k==="warn"?"warn":"muted"; }
 
-    // ====== Umi & Wallet ======
     const umi = createUmi(RPC).use(mplCandyMachine()).use(mplTokenMetadata());
     let wallet, cmAcc, guardAcc, connected=false;
 
@@ -101,10 +97,9 @@
 
         const minted = Number(cmAcc.itemsRedeemed ?? cmAcc.itemsMinted ?? 0);
         const avail  = Number(cmAcc.itemsAvailable ?? 0);
-        $("minted").textContent    = fmt(minted);
+        $("minted").textContent = fmt(minted);
         $("available").textContent = fmt(avail);
 
-        // prijs tonen (FREE tenzij er een solPayment guard is)
         let priceText = "FREE (+ tx fee)";
         if(guardAcc){
           const g = (guardAcc.groups||[]).find(x=>x.label===GROUP)?.guards || guardAcc.guards;
@@ -114,7 +109,6 @@
           }
         }
         $("price").textContent = priceText;
-
         note("");
       }catch(e){ note("Candy Machine laden mislukt.","warn"); }
     }
@@ -132,17 +126,13 @@
           collectionUpdateAuthority: cmAcc.authority,
           mintArgs: {}
         };
-        if(GROUP) params.group = some(GROUP); // alleen als je later labels gebruikt
+        if(GROUP) params.group = some(GROUP);
 
-        const tx = transactionBuilder()
-          .add(setComputeUnitLimit(umi,{units:800_000}))
-          .add(mintV2(umi, params));
-
+        const tx = transactionBuilder().add(mintV2(umi, params));
         const sig = await tx.sendAndConfirm(umi);
         note(`Mint bevestigd ✅ ${sig}`,"ok");
         await refresh();
       }catch(e){
-        // toon iets bruikbaars
         note("Mint mislukt. " + (e?.message || ""), "warn");
       }
     }
