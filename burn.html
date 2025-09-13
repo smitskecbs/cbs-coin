@@ -10,7 +10,7 @@
       --bg1:#0a0c10; --bg2:#0f141b;
       --card:#0f151c; --card2:#0c1016;
       --fg:#eafffb; --muted:#a8d6cd; --note:#7ee9dc;
-      --shadow: 0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
+      --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
       --radius:18px; --ok:#24e6b5; --warn:#ffad7a;
     }
     *{box-sizing:border-box}
@@ -23,14 +23,20 @@
         linear-gradient(135deg,var(--bg1),var(--bg2));
       -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
     }
+    /* Header */
     .topbar{position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:.8rem 1rem; backdrop-filter:blur(6px); background:linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0)); border-bottom:1px solid rgba(0,255,240,.08);}
     .brand{display:flex; align-items:center; gap:.7rem}
     .brand img{width:38px; height:38px; border-radius:10px; filter:drop-shadow(0 0 10px rgba(0,255,230,.35))}
     .brand h1{margin:0; font-size:1.05rem; letter-spacing:.4px; font-weight:700; color:#bffef2}
     .social{display:flex; align-items:center; gap:.6rem; padding:.25rem .4rem; border-radius:12px; background:linear-gradient(180deg, rgba(0,255,230,.05), rgba(0,255,230,.02)); border:1px solid rgba(0,255,240,.12);}
     .icon-link{display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:10px; background:linear-gradient(180deg, rgba(0,255,230,.06), rgba(0,255,230,.02)); border:1px solid rgba(0,255,240,.18); box-shadow:inset 0 0 0 1px rgba(0,255,240,.06); text-decoration:none;}
-    .icon{ width:20px; height:20px; display:block; } .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,1px,1px); border:0; }
+    .icon{width:20px; height:20px; display:block}
+    #langSwitch{
+      background:linear-gradient(180deg, #7dffe9, #55f1e7); color:#012022; font-weight:900; border:1px solid rgba(0,255,240,.45);
+      padding:.55rem .9rem; border-radius:12px; cursor:pointer; box-shadow:0 8px 18px rgba(0,255,230,.18), inset 0 -6px 10px rgba(0,0,0,.15);
+    }
 
+    /* Layout */
     .container{ max-width:1100px; margin:0 auto; padding:1.2rem 1rem 2.2rem }
     .hero{ display:grid; grid-template-columns:120px 1fr; gap:1.2rem; align-items:center; padding:1.2rem; margin:10px auto 18px; border-radius:var(--radius); background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35)); border:1px solid rgba(0,255,240,.18); box-shadow:var(--shadow); }
     .hero .logo-wrap{ position:relative; width:120px; height:120px; border-radius:16px; overflow:hidden; background:radial-gradient(closest-side, rgba(0,255,230,.18), rgba(0,255,230,.04) 58%, transparent 62%); display:grid; place-items:center; }
@@ -44,13 +50,17 @@
     .row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
     .ok{ color:var(--ok) } .warn{ color:var(--warn) }
 
-    input, .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace}
+    input,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace}
     input{ padding:12px 14px; border-radius:12px; width:220px; color:var(--fg); background:linear-gradient(180deg, rgba(0,255,230,.06), rgba(0,255,230,.02)); border:1px solid rgba(0,255,240,.22); box-shadow:inset 0 0 0 1px rgba(0,255,240,.06); }
+
     .btn{ display:inline-flex; align-items:center; justify-content:center; min-width:140px; padding:12px 18px; border-radius:10px; text-decoration:none; font-weight:900; font-size:.94rem; color:#001010; background:linear-gradient(180deg, #5afff0, #2bffe4); border:1px solid rgba(0,255,240,.7); box-shadow:0 0 12px rgba(0,255,230,.55), 0 0 24px rgba(0,255,230,.25), inset 0 -8px 14px rgba(0,0,0,.14); cursor:pointer; }
     .btn:disabled{ opacity:.55; cursor:not-allowed }
 
-    .flames{ display:flex; align-items:flex-end; gap:6px; padding:4px 8px 0 0; filter:drop-shadow(0 0 10px rgba(255,120,0,.45)); animation: flicker 1.2s infinite ease-in-out; }
-    .flame{ width:18px; height:24px } @keyframes flicker{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-1px) } }
+    /* Flames */
+    .burn-row{ display:flex; align-items:center; gap:14px; flex-wrap:wrap }
+    .flames{ display:flex; align-items:flex-end; gap:6px; padding:4px 8px 0 0; filter:drop-shadow(0 0 10px rgba(255,120,0,.45)); animation:flicker 1.2s infinite ease-in-out; }
+    .flame{ width:18px; height:24px } @keyframes flicker{0%,100%{transform:translateY(0)}50%{transform:translateY(-1px)}}
+
     footer{ margin:24px auto 40px; text-align:center; color:var(--muted) } footer a{ color:#79ffee; text-decoration:none } footer a:hover{ text-decoration:underline }
   </style>
 </head>
@@ -68,6 +78,7 @@
         <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M19.6 5.1A16 16 0 0 0 15.8 4l-.2.3c1 .2 1.9.6 2.8 1.2a8.7 8.7 0 0 0-3.2-1c-.3 0-.5.2-.6.4a12 12 0 0 0-5.6 0c-.2 0-.4-.3-.6-.4-1 .1-2 .5-3 1a13 13 0 0 1 2.7-1.2L8 4a16 16 0 0 0-3.8 1.1C1.6 8.7.9 12 1.1 15.2c1.4 1 2.9 1.7 4.5 2.1l.8-1.3c-.4-.1-.9-.3-1.3-.5l.3-.3c2.6 1.2 5.5 1.2 8 0l.3.3c-.4.2-.8.4-1.2.5l.7 1.3c1.6-.4 3.2-1.1 4.6-2.1.3-3.6-.5-6.9-2-10.5ZM9.1 13.6c-.8 0-1.5-.7-1.5-1.6 0-.8.7-1.5 1.5-1.5s1.5.7 1.5 1.5c0 .9-.7 1.6-1.5 1.6Zm5.8 0c-.8 0-1.5-.7-1.5-1.6 0-.8.7-1.5 1.5-1.5s1.6.7 1.6 1.5c0 .9-.8 1.6-1.6 1.6Z" fill="currentColor"/></svg>
       </a>
     </div>
+    <button id="langSwitch">NL 🇳🇱</button>
   </header>
 
   <!-- EN -->
@@ -102,7 +113,7 @@
         <div class="card" style="grid-column:span 6">
           <h3>🧯 Burn</h3>
           <p class="muted">Burns from your own account; reduces on-chain supply.</p>
-          <div class="row" style="margin:10px 0 14px;">
+          <div class="burn-row" style="margin:10px 0 14px;">
             <div class="flames" aria-hidden="true">
               <svg class="flame" viewBox="0 0 24 24"><path fill="#ffb56b" d="M12 22c4 0 7-3.1 7-7 0-5.2-5.2-7.7-5.2-11.1 0-1.2-1.1-2.1-2.3-1.6C9.1 2.1 7 5.5 7 9.5c0 2.7 1.8 4.9 4.1 5.5-1.2-2.5.7-4.4 1.9-5.2-.5 1.8.8 3.2 1.8 4 .8.7 1.2 1.5 1.2 2.5 0 2.2-1.8 4-4 4Z"/></svg>
               <svg class="flame" viewBox="0 0 24 24"><path fill="#ff894a" d="M12 22a5.5 5.5 0 0 0 5.5-5.5c0-3.5-3.5-5.2-3.5-7.6 0-.8-.8-1.4-1.7-1.1C10.9 8.3 9.5 10.8 9.5 13.5c0 1.8 1.2 3.3 2.9 3.7-.8-1.6.5-3 .9-3.5 0 1.2.9 2 1.5 2.5.5.5.7 1 .7 1.6A3.5 3.5 0 0 1 12 22Z"/></svg>
@@ -135,7 +146,7 @@
     <div class="container">
       <section class="hero">
         <div class="logo-wrap"><img class="logo" src="logo.png" alt="CBS Logo"></div>
-        <div><h2>Echte token burn (supply daalt)</h2><p>Verbind, vul bedrag in en brand CBS via SPL <span class="mono">burnChecked</span>.</p></div>
+        <div><h2>Echte token burn (supply daalt)</h2><p>Verbind je wallet, vul bedrag in en brand CBS via SPL <span class="mono">burnChecked</span>.</p></div>
       </section>
 
       <section class="grid">
@@ -162,7 +173,7 @@
         <div class="card" style="grid-column:span 6">
           <h3>🧯 Burn</h3>
           <p class="muted">Brandt uit je eigen account; supply daalt on-chain.</p>
-          <div class="row" style="margin:10px 0 14px;">
+          <div class="burn-row" style="margin:10px 0 14px;">
             <div class="flames" aria-hidden="true">
               <svg class="flame" viewBox="0 0 24 24"><path fill="#ffb56b" d="M12 22c4 0 7-3.1 7-7 0-5.2-5.2-7.7-5.2-11.1 0-1.2-1.1-2.1-2.3-1.6C9.1 2.1 7 5.5 7 9.5c0 2.7 1.8 4.9 4.1 5.5-1.2-2.5.7-4.4 1.9-5.2-.5 1.8.8 3.2 1.8 4 .8.7 1.2 1.5 1.2 2.5 0 2.2-1.8 4-4 4Z"/></svg>
               <svg class="flame" viewBox="0 0 24 24"><path fill="#ff894a" d="M12 22a5.5 5.5 0 0 0 5.5-5.5c0-3.5-3.5-5.2-3.5-7.6 0-.8-.8-1.4-1.7-1.1C10.9 8.3 9.5 10.8 9.5 13.5c0 1.8 1.2 3.3 2.9 3.7-.8-1.6.5-3 .9-3.5 0 1.2.9 2 1.5 2.5.5.5.7 1 .7 1.6A3.5 3.5 0 0 1 12 22Z"/></svg>
@@ -191,6 +202,7 @@
   </div>
 
   <script>
+    // Taal-schakelaar
     const btn = document.getElementById("langSwitch");
     const EN = document.getElementById("content-en");
     const NL = document.getElementById("content-nl");
@@ -199,7 +211,7 @@
   </script>
 
   <script type="module">
-    // ===== Polyfills & imports =====
+    /* ===== Polyfills & imports ===== */
     try{ if(!window.Buffer){ const {Buffer}=await import("https://esm.sh/buffer@6.0.3"); window.Buffer=Buffer; } }catch{}
     async function importWithFallback(p,f){ try{ return await import(p);}catch{ return await import(f);} }
 
@@ -208,240 +220,217 @@
     const { Connection, clusterApiUrl, PublicKey, Transaction } = web3;
     const { getMint, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, createBurnCheckedInstruction } = spl;
 
-    // ===== Config =====
+    /* ===== Config ===== */
     const CBS_MINT = new PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
     const TOKEN_PROGRAM = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
-    const DEFAULT_RPC = "https://mainnet.helius-rpc.com/?api-key=0053b3c9-a47d-4e7e-b76b-dbdc46f36189"; // blijft onzichtbaar in UI
+    const DEFAULT_RPC = "https://mainnet.helius-rpc.com/?api-key=0053b3c9-a47d-4e7e-b76b-dbdc46f36189"; // niet tonen in UI
     const urlRpc = new URLSearchParams(location.search).get("rpc");
     const RPC_URL = urlRpc || DEFAULT_RPC || clusterApiUrl("mainnet-beta");
-    const connection = new Connection(RPC_URL, "confirmed");
+    const connection = new Connection(RPC_URL, "confirmed"); // voor burn/supply
 
-    // ===== UI refs =====
-    const H = (id)=>document.getElementById(id);
+    /* ===== UI ===== */
+    const H=(id)=>document.getElementById(id);
     const decimalsEl=H("decimals"), supplyEl=H("supply"), yourBalEl=H("yourBal");
     const decimalsEl_nl=H("decimals_nl"), supplyEl_nl=H("supply_nl"), yourBalEl_nl=H("yourBal_nl");
     const msgEl=H("msg"), msgEl_nl=H("msg_nl");
     const scanStatus=H("scanStatus"), scanStatus_nl=H("scanStatus_nl");
     const totalBurnedEl=H("totalBurned"), totalBurnedEl_nl=H("totalBurned_nl");
+    if (location.protocol!=="https:" && location.hostname!=="localhost") { H("httpsWarn")?.style && (H("httpsWarn").style.display="inline"); H("httpsWarn_nl")?.style && (H("httpsWarn_nl").style.display="inline"); }
 
-    if (location.protocol!=="https:" && location.hostname!=="localhost") { const a=H("httpsWarn"); if(a) a.style.display="inline"; const b=H("httpsWarn_nl"); if(b) b.style.display="inline"; }
-
+    /* ===== State & utils ===== */
     let provider=null, mintDecimals=0;
     const fmt=(n)=>Number(n).toLocaleString("nl-NL");
     const setMsg=(el,t,type="info")=>{ if(!el)return; el.textContent=t||""; el.className= type==="ok"?"ok":type==="warn"?"warn":"muted"; };
-
     function detectProvider(){ const any=window.solana; if(any?.isPhantom) return any; if(any) return any; return null; }
     async function signAndSend(tx){ const res=await provider.signAndSendTransaction(tx); const sig= typeof res==="string"?res:res?.signature; if(!sig) throw new Error("No signature."); await connection.confirmTransaction(sig,"confirmed"); return sig; }
     function uiToRawBigint(ui,dec){ const s=String(ui); if(!/^\d+(\.\d+)?$/.test(s)) throw new Error("Invalid amount."); const [a,b=""]=s.split("."); const pad=b.padEnd(dec,"0").slice(0,dec); return BigInt((a||"0")+pad); }
-    async function ensureAta(owner){ const ata=await getAssociatedTokenAddress(CBS_MINT,owner,false); const info=await connection.getAccountInfo(ata); if(!info){ const tx=new Transaction().add(createAssociatedTokenAccountInstruction(provider.publicKey,ata,owner,CBS_MINT)); tx.feePayer=provider.publicKey; tx.recentBlockhash=(await connection.getLatestBlockhash()).blockhash; await signAndSend(tx); } return ata; }
+    async function ensureAta(owner){ const ata=await getAssociatedTokenAddress(CBS_MINT,owner,false); const info=await connection.getAccountInfo(ata); if(!info){ const tx=new Transaction().add(createAssociatedTokenAccountInstruction(provider.publicKey,ata,owner,CBS_MINT)); tx.feePayer=provider.publicKey; tx.recentBlockhash=(await connection.getLatestBlockhash()).blockhash; await signAndSend(tx);} return ata; }
 
     async function refreshStats(){
       try{
         const mint=await getMint(connection,CBS_MINT);
         mintDecimals=mint.decimals??0;
         const sup= Number( (typeof mint.supply==="bigint")? mint.supply : BigInt(mint.supply.toString()) ) / (10**mintDecimals);
-        if (decimalsEl) decimalsEl.textContent=String(mintDecimals);
-        if (decimalsEl_nl) decimalsEl_nl.textContent=String(mintDecimals);
-        if (supplyEl) supplyEl.textContent=fmt(sup);
-        if (supplyEl_nl) supplyEl_nl.textContent=fmt(sup);
+        decimalsEl && (decimalsEl.textContent=String(mintDecimals));
+        decimalsEl_nl && (decimalsEl_nl.textContent=String(mintDecimals));
+        supplyEl && (supplyEl.textContent=fmt(sup));
+        supplyEl_nl && (supplyEl_nl.textContent=fmt(sup));
 
         if (provider?.publicKey){
           const ata=await getAssociatedTokenAddress(CBS_MINT, provider.publicKey,false);
           const acc=await connection.getParsedAccountInfo(ata);
           const parsed=acc.value?.data?.parsed;
           const ui = parsed ? (parsed.info?.tokenAmount?.uiAmount || 0) : 0;
-          if (yourBalEl) yourBalEl.textContent=fmt(ui);
-          if (yourBalEl_nl) yourBalEl_nl.textContent=fmt(ui);
+          yourBalEl && (yourBalEl.textContent=fmt(ui));
+          yourBalEl_nl && (yourBalEl_nl.textContent=fmt(ui));
         }
       }catch(e){
-        setMsg(msgEl,"Failed to load supply/decimals.", "warn");
-        setMsg(msgEl_nl,"Kon supply/decimals niet laden.", "warn");
+        setMsg(msgEl,"Failed to load supply/decimals.","warn");
+        setMsg(msgEl_nl,"Kon supply/decimals niet laden.","warn");
       }
     }
 
-    // ===== RPC health probe (duidelijke foutmelding) =====
-    async function rpcHealth(){
-      try{
-        const t0=performance.now();
-        const r=await fetch(RPC_URL,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({jsonrpc:"2.0",id:1,method:"getHealth"})});
-        const txt=await r.text();
-        const ok= txt.includes("ok");
-        const ms=Math.round(performance.now()-t0);
-        return {ok,ms};
-      }catch{return {ok:false,ms:null};}
+    /* ===== SCAN: RPC-pool + throttling (alleen voor teller) ===== */
+    const SCAN_RPCS = [
+      RPC_URL,                                   // 1) Helius (voorkeur)
+      "https://api.mainnet-beta.solana.com",     // 2) Public Solana RPC
+      "https://rpc.ankr.com/solana",             // 3) Ankr
+      "https://rpc.publicnode.com/solana"        // 4) PublicNode
+    ];
+    let scanRpcIndex = 0;
+    let scanConn = new Connection(SCAN_RPCS[scanRpcIndex], "confirmed");
+    const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
+    const isRateLimited=(e)=>{ const m=(e && (e.message||e.toString()))||""; return m.includes("429")||m.toLowerCase().includes("too many requests")||m.toLowerCase().includes("rate"); };
+    async function rotateScanRpc(){
+      scanRpcIndex = (scanRpcIndex + 1) % SCAN_RPCS.length;
+      scanConn = new Connection(SCAN_RPCS[scanRpcIndex], "confirmed");
+      const t = `RPC switch ${scanRpcIndex+1}/${SCAN_RPCS.length}`;
+      scanStatus && (scanStatus.textContent = t);
+      scanStatus_nl && (scanStatus_nl.textContent = t);
+      await sleep(300 + Math.random()*200);
     }
 
-    // ===== Burn Counter (robuust) =====
-    async function getParsedTransactionsChunked(sigs,{chunk=25,retries=3}={}){
+    async function getParsedTransactionsChunked(signatures,{chunk=20,retries=4}={}){
       const out=[];
-      for(let i=0;i<sigs.length;i+=chunk){
-        const part=sigs.slice(i,i+chunk).map(s=>s.signature);
-        let attempt=0; let done=false;
-        while(!done){
-          try{
-            const res=await connection.getParsedTransactions(part,{maxSupportedTransactionVersion:0});
-            out.push(...res); done=true;
-          }catch(e){
-            attempt++; if(attempt>retries) throw e;
-            await new Promise(r=>setTimeout(r, 250*attempt + Math.random()*200));
-          }
+      for(let i=0;i<signatures.length;i+=chunk){
+        const part=signatures.slice(i,i+chunk).map(s=>s.signature);
+        let attempt=0;
+        for(;;){
+          try{ const res=await scanConn.getParsedTransactions(part,{maxSupportedTransactionVersion:0}); out.push(...res); break; }
+          catch(e){ attempt++; if(isRateLimited(e)){ await rotateScanRpc(); continue; } if(attempt>retries) throw e; await sleep(250*attempt + Math.random()*200); }
         }
+        await sleep(120);
       }
       return out;
     }
 
-    async function scanAllBurns({pagesCap=5, perPage=200, onProgress}={}){
-      // pagesCap: hoeveel pagina's van signatures (quick=5, full=50 bijvoorbeeld)
-      const mintStr = CBS_MINT.toBase58();
-      const tokenProg = TOKEN_PROGRAM.toBase58();
+    async function scanAllBurns({pagesCap=5, perPage=150, onProgress}={}){
+      const mintStr=CBS_MINT.toBase58(); const tokenProg=TOKEN_PROGRAM.toBase58();
       let before, pages=0, totalRaw=0n;
 
       while(pages<pagesCap){
         pages++;
-        const sigs = await connection.getSignaturesForAddress(CBS_MINT,{ limit: perPage, before });
+        let sigs;
+        for(;;){
+          try{ sigs=await scanConn.getSignaturesForAddress(CBS_MINT,{limit:perPage,before}); break; }
+          catch(e){ if(isRateLimited(e)){ await rotateScanRpc(); continue; } throw e; }
+        }
         if(!sigs.length) break;
         before = sigs[sigs.length-1].signature;
 
-        const txs = await getParsedTransactionsChunked(sigs,{chunk:25,retries:4});
+        const txs = await getParsedTransactionsChunked(sigs,{chunk:20,retries:4});
         for(const tx of txs){
           if(!tx) continue;
-
-          const toCheck=[];
-          const top=tx.transaction?.message?.instructions||[];
-          toCheck.push(...top);
-          const inners=tx.meta?.innerInstructions||[];
-          for(const grp of inners) toCheck.push(...(grp.instructions||[]));
+          const toCheck=[...(tx.transaction?.message?.instructions||[])];
+          const inners=tx.meta?.innerInstructions||[]; for(const grp of inners) toCheck.push(...(grp.instructions||[]));
 
           for(const ix of toCheck){
-            const pid = ix.programId?.toBase58?.() || ix.programId || ix.program;
-            const parsed = ix.parsed;
-            if(!parsed) continue;
-            const typ = parsed.type || parsed?.info?.type;
-            if (!typ || (pid!==tokenProg && pid!=="spl-token")) continue;
-
-            const info = parsed.info || {};
-            const m = info.mint || info.mintAddress;
-            if (m !== mintStr) continue;
-            if (typ!=="burn" && typ!=="burnChecked") continue;
+            const pid=ix.programId?.toBase58?.() || ix.programId || ix.program || "";
+            const parsed=ix.parsed; if(!parsed) continue;
+            const typ=parsed.type || parsed?.info?.type;
+            if(!typ || (pid!==tokenProg && pid!=="spl-token")) continue;
+            const info=parsed.info||{}; const m=info.mint || info.mintAddress; if(m!==mintStr) continue;
+            if(typ!=="burn" && typ!=="burnChecked") continue;
 
             let raw=0n;
-            if (typeof info.amount !== "undefined"){
+            if(typeof info.amount!=="undefined"){
               const s=String(info.amount);
-              if (s.includes(".") && typeof info.decimals==="number"){
-                const [a,b=""]=s.split("."); const pad=b.padEnd(info.decimals,"0").slice(0,info.decimals);
-                raw = BigInt((a||"0")+pad);
-              } else {
-                raw = BigInt(s);
-              }
-            } else {
+              if(s.includes(".") && typeof info.decimals==="number"){ const [a,b=""]=s.split("."); raw=BigInt((a||"0")+b.padEnd(info.decimals,"0").slice(0,info.decimals)); }
+              else raw=BigInt(s);
+            }else{
               const pre=tx.meta?.preTokenBalances||[], post=tx.meta?.postTokenBalances||[];
               const owners=new Set(); pre.forEach(b=>{if(b.mint===mintStr) owners.add(b.owner)}); post.forEach(b=>{if(b.mint===mintStr) owners.add(b.owner)});
-              for(const o of owners){
-                const p=pre.find(b=>b.mint===mintStr&&b.owner===o); const q=post.find(b=>b.mint===mintStr&&b.owner===o);
-                const pRaw=p?BigInt(p.uiTokenAmount.amount):0n; const qRaw=q?BigInt(q.uiTokenAmount.amount):0n;
-                if(pRaw>qRaw) raw += (pRaw-qRaw);
-              }
+              for(const o of owners){ const p=pre.find(b=>b.mint===mintStr&&b.owner===o); const q=post.find(b=>b.mint===mintStr&&b.owner===o);
+                const pRaw=p?BigInt(p.uiTokenAmount.amount):0n; const qRaw=q?BigInt(q.uiTokenAmount.amount):0n; if(pRaw>qRaw) raw+=(pRaw-qRaw); }
             }
             totalRaw += raw;
           }
         }
-        if (onProgress) onProgress({pages, totalRaw});
-        if (sigs.length < perPage) break;
+        onProgress && onProgress({pages,totalRaw});
+        await sleep(200 + Math.random()*150);
+        if(sigs.length < perPage) break;
       }
       return totalRaw;
     }
 
     function renderBurnTotal(totalRaw){
       const ui = Number(totalRaw) / (10**(mintDecimals||0));
-      if (totalBurnedEl) totalBurnedEl.textContent = fmt(ui);
-      if (totalBurnedEl_nl) totalBurnedEl_nl.textContent = fmt(ui);
+      totalBurnedEl && (totalBurnedEl.textContent = fmt(ui));
+      totalBurnedEl_nl && (totalBurnedEl_nl.textContent = fmt(ui));
     }
 
-    // ===== EN actions =====
+    /* ===== EN handlers ===== */
     H("connectBtn")?.addEventListener("click", async ()=>{
       try{
-        provider=detectProvider(); if(!provider){ setMsg(msgEl,"No wallet found.", "warn"); return; }
+        provider=detectProvider(); if(!provider){ setMsg(msgEl,"No wallet found.","warn"); return; }
         const resp=await provider.connect(); const pk=(resp?.publicKey||provider.publicKey).toBase58();
         H("walletStatus").textContent=`Connected: ${pk.slice(0,6)}…${pk.slice(-6)}`;
         H("burnBtn").disabled=false; setMsg(msgEl,"","info"); await refreshStats();
-      }catch{ setMsg(msgEl,"Connect failed.", "warn"); }
+      }catch{ setMsg(msgEl,"Connect failed.","warn"); }
     });
     H("refreshBtn")?.addEventListener("click", ()=>refreshStats());
-
     H("burnBtn")?.addEventListener("click", async ()=>{
       try{
-        if(!provider?.publicKey) return setMsg(msgEl,"Connect wallet first.", "warn");
-        const v=(H("amount")?.value||"").trim(); if(!v||Number(v)<=0) return setMsg(msgEl,"Enter a valid amount.", "warn");
+        if(!provider?.publicKey) return setMsg(msgEl,"Connect wallet first.","warn");
+        const v=(H("amount")?.value||"").trim(); if(!v||Number(v)<=0) return setMsg(msgEl,"Enter a valid amount.","warn");
         const fromAta=await ensureAta(provider.publicKey); const raw=uiToRawBigint(v,mintDecimals);
         const tx=new Transaction().add(createBurnCheckedInstruction(fromAta,CBS_MINT,provider.publicKey,raw,mintDecimals));
         tx.feePayer=provider.publicKey; tx.recentBlockhash=(await connection.getLatestBlockhash()).blockhash;
         setMsg(msgEl,"Sending burn…"); await signAndSend(tx); setMsg(msgEl,"Burn confirmed ✅","ok"); H("amount").value=""; await refreshStats();
-      }catch{ setMsg(msgEl,"Burn failed.", "warn"); }
+      }catch{ setMsg(msgEl,"Burn failed.","warn"); }
     });
 
-    // ===== NL actions =====
+    /* ===== NL handlers ===== */
     H("connectBtn_nl")?.addEventListener("click", async ()=>{
       try{
-        provider=detectProvider(); if(!provider){ setMsg(msgEl_nl,"Geen wallet gevonden.", "warn"); return; }
+        provider=detectProvider(); if(!provider){ setMsg(msgEl_nl,"Geen wallet gevonden.","warn"); return; }
         const resp=await provider.connect(); const pk=(resp?.publicKey||provider.publicKey).toBase58();
         H("walletStatus_nl").textContent=`Verbonden: ${pk.slice(0,6)}…${pk.slice(-6)}`;
         H("burnBtn_nl").disabled=false; setMsg(msgEl_nl,"","info"); await refreshStats();
-      }catch{ setMsg(msgEl_nl,"Verbinden mislukt.", "warn"); }
+      }catch{ setMsg(msgEl_nl,"Verbinden mislukt.","warn"); }
     });
     H("refreshBtn_nl")?.addEventListener("click", ()=>refreshStats());
-
     H("burnBtn_nl")?.addEventListener("click", async ()=>{
       try{
-        if(!provider?.publicKey) return setMsg(msgEl_nl,"Verbind eerst je wallet.", "warn");
-        const v=(H("amount_nl")?.value||"").trim(); if(!v||Number(v)<=0) return setMsg(msgEl_nl,"Vul een geldig bedrag in.", "warn");
+        if(!provider?.publicKey) return setMsg(msgEl_nl,"Verbind eerst je wallet.","warn");
+        const v=(H("amount_nl")?.value||"").trim(); if(!v||Number(v)<=0) return setMsg(msgEl_nl,"Vul een geldig bedrag in.","warn");
         const fromAta=await ensureAta(provider.publicKey); const raw=uiToRawBigint(v,mintDecimals);
         const tx=new Transaction().add(createBurnCheckedInstruction(fromAta,CBS_MINT,provider.publicKey,raw,mintDecimals));
         tx.feePayer=provider.publicKey; tx.recentBlockhash=(await connection.getLatestBlockhash()).blockhash;
         setMsg(msgEl_nl,"Burn verzonden…"); await signAndSend(tx); setMsg(msgEl_nl,"Burn bevestigd ✅","ok"); H("amount_nl").value=""; await refreshStats();
-      }catch{ setMsg(msgEl_nl,"Burn mislukt.", "warn"); }
+      }catch{ setMsg(msgEl_nl,"Burn mislukt.","warn"); }
     });
 
-    // ===== Scan buttons (met health-check & progress) =====
+    /* ===== Scan knoppen ===== */
     async function runScan({full=false}={}){
       const status = scanStatus || scanStatus_nl;
-      const btnQ = H(full?"scanFull":"scanQuick") || H(full?"scanFull_nl":"scanQuick_nl");
-      const otherBtn = H(!full?"scanFull":"scanQuick") || H(!full?"scanFull_nl":"scanQuick_nl");
+      const btnQ  = H(full?"scanFull":"scanQuick") || H(full?"scanFull_nl":"scanQuick_nl");
+      const btnO  = H(!full?"scanFull":"scanQuick") || H(!full?"scanFull_nl":"scanQuick_nl");
       try{
-        btnQ.disabled = true; if(otherBtn) otherBtn.disabled = true;
-        if(status) status.textContent="Checking RPC…";
-        const health = await rpcHealth();
-        if(!health.ok){ if(status) status.textContent="RPC blocked or unhealthy (check Allowed Origins / key quota)"; return; }
-        if(status) status.textContent=`Scanning… (latency ${health.ms??"?"}ms)`;
+        btnQ && (btnQ.disabled=true); btnO && (btnO.disabled=true);
+        status && (status.textContent="Scanning…");
         if(!mintDecimals) await refreshStats();
-
-        const pagesCap = full ? 50 : 5;     // full = grondig; quick = snel
-        const perPage  = 200;               // lager = stabieler
-        let lastPages=0, lastRaw=0n;
         const totalRaw = await scanAllBurns({
-          pagesCap, perPage,
-          onProgress: ({pages,totalRaw})=>{
-            lastPages=pages; lastRaw=totalRaw;
-            if(status) status.textContent = `Pages ${pages}/${pagesCap}…`;
-          }
+          pagesCap: full ? 50 : 5,
+          perPage: 150,
+          onProgress: ({pages})=>{ status && (status.textContent = `Scanning page ${pages}…`); }
         });
         renderBurnTotal(totalRaw);
-        if(status) status.textContent = `Done (${lastPages} page(s))`;
+        status && (status.textContent="Done");
       }catch(e){
-        if(status) status.textContent = "Failed to scan";
+        status && (status.textContent="Failed to scan");
       }finally{
-        btnQ.disabled=false; if(otherBtn) otherBtn.disabled=false;
+        btnQ && (btnQ.disabled=false); btnO && (btnO.disabled=false);
       }
     }
-
     H("scanQuick")?.addEventListener("click", ()=>runScan({full:false}));
     H("scanFull")?.addEventListener("click", ()=>runScan({full:true}));
     H("scanQuick_nl")?.addEventListener("click", ()=>runScan({full:false}));
     H("scanFull_nl")?.addEventListener("click", ()=>runScan({full:true}));
 
-    // ===== Init =====
+    /* Init */
     document.getElementById("mintLbl").textContent = CBS_MINT.toBase58();
     await refreshStats();
-    // start met snelle scan
     H("scanQuick")?.click(); H("scanQuick_nl")?.click();
   </script>
 </body>
