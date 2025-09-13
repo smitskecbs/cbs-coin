@@ -1,106 +1,320 @@
-<!doctype html>
-<html lang="nl">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CBS Coin — Burn (Supply ↓)</title>
-  <meta name="color-scheme" content="light dark" />
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CBS Coin – Burn (Supply ↓)</title>
+
+  <!-- Match index.html font -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+
   <style>
+    /* ===== Theme (copy van index.html) ===== */
     :root{
-      --brand:#127a3c;
-      --brand-ink:#0c5a2c;
-      --bg:#f6f7f9;
-      --card:#ffffff;
-      --ink:#0f172a;
-      --ink-2:#475569;
-      --border:#e5e7eb;
-      --ok:#065f46;
-      --warn:#7c2d12;
-    }
-    @media (prefers-color-scheme: dark){
-      :root{
-        --bg:#0b1220; --card:#0f172a; --ink:#e5e7eb; --ink-2:#9ba3af; --border:#1f2937;
-      }
+      --bg1:#0a0c10; --bg2:#0f141b;
+      --card:#0f151c; --card2:#0c1016;
+      --line:#0afbe0; --line2:#38f8ff;
+      --fg:#eafffb; --muted:#a8d6cd; --note:#7ee9dc;
+      --shadow: 0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
+      --radius:18px;
+      --ok:#24e6b5; --warn:#ffad7a;
     }
     *{box-sizing:border-box}
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:var(--bg);color:var(--ink)}
-    .brandbar{background:linear-gradient(135deg,var(--brand),#0f6a32); color:#fff; padding:28px 16px}
-    .wrap{max-width:960px;margin:0 auto;padding:0 16px}
-    h1{margin:0;font-size:1.9rem;font-weight:800;letter-spacing:.2px}
-    .subtitle{margin:8px 0 0;font-size:1rem;opacity:.9}
-    .grid{display:grid;grid-template-columns:1fr;gap:16px;margin:16px 0 28px}
-    @media (min-width:860px){ .grid{grid-template-columns:1fr 1fr} }
-    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
-    .card h2{margin:0 0 10px;font-size:1.2rem}
-    .muted{color:var(--ink-2)}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:'Orbitron',sans-serif; color:var(--fg);
+      background:
+        radial-gradient(900px 600px at 100% -10%, rgba(0,255,230,.10), transparent 60%),
+        radial-gradient(700px 500px at -10% 110%, rgba(0,170,255,.09), transparent 60%),
+        linear-gradient(135deg,var(--bg1),var(--bg2));
+      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+    }
+
+    /* ===== Header (copy style) ===== */
+    .topbar{
+      position:sticky; top:0; z-index:20;
+      display:flex; align-items:center; justify-content:space-between; gap:.75rem;
+      padding:.8rem 1rem; backdrop-filter:blur(6px);
+      background:linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0));
+      border-bottom:1px solid rgba(0,255,240,.08);
+    }
+    .brand{display:flex; align-items:center; gap:.7rem}
+    .brand img{width:38px; height:38px; border-radius:10px; filter:drop-shadow(0 0 10px rgba(0,255,230,.35))}
+    .brand h1{margin:0; font-size:1.05rem; letter-spacing:.4px; font-weight:700; color:#bffef2}
+
+    .top-actions{display:flex; align-items:center; gap:.75rem}
+    #langSwitch{
+      background:linear-gradient(180deg, #7dffe9, #55f1e7);
+      color:#012022; font-weight:900; border:1px solid rgba(0,255,240,.45);
+      padding:.55rem .9rem; border-radius:12px; cursor:pointer;
+      box-shadow:0 8px 18px rgba(0,255,230,.18), inset 0 -6px 10px rgba(0,0,0,.15);
+      transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
+      white-space:nowrap;
+    }
+    #langSwitch:hover{ transform:translateY(-1px); box-shadow:0 10px 22px rgba(0,255,230,.26) }
+
+    .social{
+      display:flex; align-items:center; gap:.6rem;
+      padding:.25rem .4rem; border-radius:12px;
+      background:linear-gradient(180deg, rgba(0,255,230,.05), rgba(0,255,230,.02));
+      border:1px solid rgba(0,255,240,.12);
+    }
+    .icon-link{
+      display:inline-flex; align-items:center; justify-content:center;
+      width:36px; height:36px; border-radius:10px;
+      background:linear-gradient(180deg, rgba(0,255,230,.06), rgba(0,255,230,.02));
+      border:1px solid rgba(0,255,240,.18);
+      box-shadow:inset 0 0 0 1px rgba(0,255,240,.06);
+      transition:transform .12s ease, box-shadow .12s ease;
+      text-decoration:none;
+    }
+    .icon-link:hover{ transform:translateY(-1px); box-shadow:0 0 16px rgba(0,255,230,.35) }
+    .icon{ width:20px; height:20px; display:block; }
+    .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,1px,1px); border:0; }
+
+    /* ===== Layout ===== */
+    .container{ max-width:1100px; margin:0 auto; padding:1.2rem 1rem 2.2rem }
+
+    .hero{
+      display:grid; grid-template-columns:120px 1fr; gap:1.2rem; align-items:center;
+      padding:1.2rem; margin:10px auto 18px; border-radius:var(--radius);
+      background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35));
+      border:1px solid rgba(0,255,240,.18); box-shadow:var(--shadow);
+    }
+    .hero .logo-wrap{
+      position:relative; width:120px; height:120px; border-radius:16px; overflow:hidden;
+      background:radial-gradient(closest-side, rgba(0,255,230,.18), rgba(0,255,230,.04) 58%, transparent 62%);
+      display:grid; place-items:center;
+    }
+    .hero .logo-wrap::after{
+      content:""; position:absolute; inset:-8%;
+      border-radius:18px; box-shadow:0 0 0 2px rgba(0,255,230,.18), inset 0 0 30px rgba(0,255,230,.14);
+      pointer-events:none;
+    }
+    .hero .logo{width:86%; height:86%; object-fit:contain}
+    .hero h2{ margin:.15rem 0 0; color:var(--note); font-size:1.05rem; font-weight:600 }
+    .hero p{ margin:.35rem 0 0; color:var(--muted); font-size:.95rem }
+
+    .grid{ display:grid; gap:16px; grid-template-columns:repeat(12,1fr) }
+    .card{
+      grid-column:span 12;
+      background:linear-gradient(180deg, var(--card), var(--card2));
+      border:1px solid rgba(0,255,240,.14);
+      border-radius:var(--radius); box-shadow:var(--shadow);
+      padding:18px;
+    }
+    .card h3{ margin:.2rem 0 .6rem; color:#bffef2; font-size:1.05rem }
+    .card p{ margin:0 0 .9rem; color:var(--muted); font-size:.95rem }
+
+    .ok{ color:var(--ok) } .warn{ color:var(--warn) }
     .row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
-    button{padding:10px 14px;border-radius:12px;border:1px solid var(--border);cursor:pointer;background:#fff}
-    button.primary{background:var(--brand);color:#fff;border-color:transparent}
-    button:disabled{opacity:.55;cursor:not-allowed}
+
     input, .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace}
-    input{padding:10px 12px;border:1px solid var(--border);border-radius:12px;width:220px;background:transparent;color:inherit}
-    code{background:rgba(148,163,184,.15);padding:2px 6px;border-radius:6px}
-    .ok{color:var(--ok)} .warn{color:var(--warn)}
-    details{border-top:1px dashed var(--border);padding-top:10px;margin-top:10px}
-    .badge{display:inline-flex;align-items:center;gap:6px;background:rgba(16,185,129,.12);color:#065f46;border:1px solid rgba(16,185,129,.3);padding:3px 8px;border-radius:999px;font-size:.85rem}
-    .kbd{padding:2px 6px;border:1px solid var(--border);border-bottom-width:2px;border-radius:8px}
+    input{
+      padding:12px 14px; border-radius:12px; width:220px; color:var(--fg);
+      background:linear-gradient(180deg, rgba(0,255,230,.06), rgba(0,255,230,.02));
+      border:1px solid rgba(0,255,240,.22);
+      box-shadow:inset 0 0 0 1px rgba(0,255,240,.06);
+    }
+
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center;
+      min-width:140px; padding:12px 18px; border-radius:10px;
+      text-decoration:none; font-weight:900; font-size:.94rem; color:#001010;
+      background:linear-gradient(180deg, #5afff0, #2bffe4); border:1px solid rgba(0,255,240,.7);
+      box-shadow:0 0 12px rgba(0,255,230,.55), 0 0 24px rgba(0,255,230,.25), inset 0 -8px 14px rgba(0,0,0,.14);
+      transition:transform .15s ease, box-shadow .15s ease, filter .15s ease; white-space:nowrap; cursor:pointer;
+    }
+    .btn:hover{ transform:translateY(-2px) scale(1.03); box-shadow:0 0 16px rgba(0,255,230,.75), 0 0 32px rgba(0,255,230,.35) }
+    .btn:disabled{ opacity:.55; cursor:not-allowed }
+
+    /* ===== Flame decoration next to Burn ===== */
+    .burn-row{ display:flex; align-items:center; gap:14px; flex-wrap:wrap }
+    .flames{
+      display:flex; align-items:flex-end; gap:6px; padding:4px 8px 0 0;
+      filter:drop-shadow(0 0 10px rgba(255,120,0,.45));
+      animation: flicker 1.2s infinite ease-in-out;
+    }
+    .flame{ width:18px; height:24px }
+    @keyframes flicker{
+      0%,100%{ transform:translateY(0) }
+      50%{ transform:translateY(-1px) }
+    }
+
+    /* Footer (klein) */
+    footer{ margin:24px auto 40px; text-align:center; color:var(--muted) }
+    footer a{ color:#79ffee; text-decoration:none } footer a:hover{ text-decoration:underline }
   </style>
 </head>
 <body>
-  <header class="brandbar">
-    <div class="wrap">
-      <h1>🔥 CBS Coin — Burnpagina</h1>
-      <p class="subtitle">Verbind je wallet, vul het bedrag in en voer een <b>échte burn</b> uit (supply daalt on-chain).</p>
+  <!-- ===== Header ===== -->
+  <header class="topbar">
+    <div class="brand">
+      <img src="logo.png" alt="CBS Logo">
+      <h1>CBS Coin</h1>
+    </div>
+
+    <div class="top-actions">
+      <nav class="social" aria-label="Social links">
+        <a class="icon-link" href="https://x.com/CBS_Coin" target="_blank" rel="noopener" aria-label="X (Twitter)">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M4 4h3.7l4.6 6 5.3-6H22l-7.5 8.4L22 20h-3.7l-5-6.5L7.4 20H2.1l8.3-9.3L4 4Z" fill="currentColor"/>
+          </svg><span class="sr-only">X</span>
+        </a>
+        <a class="icon-link" href="https://t.me/CBS_Coin" target="_blank" rel="noopener" aria-label="Telegram">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M21.9 4.6c.3-.9-.5-1.3-1.3-1L2.5 10.3c-.9.4-.9 1 .2 1.3l4.8 1.5 1.8 5.8c.2.9.7 1 .9 0l1.3-4.2 5.1 3.8c.7.5 1.3.2 1.5-.7l3.8-13.2Z" fill="currentColor"/>
+          </svg><span class="sr-only">Telegram</span>
+        </a>
+        <a class="icon-link" href="https://discord.gg/DxSB3ERQ" target="_blank" rel="noopener" aria-label="Discord">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path d="M19.6 5.1A16 16 0 0 0 15.8 4l-.2.3c1 .2 1.9.6 2.8 1.2a8.7 8.7 0 0 0-3.2-1c-.3 0-.5.2-.6.4a12 12 0 0 0-5.6 0c-.2 0-.4-.3-.6-.4-1 .1-2 .5-3 1a13 13 0 0 1 2.7-1.2L8 4a16 16 0 0 0-3.8 1.1C1.6 8.7.9 12 1.1 15.2c1.4 1 2.9 1.7 4.5 2.1l.8-1.3c-.4-.1-.9-.3-1.3-.5l.3-.3c2.6 1.2 5.5 1.2 8 0l.3.3c-.4.2-.8.4-1.2.5l.7 1.3c1.6-.4 3.2-1.1 4.6-2.1.3-3.6-.5-6.9-2-10.5ZM9.1 13.6c-.8 0-1.5-.7-1.5-1.6 0-.8.7-1.5 1.5-1.5s1.5.7 1.5 1.5c0 .9-.7 1.6-1.5 1.6Zm5.8 0c-.8 0-1.5-.7-1.5-1.6 0-.8.7-1.5 1.5-1.5s1.6.7 1.6 1.5c0 .9-.8 1.6-1.6 1.6Z" fill="currentColor"/>
+          </svg><span class="sr-only">Discord</span>
+        </a>
+      </nav>
+
+      <button id="langSwitch">NL 🇳🇱</button>
     </div>
   </header>
 
-  <main class="wrap">
-    <div class="grid">
-      <section class="card">
-        <h2>Wallet</h2>
-        <div class="row" style="margin:6px 0 8px;">
-          <button id="connectBtn" class="primary">Wallet verbinden</button>
-          <span id="walletStatus" class="muted">Niet verbonden</span>
-          <span id="httpsWarn" class="warn" style="display:none;">(Deze pagina is niet via HTTPS — wallets kunnen blokkeren)</span>
+  <!-- ===== EN Content ===== -->
+  <div id="content-en">
+    <div class="container">
+      <section class="hero">
+        <div class="logo-wrap"><img class="logo" src="logo.png" alt="CBS Logo"></div>
+        <div>
+          <h2>Real Token Burn (supply goes down)</h2>
+          <p>Connect your wallet, enter an amount, and burn CBS using the SPL <span class="mono">burnChecked</span> instruction.</p>
         </div>
-        <p class="muted">Tip: je kunt je eigen RPC meesturen via <code class="mono">?rpc=…</code>. Standaard gebruiken we jouw Helius RPC key.</p>
-        <div class="badge">Supply daalt écht bij deze burn</div>
+      </section>
+
+      <section class="grid">
+        <div class="card" style="grid-column:span 6">
+          <h3>Wallet</h3>
+          <div class="row" style="margin:6px 0 8px;">
+            <button id="connectBtn" class="btn">Connect Wallet</button>
+            <span id="walletStatus" class="muted">Not connected</span>
+            <span id="httpsWarn" class="warn" style="display:none;">(This page is not served via HTTPS — wallets may block)</span>
+          </div>
+          <p class="muted">Default RPC uses your Helius key. You can override with <span class="mono">?rpc=…</span>.</p>
+        </div>
+
+        <div class="card" style="grid-column:span 6">
+          <h3>📊 Stats</h3>
+          <p><b>Mint:</b> <span id="mintLbl" class="mono">B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</span></p>
+          <p><b>Decimals:</b> <span id="decimals">…</span></p>
+          <p><b>Total supply:</b> <span id="supply">…</span> CBS</p>
+          <p><b>Your CBS balance:</b> <span id="yourBal">—</span> CBS</p>
+          <button id="refreshBtn" class="btn">Refresh stats</button>
+        </div>
       </section>
 
       <section class="card">
-        <h2>📊 Statistiek</h2>
-        <p><b>Mint:</b> <code id="mintLbl" class="mono">B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code></p>
-        <p><b>Decimals:</b> <span id="decimals">…</span></p>
-        <p><b>Huidige totale supply:</b> <span id="supply">…</span> CBS</p>
-        <p><b>Jouw CBS-saldo:</b> <span id="yourBal">—</span> CBS</p>
+        <h3>🧯 Burn</h3>
+        <p class="muted">This burns tokens from your own account and lowers the on-chain supply.</p>
+        <div class="burn-row" style="margin:10px 0 14px;">
+          <!-- Flames -->
+          <div class="flames" aria-hidden="true">
+            <!-- simple SVG flames (2) -->
+            <svg class="flame" viewBox="0 0 24 24"><path fill="#ffb56b" d="M12 22c4 0 7-3.1 7-7 0-5.2-5.2-7.7-5.2-11.1 0-1.2-1.1-2.1-2.3-1.6C9.1 2.1 7 5.5 7 9.5c0 2.7 1.8 4.9 4.1 5.5-1.2-2.5.7-4.4 1.9-5.2-.5 1.8.8 3.2 1.8 4 .8.7 1.2 1.5 1.2 2.5 0 2.2-1.8 4-4 4Z"/></svg>
+            <svg class="flame" viewBox="0 0 24 24"><path fill="#ff894a" d="M12 22a5.5 5.5 0 0 0 5.5-5.5c0-3.5-3.5-5.2-3.5-7.6 0-.8-.8-1.4-1.7-1.1C10.9 8.3 9.5 10.8 9.5 13.5c0 1.8 1.2 3.3 2.9 3.7-.8-1.6.5-3 .9-3.5 0 1.2.9 2 1.5 2.5.5.5.7 1 .7 1.6A3.5 3.5 0 0 1 12 22Z"/></svg>
+          </div>
+
+          <label for="amount"><b>Amount (CBS)</b></label>
+          <input id="amount" type="number" min="0" step="0.000001" placeholder="e.g. 10000"/>
+          <button id="burnBtn" class="btn" disabled>Burn (Supply ↓)</button>
+        </div>
+
+        <p id="msg" class="muted" style="margin-top:6px;"></p>
+        <details>
+          <summary class="muted">Technical details / logs</summary>
+          <pre id="log" class="mono" style="white-space:pre-wrap;"></pre>
+        </details>
       </section>
+
+      <footer>
+        Need help? <a href="mailto:cbs.coin12@gmail.com">cbs.coin12@gmail.com</a>
+      </footer>
     </div>
+  </div>
 
-    <section class="card">
-      <h2>🧯 Échte burn</h2>
-      <div class="row" style="margin:10px 0 14px;">
-        <label for="amount"><b>Bedrag (CBS)</b></label>
-        <input id="amount" type="number" min="0" step="0.000001" placeholder="bijv. 10000" />
-        <button id="burnBtn" class="primary" disabled>Echte burn (supply ↓)</button>
-        <button id="refreshBtn" class="">Ververs statistiek</button>
-      </div>
-      <p id="msg" class="muted" style="margin-top:6px;"></p>
-      <details>
-        <summary class="muted">Technische details / foutlogs</summary>
-        <pre id="log" class="mono" style="white-space:pre-wrap;"></pre>
-      </details>
-    </section>
-  </main>
+  <!-- ===== NL Content ===== -->
+  <div id="content-nl" style="display:none">
+    <div class="container">
+      <section class="hero">
+        <div class="logo-wrap"><img class="logo" src="logo.png" alt="CBS Logo"></div>
+        <div>
+          <h2>Echte token burn (supply daalt)</h2>
+          <p>Verbind je wallet, vul het bedrag in en brand CBS via de SPL <span class="mono">burnChecked</span> instructie.</p>
+        </div>
+      </section>
 
+      <section class="grid">
+        <div class="card" style="grid-column:span 6">
+          <h3>Wallet</h3>
+          <div class="row" style="margin:6px 0 8px;">
+            <button id="connectBtn_nl" class="btn">Wallet verbinden</button>
+            <span id="walletStatus_nl" class="muted">Niet verbonden</span>
+            <span id="httpsWarn_nl" class="warn" style="display:none;">(Pagina niet via HTTPS — wallets kunnen blokkeren)</span>
+          </div>
+          <p class="muted">Standaard RPC gebruikt je Helius key. Je kunt overriden met <span class="mono">?rpc=…</span>.</p>
+        </div>
+
+        <div class="card" style="grid-column:span 6">
+          <h3>📊 Statistiek</h3>
+          <p><b>Mint:</b> <span class="mono">B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</span></p>
+          <p><b>Decimals:</b> <span id="decimals_nl">…</span></p>
+          <p><b>Totale supply:</b> <span id="supply_nl">…</span> CBS</p>
+          <p><b>Jouw CBS-saldo:</b> <span id="yourBal_nl">—</span> CBS</p>
+          <button id="refreshBtn_nl" class="btn">Ververs statistiek</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h3>🧯 Burn</h3>
+        <p class="muted">Dit brandt tokens uit je eigen account en laat de on-chain supply dalen.</p>
+        <div class="burn-row" style="margin:10px 0 14px;">
+          <div class="flames" aria-hidden="true">
+            <svg class="flame" viewBox="0 0 24 24"><path fill="#ffb56b" d="M12 22c4 0 7-3.1 7-7 0-5.2-5.2-7.7-5.2-11.1 0-1.2-1.1-2.1-2.3-1.6C9.1 2.1 7 5.5 7 9.5c0 2.7 1.8 4.9 4.1 5.5-1.2-2.5.7-4.4 1.9-5.2-.5 1.8.8 3.2 1.8 4 .8.7 1.2 1.5 1.2 2.5 0 2.2-1.8 4-4 4Z"/></svg>
+            <svg class="flame" viewBox="0 0 24 24"><path fill="#ff894a" d="M12 22a5.5 5.5 0 0 0 5.5-5.5c0-3.5-3.5-5.2-3.5-7.6 0-.8-.8-1.4-1.7-1.1C10.9 8.3 9.5 10.8 9.5 13.5c0 1.8 1.2 3.3 2.9 3.7-.8-1.6.5-3 .9-3.5 0 1.2.9 2 1.5 2.5.5.5.7 1 .7 1.6A3.5 3.5 0 0 1 12 22Z"/></svg>
+          </div>
+
+          <label for="amount_nl"><b>Bedrag (CBS)</b></label>
+          <input id="amount_nl" type="number" min="0" step="0.000001" placeholder="bijv. 10000"/>
+          <button id="burnBtn_nl" class="btn" disabled>Burn (Supply ↓)</button>
+        </div>
+
+        <p id="msg_nl" class="muted" style="margin-top:6px;"></p>
+        <details>
+          <summary class="muted">Technische details / logs</summary>
+          <pre id="log_nl" class="mono" style="white-space:pre-wrap;"></pre>
+        </details>
+      </section>
+
+      <footer>
+        Hulp nodig? <a href="mailto:cbs.coin12@gmail.com">cbs.coin12@gmail.com</a>
+      </footer>
+    </div>
+  </div>
+
+  <!-- ===== Language toggle (match index) ===== -->
+  <script>
+    const btn = document.getElementById("langSwitch");
+    const en = document.getElementById("content-en");
+    const nl = document.getElementById("content-nl");
+    let isEN = true;
+    btn.addEventListener("click", ()=>{
+      isEN = !isEN;
+      en.style.display = isEN ? "block" : "none";
+      nl.style.display = isEN ? "none"  : "block";
+      btn.textContent = isEN ? "NL 🇳🇱" : "EN 🇬🇧";
+      window.scrollTo({ top:0, behavior:'smooth' });
+    });
+  </script>
+
+  <!-- ===== Burn logic (alleen échte burn) ===== -->
   <script type="module">
-    // ---------- VEILIGHEIDSNOTITIE ----------
-    // Deze pagina bevat een publieke RPC key. Beperk misbruik:
-    // - Gebruik in Helius "Allowed Origins" (domain restricties)
-    // - Gebruik een aparte key met alleen RPC-toegang
-    // - Je kunt ?rpc=... in de URL meegeven om te overriden
-    const DEFAULT_RPC = "https://mainnet.helius-rpc.com/?api-key=0053b3c9-a47d-4e7e-b76b-dbdc46f36189";
-
-    // ---------- Buffer polyfill (nodig voor spl-token in browser) ----------
+    // ---- Buffer polyfill (vereist door spl-token in de browser) ----
     try {
       if (!window.Buffer) {
         const { Buffer } = await import("https://esm.sh/buffer@6.0.3");
@@ -108,24 +322,21 @@
       }
     } catch (e) { console.warn("Buffer polyfill kon niet laden:", e); }
 
-    // ---------- Helpers ----------
-    async function importWithFallback(primary, fallback){
+    // ---- Helper: dynamic import met fallback ----
+    async function importWithFallback(primary, fallback) {
       try { return await import(primary); }
-      catch(e){ console.warn("Primary import failed:", primary, e); return await import(fallback); }
+      catch (e) { console.warn("Primary import failed:", primary, e); return await import(fallback); }
     }
-    function $(id){ return document.getElementById(id); }
-    function logLine(...args){
-      console.log(...args);
-      $("log").textContent += args.map(a => (typeof a === "object" ? JSON.stringify(a) : String(a))).join(" ") + "\n";
-    }
-    function setMsg(text, type="info"){
-      $("msg").textContent = text;
-      $("msg").className = type==="ok"?"ok":type==="warn"?"warn":"muted";
-      logLine("[MSG]", text);
-    }
-    if (location.protocol !== "https:" && location.hostname !== "localhost") $("httpsWarn").style.display="inline";
 
-    // ---------- Imports ----------
+    // HTTPS waarschuwing in beide talen
+    if (location.protocol !== "https:" && location.hostname !== "localhost") {
+      const enWarn = document.getElementById("httpsWarn");
+      const nlWarn = document.getElementById("httpsWarn_nl");
+      if (enWarn) enWarn.style.display = "inline";
+      if (nlWarn) nlWarn.style.display = "inline";
+    }
+
+    // Imports
     const web3 = await importWithFallback(
       "https://esm.sh/@solana/web3.js@1.95.3",
       "https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"
@@ -134,57 +345,78 @@
       "https://esm.sh/@solana/spl-token@0.4.7",
       "https://unpkg.com/@solana/spl-token@0.4.7/lib/index.iife.min.js"
     );
+
     const { Connection, clusterApiUrl, PublicKey, Transaction } = web3;
     const { getMint, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, createBurnCheckedInstruction } = spl;
 
-    // ---------- Config ----------
+    // ---- Config ----
     const CBS_MINT = new PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
-    $("mintLbl").textContent = CBS_MINT.toBase58();
-
-    // RPC keus: URL ?rpc=... heeft voorrang, anders DEFAULT_RPC, anders clusterApiUrl
+    const DEFAULT_RPC = "https://mainnet.helius-rpc.com/?api-key=0053b3c9-a47d-4e7e-b76b-dbdc46f36189"; // jouw key
     const urlRpc = new URLSearchParams(location.search).get("rpc");
     const RPC_URL = urlRpc || DEFAULT_RPC || clusterApiUrl("mainnet-beta");
     const connection = new Connection(RPC_URL, "confirmed");
 
-    // ---------- UI refs ----------
-    const connectBtn = $("connectBtn");
-    const walletStatus = $("walletStatus");
-    const decimalsEl = $("decimals");
-    const supplyEl = $("supply");
-    const yourBalEl = $("yourBal");
-    const burnBtn = $("burnBtn");
-    const refreshBtn = $("refreshBtn");
-    const amountInput = $("amount");
+    // EN refs
+    const connectBtn   = document.getElementById("connectBtn");
+    const walletStatus = document.getElementById("walletStatus");
+    const decimalsEl   = document.getElementById("decimals");
+    const supplyEl     = document.getElementById("supply");
+    const yourBalEl    = document.getElementById("yourBal");
+    const burnBtn      = document.getElementById("burnBtn");
+    const refreshBtn   = document.getElementById("refreshBtn");
+    const amountInput  = document.getElementById("amount");
+    const msgEl        = document.getElementById("msg");
+    const logEl        = document.getElementById("log");
+
+    // NL refs
+    const connectBtn_nl   = document.getElementById("connectBtn_nl");
+    const walletStatus_nl = document.getElementById("walletStatus_nl");
+    const decimalsEl_nl   = document.getElementById("decimals_nl");
+    const supplyEl_nl     = document.getElementById("supply_nl");
+    const yourBalEl_nl    = document.getElementById("yourBal_nl");
+    const burnBtn_nl      = document.getElementById("burnBtn_nl");
+    const refreshBtn_nl   = document.getElementById("refreshBtn_nl");
+    const amountInput_nl  = document.getElementById("amount_nl");
+    const msgEl_nl        = document.getElementById("msg_nl");
+    const logEl_nl        = document.getElementById("log_nl");
 
     let provider = null;
     let mintDecimals = 0;
 
-    function detectProvider(){
+    function logLine(el, ...args) {
+      console.log(...args);
+      if (!el) return;
+      el.textContent += args.map(a => (typeof a === "object" ? JSON.stringify(a) : String(a))).join(" ") + "\n";
+    }
+    function setMsg(el, text, type="info") {
+      if (!el) return;
+      el.textContent = text;
+      el.className = type==="ok" ? "ok" : type==="warn" ? "warn" : "muted";
+    }
+    function detectProvider() {
       const any = window.solana;
       if (any?.isPhantom) return any;
       if (any) return any;
       return null;
     }
-    async function signAndSend(tx){
+    async function signAndSend(tx) {
       const res = await provider.signAndSendTransaction(tx);
       const sig = typeof res === "string" ? res : res?.signature;
-      if (!sig) throw new Error("Geen signature van wallet.");
+      if (!sig) throw new Error("No signature from wallet.");
       await connection.confirmTransaction(sig, "confirmed");
       return sig;
     }
-    // Veilige omzetting UI → raw BigInt
-    function uiToRawBigint(amountUi, decimals){
+    function uiToRawBigint(amountUi, decimals) {
       const s = String(amountUi);
-      if (!/^\d+(\.\d+)?$/.test(s)) throw new Error("Ongeldig bedrag.");
+      if (!/^\d+(\.\d+)?$/.test(s)) throw new Error("Invalid amount.");
       const [ints, frac=""] = s.split(".");
       const pad = frac.padEnd(decimals, "0").slice(0, decimals);
       return BigInt((ints || "0") + pad);
     }
-
-    async function ensureAta(ownerPubkey){
+    async function ensureAta(ownerPubkey) {
       const ata = await getAssociatedTokenAddress(CBS_MINT, ownerPubkey, false);
       const info = await connection.getAccountInfo(ata);
-      if (!info){
+      if (!info) {
         const tx = new Transaction().add(
           createAssociatedTokenAccountInstruction(
             provider.publicKey, // payer
@@ -196,61 +428,66 @@
         tx.feePayer = provider.publicKey;
         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
         await signAndSend(tx);
-        logLine("[ATA] aangemaakt", ata.toBase58());
+        logLine(logEl, "[ATA EN] created", ata.toBase58());
+        logLine(logEl_nl, "[ATA NL] aangemaakt", ata.toBase58());
       }
       return ata;
     }
 
-    async function refreshStats(showMsg=false){
+    async function refreshStats() {
       try{
         const mintInfo = await getMint(connection, CBS_MINT);
         mintDecimals = mintInfo.decimals ?? 0;
-        decimalsEl.textContent = String(mintDecimals);
-
         const supplyBig = (typeof mintInfo.supply === "bigint") ? mintInfo.supply : BigInt(mintInfo.supply.toString());
         const uiSupply = Number(supplyBig) / (10 ** mintDecimals);
-        supplyEl.textContent = uiSupply.toLocaleString("nl-NL");
 
-        if (provider?.publicKey){
+        if (decimalsEl)   decimalsEl.textContent   = String(mintDecimals);
+        if (supplyEl)     supplyEl.textContent     = uiSupply.toLocaleString("nl-NL");
+        if (decimalsEl_nl)decimalsEl_nl.textContent= String(mintDecimals);
+        if (supplyEl_nl)  supplyEl_nl.textContent  = uiSupply.toLocaleString("nl-NL");
+
+        if (provider?.publicKey) {
           const ata = await getAssociatedTokenAddress(CBS_MINT, provider.publicKey, false);
           const accInfo = await connection.getParsedAccountInfo(ata);
           let uiBal = 0;
           const parsed = accInfo.value?.data?.parsed;
           if (parsed) uiBal = parsed.info?.tokenAmount?.uiAmount || 0;
-          yourBalEl.textContent = uiBal.toLocaleString("nl-NL");
+          if (yourBalEl)    yourBalEl.textContent    = uiBal.toLocaleString("nl-NL");
+          if (yourBalEl_nl) yourBalEl_nl.textContent = uiBal.toLocaleString("nl-NL");
         }
-
-        if (showMsg) setMsg("Statistiek ververst.", "ok");
-        logLine("[STATS] decimals", mintDecimals, "supply", uiSupply);
       }catch(e){
-        console.error(e); logLine("[ERR refreshStats]", e?.message || e);
-        setMsg("Kon supply/decimals niet laden. Gebruik evt. ?rpc=JOUW_RPC.", "warn");
+        console.error(e);
+        logLine(logEl,   "[ERR refreshStats]", e?.message || e);
+        logLine(logEl_nl,"[ERR refreshStats]", e?.message || e);
+        setMsg(msgEl,   "Failed to load supply/decimals. You can pass ?rpc=YOUR_RPC.", "warn");
+        setMsg(msgEl_nl,"Kon supply/decimals niet laden. Gebruik evt. ?rpc=JOUW_RPC.", "warn");
       }
     }
 
-    connectBtn.onclick = async () => {
+    // EN buttons
+    if (connectBtn) connectBtn.onclick = async () => {
       try{
         provider = detectProvider();
-        if (!provider) return setMsg("Geen wallet gevonden. Installeer Phantom e.d.", "warn");
+        if (!provider) { setMsg(msgEl,"No wallet found. Install Phantom, etc.", "warn"); return; }
         const resp = await provider.connect();
         const pk = (resp?.publicKey || provider.publicKey).toBase58();
-        walletStatus.textContent = `Verbonden: ${pk.slice(0,6)}…${pk.slice(-6)}`;
-        burnBtn.disabled = false;
-        setMsg("Wallet verbonden.", "ok");
+        if (walletStatus) walletStatus.textContent = `Connected: ${pk.slice(0,6)}…${pk.slice(-6)}`;
+        if (burnBtn) burnBtn.disabled = false;
+        setMsg(msgEl,"Wallet connected.", "ok");
         await refreshStats();
       }catch(e){
-        console.error(e); logLine("[ERR connect]", e?.message || e);
-        setMsg("Verbinden geannuleerd of mislukt.", "warn");
+        console.error(e);
+        logLine(logEl,"[ERR connect]", e?.message || e);
+        setMsg(msgEl,"Connect cancelled or failed.", "warn");
       }
     };
+    if (refreshBtn) refreshBtn.onclick = () => { refreshStats(); };
 
-    refreshBtn.onclick = () => { refreshStats(true); };
-
-    burnBtn.onclick = async () => {
+    if (burnBtn) burnBtn.onclick = async () => {
       try{
-        if (!provider?.publicKey) return setMsg("Verbind eerst je wallet.", "warn");
-        const amt = amountInput.value.trim();
-        if (!amt || Number(amt) <= 0) return setMsg("Vul een geldig bedrag in.", "warn");
+        if (!provider?.publicKey) return setMsg(msgEl,"Connect your wallet first.", "warn");
+        const amt = (amountInput?.value || "").trim();
+        if (!amt || Number(amt) <= 0) return setMsg(msgEl,"Enter a valid amount.", "warn");
 
         const fromAta = await ensureAta(provider.publicKey);
         const raw = uiToRawBigint(amt, mintDecimals);
@@ -259,7 +496,7 @@
           createBurnCheckedInstruction(
             fromAta,
             CBS_MINT,
-            provider.publicKey,  // owner tekent
+            provider.publicKey,
             raw,
             mintDecimals
           )
@@ -267,19 +504,73 @@
         tx.feePayer = provider.publicKey;
         tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
 
-        setMsg("Burn verzonden. Wachten op bevestiging…");
+        setMsg(msgEl,"Sending burn…");
         const sig = await signAndSend(tx);
-        setMsg("Burn bevestigd ✅", "ok");
-        logLine("[BURN sig]", sig);
-        amountInput.value = "";
+        setMsg(msgEl,"Burn confirmed ✅", "ok");
+        logLine(logEl,"[BURN sig]", sig);
+        if (amountInput) amountInput.value = "";
         await refreshStats();
       }catch(e){
-        console.error(e); logLine("[ERR burn]", e?.message || e);
-        setMsg("Burn mislukt. Check je saldo/handtekening/logs.", "warn");
+        console.error(e);
+        logLine(logEl,"[ERR burn]", e?.message || e);
+        setMsg(msgEl,"Burn failed. Check balance/signature/logs.", "warn");
       }
     };
 
-    // Init load
+    // NL buttons
+    if (connectBtn_nl) connectBtn_nl.onclick = async () => {
+      try{
+        provider = detectProvider();
+        if (!provider) { setMsg(msgEl_nl,"Geen wallet gevonden. Installeer Phantom e.d.", "warn"); return; }
+        const resp = await provider.connect();
+        const pk = (resp?.publicKey || provider.publicKey).toBase58();
+        if (walletStatus_nl) walletStatus_nl.textContent = `Verbonden: ${pk.slice(0,6)}…${pk.slice(-6)}`;
+        if (burnBtn_nl) burnBtn_nl.disabled = false;
+        setMsg(msgEl_nl,"Wallet verbonden.", "ok");
+        await refreshStats();
+      }catch(e){
+        console.error(e);
+        logLine(logEl_nl,"[ERR connect]", e?.message || e);
+        setMsg(msgEl_nl,"Verbinden geannuleerd of mislukt.", "warn");
+      }
+    };
+    if (refreshBtn_nl) refreshBtn_nl.onclick = () => { refreshStats(); };
+
+    if (burnBtn_nl) burnBtn_nl.onclick = async () => {
+      try{
+        if (!provider?.publicKey) return setMsg(msgEl_nl,"Verbind eerst je wallet.", "warn");
+        const amt = (amountInput_nl?.value || "").trim();
+        if (!amt || Number(amt) <= 0) return setMsg(msgEl_nl,"Vul een geldig bedrag in.", "warn");
+
+        const fromAta = await ensureAta(provider.publicKey);
+        const raw = uiToRawBigint(amt, mintDecimals);
+
+        const tx = new Transaction().add(
+          createBurnCheckedInstruction(
+            fromAta,
+            CBS_MINT,
+            provider.publicKey,
+            raw,
+            mintDecimals
+          )
+        );
+        tx.feePayer = provider.publicKey;
+        tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+
+        setMsg(msgEl_nl,"Burn verzonden…");
+        const sig = await signAndSend(tx);
+        setMsg(msgEl_nl,"Burn bevestigd ✅", "ok");
+        logLine(logEl_nl,"[BURN sig]", sig);
+        if (amountInput_nl) amountInput_nl.value = "";
+        await refreshStats();
+      }catch(e){
+        console.error(e);
+        logLine(logEl_nl,"[ERR burn]", e?.message || e);
+        setMsg(msgEl_nl,"Burn mislukt. Check saldo/handtekening/logs.", "warn");
+      }
+    };
+
+    // Init
     await refreshStats();
   </script>
 </body>
