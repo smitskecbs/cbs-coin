@@ -3,79 +3,129 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CBS Coin — Burn</title>
+  <title>CBS Coin — Burn (Supply ↓)</title>
+  <meta name="color-scheme" content="light dark" />
   <style>
-    body { font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif; max-width: 760px; margin: 24px auto; padding: 0 16px; }
-    .card { border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px 18px; box-shadow: 0 2px 10px rgba(0,0,0,.04); margin: 16px 0; }
-    button { padding: 10px 14px; border-radius: 10px; border: 1px solid #e5e7eb; cursor: pointer; }
-    button:disabled { opacity: .5; cursor: not-allowed; }
-    input { padding: 10px 12px; border: 1px solid #e5e7eb; border-radius: 10px; width: 220px; }
-    code { background: #f6f7f8; padding: 2px 6px; border-radius: 6px; }
-    .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
-    .muted { color: #6b7280; font-size: 0.95rem; }
-    .ok { color: #065f46; }
-    .warn { color: #7c2d12; }
-    .mono { font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace; }
+    :root{
+      --brand:#127a3c;
+      --brand-ink:#0c5a2c;
+      --bg:#f6f7f9;
+      --card:#ffffff;
+      --ink:#0f172a;
+      --ink-2:#475569;
+      --border:#e5e7eb;
+      --ok:#065f46;
+      --warn:#7c2d12;
+    }
+    @media (prefers-color-scheme: dark){
+      :root{
+        --bg:#0b1220; --card:#0f172a; --ink:#e5e7eb; --ink-2:#9ba3af; --border:#1f2937;
+      }
+    }
+    *{box-sizing:border-box}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin:0;background:var(--bg);color:var(--ink)}
+    .brandbar{background:linear-gradient(135deg,var(--brand),#0f6a32); color:#fff; padding:28px 16px}
+    .wrap{max-width:960px;margin:0 auto;padding:0 16px}
+    h1{margin:0;font-size:1.9rem;font-weight:800;letter-spacing:.2px}
+    .subtitle{margin:8px 0 0;font-size:1rem;opacity:.9}
+    .grid{display:grid;grid-template-columns:1fr;gap:16px;margin:16px 0 28px}
+    @media (min-width:860px){ .grid{grid-template-columns:1fr 1fr} }
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+    .card h2{margin:0 0 10px;font-size:1.2rem}
+    .muted{color:var(--ink-2)}
+    .row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+    button{padding:10px 14px;border-radius:12px;border:1px solid var(--border);cursor:pointer;background:#fff}
+    button.primary{background:var(--brand);color:#fff;border-color:transparent}
+    button:disabled{opacity:.55;cursor:not-allowed}
+    input, .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace}
+    input{padding:10px 12px;border:1px solid var(--border);border-radius:12px;width:220px;background:transparent;color:inherit}
+    code{background:rgba(148,163,184,.15);padding:2px 6px;border-radius:6px}
+    .ok{color:var(--ok)} .warn{color:var(--warn)}
+    details{border-top:1px dashed var(--border);padding-top:10px;margin-top:10px}
+    .badge{display:inline-flex;align-items:center;gap:6px;background:rgba(16,185,129,.12);color:#065f46;border:1px solid rgba(16,185,129,.3);padding:3px 8px;border-radius:999px;font-size:.85rem}
+    .kbd{padding:2px 6px;border:1px solid var(--border);border-bottom-width:2px;border-radius:8px}
   </style>
 </head>
 <body>
-  <h1>🔥 CBS Coin — Burnpagina</h1>
-  <p class="muted">Verbind je wallet, kies een bedrag en voer een <b>échte burn</b> uit (supply daalt on-chain).</p>
-
-  <div class="card">
-    <div class="row">
-      <button id="connectBtn">Wallet verbinden</button>
-      <span id="walletStatus" class="muted">Niet verbonden</span>
+  <header class="brandbar">
+    <div class="wrap">
+      <h1>🔥 CBS Coin — Burnpagina</h1>
+      <p class="subtitle">Verbind je wallet, vul het bedrag in en voer een <b>échte burn</b> uit (supply daalt on-chain).</p>
     </div>
-    <p id="httpsWarn" class="warn" style="display:none;">Let op: geen HTTPS. Host dit via https:// (bijv. GitHub Pages).</p>
-  </div>
+  </header>
 
-  <div class="card">
-    <h2>📊 Statistiek</h2>
-    <p><b>Mint:</b> <code class="mono" id="mintLbl">B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code></p>
-    <p><b>Decimals:</b> <span id="decimals">…</span></p>
-    <p><b>Huidige totale supply:</b> <span id="supply">…</span> CBS</p>
-    <p class="muted">Tip: je kunt een eigen RPC opgeven via <code>?rpc=...</code> in de URL voor snellere/zekerere responses.</p>
-  </div>
+  <main class="wrap">
+    <div class="grid">
+      <section class="card">
+        <h2>Wallet</h2>
+        <div class="row" style="margin:6px 0 8px;">
+          <button id="connectBtn" class="primary">Wallet verbinden</button>
+          <span id="walletStatus" class="muted">Niet verbonden</span>
+          <span id="httpsWarn" class="warn" style="display:none;">(Deze pagina is niet via HTTPS — wallets kunnen blokkeren)</span>
+        </div>
+        <p class="muted">Tip: je kunt je eigen RPC meesturen via <code class="mono">?rpc=…</code>. Standaard gebruiken we jouw Helius RPC key.</p>
+        <div class="badge">Supply daalt écht bij deze burn</div>
+      </section>
 
-  <div class="card">
-    <h2>🧯 Échte burn</h2>
-    <div class="row" style="margin:10px 0 14px;">
-      <label for="amount">Bedrag (CBS):</label>
-      <input id="amount" type="number" min="0" step="0.000001" placeholder="bijv. 10000" />
+      <section class="card">
+        <h2>📊 Statistiek</h2>
+        <p><b>Mint:</b> <code id="mintLbl" class="mono">B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code></p>
+        <p><b>Decimals:</b> <span id="decimals">…</span></p>
+        <p><b>Huidige totale supply:</b> <span id="supply">…</span> CBS</p>
+        <p><b>Jouw CBS-saldo:</b> <span id="yourBal">—</span> CBS</p>
+      </section>
     </div>
-    <div class="row">
-      <button id="burnBtn" disabled>Echte burn (supply ↓)</button>
-    </div>
-    <p id="msg" class="muted" style="margin-top:10px;"></p>
-    <details style="margin-top:10px;">
-      <summary class="muted">Technische details / foutlogs</summary>
-      <pre id="log" class="mono" style="white-space:pre-wrap;"></pre>
-    </details>
-  </div>
+
+    <section class="card">
+      <h2>🧯 Échte burn</h2>
+      <div class="row" style="margin:10px 0 14px;">
+        <label for="amount"><b>Bedrag (CBS)</b></label>
+        <input id="amount" type="number" min="0" step="0.000001" placeholder="bijv. 10000" />
+        <button id="burnBtn" class="primary" disabled>Echte burn (supply ↓)</button>
+        <button id="refreshBtn" class="">Ververs statistiek</button>
+      </div>
+      <p id="msg" class="muted" style="margin-top:6px;"></p>
+      <details>
+        <summary class="muted">Technische details / foutlogs</summary>
+        <pre id="log" class="mono" style="white-space:pre-wrap;"></pre>
+      </details>
+    </section>
+  </main>
 
   <script type="module">
-    // ---- Buffer polyfill (vereist door spl-token in de browser) ----
+    // ---------- VEILIGHEIDSNOTITIE ----------
+    // Deze pagina bevat een publieke RPC key. Beperk misbruik:
+    // - Gebruik in Helius "Allowed Origins" (domain restricties)
+    // - Gebruik een aparte key met alleen RPC-toegang
+    // - Je kunt ?rpc=... in de URL meegeven om te overriden
+    const DEFAULT_RPC = "https://mainnet.helius-rpc.com/?api-key=0053b3c9-a47d-4e7e-b76b-dbdc46f36189";
+
+    // ---------- Buffer polyfill (nodig voor spl-token in browser) ----------
     try {
       if (!window.Buffer) {
         const { Buffer } = await import("https://esm.sh/buffer@6.0.3");
         window.Buffer = Buffer;
       }
-    } catch (e) {
-      console.warn("Buffer polyfill kon niet geladen worden:", e);
-    }
+    } catch (e) { console.warn("Buffer polyfill kon niet laden:", e); }
 
-    // ---- Helper: dynamic import met fallback ----
-    async function importWithFallback(primary, fallback) {
+    // ---------- Helpers ----------
+    async function importWithFallback(primary, fallback){
       try { return await import(primary); }
-      catch (e) { console.warn("Primary import failed:", primary, e); return await import(fallback); }
+      catch(e){ console.warn("Primary import failed:", primary, e); return await import(fallback); }
     }
-
-    if (location.protocol !== "https:" && location.hostname !== "localhost") {
-      document.getElementById("httpsWarn").style.display = "block";
+    function $(id){ return document.getElementById(id); }
+    function logLine(...args){
+      console.log(...args);
+      $("log").textContent += args.map(a => (typeof a === "object" ? JSON.stringify(a) : String(a))).join(" ") + "\n";
     }
+    function setMsg(text, type="info"){
+      $("msg").textContent = text;
+      $("msg").className = type==="ok"?"ok":type==="warn"?"warn":"muted";
+      logLine("[MSG]", text);
+    }
+    if (location.protocol !== "https:" && location.hostname !== "localhost") $("httpsWarn").style.display="inline";
 
-    // Imports
+    // ---------- Imports ----------
     const web3 = await importWithFallback(
       "https://esm.sh/@solana/web3.js@1.95.3",
       "https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"
@@ -84,56 +134,46 @@
       "https://esm.sh/@solana/spl-token@0.4.7",
       "https://unpkg.com/@solana/spl-token@0.4.7/lib/index.iife.min.js"
     );
-
     const { Connection, clusterApiUrl, PublicKey, Transaction } = web3;
     const { getMint, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, createBurnCheckedInstruction } = spl;
 
-    // ---- Config ----
+    // ---------- Config ----------
     const CBS_MINT = new PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
-    // ---- /Config ----
+    $("mintLbl").textContent = CBS_MINT.toBase58();
 
-    // RPC: ?rpc=... override
+    // RPC keus: URL ?rpc=... heeft voorrang, anders DEFAULT_RPC, anders clusterApiUrl
     const urlRpc = new URLSearchParams(location.search).get("rpc");
-    const connection = new Connection(urlRpc || clusterApiUrl("mainnet-beta"), "confirmed");
+    const RPC_URL = urlRpc || DEFAULT_RPC || clusterApiUrl("mainnet-beta");
+    const connection = new Connection(RPC_URL, "confirmed");
 
-    // UI refs
-    const connectBtn = document.getElementById("connectBtn");
-    const walletStatus = document.getElementById("walletStatus");
-    const decimalsEl = document.getElementById("decimals");
-    const supplyEl = document.getElementById("supply");
-    const burnBtn = document.getElementById("burnBtn");
-    const amountInput = document.getElementById("amount");
-    const msgEl = document.getElementById("msg");
-    const logEl = document.getElementById("log");
-
-    document.getElementById("mintLbl").textContent = CBS_MINT.toBase58();
+    // ---------- UI refs ----------
+    const connectBtn = $("connectBtn");
+    const walletStatus = $("walletStatus");
+    const decimalsEl = $("decimals");
+    const supplyEl = $("supply");
+    const yourBalEl = $("yourBal");
+    const burnBtn = $("burnBtn");
+    const refreshBtn = $("refreshBtn");
+    const amountInput = $("amount");
 
     let provider = null;
     let mintDecimals = 0;
 
-    function logLine(...args) {
-      console.log(...args);
-      logEl.textContent += args.map(a => (typeof a === "object" ? JSON.stringify(a) : String(a))).join(" ") + "\n";
-    }
-    function setMsg(text, type="info") {
-      msgEl.textContent = text;
-      msgEl.className = type === "ok" ? "ok" : type === "warn" ? "warn" : "muted";
-      logLine("[MSG]", text);
-    }
-    function detectProvider() {
+    function detectProvider(){
       const any = window.solana;
       if (any?.isPhantom) return any;
       if (any) return any;
       return null;
     }
-    async function signAndSend(tx) {
+    async function signAndSend(tx){
       const res = await provider.signAndSendTransaction(tx);
       const sig = typeof res === "string" ? res : res?.signature;
       if (!sig) throw new Error("Geen signature van wallet.");
       await connection.confirmTransaction(sig, "confirmed");
       return sig;
     }
-    function uiToRawBigint(amountUi, decimals) {
+    // Veilige omzetting UI → raw BigInt
+    function uiToRawBigint(amountUi, decimals){
       const s = String(amountUi);
       if (!/^\d+(\.\d+)?$/.test(s)) throw new Error("Ongeldig bedrag.");
       const [ints, frac=""] = s.split(".");
@@ -141,10 +181,10 @@
       return BigInt((ints || "0") + pad);
     }
 
-    async function ensureAta(ownerPubkey) {
+    async function ensureAta(ownerPubkey){
       const ata = await getAssociatedTokenAddress(CBS_MINT, ownerPubkey, false);
       const info = await connection.getAccountInfo(ata);
-      if (!info) {
+      if (!info){
         const tx = new Transaction().add(
           createAssociatedTokenAccountInstruction(
             provider.publicKey, // payer
@@ -161,8 +201,8 @@
       return ata;
     }
 
-    async function refreshStats() {
-      try {
+    async function refreshStats(showMsg=false){
+      try{
         const mintInfo = await getMint(connection, CBS_MINT);
         mintDecimals = mintInfo.decimals ?? 0;
         decimalsEl.textContent = String(mintDecimals);
@@ -171,16 +211,25 @@
         const uiSupply = Number(supplyBig) / (10 ** mintDecimals);
         supplyEl.textContent = uiSupply.toLocaleString("nl-NL");
 
+        if (provider?.publicKey){
+          const ata = await getAssociatedTokenAddress(CBS_MINT, provider.publicKey, false);
+          const accInfo = await connection.getParsedAccountInfo(ata);
+          let uiBal = 0;
+          const parsed = accInfo.value?.data?.parsed;
+          if (parsed) uiBal = parsed.info?.tokenAmount?.uiAmount || 0;
+          yourBalEl.textContent = uiBal.toLocaleString("nl-NL");
+        }
+
+        if (showMsg) setMsg("Statistiek ververst.", "ok");
         logLine("[STATS] decimals", mintDecimals, "supply", uiSupply);
-      } catch (e) {
-        console.error(e);
-        logLine("[ERR refreshStats]", e.message || e);
-        setMsg("Kon supply/decimals niet laden (RPC of Buffer). Probeer pagina met ?rpc=JOUW_RPC.", "warn");
+      }catch(e){
+        console.error(e); logLine("[ERR refreshStats]", e?.message || e);
+        setMsg("Kon supply/decimals niet laden. Gebruik evt. ?rpc=JOUW_RPC.", "warn");
       }
     }
 
     connectBtn.onclick = async () => {
-      try {
+      try{
         provider = detectProvider();
         if (!provider) return setMsg("Geen wallet gevonden. Installeer Phantom e.d.", "warn");
         const resp = await provider.connect();
@@ -188,15 +237,17 @@
         walletStatus.textContent = `Verbonden: ${pk.slice(0,6)}…${pk.slice(-6)}`;
         burnBtn.disabled = false;
         setMsg("Wallet verbonden.", "ok");
-      } catch (e) {
-        console.error(e);
-        logLine("[ERR connect]", e.message || e);
+        await refreshStats();
+      }catch(e){
+        console.error(e); logLine("[ERR connect]", e?.message || e);
         setMsg("Verbinden geannuleerd of mislukt.", "warn");
       }
     };
 
+    refreshBtn.onclick = () => { refreshStats(true); };
+
     burnBtn.onclick = async () => {
-      try {
+      try{
         if (!provider?.publicKey) return setMsg("Verbind eerst je wallet.", "warn");
         const amt = amountInput.value.trim();
         if (!amt || Number(amt) <= 0) return setMsg("Vul een geldig bedrag in.", "warn");
@@ -220,17 +271,16 @@
         const sig = await signAndSend(tx);
         setMsg("Burn bevestigd ✅", "ok");
         logLine("[BURN sig]", sig);
+        amountInput.value = "";
         await refreshStats();
-      } catch (e) {
-        console.error(e);
-        logLine("[ERR burn]", e.message || e);
+      }catch(e){
+        console.error(e); logLine("[ERR burn]", e?.message || e);
         setMsg("Burn mislukt. Check je saldo/handtekening/logs.", "warn");
       }
     };
 
-    // Init
+    // Init load
     await refreshStats();
   </script>
 </body>
 </html>
-
