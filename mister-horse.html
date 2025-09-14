@@ -100,14 +100,13 @@
   <script type="module">
     // ---------- Imports ----------
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
-    import { publicKey, generateSigner, transactionBuilder } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
+    import { publicKey, generateSigner, transactionBuilder, some } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
     import { mplCandyMachine, fetchCandyMachine, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.2.0";
     import { setComputeUnitLimit } from "https://esm.sh/@metaplex-foundation/mpl-toolbox@0.9.1";
     import { PhantomWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-phantom@0.9.25";
     import { Connection, PublicKey } from "https://esm.sh/@solana/web3.js@1.95.3";
-    import { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from "https://esm.sh/@solana/spl-token@0.4.3";
 
     // ---------- Config ----------
     const DEFAULTS = {
@@ -194,19 +193,15 @@
         note(T("minting"));
         const nftMint = generateSigner(umi);
 
-        // Belangrijk voor tokenGate: geef de CBS ATA van de minter mee als remaining account
-        const ata = getAssociatedTokenAddressSync(CBS_MINT, wallet.publicKey, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
-        const remainingAccounts = [{ pubkey: publicKey(ata.toBase58()), isWritable:false, isSigner:false }];
-
         const args = {
           candyMachine: publicKey(CM_ADDR),
-          candyGuard: cm.mintAuthority, // expliciet
+          candyGuard: cm.mintAuthority,
           nftMint,
           collectionMint: cm.collectionMint,
           collectionUpdateAuthority: cm.authority,
-          // optioneel groep label via ?group=holder
           ...(GROUP ? { group: GROUP } : {}),
-          remainingAccounts
+          // Belangrijk: geef tokenGate mint mee zodat Umi de juiste remaining accounts kan toevoegen.
+          mintArgs: { tokenGate: some({ mint: publicKey(DEFAULTS.CBS_MINT) }) }
         };
 
         const tx = transactionBuilder()
@@ -230,4 +225,3 @@
   </script>
 </body>
 </html>
-
