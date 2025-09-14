@@ -1,109 +1,138 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Mister Horse — FREE Mint (Devnet)</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Mister Horse — Mint</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <style>
     :root{
-      --bg1:#07090D; --bg2:#0B1016; --card:#0c121a; --edge:#0df5e6;
-      --fg:#eafffb; --muted:#a3cfc6; --ok:#2bf0c1; --warn:#ffb48a;
-      --radius:16px;
+      --bg1:#06090d; --bg2:#0a1117;
+      --card:#0d141c; --edge:#0ef1d0; --edge2:#22e3ff;
+      --text:#eafffb; --muted:#9ed0c7; --ok:#2bf5bf; --warn:#ffad7a;
+      --ring:0 0 0 1px rgba(0,255,220,.13); --glow:0 8px 30px rgba(0,255,220,.08);
+      --radius:18px;
     }
     *{box-sizing:border-box}
-    body{margin:0; font-family:'Orbitron',system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
-      color:var(--fg);
-      background: radial-gradient(700px 500px at 110% -10%, rgba(0,255,230,.10), transparent 60%),
-                  radial-gradient(600px 400px at -10% 110%, rgba(0,170,255,.08), transparent 60%),
-                  linear-gradient(135deg,var(--bg1),var(--bg2));}
-    .wrap{max-width:1100px; margin:0 auto; padding:18px 16px 42px}
-    h1{font-size:28px; margin:8px 0 18px; letter-spacing:.5px}
-    .row{display:grid; grid-template-columns:280px 1fr; gap:16px}
-    .card{background:linear-gradient(180deg,#0c121a,#0a0f15); border:1px solid rgba(13,245,230,.16);
-      border-radius:var(--radius); padding:16px; box-shadow:0 18px 40px rgba(0,255,230,.07), inset 0 0 0 1px rgba(0,255,255,.06)}
-    .card h2{font-size:18px; margin:4px 0 12px}
-    .btn{display:inline-flex; align-items:center; justify-content:center; min-width:160px;
-      padding:12px 16px; border-radius:12px; background:linear-gradient(180deg,#5afff0,#28ffe3);
-      border:1px solid rgba(0,255,240,.7); color:#001010; font-weight:900; cursor:pointer}
+    html,body{height:100%}
+    body{
+      margin:0; font-family:'Orbitron',system-ui,Segoe UI,Roboto,Arial,sans-serif; color:var(--text);
+      background:
+        radial-gradient(900px 600px at 110% -10%, rgba(0,255,220,.10), transparent 60%),
+        radial-gradient(700px 500px at -10% 110%, rgba(0,160,255,.09), transparent 60%),
+        linear-gradient(135deg,var(--bg1),var(--bg2));
+    }
+    .wrap{max-width:1100px; margin:0 auto; padding:20px 16px 44px}
+    .top{
+      display:flex; justify-content:space-between; align-items:center; gap:12px;
+      position:sticky; top:0; z-index:10; padding:10px 12px 12px; margin:-8px -8px 14px;
+      background:linear-gradient(180deg, rgba(0,0,0,.5), rgba(0,0,0,0));
+      border-bottom:1px solid rgba(0,255,230,.12); backdrop-filter:blur(6px);
+    }
+    .brand{display:flex; align-items:center; gap:.8rem}
+    .brand h1{margin:0; font-size:1.25rem; letter-spacing:.6px; color:#bffef2}
+    .connect{display:flex; align-items:center; gap:10px}
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center; gap:.5rem;
+      min-width:140px; padding:12px 18px; border-radius:12px; cursor:pointer; user-select:none;
+      color:#011; font-weight:900; letter-spacing:.3px;
+      background:linear-gradient(180deg,#69fff0,#2dffe6);
+      border:1px solid rgba(0,255,240,.7); box-shadow:0 0 16px rgba(0,255,220,.35), inset 0 -10px 14px rgba(0,0,0,.18);
+    }
     .btn:disabled{opacity:.55; cursor:not-allowed}
+    .status{font-size:.92rem; color:var(--muted)}
+
+    .grid{display:grid; gap:16px; grid-template-columns:repeat(12,1fr)}
+    .card{
+      grid-column:span 12; padding:18px; border-radius:var(--radius);
+      background:linear-gradient(180deg, var(--card), #0b1219);
+      border:1px solid rgba(0,255,240,.14); box-shadow:var(--ring),var(--glow);
+    }
+    .card h2{margin:.2rem 0 .8rem; font-size:1.05rem; color:#c5fff4}
+    .row{display:flex; flex-wrap:wrap; gap:12px; align-items:center}
+    .mono{font-family:ui-monospace,Menlo,Monaco,Consolas,monospace}
     .muted{color:var(--muted)} .ok{color:var(--ok)} .warn{color:var(--warn)}
-    .stack{display:flex; flex-direction:column; gap:10px}
-    .pill{display:inline-block; padding:4px 10px; border-radius:999px; border:1px solid rgba(13,245,230,.25); color:#bffef2; font-size:12px}
-    .kvs{display:grid; grid-template-columns:140px 1fr; gap:6px; row-gap:8px; font-size:14px}
-    .top{display:flex; gap:10px; align-items:center; justify-content:flex-end; margin-bottom:10px}
-    .msg{min-height:22px; font-size:14px}
-    @media (max-width:860px){ .row{grid-template-columns:1fr} .top{justify-content:flex-start} }
+    .pill{display:inline-block; padding:.25rem .55rem; border-radius:999px; border:1px solid rgba(0,255,240,.18); color:#bffef2; font-size:.82rem}
+    input.read{width:100%; padding:10px 12px; border-radius:10px; background:#0a131a; color:var(--text); border:1px solid rgba(0,255,240,.14)}
+    .kpi{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-top:6px}
+    .kpi .box{padding:10px 12px; border-radius:12px; background:#0a131a; border:1px solid rgba(0,255,240,.12)}
+    @media(min-width:960px){ .col-4{grid-column:span 4} .col-8{grid-column:span 8} }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="top">
-      <button id="connectBtn" class="btn">Wallet verbinden</button>
-      <span id="walletStatus" class="muted">Niet verbonden</span>
-    </div>
+    <header class="top">
+      <div class="brand">
+        <h1>Mister Horse — Mint</h1>
+      </div>
+      <div class="connect">
+        <button class="btn" id="connectBtn">Wallet verbinden</button>
+        <span id="walletStatus" class="status">Niet verbonden</span>
+      </div>
+    </header>
 
-    <h1>Mister Horse — FREE Mint (Devnet)</h1>
-
-    <div class="row">
-      <!-- Mint kolom -->
-      <div class="card">
+    <section class="grid">
+      <div class="card col-4">
         <h2>🎟️ Mint</h2>
-        <div class="stack">
-          <button id="mintBtn" class="btn" disabled>Mint NFT (FREE)</button>
+        <div class="row">
+          <button id="mintBtn" class="btn" disabled>Mint NFT</button>
           <button id="refreshBtn" class="btn">Verversen</button>
-          <div id="msg" class="msg muted"></div>
-          <div class="muted" style="font-size:13px;line-height:1.25;">
-            Tip: Je Phantom mag op Mainnet of Devnet staan; de tx gaat naar de gekozen RPC (URL-parameter <span class="pill">rpc=…</span>).
-          </div>
         </div>
+        <p id="msg" class="muted" style="margin:.8rem 0 0"></p>
+        <p class="muted" style="margin:.4rem 0 0">Tip: je Phantom mag op Mainnet of Devnet staan; de tx gaat altijd naar de <span class="mono">rpc</span> in de URL.</p>
       </div>
 
-      <!-- Info kolom -->
-      <div class="card">
+      <div class="card col-8">
         <h2>📊 Drop info</h2>
-        <div class="kvs">
-          <div class="muted">Candy Machine:</div><div id="cmLbl" class="pill">–</div>
-          <div class="muted">Guard label (actief):</div><div id="activeGroup">–</div>
-          <div class="muted">Gemintrd:</div><div><span id="minted">…</span> / <span id="available">…</span></div>
-          <div class="muted">Prijs (SOL):</div><div id="priceSol">FREE (+ tx fee)</div>
+        <div class="row" style="gap:8px; align-items:end">
+          <div style="flex:1 1 360px">
+            <label class="muted" for="cmField">Candy Machine</label>
+            <input id="cmField" class="read mono" type="text" readonly value="—">
+          </div>
+          <span class="pill">Guard: <span id="groupLbl">–</span></span>
         </div>
-        <div class="muted" style="margin-top:10px; font-size:13px;">
-          Prijs verschijnt alleen als er een <code>solPayment</code> guard actief is; anders is het een free mint
-          en betaal je alleen network fees.
+
+        <div class="kpi">
+          <div class="box"><div class="muted">Gemintrd</div><div><span id="minted" class="mono">…</span> / <span id="available" class="mono">…</span></div></div>
+          <div class="box"><div class="muted">Prijs (SOL)</div><div id="priceSol" class="mono">FREE</div></div>
         </div>
+
+        <p class="muted" style="margin-top:.8rem">
+          Prijs verschijnt alleen als er een <span class="mono">solPayment</span> guard actief is; anders is de mint “gratis” (alleen netwerkfees).
+        </p>
       </div>
-    </div>
+    </section>
   </div>
 
-  <!-- ====== LOGICA ====== -->
+  <!-- ===== MINT LOGIC (UMI + MPL Candy Machine v3) ===== -->
   <script type="module">
-    // Libs (let op: géén mpl-toolbox import meer)
+    // Libs
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
-    import { publicKey, generateSigner, transactionBuilder, some, none } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
+    import { publicKey, generateSigner, some, none } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
     import { mplCandyMachine, fetchCandyMachine, fetchCandyGuard, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.2.0";
     import { PhantomWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-phantom@0.9.25";
     import { Connection, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.95.3";
 
-    // URL parameters
+    // Config via URL
+    const DEFAULTS = {
+      CM: "",                                         // laat leeg; zet ?cm=... in je URL
+      RPC: "https://api.mainnet-beta.solana.com",     // standaard mainnet
+      GROUP: null                                     // optioneel bv. "SOL" of "FREE"
+    };
     const qs = new URLSearchParams(location.search);
-    const CM_ADDR = (qs.get("cm") || "").trim();                         // <-- zet hier je CM via ?cm=...
-    const GROUP   = (qs.get("group") || "").trim();                      // <-- optioneel
-    const RPC_URL = (qs.get("rpc") || "https://api.devnet.solana.com").trim();
+    const CM_ADDR = qs.get("cm") || DEFAULTS.CM;
+    const RPC_URL = qs.get("rpc") || DEFAULTS.RPC;
+    const GROUP   = qs.get("group") || DEFAULTS.GROUP;
 
-    // Helpers
+    // UI helpers
     const $ = (id)=>document.getElementById(id);
     const setTxt = (id,v)=>{ const el=$(id); if(el) el.textContent=v; };
-    const note = (msg, kind="info")=>{
-      const el=$("msg"); if(!el) return;
-      el.textContent = msg || "";
-      el.className = "msg " + (kind==="ok"?"ok":kind==="warn"?"warn":"muted");
-    };
+    const note = (t,k="info")=>{ const el=$("msg"); if(!el) return; el.textContent=t||""; el.className=k==="ok"?"ok":k==="warn"?"warn":"muted"; };
     const fmt = (n)=> Number(n ?? 0).toLocaleString("nl-NL");
 
-    // UMI / Wallet
+    // Umi + wallet
     const umi = createUmi(RPC_URL).use(mplCandyMachine()).use(mplTokenMetadata());
     const web3Conn = new Connection(RPC_URL, "confirmed");
     let wallet, connected=false, cm, guard;
@@ -115,44 +144,42 @@
         umi.use(walletAdapterIdentity(wallet));
         connected = true;
         const pk = wallet.publicKey.toBase58();
-        setTxt("walletStatus", `Verbonden: ${pk.slice(0,6)}…${pk.slice(-6)}`);
+        $("walletStatus").textContent = `Verbonden: ${pk.slice(0,6)}…${pk.slice(-6)}`;
         $("mintBtn").disabled = false;
         note("");
-      }catch(e){
-        console.error(e);
+      }catch(err){
+        console.error(err);
         note("Verbinden mislukt.","warn");
       }
     }
 
     function guardGroup(guardAcc, label){
-      if(!guardAcc) return null;
-      if(!label) return null;                           // geen label => geen group gebruiken
       const g = (guardAcc.groups||[]).find(x=>x.label===label);
-      return g ? g.guards : null;
+      return g ? g.guards : guardAcc.guards || null;
     }
     function solPriceText(guards){
       const g = guards?.solPayment?.__option==="Some" ? guards.solPayment.value : guards?.solPayment;
-      if(!g?.lamports && g?.lamports!==0) return "—";
+      if(!g?.lamports && g?.lamports!==0) return "FREE";
       return (Number(g.lamports)/LAMPORTS_PER_SOL).toFixed(3)+" SOL";
     }
 
     async function refresh(){
       try{
-        if(!CM_ADDR){ setTxt("cmLbl","(ontbreekt)"); note("Geen CM id in de URL.","warn"); return; }
-        setTxt("cmLbl", CM_ADDR);
-        cm = await fetchCandyMachine(umi, publicKey(CM_ADDR));
-        // Guard: zit als mintAuthority op de CM
-        const cgPk = cm.mintAuthority;
-        guard = await fetchCandyGuard(umi, cgPk).catch(()=>null);
+        if(!CM_ADDR){ $("cmField").value = "⚠️ Voeg ?cm=<id> toe aan de URL"; return; }
+        $("cmField").value = CM_ADDR;
+        setTxt("groupLbl", GROUP || "–");
 
+        cm = await fetchCandyMachine(umi, publicKey(CM_ADDR));
+        guard = await fetchCandyGuard(umi, cm.mintAuthority);   // belangrijk: échte guard ophalen
+
+        // Tellers (v3 kan verschillende veldnamen hebben)
         const minted = Number(cm.itemsRedeemed ?? cm.itemsMinted ?? 0);
-        const avail  = Number(cm.itemsAvailable ?? 0);
-        setTxt("minted", fmt(minted));
-        setTxt("available", fmt(avail));
+        const available = Number(cm.itemsAvailable ?? cm.data?.itemsAvailable ?? cm.config?.itemsAvailable ?? 0);
+        setTxt("minted", fmt(minted)); setTxt("available", fmt(available));
 
         const g = guardGroup(guard, GROUP);
-        setTxt("activeGroup", GROUP || "—");
-        setTxt("priceSol", g ? solPriceText(g) : "FREE (+ tx fee)");
+        setTxt("priceSol", solPriceText(g));
+
         note("");
       }catch(e){
         console.error(e);
@@ -163,29 +190,29 @@
     async function doMint(){
       try{
         if(!connected) return note("Verbind eerst je wallet.","warn");
-        if(!cm)        return note("Candy Machine niet geladen.","warn");
+        if(!cm) await refresh();
+
         note("Mint wordt verzonden…");
 
         const nftMint = generateSigner(umi);
-        const groupArg = GROUP ? some(GROUP) : none();   // geen group meesturen als je er geen gebruikt
 
-        const tx = transactionBuilder().add(
-          mintV2(umi, {
-            candyMachine: publicKey(CM_ADDR),
-            nftMint,
-            collectionMint: cm.collectionMint,
-            collectionUpdateAuthority: cm.authority,
-            group: groupArg,
-            mintArgs: {}
-          })
-        );
+        // BELANGRIJK: candyGuard expliciet meegeven
+        const sig = await mintV2(umi, {
+          candyMachine: publicKey(CM_ADDR),
+          candyGuard: publicKey(cm.mintAuthority),
+          nftMint,
+          collectionMint: cm.collectionMint,
+          collectionUpdateAuthority: cm.authority,
+          group: GROUP ? some(GROUP) : none(),
+          mintArgs: {}
+        }).sendAndConfirm(umi);
 
-        const sig = await tx.sendAndConfirm(umi);
         note(`Mint bevestigd ✅ ${sig}`,"ok");
         await refresh();
       }catch(e){
         console.error(e);
-        note("Mint mislukt.","warn");
+        // Vaak: AccountNotInitialized => verkeerde/ontbrekende guard
+        note("Mint mislukt. Check of de juiste Candy Guard op de CM staat.","warn");
       }
     }
 
