@@ -75,7 +75,7 @@
 
       <div class="card col-6">
         <h3>📊 <span id="t_drop">Drop</span></h3>
-        <p><b id="t_cm">Candy Machine:</b> <span id="cmLbl" class="mono">—</span></p>
+        <p id="cmRow"><b id="t_cm">Candy Machine:</b> <span id="cmLbl" class="mono">—</span> <a id="cmSol" class="mono" target="_blank" rel="noreferrer"></a></p>
         <p><b id="t_minted">Minted:</b> <span id="minted">…</span> / <span id="available">…</span></p>
         <p><b id="t_price">Prijs:</b> <span id="price">Free (CBS ≥ 2 500)</span></p>
         <div class="row" style="margin-top:8px;">
@@ -123,6 +123,7 @@
     const RPC_URL = qs.get("rpc") || DEFAULTS.RPC;
     const LANG = (qs.get("lang") || "nl").toLowerCase();
     const GROUP = qs.get("group"); // optioneel: guard group label
+    const DEBUG = qs.get("debug") === "1"; // verberg CM-gegevens standaard; toon met ?debug=1
 
     // ---------- i18n ----------
     const I18N = { nl:{ connect:"Wallet verbinden", connected:(pk)=>`Verbonden: ${pk.slice(0,6)}…${pk.slice(-6)}`, needHttps:"(Open deze pagina via HTTPS)", title:"Mister Horse – CBS Holders Only Mint", sub:"Gratis mint voor wallets met ≥ 2.500 CBS. Alleen netwerk- en opslagkosten.", wallet:"Wallet", balance:"Jouw CBS balans:", drop:"Drop", cm:"Candy Machine:", minted:"Minted:", price:"Prijs:", refresh:"Verversen", mint:"Mint", note:"De knop wordt actief als je wallet ≥ 2.500 CBS heeft. De on-chain guard controleert dit ook.", okReady:"Je voldoet aan de CBS-eis, je kunt minten ✅", warnNeed:"Je hebt minimaal 2.500 CBS nodig om te minten.", errConnect:"Verbinden mislukt.", errLoad:"Candy Machine laden mislukt.", errMint:"Mint mislukt.", minting:"Mint wordt verzonden…", mintedOk:(sig)=>`Mint bevestigd ✅ ${sig}` }, en:{ connect:"Connect Wallet", connected:(pk)=>`Connected: ${pk.slice(0,6)}…${pk.slice(-6)}`, needHttps:"(Open this page over HTTPS)", title:"Mister Horse – CBS Holders Only Mint", sub:"Free mint for wallets holding ≥ 2,500 CBS. Network/storage fees only.", wallet:"Wallet", balance:"Your CBS balance:", drop:"Drop", cm:"Candy Machine:", minted:"Minted:", price:"Price:", refresh:"Refresh", mint:"Mint", note:"Button becomes active when your wallet holds ≥ 2,500 CBS. The on-chain guard enforces this too.", okReady:"CBS requirement met, you can mint ✅", warnNeed:"You need at least 2,500 CBS to mint.", errConnect:"Connection failed.", errLoad:"Failed to load Candy Machine.", errMint:"Mint failed.", minting:"Sending mint…", mintedOk:(sig)=>`Mint confirmed ✅ ${sig}` } };
@@ -157,7 +158,13 @@
       try{
         setTxt("cmLbl", ""); setTxt("cmShort", "CM: —");
         cm = await fetchCandyMachine(umi, publicKey(CM_ADDR));
-        setTxt("cmLbl", CM_ADDR); setTxt("cmShort", "CM: "+CM_ADDR.slice(0,4)+"…"+CM_ADDR.slice(-4));
+        setTxt("cmLbl", CM_ADDR);
+        const short = "CM: "+CM_ADDR.slice(0,4)+"…"+CM_ADDR.slice(-4);
+        setTxt("cmShort", short);
+        const cmHref = `https://solscan.io/account/${CM_ADDR}`;
+        const cmSol = $("cmSol"); if (cmSol){ cmSol.textContent = DEBUG ? "(Solscan)" : ""; cmSol.href = cmHref; }
+        const cmRow = $("cmRow"); if (cmRow){ cmRow.style.display = DEBUG ? "" : "none"; }
+        const cmShortEl = $("cmShort"); if (cmShortEl){ cmShortEl.style.display = DEBUG ? "" : "none"; }
         const minted = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? cm.itemsMinted ?? 0);
         const avail  = Number(cm.itemsAvailable ?? cm.data?.itemsAvailable ?? cm.itemsLoaded ?? cm.data?.itemsLoaded ?? 0);
         setTxt("minted", fmt(minted));
