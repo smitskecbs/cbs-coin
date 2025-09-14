@@ -1,80 +1,112 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Mister Horse — FREE Mint (Devnet)</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    :root{--bg1:#0a0c10;--bg2:#0f141b;--card:#0f151c;--card2:#0c1016;--fg:#eafffb;--muted:#a8d6cd;--note:#7ee9dc;--ok:#24e6b5;--warn:#ffad7a;--shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);--radius:18px}
-    *{box-sizing:border-box} html,body{height:100%}
-    body{margin:0;font-family:'Orbitron',sans-serif;color:var(--fg);background:
-      radial-gradient(900px 600px at 100% -10%, rgba(0,255,230,.10), transparent 60%),
-      radial-gradient(700px 500px at -10% 110%, rgba(0,170,255,.09), transparent 60%),
-      linear-gradient(135deg,var(--bg1),var(--bg2));}
-    .container{max-width:1100px;margin:0 auto;padding:1.2rem 1rem 2.2rem}
-    .card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid rgba(0,255,240,.14);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
-    .grid{display:grid;gap:16px;grid-template-columns:repeat(12,1fr)}
-    @media(min-width:980px){.col-6{grid-column:span 6}}
-    h1{margin:.3rem 0 1rem;color:#bffef2;font-size:1.4rem}
-    .row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-    .btn{display:inline-flex;align-items:center;justify-content:center;min-width:140px;padding:12px 18px;border-radius:10px;text-decoration:none;font-weight:900;font-size:.94rem;color:#001010;background:linear-gradient(180deg,#5afff0,#2bffe4);border:1px solid rgba(0,255,240,.7);box-shadow:0 0 12px rgba(0,255,230,.55),0 0 24px rgba(0,255,230,.25),inset 0 -8px 14px rgba(0,0,0,.14);cursor:pointer}
-    .btn:disabled{opacity:.55;cursor:not-allowed}
+    :root{
+      --bg1:#07090D; --bg2:#0B1016; --card:#0c121a; --edge:#0df5e6;
+      --fg:#eafffb; --muted:#a3cfc6; --ok:#2bf0c1; --warn:#ffb48a;
+      --radius:16px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:'Orbitron',system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      color:var(--fg);
+      background: radial-gradient(700px 500px at 110% -10%, rgba(0,255,230,.10), transparent 60%),
+                  radial-gradient(600px 400px at -10% 110%, rgba(0,170,255,.08), transparent 60%),
+                  linear-gradient(135deg,var(--bg1),var(--bg2));}
+    .wrap{max-width:1100px; margin:0 auto; padding:18px 16px 42px}
+    h1{font-size:28px; margin:8px 0 18px; letter-spacing:.5px}
+    .row{display:grid; grid-template-columns:280px 1fr; gap:16px}
+    .card{background:linear-gradient(180deg,#0c121a,#0a0f15); border:1px solid rgba(13,245,230,.16);
+      border-radius:var(--radius); padding:16px; box-shadow:0 18px 40px rgba(0,255,230,.07), inset 0 0 0 1px rgba(0,255,255,.06)}
+    .card h2{font-size:18px; margin:4px 0 12px}
+    .btn{display:inline-flex; align-items:center; justify-content:center; min-width:160px;
+      padding:12px 16px; border-radius:12px; background:linear-gradient(180deg,#5afff0,#28ffe3);
+      border:1px solid rgba(0,255,240,.7); color:#001010; font-weight:900; cursor:pointer}
+    .btn:disabled{opacity:.55; cursor:not-allowed}
     .muted{color:var(--muted)} .ok{color:var(--ok)} .warn{color:var(--warn)}
-    .mono{font-family:ui-monospace,Menlo,Monaco,Consolas,monospace}
-    .top{display:flex;align-items:center;justify-content:space-between;margin:8px 0 16px}
+    .stack{display:flex; flex-direction:column; gap:10px}
+    .pill{display:inline-block; padding:4px 10px; border-radius:999px; border:1px solid rgba(13,245,230,.25); color:#bffef2; font-size:12px}
+    .kvs{display:grid; grid-template-columns:140px 1fr; gap:6px; row-gap:8px; font-size:14px}
+    .top{display:flex; gap:10px; align-items:center; justify-content:flex-end; margin-bottom:10px}
+    .msg{min-height:22px; font-size:14px}
+    @media (max-width:860px){ .row{grid-template-columns:1fr} .top{justify-content:flex-start} }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="wrap">
     <div class="top">
-      <h1>Mister Horse — FREE Mint (Devnet)</h1>
-      <div class="row">
-        <button id="connectBtn" class="btn">Wallet verbinden</button>
-        <span id="walletStatus" class="muted">Niet verbonden</span>
-      </div>
+      <button id="connectBtn" class="btn">Wallet verbinden</button>
+      <span id="walletStatus" class="muted">Niet verbonden</span>
     </div>
 
-    <div class="grid">
-      <div class="card col-6">
-        <h3>🎟️ Mint</h3>
-        <div class="row" style="margin-top:10px;">
+    <h1>Mister Horse — FREE Mint (Devnet)</h1>
+
+    <div class="row">
+      <!-- Mint kolom -->
+      <div class="card">
+        <h2>🎟️ Mint</h2>
+        <div class="stack">
           <button id="mintBtn" class="btn" disabled>Mint NFT (FREE)</button>
           <button id="refreshBtn" class="btn">Verversen</button>
+          <div id="msg" class="msg muted"></div>
+          <div class="muted" style="font-size:13px;line-height:1.25;">
+            Tip: Je Phantom mag op Mainnet of Devnet staan; de tx gaat naar de gekozen RPC (URL-parameter <span class="pill">rpc=…</span>).
+          </div>
         </div>
-        <p id="msg" class="muted" style="margin-top:8px;"></p>
       </div>
 
-      <div class="card col-6">
-        <h3>📊 Drop info</h3>
-        <p><b>Candy Machine:</b> <span id="cmLbl" class="mono">—</span></p>
-        <p><b>Gemintrd:</b> <span id="minted">…</span> / <span id="available">…</span></p>
-        <p><b>Prijs:</b> <span id="price">FREE (+ tx fee)</span></p>
-        <small class="muted">Op devnet. Je Phantom mag gewoon op Mainnet staan; de tx gaat naar de RPC die hieronder staat.</small>
+      <!-- Info kolom -->
+      <div class="card">
+        <h2>📊 Drop info</h2>
+        <div class="kvs">
+          <div class="muted">Candy Machine:</div><div id="cmLbl" class="pill">–</div>
+          <div class="muted">Guard label (actief):</div><div id="activeGroup">–</div>
+          <div class="muted">Gemintrd:</div><div><span id="minted">…</span> / <span id="available">…</span></div>
+          <div class="muted">Prijs (SOL):</div><div id="priceSol">FREE (+ tx fee)</div>
+        </div>
+        <div class="muted" style="margin-top:10px; font-size:13px;">
+          Prijs verschijnt alleen als er een <code>solPayment</code> guard actief is; anders is het een free mint
+          en betaal je alleen network fees.
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- ====== LOGICA ====== -->
   <script type="module">
+    // Libs (let op: géén mpl-toolbox import meer)
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
-    import { publicKey, generateSigner, transactionBuilder, some } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
+    import { publicKey, generateSigner, transactionBuilder, some, none } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
     import { mplCandyMachine, fetchCandyMachine, fetchCandyGuard, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.2.0";
     import { PhantomWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-phantom@0.9.25";
+    import { Connection, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.95.3";
 
-    // URL-params / defaults
-    const qs    = new URLSearchParams(location.search);
-    const CM    = qs.get("cm")  || "8ZQgf6goaJaqgB1rtPoVcLd2KEo359NKqwTK5UEk5v9s";
-    const RPC   = qs.get("rpc") || "https://api.devnet.solana.com";
-    const GROUP = qs.get("group") || ""; // leeg = default guard (FREE)
+    // URL parameters
+    const qs = new URLSearchParams(location.search);
+    const CM_ADDR = (qs.get("cm") || "").trim();                         // <-- zet hier je CM via ?cm=...
+    const GROUP   = (qs.get("group") || "").trim();                      // <-- optioneel
+    const RPC_URL = (qs.get("rpc") || "https://api.devnet.solana.com").trim();
 
+    // Helpers
     const $ = (id)=>document.getElementById(id);
-    const fmt = (n)=>Number(n??0).toLocaleString("nl-NL");
-    const note = (t,k="info")=>{ const el=$("msg"); if(!el) return; el.textContent=t||""; el.className= k==="ok"?"ok":k==="warn"?"warn":"muted"; }
+    const setTxt = (id,v)=>{ const el=$(id); if(el) el.textContent=v; };
+    const note = (msg, kind="info")=>{
+      const el=$("msg"); if(!el) return;
+      el.textContent = msg || "";
+      el.className = "msg " + (kind==="ok"?"ok":kind==="warn"?"warn":"muted");
+    };
+    const fmt = (n)=> Number(n ?? 0).toLocaleString("nl-NL");
 
-    const umi = createUmi(RPC).use(mplCandyMachine()).use(mplTokenMetadata());
-    let wallet, cmAcc, guardAcc, connected=false;
+    // UMI / Wallet
+    const umi = createUmi(RPC_URL).use(mplCandyMachine()).use(mplTokenMetadata());
+    const web3Conn = new Connection(RPC_URL, "confirmed");
+    let wallet, connected=false, cm, guard;
 
     async function connectWallet(){
       try{
@@ -83,57 +115,77 @@
         umi.use(walletAdapterIdentity(wallet));
         connected = true;
         const pk = wallet.publicKey.toBase58();
-        $("walletStatus").textContent = `Verbonden: ${pk.slice(0,6)}…${pk.slice(-6)}`;
+        setTxt("walletStatus", `Verbonden: ${pk.slice(0,6)}…${pk.slice(-6)}`);
         $("mintBtn").disabled = false;
         note("");
-      }catch(e){ note("Verbinden mislukt.","warn"); }
+      }catch(e){
+        console.error(e);
+        note("Verbinden mislukt.","warn");
+      }
+    }
+
+    function guardGroup(guardAcc, label){
+      if(!guardAcc) return null;
+      if(!label) return null;                           // geen label => geen group gebruiken
+      const g = (guardAcc.groups||[]).find(x=>x.label===label);
+      return g ? g.guards : null;
+    }
+    function solPriceText(guards){
+      const g = guards?.solPayment?.__option==="Some" ? guards.solPayment.value : guards?.solPayment;
+      if(!g?.lamports && g?.lamports!==0) return "—";
+      return (Number(g.lamports)/LAMPORTS_PER_SOL).toFixed(3)+" SOL";
     }
 
     async function refresh(){
       try{
-        $("cmLbl").textContent = CM;
-        cmAcc    = await fetchCandyMachine(umi, publicKey(CM));
-        guardAcc = await fetchCandyGuard(umi, cmAcc.mintAuthority).catch(()=>null);
+        if(!CM_ADDR){ setTxt("cmLbl","(ontbreekt)"); note("Geen CM id in de URL.","warn"); return; }
+        setTxt("cmLbl", CM_ADDR);
+        cm = await fetchCandyMachine(umi, publicKey(CM_ADDR));
+        // Guard: zit als mintAuthority op de CM
+        const cgPk = cm.mintAuthority;
+        guard = await fetchCandyGuard(umi, cgPk).catch(()=>null);
 
-        const minted = Number(cmAcc.itemsRedeemed ?? cmAcc.itemsMinted ?? 0);
-        const avail  = Number(cmAcc.itemsAvailable ?? 0);
-        $("minted").textContent = fmt(minted);
-        $("available").textContent = fmt(avail);
+        const minted = Number(cm.itemsRedeemed ?? cm.itemsMinted ?? 0);
+        const avail  = Number(cm.itemsAvailable ?? 0);
+        setTxt("minted", fmt(minted));
+        setTxt("available", fmt(avail));
 
-        let priceText = "FREE (+ tx fee)";
-        if(guardAcc){
-          const g = (guardAcc.groups||[]).find(x=>x.label===GROUP)?.guards || guardAcc.guards;
-          const solG = g?.solPayment?.__option==="Some" ? g.solPayment.value : g?.solPayment;
-          if(solG?.lamports !== undefined){
-            priceText = (Number(solG.lamports)/1_000_000_000).toFixed(3) + " SOL";
-          }
-        }
-        $("price").textContent = priceText;
+        const g = guardGroup(guard, GROUP);
+        setTxt("activeGroup", GROUP || "—");
+        setTxt("priceSol", g ? solPriceText(g) : "FREE (+ tx fee)");
         note("");
-      }catch(e){ note("Candy Machine laden mislukt.","warn"); }
+      }catch(e){
+        console.error(e);
+        note("Candy Machine of Guard laden mislukt.","warn");
+      }
     }
 
     async function doMint(){
       try{
         if(!connected) return note("Verbind eerst je wallet.","warn");
+        if(!cm)        return note("Candy Machine niet geladen.","warn");
         note("Mint wordt verzonden…");
+
         const nftMint = generateSigner(umi);
+        const groupArg = GROUP ? some(GROUP) : none();   // geen group meesturen als je er geen gebruikt
 
-        const params = {
-          candyMachine: publicKey(CM),
-          nftMint,
-          collectionMint: cmAcc.collectionMint,
-          collectionUpdateAuthority: cmAcc.authority,
-          mintArgs: {}
-        };
-        if(GROUP) params.group = some(GROUP);
+        const tx = transactionBuilder().add(
+          mintV2(umi, {
+            candyMachine: publicKey(CM_ADDR),
+            nftMint,
+            collectionMint: cm.collectionMint,
+            collectionUpdateAuthority: cm.authority,
+            group: groupArg,
+            mintArgs: {}
+          })
+        );
 
-        const tx = transactionBuilder().add(mintV2(umi, params));
         const sig = await tx.sendAndConfirm(umi);
         note(`Mint bevestigd ✅ ${sig}`,"ok");
         await refresh();
       }catch(e){
-        note("Mint mislukt. " + (e?.message || ""), "warn");
+        console.error(e);
+        note("Mint mislukt.","warn");
       }
     }
 
