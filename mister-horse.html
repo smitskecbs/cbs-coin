@@ -93,7 +93,7 @@
       <div class="card col-6">
         <h3>📊 <span id="t_drop">Drop</span></h3>
         <p><b id="t_cm">Candy Machine:</b> <span id="cmLbl" class="mono">—</span></p>
-        <p><b id="t_minted">Gemintrd:</b> <span id="minted">…</span> / <span id="available">…</span></p>
+        <p><b id="t_minted">Minted:</b> <span id="minted">…</span> / <span id="available">…</span></p>
         <p><b id="t_price">Prijs:</b> <span id="price">Free (CBS ≥ 2 500)</span></p>
         <div class="row" style="margin-top:8px;">
           <button id="btnRefresh" class="btn secondary">↻ <span id="t_refresh">Verversen</span></button>
@@ -115,11 +115,11 @@
   </div>
 
   <script type="module">
-    // ---------- Imports ----------
+    // ---------- Imports (stabiele CDN-versies, zonder bundler) ----------
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
     import { publicKey, generateSigner, transactionBuilder } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
-    import { mplCandyMachine, fetchCandyMachine, fetchCandyGuard, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
+    import { mplCandyMachine, fetchCandyMachine, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.2.0";
     import { setComputeUnitLimit } from "https://esm.sh/@metaplex-foundation/mpl-toolbox@0.10.1";
     import { PhantomWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-phantom@0.9.25";
@@ -127,11 +127,13 @@
 
     // ---------- Config ----------
     const DEFAULTS = {
-      CM: "A7vfGTsyE9xDYJRMvR3nZ2oNntcaB7ZCFtUBpjipQc4F", // jouw mainnet CM
+      CM: "A7vfGTsyE9xDYJRMvR3nZ2oNntcaB7ZCFtUBpjipQc4F", // ← jouw mainnet CM
       CBS_MINT: "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk",
       THRESHOLD_UI: 2500, // 2.500 CBS in UI units
-      RPC: "https://mainnet.helius-rpc.com/?api-key=0053b3c9-a47d-4e7e-b76b-dbdc46f36189"
+      RPC: "https://api.mainnet-beta.solana.com" // Gebruik evt. jouw Helius/QuickNode URL
     };
+
+    // Optionele override via query params
     const qs = new URLSearchParams(location.search);
     const CM_ADDR = qs.get("cm") || DEFAULTS.CM;
     const RPC_URL = qs.get("rpc") || DEFAULTS.RPC;
@@ -149,7 +151,7 @@
         balance: "Jouw CBS balans:",
         drop: "Drop",
         cm: "Candy Machine:",
-        minted: "Gemintrd:",
+        minted: "Minted:",
         price: "Prijs:",
         refresh: "Verversen",
         mint: "Mint",
@@ -157,7 +159,7 @@
         okReady: "Je voldoet aan de CBS-eis, je kunt minten ✅",
         warnNeed: "Je hebt minimaal 2.500 CBS nodig om te minten.",
         errConnect: "Verbinden mislukt.",
-        errLoad: "Candy Machine of Guard laden mislukt.",
+        errLoad: "Candy Machine laden mislukt.",
         errMint: "Mint mislukt.",
         minting: "Mint wordt verzonden…",
         mintedOk: (sig)=>`Mint bevestigd ✅ ${sig}`
@@ -180,7 +182,7 @@
         okReady: "CBS requirement met, you can mint ✅",
         warnNeed: "You need at least 2,500 CBS to mint.",
         errConnect: "Connection failed.",
-        errLoad: "Failed to load Candy Machine or Guard.",
+        errLoad: "Failed to load Candy Machine.",
         errMint: "Mint failed.",
         minting: "Sending mint…",
         mintedOk: (sig)=>`Mint confirmed ✅ ${sig}`
@@ -249,9 +251,6 @@
         setTxt("minted", fmt(minted));
         setTxt("available", fmt(avail));
 
-        // Guard ophalen (alleen om te checken dat hij bestaat)
-        await fetchCandyGuard(umi, cm.mintAuthority);
-
         setTxt("price","Free (CBS ≥ 2 500)");
         note("");
       }catch(e){
@@ -260,11 +259,12 @@
       }
     }
 
-    // ---------- Wallet connect ----------
+    // ---------- Wallet connect (fix: expliciete Phantom adapter + duidelijke foutafhandeling) ----------
     async function connectWallet(){
       try{
         wallet = new PhantomWalletAdapter();
         await wallet.connect();
+        if(!wallet.publicKey){ throw new Error("Geen publicKey van wallet"); }
         umi.use(walletAdapterIdentity(wallet));
         connected = true;
         const pk = wallet.publicKey.toBase58();
@@ -277,13 +277,12 @@
       }
     }
 
-    // ---------- CBS holder check ----------
+    // ---------- CBS holder check (fix: sommeer uiAmount over alle accounts + robuuste null‑checks) ----------
     async function getCbsUiBalance(ownerPk){
-      // Sommeer alle parsed CBS token accounts (uiAmount)
       const res = await connection.getParsedTokenAccountsByOwner(ownerPk, { mint: CBS_MINT });
       let total = 0;
       for(const acc of (res.value||[])){
-        const ui = acc.account.data?.parsed?.info?.tokenAmount?.uiAmount;
+        const ui = acc.account?.data?.parsed?.info?.tokenAmount?.uiAmount;
         total += Number(ui||0);
       }
       return total;
@@ -303,7 +302,7 @@
       }
     }
 
-    // ---------- Mint ----------
+    // ---------- Mint (fix: verlaagde compute units + heldere bevestigingslink) ----------
     async function doMint(){
       try{
         if(!connected) return;
@@ -313,16 +312,21 @@
         note(T("minting"));
         const nftMint = generateSigner(umi);
         const tx = transactionBuilder()
-          .add(setComputeUnitLimit(umi, { units: 800_000 }))
+          .add(setComputeUnitLimit(umi, { units: 600_000 }))
           .add(mintV2(umi, {
               candyMachine: publicKey(CM_ADDR),
               nftMint,
               collectionMint: cm.collectionMint,
               collectionUpdateAuthority: cm.authority
-              // géén group -> default guard met tokenGate wordt gebruikt
           }));
         const sig = await tx.sendAndConfirm(umi);
         note(()=>I18N[LANG_CUR].mintedOk(sig),"ok");
+        // klikbare bevestiging
+        const href = `https://solscan.io/tx/${sig}`;
+        const p = document.createElement('p');
+        p.className = 'ok';
+        p.innerHTML = `<a target="_blank" rel="noreferrer" href="${href}">Bekijk op Solscan</a>`;
+        $("msg").after(p);
         await refresh();
         await checkHolderAndToggle();
       }catch(e){
