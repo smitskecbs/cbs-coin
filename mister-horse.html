@@ -107,6 +107,7 @@
     import { setComputeUnitLimit } from "https://esm.sh/@metaplex-foundation/mpl-toolbox@0.9.1";
     import { PhantomWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-phantom@0.9.25";
     import { Connection, PublicKey } from "https://esm.sh/@solana/web3.js@1.95.3";
+    import { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from "https://esm.sh/@solana/spl-token@0.4.3";
 
     // ---------- Config ----------
     const DEFAULTS = {
@@ -157,9 +158,10 @@
         setTxt("cmLbl", ""); setTxt("cmShort", "CM: —");
         cm = await fetchCandyMachine(umi, publicKey(CM_ADDR));
         setTxt("cmLbl", CM_ADDR); setTxt("cmShort", "CM: "+CM_ADDR.slice(0,4)+"…"+CM_ADDR.slice(-4));
-        const minted = Number(cm.itemsRedeemed ?? cm.itemsMinted ?? 0);
-        const avail  = Number(cm.itemsAvailable ?? 0);
-        setTxt("minted", fmt(minted)); setTxt("available", fmt(avail));
+        const minted = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? cm.itemsMinted ?? 0);
+        const avail  = Number(cm.itemsAvailable ?? cm.data?.itemsAvailable ?? cm.itemsLoaded ?? cm.data?.itemsLoaded ?? 0);
+        setTxt("minted", fmt(minted));
+        setTxt("available", fmt(avail));
         setTxt("price","Free (CBS ≥ 2 500)"); note("");
       }catch(e){ console.error(e); note(T("errLoad"),"warn"); }
     }
@@ -193,6 +195,15 @@
         note(T("minting"));
         const nftMint = generateSigner(umi);
 
+        const mintPk = publicKey(DEFAULTS.CBS_MINT);
+        const ata = getAssociatedTokenAddressSync(new PublicKey(DEFAULTS.CBS_MINT), wallet.publicKey, false, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID);
+
+        const remainingAccounts = [
+          { pubkey: publicKey(ata.toBase58()), isWritable: false, isSigner: false },
+          { pubkey: mintPk, isWritable: false, isSigner: false },
+          { pubkey: publicKey(TOKEN_PROGRAM_ID.toBase58()), isWritable: false, isSigner: false }
+        ];
+
         const args = {
           candyMachine: publicKey(CM_ADDR),
           candyGuard: cm.mintAuthority,
@@ -200,15 +211,16 @@
           collectionMint: cm.collectionMint,
           collectionUpdateAuthority: cm.authority,
           ...(GROUP ? { group: GROUP } : {}),
-          // Belangrijk: geef tokenGate mint mee zodat Umi de juiste remaining accounts kan toevoegen.
-          mintArgs: { tokenGate: some({ mint: publicKey(DEFAULTS.CBS_MINT) }) }
+          mintArgs: { tokenGate: some({ mint: mintPk }) },
+          remainingAccounts
         };
 
         const tx = transactionBuilder()
           .add(setComputeUnitLimit(umi, { units: 600_000 }))
           .add(mintV2(umi, args));
 
-        const sig = await tx.sendAndConfirm(umi);
+        const resSig = await tx.sendAndConfirm(umi);
+        const sig = (typeof resSig === 'string') ? resSig : (resSig?.signature || (Array.isArray(resSig) ? resSig[0] : String(resSig)));
         note(()=>I18N[LANG_CUR].mintedOk(sig),"ok");
         const href = `https://solscan.io/tx/${sig}`; const p = document.createElement('p'); p.className='ok'; p.innerHTML=`<a target="_blank" rel="noreferrer" href="${href}">Bekijk op Solscan</a>`; $("msg").after(p);
         await refresh(); await checkHolderAndToggle();
