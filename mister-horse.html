@@ -1,20 +1,17 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Mister Horse — Free Mint (Mainnet)</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Mister Horse — CBS Holders Only (Mainnet)</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <style>
     :root{
-      --bg1:#080b10; --bg2:#0f141b;
-      --card:#0f151c; --card2:#0c1016;
-      --fg:#eafffb; --muted:#a8d6cd; --note:#7ee9dc;
-      --accent:#58ffe8; --ok:#24e6b5; --warn:#ffb58a;
+      --bg1:#080b10; --bg2:#0f141b; --card:#0f151c; --card2:#0c1016;
+      --fg:#eafffb; --muted:#a8d6cd; --note:#7ee9dc; --ok:#24e6b5; --warn:#ffb58a;
       --radius:18px; --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
+    *{box-sizing:border-box} html,body{height:100%}
     body{
       margin:0; font-family:'Orbitron',sans-serif; color:var(--fg);
       background:
@@ -56,7 +53,6 @@
     .muted{color:var(--muted)} .ok{color:var(--ok)} .warn{color:var(--warn)} .mono{font-family:ui-monospace,Menlo,Monaco,Consolas,monospace}
     .progress{height:10px; width:100%; background:#0b1117; border:1px solid rgba(0,255,240,.15); border-radius:999px; overflow:hidden}
     .bar{height:100%; width:0%; background:linear-gradient(90deg,#5afff0,#2bffe4); transition:width .5s ease}
-    .kbd{font-family:ui-monospace,Menlo,Consolas,monospace; padding:.2rem .4rem; border:1px solid rgba(0,255,240,.2); border-radius:6px; background:rgba(0,255,240,.06)}
     footer{ text-align:center; color:#a8d6cd; margin-top:24px }
     footer a{ color:#79ffee; text-decoration:none } footer a:hover{text-decoration:underline}
   </style>
@@ -64,7 +60,7 @@
 <body>
   <header class="topbar">
     <div class="brand">
-      <img src="logo.png" alt="CBS Logo"><h1>Mister Horse — Free Mint</h1>
+      <img src="logo.png" alt="CBS Logo"><h1>Mister Horse — CBS Holders Only</h1>
     </div>
     <div class="social" aria-label="Social links">
       <a class="icon-link" href="https://x.com/CBS_Coin" target="_blank" rel="noopener" aria-label="X">
@@ -84,7 +80,7 @@
       <div class="logo-wrap"><img class="logo" src="logo.png" alt="Mister Horse"></div>
       <div>
         <h2>Mister Horse — NFT Mint (Mainnet)</h2>
-        <p class="muted">Free mint (alleen netwerkfees). Werkt met Phantom op HTTPS.</p>
+        <p class="muted">Alleen voor wallets met ≥ <b>2 500 CBS</b>. Gratis mint (alleen netwerkfees).</p>
       </div>
     </section>
 
@@ -96,10 +92,11 @@
           <span id="walletStatus" class="muted">Niet verbonden</span>
         </div>
         <div class="row" style="margin-top:10px;">
-          <button id="mintBtn" class="btn" disabled>Mint NFT (Free)</button>
+          <button id="mintBtn" class="btn" disabled>Mint NFT (CBS Holders)</button>
           <button id="refreshBtn" class="btn">Verversen</button>
         </div>
         <p id="msg" class="muted" style="margin-top:8px;"></p>
+        <p id="cbsInfo" class="muted" style="margin-top:4px;"></p>
       </div>
 
       <div class="card col-6">
@@ -109,91 +106,106 @@
           <div class="progress" style="flex:1;"><div id="bar" class="bar"></div></div>
           <span class="mono" id="counter">— / —</span>
         </div>
-        <p style="margin-top:8px;"><b>Prijs:</b> <span id="priceSol">Free (tx fees)</span></p>
-        <small class="muted">Geen solPayment guard ingesteld. Alleen netwerkfees voor accounts/tx.</small>
+        <p style="margin-top:8px;"><b>Prijs:</b> Free (tx fees) • <b>Gate:</b> CBS ≥ 2 500</p>
       </div>
     </section>
 
     <footer>
       Vragen? <a href="mailto:cbs.coin12@gmail.com">cbs.coin12@gmail.com</a>
-      <div style="margin-top:8px" class="muted">Tip: je kunt <span class="kbd">?cm=…&rpc=…</span> in de URL zetten om CM/RPC te overschrijven.</div>
+      <div style="margin-top:8px" class="muted">Je kunt <code>?cm=…&rpc=…</code> aan de URL toevoegen om CM/RPC te overschrijven.</div>
     </footer>
   </div>
 
-  <!-- MINT LOGIC -->
   <script type="module">
-    // ===== Dependencies =====
+    // ====== Imports ======
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
-    import { publicKey, generateSigner, transactionBuilder, some, none } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
+    import { publicKey, generateSigner } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
     import { mplCandyMachine, fetchCandyMachine, fetchCandyGuard, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.2.0";
     import { setComputeUnitLimit } from "https://esm.sh/@metaplex-foundation/mpl-toolbox@0.10.1";
     import { PhantomWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-phantom@0.9.25";
+    import { Connection, PublicKey } from "https://esm.sh/@solana/web3.js@1.95.3";
+    import { getAssociatedTokenAddress } from "https://esm.sh/@solana/spl-token@0.4.7";
 
-    // ===== Config (defaults -> via URL te overschrijven) =====
+    // ====== Config ======
     const DEFAULTS = {
-      CM:  "A7vfGTsyE9xDYJRMvR3nZ2oNntcaB7ZCFtUBpjipQc4F", // ← jouw mainnet CM
-      RPC: "https://mainnet.helius-rpc.com/?api-key=0053b3c9-a47d-4e7e-b76b-dbdc46f36189" // ← jouw Helius
+      CM:  "A7vfGTsyE9xDYJRMvR3nZ2oNntcaB7ZCFtUBpjipQc4F",
+      RPC: "https://mainnet.helius-rpc.com/?api-key=0053b3c9-a47d-4e7e-b76b-dbdc46f36189"
     };
-    const qs     = new URLSearchParams(location.search);
-    const CM_ID  = qs.get("cm")  || DEFAULTS.CM;
-    const RPC    = qs.get("rpc") || DEFAULTS.RPC;
+    const CBS_MINT = new PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
+    const REQUIRED_CBS_UI = 2500; // pas dit aan indien gewenst
 
-    // ===== UI helpers =====
+    const qs = new URLSearchParams(location.search);
+    const CM_ID = qs.get("cm")  || DEFAULTS.CM;
+    const RPC   = qs.get("rpc") || DEFAULTS.RPC;
+
+    // ====== UI helpers ======
     const $ = (id)=>document.getElementById(id);
-    const setTxt = (id, v)=>{ const el=$(id); if(el) el.textContent = v; };
-    const setMsg = (t, kind="info")=>{
-      const el = $("msg"); if(!el) return;
-      el.textContent = t || "";
-      el.className = kind==="ok" ? "ok" : kind==="warn" ? "warn" : "muted";
-    };
     const fmt = (n)=> Number(n ?? 0).toLocaleString("nl-NL");
-    const setBar = (num, den)=>{
-      const p = (!den || den<=0) ? 0 : Math.min(100, Math.round((num/den)*100));
-      const bar = $("bar"); if(bar) bar.style.width = p+"%";
+    const setTxt = (id,v)=>{ const el=$(id); if(el) el.textContent=v; };
+    const setMsg = (t,k="info")=>{
+      const el=$("msg"); if(!el) return;
+      el.textContent=t||""; el.className = k==="ok"?"ok":k==="warn"?"warn":"muted";
+    };
+    const setBar=(num,den)=>{
+      const p = (!den||den<=0)?0:Math.min(100,Math.round(num/den*100));
+      const bar=$("bar"); if(bar) bar.style.width=p+"%";
       setTxt("counter", `${fmt(num)} / ${fmt(den)}`);
     };
 
-    // ===== UMI / Wallet =====
+    // ====== State ======
     const umi = createUmi(RPC).use(mplCandyMachine()).use(mplTokenMetadata());
-    let walletAdapter = null, connected = false, cm = null, guard = null;
+    const web3 = new Connection(RPC, "confirmed");
+    let wallet=null, cm=null, guard=null, connected=false;
 
     async function connectWallet(){
       try{
-        walletAdapter = new PhantomWalletAdapter();
-        await walletAdapter.connect();
-        umi.use(walletAdapterIdentity(walletAdapter));
-        connected = true;
-        const pk = walletAdapter.publicKey.toBase58();
-        $("walletStatus").textContent = `Verbonden: ${pk.slice(0,6)}…${pk.slice(-6)}`;
-        $("mintBtn").disabled = false;
+        wallet = new PhantomWalletAdapter();
+        await wallet.connect();
+        umi.use(walletAdapterIdentity(wallet));
+        connected=true;
+        const pk=wallet.publicKey.toBase58();
+        $("walletStatus").textContent=`Verbonden: ${pk.slice(0,6)}…${pk.slice(-6)}`;
         setMsg("");
+        await checkCbs();
+      }catch(e){ console.error(e); setMsg("Verbinden mislukt.","warn"); }
+    }
+
+    async function checkCbs(){
+      try{
+        if(!wallet?.publicKey) return;
+        const ata = await getAssociatedTokenAddress(CBS_MINT, wallet.publicKey, false);
+        const acc = await web3.getParsedAccountInfo(ata);
+        const parsed = acc.value?.data?.parsed;
+        const ui = parsed ? (parsed.info?.tokenAmount?.uiAmount || 0) : 0;
+        const ok = ui >= REQUIRED_CBS_UI;
+        $("cbsInfo").textContent = ok
+          ? `CBS OK: ${fmt(ui)} ≥ ${fmt(REQUIRED_CBS_UI)}`
+          : `CBS te laag: ${fmt(ui)} / ${fmt(REQUIRED_CBS_UI)} nodig`;
+        $("cbsInfo").className = ok ? "ok" : "warn";
+        $("mintBtn").disabled = !ok;
       }catch(e){
         console.error(e);
-        setMsg("Verbinden mislukt.","warn");
+        $("cbsInfo").textContent = "CBS-saldo controleren mislukt";
+        $("cbsInfo").className = "warn";
+        $("mintBtn").disabled = true;
       }
     }
 
-    // ===== Load CM & stats =====
     async function refresh(){
       try{
         setTxt("cmLbl", CM_ID);
         cm = await fetchCandyMachine(umi, publicKey(CM_ID));
-        try { guard = await fetchCandyGuard(umi, cm.mintAuthority); } catch { guard = null; }
+        try { guard = await fetchCandyGuard(umi, cm.mintAuthority); } catch { guard=null; }
         const minted = Number(cm.itemsRedeemed ?? cm.itemsMinted ?? 0);
         const total  = Number(cm.itemsAvailable ?? 0);
-        setBar(minted, total);
-        // Geen solPayment guard → Free (tx fees)
-        setTxt("priceSol", "Free (tx fees)");
+        setBar(minted,total);
         setMsg("");
-      }catch(e){
-        console.error(e);
-        setMsg("Candy Machine of Guard laden mislukt.","warn");
-      }
+        if(connected) await checkCbs();
+      }catch(e){ console.error(e); setMsg("Candy Machine/Guard laden mislukt.","warn"); }
     }
 
-    // ===== Mint (free) =====
     async function doMint(){
       try{
         if(!connected) return setMsg("Verbind eerst je wallet.","warn");
@@ -205,33 +217,24 @@
             nftMint,
             collectionMint: cm.collectionMint,
             collectionUpdateAuthority: cm.authority,
-            // Geen group label → default guards
-            // group: none(),
             mintArgs: {}
           }));
         const sig = await tx.sendAndConfirm(umi);
-        setMsg(`Mint bevestigd ✅ ${sig}`, "ok");
+        setMsg(`Mint bevestigd ✅ ${sig}`,"ok");
         await refresh();
-      }catch(e){
-        console.error(e);
-        // Kleine foutuitleg
-        const msg = (e && e.message) ? String(e.message) : "Mint mislukt.";
-        setMsg(msg, "warn");
+      }catch(e){ console.error(e);
+        setMsg(e?.message || "Mint mislukt.","warn");
       }
     }
 
-    // ===== Wire up =====
     $("connectBtn")?.addEventListener("click", connectWallet);
     $("refreshBtn")?.addEventListener("click", refresh);
     $("mintBtn")?.addEventListener("click", doMint);
 
-    // HTTPS waarschuwing voor lokale tests
     if (location.protocol!=="https:" && location.hostname!=="localhost") {
       setMsg("Let op: gebruik HTTPS zodat Phantom werkt.","warn");
     }
-
     await refresh();
   </script>
 </body>
 </html>
-
