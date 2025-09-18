@@ -14,7 +14,6 @@
       --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
       --radius:18px;
       --btnA:#5afff0; --btnB:#2bffe4;
-      --tag:#91ffee; --danger:#ffad7a;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -42,8 +41,10 @@
     .logo-wrap{position:relative; width:90px; height:90px; border-radius:16px; overflow:hidden; background:radial-gradient(closest-side, rgba(0,255,230,.18), rgba(0,255,230,.04) 58%, transparent 62%); display:grid; place-items:center;}
     .logo{width:78%; height:78%; object-fit:contain}
     #title{margin:.15rem 0 0; color:#bffef2; font-size:1.2rem}
+
     .panel{background:linear-gradient(180deg, var(--card), var(--card2)); border:1px solid var(--line); border-radius:var(--radius); padding:20px; margin:18px auto; box-shadow:var(--shadow);}
     .panel p{color:var(--fg); line-height:1.6; margin:.2rem 0}
+
     .table-wrap{overflow-x:auto;}
     table{width:100%; border-collapse:separate; border-spacing:0; margin-top:.6rem; background:linear-gradient(180deg,#0b1217,#0a1015); border:1px solid rgba(0,255,240,.18); border-radius:12px; box-shadow:inset 0 0 0 1px rgba(0,255,240,.06), 0 8px 18px rgba(0,255,230,.08);}
     thead th{background:linear-gradient(180deg,#0f1a20,#0d151b); color:#bffef2; text-align:left; padding:14px; border-bottom:1px solid rgba(0,255,240,.18); font-weight:700;}
@@ -54,7 +55,7 @@
     .tag{display:inline-block; padding:.12rem .45rem; border:1px solid rgba(0,255,240,.28); border-radius:999px; font-size:.78rem; color:#063; background:rgba(0,255,240,.07)}
     .tag.team{color:#0a1b12; background:#b7ffe8; border-color:#8affd8}
     .muted{color:var(--muted)}
-    .danger{color:var(--danger)}
+
     @media (max-width:640px){ .hero{grid-template-columns:1fr; text-align:center} .logo-wrap{margin:0 auto} #title{text-align:center} }
   </style>
 </head>
@@ -74,11 +75,19 @@
     </section>
 
     <div class="panel">
-      <p id="intro_nl">CBS Coin is 100% community-driven zonder teamallocaties, VC’s of presales. Alles is on-chain en transparant. Holders: <b id="holders_nl">—</b>. <span class="muted">Laatste update: <span id="ts_nl">—</span></span></p>
-      <p id="intro_en" style="display:none;">CBS Coin is 100% community-driven with no team allocations, VCs or presales. Everything is on-chain and transparent. Holders: <b id="holders_en">—</b>. <span class="muted">Last update: <span id="ts_en">—</span></span></p>
+      <p id="intro_nl">
+        CBS Coin is 100% community-driven zonder teamallocaties, VC’s of presales.
+        Alles is on-chain en transparant. Holders: <b id="holders_nl">—</b>.
+        <span class="muted">Laatste update: <span id="ts_nl">—</span></span>
+      </p>
+      <p id="intro_en" style="display:none;">
+        CBS Coin is 100% community-driven with no team allocations, VCs or presales.
+        Everything is on-chain and transparent. Holders: <b id="holders_en">—</b>.
+        <span class="muted">Last update: <span id="ts_en">—</span></span>
+      </p>
     </div>
 
-    <!-- Samenvattende tabel (live) -->
+    <!-- Samenvatting -->
     <div class="panel">
       <div class="table-wrap">
         <table>
@@ -89,9 +98,7 @@
               <th id="th_pct">Percentage</th>
             </tr>
           </thead>
-          <tbody id="summaryRows">
-            <!-- wordt live gevuld -->
-          </tbody>
+          <tbody id="summaryRows"></tbody>
         </table>
       </div>
       <p class="muted" id="discl_nl" style="margin-top:10px;">
@@ -104,7 +111,7 @@
       </p>
     </div>
 
-    <!-- Top 10 holders (live) -->
+    <!-- Top 10 -->
     <div class="panel">
       <h3 id="h_top10" style="margin:0 0 .6rem;">Top 10 holders (live)</h3>
       <div class="table-wrap">
@@ -116,9 +123,7 @@
               <th id="th_pct2">Percentage</th>
             </tr>
           </thead>
-          <tbody id="topRows">
-            <!-- wordt live gevuld -->
-          </tbody>
+          <tbody id="topRows"></tbody>
         </table>
       </div>
       <p class="muted" id="lp_hint" style="margin-top:10px;"></p>
@@ -128,217 +133,206 @@
   <script type="module">
     // ====== CONFIG ======
     const CONFIG = {
-      RPC: "https://mainnet.helius-rpc.com/?api-key=0053b3c9-a47d-4e7e-b76b-dbdc46f36189",
+      RPCS: [
+        "https://rpc.helius.xyz/?api-key=0053b3c9-a47d-4e7e-b76b-dbdc46f36189", // jouw Helius; pas aan indien nodig
+        "https://api.mainnet-beta.solana.com"                                   // fallback
+      ],
       MINT: "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk",      // CBS mint
-      TEAM_WALLET: "8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd", // team wallet
-      // Optioneel: als je de LP-owner/token-account weet, zet die hier (dan geen auto-detect nodig)
-      LP_OWNER_HINT: "" // bv. "RaydiumAuthorityAddress"
+      TEAM_WALLET: "8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd",
+      LP_OWNER_HINT: "" // optioneel: owner van LP-tokenaccount; laat leeg voor auto-detect
     };
 
-    // ====== I18N ======
+    // ====== I18N & UI helpers ======
     let LANG = "nl";
+    let lastSupply = null, lastOwnerAgg = null, lastHoldersGuess = null;
+
+    const $ = (q)=>document.querySelector(q);
+    const short = (pk)=>pk.slice(0,4)+"…"+pk.slice(-4);
+    const fmt = (n)=>Number(n).toLocaleString(LANG==="nl"?"nl-NL":"en-US");
+    const pct = (n)=>Number(n).toLocaleString(LANG==="nl"?"nl-NL":"en-US",{minimumFractionDigits:2,maximumFractionDigits:2})+"%";
+
     const T = {
-      nl: {
-        category: "Categorie", amount: "Aantal CBS", pct: "Percentage",
-        total: "Totale supply (live)", lp: "Liquidity pool (live)", lp_likely: "Liquidity pool (auto, vermoedelijk)",
-        team: 'Team wallet <a href="https://solscan.io/account/'+CONFIG.TEAM_WALLET+'" target="_blank" rel="noopener" class="mono">'+short(CONFIG.TEAM_WALLET)+'</a> <span class="tag team">TEAM (live)</span>',
-        others: "Overige holders (rest)",
-        holder: "Holder", top10: "Top 10 holders (live)", amt2: "Amount CBS", pct2: "Percentage",
-        lp_hint_known: "LP wordt uit config getoond.",
-        lp_hint_auto: "LP is automatisch bepaald als grootste non-team holder (kan afwijken als er uitzonderlijke wallets zijn)."
-      },
-      en: {
-        category: "Category", amount: "Amount CBS", pct: "Percentage",
-        total: "Total supply (live)", lp: "Liquidity pool (live)", lp_likely: "Liquidity pool (auto, likely)",
-        team: 'Team wallet <a href="https://solscan.io/account/'+CONFIG.TEAM_WALLET+'" target="_blank" rel="noopener" class="mono">'+short(CONFIG.TEAM_WALLET)+'</a> <span class="tag team">TEAM (live)</span>',
-        others: "Other holders (rest)",
-        holder: "Holder", top10: "Top 10 holders (live)", amt2: "Amount CBS", pct2: "Percentage",
-        lp_hint_known: "LP shown from config.",
-        lp_hint_auto: "LP auto-detected as the largest non-team holder (could differ if atypical wallets exist)."
-      }
+      nl:{category:"Categorie",amount:"Aantal CBS",percentage:"Percentage",
+          holder:"Holder",amt2:"Amount CBS",pct2:"Percentage",
+          top10:"Top 10 holders (live)",
+          total:"Totale supply (live)",lp:"Liquidity pool (live)",lpLikely:"Liquidity pool (auto, vermoedelijk)",
+          team:`Team wallet <a href="https://solscan.io/account/${CONFIG.TEAM_WALLET}" target="_blank" rel="noopener" class="mono">${short(CONFIG.TEAM_WALLET)}</a> <span class="tag team">TEAM (live)</span>`,
+          others:"Overige holders (rest)",
+          lpKnown:"LP wordt uit config getoond.", lpAuto:"LP automatisch bepaald als grootste non-team holder."},
+      en:{category:"Category",amount:"Amount CBS",percentage:"Percentage",
+          holder:"Holder",amt2:"Amount CBS",pct2:"Percentage",
+          top10:"Top 10 holders (live)",
+          total:"Total supply (live)",lp:"Liquidity pool (live)",lpLikely:"Liquidity pool (auto, likely)",
+          team:`Team wallet <a href="https://solscan.io/account/${CONFIG.TEAM_WALLET}" target="_blank" rel="noopener" class="mono">${short(CONFIG.TEAM_WALLET)}</a> <span class="tag team">TEAM (live)</span>`,
+          others:"Other holders (rest)",
+          lpKnown:"LP shown from config.", lpAuto:"LP auto-detected as the largest non-team holder."}
     };
-    function short(pk){ return pk.slice(0,4)+"…"+pk.slice(-4); }
-    function fmt(n){ return Number(n).toLocaleString(LANG==="nl"?"nl-NL":"en-US"); }
-    function pct(n){ return Number(n).toLocaleString(LANG==="nl"?"nl-NL":"en-US",{ minimumFractionDigits:2, maximumFractionDigits:2 })+"%"; }
 
-    // ====== Chain access (pure RPC) ======
-    async function rpc(method, params=[]){
-      const r = await fetch(CONFIG.RPC, {
-        method:"POST",
-        headers:{ "content-type":"application/json" },
-        body: JSON.stringify({ jsonrpc:"2.0", id:1, method, params })
-      });
-      const j = await r.json();
-      if(j.error) throw new Error(j.error.message||"RPC error");
-      return j.result;
-    }
+    function setLangTexts(){
+      $("#th_cat").textContent = T[LANG].category;
+      $("#th_amt").textContent = T[LANG].amount;
+      $("#th_pct").textContent = T[LANG].percentage;
+      $("#th_holder").textContent = T[LANG].holder;
+      $("#th_amt2").textContent = T[LANG].amt2;
+      $("#th_pct2").textContent = T[LANG].pct2;
+      $("#h_top10").textContent = T[LANG].top10;
 
-    async function getSupply(){
-      const res = await rpc("getTokenSupply", [CONFIG.MINT, { commitment:"confirmed" }]);
-      const dec = res.value.decimals;
-      const ui = Number(res.value.uiAmountString ?? res.value.uiAmount ?? 0);
-      return { decimals: dec, supplyUI: ui };
-    }
+      $("#intro_nl").style.display = LANG==="nl" ? "" : "none";
+      $("#intro_en").style.display = LANG==="en" ? "" : "none";
+      $("#discl_nl").style.display = LANG==="nl" ? "" : "none";
+      $("#discl_en").style.display = LANG==="en" ? "" : "none";
+      $("#langBtn").textContent = LANG==="nl" ? "🌐 Switch to English" : "🌐 Wissel naar Nederlands";
 
-    // Alle token accounts voor deze mint (parsed), dan per owner sommeren
-    async function getHolders(decimals){
-      const TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
-      const res = await rpc("getParsedProgramAccounts", [
-        TOKEN_PROGRAM_ID,
-        {
-          commitment: "confirmed",
-          encoding: "jsonParsed",
-          filters: [
-            { dataSize: 165 },
-            { memcmp: { offset: 0, bytes: CONFIG.MINT } } // mint op offset 0
-          ]
-        }
-      ]);
-      const byOwner = new Map();
-      let totalUI = 0;
-
-      for(const acc of res){
-        const info = acc.account?.data?.parsed?.info;
-        if(!info) continue;
-        const owner = info.owner;
-        const raw = info.tokenAmount?.amount;
-        const ui = Number(info.tokenAmount?.uiAmount ?? 0);
-        if(ui <= 0) continue;
-        totalUI += ui;
-        byOwner.set(owner, (byOwner.get(owner)||0) + ui);
+      // Houders + timestamp (indien al geladen)
+      if(lastHoldersGuess){
+        $("#holders_nl").textContent = lastHoldersGuess;
+        $("#holders_en").textContent = lastHoldersGuess;
       }
+    }
 
-      // Sorteer grootste eerst
-      const list = [...byOwner.entries()]
+    document.getElementById("langBtn").addEventListener("click", ()=>{
+      LANG = (LANG==="nl" ? "en" : "nl");
+      setLangTexts();
+      if(lastSupply && lastOwnerAgg){
+        const summary = buildSummary(lastSupply, lastOwnerAgg);
+        renderSummary(summary);
+        renderTop10(lastSupply, lastOwnerAgg);
+      }
+    });
+
+    // ====== RPC helper met fallback ======
+    async function rpcCall(method, params=[]){
+      let lastErr;
+      for(const url of CONFIG.RPCS){
+        try{
+          const res = await fetch(url, {
+            method:"POST",
+            headers:{ "content-type":"application/json" },
+            body: JSON.stringify({ jsonrpc:"2.0", id:1, method, params })
+          });
+          if(!res.ok) { lastErr = new Error(`HTTP ${res.status}`); continue; }
+          const j = await res.json();
+          if(j.error){ lastErr = new Error(j.error.message || "RPC error"); continue; }
+          return j.result;
+        }catch(e){ lastErr = e; }
+      }
+      throw lastErr || new Error("All RPCs failed");
+    }
+
+    // ====== Chain helpers (lichte calls) ======
+    async function getSupply(){
+      const r = await rpcCall("getTokenSupply", [CONFIG.MINT, {commitment:"confirmed"}]);
+      return Number(r.value.uiAmountString ?? r.value.uiAmount ?? 0);
+    }
+
+    async function getTokenLargestAccounts(){
+      const r = await rpcCall("getTokenLargestAccounts", [CONFIG.MINT, {commitment:"confirmed"}]);
+      return (r?.value || []).map(v => ({ address: v.address, amount: Number(v.uiAmount ?? 0) }));
+    }
+
+    async function enrichWithOwners(accs){
+      const addrs = accs.map(a=>a.address);
+      if(addrs.length === 0) return [];
+      const r = await rpcCall("getMultipleAccounts", [addrs, {commitment:"confirmed", encoding:"jsonParsed"}]);
+      return accs.map((a, i) => {
+        const info = r.value?.[i]?.data?.parsed?.info;
+        const owner = info?.owner || "";
+        return { ...a, owner };
+      });
+    }
+
+    function aggregateByOwner(list){
+      const by = new Map();
+      for(const x of list){
+        if(!x.owner || x.amount<=0) continue;
+        by.set(x.owner, (by.get(x.owner)||0) + x.amount);
+      }
+      return [...by.entries()]
         .map(([owner, amountUI])=>({ owner, amountUI }))
         .sort((a,b)=> b.amountUI - a.amountUI);
-
-      return { list, holders: list.length, totalUI }; // totalUI ≈ supplyUI
     }
 
-    function buildSummary({ supplyUI, list }){
-      // Team
-      const teamRow = list.find(r=>r.owner === CONFIG.TEAM_WALLET);
-      const teamAmt = teamRow ? teamRow.amountUI : 0;
-
-      // LP
+    function buildSummary(supplyUI, ownerAgg){
+      const teamAmt = ownerAgg.find(r=>r.owner===CONFIG.TEAM_WALLET)?.amountUI || 0;
       let lpOwner = CONFIG.LP_OWNER_HINT || "";
-      let lpLabelKey = "lp";
+      let lpKey = "lp";
       if(!lpOwner){
-        // Auto-detect: grootste non-team
-        const first = list.find(r=>r.owner !== CONFIG.TEAM_WALLET);
-        lpOwner = first?.owner || "";
-        lpLabelKey = "lp_likely";
+        const firstNonTeam = ownerAgg.find(r=>r.owner !== CONFIG.TEAM_WALLET);
+        lpOwner = firstNonTeam?.owner || "";
+        lpKey = "lpLikely";
       }
-      const lpAmt = list.find(r=>r.owner === lpOwner)?.amountUI || 0;
-
-      const used = teamAmt + lpAmt;
-      const restAmt = Math.max(0, supplyUI - used);
+      const lpAmt = ownerAgg.find(r=>r.owner===lpOwner)?.amountUI || 0;
+      const restAmt = Math.max(0, supplyUI - teamAmt - lpAmt);
 
       return {
         rows: [
-          { labelKey:"total", amount:supplyUI, pct:100 },
-          { labelKey:lpLabelKey, amount:lpAmt, pct:(lpAmt/supplyUI)*100, hintOwner: lpOwner },
-          { labelKey:"team", amount:teamAmt, pct:(teamAmt/supplyUI)*100 },
-          { labelKey:"others", amount:restAmt, pct:(restAmt/supplyUI)*100 }
+          { key:"total", label: T[LANG].total, amount: supplyUI, pct: 100 },
+          { key:"lp",    label: T[LANG][lpKey] + (lpOwner?` <span class="mono">(${short(lpOwner)})</span>`:""), amount: lpAmt,   pct: (lpAmt/supplyUI)*100 },
+          { key:"team",  label: T[LANG].team,  amount: teamAmt, pct: (teamAmt/supplyUI)*100 },
+          { key:"others",label: T[LANG].others,amount: restAmt, pct: (restAmt/supplyUI)*100 }
         ],
-        lpOwner, teamAmt, lpAmt
+        ownerAgg
       };
     }
 
-    function setLangTexts(){
-      document.getElementById("th_cat").textContent = T[LANG].category;
-      document.getElementById("th_amt").textContent = T[LANG].amount;
-      document.getElementById("th_pct").textContent = T[LANG].pct;
-      document.getElementById("th_holder").textContent = T[LANG].holder;
-      document.getElementById("th_amt2").textContent = T[LANG].amt2;
-      document.getElementById("th_pct2").textContent = T[LANG].pct2;
-      document.getElementById("h_top10").textContent = T[LANG].top10;
-      document.getElementById("langBtn").textContent = LANG==="nl" ? "🌐 Switch to English" : "🌐 Wissel naar Nederlands";
-      document.getElementById("intro_nl").style.display = LANG==="nl" ? "" : "none";
-      document.getElementById("intro_en").style.display = LANG==="en" ? "" : "none";
-      document.getElementById("discl_nl").style.display = LANG==="nl" ? "" : "none";
-      document.getElementById("discl_en").style.display = LANG==="en" ? "" : "none";
+    function renderSummary(summary){
+      const tbody = $("#summaryRows");
+      tbody.innerHTML = "";
+      summary.rows.forEach(r=>{
+        if(r.key==="lp" && r.amount===0) return; // sla lege LP over
+        const tr = document.createElement("tr");
+        const td1 = document.createElement("td"); td1.innerHTML = r.label;
+        const td2 = document.createElement("td"); td2.textContent = fmt(r.amount);
+        const td3 = document.createElement("td"); td3.textContent = pct(r.pct);
+        tr.append(td1, td2, td3); tbody.appendChild(tr);
+      });
+      const hint = CONFIG.LP_OWNER_HINT ? T[LANG].lpKnown : T[LANG].lpAuto;
+      $("#lp_hint").textContent = hint;
     }
 
-    function renderSummary(supplyUI, summary){
-      const tbody = document.getElementById("summaryRows");
+    function renderTop10(supplyUI, ownerAgg){
+      const tbody = $("#topRows");
       tbody.innerHTML = "";
-      for(const r of summary.rows){
-        // sla LP over als 0
-        if((r.labelKey==="lp" || r.labelKey==="lp_likely") && r.amount === 0) continue;
+      ownerAgg.slice(0,10).forEach(r=>{
         const tr = document.createElement("tr");
         const td1 = document.createElement("td");
-        const td2 = document.createElement("td");
-        const td3 = document.createElement("td");
-
-        if(r.labelKey==="team"){
-          td1.innerHTML = T[LANG].team; // bevat link + TEAM badge
-        }else if(r.labelKey==="lp"){
-          td1.innerHTML = T[LANG].lp;
-        }else if(r.labelKey==="lp_likely"){
-          td1.innerHTML = T[LANG].lp_likely + (summary.lpOwner ? ` <span class="mono">(${short(summary.lpOwner)})</span>` : "");
-        }else{
-          td1.textContent = T[LANG][r.labelKey];
-        }
-
-        td2.textContent = fmt(r.amount);
-        td3.textContent = pct(r.pct);
-        tr.append(td1, td2, td3);
-        tbody.appendChild(tr);
-      }
+        td1.innerHTML = `<a class="mono" href="https://solscan.io/account/${r.owner}" target="_blank" rel="noopener">${short(r.owner)}</a>` + (r.owner===CONFIG.TEAM_WALLET?' <span class="tag team">TEAM</span>':'');
+        const td2 = document.createElement("td"); td2.textContent = fmt(r.amountUI);
+        const td3 = document.createElement("td"); td3.textContent = pct((r.amountUI/supplyUI)*100);
+        tr.append(td1, td2, td3); tbody.appendChild(tr);
+      });
     }
 
-    function renderTop10(supplyUI, list){
-      const tbody = document.getElementById("topRows");
-      tbody.innerHTML = "";
-      const top = list.slice(0, 10);
-      for(const r of top){
-        const tr = document.createElement("tr");
-        const td1 = document.createElement("td");
-        const td2 = document.createElement("td");
-        const td3 = document.createElement("td");
-
-        const isTeam = r.owner === CONFIG.TEAM_WALLET;
-        const label = `<a class="mono" href="https://solscan.io/account/${r.owner}" target="_blank" rel="noopener">${short(r.owner)}</a>` + (isTeam ? ' <span class="tag team">TEAM</span>' : '');
-        td1.innerHTML = label;
-        td2.textContent = fmt(r.amountUI);
-        td3.textContent = pct((r.amountUI/supplyUI)*100);
-        tr.append(td1, td2, td3);
-        tbody.appendChild(tr);
-      }
-    }
-
-    function setHoldersAndTs(holders){
+    function setHeaderMeta(holdersGuess){
+      lastHoldersGuess = holdersGuess;
       const d = new Date();
-      const ts_nl = d.toLocaleString("nl-NL");
-      const ts_en = d.toLocaleString("en-US");
-      document.getElementById("holders_nl").textContent = holders.toString();
-      document.getElementById("holders_en").textContent = holders.toString();
-      document.getElementById("ts_nl").textContent = ts_nl;
-      document.getElementById("ts_en").textContent = ts_en;
+      $("#holders_nl").textContent = holdersGuess ?? "—";
+      $("#holders_en").textContent = holdersGuess ?? "—";
+      $("#ts_nl").textContent = d.toLocaleString("nl-NL");
+      $("#ts_en").textContent = d.toLocaleString("en-US");
     }
 
-    // ====== Init ======
-    document.getElementById("langBtn").addEventListener("click", ()=>{ LANG = (LANG==="nl" ? "en" : "nl"); setLangTexts(); });
-
+    // ====== Load ======
     async function load(){
       try{
         setLangTexts();
-        const { supplyUI } = await getSupply();
-        const { list, holders } = await getHolders();
-        setHoldersAndTs(holders);
+        const supplyUI = await getSupply();
+        const largest = await getTokenLargestAccounts();
+        const withOwners = await enrichWithOwners(largest);
+        const ownerAgg = aggregateByOwner(withOwners);
 
-        const summary = buildSummary({ supplyUI, list });
-        renderSummary(supplyUI, summary);
-        renderTop10(supplyUI, list);
+        lastSupply = supplyUI;
+        lastOwnerAgg = ownerAgg;
 
-        // LP hint
-        const hint = CONFIG.LP_OWNER_HINT ? T[LANG].lp_hint_known : T[LANG].lp_hint_auto;
-        document.getElementById("lp_hint").textContent = hint;
+        // “Holders” exact vereist zware call; toon ten minste unieke owners in de grootste set
+        setHeaderMeta(ownerAgg.length ? `${ownerAgg.length}+` : "—");
+
+        const summary = buildSummary(supplyUI, ownerAgg);
+        renderSummary(summary);
+        renderTop10(supplyUI, ownerAgg);
       }catch(e){
         console.error(e);
-        alert("Kon live data niet laden. Check je RPC of probeer later opnieuw.");
+        alert("Live data laden mislukte (RPC). Pagina werkt verder normaal. Pas je RPC in CONFIG aan of probeer later opnieuw.");
       }
     }
     load();
