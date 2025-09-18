@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Tokenomics – CBS Coin</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet"/>
-
   <style>
     :root{
       --bg1:#0a0c10; --bg2:#0f141b;
@@ -15,6 +14,7 @@
       --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
       --radius:18px;
       --btnA:#5afff0; --btnB:#2bffe4;
+      --warn:#ffad7a;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -98,12 +98,14 @@
     a{ color:#79ffee; text-decoration:none }
     a:hover{ text-decoration:underline }
 
+    .shots{ display:grid; gap:12px; grid-template-columns:repeat(12,1fr); margin-top:8px; }
+    .shot{ grid-column:span 12; background:linear-gradient(180deg, var(--card), var(--card2)); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; }
+    .shot img{ display:block; width:100%; height:auto }
+    .shot h3{ margin:12px 14px 6px; color:#bffef2; }
+    .shot p{ margin:0 14px 14px; color:var(--muted) }
+    @media (min-width:900px){ .shot{ grid-column:span 6 } }
+
     .note{ color:var(--muted); text-align:left }
-    @media (max-width:640px){
-      .hero{ grid-template-columns:1fr; text-align:center }
-      .logo-wrap{ margin:0 auto }
-      #title{ text-align:center }
-    }
   </style>
 </head>
 <body>
@@ -112,7 +114,7 @@
       <img src="logo.png" alt="CBS Logo">
       <h1>Tokenomics – CBS Coin</h1>
     </div>
-    <button class="lang-btn" onclick="toggleLanguage()">🌐 Switch to English</button>
+    <button class="lang-btn" id="langBtn">🌐 Switch to English</button>
   </header>
 
   <main class="container">
@@ -122,9 +124,13 @@
     </section>
 
     <div class="panel">
-      <p id="intro">
-        CBS Coin is 100% community-driven zonder teamallocaties, VC's of presales.
-        Alle coins zijn volledig on-chain en transparant te volgen.
+      <p id="intro_nl">
+        CBS Coin is 100% community-driven zonder teamallocaties, VC’s of presales.
+        Alle coins zijn volledig on-chain en transparant te volgen. Huidig aantal holders: <b id="holdersCount"></b>.
+      </p>
+      <p id="intro_en" style="display:none;">
+        CBS Coin is 100% community-driven with no team allocations, VCs or presales.
+        All coins are fully on-chain and transparent. Current holders: <b id="holdersCount_en"></b>.
       </p>
     </div>
 
@@ -133,104 +139,142 @@
         <table>
           <thead>
             <tr>
-              <th id="col1">Categorie</th>
-              <th id="col2">Aantal CBS</th>
-              <th id="col3">Percentage</th>
+              <th id="th_cat">Categorie</th>
+              <th id="th_amt">Aantal CBS</th>
+              <th id="th_pct">Percentage</th>
             </tr>
           </thead>
-          <tbody>
-            <tr>
-              <td id="row1">Totale supply</td>
-              <td>100.000.000</td>
-              <td>100%</td>
-            </tr>
-            <tr>
-              <td id="row2">Liquidity pool (Raydium)</td>
-              <td>25.976.230</td>
-              <td>25,98%</td>
-            </tr>
-            <tr>
-              <td id="row3">
-                Team wallet
-                <a href="https://solscan.io/account/8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd" target="_blank" rel="noopener">8Y7w...k5Zd</a>
-              </td>
-              <td>21.773.916</td>
-              <td>21,77%</td>
-            </tr>
-            <tr>
-              <td id="row4">Legacy airdrop wallet (gecompromitteerd)</td>
-              <td>13.975.340</td>
-              <td>13,97%</td>
-            </tr>
-            <tr>
-              <td id="row5">Team & early holders (#4–10)</td>
-              <td>29.840.000</td>
-              <td>29,84%</td>
-            </tr>
-            <tr>
-              <td id="row6">Overige holders (#11–79)</td>
-              <td>8.440.000</td>
-              <td>8,44%</td>
-            </tr>
-          </tbody>
+          <tbody id="rows"></tbody>
         </table>
       </div>
     </div>
 
     <div class="panel">
-      <p id="footer" class="note">
-        <b>Disclosure:</b> #2 is de <b>team wallet</b> (adres hierboven). Kevin beheert deze voor het team/operaties;
-        hij bezit momenteel <b>geen</b> CBS persoonlijk. #3 is een legacy airdrop-wallet die tijdens een airdrop
-        is gecompromitteerd. Mint authority en freeze authority zijn uitgeschakeld.<br>
-        Bekijk
-        <a href="https://solscan.io/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk#holders" target="_blank" rel="noopener">
-          CBS Coin op Solscan
-        </a> voor live cijfers (percentages bewegen mee met handel).
+      <p id="disclosure_nl" class="note">
+        <b>Disclosure:</b> De team wallet
+        <a href="https://solscan.io/account/8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd" target="_blank" rel="noopener">8Y7w…k5Zd</a>
+        wordt door Kevin beheerd voor team/operaties. De team wallet is <b>ongewijzigd</b>.
+        Mint authority en freeze authority zijn uitgeschakeld.
+        Bekijk <a href="https://solscan.io/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk#holders" target="_blank" rel="noopener">
+        CBS op Solscan</a> voor live cijfers (percentages bewegen mee met handel).
+      </p>
+      <p id="disclosure_en" class="note" style="display:none;">
+        <b>Disclosure:</b> The team wallet
+        <a href="https://solscan.io/account/8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd" target="_blank" rel="noopener">8Y7w…k5Zd</a>
+        is managed by Kevin for team/ops. The team wallet is <b>unchanged</b>.
+        Mint authority and freeze authority are disabled.
+        See <a href="https://solscan.io/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk#holders" target="_blank" rel="noopener">
+        CBS on Solscan</a> for live figures (percentages move with trading).
       </p>
     </div>
+
+    <!-- Screenshots sectie (zet pool.png en team.png naast dit HTML-bestand) -->
+    <section class="shots">
+      <div class="shot">
+        <h3 id="shot1_h">Raydium LP (screenshot)</h3>
+        <img src="pool.png" alt="Raydium pool screenshot">
+        <p id="shot1_p" class="note">Raydium (CBS-WSOL) Pool 1</p>
+      </div>
+      <div class="shot">
+        <h3 id="shot2_h">Team wallet (screenshot)</h3>
+        <img src="team.png" alt="Team wallet screenshot">
+        <p id="shot2_p" class="note">Adres: 8Y7w…k5Zd</p>
+      </div>
+    </section>
   </main>
 
   <script>
+    // === Data uit je screenshot ===
+    const DATA = {
+      totalSupply: 100_000_000,
+      holders: 64,
+      rows: [
+        {
+          key: "lp",
+          nl: "Liquidity pool (Raydium WSOL)",
+          en: "Liquidity pool (Raydium WSOL)",
+          amount: 22_088_317.609814524,
+          link: "" // optioneel: vul de pool token-account URL in
+        },
+        {
+          key: "team",
+          nl: "Team wallet (8Y7w…k5Zd)",
+          en: "Team wallet (8Y7w…k5Zd)",
+          amount: 21_773_815.696916452,
+          link: "https://solscan.io/account/8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd"
+        },
+        {
+          key: "top3_10",
+          nl: "Top wallets #3–10 (samengevoegd)",
+          en: "Top wallets #3–10 (combined)",
+          amount: 47_579_814.43504803
+        },
+        {
+          key: "rest",
+          nl: "Overige holders (#11–64)",
+          en: "Other holders (#11–64)",
+          amount: 8_558_052.258221
+        }
+      ]
+    };
+
+    // === Helpers ===
     let lang = "nl";
-    function toggleLanguage() {
-      if (lang === "nl") {
-        document.getElementById("title").innerText = "📊 CBS Coin Tokenomics";
-        document.getElementById("intro").innerText =
-          "CBS Coin is 100% community-driven without team allocations, VCs or presales. All coins are fully on-chain and transparent.";
-        document.getElementById("col1").innerText = "Category";
-        document.getElementById("col2").innerText = "Amount CBS";
-        document.getElementById("col3").innerText = "Percentage";
-        document.getElementById("row1").innerText = "Total supply";
-        document.getElementById("row2").innerText = "Liquidity pool (Raydium)";
-        document.getElementById("row3").innerHTML =
-          'Team wallet <a href="https://solscan.io/account/8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd" target="_blank" rel="noopener">8Y7w...k5Zd</a>';
-        document.getElementById("row4").innerText = "Legacy airdrop wallet (compromised)";
-        document.getElementById("row5").innerText = "Team & early holders (#4–10)";
-        document.getElementById("row6").innerText = "Other holders (#11–79)";
-        document.getElementById("footer").innerHTML =
-          '<b>Disclosure:</b> #2 is the <b>team wallet</b> (address above). Kevin manages it for team/ops; he currently holds <b>no</b> CBS personally. #3 is a legacy airdrop wallet that was compromised. Mint authority and freeze authority are disabled.<br>See <a href="https://solscan.io/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk#holders" target="_blank" rel="noopener">CBS Coin on Solscan</a> for live figures (percentages move with trading).';
-        document.querySelector(".lang-btn").innerText = "🌐 Wissel naar Nederlands";
-        lang = "en";
-      } else {
-        document.getElementById("title").innerText = "📊 CBS Coin Tokenomics";
-        document.getElementById("intro").innerText =
-          "CBS Coin is 100% community-driven zonder teamallocaties, VC's of presales. Alle coins zijn volledig on-chain en transparant te volgen.";
-        document.getElementById("col1").innerText = "Categorie";
-        document.getElementById("col2").innerText = "Aantal CBS";
-        document.getElementById("col3").innerText = "Percentage";
-        document.getElementById("row1").innerText = "Totale supply";
-        document.getElementById("row2").innerText = "Liquidity pool (Raydium)";
-        document.getElementById("row3").innerHTML =
-          'Team wallet <a href="https://solscan.io/account/8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd" target="_blank" rel="noopener">8Y7w...k5Zd</a>';
-        document.getElementById("row4").innerText = "Legacy airdrop wallet (gecompromitteerd)";
-        document.getElementById("row5").innerText = "Team & early holders (#4–10)";
-        document.getElementById("row6").innerText = "Overige holders (#11–79)";
-        document.getElementById("footer").innerHTML =
-          '<b>Disclosure:</b> #2 is de <b>team wallet</b> (adres hierboven). Kevin beheert deze voor het team/operaties; hij bezit momenteel <b>geen</b> CBS persoonlijk. #3 is een legacy airdrop-wallet die tijdens een airdrop is gecompromitteerd. Mint authority en freeze authority zijn uitgeschakeld.<br>Bekijk <a href="https://solscan.io/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk#holders" target="_blank" rel="noopener">CBS Coin op Solscan</a> voor live cijfers (percentages bewegen mee met handel).';
-        document.querySelector(".lang-btn").innerText = "🌐 Switch to English";
-        lang = "nl";
-      }
+    const $ = (q)=>document.querySelector(q);
+    const fmtInt = (n, l=lang)=>Number(n).toLocaleString(l==="nl"?"nl-NL":"en-US");
+    const fmtPct = (n, l=lang)=>n.toLocaleString(l==="nl"?"nl-NL":"en-US",{minimumFractionDigits:2, maximumFractionDigits:2})+"%";
+
+    function render(){
+      // headers
+      $("#th_cat").textContent = lang==="nl" ? "Categorie" : "Category";
+      $("#th_amt").textContent = lang==="nl" ? "Aantal CBS" : "Amount CBS";
+      $("#th_pct").textContent = lang==="nl" ? "Percentage" : "Percentage";
+      $("#title").textContent = "📊 CBS Coin Tokenomics";
+      $("#langBtn").textContent = lang==="nl" ? "🌐 Switch to English" : "🌐 Wissel naar Nederlands";
+
+      // intros & disclosures
+      $("#intro_nl").style.display = lang==="nl" ? "" : "none";
+      $("#intro_en").style.display = lang==="en" ? "" : "none";
+      $("#holdersCount").textContent = fmtInt(DATA.holders, "nl");
+      $("#holdersCount_en").textContent = fmtInt(DATA.holders, "en");
+      $("#disclosure_nl").style.display = lang==="nl" ? "" : "none";
+      $("#disclosure_en").style.display = lang==="en" ? "" : "none";
+
+      // shots captions
+      $("#shot1_h").textContent = lang==="nl" ? "Raydium LP (screenshot)" : "Raydium LP (screenshot)";
+      $("#shot1_p").textContent = lang==="nl" ? "Raydium (CBS-WSOL) Pool 1" : "Raydium (CBS-WSOL) Pool 1";
+      $("#shot2_h").textContent = lang==="nl" ? "Team wallet (screenshot)" : "Team wallet (screenshot)";
+      $("#shot2_p").textContent = lang==="nl" ? "Adres: 8Y7w…k5Zd" : "Address: 8Y7w…k5Zd";
+
+      // table rows
+      const tbody = $("#rows");
+      tbody.innerHTML = "";
+      const total = DATA.totalSupply;
+      DATA.rows.forEach(r=>{
+        if (!r.amount || r.amount <= 0) return; // verberg 0-rijen
+        const tr = document.createElement("tr");
+        const td1 = document.createElement("td");
+        const td2 = document.createElement("td");
+        const td3 = document.createElement("td");
+        const label = lang==="nl" ? r.nl : r.en;
+        if (r.link){
+          td1.innerHTML = `<a href="${r.link}" target="_blank" rel="noopener">${label}</a>`;
+        } else {
+          td1.textContent = label;
+        }
+        td2.textContent = fmtInt(r.amount);
+        td3.textContent = fmtPct((r.amount/total)*100);
+        tr.append(td1, td2, td3);
+        tbody.appendChild(tr);
+      });
     }
+
+    $("#langBtn").addEventListener("click", ()=>{
+      lang = (lang==="nl" ? "en" : "nl");
+      render();
+    });
+
+    render();
   </script>
 </body>
 </html>
