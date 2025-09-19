@@ -87,6 +87,23 @@
       </p>
     </div>
 
+    <!-- Profile Summary (nieuw blok, geïntegreerde stijl) -->
+    <div class="panel" id="profilePanel">
+      <h3 id="h_profile" style="margin:0 0 .6rem;">Profile Summary</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th id="th_profile_key">Eigenschap</th>
+              <th id="th_profile_val">Waarde</th>
+            </tr>
+          </thead>
+          <tbody id="profileRows"></tbody>
+        </table>
+      </div>
+      <p class="muted" id="profile_note" style="margin-top:10px;"></p>
+    </div>
+
     <!-- Samenvatting -->
     <div class="panel">
       <div class="table-wrap">
@@ -134,17 +151,25 @@
     // ====== CONFIG ======
     const CONFIG = {
       RPCS: [
-        "https://rpc.helius.xyz/?api-key=0053b3c9-a47d-4e7e-b76b-dbdc46f36189", // jouw Helius; pas aan indien nodig
-        "https://api.mainnet-beta.solana.com"                                   // fallback
+        "https://rpc.helius.xyz/?api-key=0053b3c9-a47d-4e7e-b76b-dbdc46f36189",
+        "https://api.mainnet-beta.solana.com"
       ],
-      MINT: "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk",      // CBS mint
+      MINT: "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk",
       TEAM_WALLET: "8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd",
-      LP_OWNER_HINT: "" // optioneel: owner van LP-tokenaccount; laat leeg voor auto-detect
+      LP_OWNER_HINT: "",
+
+      // === Profile Summary (uit je screenshot) ===
+      TOKEN_NAME: "CBS Coin (CBS)",
+      FALLBACK_DECIMALS: 9, // live opgehaald; valt hierop terug
+      AUTHORITY: "8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd",
+      CREATOR: "76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg",
+      FIRST_MINT_UTC: "14:37:40 Jul 24, 2025 (UTC)",
+      TOKEN_EXTENSIONS: false
     };
 
     // ====== I18N & UI helpers ======
     let LANG = "nl";
-    let lastSupply = null, lastOwnerAgg = null, lastHoldersGuess = null;
+    let lastSupply = null, lastOwnerAgg = null, lastHoldersGuess = null, lastDecimals = CONFIG.FALLBACK_DECIMALS;
 
     const $ = (q)=>document.querySelector(q);
     const short = (pk)=>pk.slice(0,4)+"…"+pk.slice(-4);
@@ -152,20 +177,34 @@
     const pct = (n)=>Number(n).toLocaleString(LANG==="nl"?"nl-NL":"en-US",{minimumFractionDigits:2,maximumFractionDigits:2})+"%";
 
     const T = {
-      nl:{category:"Categorie",amount:"Aantal CBS",percentage:"Percentage",
-          holder:"Holder",amt2:"Amount CBS",pct2:"Percentage",
-          top10:"Top 10 holders (live)",
-          total:"Totale supply (live)",lp:"Liquidity pool (live)",lpLikely:"Liquidity pool (auto, vermoedelijk)",
-          team:`Team wallet <a href="https://solscan.io/account/${CONFIG.TEAM_WALLET}" target="_blank" rel="noopener" class="mono">${short(CONFIG.TEAM_WALLET)}</a> <span class="tag team">TEAM (live)</span>`,
-          others:"Overige holders (rest)",
-          lpKnown:"LP wordt uit config getoond.", lpAuto:"LP automatisch bepaald als grootste non-team holder."},
-      en:{category:"Category",amount:"Amount CBS",percentage:"Percentage",
-          holder:"Holder",amt2:"Amount CBS",pct2:"Percentage",
-          top10:"Top 10 holders (live)",
-          total:"Total supply (live)",lp:"Liquidity pool (live)",lpLikely:"Liquidity pool (auto, likely)",
-          team:`Team wallet <a href="https://solscan.io/account/${CONFIG.TEAM_WALLET}" target="_blank" rel="noopener" class="mono">${short(CONFIG.TEAM_WALLET)}</a> <span class="tag team">TEAM (live)</span>`,
-          others:"Other holders (rest)",
-          lpKnown:"LP shown from config.", lpAuto:"LP auto-detected as the largest non-team holder."}
+      nl:{
+        category:"Categorie",amount:"Aantal CBS",percentage:"Percentage",
+        holder:"Holder",amt2:"Amount CBS",pct2:"Percentage",
+        top10:"Top 10 holders (live)",
+        total:"Totale supply (live)",lp:"Liquidity pool (live)",lpLikely:"Liquidity pool (auto, vermoedelijk)",
+        team:`Team wallet <a href="https://solscan.io/account/${CONFIG.TEAM_WALLET}" target="_blank" rel="noopener" class="mono">${short(CONFIG.TEAM_WALLET)}</a> <span class="tag team">TEAM (live)</span>`,
+        others:"Overige holders (rest)",
+        lpKnown:"LP wordt uit config getoond.", lpAuto:"LP automatisch bepaald als grootste non-team holder.",
+        profile:"Profielsamenvatting",
+        prop:"Eigenschap", value:"Waarde",
+        tname:"Token name", decimals:"Decimals", authority:"Authority", creator:"Creator",
+        firstmint:"First Mint", extensions:"Token Extensions",
+        profileNote:"*Decimals worden live opgehaald indien mogelijk. Authority/Creator komen uit het on-chain metadataoverzicht."
+      },
+      en:{
+        category:"Category",amount:"Amount CBS",percentage:"Percentage",
+        holder:"Holder",amt2:"Amount CBS",pct2:"Percentage",
+        top10:"Top 10 holders (live)",
+        total:"Total supply (live)",lp:"Liquidity pool (live)",lpLikely:"Liquidity pool (auto, likely)",
+        team:`Team wallet <a href="https://solscan.io/account/${CONFIG.TEAM_WALLET}" target="_blank" rel="noopener" class="mono">${short(CONFIG.TEAM_WALLET)}</a> <span class="tag team">TEAM (live)</span>`,
+        others:"Other holders (rest)",
+        lpKnown:"LP shown from config.", lpAuto:"LP auto-detected as the largest non-team holder.",
+        profile:"Profile Summary",
+        prop:"Property", value:"Value",
+        tname:"Token name", decimals:"Decimals", authority:"Authority", creator:"Creator",
+        firstmint:"First Mint", extensions:"Token Extensions",
+        profileNote:"*Decimals are fetched live when possible. Authority/Creator reflect the on-chain metadata overview."
+      }
     };
 
     function setLangTexts(){
@@ -177,17 +216,25 @@
       $("#th_pct2").textContent = T[LANG].pct2;
       $("#h_top10").textContent = T[LANG].top10;
 
+      // Profile labels
+      $("#h_profile").textContent = T[LANG].profile;
+      $("#th_profile_key").textContent = T[LANG].prop;
+      $("#th_profile_val").textContent = T[LANG].value;
+      $("#profile_note").textContent = T[LANG].profileNote;
+
       $("#intro_nl").style.display = LANG==="nl" ? "" : "none";
       $("#intro_en").style.display = LANG==="en" ? "" : "none";
       $("#discl_nl").style.display = LANG==="nl" ? "" : "none";
       $("#discl_en").style.display = LANG==="en" ? "" : "none";
       $("#langBtn").textContent = LANG==="nl" ? "🌐 Switch to English" : "🌐 Wissel naar Nederlands";
 
-      // Houders + timestamp (indien al geladen)
+      // Houders + timestamp
       if(lastHoldersGuess){
         $("#holders_nl").textContent = lastHoldersGuess;
         $("#holders_en").textContent = lastHoldersGuess;
       }
+      // Profile opnieuw renderen zodat labels wisselen
+      renderProfile();
     }
 
     document.getElementById("langBtn").addEventListener("click", ()=>{
@@ -219,7 +266,7 @@
       throw lastErr || new Error("All RPCs failed");
     }
 
-    // ====== Chain helpers (lichte calls) ======
+    // ====== Chain helpers ======
     async function getSupply(){
       const r = await rpcCall("getTokenSupply", [CONFIG.MINT, {commitment:"confirmed"}]);
       return Number(r.value.uiAmountString ?? r.value.uiAmount ?? 0);
@@ -239,6 +286,18 @@
         const owner = info?.owner || "";
         return { ...a, owner };
       });
+    }
+
+    async function getMintInfo(){
+      try{
+        const r = await rpcCall("getAccountInfo", [CONFIG.MINT, {commitment:"confirmed", encoding:"jsonParsed"}]);
+        const info = r?.value?.data?.parsed?.info;
+        if(info?.decimals != null){
+          lastDecimals = Number(info.decimals);
+        }
+      }catch(e){
+        // val terug op fallback; geen alert nodig
+      }
     }
 
     function aggregateByOwner(list){
@@ -279,7 +338,7 @@
       const tbody = $("#summaryRows");
       tbody.innerHTML = "";
       summary.rows.forEach(r=>{
-        if(r.key==="lp" && r.amount===0) return; // sla lege LP over
+        if(r.key==="lp" && r.amount===0) return;
         const tr = document.createElement("tr");
         const td1 = document.createElement("td"); td1.innerHTML = r.label;
         const td2 = document.createElement("td"); td2.textContent = fmt(r.amount);
@@ -303,6 +362,30 @@
       });
     }
 
+    // ====== Profile Summary renderer ======
+    function renderProfile(){
+      const rows = $("#profileRows");
+      rows.innerHTML = "";
+
+      const asLink = (addr)=>`<a class="mono" href="https://solscan.io/account/${addr}" target="_blank" rel="noopener">${short(addr)}</a>`;
+
+      const data = [
+        [T[LANG].tname, CONFIG.TOKEN_NAME],
+        [T[LANG].decimals, String(lastDecimals)],
+        [T[LANG].authority, asLink(CONFIG.AUTHORITY)],
+        [T[LANG].creator, asLink(CONFIG.CREATOR)],
+        [T[LANG].firstmint, CONFIG.FIRST_MINT_UTC],
+        [T[LANG].extensions, String(CONFIG.TOKEN_EXTENSIONS).toUpperCase()]
+      ];
+
+      for(const [k,v] of data){
+        const tr = document.createElement("tr");
+        const td1 = document.createElement("td"); td1.textContent = k;
+        const td2 = document.createElement("td"); td2.innerHTML = v;
+        tr.append(td1, td2); rows.appendChild(tr);
+      }
+    }
+
     function setHeaderMeta(holdersGuess){
       lastHoldersGuess = holdersGuess;
       const d = new Date();
@@ -316,6 +399,9 @@
     async function load(){
       try{
         setLangTexts();
+        await getMintInfo();      // haalt decimals live op (fallback aanwezig)
+        renderProfile();          // toon profiel direct
+
         const supplyUI = await getSupply();
         const largest = await getTokenLargestAccounts();
         const withOwners = await enrichWithOwners(largest);
@@ -339,3 +425,4 @@
   </script>
 </body>
 </html>
+
