@@ -9,11 +9,12 @@
 
   <style>
     :root{
-      --bg1:#0a0c10; --bg2:#0f141b;
-      --card:#0f151c; --card2:#0c1016;
-      --line:#0afbe0; --line2:#38f8ff;
+      --bg1:#070b0f; --bg2:#0d141b;
+      --card:#0e151c; --card2:#0a1117;
       --fg:#eafffb; --muted:#a8d6cd; --note:#7ee9dc;
-      --shadow: 0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
+      --accent:#5afff0; --accent2:#2bffe4;
+      --meme1:#b084ff; --meme2:#ff8ad8;
+      --shadow: 0 22px 48px rgba(0,255,230,.10), inset 0 0 0 1px rgba(0,255,240,.10);
       --radius:18px;
     }
     *{box-sizing:border-box}
@@ -22,9 +23,16 @@
       margin:0; font-family:'Orbitron',sans-serif; color:var(--fg);
       background:
         radial-gradient(900px 600px at 100% -10%, rgba(0,255,230,.10), transparent 60%),
-        radial-gradient(700px 500px at -10% 110%, rgba(0,170,255,.09), transparent 60%),
+        radial-gradient(700px 500px at -10% 110%, rgba(138,99,246,.10), transparent 60%),
         linear-gradient(135deg,var(--bg1),var(--bg2));
       -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+    }
+    /* Meme theme modifier */
+    body.meme{
+      background:
+        radial-gradient(900px 600px at 100% -10%, rgba(176,132,255,.10), transparent 60%),
+        radial-gradient(700px 500px at -10% 110%, rgba(255,138,216,.08), transparent 60%),
+        linear-gradient(135deg,#090812,#0f0a12);
     }
 
     /* ===== Header ===== */
@@ -39,16 +47,17 @@
     .brand img{width:38px; height:38px; border-radius:10px; filter:drop-shadow(0 0 10px rgba(0,255,230,.35))}
     .brand h1{margin:0; font-size:1.05rem; letter-spacing:.4px; font-weight:700; color:#bffef2}
 
-    .top-actions{display:flex; align-items:center; gap:.75rem}
-    #langSwitch{
-      background:linear-gradient(180deg, #7dffe9, #55f1e7);
+    .top-actions{display:flex; align-items:center; gap:.5rem}
+    .pill-btn{
+      background:linear-gradient(180deg, var(--accent), var(--accent2));
       color:#012022; font-weight:900; border:1px solid rgba(0,255,240,.45);
-      padding:.55rem .9rem; border-radius:12px; cursor:pointer;
+      padding:.5rem .8rem; border-radius:12px; cursor:pointer;
       box-shadow:0 8px 18px rgba(0,255,230,.18), inset 0 -6px 10px rgba(0,0,0,.15);
       transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
       white-space:nowrap;
     }
-    #langSwitch:hover{ transform:translateY(-1px); box-shadow:0 10px 22px rgba(0,255,230,.26) }
+    .pill-btn:hover{ transform:translateY(-1px); box-shadow:0 10px 22px rgba(0,255,230,.26) }
+    body.meme .pill-btn{ background:linear-gradient(180deg, var(--meme1), var(--meme2)); color:#15081a; border-color:rgba(255,170,240,.45) }
 
     /* Social icons (header & footer) */
     .social{
@@ -63,10 +72,11 @@
       background:linear-gradient(180deg, rgba(0,255,230,.06), rgba(0,255,230,.02));
       border:1px solid rgba(0,255,240,.18);
       box-shadow:inset 0 0 0 1px rgba(0,255,240,.06);
-      transition:transform .12s ease, box-shadow .12s ease;
+      transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
       text-decoration:none;
     }
-    .icon-link:hover{ transform:translateY(-1px); box-shadow:0 0 16px rgba(0,255,230,.35) }
+    .icon-link:hover{ transform:translateY(-1px) rotate(-1deg); box-shadow:0 0 16px rgba(0,255,230,.35) }
+    body.meme .icon-link:hover{ box-shadow:0 0 16px rgba(255,138,216,.35) }
     .icon{ width:20px; height:20px; display:block; }
     .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,1px,1px); border:0; }
 
@@ -78,6 +88,11 @@
       padding:1.2rem; margin:10px auto 18px; border-radius:var(--radius);
       background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35));
       border:1px solid rgba(0,255,240,.18); box-shadow:var(--shadow);
+      position:relative; overflow:hidden;
+    }
+    .hero::after{
+      content:""; position:absolute; inset:0; pointer-events:none;
+      background:radial-gradient(500px 220px at 100% 0%, rgba(0,255,230,.10), transparent 60%);
     }
     .hero .logo-wrap{
       position:relative; width:120px; height:120px; border-radius:16px; overflow:hidden;
@@ -91,13 +106,17 @@
     }
     .hero .logo{width:86%; height:86%; object-fit:contain}
 
-    .hero h2{ margin:.15rem 0 0; color:var(--note); font-size:1.05rem; font-weight:600 }
+    .badge{display:inline-flex; align-items:center; gap:.45rem; font-weight:900; letter-spacing:.2px; margin:.25rem 0 0; color:#061515}
+    .badge span{padding:.32rem .55rem; border-radius:10px; background:linear-gradient(180deg, var(--accent), var(--accent2)); border:1px solid rgba(0,255,240,.45); box-shadow:0 8px 18px rgba(0,255,230,.18)}
+    body.meme .badge span{ background:linear-gradient(180deg, var(--meme1), var(--meme2)); border-color:rgba(255,170,240,.45) }
+
+    .hero h2{ margin:.25rem 0 0; color:var(--note); font-size:1.08rem; font-weight:700 }
     .hero p{ margin:.35rem 0 0; color:var(--muted); font-size:.95rem }
 
-    /* Burn badge */
+    /* Burn pill */
     .burn-pill{
       display:inline-flex; align-items:center; gap:.5rem;
-      margin-top:.6rem; padding:.4rem .65rem; border-radius:12px;
+      margin-top:.6rem; padding:.45rem .7rem; border-radius:12px;
       background:linear-gradient(180deg, rgba(255,145,0,.16), rgba(255,100,0,.08));
       border:1px solid rgba(255,150,0,.35);
       box-shadow:0 10px 24px rgba(255,120,0,.12), inset 0 0 0 1px rgba(255,160,0,.12);
@@ -118,7 +137,7 @@
     .card h3{ margin:.2rem 0 .6rem; color:#bffef2; font-size:1.05rem }
     .card p{ margin:0 0 .9rem; color:var(--muted); font-size:.95rem }
 
-    /* Primary actions as large tiles */
+    /* Primary actions */
     .cta-grid{ display:grid; gap:14px; grid-template-columns:repeat(12,1fr) }
     .cta{
       grid-column:span 12;
@@ -131,6 +150,11 @@
       border:1.5px solid rgba(0,255,240,.22);
       box-shadow:0 20px 40px rgba(0,255,230,.10), inset 0 0 0 1px rgba(0,255,240,.06);
     }
+    body.meme .cta{ background:
+        linear-gradient(180deg, rgba(176,132,255,.08), rgba(255,138,216,.05)),
+        radial-gradient(600px 300px at 100% 0%, rgba(176,132,255,.12), transparent 60%),
+        #0e0a16;
+      border-color:rgba(220,170,255,.25); box-shadow:0 20px 40px rgba(176,132,255,.10), inset 0 0 0 1px rgba(220,170,255,.10) }
     .cta h4{ margin:0 0 .25rem; font-size:1.05rem }
     .cta small{ color:var(--muted) }
 
@@ -140,7 +164,7 @@
       min-width:120px; padding:12px 18px; border-radius:10px;
       text-decoration:none; font-weight:900; font-size:.94rem;
       color:#001010;
-      background:linear-gradient(180deg, #5afff0, #2bffe4);
+      background:linear-gradient(180deg, var(--accent), var(--accent2));
       border:1px solid rgba(0,255,240,.7);
       box-shadow:
         0 0 12px rgba(0,255,230,.55),
@@ -149,11 +173,8 @@
       transition:transform .15s ease, box-shadow .15s ease, filter .15s ease;
       white-space:nowrap;
     }
-    .btn:hover{
-      transform:translateY(-2px) scale(1.03);
-      box-shadow:0 0 16px rgba(0,255,230,.75), 0 0 32px rgba(0,255,230,.35);
-    }
-    .btn:active{ transform:translateY(0) scale(.99) }
+    .btn:hover{ transform:translateY(-2px) scale(1.03); box-shadow:0 0 16px rgba(0,255,230,.75), 0 0 32px rgba(0,255,230,.35) }
+    body.meme .btn{ background:linear-gradient(180deg, var(--meme1), var(--meme2)); color:#17081a; border-color:rgba(255,170,240,.7) }
 
     /* ===== More pages tiles ===== */
     .tiles{ display:grid; gap:14px; grid-template-columns:repeat(12,1fr) }
@@ -164,9 +185,9 @@
       background:linear-gradient(180deg, #081015, #0a1118);
       border:1px solid rgba(0,255,240,.2);
       box-shadow:inset 0 0 0 1px rgba(0,255,240,.05), 0 8px 20px rgba(0,255,230,.08);
-      position:relative;
-      min-height:120px;
+      position:relative; min-height:120px;
     }
+    body.meme .tile{ background:linear-gradient(180deg, #0b0712, #120918); border-color:rgba(220,170,255,.25); box-shadow:inset 0 0 0 1px rgba(220,170,255,.08), 0 8px 20px rgba(176,132,255,.10) }
     .tile h5{ margin:0; font-size:1rem; color:#d9fffb }
     .tile small{ color:var(--muted) }
     .tile .btn{ align-self:flex-end; margin-top:6px }
@@ -177,15 +198,9 @@
     footer a{ color:#79ffee; text-decoration:none }
     footer a:hover{ text-decoration:underline }
 
-    /* Responsive columns */
-    @media (min-width:640px){
-      .cta{ grid-column:span 6 }
-      .tile{ grid-column:span 6 }
-    }
-    @media (min-width:980px){
-      .cta{ grid-column:span 6 }
-      .tile{ grid-column:span 3 }
-    }
+    /* Responsive */
+    @media (min-width:640px){ .cta{ grid-column:span 6 } .tile{ grid-column:span 6 } }
+    @media (min-width:980px){ .cta{ grid-column:span 6 } .tile{ grid-column:span 3 } }
   </style>
 </head>
 <body>
@@ -218,7 +233,8 @@
         </a>
       </nav>
 
-      <button id="langSwitch">NL 🇳🇱</button>
+      <button id="themeBtn" class="pill-btn" title="Switch Pro/Meme">Meme Mode ✨</button>
+      <button id="langSwitch" class="pill-btn">NL 🇳🇱</button>
     </div>
   </header>
 
@@ -228,9 +244,9 @@
       <section class="hero">
         <div class="logo-wrap"><img class="logo" src="logo.png" alt="CBS Logo"></div>
         <div>
+          <div class="badge"><span>LIVE ON SOLANA</span></div>
           <h2>Community Builds Sovereignty</h2>
           <p>CBS Coin is a community-driven token on Solana. Breaking chains together.</p>
-          <!-- Burn badge EN -->
           <div class="burn-pill" title="Initial supply − current supply">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#ffb56b" d="M12 22c4 0 7-3.1 7-7 0-5.2-5.2-7.7-5.2-11.1 0-1.2-1.1-2.1-2.3-1.6C9.1 2.1 7 5.5 7 9.5c0 2.7 1.8 4.9 4.1 5.5-1.2-2.5.7-4.4 1.9-5.2-.5 1.8.8 3.2 1.8 4 .8.7 1.2 1.5 1.2 2.5 0 2.2-1.8 4-4 4Z"/></svg>
             <span><b>Total burned:</b> <span id="burnTotal_en">…</span> CBS</span>
@@ -267,7 +283,6 @@
               <a class="btn" href="burn.html">Open burn</a>
             </div>
 
-            <!-- NEW: Mister Horse mint -->
             <div class="cta">
               <div>
                 <h4>🐴 Mister Horse Mint</h4>
@@ -353,8 +368,8 @@
             </a>
             <a class="icon-link" href="https://discord.gg/DxSB3ERQ" target="_blank" rel="noopener" aria-label="Discord">
               <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M19.6 5.1A16 16 0 0 0 15.8 4l-.2.3c1 .2 1.9.6 2.8 1.2a8.7 8.7 0 0 0-3.2-1c-.3 0 -.5.2 -.6.4a12 12 0 0 0 -5.6 0c -.2 0 -.4 -.3 -.6 -.4 -1 .1 -2 .5 -3 1a13 13 0 0 1 2.7 -1.2L8 4a16 16 0 0 0 -3.8 1.1C1.6 8.7 .9 12 1.1 15.2c1.4 1 2.9 1.7 4.5 2.1l.8 -1.3c -.4 -.1 -.9 -.3 -1.3 -.5l.3 -.3c2.6 1.2 5.5 1.2 8 0l.3 .3c -.4 .2 -.8 .4 -1.2 .5l.7 1.3c1.6 -.4 3.2 -1.1 4.6 -2.1.3 -3.6 -.5 -6.9 -2 -10.5ZM9.1 13.6c -.8 0 -1.5 -.7 -1.5 -1.6 0 -.8 .7 -1.5 1.5 -1.5s1.5 .7 1.5 1.5c0 .9 -.7 1.6 -1.5 1.6Zm5.8 0c -.8 0 -1.5 -.7 -1.5 -1.6 0 -.8 .7 -1.5 1.5 -1.5s1.6 .7 1.6 1.5c0 .9 -.8 1.6 -1.6 1.6Z" fill="currentColor"/>
-            </svg>
+                <path d="M19.6 5.1A16 16 0 0 0 15.8 4l-.2.3c1 .2 1.9 .6 2.8 1.2a8.7 8.7 0 0 0 -3.2 -1c -.3 0 -.5 .2 -.6 .4a12 12 0 0 0 -5.6 0c -.2 0 -.4 -.3 -.6 -.4 -1 .1 -2 .5 -3 1a13 13 0 0 1 2.7 -1.2L8 4a16 16 0 0 0 -3.8 1.1C1.6 8.7 .9 12 1.1 15.2c1.4 1 2.9 1.7 4.5 2.1l.8 -1.3c -.4 -.1 -.9 -.3 -1.3 -.5l.3 -.3c2.6 1.2 5.5 1.2 8 0l.3 .3c -.4 .2 -.8 .4 -1.2 .5l.7 1.3c1.6 -.4 3.2 -1.1 4.6 -2.1.3 -3.6 -.5 -6.9 -2 -10.5ZM9.1 13.6c -.8 0 -1.5 -.7 -1.5 -1.6 0 -.8 .7 -1.5 1.5 -1.5s1.5 .7 1.5 1.5c0 .9 -.7 1.6 -1.5 1.6Zm5.8 0c -.8 0 -1.5 -.7 -1.5 -1.6 0 -.8 .7 -1.5 1.5 -1.5s1.6 .7 1.6 1.5c0 .9 -.8 1.6 -1.6 1.6Z" fill="currentColor"/>
+              </svg>
               <span class="sr-only">Discord</span>
             </a>
           </nav>
@@ -370,9 +385,9 @@
       <section class="hero">
         <div class="logo-wrap"><img class="logo" src="logo.png" alt="CBS Logo"></div>
         <div>
+          <div class="badge"><span>LIVE OP SOLANA</span></div>
           <h2>Community Builds Sovereignty</h2>
           <p>CBS Coin is een door de community gedreven token op Solana. Samen de ketens breken.</p>
-          <!-- Burn badge NL -->
           <div class="burn-pill" title="Initiële supply − huidige supply">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#ffb56b" d="M12 22c4 0 7-3.1 7-7 0-5.2-5.2-7.7-5.2-11.1 0-1.2-1.1-2.1-2.3-1.6C9.1 2.1 7 5.5 7 9.5c0 2.7 1.8 4.9 4.1 5.5-1.2-2.5.7-4.4 1.9-5.2-.5 1.8.8 3.2 1.8 4 .8.7 1.2 1.5 1.2 2.5 0 2.2-1.8 4-4 4Z"/></svg>
             <span><b>Gebrand totaal:</b> <span id="burnTotal_nl">…</span> CBS</span>
@@ -409,7 +424,6 @@
               <a class="btn" href="burn.html">Openen</a>
             </div>
 
-            <!-- NIEUW: Mister Horse mint -->
             <div class="cta">
               <div>
                 <h4>🐴 Mister Horse Mint</h4>
@@ -421,7 +435,6 @@
         </div>
       </section>
 
-      <!-- Meer pagina's -->
       <section class="grid">
         <div class="card">
           <h3>Meer pagina’s</h3>
@@ -506,66 +519,62 @@
     </div>
   </div>
 
-  <!-- ===== Language toggle ===== -->
+  <!-- ===== Toggles ===== -->
   <script>
-    const btn = document.getElementById("langSwitch");
-    const en = document.getElementById("content-en");
-    const nl = document.getElementById("content-nl");
+    const langBtn = document.getElementById('langSwitch');
+    const themeBtn = document.getElementById('themeBtn');
+    const en = document.getElementById('content-en');
+    const nl = document.getElementById('content-nl');
     let isEN = true;
 
-    btn.addEventListener("click", ()=>{
+    langBtn.addEventListener('click', ()=>{
       isEN = !isEN;
-      en.style.display = isEN ? "block" : "none";
-      nl.style.display = isEN ? "none"  : "block";
-      btn.textContent = isEN ? "NL 🇳🇱" : "EN 🇬🇧";
+      en.style.display = isEN ? 'block' : 'none';
+      nl.style.display = isEN ? 'none'  : 'block';
+      langBtn.textContent = isEN ? 'NL 🇳🇱' : 'EN 🇬🇧';
       window.scrollTo({ top:0, behavior:'smooth' });
+    });
+
+    themeBtn.addEventListener('click', ()=>{
+      document.body.classList.toggle('meme');
+      themeBtn.textContent = document.body.classList.contains('meme') ? 'Pro Mode 💼' : 'Meme Mode ✨';
     });
   </script>
 
-  <!-- ===== Burn badge logic (lightweight, no heavy scan) ===== -->
+  <!-- ===== Burn badge logic ===== -->
   <script type="module">
-    // ---- CONFIG: initiële supply in CBS (UI units) ----
-    const INITIAL_SUPPLY_UI = 100_000_000; // 100 miljoen
-
-    import * as web3 from "https://esm.sh/@solana/web3.js@1.95.3";
+    const INITIAL_SUPPLY_UI = 100_000_000; // 100M
+    import * as web3 from 'https://esm.sh/@solana/web3.js@1.95.3';
     const { Connection, PublicKey, clusterApiUrl } = web3;
+    const CBS_MINT = new PublicKey('B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk');
 
-    const CBS_MINT = new PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
-
-    // Simpele RPC fallback-lijst; we doen slechts 1 call.
     const RPCS = [
-      "https://mainnet.helius-rpc.com/?api-key=0053b3c9-a47d-4e7e-b76b-dbdc46f36189",
-      "https://api.mainnet-beta.solana.com",
-      "https://rpc.publicnode.com/solana",
-      clusterApiUrl("mainnet-beta")
+      'https://mainnet.helius-rpc.com/?api-key=0053b3c9-a47d-4e7e-b76b-dbdc46f36189',
+      'https://api.mainnet-beta.solana.com',
+      'https://rpc.publicnode.com/solana',
+      clusterApiUrl('mainnet-beta')
     ];
 
-    const fmt = n => Number(n).toLocaleString("nl-NL");
+    const fmt = n => Number(n).toLocaleString('nl-NL');
 
     async function loadBurnBadge(){
       for (const url of RPCS) {
         try{
-          const conn = new Connection(url, "confirmed");
+          const conn = new Connection(url, 'confirmed');
           const t = await conn.getTokenSupply(CBS_MINT);
-          // uiAmount kan number of string zijn; fallback naar string
-          const ui = (typeof t?.value?.uiAmount === "number" && !Number.isNaN(t.value.uiAmount))
+          const ui = (typeof t?.value?.uiAmount === 'number' && !Number.isNaN(t.value.uiAmount))
                       ? t.value.uiAmount
-                      : parseFloat(t?.value?.uiAmountString ?? "0");
+                      : parseFloat(t?.value?.uiAmountString ?? '0');
           const burned = Math.max(0, INITIAL_SUPPLY_UI - ui);
-          const en = document.getElementById("burnTotal_en");
-          const nl = document.getElementById("burnTotal_nl");
+          const en = document.getElementById('burnTotal_en');
+          const nl = document.getElementById('burnTotal_nl');
           if (en) en.textContent = fmt(burned);
           if (nl) nl.textContent = fmt(burned);
           return;
-        }catch(e){
-          // probeer volgende RPC
-        }
+        }catch(e){/* try next */}
       }
-      // als alles faalt blijft de badge op …
     }
-
     loadBurnBadge();
   </script>
 </body>
 </html>
-
