@@ -20,6 +20,10 @@
       --memeStroke:#000; --memeFill:#fff;
       --pillBG:#2bffe4; --pillText:#012022;
       --stickerA:#fffd7a; --stickerB:#baffd2; --stickerC:#ffd1f7; --stickerD:#8be7ff;
+
+      /* Marquee + caption buffers */
+      --mqH: 42px; /* hoogte lopende balk */
+      --capPad: clamp(76px, 8.2vw, 116px); /* buffer voor de grote captions */
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -41,7 +45,25 @@
     .container{max-width:1100px; margin:0 auto; padding:1.2rem 1rem 2.2rem}
 
     /* === MEME WRAPPER bovenaan === */
-    .meme-frame{position:relative; border-radius:22px; overflow:hidden; border:3px solid rgba(255,255,255,.1); box-shadow:0 18px 40px rgba(0,0,0,.35), inset 0 0 0 2px rgba(0,255,240,.08); margin:10px 0 18px;}
+    .meme-frame{
+      position:relative; border-radius:22px; overflow:hidden;
+      border:3px solid rgba(255,255,255,.1);
+      box-shadow:0 18px 40px rgba(0,0,0,.35), inset 0 0 0 2px rgba(0,255,240,.08);
+      margin:10px 0 18px;
+    }
+
+    /* Desktop/laptop: ruimte reserveren voor captions + marquee (geen overlap) */
+    @media (min-width:721px){
+      body.meme-max .meme-frame{
+        padding-top: var(--capPad);
+        /* onder: buffer voor captions + extra ruimte voor de marquee + kleine marge */
+        padding-bottom: calc(var(--capPad) + var(--mqH) + 10px);
+      }
+      body:not(.meme-max) .meme-frame{
+        padding-top:12px; padding-bottom:12px;
+      }
+    }
+
     .meme-halftone{position:absolute; inset:0; pointer-events:none; background:
       radial-gradient(circle at 20% 10%, rgba(255,255,255,.06), transparent 40%),
       radial-gradient(circle at 80% 20%, rgba(0,255,240,.06), transparent 50%),
@@ -80,13 +102,13 @@
     .meme-top{ top:10px }
     .meme-bottom{ bottom:10px }
 
-    /* NO-OVERLAP buffer op desktop */
-    @media (min-width:721px){
-      .meme-frame{ padding-top:clamp(76px,8.2vw,116px); padding-bottom:clamp(76px,8.2vw,116px); }
+    /* Marquee onderin meme-frame – blokkeert niks en heeft vaste hoogte */
+    .meme-marquee{
+      position:absolute; left:0; right:0; bottom:0; height:var(--mqH);
+      overflow:hidden; border-top:2px dashed rgba(255,255,255,.15);
+      background:linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.15));
+      z-index:5; pointer-events:none; /* <- belangrijk */
     }
-
-    /* Marquee onder de hero */
-    .meme-marquee{position:absolute; left:0; right:0; bottom:0; height:42px; overflow:hidden; border-top:2px dashed rgba(255,255,255,.15); background:linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.15)); z-index:5}
     .meme-marquee .track{display:flex; gap:48px; align-items:center; white-space:nowrap; will-change:transform; animation:scroll 16s linear infinite}
     .meme-marquee .item{font-family:'Bangers',system-ui,sans-serif; font-size:22px; letter-spacing:.6px; color:#fff; text-shadow:-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,2px 2px 0 #000;}
     @keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
@@ -123,13 +145,12 @@
     body:not(.meme-max) .meme-bottom,
     body:not(.meme-max) .starburst,
     body:not(.meme-max) .meme-marquee { display:none !important; }
-    body:not(.meme-max) .meme-frame{ padding-top:12px; padding-bottom:12px; }
 
     @media (max-width:640px){
       .hero{grid-template-columns:1fr; text-align:center}
       .logo-wrap{margin:0 auto}
       #title{text-align:center}
-      .meme-top,.meme-bottom,.starburst,.meme-marquee{display:none} /* grote overlays weg op mobiel */
+      .meme-top,.meme-bottom,.starburst,.meme-marquee{display:none} /* overlays weg op mobiel */
     }
   </style>
 </head>
@@ -171,9 +192,7 @@
 
       <!-- Marquee -->
       <div class="meme-marquee" aria-hidden="true">
-        <div class="track" id="mqTrack">
-          <!-- filled by JS -->
-        </div>
+        <div class="track" id="mqTrack"></div>
       </div>
     </section>
 
@@ -542,13 +561,7 @@
       try{
         setLangTexts();
 
-        await (async ()=>{ // decimals live
-          try{
-            const r = await rpcCall("getAccountInfo", [CONFIG.MINT, {commitment:"confirmed", encoding:"jsonParsed"}]);
-            const info = r?.value?.data?.parsed?.info;
-            if(info?.decimals != null) lastDecimals = Number(info.decimals);
-          }catch{}
-        })();
+        await getMintInfo();      // decimals live (fallback aanwezig)
         renderProfile();
 
         const supplyUI = await getSupply();
