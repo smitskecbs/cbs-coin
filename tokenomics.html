@@ -4,7 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Tokenomics – CBS Coin</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet"/>
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Bangers&display=swap" rel="stylesheet"/>
   <style>
     :root{
       --bg1:#0a0c10; --bg2:#0f141b;
@@ -14,6 +15,11 @@
       --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
       --radius:18px;
       --btnA:#5afff0; --btnB:#2bffe4;
+
+      /* Meme palette */
+      --memeStroke:#000; --memeFill:#fff;
+      --pillBG:#2bffe4; --pillText:#012022;
+      --stickerA:#fffd7a; --stickerB:#baffd2; --stickerC:#ffd1f7; --stickerD:#8be7ff;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -37,14 +43,56 @@
       font-family:'Orbitron',sans-serif;
     }
     .container{max-width:1100px; margin:0 auto; padding:1.2rem 1rem 2.2rem}
-    .hero{display:grid; grid-template-columns:90px 1fr; gap:1rem; align-items:center; padding:1.1rem; margin:10px auto 18px; border-radius:var(--radius); background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35)); border:1px solid var(--line); box-shadow:var(--shadow);}
+
+    /* === MEME WRAPPER (boven de hero) === */
+    .meme-frame{position:relative; border-radius:22px; overflow:hidden; border:3px solid rgba(255,255,255,.1); box-shadow:0 18px 40px rgba(0,0,0,.35), inset 0 0 0 2px rgba(0,255,240,.08); margin:10px 0 18px;}
+    .meme-halftone{position:absolute; inset:0; pointer-events:none; background:
+      radial-gradient(circle at 20% 10%, rgba(255,255,255,.06), transparent 40%),
+      radial-gradient(circle at 80% 20%, rgba(0,255,240,.06), transparent 50%),
+      radial-gradient(circle at 50% 80%, rgba(0,170,255,.06), transparent 50%);
+      mix-blend-screen; opacity:.7}
+    .meme-pill{
+      position:absolute; top:12px; left:12px; z-index:3;
+      background:var(--pillBG); color:var(--pillText); font-weight:900;
+      padding:8px 14px; border-radius:999px; border:2px solid #0ad7c6;
+      box-shadow:0 8px 18px rgba(0,255,230,.25);
+      font-family:'Bangers',system-ui,sans-serif; letter-spacing:.5px;
+    }
+    .meme-top,.meme-bottom{
+      position:absolute; left:50%; transform:translateX(-50%); z-index:2;
+      font-family:'Bangers',system-ui,sans-serif; letter-spacing:.5px; text-align:center;
+      color:var(--memeFill); font-size:clamp(26px,4.6vw,42px);
+      text-shadow:
+        -2px -2px 0 var(--memeStroke), 2px -2px 0 var(--memeStroke),
+        -2px  2px 0 var(--memeStroke), 2px  2px 0 var(--memeStroke),
+        0 0 16px rgba(0,0,0,.45);
+      padding:.25rem .6rem;
+      background:rgba(0,0,0,.45); backdrop-filter:blur(3px) saturate(1.2); border-radius:12px;
+      pointer-events:none;
+    }
+    .meme-top{ top:10px }
+    .meme-bottom{ bottom:10px }
+
+    /* NO-OVERLAP buffer desktop */
+    @media (min-width:721px){
+      .meme-frame{ padding-top:clamp(72px,8vw,112px); padding-bottom:clamp(72px,8vw,112px); }
+    }
+
+    /* Hero in meme-frame */
+    .hero{display:grid; grid-template-columns:90px 1fr; gap:1rem; align-items:center; padding:1.1rem; border-radius:var(--radius); background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35)); border:1px solid var(--line); box-shadow:var(--shadow); margin:0 12px;}
     .logo-wrap{position:relative; width:90px; height:90px; border-radius:16px; overflow:hidden; background:radial-gradient(closest-side, rgba(0,255,230,.18), rgba(0,255,230,.04) 58%, transparent 62%); display:grid; place-items:center;}
     .logo{width:78%; height:78%; object-fit:contain}
-    #title{margin:.15rem 0 0; color:#bffef2; font-size:1.2rem}
+    #title{margin:.15rem 0 .2rem; color:#bffef2; font-size:1.2rem}
 
+    /* Stickers onder de titel */
+    .sticker-row{display:flex; gap:8px; flex-wrap:wrap; margin:.25rem 0 0}
+    .sticker{display:inline-flex; align-items:center; gap:.35rem; padding:.28rem .6rem; border-radius:10px; border:2px dashed rgba(0,0,0,.35); font-weight:900; transform:rotate(-1.5deg); box-shadow:0 8px 16px rgba(0,0,0,.18)}
+    .st-a{ background:var(--stickerA); color:#202 } .st-b{ background:var(--stickerB); color:#053 }
+    .st-c{ background:var(--stickerC); color:#401 } .st-d{ background:var(--stickerD); color:#023 }
+
+    /* Panels & tables (ongewijzigde stijl) */
     .panel{background:linear-gradient(180deg, var(--card), var(--card2)); border:1px solid var(--line); border-radius:var(--radius); padding:20px; margin:18px auto; box-shadow:var(--shadow);}
     .panel p{color:var(--fg); line-height:1.6; margin:.2rem 0}
-
     .table-wrap{overflow-x:auto;}
     table{width:100%; border-collapse:separate; border-spacing:0; margin-top:.6rem; background:linear-gradient(180deg,#0b1217,#0a1015); border:1px solid rgba(0,255,240,.18); border-radius:12px; box-shadow:inset 0 0 0 1px rgba(0,255,240,.06), 0 8px 18px rgba(0,255,230,.08);}
     thead th{background:linear-gradient(180deg,#0f1a20,#0d151b); color:#bffef2; text-align:left; padding:14px; border-bottom:1px solid rgba(0,255,240,.18); font-weight:700;}
@@ -56,7 +104,12 @@
     .tag.team{color:#0a1b12; background:#b7ffe8; border-color:#8affd8}
     .muted{color:var(--muted)}
 
-    @media (max-width:640px){ .hero{grid-template-columns:1fr; text-align:center} .logo-wrap{margin:0 auto} #title{text-align:center} }
+    @media (max-width:640px){
+      .hero{grid-template-columns:1fr; text-align:center}
+      .logo-wrap{margin:0 auto}
+      #title{text-align:center}
+      .meme-top,.meme-bottom{display:none} /* captions weg op mobiel */
+    }
   </style>
 </head>
 <body>
@@ -69,9 +122,25 @@
   </header>
 
   <main class="container">
-    <section class="hero">
-      <div class="logo-wrap"><img class="logo" src="logo.png" alt="CBS Logo"></div>
-      <h1 id="title">📊 CBS Coin Tokenomics</h1>
+    <!-- MEME WRAP + HERO -->
+    <section class="meme-frame">
+      <div class="meme-halftone" aria-hidden="true"></div>
+      <div class="meme-pill" id="memePill">LIVE</div>
+      <div class="meme-top" id="memeTop">LIVE TOKENOMICS 📊</div>
+      <div class="meme-bottom" id="memeBottom">NO PRESALE • NO VC • ON-CHAIN</div>
+
+      <section class="hero">
+        <div class="logo-wrap"><img class="logo" src="logo.png" alt="CBS Logo"></div>
+        <div>
+          <h1 id="title">📊 CBS Coin Tokenomics</h1>
+          <div class="sticker-row">
+            <span class="sticker st-a" id="st1">NO PRESALE</span>
+            <span class="sticker st-b" id="st2">NO VC</span>
+            <span class="sticker st-c" id="st3">ON-CHAIN</span>
+            <span class="sticker st-d" id="st4">JUST COMMUNITY</span>
+          </div>
+        </div>
+      </section>
     </section>
 
     <div class="panel">
@@ -87,7 +156,7 @@
       </p>
     </div>
 
-    <!-- Profile Summary (nieuw blok, geïntegreerde stijl) -->
+    <!-- Profile Summary -->
     <div class="panel" id="profilePanel">
       <h3 id="h_profile" style="margin:0 0 .6rem;">Profile Summary</h3>
       <div class="table-wrap">
@@ -189,7 +258,12 @@
         prop:"Eigenschap", value:"Waarde",
         tname:"Token name", decimals:"Decimals", authority:"Authority", creator:"Creator",
         firstmint:"First Mint", extensions:"Token Extensions",
-        profileNote:"*Decimals worden live opgehaald indien mogelijk. Authority/Creator komen uit het on-chain metadataoverzicht."
+        profileNote:"*Decimals worden live opgehaald indien mogelijk. Authority/Creator komen uit het on-chain metadataoverzicht.",
+        // Meme texts
+        memeTop:"LIVE TOKENOMICS 📊",
+        memeBottom:"GEEN PRESALE • GEEN VC • ON-CHAIN",
+        st1:"GEEN PRESALE", st2:"GEEN VC", st3:"ON-CHAIN", st4:"ALLEEN COMMUNITY",
+        pill:"LIVE"
       },
       en:{
         category:"Category",amount:"Amount CBS",percentage:"Percentage",
@@ -203,7 +277,12 @@
         prop:"Property", value:"Value",
         tname:"Token name", decimals:"Decimals", authority:"Authority", creator:"Creator",
         firstmint:"First Mint", extensions:"Token Extensions",
-        profileNote:"*Decimals are fetched live when possible. Authority/Creator reflect the on-chain metadata overview."
+        profileNote:"*Decimals are fetched live when possible. Authority/Creator reflect the on-chain metadata overview.",
+        // Meme texts
+        memeTop:"LIVE TOKENOMICS 📊",
+        memeBottom:"NO PRESALE • NO VC • ON-CHAIN",
+        st1:"NO PRESALE", st2:"NO VC", st3:"ON-CHAIN", st4:"JUST COMMUNITY",
+        pill:"LIVE"
       }
     };
 
@@ -222,18 +301,28 @@
       $("#th_profile_val").textContent = T[LANG].value;
       $("#profile_note").textContent = T[LANG].profileNote;
 
+      // Meme captions + stickers
+      $("#memeTop").textContent = T[LANG].memeTop;
+      $("#memeBottom").textContent = T[LANG].memeBottom;
+      $("#memePill").textContent = T[LANG].pill;
+      $("#st1").textContent = T[LANG].st1;
+      $("#st2").textContent = T[LANG].st2;
+      $("#st3").textContent = T[LANG].st3;
+      $("#st4").textContent = T[LANG].st4;
+
+      // Intro secties
       $("#intro_nl").style.display = LANG==="nl" ? "" : "none";
       $("#intro_en").style.display = LANG==="en" ? "" : "none";
       $("#discl_nl").style.display = LANG==="nl" ? "" : "none";
       $("#discl_en").style.display = LANG==="en" ? "" : "none";
       $("#langBtn").textContent = LANG==="nl" ? "🌐 Switch to English" : "🌐 Wissel naar Nederlands";
 
-      // Houders + timestamp
+      // Houders + timestamp (indien al geladen)
       if(lastHoldersGuess){
         $("#holders_nl").textContent = lastHoldersGuess;
         $("#holders_en").textContent = lastHoldersGuess;
       }
-      // Profile opnieuw renderen zodat labels wisselen
+      // labels binnen profile opnieuw tonen
       renderProfile();
     }
 
@@ -296,7 +385,7 @@
           lastDecimals = Number(info.decimals);
         }
       }catch(e){
-        // val terug op fallback; geen alert nodig
+        // fallback blijft staan
       }
     }
 
@@ -410,7 +499,7 @@
         lastSupply = supplyUI;
         lastOwnerAgg = ownerAgg;
 
-        // “Holders” exact vereist zware call; toon ten minste unieke owners in de grootste set
+        // “Holders” exact vereist zware call; toon min. unieke owners in de grootste set
         setHeaderMeta(ownerAgg.length ? `${ownerAgg.length}+` : "—");
 
         const summary = buildSummary(supplyUI, ownerAgg);
