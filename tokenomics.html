@@ -21,9 +21,8 @@
       --pillBG:#2bffe4; --pillText:#012022;
       --stickerA:#fffd7a; --stickerB:#baffd2; --stickerC:#ffd1f7; --stickerD:#8be7ff;
 
-      /* Marquee + caption buffers */
-      --mqH: 42px; /* hoogte lopende balk op desktop */
-      --capPad: clamp(76px, 8.2vw, 116px); /* buffer voor grote captions */
+      /* Marquee */
+      --mqH: 42px; /* desktop hoogte */
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -43,68 +42,45 @@
 
     .container{max-width:1100px; margin:0 auto; padding:1.2rem 1rem 2.2rem}
 
-    /* === MEME WRAPPER bovenaan === */
+    /* === MEME WRAPPER (alles in normale flow, geen absolute captions/marquee) === */
     .meme-frame{
       position:relative; border-radius:22px; overflow:hidden;
       border:3px solid rgba(255,255,255,.1);
       box-shadow:0 18px 40px rgba(0,0,0,.35), inset 0 0 0 2px rgba(0,255,240,.08);
-      margin:10px 0 18px;
-      /* desktop: ruimte reserveren voor captions + marquee (geen overlap) */
-      padding-top: var(--capPad);
-      padding-bottom: calc(var(--capPad) + var(--mqH) + 10px);
+      margin:10px 0 18px; padding:14px 12px;
+      background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35));
     }
 
     .meme-halftone{position:absolute; inset:0; pointer-events:none; background:
       radial-gradient(circle at 20% 10%, rgba(255,255,255,.06), transparent 40%),
       radial-gradient(circle at 80% 20%, rgba(0,255,240,.06), transparent 50%),
       radial-gradient(circle at 50% 80%, rgba(0,170,255,.06), transparent 50%);
-      mix-blend-screen; opacity:.7}
+      mix-blend-screen; opacity:.7; z-index:0}
 
-    /* Starburst achter titel */
-    .starburst{position:absolute; inset:0; pointer-events:none; display:flex; align-items:center; justify-content:center; z-index:1; opacity:.9}
-    .starburst::before{
-      content:""; width:min(760px,86%); aspect-ratio:1/1;
-      background:
-        conic-gradient(from 0deg, rgba(255,255,255,.08) 0 10deg, transparent 10deg 20deg) ,
-        radial-gradient(circle, transparent 58%, rgba(255,255,255,.06) 60% 62%, transparent 63% 100%);
-      border-radius:50%;
-      filter:drop-shadow(0 0 12px rgba(0,0,0,.4));
-      transform:rotate(-8deg);
+    .meme-cap{
+      position:relative; z-index:2;
+      font-family:'Bangers',system-ui,sans-serif; letter-spacing:.5px; text-align:center;
+      color:var(--memeFill); font-size:clamp(22px,4.6vw,40px);
+      text-shadow:-2px -2px 0 var(--memeStroke), 2px -2px 0 var(--memeStroke),
+                  -2px  2px 0 var(--memeStroke), 2px  2px 0 var(--memeStroke),
+                  0 0 16px rgba(0,0,0,.45);
+      padding:.25rem .6rem; background:rgba(0,0,0,.45);
+      backdrop-filter:blur(3px) saturate(1.2); border-radius:12px; margin:6px auto;
+      width:fit-content; max-width:100%;
     }
 
-    /* Pill linksboven */
+    /* Pill linksboven (in flow naast top caption) */
     .meme-pill{
-      position:absolute; top:12px; left:12px; z-index:4;
-      background:var(--pillBG); color:var(--pillText); font-weight:900; padding:8px 14px; border-radius:999px; border:2px solid #0ad7c6;
+      position:relative; z-index:2; display:inline-block;
+      background:var(--pillBG); color:var(--pillText); font-weight:900; padding:6px 12px; border-radius:999px; border:2px solid #0ad7c6;
       box-shadow:0 8px 18px rgba(0,255,230,.25); font-family:'Bangers',system-ui,sans-serif; letter-spacing:.5px;
+      margin:6px 10px 6px 0;
       animation:pulse 2.2s ease-in-out infinite;
     }
     @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
 
-    /* Grote meme-captions */
-    .meme-top,.meme-bottom{
-      position:absolute; left:50%; transform:translateX(-50%); z-index:3;
-      font-family:'Bangers',system-ui,sans-serif; letter-spacing:.5px; text-align:center;
-      color:var(--memeFill); font-size:clamp(26px,4.8vw,44px);
-      text-shadow:-2px -2px 0 var(--memeStroke), 2px -2px 0 var(--memeStroke), -2px 2px 0 var(--memeStroke), 2px 2px 0 var(--memeStroke), 0 0 16px rgba(0,0,0,.45);
-      padding:.25rem .6rem; background:rgba(0,0,0,.45); backdrop-filter:blur(3px) saturate(1.2); border-radius:12px; pointer-events:none;
-    }
-    .meme-top{ top:10px }
-    .meme-bottom{ bottom:10px }
-
-    /* Marquee onderin meme-frame – blokkeert niks en heeft vaste hoogte */
-    .meme-marquee{
-      position:absolute; left:0; right:0; bottom:0; height:var(--mqH);
-      overflow:hidden; border-top:2px dashed rgba(255,255,255,.15);
-      background:linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.15));
-      z-index:5; pointer-events:none;
-    }
-    .meme-marquee .track{display:flex; gap:48px; align-items:center; white-space:nowrap; will-change:transform; animation:scroll 16s linear infinite}
-    .meme-marquee .item{font-family:'Bangers',system-ui,sans-serif; font-size:22px; letter-spacing:.6px; color:#fff; text-shadow:-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,2px 2px 0 #000;}
-    @keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-
-    /* Hero in meme-frame */
-    .hero{position:relative; z-index:2; display:grid; grid-template-columns:90px 1fr; gap:1rem; align-items:center; padding:1.1rem; border-radius:var(--radius); background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35)); border:1px solid var(--line); box-shadow:var(--shadow); margin:0 12px;}
+    /* Hero */
+    .hero{position:relative; z-index:2; display:grid; grid-template-columns:90px 1fr; gap:1rem; align-items:center; padding:1.1rem; border-radius:var(--radius); background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35)); border:1px solid var(--line); box-shadow:var(--shadow); margin:8px 0;}
     .logo-wrap{position:relative; width:90px; height:90px; border-radius:16px; overflow:hidden; background:radial-gradient(closest-side, rgba(0,255,230,.18), rgba(0,255,230,.04) 58%, transparent 62%); display:grid; place-items:center;}
     .logo{width:78%; height:78%; object-fit:contain}
     #title{margin:.15rem 0 .2rem; color:#bffef2; font-size:1.2rem}
@@ -115,6 +91,16 @@
     .st-a{ background:var(--stickerA); color:#202 } .st-b{ background:var(--stickerB); color:#053 }
     .st-c{ background:var(--stickerC); color:#401 } .st-d{ background:var(--stickerD); color:#023 }
     .st-h{ background:#fff2a8; color:#222 } /* holders sticker */
+
+    /* Marquee (in flow, nooit overlap) */
+    .meme-marquee{
+      position:relative; z-index:2; height:var(--mqH); overflow:hidden; margin-top:10px;
+      border-top:2px dashed rgba(255,255,255,.15);
+      background:linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.15));
+    }
+    .meme-marquee .track{display:flex; gap:48px; align-items:center; white-space:nowrap; will-change:transform; animation:scroll 16s linear infinite}
+    .meme-marquee .item{font-family:'Bangers',system-ui,sans-serif; font-size:22px; letter-spacing:.6px; color:#fff; text-shadow:-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,2px 2px 0 #000;}
+    @keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
     /* Panels & tables */
     .panel{background:linear-gradient(180deg, var(--card), var(--card2)); border:1px solid var(--line); border-radius:var(--radius); padding:20px; margin:18px auto; box-shadow:var(--shadow);}
@@ -130,13 +116,14 @@
     .tag.team{color:#0a1b12; background:#b7ffe8; border-color:#8affd8}
     .muted{color:var(--muted)}
 
-    /* Mobiel: verberg grote overlays om overlap te voorkomen; compacte hero */
+    /* Mobiel: iets compacter + kleinere marquee */
     @media (max-width:640px){
       .hero{grid-template-columns:1fr; text-align:center}
       .logo-wrap{margin:0 auto}
       #title{text-align:center}
-      .meme-top,.meme-bottom,.starburst,.meme-marquee{display:none}
-      .meme-frame{padding:12px 0}
+      .meme-cap{font-size:clamp(18px,5.2vw,22px)}
+      .meme-marquee{height:28px}
+      .meme-marquee .item{font-size:16px}
     }
   </style>
 </head>
@@ -150,14 +137,11 @@
   </header>
 
   <main class="container">
-    <!-- MEME WRAP + HERO -->
+    <!-- MEME WRAP (alles in-flow, geen overlap) -->
     <section class="meme-frame">
       <div class="meme-halftone" aria-hidden="true"></div>
-      <div class="starburst" aria-hidden="true"></div>
 
-      <div class="meme-pill" id="memePill">LIVE</div>
-      <div class="meme-top" id="memeTop">LIVE TOKENOMICS 📊</div>
-      <div class="meme-bottom" id="memeBottom">NO PRESALE • NO VC • ON-CHAIN</div>
+      <div class="meme-cap"><span class="meme-pill" id="memePill">LIVE</span><span id="memeTop">LIVE TOKENOMICS 📊</span></div>
 
       <section class="hero">
         <div class="logo-wrap"><img class="logo" src="logo.png" alt="CBS Logo"></div>
@@ -173,7 +157,9 @@
         </div>
       </section>
 
-      <!-- Marquee (desktop) -->
+      <div class="meme-cap" id="memeBottom">NO PRESALE • NO VC • ON-CHAIN</div>
+
+      <!-- Marquee (in flow) -->
       <div class="meme-marquee" aria-hidden="true">
         <div class="track" id="mqTrack"></div>
       </div>
@@ -253,7 +239,7 @@
   </main>
 
   <script type="module">
-    /* ========== CONFIG (eerst zetten) ========== */
+    /* ========== CONFIG ========== */
     const CONFIG = {
       RPCS: [
         "https://rpc.helius.xyz/?api-key=0053b3c9-a47d-4e7e-b76b-dbdc46f36189",
@@ -270,7 +256,7 @@
       TOKEN_EXTENSIONS: false
     };
 
-    /* ========== I18N (T na CONFIG, gebruikt CONFIG.* in strings) ========== */
+    /* ========== I18N ========== */
     const short = (pk)=>pk.slice(0,4)+"…"+pk.slice(-4);
     let LANG = "nl";
     let lastSupply = null, lastOwnerAgg = null, lastHoldersGuess = null, lastDecimals = CONFIG.FALLBACK_DECIMALS;
@@ -331,6 +317,26 @@
       track.innerHTML = items.join("");
     }
 
+    function renderProfile(){
+      const rows = $("#profileRows");
+      rows.innerHTML = "";
+      const asLink = (addr)=>`<a class="mono" href="https://solscan.io/account/${addr}" target="_blank" rel="noopener">${short(addr)}</a>`;
+      const data = [
+        [T[LANG].tname, CONFIG.TOKEN_NAME],
+        [T[LANG].decimals, String(lastDecimals)],
+        [T[LANG].authority, asLink(CONFIG.AUTHORITY)],
+        [T[LANG].creator, asLink(CONFIG.CREATOR)],
+        [T[LANG].firstmint, CONFIG.FIRST_MINT_UTC],
+        [T[LANG].extensions, String(CONFIG.TOKEN_EXTENSIONS).toUpperCase()]
+      ];
+      for(const [k,v] of data){
+        const tr = document.createElement("tr");
+        const td1 = document.createElement("td"); td1.textContent = k;
+        const td2 = document.createElement("td"); td2.innerHTML = v;
+        tr.append(td1, td2); rows.appendChild(tr);
+      }
+    }
+
     function setLangTexts(){
       $("#th_cat").textContent = T[LANG].category;
       $("#th_amt").textContent = T[LANG].amount;
@@ -382,7 +388,7 @@
       }
     });
 
-    /* ========== RPC helper met fallback ========== */
+    /* ========== RPC helper ========== */
     async function rpcCall(method, params=[]){
       let lastErr;
       for(const url of CONFIG.RPCS){
@@ -493,26 +499,6 @@
         const td3 = document.createElement("td"); td3.textContent = pct((r.amountUI/supplyUI)*100);
         tr.append(td1, td2, td3); tbody.appendChild(tr);
       });
-    }
-
-    function renderProfile(){
-      const rows = $("#profileRows");
-      rows.innerHTML = "";
-      const asLink = (addr)=>`<a class="mono" href="https://solscan.io/account/${addr}" target="_blank" rel="noopener">${short(addr)}</a>`;
-      const data = [
-        [T[LANG].tname, CONFIG.TOKEN_NAME],
-        [T[LANG].decimals, String(lastDecimals)],
-        [T[LANG].authority, asLink(CONFIG.AUTHORITY)],
-        [T[LANG].creator, asLink(CONFIG.CREATOR)],
-        [T[LANG].firstmint, CONFIG.FIRST_MINT_UTC],
-        [T[LANG].extensions, String(CONFIG.TOKEN_EXTENSIONS).toUpperCase()]
-      ];
-      for(const [k,v] of data){
-        const tr = document.createElement("tr");
-        const td1 = document.createElement("td"); td1.textContent = k;
-        const td2 = document.createElement("td"); td2.innerHTML = v;
-        tr.append(td1, td2); rows.appendChild(tr);
-      }
     }
 
     function setHeaderMeta(holdersGuess){
