@@ -4,7 +4,10 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CBS Coin – Burn (Supply ↓)</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Bangers&display=swap" rel="stylesheet">
+
   <style>
     :root{
       --bg1:#0a0c10; --bg2:#0f141b;
@@ -12,6 +15,8 @@
       --fg:#eafffb; --muted:#a8d6cd; --note:#7ee9dc;
       --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
       --radius:18px; --ok:#24e6b5; --warn:#ffad7a;
+      --memeStroke:#000; --memeFill:#ffffff;
+      --stickerA:#fffd7a; --stickerB:#baffd2; --stickerC:#ffd1f7; --stickerD:#8be7ff;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -23,6 +28,7 @@
         linear-gradient(135deg,var(--bg1),var(--bg2));
       -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
     }
+
     /* Header */
     .topbar{position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:.8rem 1rem; backdrop-filter:blur(6px); background:linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0)); border-bottom:1px solid rgba(0,255,240,.08);}
     .brand{display:flex; align-items:center; gap:.7rem}
@@ -38,6 +44,36 @@
 
     /* Layout */
     .container{ max-width:1100px; margin:0 auto; padding:1.2rem 1rem 2.2rem }
+
+    /* === Meme Additions: frame, captions, stickers === */
+    .meme-frame{position:relative; border-radius:22px; overflow:hidden; border:3px solid rgba(255,255,255,.1); box-shadow:0 18px 40px rgba(0,0,0,.35), inset 0 0 0 2px rgba(0,255,240,.08);}
+    .meme-halftone{position:absolute; inset:0; pointer-events:none; background:
+      radial-gradient(circle at 20% 10%, rgba(255,255,255,.06), transparent 40%),
+      radial-gradient(circle at 80% 20%, rgba(0,255,240,.06), transparent 50%),
+      radial-gradient(circle at 50% 80%, rgba(0,170,255,.06), transparent 50%);
+      mix-blend-screen; opacity:.7}
+    .meme-top,.meme-bottom{
+      position:absolute; left:50%; transform:translateX(-50%); z-index:2;
+      font-family:'Bangers',system-ui,sans-serif; letter-spacing:.5px; text-align:center;
+      color:var(--memeFill); font-size:clamp(26px,4.6vw,42px);
+      text-shadow:
+        -2px -2px 0 var(--memeStroke), 2px -2px 0 var(--memeStroke),
+        -2px  2px 0 var(--memeStroke), 2px  2px 0 var(--memeStroke),
+        0 0 16px rgba(0,0,0,.45);
+      padding:.25rem .6rem;
+    }
+    .meme-top{ top:10px }
+    .meme-bottom{ bottom:10px }
+    .sticker-row{display:flex; gap:8px; flex-wrap:wrap; margin:.6rem 0 0}
+    .sticker{
+      display:inline-flex; align-items:center; gap:.35rem; padding:.28rem .6rem; border-radius:10px;
+      border:2px dashed rgba(0,0,0,.35); color:#091; font-weight:900; transform:rotate(-1.5deg);
+      box-shadow:0 8px 16px rgba(0,0,0,.18);
+    }
+    .st-a{ background:var(--stickerA); color:#202 } .st-b{ background:var(--stickerB); color:#053 }
+    .st-c{ background:var(--stickerC); color:#401 } .st-d{ background:var(--stickerD); color:#023 }
+
+    /* Original hero, now inside meme-frame */
     .hero{ display:grid; grid-template-columns:120px 1fr; gap:1.2rem; align-items:center; padding:1.2rem; margin:10px auto 18px; border-radius:var(--radius); background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35)); border:1px solid rgba(0,255,240,.18); box-shadow:var(--shadow); }
     .hero .logo-wrap{ position:relative; width:120px; height:120px; border-radius:16px; overflow:hidden; background:radial-gradient(closest-side, rgba(0,255,230,.18), rgba(0,255,230,.04) 58%, transparent 62%); display:grid; place-items:center; }
     .hero .logo{ width:86%; height:86%; object-fit:contain }
@@ -45,16 +81,25 @@
     .hero p{ margin:.35rem 0 0; color:var(--muted); font-size:.95rem }
 
     .grid{ display:grid; gap:16px; grid-template-columns:repeat(12,1fr) }
-    .card{ grid-column:span 12; background:linear-gradient(180deg, var(--card), var(--card2)); border:1px solid rgba(0,255,240,.14); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px; }
+
+    /* Meme card style (keeps IDs) */
+    .card{ grid-column:span 12; background:linear-gradient(180deg, var(--card), var(--card2)); border:3px solid #121a21; border-radius:20px; box-shadow:0 18px 40px rgba(0,0,0,.35), inset 0 0 0 2px rgba(0,255,240,.08); padding:18px; position:relative; }
+    .card:before{
+      content:""; position:absolute; inset:-6px; border-radius:24px; pointer-events:none;
+      background:repeating-linear-gradient(45deg, rgba(255,255,255,.06) 0 6px, transparent 6px 12px);
+      mask:linear-gradient(#000 0 0) subtract, radial-gradient(24px at 24px 24px,#0000 98%,#000) subtract;
+      opacity:.15;
+    }
     .card h3{ margin:.2rem 0 .6rem; color:#bffef2; font-size:1.05rem }
+
     .row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
     .ok{ color:var(--ok) } .warn{ color:var(--warn) }
 
     input,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono",monospace}
     input{ padding:12px 14px; border-radius:12px; width:220px; color:var(--fg); background:linear-gradient(180deg, rgba(0,255,230,.06), rgba(0,255,230,.02)); border:1px solid rgba(0,255,240,.22); box-shadow:inset 0 0 0 1px rgba(0,255,240,.06); }
 
-    .btn{ display:inline-flex; align-items:center; justify-content:center; min-width:140px; padding:12px 18px; border-radius:10px; text-decoration:none; font-weight:900; font-size:.94rem; color:#001010; background:linear-gradient(180deg, #5afff0, #2bffe4); border:1px solid rgba(0,255,240,.7); box-shadow:0 0 12px rgba(0,255,230,.55), 0 0 24px rgba(0,255,230,.25), inset 0 -8px 14px rgba(0,0,0,.14); cursor:pointer; }
-    .btn:disabled{ opacity:.55; cursor:not-allowed }
+    .btn{ display:inline-flex; align-items:center; justify-content:center; min-width:160px; padding:12px 18px; border-radius:12px; text-decoration:none; font-weight:900; font-size:1rem; color:#001010; background:linear-gradient(180deg, #5afff0, #2bffe4); border:2px solid rgba(0,255,240,.85); box-shadow:0 0 12px rgba(0,255,230,.55), 0 0 24px rgba(0,255,230,.25), inset 0 -8px 14px rgba(0,0,0,.14); cursor:pointer; transform:rotate(-1deg);}
+    .btn:disabled{ opacity:.55; cursor:not-allowed; transform:none }
 
     /* Flames */
     .burn-row{ display:flex; align-items:center; gap:14px; flex-wrap:wrap }
@@ -62,6 +107,19 @@
     .flame{ width:18px; height:24px } @keyframes flicker{0%,100%{transform:translateY(0)}50%{transform:translateY(-1px)}}
 
     footer{ margin:24px auto 40px; text-align:center; color:var(--muted) } footer a{ color:#79ffee; text-decoration:none } footer a:hover{ text-decoration:underline }
+
+    /* Responsive */
+    @media (max-width:720px){
+      .btn{min-width:140px}
+      .hero{grid-template-columns:1fr}
+      .meme-top,.meme-bottom{font-size:clamp(22px,6vw,34px)}
+    }
+
+    /* Reduce motion for sensitive users */
+    @media (prefers-reduced-motion: reduce){
+      .flames{animation:none}
+      .btn{transform:none}
+    }
   </style>
 </head>
 <body>
@@ -84,9 +142,25 @@
   <!-- EN -->
   <div id="content-en">
     <div class="container">
-      <section class="hero">
-        <div class="logo-wrap"><img class="logo" src="logo.png" alt="CBS Logo"></div>
-        <div><h2>Real token burn (supply goes down)</h2><p>Connect, enter amount, and burn CBS via SPL <span class="mono">burnChecked</span>.</p></div>
+      <!-- MEME FRAME AROUND HERO -->
+      <section class="meme-frame" style="margin:10px 0 18px;">
+        <div class="meme-halftone" aria-hidden="true"></div>
+        <div class="meme-top">BURN IT 🔥</div>
+        <div class="meme-bottom">SUPPLY GOES DOWN 😎</div>
+
+        <section class="hero">
+          <div class="logo-wrap"><img class="logo" src="logo.png" alt="CBS Logo"></div>
+          <div>
+            <h2>Real token burn (supply goes down)</h2>
+            <p>Connect, enter amount, and burn CBS via SPL <span class="mono">burnChecked</span>.</p>
+            <div class="sticker-row">
+              <span class="sticker st-a">NO PRESALE</span>
+              <span class="sticker st-b">NO VC</span>
+              <span class="sticker st-c">ON-CHAIN</span>
+              <span class="sticker st-d">JUST COMMUNITY</span>
+            </div>
+          </div>
+        </section>
       </section>
 
       <section class="grid">
@@ -142,9 +216,25 @@
   <!-- NL -->
   <div id="content-nl" style="display:none">
     <div class="container">
-      <section class="hero">
-        <div class="logo-wrap"><img class="logo" src="logo.png" alt="CBS Logo"></div>
-        <div><h2>Echte token burn (supply daalt)</h2><p>Verbind je wallet, vul bedrag in en brand CBS via SPL <span class="mono">burnChecked</span>.</p></div>
+      <!-- MEME FRAME AROUND HERO (NL captions) -->
+      <section class="meme-frame" style="margin:10px 0 18px;">
+        <div class="meme-halftone" aria-hidden="true"></div>
+        <div class="meme-top">BRANDEN 🔥</div>
+        <div class="meme-bottom">SUPPLY GAAT OMLAAG 😎</div>
+
+        <section class="hero">
+          <div class="logo-wrap"><img class="logo" src="logo.png" alt="CBS Logo"></div>
+          <div>
+            <h2>Echte token burn (supply daalt)</h2>
+            <p>Verbind je wallet, vul bedrag in en brand CBS via SPL <span class="mono">burnChecked</span>.</p>
+            <div class="sticker-row">
+              <span class="sticker st-a">GEEN PRESALE</span>
+              <span class="sticker st-b">GEEN VC</span>
+              <span class="sticker st-c">ON-CHAIN</span>
+              <span class="sticker st-d">ALLEEN COMMUNITY</span>
+            </div>
+          </div>
+        </section>
       </section>
 
       <section class="grid">
@@ -197,8 +287,8 @@
     </div>
   </div>
 
+  <!-- Lang switch (ongewijzigd) -->
   <script>
-    // Taal-schakelaar
     const btn = document.getElementById("langSwitch");
     const EN = document.getElementById("content-en");
     const NL = document.getElementById("content-nl");
@@ -206,23 +296,16 @@
     btn.addEventListener("click", ()=>{ isEN=!isEN; EN.style.display=isEN?"block":"none"; NL.style.display=isEN?"none":"block"; btn.textContent=isEN?"NL 🇳🇱":"EN 🇬🇧"; window.scrollTo({top:0,behavior:'smooth'}); });
   </script>
 
+  <!-- Functionality (ongewijzigd) -->
   <script type="module">
-    /* ===== Polyfills & imports ===== */
     try{ if(!window.Buffer){ const {Buffer}=await import("https://esm.sh/buffer@6.0.3"); window.Buffer=Buffer; } }catch{}
     async function importWithFallback(p,f){ try{ return await import(p);}catch{ return await import(f);} }
-
     const web3 = await importWithFallback("https://esm.sh/@solana/web3.js@1.95.3","https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js");
     const spl  = await importWithFallback("https://esm.sh/@solana/spl-token@0.4.7","https://unpkg.com/@solana/spl-token@0.4.7/lib/index.iife.min.js");
     const { Connection, clusterApiUrl, PublicKey, Transaction } = web3;
     const { getMint, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, createBurnCheckedInstruction } = spl;
 
-    /* ===== CONFIG =====
-       Zet dit op jullie INITIËLE supply in CBS (UI units).
-       Voorbeeld: 100_000_000 (100 miljoen CBS).
-    */
-    const INITIAL_SUPPLY_UI = 100_000_000;   /* <— aangepast naar 100 miljoen */
-
-    // Mint & RPC
+    const INITIAL_SUPPLY_UI = 100_000_000;
     const CBS_MINT = new PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
     const TOKEN_PROGRAM = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
     const DEFAULT_RPC = "https://mainnet.helius-rpc.com/?api-key=0053b3c9-a47d-4e7e-b76b-dbdc46f36189";
@@ -230,7 +313,6 @@
     const RPC_URL = urlRpc || DEFAULT_RPC || clusterApiUrl("mainnet-beta");
     const connection = new Connection(RPC_URL, "confirmed");
 
-    /* ===== UI ===== */
     const H=(id)=>document.getElementById(id);
     const decimalsEl=H("decimals"), supplyEl=H("supply"), yourBalEl=H("yourBal"), mintAuthEl=H("mintAuth");
     const decimalsEl_nl=H("decimals_nl"), supplyEl_nl=H("supply_nl"), yourBalEl_nl=H("yourBal_nl"), mintAuthEl_nl=H("mintAuth_nl");
@@ -246,7 +328,6 @@
     if (location.protocol!=="https:" && location.hostname!=="localhost") { H("httpsWarn")?.style && (H("httpsWarn").style.display="inline"); H("httpsWarn_nl")?.style && (H("httpsWarn_nl").style.display="inline"); }
 
     let provider=null, mintDecimals=0, lastSupplyUi=0;
-
     const fmt=(n)=>Number(n).toLocaleString("nl-NL");
     const setMsg=(el,t,type="info")=>{ if(!el)return; el.textContent=t||""; el.className= type==="ok"?"ok":type==="warn"?"warn":"muted"; };
 
@@ -279,25 +360,21 @@
         const mint=await getMint(connection,CBS_MINT);
         mintDecimals=mint.decimals??0;
 
-        // Total supply (ui)
         const supplyBig = (typeof mint.supply==="bigint") ? mint.supply : BigInt(mint.supply.toString());
         lastSupplyUi = Number(supplyBig) / (10 ** mintDecimals);
 
-        // Mint authority status
-        const mintAuthority = mint.mintAuthority ? mint.mintAuthority.toBase58?.() || String(mint.mintAuthority) : null;
+        const mintAuthority = mint.mintAuthority ? mint.mintAuthority.toBase64?.() || mint.mintAuthority.toString?.() || String(mint.mintAuthority) : null;
         const locked = !mintAuthority;
         mintAuthEl   && (mintAuthEl.textContent   = locked ? "Disabled ✅ (exact counter)" : ("Enabled ⚠️ (counter is an estimate)"));
         mintAuthEl_nl&& (mintAuthEl_nl.textContent= locked ? "Uitgeschakeld ✅ (teller exact)" : ("Ingeschakeld ⚠️ (teller is een schatting)"));
         burnNote     && (burnNote.textContent     = locked ? "" : "If new tokens were minted after launch, burned total is an estimate.");
         burnNote_nl  && (burnNote_nl.textContent  = locked ? "" : "Als er na de start nieuw is gemint, is de burn-teller een schatting.");
 
-        // Decimals/supply UI
         decimalsEl    && (decimalsEl.textContent    = String(mintDecimals));
         decimalsEl_nl && (decimalsEl_nl.textContent = String(mintDecimals));
         supplyEl      && (supplyEl.textContent      = fmt(lastSupplyUi));
         supplyEl_nl   && (supplyEl_nl.textContent   = fmt(lastSupplyUi));
 
-        // Wallet balance (indien verbonden)
         if (provider?.publicKey){
           const ata=await getAssociatedTokenAddress(CBS_MINT, provider.publicKey,false);
           const acc=await connection.getParsedAccountInfo(ata);
@@ -306,8 +383,6 @@
           yourBalEl    && (yourBalEl.textContent    = fmt(ui));
           yourBalEl_nl && (yourBalEl_nl.textContent = fmt(ui));
         }
-
-        // Delta weergeven
         renderDelta();
       }catch(e){
         setMsg(msgEl,"Failed to load stats.","warn");
@@ -315,7 +390,6 @@
       }
     }
 
-    /* ===== EN handlers ===== */
     document.getElementById("mintLbl").textContent = CBS_MINT.toBase58();
 
     document.getElementById("connectBtn")?.addEventListener("click", async ()=>{
@@ -340,7 +414,6 @@
       }catch{ setMsg(msgEl,"Burn failed.","warn"); }
     });
 
-    /* ===== NL handlers ===== */
     document.getElementById("connectBtn_nl")?.addEventListener("click", async ()=>{
       try{
         provider=detectProvider(); if(!provider){ setMsg(msgEl_nl,"Geen wallet gevonden.","warn"); return; }
@@ -363,7 +436,6 @@
       }catch{ setMsg(msgEl_nl,"Burn mislukt.","warn"); }
     });
 
-    /* Init */
     await refreshStats();
   </script>
 </body>
