@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CBS Pet — Adje Cat (Kitten → Cat)</title>
+  <title>CBS Pet — Adje Cat (Sleep • Eat • Clean • Play)</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Bangers&display=swap" rel="stylesheet"/>
   <style>
     :root{
@@ -15,8 +15,8 @@
       --btnA:#5afff0; --btnB:#2bffe4;
       --stA:#fffd7a; --stB:#baffd2; --stC:#ffd1f7; --stD:#8be7ff;
       --memeStroke:#000; --memeFill:#fff; --mqH:40px;
-      --ok:#2bffe4; --warn:#ffd27a; --bad:#ff8a8a;
-      --good:#24e6b5; --health:#a5ffcf;
+      --ok:#2bffe4; --warn:#ffd27a; --bad:#ff8a8a; --health:#a5ffcf;
+      --collar:#15f0d8; --tag:#ffcc66; --tagTxt:#1a1200;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -72,7 +72,7 @@
 
     /* PET */
     .pet-wrap{border-radius:16px; padding:14px; background:linear-gradient(180deg,#0b1217,#0a1015); border:1px solid rgba(0,255,240,.18);}
-    .pet-row{display:grid; grid-template-columns:320px 1fr; gap:16px}
+    .pet-row{display:grid; grid-template-columns:340px 1fr; gap:16px}
     @media (max-width:820px){.pet-row{grid-template-columns:1fr}}
     .stat{display:flex; align-items:center; gap:8px; margin:8px 0}
     .bar{flex:1; height:10px; border-radius:999px; background:#122027; overflow:hidden}
@@ -85,7 +85,6 @@
     .mood{font-weight:900}
     .mood.ok{color:var(--ok)} .mood.warn{color:var(--warn)} .mood.bad{color:var(--bad)}
 
-    /* Death screen overlay */
     .dead-overlay{position:absolute; inset:0; display:none; place-items:center; background:rgba(0,0,0,.6); border-radius:12px}
     .dead-card{background:#0a141a; border:1px solid rgba(255,255,255,.15); padding:14px; border-radius:12px; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,.5)}
     .dead-card h4{margin:.2rem 0 .4rem}
@@ -144,7 +143,7 @@
         <h3 class="title">🐱 Adje Cat — Kitten → Cat</h3>
         <div class="pet-row">
           <div style="position:relative">
-            <canvas id="petCanvas" width="320" height="250"></canvas>
+            <canvas id="petCanvas" width="340" height="260"></canvas>
 
             <div class="stat"><strong>Honger</strong><div class="bar"><div id="barH" class="fill" style="width:100%"></div></div></div>
             <div class="stat"><strong>Fun</strong><div class="bar"><div id="barF" class="fill" style="width:100%"></div></div></div>
@@ -156,7 +155,7 @@
             <div class="toggle-row">
               <button class="btn" id="feedBtn">Feed 🍣</button>
               <button class="btn" id="playBtn">Play</button>
-              <button class="btn" id="cleanBtn">Clean 💩</button>
+              <button class="btn" id="cleanBtn">Clean ✨</button>
             </div>
 
             <div class="toggle-row">
@@ -171,7 +170,7 @@
               <button class="btn" id="removeCollar" disabled>Remove</button>
             </div>
 
-            <p class="muted" id="status">Hou je kat blij — slecht verzorgen = boos… of erger 😿</p>
+            <p class="muted" id="status">Katten slapen vaak. Druk op Play/Feed/ Clean om ’m te wekken 😺</p>
 
             <!-- death overlay -->
             <div class="dead-overlay" id="deadOverlay">
@@ -218,7 +217,7 @@
 
     <section class="panel">
       <h3>Waarom dit?</h3>
-      <p class="muted"><b>CBS — Community Builds Sovereignty.</b> Geen presale, geen VC. Koop speeltjes & de CBS-collar met CBS, steun de treasury en laat Adje Cat opgroeien. Verzorg ’m goed — anders wordt ’ie boos of gaat ’ie dood (dan respawn je als kitten).</p>
+      <p class="muted"><b>CBS — Community Builds Sovereignty.</b> Geen presale, geen VC. Koop speeltjes & de CBS-collar met CBS, steun de treasury en laat Adje Cat opgroeien. Verzorg ’m goed — anders wordt ’ie boos of gaat ’ie dood (dan respawn je als kitten). Katten slapen veel — Adje dus ook 😉</p>
     </section>
   </main>
 
@@ -239,33 +238,27 @@
 
     /* ========= STATE ========= */
     const DEF = {
-      hunger:100, fun:100, clean:100, health:100,
+      hunger:100, fun:100, clean:100, health:100, energy:80,
       feeds:0, mouseOwned:false,
       collarOwned:false, collarEquipped:false,
-      xp:0, stage:"kitten", mood:"happy", // kitten/teen/cat
-      poop:0, lastTick:Date.now(),
-      toy:"ball", // ball | mouse
-      dead:false
+      xp:0, stage:"kitten", mood:"happy",
+      lastTick:Date.now(),
+      toy:"ball",
+      dead:false,
+      cx:170, roamTargetX:null, state:"idle", stateT:0,
+      // states: idle, walk, seekFood, eat, seekToy, playPaws, sleep, cleaning
     };
-    let S = JSON.parse(localStorage.getItem("cbs_adjecat_v1")||"null") || structuredClone(DEF);
-    const save=()=>localStorage.setItem("cbs_adjecat_v1", JSON.stringify(S));
+    let S = Object.assign(structuredClone(DEF), JSON.parse(localStorage.getItem("cbs_adjecat_v4")||"{}"));
+    const save=()=>localStorage.setItem("cbs_adjecat_v4", JSON.stringify(S));
 
     /* ========= UI refs ========= */
     const barH=$("#barH"), barF=$("#barF"), barC=$("#barC"), barHP=$("#barHP");
     const statusEl=$("#status"), xpTxt=$("#xpTxt"), ageTxt=$("#ageTxt"), moodTxt=$("#moodTxt");
-    const deadOverlay=$("#deadOverlay");
-    const btnRespawn=$("#respawnBtn");
-
+    const deadOverlay=$("#deadOverlay"); const btnRespawn=$("#respawnBtn");
     const clamp=(n)=>Math.max(0,Math.min(100,n));
     const setStatus=(t)=>statusEl.textContent=t;
-    function updateBars(){
-      barH.style.width=S.hunger+"%"; barF.style.width=S.fun+"%"; barC.style.width=S.clean+"%"; barHP.style.width=S.health+"%";
-    }
-    function updateAge(){
-      S.stage = S.xp>=80 ? "cat" : S.xp>=30 ? "teen" : "kitten";
-      ageTxt.textContent = S.stage==="kitten" ? "Kitten" : (S.stage==="teen" ? "Jonge kat" : "Kat");
-      xpTxt.textContent = S.xp|0;
-    }
+    function updateBars(){ barH.style.width=S.hunger+"%"; barF.style.width=S.fun+"%"; barC.style.width=S.clean+"%"; barHP.style.width=S.health+"%"; }
+    function updateAge(){ S.stage = S.xp>=80 ? "cat" : S.xp>=30 ? "teen" : "kitten"; ageTxt.textContent = S.stage==="kitten" ? "Kitten" : (S.stage==="teen" ? "Jonge kat" : "Kat"); xpTxt.textContent = S.xp|0; }
     function updateMood(){
       const avg=(S.hunger+S.fun+S.clean)/3;
       if(avg>=70 && S.health>=60){ S.mood="happy"; }
@@ -276,116 +269,160 @@
       moodTxt.className = "mood " + (S.mood==="happy"?"ok":S.mood==="ok"?"ok":S.mood==="angry"?"warn":"bad");
     }
 
-    /* ========= CANVAS & ANIMS ========= */
+    /* ========= CANVAS ========= */
     const canvas=document.getElementById("petCanvas"); const ctx=canvas.getContext("2d");
-    const W=canvas.width, H=canvas.height; const groundY=H-28;
-    let cat={x:W*0.56,y:groundY-36,vx:0,vy:0,facing:1,blink:0};
+    const W=canvas.width, H=canvas.height, MARGIN=28; const groundY=H-26;
+    let cat={x:S.cx, y:groundY-40, vx:0, facing:1, blink:0, pawPhase:0, groomPhase:0};
 
-    // objects
+    // resources
     let food=null; // {x,amount}
     let toy=null;  // {type, x,y, vx, vy}
+    let zzz=[]; let zTimer=0;      // sleep Zs
+    let bubbles=[];                // cleaning bubbles
 
-    function drawGround(){
-      ctx.fillStyle="#0b141a"; ctx.fillRect(0,0,W,H);
-      ctx.fillStyle="#0a1f22"; ctx.fillRect(0,groundY,W,H-groundY);
-      // subtle vignette
-      const grd=ctx.createLinearGradient(0,0,0,H);
-      grd.addColorStop(0,"rgba(255,255,255,0.02)"); grd.addColorStop(1,"rgba(0,0,0,0.08)");
-      ctx.fillStyle=grd; ctx.fillRect(0,0,W,H);
+    const safeX=(x)=>Math.max(MARGIN, Math.min(W-MARGIN, x));
+    const rnd=(a,b)=>a + Math.random()*(b-a);
+
+    function rrect(x,y,w,h,r){
+      ctx.beginPath();
+      ctx.moveTo(x+r,y);
+      ctx.lineTo(x+w-r,y);
+      ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+      ctx.lineTo(x+w,y+h-r);
+      ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+      ctx.lineTo(x+r,y+h);
+      ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+      ctx.lineTo(x,y+r);
+      ctx.quadraticCurveTo(x,y,x+r,y);
+      ctx.closePath();
     }
 
-    function catScale(){ return S.stage==="kitten"?0.85:(S.stage==="teen"?1.05:1.2); }
+    /* ========= DRAW ========= */
+    function drawGround(){
+      ctx.fillStyle="#0b141a"; ctx.fillRect(0,0,W,H);
+      ctx.fillStyle="#0a1f22"; ctx.fillRect(0,groundY,W-groundY);
+    }
+    function catScale(){ return S.stage==="kitten"?0.92:(S.stage==="teen"?1.06:1.18); }
 
     function drawCat(){
-      const scale = catScale();
-      const bw = true; // black-white cat
-      ctx.save(); ctx.translate(cat.x, cat.y); ctx.scale(scale, scale);
+      const scale=catScale();
+      ctx.save(); ctx.translate(cat.x, cat.y);
+      const bobAmp = S.state==="sleep" ? 2.0 : (["walk","seekFood","seekToy"].includes(S.state)?1.2:0.5);
+      const bob = Math.sin(Date.now()/280)*bobAmp;
+      ctx.translate(0, bob);
+      ctx.scale(scale, scale);
 
-      // tail (expressive)
-      ctx.strokeStyle = S.mood==="angry"?"#ffffff": "#eaeaea";
+      /* Tail */
+      ctx.strokeStyle = S.state==="sleep" ? "#d8d8d8" : (S.mood==="angry"?"#ffffff": "#eaeaea");
       ctx.lineWidth=6; ctx.lineCap="round";
       ctx.beginPath();
-      const tailUp = S.mood==="happy" ? -18 : S.mood==="angry" ? -6 : -12;
-      ctx.moveTo(-30,10); ctx.quadraticCurveTo(-48,tailUp,-62,10); ctx.stroke();
+      const tailUp = (S.state==="sleep") ? -20 : (S.mood==="happy" ? -18 : S.mood==="angry" ? -6 : -12);
+      ctx.moveTo(-32,12); ctx.quadraticCurveTo(-52,tailUp,-66,10); ctx.stroke();
 
-      // body (white belly)
-      ctx.fillStyle = "#111"; // black
-      ctx.beginPath(); ctx.ellipse(0,10,36,26,0,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle = "#f5f5f5";
-      ctx.beginPath(); ctx.ellipse(0,16,20,16,0,0,Math.PI*2); ctx.fill();
+      /* Body */
+      ctx.fillStyle="#121212"; ctx.beginPath(); ctx.ellipse(0,12,36,26,0,0,Math.PI*2); ctx.fill();
+      // chest / belly (tuxedo)
+      ctx.fillStyle="#f5f5f5"; ctx.beginPath(); ctx.ellipse(0,18,18,16,0,0,Math.PI*2); ctx.fill();
 
-      // head
-      ctx.fillStyle = "#111";
-      ctx.beginPath(); ctx.ellipse(0,-18,24,20,0,0,Math.PI*2); ctx.fill();
+      /* Legs/paws (simple ovals) */
+      ctx.fillStyle="#0e0e0e";
+      ctx.beginPath(); ctx.ellipse(-14,24,8,6,0,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(14,24,8,6,0,0,Math.PI*2); ctx.fill();
 
-      // ears (pointy)
-      ctx.fillStyle="#111";
-      ctx.beginPath(); ctx.moveTo(-16,-36); ctx.lineTo(-3,-24); ctx.lineTo(-22,-24); ctx.closePath(); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(16,-36); ctx.lineTo(3,-24); ctx.lineTo(22,-24); ctx.closePath(); ctx.fill();
-      // inner ears
-      ctx.fillStyle="#545454"; ctx.beginPath(); ctx.moveTo(-15,-33); ctx.lineTo(-6,-25); ctx.lineTo(-20,-25); ctx.closePath(); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(15,-33); ctx.lineTo(6,-25); ctx.lineTo(20,-25); ctx.closePath(); ctx.fill();
+      /* Head */
+      ctx.fillStyle="#121212"; ctx.beginPath(); ctx.ellipse(0,-18,24,20,0,0,Math.PI*2); ctx.fill();
+      // Cheeks/muzzle white
+      ctx.fillStyle="#f2f2f2";
+      ctx.beginPath(); ctx.ellipse(-6,-12,8,7,0,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(6,-12,8,7,0,0,Math.PI*2); ctx.fill();
 
-      // collar
-      if(S.collarEquipped){
-        ctx.strokeStyle="#0feedd"; ctx.lineWidth=6;
-        ctx.beginPath(); ctx.arc(0,-6,16,0,Math.PI*2); ctx.stroke();
-        ctx.fillStyle="#00161a"; ctx.font="bold 8px monospace"; ctx.textAlign="center"; ctx.fillText("CBS",0,-3);
+      /* Ears */
+      ctx.fillStyle="#121212";
+      ctx.beginPath(); ctx.moveTo(-16,-36); ctx.lineTo(-4,-24); ctx.lineTo(-22,-24); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(16,-36); ctx.lineTo(4,-24); ctx.lineTo(22,-24); ctx.closePath(); ctx.fill();
+      // inner ear (soft pink/gray)
+      ctx.fillStyle="#5d5d5d";
+      ctx.beginPath(); ctx.moveTo(-15,-33); ctx.lineTo(-7,-25); ctx.lineTo(-20,-25); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(15,-33); ctx.lineTo(7,-25); ctx.lineTo(20,-25); ctx.closePath(); ctx.fill();
+
+      /* Eyes */
+      const blinkNow = (Math.random()<0.008); if(blinkNow && S.state!=="sleep") cat.blink=4; if(cat.blink>0) cat.blink--;
+      const eyeOpen = cat.blink<=0 && S.state!=="sleep";
+      if(eyeOpen){
+        ctx.fillStyle="#ffffff"; ctx.beginPath(); ctx.ellipse(-6,-20,4.2,3.6,0,0,Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(6,-20,4.2,3.6,0,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle="#000000"; ctx.beginPath(); ctx.ellipse(-6,-20,1.8,2.2,0,0,Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(6,-20,1.8,2.2,0,0,Math.PI*2); ctx.fill();
+      } else {
+        ctx.fillStyle="#eaeaea"; ctx.fillRect(-9,-20,6,1.5); ctx.fillRect(3,-20,6,1.5);
       }
 
-      // whiskers
+      /* Nose + mouth */
+      ctx.fillStyle="#d8a0a0";
+      ctx.beginPath(); ctx.moveTo(0,-16); ctx.lineTo(-3,-13); ctx.lineTo(3,-13); ctx.closePath(); ctx.fill();
       ctx.strokeStyle="#eaeaea"; ctx.lineWidth=1.6;
-      ctx.beginPath(); ctx.moveTo(-4,-16); ctx.lineTo(-22,-13); ctx.moveTo(-4,-18); ctx.lineTo(-22,-18); ctx.moveTo(-4,-20); ctx.lineTo(-22,-23); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(4,-16); ctx.lineTo(22,-13); ctx.moveTo(4,-18); ctx.lineTo(22,-18); ctx.moveTo(4,-20); ctx.lineTo(22,-23); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0,-13); ctx.lineTo(0,-10); ctx.moveTo(0,-10); ctx.quadraticCurveTo(-3,-8,-5,-9);
+      ctx.moveTo(0,-10); ctx.quadraticCurveTo(3,-8,5,-9); ctx.stroke();
 
-      // eyes/mouth by mood
-      ctx.fillStyle="#f5f5f5"; ctx.strokeStyle="#f5f5f5";
-      const blinkNow = (Math.random()<0.01); if(blinkNow) cat.blink=4; if(cat.blink>0) cat.blink--;
-      const eyeOpen = cat.blink<=0;
+      /* Whiskers */
+      ctx.strokeStyle="#eaeaea"; ctx.lineWidth=1.6;
+      ctx.beginPath(); ctx.moveTo(-2,-12); ctx.lineTo(-18,-10); ctx.moveTo(-2,-14); ctx.lineTo(-18,-14); ctx.moveTo(-2,-16); ctx.lineTo(-18,-18); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(2,-12); ctx.lineTo(18,-10); ctx.moveTo(2,-14); ctx.lineTo(18,-14); ctx.moveTo(2,-16); ctx.lineTo(18,-18); ctx.stroke();
 
-      if(S.dead){
-        // X eyes + limp mouth
-        ctx.strokeStyle="#f27272"; ctx.lineWidth=2.5;
-        ctx.beginPath(); ctx.moveTo(-8,-22); ctx.lineTo(-2,-16); ctx.moveTo(-2,-22); ctx.lineTo(-8,-16); ctx.stroke();
-        ctx.beginPath(); ctx.moveTo(8,-22); ctx.lineTo(2,-16); ctx.moveTo(2,-22); ctx.lineTo(8,-16); ctx.stroke();
-        ctx.strokeStyle="#555"; ctx.lineWidth=2;
-        ctx.beginPath(); ctx.moveTo(-6,-10); ctx.quadraticCurveTo(0,-6,6,-10); ctx.stroke();
-      } else {
-        if(S.mood==="happy"){
-          if(eyeOpen){ ctx.beginPath(); ctx.arc(-6,-20,3,0,Math.PI*2); ctx.arc(6,-20,3,0,Math.PI*2); ctx.fill(); }
-          else { ctx.fillRect(-9,-20,6,2); ctx.fillRect(3,-20,6,2); }
-          ctx.strokeStyle="#f5f5f5"; ctx.lineWidth=2;
-          ctx.beginPath(); ctx.arc(0,-12,6,0.1*Math.PI,0.9*Math.PI); ctx.stroke();
-        } else if(S.mood==="ok"){
-          if(eyeOpen){ ctx.fillRect(-9,-20,6,2); ctx.fillRect(3,-20,6,2); }
-          else { ctx.fillRect(-9,-20,6,1); ctx.fillRect(3,-20,6,1); }
-          ctx.strokeStyle="#ddd"; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(-5,-10); ctx.lineTo(5,-10); ctx.stroke();
-        } else if(S.mood==="angry"){
-          // angled brows + slit eyes
-          ctx.strokeStyle="#ffcc7a"; ctx.lineWidth=2;
-          ctx.beginPath(); ctx.moveTo(-12,-24); ctx.lineTo(-2,-20); ctx.moveTo(12,-24); ctx.lineTo(2,-20); ctx.stroke();
-          ctx.fillRect(-9,-20,6,2); ctx.fillRect(3,-20,6,2);
-          ctx.strokeStyle="#ffcc7a"; ctx.beginPath(); ctx.moveTo(-4,-10); ctx.quadraticCurveTo(0,-14,4,-10); ctx.stroke();
-        } else { // sick
-          ctx.fillStyle="#a8a8a8";
-          ctx.fillRect(-9,-20,6,1.5); ctx.fillRect(3,-20,6,1.5);
-          ctx.strokeStyle="#a8a8a8"; ctx.lineWidth=2;
-          ctx.beginPath(); ctx.moveTo(-4,-8); ctx.quadraticCurveTo(0,-4,4,-8); ctx.stroke();
+      /* Collar band + tag (NECK, not face) */
+      if(S.collarEquipped){
+        // band just under head, on top of neck
+        ctx.fillStyle = "rgba(0,0,0,.3)";
+        rrect(-22,-8,44,10,4); ctx.fill(); // subtle shadow behind band
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--collar') || "#15f0d8";
+        rrect(-20,-9,40,8,4); ctx.fill();
+        // tag
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--tag') || "#ffcc66";
+        ctx.beginPath(); ctx.arc(0,0,7,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--tagTxt') || "#1a1200";
+        ctx.font="bold 7px monospace"; ctx.textAlign="center"; ctx.textBaseline="middle";
+        ctx.fillText("CBS",0,0.5);
+      }
+
+      /* Paws (front) */
+      // When cleaning: alternate paw up to mouth
+      const cleanAmp = (S.state==="cleaning") ? Math.sin(cat.groomPhase)*6 : 0;
+      ctx.fillStyle="#101010";
+      ctx.beginPath(); ctx.ellipse(-16, 18 - cleanAmp, 7,6, 0, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(16, 18 + cleanAmp, 7,6, 0, 0, Math.PI*2); ctx.fill();
+
+      ctx.restore();
+
+      /* Sleep Zzz */
+      if(S.state==="sleep"){
+        zTimer += 1/60;
+        if(zTimer>0.7){ zTimer=0; zzz.push({x:cat.x+12, y:cat.y-58, a:1, v:-22, s:12}); }
+        for(let i=zzz.length-1;i>=0;i--){
+          const z=zzz[i]; z.y += z.v*(1/60); z.a -= 0.015; z.s += 0.15;
+          if(z.a<=0) zzz.splice(i,1);
+          else{ ctx.globalAlpha=z.a; ctx.fillStyle="#dcdcdc"; ctx.font=`bold ${z.s}px Bangers, system-ui`; ctx.fillText("Z", z.x, z.y); ctx.globalAlpha=1; }
         }
       }
 
-      ctx.restore();
+      /* Cleaning bubbles */
+      if(S.state==="cleaning"){
+        for(let i=bubbles.length-1;i>=0;i--){
+          const b=bubbles[i]; b.x+=b.vx; b.y+=b.vy; b.a-=0.02;
+          if(b.a<=0) bubbles.splice(i,1);
+          else{
+            ctx.globalAlpha=b.a; ctx.fillStyle="rgba(180,255,250,.9)";
+            ctx.beginPath(); ctx.arc(b.x,b.y,b.r,0,Math.PI*2); ctx.fill(); ctx.globalAlpha=1;
+          }
+        }
+      }
     }
 
     function drawFood(){
       if(!food) return;
-      // bowl + fish shrinking
-      ctx.fillStyle="#0feedd";
-      ctx.beginPath(); ctx.ellipse(food.x, groundY-6, 22, 8, 0, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle="#0feedd"; ctx.beginPath(); ctx.ellipse(food.x, groundY-6, 22, 8, 0, 0, Math.PI*2); ctx.fill();
       const f=Math.max(0,food.amount);
       if(f>0){
-        ctx.fillStyle="#c1f7ff";
-        ctx.beginPath(); ctx.ellipse(food.x, groundY-11, 10*f, 6*f, 0, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle="#c1f7ff"; ctx.beginPath(); ctx.ellipse(food.x, groundY-11, 10*f, 6*f, 0, 0, Math.PI*2); ctx.fill();
         ctx.beginPath(); ctx.moveTo(food.x-10*f, groundY-11); ctx.lineTo(food.x-14*f, groundY-9); ctx.lineTo(food.x-14*f, groundY-13); ctx.closePath(); ctx.fill();
       }
     }
@@ -394,74 +431,168 @@
       if(!toy) return;
       if(toy.type==="ball"){
         ctx.fillStyle="#ffd27a"; ctx.beginPath(); ctx.arc(toy.x,toy.y,8,0,Math.PI*2); ctx.fill(); ctx.strokeStyle="#e8b95e"; ctx.stroke();
-      }else{ // mouse
+      }else{
         ctx.fillStyle="#cfc0aa"; ctx.beginPath(); ctx.ellipse(toy.x,toy.y,10,6,0,0,Math.PI*2); ctx.fill();
         ctx.fillStyle="#806f5a"; ctx.beginPath(); ctx.arc(toy.x+8,toy.y-2,2,0,Math.PI*2); ctx.fill();
         ctx.strokeStyle="#cfc0aa"; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(toy.x-10,toy.y); ctx.quadraticCurveTo(toy.x-18,toy.y-8,toy.x-26,toy.y-2); ctx.stroke();
       }
     }
 
-    function stepAnim(dt){
+    /* ========= FSM helpers ========= */
+    function setState(newState, t=0){
+      S.state=newState; S.stateT=t;
+      if(newState==="sleep") S.roamTargetX=null;
+      save();
+    }
+    function ensureRoamTarget(){
+      if(S.roamTargetX==null) S.roamTargetX = safeX(rnd(W*0.25, W*0.75));
+    }
+    function tryAutoSleep(){
+      if(S.state==="idle" || S.state==="walk"){
+        if(S.energy<=25){ setState("sleep",0); setStatus("Adje doet een dutje… 😴"); return true; }
+        if(S.state==="idle" && S.stateT> rnd(6,12)){ setState("sleep",0); setStatus("Adje dut even weg… 😴"); return true; }
+      }
+      return false;
+    }
+    function wakeUp(bonus=6){
+      if(S.state==="sleep"){
+        S.energy = clamp(S.energy + bonus);
+        setState("idle",0);
+        setStatus("Wakker! 👀");
+      }
+    }
+
+    /* ========= SIM ========= */
+    const WLK=80, SEEK=120;
+    function stepToy(dt){
+      if(!toy) return;
+      toy.x += toy.vx*dt; toy.y += toy.vy*dt;
+      toy.vy += 900*dt;
+      const r=8;
+      if(toy.y>groundY-r){ toy.y=groundY-r; toy.vy *= -0.45; toy.vx *= 0.86; if(Math.abs(toy.vy)<60) toy.vy=0; }
+      if(toy.x<MARGIN){ toy.x=MARGIN; toy.vx*=-0.6; }
+      if(toy.x>W-MARGIN){ toy.x=W-MARGIN; toy.vx*=-0.6; }
+    }
+
+    function stepCat(dt){
       if(S.dead) return;
+      S.stateT += dt;
+      cat.pawPhase += (S.state==="playPaws"? 16*dt : 0);
+      cat.groomPhase += (S.state==="cleaning"? 18*dt : 0);
 
-      // toy physics
-      if(toy){
-        toy.x += toy.vx*dt; toy.y += toy.vy*dt; toy.vy += 900*dt;
-        if(toy.y>groundY-8){ toy.y=groundY-8; toy.vy *= -0.45; toy.vx *= 0.86; if(Math.abs(toy.vy)<60) toy.vy=0; }
-        // chase toy
-        const dx = toy.x - cat.x; cat.facing = dx>=0?1:-1;
-        cat.vx = Math.max(-140, Math.min(140, dx*2));
-        cat.x += cat.vx*dt;
-        cat.x = Math.max(30, Math.min(W-30, cat.x));
+      let targetX=null;
+
+      if(S.state==="sleep"){
+        S.energy = clamp(S.energy + 8*dt);
+        if(S.energy>=92 && S.stateT>3){ setState("idle",0); setStatus("Uitgeslapen 😺"); }
+      }
+      else if(S.state==="cleaning"){
+        // vooruitgang tijdens cleaning, bubbels spawnen
+        if(Math.random()<0.25) bubbles.push({x:cat.x+rnd(-14,14), y:cat.y+rnd(-8,8), r:rnd(2,5), vx:rnd(-0.6,0.6), vy:rnd(-0.8,-0.2), a:0.9});
+        if(S.stateT>2){ setState("idle",0); }
+      }
+      else if(S.state==="seekFood" && food){
+        targetX = food.x - 10;
+        if(Math.abs(cat.x - food.x) < 14){ setState("eat"); }
+      }
+      else if(S.state==="eat" && food){
+        food.amount -= 0.55*dt;
+        if(food.amount<=0){ food=null; setState("idle",0); }
+      }
+      else if(S.state==="seekToy" && toy){
+        targetX = toy.x - 10*(cat.x<toy.x?1:-1);
+        if(Math.abs(cat.x - toy.x) < 18){ setState("playPaws"); }
+      }
+      else if(S.state==="playPaws"){
+        if(toy && S.stateT > 0.35){
+          S.stateT = 0;
+          const dir = (Math.random()<0.5 ? -1 : 1);
+          toy.vx += 120*dir; toy.vy += -80;
+        }
+        if((S.stage==="kitten" && cat.pawPhase>20) || cat.pawPhase>40) setState("idle");
+      }
+      else {
+        ensureRoamTarget();
+        if(S.state==="idle"){
+          if(tryAutoSleep()){}
+          else if(S.stateT> rnd(1.5,3.5)) setState("walk");
+        }
+        if(S.state==="walk"){
+          targetX = S.roamTargetX;
+          if(Math.abs(cat.x - S.roamTargetX) < 6){
+            if(Math.random()<0.5) S.roamTargetX = safeX(rnd(W*0.25, W*0.75));
+            else { S.roamTargetX=null; setState("idle",0); }
+          }
+        }
       }
 
-      // move to food to eat
-      if(food){
-        const dx = food.x - cat.x; cat.facing = dx>=0?1:-1;
-        cat.vx = Math.max(-120, Math.min(120, dx*2)); cat.x += cat.vx*dt;
-        if(Math.abs(dx)<16 && food.amount>0){ food.amount -= 0.6*dt; if(food.amount<=0) food=null; }
+      if(targetX!=null){
+        cat.facing = targetX>=cat.x?1:-1;
+        const speed = (S.state==="seekFood"||S.state==="seekToy") ? SEEK : WLK;
+        const dx = targetX - cat.x;
+        const step = Math.sign(dx) * Math.min(Math.abs(dx), speed*dt);
+        cat.x = safeX(cat.x + step);
+      }
+
+      if(cat.x<=MARGIN+2 || cat.x>=W-MARGIN-2){
+        S.roamTargetX = safeX(W*0.5 + rnd(-40,40));
+        if(!["seekFood","seekToy","eat","sleep","cleaning"].includes(S.state)) setState("walk",0);
+      }
+      if(S.state==="idle" && (cat.x<MARGIN+24 || cat.x>W-MARGIN-24)){
+        S.roamTargetX = safeX(W*0.5 + rnd(-60,60)); setState("walk",0);
       }
     }
 
-    let lastT=performance.now();
-    function loop(now){
-      const dt = Math.min(0.033, (now-lastT)/1000); lastT=now;
-      drawGround(); stepAnim(dt); drawFood(); drawToy(); drawCat();
-      requestAnimationFrame(loop);
+    function loopFrame(){
+      const dt = 1/60;
+      drawGround();
+      stepToy(dt);
+      stepCat(dt);
+      drawFood();
+      drawToy();
+      drawCat();
+      requestAnimationFrame(loopFrame);
     }
-    requestAnimationFrame(loop);
+    requestAnimationFrame(loopFrame);
 
-    /* ========= GAME TICKS ========= */
+    /* ========= CARE TICK ========= */
     function tickCare(force=false){
       if(S.dead) return;
-      const now=Date.now(), dt=now - S.lastTick;
-      if(dt>=8000 || force){
-        S.hunger=clamp(S.hunger-3); S.fun=clamp(S.fun-2); S.clean=clamp(S.clean-2);
-        // HEALTH: straf bij verwaarlozing, herstel wanneer oké
+      const now=Date.now(), dtnow=now - S.lastTick;
+      if(dtnow>=8000 || force){
+        S.hunger=clamp(S.hunger-3); S.fun=clamp(S.fun-2);
+        // Clean zakt langzaam, maar niet onder nul
+        S.clean=clamp(S.clean-2);
+
+        if(S.state==="sleep"){ S.energy = clamp(S.energy + 6); }
+        else { S.energy = clamp(S.energy - 4); }
+
         let penalty=0;
         if(S.hunger<15) penalty+=6; else if(S.hunger<30) penalty+=3;
         if(S.clean<15)  penalty+=5; else if(S.clean<30)  penalty+=2;
         if(S.fun<10)    penalty+=3; else if(S.fun<25)    penalty+=1;
+
         if(penalty>0) S.health = clamp(S.health - penalty);
-        else S.health = clamp(S.health + 2); // langzaam herstellen
-        // dood?
+        else S.health = clamp(S.health + 2);
+
         if(S.health<=0){ S.dead=true; showDead(); }
-        // groei
         S.xp = Math.min(999, S.xp + 1.2);
         S.lastTick=now; save(); updateBars(); updateAge(); updateMood();
+
+        tryAutoSleep();
       }
     }
     setInterval(()=>tickCare(false), 2000);
 
     function showDead(){
       updateBars(); updateMood();
-      deadOverlay.style.display="grid";
+      $("#deadOverlay").style.display="grid";
       setStatus("😿 Adje Cat is overleden. Respawn om opnieuw te beginnen.");
-      // stop anim-interacties (knoppen laten we staan maar ze doen niks bij dead)
     }
     btnRespawn.addEventListener("click", ()=>{
       S = structuredClone(DEF); save();
-      deadOverlay.style.display="none";
+      cat.x = S.cx; setState("idle",0);
+      $("#deadOverlay").style.display="none";
       updateBars(); updateAge(); updateMood();
       setStatus("Welkom terug, kitten! Verzorg ’m goed 💚");
     });
@@ -469,12 +600,15 @@
     /* ========= BUTTONS ========= */
     $("#feedBtn").addEventListener("click", ()=>{
       if(S.dead) return;
+      if(S.state==="sleep") wakeUp(10);
       if(S.feeds<=0){ setStatus("Geen voer. Koop een Food Pack in de shop."); return; }
-      S.feeds--; S.hunger=clamp(S.hunger+28); S.clean=clamp(S.clean-2);
-      const bowlX = Math.max(40, Math.min(W-40, cat.x + (cat.facing>0? 40 : -40)));
+      S.feeds--;
+      const bowlX = safeX(cat.x + (cat.facing>0? 46 : -46));
       food = { x:bowlX, amount:1 };
-      S.xp = Math.min(999, S.xp+3.5);
-      save(); updateBars(); updateAge(); updateMood(); setStatus(`Smak smak! Feeds left: ${S.feeds}`);
+      S.hunger=clamp(S.hunger+18); S.clean=clamp(S.clean-2); S.energy=clamp(S.energy+8);
+      S.xp = Math.min(999, S.xp+3);
+      setState("seekFood",0);
+      save(); updateBars(); updateAge(); updateMood(); setStatus(`Etenstijd! Feeds left: ${S.feeds}`);
       tickCare(true);
     });
 
@@ -484,20 +618,34 @@
 
     $("#playBtn").addEventListener("click", ()=>{
       if(S.dead) return;
-      S.fun=clamp(S.fun+24);
-      const t=selectedToy;
-      if(t==="ball"){ toy={type:"ball",x:cat.x,y:cat.y-20,vx:230*cat.facing,vy:-360}; }
-      else{ toy={type:"mouse",x:cat.x,y:cat.y-10,vx:170*cat.facing,vy:-280}; S.fun=clamp(S.fun+6); }
-      S.xp = Math.min(999,S.xp+2.5);
+      if(S.state==="sleep") wakeUp(8);
+      const spawnX = safeX(cat.x + (cat.facing>0? 20 : -20));
+      toy = { type: selectedToy, x: spawnX, y: cat.y-18, vx: (selectedToy==="ball"? 200:150)*cat.facing, vy: -320 };
+      S.fun=clamp(S.fun + (selectedToy==="ball"? 22: 28));
+      S.energy=clamp(S.energy - 6);
+      S.xp = Math.min(999,S.xp+2);
+      setState("seekToy",0);
       save(); updateBars(); updateAge(); updateMood(); setStatus("Speeltijd!");
       tickCare(true);
     });
 
+    // CLEAN — altijd schoon maken (zonder voorwaarden) + animatie + kleine health boost
     $("#cleanBtn").addEventListener("click", ()=>{
       if(S.dead) return;
-      if(S.poop>0){ S.poop=0; S.clean=clamp(S.clean+30); setStatus("Schoon! ✨"); S.xp=Math.min(999,S.xp+1); }
-      else setStatus("Niks op te ruimen.");
-      save(); updateBars(); updateAge(); updateMood(); tickCare(true);
+      if(S.state==="sleep") wakeUp(5);
+      S.clean = clamp(S.clean + 35);
+      S.health = clamp(S.health + 4);
+      S.fun = clamp(S.fun + 2);      // poetsen voelt goed
+      S.xp = Math.min(999,S.xp+1);
+      // start cleaning anim
+      setState("cleaning",0);
+      setStatus("Wassen & poetsen ✨");
+      save(); updateBars(); updateAge(); updateMood();
+      // spawn meteen wat bubbels
+      for(let i=0;i<10;i++){
+        bubbles.push({x:cat.x+rnd(-14,14), y:cat.y+rnd(-8,8), r:rnd(2,5), vx:rnd(-0.6,0.6), vy:rnd(-1,-0.2), a:0.9});
+      }
+      tickCare(true);
     });
 
     function refreshEquipButtons(){
@@ -508,7 +656,6 @@
     $("#equipCollar").addEventListener("click", ()=>{ if(!S.collarOwned||S.dead) return; S.collarEquipped=true; save(); refreshEquipButtons(); setStatus("CBS Collar equipped."); });
     $("#removeCollar").addEventListener("click", ()=>{ if(S.dead) return; S.collarEquipped=false; save(); refreshEquipButtons(); setStatus("Collar removed."); });
 
-    // Init UI
     updateBars(); updateAge(); updateMood(); if(S.dead) showDead(); refreshEquipButtons(); tickCare(true);
 
     /* ========= WALLET & CBS PAYMENTS ========= */
@@ -591,9 +738,10 @@
   </script>
 
   <script>
-    // Make marquee content repeat without overlap
+    // Marquee veilig vullen zonder overlap
     const track = document.getElementById("mqTrack");
-    if(track && track.children.length>1){ track.appendChild(track.children[0].cloneNode(true)); }
+    if(track){ const phrase="NO PRESALE • NO VC • ON-CHAIN • COMMUNITY BUILDS SOVEREIGNTY • ";
+      track.innerHTML = Array.from({length:20},()=>`<span>${phrase}</span>`).join(""); }
   </script>
 </body>
 </html>
