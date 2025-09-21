@@ -6,7 +6,7 @@
   <title>CBS Coin – Burn (Supply ↓)</title>
 
   <!-- Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Bangers&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Bangers&display=swap" rel="stylesheet"/>
 
   <style>
     :root{
@@ -15,6 +15,8 @@
       --fg:#eafffb; --muted:#a8d6cd; --note:#7ee9dc;
       --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
       --radius:18px; --ok:#24e6b5; --warn:#ffad7a;
+
+      /* Meme palette */
       --memeStroke:#000; --memeFill:#ffffff;
       --stickerA:#fffd7a; --stickerB:#baffd2; --stickerC:#ffd1f7; --stickerD:#8be7ff;
     }
@@ -34,46 +36,60 @@
     .brand{display:flex; align-items:center; gap:.7rem}
     .brand img{width:38px; height:38px; border-radius:10px; filter:drop-shadow(0 0 10px rgba(0,255,230,.35))}
     .brand h1{margin:0; font-size:1.05rem; letter-spacing:.4px; font-weight:700; color:#bffef2}
+
+    /* Social icons: GREEN + glow */
     .social{display:flex; align-items:center; gap:.6rem; padding:.25rem .4rem; border-radius:12px; background:linear-gradient(180deg, rgba(0,255,230,.05), rgba(0,255,230,.02)); border:1px solid rgba(0,255,240,.12);}
-    .icon-link{display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:10px; background:linear-gradient(180deg, rgba(0,255,230,.06), rgba(0,255,230,.02)); border:1px solid rgba(0,255,240,.18); box-shadow:inset 0 0 0 1px rgba(0,255,240,.06); text-decoration:none;}
+    .icon-link{
+      display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:10px;
+      text-decoration:none; color:#1fffbd; /* green via currentColor */
+      background:linear-gradient(180deg, rgba(0,255,230,.10), rgba(0,255,230,.04));
+      border:1px solid rgba(0,255,240,.35); box-shadow:inset 0 0 0 1px rgba(0,255,240,.06);
+    }
+    .icon-link:hover{
+      color:#8fffee; border-color:rgba(0,255,240,.55);
+      box-shadow:0 0 16px rgba(0,255,230,.35), inset 0 0 0 1px rgba(0,255,240,.20);
+    }
     .icon{width:20px; height:20px; display:block}
+
     #langSwitch{
       background:linear-gradient(180deg, #7dffe9, #55f1e7); color:#012022; font-weight:900; border:1px solid rgba(0,255,240,.45);
       padding:.55rem .9rem; border-radius:12px; cursor:pointer; box-shadow:0 8px 18px rgba(0,255,230,.18), inset 0 -6px 10px rgba(0,0,0,.15);
     }
 
-    /* Layout */
     .container{ max-width:1100px; margin:0 auto; padding:1.2rem 1rem 2.2rem }
 
-    /* === Meme Additions: frame, captions, stickers === */
+    /* === Meme Additions === */
     .meme-frame{position:relative; border-radius:22px; overflow:hidden; border:3px solid rgba(255,255,255,.1); box-shadow:0 18px 40px rgba(0,0,0,.35), inset 0 0 0 2px rgba(0,255,240,.08);}
     .meme-halftone{position:absolute; inset:0; pointer-events:none; background:
       radial-gradient(circle at 20% 10%, rgba(255,255,255,.06), transparent 40%),
       radial-gradient(circle at 80% 20%, rgba(0,255,240,.06), transparent 50%),
-      radial-gradient(circle at 50% 80%, rgba(0,170,255,.06), transparent 50%);
-      mix-blend-screen; opacity:.7}
+      radial-gradient(circle at 50% 80%, rgba(0,170,255,.06), transparent 50%); mix-blend-screen; opacity:.7}
     .meme-top,.meme-bottom{
       position:absolute; left:50%; transform:translateX(-50%); z-index:2;
       font-family:'Bangers',system-ui,sans-serif; letter-spacing:.5px; text-align:center;
       color:var(--memeFill); font-size:clamp(26px,4.6vw,42px);
-      text-shadow:
-        -2px -2px 0 var(--memeStroke), 2px -2px 0 var(--memeStroke),
-        -2px  2px 0 var(--memeStroke), 2px  2px 0 var(--memeStroke),
-        0 0 16px rgba(0,0,0,.45);
+      text-shadow:-2px -2px 0 var(--memeStroke), 2px -2px 0 var(--memeStroke),
+                  -2px  2px 0 var(--memeStroke), 2px  2px 0 var(--memeStroke),
+                  0 0 16px rgba(0,0,0,.45);
       padding:.25rem .6rem;
     }
     .meme-top{ top:10px }
     .meme-bottom{ bottom:10px }
-    .sticker-row{display:flex; gap:8px; flex-wrap:wrap; margin:.6rem 0 0}
-    .sticker{
-      display:inline-flex; align-items:center; gap:.35rem; padding:.28rem .6rem; border-radius:10px;
-      border:2px dashed rgba(0,0,0,.35); color:#091; font-weight:900; transform:rotate(-1.5deg);
-      box-shadow:0 8px 16px rgba(0,0,0,.18);
+
+    /* Corner ribbon */
+    .ribbon{
+      position:absolute; top:12px; right:-44px; transform:rotate(35deg);
+      background:#2bffe4; color:#012022; font-weight:900; padding:6px 60px;
+      border:2px solid #0ad7c6; box-shadow:0 8px 18px rgba(0,255,230,.25); z-index:3;
     }
+
+    /* Stickers */
+    .sticker-row{display:flex; gap:8px; flex-wrap:wrap; margin:.6rem 0 0}
+    .sticker{display:inline-flex; align-items:center; gap:.35rem; padding:.28rem .6rem; border-radius:10px; border:2px dashed rgba(0,0,0,.35); font-weight:900; transform:rotate(-1.5deg); box-shadow:0 8px 16px rgba(0,0,0,.18)}
     .st-a{ background:var(--stickerA); color:#202 } .st-b{ background:var(--stickerB); color:#053 }
     .st-c{ background:var(--stickerC); color:#401 } .st-d{ background:var(--stickerD); color:#023 }
 
-    /* Original hero, now inside meme-frame */
+    /* Hero (bestaand) */
     .hero{ display:grid; grid-template-columns:120px 1fr; gap:1.2rem; align-items:center; padding:1.2rem; margin:10px auto 18px; border-radius:var(--radius); background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35)); border:1px solid rgba(0,255,240,.18); box-shadow:var(--shadow); }
     .hero .logo-wrap{ position:relative; width:120px; height:120px; border-radius:16px; overflow:hidden; background:radial-gradient(closest-side, rgba(0,255,230,.18), rgba(0,255,230,.04) 58%, transparent 62%); display:grid; place-items:center; }
     .hero .logo{ width:86%; height:86%; object-fit:contain }
@@ -82,14 +98,9 @@
 
     .grid{ display:grid; gap:16px; grid-template-columns:repeat(12,1fr) }
 
-    /* Meme card style (keeps IDs) */
+    /* Cards (meme frame edge) */
     .card{ grid-column:span 12; background:linear-gradient(180deg, var(--card), var(--card2)); border:3px solid #121a21; border-radius:20px; box-shadow:0 18px 40px rgba(0,0,0,.35), inset 0 0 0 2px rgba(0,255,240,.08); padding:18px; position:relative; }
-    .card:before{
-      content:""; position:absolute; inset:-6px; border-radius:24px; pointer-events:none;
-      background:repeating-linear-gradient(45deg, rgba(255,255,255,.06) 0 6px, transparent 6px 12px);
-      mask:linear-gradient(#000 0 0) subtract, radial-gradient(24px at 24px 24px,#0000 98%,#000) subtract;
-      opacity:.15;
-    }
+    .card:before{ content:""; position:absolute; inset:-6px; border-radius:24px; pointer-events:none; background:repeating-linear-gradient(45deg, rgba(255,255,255,.06) 0 6px, transparent 6px 12px); opacity:.15; }
     .card h3{ margin:.2rem 0 .6rem; color:#bffef2; font-size:1.05rem }
 
     .row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
@@ -106,6 +117,18 @@
     .flames{ display:flex; align-items:flex-end; gap:6px; padding:4px 8px 0 0; filter:drop-shadow(0 0 10px rgba(255,120,0,.45)); animation:flicker 1.2s infinite ease-in-out; }
     .flame{ width:18px; height:24px } @keyframes flicker{0%,100%{transform:translateY(0)}50%{transform:translateY(-1px)}}
 
+    /* Burn-O-Meter */
+    .meme-meter{margin-top:10px}
+    .meme-meter-label{
+      font-family:'Bangers',system-ui,sans-serif; letter-spacing:.5px; color:#fff;
+      text-shadow:-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,2px 2px 0 #000;
+      font-size:1.05rem; margin-bottom:6px;
+    }
+    .meme-meter-bar{height:14px; border-radius:999px; background:rgba(255,255,255,.08);
+      border:2px solid #121a21; box-shadow:inset 0 0 0 2px rgba(0,255,240,.06)}
+    .meme-meter-fill{height:100%; width:0%; border-radius:999px;
+      background:linear-gradient(90deg,#ffb56b,#ff894a,#ff5f3a); box-shadow:0 0 14px rgba(255,120,0,.35)}
+
     footer{ margin:24px auto 40px; text-align:center; color:var(--muted) } footer a{ color:#79ffee; text-decoration:none } footer a:hover{ text-decoration:underline }
 
     /* Responsive */
@@ -115,7 +138,7 @@
       .meme-top,.meme-bottom{font-size:clamp(22px,6vw,34px)}
     }
 
-    /* Reduce motion for sensitive users */
+    /* Reduce motion */
     @media (prefers-reduced-motion: reduce){
       .flames{animation:none}
       .btn{transform:none}
@@ -133,7 +156,7 @@
         <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M21.9 4.6c.3-.9-.5-1.3-1.3-1L2.5 10.3c-.9.4-.9 1 .2 1.3l4.8 1.5 1.8 5.8c.2.9.7 1 .9 0l1.3-4.2 5.1 3.8c.7.5 1.3.2 1.5-.7l3.8-13.2Z" fill="currentColor"/></svg>
       </a>
       <a class="icon-link" href="https://discord.gg/DxSB3ERQ" target="_blank" rel="noopener" aria-label="Discord">
-        <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M19.6 5.1A16 16 0 0 0 15.8 4l-.2.3c1 .2 1.9.6 2.8 1.2a8.7 8.7 0 0 0-3.2-1c-.3 0-.5.2-.6 .4a12 12 0 0 0-5.6 0c-.2 0-.4-.3-.6-.4-1 .1-2 .5-3 1a13 13 0 0 1 2.7-1.2L8 4a16 16 0 0 0-3.8 1.1C1.6 8.7.9 12 1.1 15.2c1.4 1 2.9 1.7 4.5 2.1l.8-1.3c-.4-.1-.9-.3-1.3-.5l.3-.3c2.6 1.2 5.5 1.2 8 0l.3.3c-.4 .2-.8 .4-1.2 .5l.7 1.3c1.6-.4 3.2-1.1 4.6-2.1.3-3.6-.5-6.9-2-10.5ZM9.1 13.6c-.8 0-1.5-.7-1.5-1.6 0-.8.7-1.5 1.5-1.5s1.5.7 1.5 1.5c0 .9-.7 1.6-1.5 1.6Zm5.8 0c-.8 0-1.5-.7-1.5-1.6 0-.8.7-1.5 1.5-1.5s1.6.7 1.6 1.5c0 .9-.8 1.6-1.6 1.6Z" fill="currentColor"/></svg>
+        <svg class="icon" viewBox="0 0 24 24" fill="none"><path d="M19.6 5.1A16 16 0 0 0 15.8 4l-.2.3c1 .2 1.9.6 2.8 1.2a8.7 8.7 0 0 0-3.2-1c-.3 0-.5.2-.6 .4a12 12 0 0 0-5.6 0c-.2 0-.4-.3-.6-.4-1 .1-2 .5-3 1a13 13 0 0 1 2.7-1.2L8 4a16 16 0 0 0-3.8 1.1C1.6 8.7.9 12 1.1 15.2c1.4 1 2.9 1.7 4.5 2.1l.8-1.3c-.4-.1-.9-.3-1.3-.5l.3-.3c2.6 1.2 5.5 1.2 8 0l.3.3c-.4 .2-.8 .4-1.2 .5l.7 1.3c1.6-.4 3.2-1.1 4.6-2.1.3-3.6-.5-6.9-2-10.5ZM9.1 13.6c-.8 0-1.5-.7-1.5-1.6 0-.8.7-1.5 1.5-1.5s1.5.7 1.5 1.5c0 .9-.7 1.6-1.5 1.6Zm5.8 0c-.8 0-1.5-.7-1.5-1.6 0-.8.7-1.5 1.5-1.5s1.6 .7 1.6 1.5c0 .9-.8 1.6-1.6 1.6Z" fill="currentColor"/></svg>
       </a>
     </div>
     <button id="langSwitch">NL 🇳🇱</button>
@@ -142,9 +165,11 @@
   <!-- EN -->
   <div id="content-en">
     <div class="container">
+
       <!-- MEME FRAME AROUND HERO -->
       <section class="meme-frame" style="margin:10px 0 18px;">
         <div class="meme-halftone" aria-hidden="true"></div>
+        <div class="ribbon">REAL BURN</div>
         <div class="meme-top">BURN IT 🔥</div>
         <div class="meme-bottom">SUPPLY GOES DOWN 😎</div>
 
@@ -152,7 +177,6 @@
           <div class="logo-wrap"><img class="logo" src="logo.png" alt="CBS Logo"></div>
           <div>
             <h2>Real token burn (supply goes down)</h2>
-            <p>Connect, enter amount, and burn CBS via SPL <span class="mono">burnChecked</span>.</p>
             <div class="sticker-row">
               <span class="sticker st-a">NO PRESALE</span>
               <span class="sticker st-b">NO VC</span>
@@ -206,6 +230,13 @@
           <p><b>Initial supply:</b> <span id="initialSupplyUi">—</span> CBS</p>
           <p><b>Total burned (since launch):</b> <span id="burnedDelta">…</span> CBS</p>
           <small id="burnNote" class="muted"></small>
+
+          <!-- Burn-O-Meter (EN) -->
+          <div class="meme-meter">
+            <div class="meme-meter-label">🔥 Burn-O-Meter: <span id="burnPct">0%</span></div>
+            <div class="meme-meter-bar"><div class="meme-meter-fill" id="burnFill"></div></div>
+            <div class="meme-meter-note">Based on initial vs current supply.</div>
+          </div>
         </div>
       </section>
 
@@ -216,9 +247,11 @@
   <!-- NL -->
   <div id="content-nl" style="display:none">
     <div class="container">
-      <!-- MEME FRAME AROUND HERO (NL captions) -->
+
+      <!-- MEME FRAME AROUND HERO (NL) -->
       <section class="meme-frame" style="margin:10px 0 18px;">
         <div class="meme-halftone" aria-hidden="true"></div>
+        <div class="ribbon">ECHTE BURN</div>
         <div class="meme-top">BRANDEN 🔥</div>
         <div class="meme-bottom">SUPPLY GAAT OMLAAG 😎</div>
 
@@ -226,7 +259,6 @@
           <div class="logo-wrap"><img class="logo" src="logo.png" alt="CBS Logo"></div>
           <div>
             <h2>Echte token burn (supply daalt)</h2>
-            <p>Verbind je wallet, vul bedrag in en brand CBS via SPL <span class="mono">burnChecked</span>.</p>
             <div class="sticker-row">
               <span class="sticker st-a">GEEN PRESALE</span>
               <span class="sticker st-b">GEEN VC</span>
@@ -280,6 +312,13 @@
           <p><b>Initiële supply:</b> <span id="initialSupplyUi_nl">—</span> CBS</p>
           <p><b>Totale burn (sinds start):</b> <span id="burnedDelta_nl">…</span> CBS</p>
           <small id="burnNote_nl" class="muted"></small>
+
+          <!-- Burn-O-Meter (NL) -->
+          <div class="meme-meter">
+            <div class="meme-meter-label">🔥 Burn-Meter: <span id="burnPct_nl">0%</span></div>
+            <div class="meme-meter-bar"><div class="meme-meter-fill" id="burnFill_nl"></div></div>
+            <div class="meme-meter-note">Gebaseerd op initiële vs huidige supply.</div>
+          </div>
         </div>
       </section>
 
@@ -287,32 +326,39 @@
     </div>
   </div>
 
-  <!-- Lang switch (ongewijzigd) -->
+  <!-- Language switch -->
   <script>
     const btn = document.getElementById("langSwitch");
     const EN = document.getElementById("content-en");
     const NL = document.getElementById("content-nl");
     let isEN = true;
-    btn.addEventListener("click", ()=>{ isEN=!isEN; EN.style.display=isEN?"block":"none"; NL.style.display=isEN?"none":"block"; btn.textContent=isEN?"NL 🇳🇱":"EN 🇬🇧"; window.scrollTo({top:0,behavior:'smooth'}); });
+    btn.addEventListener("click", ()=>{
+      isEN=!isEN; EN.style.display=isEN?"block":"none"; NL.style.display=isEN?"none":"block";
+      btn.textContent=isEN?"NL 🇳🇱":"EN 🇬🇧"; window.scrollTo({top:0,behavior:'smooth'});
+    });
   </script>
 
-  <!-- Functionality (ongewijzigd) -->
+  <!-- Functionality -->
   <script type="module">
+    /* Polyfills & imports */
     try{ if(!window.Buffer){ const {Buffer}=await import("https://esm.sh/buffer@6.0.3"); window.Buffer=Buffer; } }catch{}
     async function importWithFallback(p,f){ try{ return await import(p);}catch{ return await import(f);} }
+
     const web3 = await importWithFallback("https://esm.sh/@solana/web3.js@1.95.3","https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js");
     const spl  = await importWithFallback("https://esm.sh/@solana/spl-token@0.4.7","https://unpkg.com/@solana/spl-token@0.4.7/lib/index.iife.min.js");
     const { Connection, clusterApiUrl, PublicKey, Transaction } = web3;
     const { getMint, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, createBurnCheckedInstruction } = spl;
 
-    const INITIAL_SUPPLY_UI = 100_000_000;
+    /* Config */
+    const INITIAL_SUPPLY_UI = 100_000_000; /* set to your initial CBS supply */
     const CBS_MINT = new PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
-    const TOKEN_PROGRAM = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
+    const TOKEN_PROGRAM = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"); // (not used directly, kept for clarity)
     const DEFAULT_RPC = "https://mainnet.helius-rpc.com/?api-key=0053b3c9-a47d-4e7e-b76b-dbdc46f36189";
     const urlRpc = new URLSearchParams(location.search).get("rpc");
     const RPC_URL = urlRpc || DEFAULT_RPC || clusterApiUrl("mainnet-beta");
     const connection = new Connection(RPC_URL, "confirmed");
 
+    /* UI refs */
     const H=(id)=>document.getElementById(id);
     const decimalsEl=H("decimals"), supplyEl=H("supply"), yourBalEl=H("yourBal"), mintAuthEl=H("mintAuth");
     const decimalsEl_nl=H("decimals_nl"), supplyEl_nl=H("supply_nl"), yourBalEl_nl=H("yourBal_nl"), mintAuthEl_nl=H("mintAuth_nl");
@@ -325,15 +371,31 @@
     const burnNote_nl   = H("burnNote_nl");
 
     const msgEl=H("msg"), msgEl_nl=H("msg_nl");
-    if (location.protocol!=="https:" && location.hostname!=="localhost") { H("httpsWarn")?.style && (H("httpsWarn").style.display="inline"); H("httpsWarn_nl")?.style && (H("httpsWarn_nl").style.display="inline"); }
+    if (location.protocol!=="https:" && location.hostname!=="localhost") {
+      H("httpsWarn")?.style && (H("httpsWarn").style.display="inline");
+      H("httpsWarn_nl")?.style && (H("httpsWarn_nl").style.display="inline");
+    }
 
     let provider=null, mintDecimals=0, lastSupplyUi=0;
+
     const fmt=(n)=>Number(n).toLocaleString("nl-NL");
     const setMsg=(el,t,type="info")=>{ if(!el)return; el.textContent=t||""; el.className= type==="ok"?"ok":type==="warn"?"warn":"muted"; };
 
     function detectProvider(){ const any=window.solana; if(any?.isPhantom) return any; if(any) return any; return null; }
-    async function signAndSend(tx){ const res=await provider.signAndSendTransaction(tx); const sig= typeof res==="string"?res:res?.signature; if(!sig) throw new Error("No signature."); await connection.confirmTransaction(sig,"confirmed"); return sig; }
-    function uiToRawBigint(ui,dec){ const s=String(ui); if(!/^\d+(\.\d+)?$/.test(s)) throw new Error("Invalid amount."); const [a,b=""]=s.split("."); const pad=b.padEnd(dec,"0").slice(0,dec); return BigInt((a||"0")+pad); }
+    async function signAndSend(tx){
+      const res=await provider.signAndSendTransaction(tx);
+      const sig= typeof res==="string"?res:res?.signature;
+      if(!sig) throw new Error("No signature.");
+      await connection.confirmTransaction(sig,"confirmed");
+      return sig;
+    }
+    function uiToRawBigint(ui,dec){
+      const s=String(ui);
+      if(!/^\d+(\.\d+)?$/.test(s)) throw new Error("Invalid amount.");
+      const [a,b=""]=s.split(".");
+      const pad=b.padEnd(dec,"0").slice(0,dec);
+      return BigInt((a||"0")+pad);
+    }
 
     async function ensureAta(owner){
       const ata=await getAssociatedTokenAddress(CBS_MINT,owner,false);
@@ -351,6 +413,15 @@
       initialUiEl   && (initialUiEl.textContent   = fmt(INITIAL_SUPPLY_UI));
       initialUiEl_nl&& (initialUiEl_nl.textContent = fmt(INITIAL_SUPPLY_UI));
       const burnedUi = Math.max(0, INITIAL_SUPPLY_UI - lastSupplyUi);
+
+      /* Burn-O-Meter */
+      const pct = INITIAL_SUPPLY_UI ? Math.max(0, Math.min(100, (burnedUi/INITIAL_SUPPLY_UI)*100)) : 0;
+      const pctTxt = pct.toFixed(2) + "%";
+      H("burnPct")    && (H("burnPct").textContent = pctTxt);
+      H("burnPct_nl") && (H("burnPct_nl").textContent = pctTxt);
+      H("burnFill")    && (H("burnFill").style.width = pct + "%");
+      H("burnFill_nl") && (H("burnFill_nl").style.width = pct + "%");
+
       burnedEl    && (burnedEl.textContent    = fmt(burnedUi));
       burnedEl_nl && (burnedEl_nl.textContent = fmt(burnedUi));
     }
@@ -360,21 +431,25 @@
         const mint=await getMint(connection,CBS_MINT);
         mintDecimals=mint.decimals??0;
 
+        // Total supply (ui units)
         const supplyBig = (typeof mint.supply==="bigint") ? mint.supply : BigInt(mint.supply.toString());
         lastSupplyUi = Number(supplyBig) / (10 ** mintDecimals);
 
-        const mintAuthority = mint.mintAuthority ? mint.mintAuthority.toBase64?.() || mint.mintAuthority.toString?.() || String(mint.mintAuthority) : null;
+        // Mint authority status
+        const mintAuthority = mint.mintAuthority ? (mint.mintAuthority.toBase58?.() || String(mint.mintAuthority)) : null;
         const locked = !mintAuthority;
-        mintAuthEl   && (mintAuthEl.textContent   = locked ? "Disabled ✅ (exact counter)" : ("Enabled ⚠️ (counter is an estimate)"));
-        mintAuthEl_nl&& (mintAuthEl_nl.textContent= locked ? "Uitgeschakeld ✅ (teller exact)" : ("Ingeschakeld ⚠️ (teller is een schatting)"));
-        burnNote     && (burnNote.textContent     = locked ? "" : "If new tokens were minted after launch, burned total is an estimate.");
-        burnNote_nl  && (burnNote_nl.textContent  = locked ? "" : "Als er na de start nieuw is gemint, is de burn-teller een schatting.");
+        mintAuthEl    && (mintAuthEl.textContent    = locked ? "Disabled ✅ (exact counter)" : ("Enabled ⚠️ (counter is an estimate)"));
+        mintAuthEl_nl && (mintAuthEl_nl.textContent = locked ? "Uitgeschakeld ✅ (teller exact)" : ("Ingeschakeld ⚠️ (teller is een schatting)"));
+        burnNote      && (burnNote.textContent      = locked ? "" : "If new tokens were minted after launch, burned total is an estimate.");
+        burnNote_nl   && (burnNote_nl.textContent   = locked ? "" : "Als er na de start nieuw is gemint, is de burn-teller een schatting.");
 
+        // Decimals/Supply UI
         decimalsEl    && (decimalsEl.textContent    = String(mintDecimals));
         decimalsEl_nl && (decimalsEl_nl.textContent = String(mintDecimals));
         supplyEl      && (supplyEl.textContent      = fmt(lastSupplyUi));
         supplyEl_nl   && (supplyEl_nl.textContent   = fmt(lastSupplyUi));
 
+        // Wallet balance (if connected)
         if (provider?.publicKey){
           const ata=await getAssociatedTokenAddress(CBS_MINT, provider.publicKey,false);
           const acc=await connection.getParsedAccountInfo(ata);
@@ -383,6 +458,7 @@
           yourBalEl    && (yourBalEl.textContent    = fmt(ui));
           yourBalEl_nl && (yourBalEl_nl.textContent = fmt(ui));
         }
+
         renderDelta();
       }catch(e){
         setMsg(msgEl,"Failed to load stats.","warn");
@@ -390,6 +466,7 @@
       }
     }
 
+    /* EN handlers */
     document.getElementById("mintLbl").textContent = CBS_MINT.toBase58();
 
     document.getElementById("connectBtn")?.addEventListener("click", async ()=>{
@@ -414,6 +491,7 @@
       }catch{ setMsg(msgEl,"Burn failed.","warn"); }
     });
 
+    /* NL handlers */
     document.getElementById("connectBtn_nl")?.addEventListener("click", async ()=>{
       try{
         provider=detectProvider(); if(!provider){ setMsg(msgEl_nl,"Geen wallet gevonden.","warn"); return; }
@@ -436,6 +514,7 @@
       }catch{ setMsg(msgEl_nl,"Burn mislukt.","warn"); }
     });
 
+    /* Init */
     await refreshStats();
   </script>
 </body>
