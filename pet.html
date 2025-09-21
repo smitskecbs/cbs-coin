@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CBS Pet — Meme Edition</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Bangers&display=swap" rel="stylesheet"/>
+  <style>
+    :root{
+      --bg1:#0a0c10; --bg2:#0f141b;
+      --card:#0f151c; --card2:#0c1016;
+      --fg:#eafffb; --muted:#a8d6cd;
+      --line:rgba(0,255,240,.18);
+      --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
+      --radius:18px;
+      --btnA:#5afff0; --btnB:#2bffe4;
+      --stA:#fffd7a; --stB:#baffd2; --stC:#ffd1f7; --stD:#8be7ff;
+      --memeStroke:#000; --memeFill:#fff;
+      --mqH: 40px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; color:var(--fg); font-family:'Orbitron',sans-serif;
+      background:
+        radial-gradient(900px 600px at 100% -10%, rgba(0,255,230,.10), transparent 60%),
+        radial-gradient(700px 500px at -10% 110%, rgba(0,170,255,.09), transparent 60%),
+        linear-gradient(135deg,var(--bg1),var(--bg2));
+      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+    }
+    .topbar{position:sticky; top:0; z-index:10; display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:.8rem 1rem; background:linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0)); border-bottom:1px solid rgba(0,255,240,.08); backdrop-filter:blur(6px);}
+    .brand{display:flex; align-items:center; gap:.7rem}
+    .brand img{width:38px; height:38px; border-radius:10px; filter:drop-shadow(0 0 10px rgba(0,255,230,.35))}
+    .brand h1{margin:0; font-size:1.05rem; letter-spacing:.4px; font-weight:700; color:#bffef2}
+    .social{display:flex; align-items:center; gap:.6rem}
+    .icon-link{display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:10px; text-decoration:none; color:#7dffe9; border:1px solid rgba(0,255,240,.35); background:linear-gradient(180deg, rgba(0,255,230,.06), rgba(0,255,230,.02)); box-shadow:inset 0 0 0 1px rgba(0,255,240,.08)}
+    .icon{width:20px; height:20px; display:block}
+
+    .container{max-width:1100px; margin:0 auto; padding:1.2rem 1rem 2.2rem}
+
+    /* MEME header in-flow (geen overlap) */
+    .meme-wrap{
+      border-radius:22px; overflow:hidden; margin:12px 0 18px; padding:14px 12px;
+      border:3px solid rgba(255,255,255,.08); box-shadow:0 18px 40px rgba(0,0,0,.35), inset 0 0 0 2px rgba(0,255,240,.08);
+      background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35));
+      position:relative;
+    }
+    .halftone{position:absolute; inset:0; pointer-events:none; opacity:.7; mix-blend-screen;
+      background:
+        radial-gradient(circle at 20% 10%, rgba(255,255,255,.06), transparent 40%),
+        radial-gradient(circle at 80% 20%, rgba(0,255,240,.06), transparent 50%),
+        radial-gradient(circle at 50% 80%, rgba(0,170,255,.06), transparent 50%);
+    }
+    .meme-cap{
+      position:relative; z-index:2; margin:6px auto; width:fit-content; max-width:100%;
+      font-family:'Bangers',system-ui,sans-serif; color:var(--memeFill); letter-spacing:.5px;
+      font-size:clamp(22px,4.8vw,42px); text-align:center;
+      background:rgba(0,0,0,.45); backdrop-filter:blur(3px) saturate(1.2); border-radius:12px; padding:.28rem .6rem;
+      text-shadow:-2px -2px 0 var(--memeStroke), 2px -2px 0 var(--memeStroke), -2px 2px 0 var(--memeStroke), 2px 2px 0 var(--memeStroke), 0 0 16px rgba(0,0,0,.45);
+    }
+    .pill{display:inline-block; margin-right:8px; background:#2bffe4; color:#012022; border:2px solid #0ad7c6; padding:6px 12px; border-radius:999px; font-weight:900; animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
+
+    .hero{position:relative; z-index:2; display:grid; grid-template-columns:90px 1fr; gap:1rem; align-items:center; padding:1.1rem; border-radius:18px; background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35)); border:1px solid var(--line); box-shadow:var(--shadow); margin:8px 0}
+    .logo-wrap{width:90px; height:90px; border-radius:16px; overflow:hidden; background:radial-gradient(closest-side, rgba(0,255,230,.18), rgba(0,255,230,.04) 58%, transparent 62%); display:grid; place-items:center;}
+    .logo{width:78%; height:78%; object-fit:contain}
+    #title{margin:.15rem 0 .2rem; color:#bffef2; font-size:1.2rem}
+    .stickers{display:flex; gap:8px; flex-wrap:wrap; margin:.3rem 0 0}
+    .st{display:inline-flex; align-items:center; gap:.35rem; padding:.28rem .6rem; border-radius:10px; border:2px dashed rgba(0,0,0,.35); font-weight:900; transform:rotate(-1.5deg); box-shadow:0 8px 16px rgba(0,0,0,.18)}
+    .st-a{background:var(--stA); color:#202} .st-b{background:var(--stB); color:#053} .st-c{background:var(--stC); color:#401} .st-d{background:var(--stD); color:#023}
+    .st-h{background:#fff2a8; color:#222}
+
+    .marquee{position:relative; z-index:2; height:var(--mqH); overflow:hidden; border-top:2px dashed rgba(255,255,255,.15); background:linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.15)); margin-top:10px}
+    .track{display:flex; gap:48px; align-items:center; white-space:nowrap; animation:scroll 16s linear infinite}
+    .track span{font-family:'Bangers',system-ui,sans-serif; font-size:22px; letter-spacing:.6px; color:#fff; text-shadow:-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,2px 2px 0 #000;}
+    @keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+    .panel{background:linear-gradient(180deg, var(--card), var(--card2)); border:1px solid var(--line); border-radius:var(--radius); padding:16px; margin:18px auto; box-shadow:var(--shadow);}
+    .panel h3{margin:.1rem 0 .6rem}
+    .muted{color:var(--muted)}
+
+    /* PET styles embedded */
+    .pet-wrap{--fg:#eafffb;--muted:#a8d6cd;--line:rgba(0,255,240,.18);
+      border-radius:16px; padding:14px; background:linear-gradient(180deg,#0b1217,#0a1015); border:1px solid rgba(0,255,240,.18);}
+    .pet-row{display:grid; grid-template-columns:280px 1fr; gap:16px}
+    @media (max-width:760px){.pet-row{grid-template-columns:1fr}}
+    .stat{display:flex; align-items:center; gap:8px; margin:8px 0}
+    .bar{flex:1; height:10px; border-radius:999px; background:#122027; overflow:hidden}
+    .fill{height:100%; background:linear-gradient(90deg,#5afff0,#2bffe4)}
+    .btn{display:inline-flex; align-items:center; justify-content:center; padding:10px 12px; border-radius:10px; color:#001012; background:linear-gradient(180deg,#5afff0,#2bffe4); border:1px solid rgba(0,255,240,.6); font-weight:800; cursor:pointer; box-shadow:0 8px 18px rgba(0,255,230,.18)}
+    .btn:disabled{opacity:.55; cursor:not-allowed}
+    .shop-item{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px; border-radius:10px; background:#0a141a; border:1px solid rgba(0,255,240,.16); margin-top:8px}
+    .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+    canvas{width:100%; height:auto; border-radius:12px; border:1px solid rgba(0,255,240,.12); background:#071015}
+    .title{margin:0 0 8px; font-weight:800; letter-spacing:.3px}
+
+    /* Mobile tweaks */
+    @media (max-width:640px){
+      .hero{grid-template-columns:1fr; text-align:center}
+      .logo-wrap{margin:0 auto}
+      #title{text-align:center}
+      .track span{font-size:16px}
+      .marquee{height:30px}
+      .meme-cap{font-size:clamp(18px,5.2vw,22px)}
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <img src="logo.png" alt="CBS Logo">
+      <h1>CBS Pet — Meme Edition</h1>
+    </div>
+    <div class="social" aria-label="Social">
+      <a class="icon-link" href="https://x.com/CBS_Coin" target="_blank" rel="noopener" aria-label="X">
+        <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h3.7l4.6 6 5.3-6H22l-7.5 8.4L22 20h-3.7l-5-6.5L7.4 20H2.1l8.3-9.3L4 4Z"/></svg>
+      </a>
+      <a class="icon-link" href="https://t.me/CBS_Coin" target="_blank" rel="noopener" aria-label="Telegram">
+        <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M21.9 4.6c.3-.9-.5-1.3-1.3-1L2.5 10.3c-.9.4-.9 1 .2 1.3l4.8 1.5 1.8 5.8c.2.9.7 1 .9 0l1.3-4.2 5.1 3.8c.7.5 1.3.2 1.5-.7l3.8-13.2Z"/></svg>
+      </a>
+      <a class="icon-link" href="https://discord.gg/DxSB3ERQ" target="_blank" rel="noopener" aria-label="Discord">
+        <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M19.6 5.1A16 16 0 0 0 15.8 4l-.2.3c1 .2 1.9.6 2.8 1.2a8.7 8.7 0 0 0-3.2-1c-.3 0-.5.2-.6 .4a12 12 0 0 0-5.6 0c-.2 0-.4-.3-.6-.4-1 .1-2 .5-3 1a13 13 0 0 1 2.7-1.2L8 4a16 16 0 0 0-3.8 1.1C1.6 8.7.9 12 1.1 15.2c1.4 1 2.9 1.7 4.5 2.1l.8-1.3c-.4-.1-.9-.3-1.3-.5l.3-.3c2.6 1.2 5.5 1.2 8 0l.3.3c-.4 .2-.8 .4-1.2 .5l.7 1.3c1.6-.4 3.2-1.1 4.6-2.1.3-3.6-.5-6.9-2-10.5ZM9.1 13.6c-.8 0-1.5-.7-1.5-1.6 0-.8.7-1.5 1.5-1.5s1.5.7 1.5 1.5c0 .9-.7 1.6-1.5 1.6Zm5.8 0c-.8 0-1.5-.7-1.5-1.6 0-.8.7-1.5 1.5-1.5s1.6.7 1.6 1.5c0 .9-.8 1.6-1.6 1.6Z"/></svg>
+      </a>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="meme-wrap">
+      <div class="halftone" aria-hidden="true"></div>
+      <div class="meme-cap"><span class="pill">LIVE</span><span>FEED. PLAY. CLEAN. — BUILD SOVEREIGNTY.</span></div>
+
+      <section class="hero">
+        <div class="logo-wrap"><img class="logo" src="logo.png" alt="CBS Logo"></div>
+        <div>
+          <h2 id="title">CBS Pet — Keep it happy, pay with CBS 🐣</h2>
+          <div class="stickers">
+            <span class="st st-a">NO PRESALE</span>
+            <span class="st st-b">NO VC</span>
+            <span class="st st-c">ON-CHAIN</span>
+            <span class="st st-d">JUST COMMUNITY</span>
+            <span class="st st-h" id="holdersSticker" style="display:none">HOLDERS: —</span>
+          </div>
+        </div>
+      </section>
+
+      <div class="meme-cap">BREAK THE CHAINS • PLAY THE GAME • SUPPORT THE TREASURY</div>
+
+      <div class="marquee" aria-hidden="true">
+        <div class="track" id="mqTrack"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="pet-wrap">
+        <h3 class="title">🍼 CBS Pet</h3>
+        <div class="pet-row">
+          <div>
+            <canvas id="petCanvas" width="260" height="230"></canvas>
+            <div class="stat"><strong>Honger</strong><div class="bar"><div id="barH" class="fill" style="width:100%"></div></div></div>
+            <div class="stat"><strong>Fun</strong><div class="bar"><div id="barF" class="fill" style="width:100%"></div></div></div>
+            <div class="stat"><strong>Schoon</strong><div class="bar"><div id="barC" class="fill" style="width:100%"></div></div></div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px">
+              <button class="btn" id="feedBtn">Feed 🍖</button>
+              <button class="btn" id="playBtn">Play 🎾</button>
+              <button class="btn" id="cleanBtn">Clean 💩</button>
+            </div>
+            <p class="muted" id="status">Hou je pet blij. Balkjes dalen vanzelf; voer/speel/poets om bij te vullen.</p>
+          </div>
+          <div>
+            <h4 style="margin:.1rem 0 .6rem">🛒 Shop (CBS)</h4>
+            <div class="shop-item">
+              <div><b>Food Pack ×10</b><div class="muted">Instant 10x eten</div></div>
+              <div><b id="priceFood">100 CBS</b></div>
+              <button class="btn" id="buyFood">Buy with CBS</button>
+            </div>
+            <div class="shop-item">
+              <div><b>CBS Cap (Outfit)</b><div class="muted">Pet met teal cap 😎</div></div>
+              <div><b id="priceCap">2500 CBS</b></div>
+              <button class="btn" id="buyCap">Buy with CBS</button>
+            </div>
+            <hr style="border-color:rgba(0,255,240,.16); margin:12px 0">
+            <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+              <button class="btn" id="connectBtn">Connect Wallet</button>
+              <span class="muted" id="wStatus">Niet verbonden</span>
+            </div>
+            <p class="muted" id="info"></p>
+            <small class="muted">
+              Treasury (team wallet): <a class="mono" href="https://solscan.io/account/8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd" target="_blank" rel="noopener">8Y7w…HUk5Zd</a>.<br/>
+              Uitgaven van deze wallet gebeuren uitsluitend na community-stemrondes; enkel CBS verlaat de wallet volgens de uitkomst.
+            </small>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>Waarom dit?</h3>
+      <p class="muted">
+        <b>CBS — Community Builds Sovereignty.</b> Geen presale, geen VC. Koop je voer/outfits met CBS en steun tegelijk de treasury.
+        Alles is on-chain en transparant — maar de fun is pure meme-energie 😎.
+      </p>
+    </section>
+  </main>
+
+  <script type="module">
+    /* ===== CONFIG ===== */
+    const CONFIG = {
+      RPCS: [
+        "https://rpc.helius.xyz/?api-key=0053b3c9-a47d-4e7e-b76b-dbdc46f36189",
+        "https://api.mainnet-beta.solana.com"
+      ],
+      MINT: "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk", // CBS mint
+      TREASURY: "8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd", // team/treasury
+      PRICES: { FOOD_PACK_10: 100, CBS_CAP: 2500 }
+    };
+    const short = (pk)=>pk.slice(0,4)+"…"+pk.slice(-4);
+
+    /* ===== Marquee ===== */
+    const mq = document.getElementById("mqTrack");
+    if(mq){
+      const phrase = "NO PRESALE • NO VC • ON-CHAIN • COMMUNITY BUILDS SOVEREIGNTY • ";
+      mq.innerHTML = Array.from({length:12},()=>`<span>${phrase}</span>`).join("");
+    }
+
+    /* ===== Pet state ===== */
+    const DEF = { hunger:100, fun:100, clean:100, feeds:0, hasCap:false, lastTick:Date.now(), poop:0 };
+    const s = JSON.parse(localStorage.getItem("cbs_pet_v1")||"null") || structuredClone(DEF);
+    const save=()=>localStorage.setItem("cbs_pet_v1", JSON.stringify(s));
+
+    const el = (q,r=document)=>r.querySelector(q);
+    const canvas = document.getElementById("petCanvas");
+    const ctx = canvas.getContext("2d");
+    const barH=el("#barH"), barF=el("#barF"), barC=el("#barC");
+    const statusEl=el("#status");
+
+    function clamp(n){return Math.max(0,Math.min(100,n));}
+    function setStatus(t){ statusEl.textContent=t; }
+    function renderBars(){ barH.style.width=s.hunger+"%"; barF.style.width=s.fun+"%"; barC.style.width=s.clean+"%"; }
+
+    function drawPet(){
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle="#0b141a"; ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle="#0a1f22"; ctx.fillRect(0,190,canvas.width,40);
+      // body
+      ctx.fillStyle="#2bffe4"; ctx.beginPath(); ctx.ellipse(130,140,55,45,0,0,Math.PI*2); ctx.fill();
+      // eyes + mouth
+      ctx.fillStyle="#012022"; ctx.beginPath(); ctx.arc(110,130,6,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(150,130,6,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle="#012022"; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(130,146,14,0.2*Math.PI,0.8*Math.PI); ctx.stroke();
+      // cap
+      if(s.hasCap){
+        ctx.fillStyle="#0feedd"; ctx.fillRect(95,98,70,10);
+        ctx.beginPath(); ctx.ellipse(130,98,35,12,0,0,Math.PI,true); ctx.fill();
+        ctx.fillStyle="#00161a"; ctx.font="bold 10px monospace"; ctx.fillText("CBS",116,100);
+      }
+      // poop
+      for(let i=0;i<s.poop;i++){
+        ctx.fillStyle="#6b4b2a"; const x=40+i*22;
+        ctx.beginPath(); ctx.arc(x,178,6,0,Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.arc(x,173,4,0,Math.PI*2); ctx.fill();
+      }
+    }
+
+    function tickOnce(force=false){
+      const now=Date.now(), dt=now - s.lastTick;
+      if(dt>=10000 || force){
+        s.hunger=clamp(s.hunger-3); s.fun=clamp(s.fun-2); s.clean=clamp(s.clean-2);
+        if(Math.random()<0.25 && s.poop<3) s.poop++;
+        s.lastTick=now; save(); renderBars(); drawPet();
+      }
+    }
+    setInterval(()=>tickOnce(false), 2000);
+
+    document.getElementById("feedBtn").addEventListener("click", ()=>{
+      if(s.feeds>0){ s.hunger=clamp(s.hunger+25); s.feeds--; setStatus(`Gevoerd. Rantsoenen over: ${s.feeds}`); tickOnce(true); }
+      else setStatus("Geen voer meer. Koop een Food Pack in de shop.");
+    });
+    document.getElementById("playBtn").addEventListener("click", ()=>{
+      s.fun=clamp(s.fun+25); setStatus("Spelen! 🎉"); tickOnce(true);
+    });
+    document.getElementById("cleanBtn").addEventListener("click", ()=>{
+      if(s.poop>0){ s.poop=0; s.clean=clamp(s.clean+30); setStatus("Helemaal schoon ✨"); tickOnce(true); }
+      else setStatus("Niks op te ruimen.");
+    });
+
+    renderBars(); drawPet(); tickOnce(true);
+
+    /* ===== Wallet & CBS betalingen ===== */
+    async function imp(p,f){ try{return await import(p);}catch{ return await import(f);} }
+    const web3 = await imp("https://esm.sh/@solana/web3.js@1.95.3","https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js");
+    const spl  = await imp("https://esm.sh/@solana/spl-token@0.4.7","https://unpkg.com/@solana/spl-token@0.4.7/lib/index.iife.min.js");
+    const { Connection, PublicKey, Transaction } = web3;
+    const { getMint, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction, createTransferCheckedInstruction } = spl;
+
+    const connection = new Connection(CONFIG.RPCS[0], "confirmed");
+    const CBS_MINT = new PublicKey(CONFIG.MINT);
+    const TREASURY = new PublicKey(CONFIG.TREASURY);
+    let provider=null, decimals=9;
+
+    function detectProvider(){ const any=window.solana; if(any?.isPhantom) return any; return any||null; }
+    async function ensureDecimals(){ try{ const m=await getMint(connection,CBS_MINT); decimals=m.decimals??9; }catch{} }
+    function uiToRaw(ui){ return BigInt(Math.round(Number(ui) * (10**decimals))); }
+
+    const wStatus=document.getElementById("wStatus"), info=document.getElementById("info");
+    async function connect(){
+      provider = detectProvider();
+      if(!provider){ wStatus.textContent="Geen wallet gevonden (installeer Phantom)."; return; }
+      const resp = await provider.connect();
+      const pk = (resp?.publicKey||provider.publicKey).toBase58();
+      wStatus.textContent="Verbonden: "+pk.slice(0,6)+"…"+pk.slice(-6);
+      await ensureDecimals();
+      return pk;
+    }
+
+    async function payCBS(uiAmount, purpose){
+      if(!provider?.publicKey) await connect();
+      const owner = provider.publicKey;
+      const fromAta = await getAssociatedTokenAddress(CBS_MINT, owner, false);
+      const toAta   = await getAssociatedTokenAddress(CBS_MINT, TREASURY, false);
+      const infoAcc = await connection.getAccountInfo(toAta);
+      const tx = new Transaction();
+      if(!infoAcc){
+        tx.add(createAssociatedTokenAccountInstruction(owner, toAta, TREASURY, CBS_MINT));
+      }
+      const raw = uiToRaw(uiAmount);
+      tx.add(createTransferCheckedInstruction(fromAta, CBS_MINT, toAta, owner, raw, decimals));
+      tx.feePayer = owner;
+      tx.recentBlockhash = (await connection.getLatestBlockhash()).blockhash;
+      const res = await provider.signAndSendTransaction(tx);
+      const sig = res?.signature || res;
+      await connection.confirmTransaction(sig,"confirmed");
+      return sig;
+    }
+
+    document.getElementById("connectBtn").addEventListener("click", ()=>connect());
+    document.getElementById("buyFood").addEventListener("click", async ()=>{
+      try{
+        info.textContent="Wallet openen…";
+        const sig = await payCBS(CONFIG.PRICES.FOOD_PACK_10,"FOOD_PACK_10");
+        s.feeds += 10; save(); renderBars(); drawPet();
+        info.innerHTML=`Food Pack toegevoegd (×10). <span class="mono">${sig.slice(0,8)}…</span>`;
+      }catch{ info.textContent="Betaling mislukt/geannuleerd." }
+    });
+    document.getElementById("buyCap").addEventListener("click", async ()=>{
+      try{
+        info.textContent="Wallet openen…";
+        const sig = await payCBS(CONFIG.PRICES.CBS_CAP,"CBS_CAP");
+        s.hasCap = true; save(); drawPet();
+        info.innerHTML=`CBS Cap geactiveerd. <span class="mono">${sig.slice(0,8)}…</span>`;
+      }catch{ info.textContent="Betaling mislukt/geannuleerd." }
+    });
+
+    /* Optioneel: houders-aanduiding (snelle schatting via largest accounts) */
+    async function rpcCall(method, params=[]){
+      let lastErr;
+      for(const url of CONFIG.RPCS){
+        try{
+          const res = await fetch(url,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({jsonrpc:"2.0",id:1,method,params})});
+          if(!res.ok){ lastErr=new Error("HTTP "+res.status); continue; }
+          const j=await res.json(); if(j.error){ lastErr=new Error(j.error.message||"RPC error"); continue; }
+          return j.result;
+        }catch(e){ lastErr=e; }
+      }
+      throw lastErr||new Error("All RPCs failed");
+    }
+    try{
+      const r = await rpcCall("getTokenLargestAccounts",[CONFIG.MINT,{commitment:"confirmed"}]);
+      const guess = (r?.value||[]).length ? `${(r.value.length)}+` : "—";
+      const hs = document.getElementById("holdersSticker");
+      if(hs){ hs.textContent = `HOLDERS: ${guess}`; hs.style.display="inline-flex"; }
+    }catch{}
+
+    /* Zet prijzen tekst (als je ooit wijzigen wil) */
+    document.getElementById("priceFood").textContent = `${CONFIG.PRICES.FOOD_PACK_10} CBS`;
+    document.getElementById("priceCap").textContent  = `${CONFIG.PRICES.CBS_CAP} CBS`;
+  </script>
+</body>
+</html>
