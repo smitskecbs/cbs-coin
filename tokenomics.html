@@ -22,8 +22,8 @@
       --stickerA:#fffd7a; --stickerB:#baffd2; --stickerC:#ffd1f7; --stickerD:#8be7ff;
 
       /* Marquee + caption buffers */
-      --mqH: 42px; /* hoogte lopende balk */
-      --capPad: clamp(76px, 8.2vw, 116px); /* buffer voor de grote captions */
+      --mqH: 42px; /* hoogte lopende balk op desktop */
+      --capPad: clamp(76px, 8.2vw, 116px); /* buffer voor grote captions */
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -49,15 +49,9 @@
       border:3px solid rgba(255,255,255,.1);
       box-shadow:0 18px 40px rgba(0,0,0,.35), inset 0 0 0 2px rgba(0,255,240,.08);
       margin:10px 0 18px;
-    }
-
-    /* Desktop/laptop: ruimte reserveren voor captions + marquee (geen overlap) */
-    @media (min-width:721px){
-      .meme-frame{
-        padding-top: var(--capPad);
-        /* onder: buffer voor captions + extra ruimte voor de marquee + kleine marge */
-        padding-bottom: calc(var(--capPad) + var(--mqH) + 10px);
-      }
+      /* desktop: ruimte reserveren voor captions + marquee (geen overlap) */
+      padding-top: var(--capPad);
+      padding-bottom: calc(var(--capPad) + var(--mqH) + 10px);
     }
 
     .meme-halftone{position:absolute; inset:0; pointer-events:none; background:
@@ -136,13 +130,13 @@
     .tag.team{color:#0a1b12; background:#b7ffe8; border-color:#8affd8}
     .muted{color:var(--muted)}
 
-    /* Mobiel: toon geen overlay-captions/marquee om overlap 100% te voorkomen */
+    /* Mobiel: verberg grote overlays om overlap te voorkomen; compacte hero */
     @media (max-width:640px){
       .hero{grid-template-columns:1fr; text-align:center}
       .logo-wrap{margin:0 auto}
       #title{text-align:center}
       .meme-top,.meme-bottom,.starburst,.meme-marquee{display:none}
-      .meme-frame{padding:12px 0} /* compacte ruimte */
+      .meme-frame{padding:12px 0}
     }
   </style>
 </head>
@@ -179,7 +173,7 @@
         </div>
       </section>
 
-      <!-- Marquee -->
+      <!-- Marquee (desktop) -->
       <div class="meme-marquee" aria-hidden="true">
         <div class="track" id="mqTrack"></div>
       </div>
@@ -259,7 +253,7 @@
   </main>
 
   <script type="module">
-    // ====== CONFIG ======
+    /* ========== CONFIG (eerst zetten) ========== */
     const CONFIG = {
       RPCS: [
         "https://rpc.helius.xyz/?api-key=0053b3c9-a47d-4e7e-b76b-dbdc46f36189",
@@ -268,8 +262,6 @@
       MINT: "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk",
       TEAM_WALLET: "8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd",
       LP_OWNER_HINT: "",
-
-      // === Profile Summary (uit je screenshot) ===
       TOKEN_NAME: "CBS Coin (CBS)",
       FALLBACK_DECIMALS: 9,
       AUTHORITY: "8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd",
@@ -278,14 +270,10 @@
       TOKEN_EXTENSIONS: false
     };
 
-    // ====== I18N & UI helpers ======
+    /* ========== I18N (T na CONFIG, gebruikt CONFIG.* in strings) ========== */
+    const short = (pk)=>pk.slice(0,4)+"…"+pk.slice(-4);
     let LANG = "nl";
     let lastSupply = null, lastOwnerAgg = null, lastHoldersGuess = null, lastDecimals = CONFIG.FALLBACK_DECIMALS;
-
-    const $ = (q)=>document.querySelector(q);
-    const short = (pk)=>pk.slice(0,4)+"…"+pk.slice(-4);
-    const fmt = (n)=>Number(n).toLocaleString(LANG==="nl"?"nl-NL":"en-US");
-    const pct = (n)=>Number(n).toLocaleString(LANG==="nl"?"nl-NL":"en-US",{minimumFractionDigits:2,maximumFractionDigits:2})+"%";
 
     const T = {
       nl:{
@@ -329,6 +317,11 @@
         marquee:"NO PRESALE • NO VC • ON-CHAIN • COMMUNITY BUILDS SOVEREIGNTY • FAIR & TRANSPARENT • "
       }
     };
+
+    /* ========== Helpers/UI ========== */
+    const $ = (q)=>document.querySelector(q);
+    const fmt = (n)=>Number(n).toLocaleString(LANG==="nl"?"nl-NL":"en-US");
+    const pct = (n)=>Number(n).toLocaleString(LANG==="nl"?"nl-NL":"en-US",{minimumFractionDigits:2,maximumFractionDigits:2})+"%";
 
     function setMarquee(){
       const track = $("#mqTrack"); if(!track) return;
@@ -389,7 +382,7 @@
       }
     });
 
-    // ====== RPC helper met fallback ======
+    /* ========== RPC helper met fallback ========== */
     async function rpcCall(method, params=[]){
       let lastErr;
       for(const url of CONFIG.RPCS){
@@ -408,7 +401,7 @@
       throw lastErr || new Error("All RPCs failed");
     }
 
-    // ====== Chain helpers ======
+    /* ========== Chain helpers ========== */
     async function getSupply(){
       const r = await rpcCall("getTokenSupply", [CONFIG.MINT, {commitment:"confirmed"}]);
       return Number(r.value.uiAmountString ?? r.value.uiAmount ?? 0);
@@ -529,7 +522,6 @@
       $("#holders_en").textContent = holdersGuess ?? "—";
       $("#ts_nl").textContent = d.toLocaleString("nl-NL");
       $("#ts_en").textContent = d.toLocaleString("en-US");
-      // Update meme holders sticker
       const sh = $("#stHold");
       if(sh){
         const lbl = T[LANG].holdersLabel || "Holders";
@@ -538,20 +530,11 @@
       }
     }
 
-    function setMarquee(){
-      const track = $("#mqTrack"); if(!track) return;
-      const piece = T[LANG].marquee;
-      const items = [];
-      for(let i=0;i<10;i++) items.push(`<span class="item">${piece}</span>`);
-      track.innerHTML = items.join("");
-    }
-
-    // ====== Load ======
+    /* ========== Load flow ========== */
     async function load(){
       try{
-        setLangTexts();
-
-        await getMintInfo();      // decimals live (fallback aanwezig)
+        setLangTexts();         // labels + marquee
+        await getMintInfo();    // decimals (fallback aanwezig)
         renderProfile();
 
         const supplyUI = await getSupply();
