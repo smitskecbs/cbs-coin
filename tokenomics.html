@@ -40,7 +40,6 @@
     .brand img{width:38px; height:38px; border-radius:10px; filter:drop-shadow(0 0 10px rgba(0,255,230,.35))}
     .brand h1{margin:0; font-size:1.05rem; font-weight:700; color:#bffef2}
     .btn{background:linear-gradient(180deg, var(--btnA), var(--btnB)); color:#001013; font-weight:900; border:1px solid rgba(0,255,240,.45); padding:.55rem .9rem; border-radius:12px; cursor:pointer; box-shadow:0 8px 18px rgba(0,255,230,.18), inset 0 -6px 10px rgba(0,0,0,.15); font-family:'Orbitron',sans-serif;}
-    .actions{display:flex; gap:.5rem; align-items:center}
 
     .container{max-width:1100px; margin:0 auto; padding:1.2rem 1rem 2.2rem}
 
@@ -54,13 +53,10 @@
 
     /* Desktop/laptop: ruimte reserveren voor captions + marquee (geen overlap) */
     @media (min-width:721px){
-      body.meme-max .meme-frame{
+      .meme-frame{
         padding-top: var(--capPad);
         /* onder: buffer voor captions + extra ruimte voor de marquee + kleine marge */
         padding-bottom: calc(var(--capPad) + var(--mqH) + 10px);
-      }
-      body:not(.meme-max) .meme-frame{
-        padding-top:12px; padding-bottom:12px;
       }
     }
 
@@ -107,7 +103,7 @@
       position:absolute; left:0; right:0; bottom:0; height:var(--mqH);
       overflow:hidden; border-top:2px dashed rgba(255,255,255,.15);
       background:linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.15));
-      z-index:5; pointer-events:none; /* <- belangrijk */
+      z-index:5; pointer-events:none;
     }
     .meme-marquee .track{display:flex; gap:48px; align-items:center; white-space:nowrap; will-change:transform; animation:scroll 16s linear infinite}
     .meme-marquee .item{font-family:'Bangers',system-ui,sans-serif; font-size:22px; letter-spacing:.6px; color:#fff; text-shadow:-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,2px 2px 0 #000;}
@@ -140,30 +136,23 @@
     .tag.team{color:#0a1b12; background:#b7ffe8; border-color:#8affd8}
     .muted{color:var(--muted)}
 
-    /* Meme intensiteit toggle */
-    body:not(.meme-max) .meme-top,
-    body:not(.meme-max) .meme-bottom,
-    body:not(.meme-max) .starburst,
-    body:not(.meme-max) .meme-marquee { display:none !important; }
-
+    /* Mobiel: toon geen overlay-captions/marquee om overlap 100% te voorkomen */
     @media (max-width:640px){
       .hero{grid-template-columns:1fr; text-align:center}
       .logo-wrap{margin:0 auto}
       #title{text-align:center}
-      .meme-top,.meme-bottom,.starburst,.meme-marquee{display:none} /* overlays weg op mobiel */
+      .meme-top,.meme-bottom,.starburst,.meme-marquee{display:none}
+      .meme-frame{padding:12px 0} /* compacte ruimte */
     }
   </style>
 </head>
-<body class="meme-max">
+<body>
   <header class="topbar">
     <div class="brand">
       <img src="logo.png" alt="CBS Logo">
       <h1>Tokenomics – CBS Coin</h1>
     </div>
-    <div class="actions">
-      <button class="btn" id="memeBtn">😎 Meme MAX</button>
-      <button class="btn" id="langBtn">🌐 Switch to English</button>
-    </div>
+    <button class="btn" id="langBtn">🌐 Switch to English</button>
   </header>
 
   <main class="container">
@@ -400,13 +389,6 @@
       }
     });
 
-    // Meme intensiteit toggle
-    document.getElementById("memeBtn").addEventListener("click", ()=>{
-      document.body.classList.toggle("meme-max");
-      const on = document.body.classList.contains("meme-max");
-      document.getElementById("memeBtn").textContent = on ? "😎 Meme MAX" : "🙂 Chill mode";
-    });
-
     // ====== RPC helper met fallback ======
     async function rpcCall(method, params=[]){
       let lastErr;
@@ -554,6 +536,14 @@
         if(holdersGuess){ sh.textContent = `${lbl}: ${holdersGuess}`; sh.style.display="inline-flex"; }
         else{ sh.style.display="none"; }
       }
+    }
+
+    function setMarquee(){
+      const track = $("#mqTrack"); if(!track) return;
+      const piece = T[LANG].marquee;
+      const items = [];
+      for(let i=0;i<10;i++) items.push(`<span class="item">${piece}</span>`);
+      track.innerHTML = items.join("");
     }
 
     // ====== Load ======
