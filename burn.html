@@ -19,6 +19,7 @@
       /* Meme palette */
       --memeStroke:#000; --memeFill:#ffffff;
       --stickerA:#fffd7a; --stickerB:#baffd2; --stickerC:#ffd1f7; --stickerD:#8be7ff;
+      --pillBG:#2bffe4; --pillText:#012022;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -58,47 +59,53 @@
 
     .container{ max-width:1100px; margin:0 auto; padding:1.2rem 1rem 2.2rem }
 
-    /* === Meme Additions === */
-    .meme-frame{position:relative; border-radius:22px; overflow:hidden; border:3px solid rgba(255,255,255,.1); box-shadow:0 18px 40px rgba(0,0,0,.35), inset 0 0 0 2px rgba(0,255,240,.08);}
+    /* === Meme Additions & Layout === */
+    .meme-frame{position:relative; border-radius:22px; overflow:hidden; border:3px solid rgba(255,255,255,.1); box-shadow:0 18px 40px rgba(0,0,0,.35), inset 0 0 0 2px rgba(0,255,240,.08); margin:10px 0 18px;}
     .meme-halftone{position:absolute; inset:0; pointer-events:none; background:
       radial-gradient(circle at 20% 10%, rgba(255,255,255,.06), transparent 40%),
       radial-gradient(circle at 80% 20%, rgba(0,255,240,.06), transparent 50%),
-      radial-gradient(circle at 50% 80%, rgba(0,170,255,.06), transparent 50%); mix-blend-screen; opacity:.7}
+      radial-gradient(circle at 50% 80%, rgba(0,170,255,.06), transparent 50%);
+      mix-blend-screen; opacity:.7}
+
+    /* Readable pill banner (replaces rotated ribbon) */
+    .meme-pill{
+      position:absolute; top:12px; left:12px; z-index:3;
+      background:var(--pillBG); color:var(--pillText); font-weight:900;
+      padding:8px 14px; border-radius:999px; border:2px solid #0ad7c6;
+      box-shadow:0 8px 18px rgba(0,255,230,.25);
+      font-family:'Bangers',system-ui,sans-serif; letter-spacing:.5px;
+    }
+
+    /* Overlay captions — auto-hide on mobile */
     .meme-top,.meme-bottom{
       position:absolute; left:50%; transform:translateX(-50%); z-index:2;
       font-family:'Bangers',system-ui,sans-serif; letter-spacing:.5px; text-align:center;
       color:var(--memeFill); font-size:clamp(26px,4.6vw,42px);
-      text-shadow:-2px -2px 0 var(--memeStroke), 2px -2px 0 var(--memeStroke),
-                  -2px  2px 0 var(--memeStroke), 2px  2px 0 var(--memeStroke),
-                  0 0 16px rgba(0,0,0,.45);
+      text-shadow:
+        -2px -2px 0 var(--memeStroke), 2px -2px 0 var(--memeStroke),
+        -2px  2px 0 var(--memeStroke), 2px  2px 0 var(--memeStroke),
+        0 0 16px rgba(0,0,0,.45);
       padding:.25rem .6rem;
+      background:rgba(0,0,0,.45); backdrop-filter:blur(3px) saturate(1.2); border-radius:12px;
     }
     .meme-top{ top:10px }
     .meme-bottom{ bottom:10px }
 
-    /* Corner ribbon */
-    .ribbon{
-      position:absolute; top:12px; right:-44px; transform:rotate(35deg);
-      background:#2bffe4; color:#012022; font-weight:900; padding:6px 60px;
-      border:2px solid #0ad7c6; box-shadow:0 8px 18px rgba(0,255,230,.25); z-index:3;
-    }
-
-    /* Stickers */
+    /* Stickers (inside content; no overlap) */
     .sticker-row{display:flex; gap:8px; flex-wrap:wrap; margin:.6rem 0 0}
     .sticker{display:inline-flex; align-items:center; gap:.35rem; padding:.28rem .6rem; border-radius:10px; border:2px dashed rgba(0,0,0,.35); font-weight:900; transform:rotate(-1.5deg); box-shadow:0 8px 16px rgba(0,0,0,.18)}
     .st-a{ background:var(--stickerA); color:#202 } .st-b{ background:var(--stickerB); color:#053 }
     .st-c{ background:var(--stickerC); color:#401 } .st-d{ background:var(--stickerD); color:#023 }
 
-    /* Hero (bestaand) */
-    .hero{ display:grid; grid-template-columns:120px 1fr; gap:1.2rem; align-items:center; padding:1.2rem; margin:10px auto 18px; border-radius:var(--radius); background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35)); border:1px solid rgba(0,255,240,.18); box-shadow:var(--shadow); }
+    /* Hero */
+    .hero{ display:grid; grid-template-columns:120px 1fr; gap:1.2rem; align-items:center; padding:1.2rem; border-radius:var(--radius); background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35)); border:1px solid rgba(0,255,240,.18); box-shadow:var(--shadow); }
     .hero .logo-wrap{ position:relative; width:120px; height:120px; border-radius:16px; overflow:hidden; background:radial-gradient(closest-side, rgba(0,255,230,.18), rgba(0,255,230,.04) 58%, transparent 62%); display:grid; place-items:center; }
     .hero .logo{ width:86%; height:86%; object-fit:contain }
     .hero h2{ margin:.15rem 0 0; color:var(--note); font-size:1.05rem; font-weight:600 }
-    .hero p{ margin:.35rem 0 0; color:var(--muted); font-size:.95rem }
 
     .grid{ display:grid; gap:16px; grid-template-columns:repeat(12,1fr) }
 
-    /* Cards (meme frame edge) */
+    /* Cards */
     .card{ grid-column:span 12; background:linear-gradient(180deg, var(--card), var(--card2)); border:3px solid #121a21; border-radius:20px; box-shadow:0 18px 40px rgba(0,0,0,.35), inset 0 0 0 2px rgba(0,255,240,.08); padding:18px; position:relative; }
     .card:before{ content:""; position:absolute; inset:-6px; border-radius:24px; pointer-events:none; background:repeating-linear-gradient(45deg, rgba(255,255,255,.06) 0 6px, transparent 6px 12px); opacity:.15; }
     .card h3{ margin:.2rem 0 .6rem; color:#bffef2; font-size:1.05rem }
@@ -129,13 +136,31 @@
     .meme-meter-fill{height:100%; width:0%; border-radius:999px;
       background:linear-gradient(90deg,#ffb56b,#ff894a,#ff5f3a); box-shadow:0 0 14px rgba(255,120,0,.35)}
 
+    /* Flash on success */
+    .flash{
+      position:fixed; inset:0; display:none; align-items:center; justify-content:center; z-index:40;
+      background:rgba(0,0,0,.4); backdrop-filter:blur(2px);
+    }
+    .flash.show{ display:flex }
+    .flash-box{
+      background:linear-gradient(180deg,#0f151c,#0c1016);
+      border:3px solid #2bffe4; border-radius:18px; padding:18px 22px; text-align:center;
+      box-shadow:0 18px 40px rgba(0,0,0,.35), 0 0 28px rgba(0,255,230,.25);
+    }
+    .flash-title{
+      font-family:'Bangers',system-ui,sans-serif; color:#fff; font-size:clamp(26px,4vw,40px);
+      text-shadow:-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,2px 2px 0 #000;
+      letter-spacing:.6px; margin:0 0 6px;
+    }
+    .flash-sub{ color:#bffef2; margin:0; font-size:1rem }
+
     footer{ margin:24px auto 40px; text-align:center; color:var(--muted) } footer a{ color:#79ffee; text-decoration:none } footer a:hover{ text-decoration:underline }
 
     /* Responsive */
     @media (max-width:720px){
-      .btn{min-width:140px}
       .hero{grid-template-columns:1fr}
-      .meme-top,.meme-bottom{font-size:clamp(22px,6vw,34px)}
+      .meme-top,.meme-bottom{display:none}  /* prevent overlap on phones */
+      .btn{min-width:140px}
     }
 
     /* Reduce motion */
@@ -166,10 +191,10 @@
   <div id="content-en">
     <div class="container">
 
-      <!-- MEME FRAME AROUND HERO -->
-      <section class="meme-frame" style="margin:10px 0 18px;">
+      <!-- MEME FRAME -->
+      <section class="meme-frame">
         <div class="meme-halftone" aria-hidden="true"></div>
-        <div class="ribbon">REAL BURN</div>
+        <div class="meme-pill">REAL BURN</div>
         <div class="meme-top">BURN IT 🔥</div>
         <div class="meme-bottom">SUPPLY GOES DOWN 😎</div>
 
@@ -248,10 +273,10 @@
   <div id="content-nl" style="display:none">
     <div class="container">
 
-      <!-- MEME FRAME AROUND HERO (NL) -->
-      <section class="meme-frame" style="margin:10px 0 18px;">
+      <!-- MEME FRAME (NL) -->
+      <section class="meme-frame">
         <div class="meme-halftone" aria-hidden="true"></div>
-        <div class="ribbon">ECHTE BURN</div>
+        <div class="meme-pill">ECHTE BURN</div>
         <div class="meme-top">BRANDEN 🔥</div>
         <div class="meme-bottom">SUPPLY GAAT OMLAAG 😎</div>
 
@@ -326,6 +351,14 @@
     </div>
   </div>
 
+  <!-- FLASH (success) -->
+  <div class="flash" id="flash">
+    <div class="flash-box">
+      <h4 class="flash-title">BURN CONFIRMED ✅</h4>
+      <p class="flash-sub">Supply goes down. Community builds sovereignty.</p>
+    </div>
+  </div>
+
   <!-- Language switch -->
   <script>
     const btn = document.getElementById("langSwitch");
@@ -352,7 +385,6 @@
     /* Config */
     const INITIAL_SUPPLY_UI = 100_000_000; /* set to your initial CBS supply */
     const CBS_MINT = new PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
-    const TOKEN_PROGRAM = new PublicKey("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"); // (not used directly, kept for clarity)
     const DEFAULT_RPC = "https://mainnet.helius-rpc.com/?api-key=0053b3c9-a47d-4e7e-b76b-dbdc46f36189";
     const urlRpc = new URLSearchParams(location.search).get("rpc");
     const RPC_URL = urlRpc || DEFAULT_RPC || clusterApiUrl("mainnet-beta");
@@ -431,7 +463,7 @@
         const mint=await getMint(connection,CBS_MINT);
         mintDecimals=mint.decimals??0;
 
-        // Total supply (ui units)
+        // Total supply (ui)
         const supplyBig = (typeof mint.supply==="bigint") ? mint.supply : BigInt(mint.supply.toString());
         lastSupplyUi = Number(supplyBig) / (10 ** mintDecimals);
 
@@ -479,6 +511,13 @@
     });
     document.getElementById("refreshBtn")?.addEventListener("click", ()=>refreshStats());
 
+    /* Flash helper */
+    function showFlash(){
+      const el = H("flash"); if(!el) return;
+      el.classList.add("show");
+      setTimeout(()=> el.classList.remove("show"), 1600);
+    }
+
     document.getElementById("burnBtn")?.addEventListener("click", async ()=>{
       try{
         if(!provider?.publicKey) return setMsg(msgEl,"Connect wallet first.","warn");
@@ -487,6 +526,7 @@
         const tx=new Transaction().add(createBurnCheckedInstruction(fromAta,CBS_MINT,provider.publicKey,raw,mintDecimals));
         tx.feePayer=provider.publicKey; tx.recentBlockhash=(await connection.getLatestBlockhash()).blockhash;
         setMsg(msgEl,"Sending burn…"); await signAndSend(tx); setMsg(msgEl,"Burn confirmed ✅","ok");
+        showFlash();
         document.getElementById("amount").value=""; await refreshStats();
       }catch{ setMsg(msgEl,"Burn failed.","warn"); }
     });
@@ -510,6 +550,7 @@
         const tx=new Transaction().add(createBurnCheckedInstruction(fromAta,CBS_MINT,provider.publicKey,raw,mintDecimals));
         tx.feePayer=provider.publicKey; tx.recentBlockhash=(await connection.getLatestBlockhash()).blockhash;
         setMsg(msgEl_nl,"Burn verzonden…"); await signAndSend(tx); setMsg(msgEl_nl,"Burn bevestigd ✅","ok");
+        showFlash();
         document.getElementById("amount_nl").value=""; await refreshStats();
       }catch{ setMsg(msgEl_nl,"Burn mislukt.","warn"); }
     });
