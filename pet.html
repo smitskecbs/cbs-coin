@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CBS Pet — Meme Edition</title>
+  <title>CBS Pet — Kitten to Cat (Meme Edition)</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Bangers&display=swap" rel="stylesheet"/>
   <style>
     :root{
@@ -11,12 +11,11 @@
       --card:#0f151c; --card2:#0c1016;
       --fg:#eafffb; --muted:#a8d6cd;
       --line:rgba(0,255,240,.18);
-      --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
-      --radius:18px;
+      --radius:18px; --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
       --btnA:#5afff0; --btnB:#2bffe4;
       --stA:#fffd7a; --stB:#baffd2; --stC:#ffd1f7; --stD:#8be7ff;
       --memeStroke:#000; --memeFill:#fff;
-      --mqH: 40px;
+      --mqH:40px;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -32,35 +31,25 @@
     .brand{display:flex; align-items:center; gap:.7rem}
     .brand img{width:38px; height:38px; border-radius:10px; filter:drop-shadow(0 0 10px rgba(0,255,230,.35))}
     .brand h1{margin:0; font-size:1.05rem; letter-spacing:.4px; font-weight:700; color:#bffef2}
-    .social{display:flex; align-items:center; gap:.6rem}
+    .social{display:flex; gap:.6rem}
     .icon-link{display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:10px; text-decoration:none; color:#7dffe9; border:1px solid rgba(0,255,240,.35); background:linear-gradient(180deg, rgba(0,255,230,.06), rgba(0,255,230,.02)); box-shadow:inset 0 0 0 1px rgba(0,255,240,.08)}
     .icon{width:20px; height:20px; display:block}
 
     .container{max-width:1100px; margin:0 auto; padding:1.2rem 1rem 2.2rem}
 
-    /* MEME header in-flow (geen overlap) */
-    .meme-wrap{
-      border-radius:22px; overflow:hidden; margin:12px 0 18px; padding:14px 12px;
-      border:3px solid rgba(255,255,255,.08); box-shadow:0 18px 40px rgba(0,0,0,.35), inset 0 0 0 2px rgba(0,255,240,.08);
-      background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35));
-      position:relative;
-    }
-    .halftone{position:absolute; inset:0; pointer-events:none; opacity:.7; mix-blend-screen;
-      background:
-        radial-gradient(circle at 20% 10%, rgba(255,255,255,.06), transparent 40%),
-        radial-gradient(circle at 80% 20%, rgba(0,255,240,.06), transparent 50%),
-        radial-gradient(circle at 50% 80%, rgba(0,170,255,.06), transparent 50%);
-    }
-    .meme-cap{
-      position:relative; z-index:2; margin:6px auto; width:fit-content; max-width:100%;
+    /* Meme frame */
+    .meme-wrap{border-radius:22px; overflow:hidden; margin:12px 0 18px; padding:14px 12px; border:3px solid rgba(255,255,255,.08); box-shadow:0 18px 40px rgba(0,0,0,.35), inset 0 0 0 2px rgba(0,255,240,.08); background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35)); position:relative;}
+    .halftone{position:absolute; inset:0; pointer-events:none; opacity:.7; mix-blend-screen; background:
+      radial-gradient(circle at 20% 10%, rgba(255,255,255,.06), transparent 40%),
+      radial-gradient(circle at 80% 20%, rgba(0,255,240,.06), transparent 50%),
+      radial-gradient(circle at 50% 80%, rgba(0,170,255,.06), transparent 50%);}
+    .meme-cap{position:relative; z-index:2; margin:6px auto; width:fit-content; max-width:100%;
       font-family:'Bangers',system-ui,sans-serif; color:var(--memeFill); letter-spacing:.5px;
-      font-size:clamp(22px,4.8vw,42px); text-align:center;
-      background:rgba(0,0,0,.45); backdrop-filter:blur(3px) saturate(1.2); border-radius:12px; padding:.28rem .6rem;
-      text-shadow:-2px -2px 0 var(--memeStroke), 2px -2px 0 var(--memeStroke), -2px 2px 0 var(--memeStroke), 2px 2px 0 var(--memeStroke), 0 0 16px rgba(0,0,0,.45);
-    }
+      font-size:clamp(22px,4.8vw,42px); text-align:center; background:rgba(0,0,0,.45);
+      backdrop-filter:blur(3px) saturate(1.2); border-radius:12px; padding:.28rem .6rem;
+      text-shadow:-2px -2px 0 var(--memeStroke), 2px -2px 0 var(--memeStroke), -2px 2px 0 var(--memeStroke), 2px 2px 0 var(--memeStroke), 0 0 16px rgba(0,0,0,.45);}
     .pill{display:inline-block; margin-right:8px; background:#2bffe4; color:#012022; border:2px solid #0ad7c6; padding:6px 12px; border-radius:999px; font-weight:900; animation:pulse 2s infinite}
     @keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.04)}}
-
     .hero{position:relative; z-index:2; display:grid; grid-template-columns:90px 1fr; gap:1rem; align-items:center; padding:1.1rem; border-radius:18px; background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35)); border:1px solid var(--line); box-shadow:var(--shadow); margin:8px 0}
     .logo-wrap{width:90px; height:90px; border-radius:16px; overflow:hidden; background:radial-gradient(closest-side, rgba(0,255,230,.18), rgba(0,255,230,.04) 58%, transparent 62%); display:grid; place-items:center;}
     .logo{width:78%; height:78%; object-fit:contain}
@@ -68,8 +57,6 @@
     .stickers{display:flex; gap:8px; flex-wrap:wrap; margin:.3rem 0 0}
     .st{display:inline-flex; align-items:center; gap:.35rem; padding:.28rem .6rem; border-radius:10px; border:2px dashed rgba(0,0,0,.35); font-weight:900; transform:rotate(-1.5deg); box-shadow:0 8px 16px rgba(0,0,0,.18)}
     .st-a{background:var(--stA); color:#202} .st-b{background:var(--stB); color:#053} .st-c{background:var(--stC); color:#401} .st-d{background:var(--stD); color:#023}
-    .st-h{background:#fff2a8; color:#222}
-
     .marquee{position:relative; z-index:2; height:var(--mqH); overflow:hidden; border-top:2px dashed rgba(255,255,255,.15); background:linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.15)); margin-top:10px}
     .track{display:flex; gap:48px; align-items:center; white-space:nowrap; animation:scroll 16s linear infinite}
     .track span{font-family:'Bangers',system-ui,sans-serif; font-size:22px; letter-spacing:.6px; color:#fff; text-shadow:-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,2px 2px 0 #000;}
@@ -78,23 +65,21 @@
     .panel{background:linear-gradient(180deg, var(--card), var(--card2)); border:1px solid var(--line); border-radius:var(--radius); padding:16px; margin:18px auto; box-shadow:var(--shadow);}
     .panel h3{margin:.1rem 0 .6rem}
     .muted{color:var(--muted)}
+    .btn{display:inline-flex; align-items:center; justify-content:center; padding:10px 12px; border-radius:10px; color:#001012; background:linear-gradient(180deg,#5afff0,#2bffe4); border:1px solid rgba(0,255,240,.6); font-weight:800; cursor:pointer; box-shadow:0 8px 18px rgba(0,255,230,.18)}
+    .btn:disabled{opacity:.55; cursor:not-allowed}
+    .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
 
-    /* PET styles embedded */
-    .pet-wrap{--fg:#eafffb;--muted:#a8d6cd;--line:rgba(0,255,240,.18);
-      border-radius:16px; padding:14px; background:linear-gradient(180deg,#0b1217,#0a1015); border:1px solid rgba(0,255,240,.18);}
-    .pet-row{display:grid; grid-template-columns:280px 1fr; gap:16px}
-    @media (max-width:760px){.pet-row{grid-template-columns:1fr}}
+    /* PET */
+    .pet-wrap{border-radius:16px; padding:14px; background:linear-gradient(180deg,#0b1217,#0a1015); border:1px solid rgba(0,255,240,.18);}
+    .pet-row{display:grid; grid-template-columns:300px 1fr; gap:16px}
+    @media (max-width:780px){.pet-row{grid-template-columns:1fr}}
     .stat{display:flex; align-items:center; gap:8px; margin:8px 0}
     .bar{flex:1; height:10px; border-radius:999px; background:#122027; overflow:hidden}
     .fill{height:100%; background:linear-gradient(90deg,#5afff0,#2bffe4)}
-    .btn{display:inline-flex; align-items:center; justify-content:center; padding:10px 12px; border-radius:10px; color:#001012; background:linear-gradient(180deg,#5afff0,#2bffe4); border:1px solid rgba(0,255,240,.6); font-weight:800; cursor:pointer; box-shadow:0 8px 18px rgba(0,255,230,.18)}
-    .btn:disabled{opacity:.55; cursor:not-allowed}
     .shop-item{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px; border-radius:10px; background:#0a141a; border:1px solid rgba(0,255,240,.16); margin-top:8px}
-    .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+    .toggle-row{display:flex; gap:8px; flex-wrap:wrap; margin-top:6px}
     canvas{width:100%; height:auto; border-radius:12px; border:1px solid rgba(0,255,240,.12); background:#071015}
-    .title{margin:0 0 8px; font-weight:800; letter-spacing:.3px}
 
-    /* Mobile tweaks */
     @media (max-width:640px){
       .hero{grid-template-columns:1fr; text-align:center}
       .logo-wrap{margin:0 auto}
@@ -109,9 +94,9 @@
   <header class="topbar">
     <div class="brand">
       <img src="logo.png" alt="CBS Logo">
-      <h1>CBS Pet — Meme Edition</h1>
+      <h1>CBS Pet — Kitten → Cat</h1>
     </div>
-    <div class="social" aria-label="Social">
+    <div class="social">
       <a class="icon-link" href="https://x.com/CBS_Coin" target="_blank" rel="noopener" aria-label="X">
         <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h3.7l4.6 6 5.3-6H22l-7.5 8.4L22 20h-3.7l-5-6.5L7.4 20H2.1l8.3-9.3L4 4Z"/></svg>
       </a>
@@ -127,57 +112,73 @@
   <main class="container">
     <section class="meme-wrap">
       <div class="halftone" aria-hidden="true"></div>
-      <div class="meme-cap"><span class="pill">LIVE</span><span>FEED. PLAY. CLEAN. — BUILD SOVEREIGNTY.</span></div>
-
+      <div class="meme-cap"><span class="pill">LIVE</span>RAISE YOUR KITTEN • BUILD SOVEREIGNTY</div>
       <section class="hero">
         <div class="logo-wrap"><img class="logo" src="logo.png" alt="CBS Logo"></div>
         <div>
-          <h2 id="title">CBS Pet — Keep it happy, pay with CBS 🐣</h2>
+          <h2 id="title">Feed • Play • Clean — Buy toys & collar with CBS</h2>
           <div class="stickers">
             <span class="st st-a">NO PRESALE</span>
             <span class="st st-b">NO VC</span>
             <span class="st st-c">ON-CHAIN</span>
             <span class="st st-d">JUST COMMUNITY</span>
-            <span class="st st-h" id="holdersSticker" style="display:none">HOLDERS: —</span>
           </div>
         </div>
       </section>
-
-      <div class="meme-cap">BREAK THE CHAINS • PLAY THE GAME • SUPPORT THE TREASURY</div>
-
-      <div class="marquee" aria-hidden="true">
-        <div class="track" id="mqTrack"></div>
-      </div>
+      <div class="meme-cap">BREAK THE CHAINS • PET THE CAT • SUPPORT THE TREASURY</div>
+      <div class="marquee" aria-hidden="true"><div class="track" id="mqTrack"></div></div>
     </section>
 
     <section class="panel">
       <div class="pet-wrap">
-        <h3 class="title">🍼 CBS Pet</h3>
+        <h3 class="title">🐱 CBS Kitten → Cat</h3>
         <div class="pet-row">
           <div>
-            <canvas id="petCanvas" width="260" height="230"></canvas>
+            <canvas id="petCanvas" width="300" height="240"></canvas>
+
             <div class="stat"><strong>Honger</strong><div class="bar"><div id="barH" class="fill" style="width:100%"></div></div></div>
             <div class="stat"><strong>Fun</strong><div class="bar"><div id="barF" class="fill" style="width:100%"></div></div></div>
             <div class="stat"><strong>Schoon</strong><div class="bar"><div id="barC" class="fill" style="width:100%"></div></div></div>
-            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px">
-              <button class="btn" id="feedBtn">Feed 🍖</button>
+
+            <div class="toggle-row">
+              <button class="btn" id="feedBtn">Feed 🍣</button>
               <button class="btn" id="playBtn">Play 🎾</button>
               <button class="btn" id="cleanBtn">Clean 💩</button>
             </div>
-            <p class="muted" id="status">Hou je pet blij. Balkjes dalen vanzelf; voer/speel/poets om bij te vullen.</p>
+
+            <div class="toggle-row">
+              <span class="muted">Toy:</span>
+              <button class="btn" id="toyBall">Ball</button>
+              <button class="btn" id="toyMouse" disabled>Mouse (buy)</button>
+            </div>
+            <div class="toggle-row">
+              <span class="muted">Collar:</span>
+              <button class="btn" id="equipCollar" disabled>Equip CBS Collar</button>
+              <button class="btn" id="removeCollar" disabled>Remove</button>
+            </div>
+
+            <p class="muted" id="status">Hou je kitten blij — en zie ’m groeien tot kat! Stats dalen vanzelf met de tijd.</p>
+            <p class="muted">Leeftijd: <span id="ageTxt">Kitten</span> • XP: <span id="xpTxt">0</span></p>
           </div>
+
           <div>
-            <h4 style="margin:.1rem 0 .6rem">🛒 Shop (CBS)</h4>
+            <h4 style="margin:.1rem 0 .6rem">🛒 Shop (betaal met CBS)</h4>
             <div class="shop-item">
-              <div><b>Food Pack ×10</b><div class="muted">Instant 10x eten</div></div>
+              <div><b>Food Pack ×10</b><div class="muted">10x voeren</div></div>
               <div><b id="priceFood">100 CBS</b></div>
               <button class="btn" id="buyFood">Buy with CBS</button>
             </div>
             <div class="shop-item">
-              <div><b>CBS Cap (Outfit)</b><div class="muted">Pet met teal cap 😎</div></div>
-              <div><b id="priceCap">2500 CBS</b></div>
-              <button class="btn" id="buyCap">Buy with CBS</button>
+              <div><b>Mouse Toy</b><div class="muted">Speelgoed muisje (ontgrendelt Play met muis)</div></div>
+              <div><b id="priceMouse">800 CBS</b></div>
+              <button class="btn" id="buyMouse">Buy with CBS</button>
             </div>
+            <div class="shop-item">
+              <div><b>CBS Collar</b><div class="muted">Halsbandje met “CBS”</div></div>
+              <div><b id="priceCollar">1800 CBS</b></div>
+              <button class="btn" id="buyCollar">Buy with CBS</button>
+            </div>
+
             <hr style="border-color:rgba(0,255,240,.16); margin:12px 0">
             <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
               <button class="btn" id="connectBtn">Connect Wallet</button>
@@ -186,7 +187,7 @@
             <p class="muted" id="info"></p>
             <small class="muted">
               Treasury (team wallet): <a class="mono" href="https://solscan.io/account/8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd" target="_blank" rel="noopener">8Y7w…HUk5Zd</a>.<br/>
-              Uitgaven van deze wallet gebeuren uitsluitend na community-stemrondes; enkel CBS verlaat de wallet volgens de uitkomst.
+              Uitgaven enkel na community-stemrondes; alleen CBS verlaat de wallet volgens uitkomst.
             </small>
           </div>
         </div>
@@ -195,97 +196,242 @@
 
     <section class="panel">
       <h3>Waarom dit?</h3>
-      <p class="muted">
-        <b>CBS — Community Builds Sovereignty.</b> Geen presale, geen VC. Koop je voer/outfits met CBS en steun tegelijk de treasury.
-        Alles is on-chain en transparant — maar de fun is pure meme-energie 😎.
-      </p>
+      <p class="muted"><b>CBS — Community Builds Sovereignty.</b> Geen presale, geen VC. Koop speeltjes & de CBS-collar met CBS, steun de treasury en laat je kitten groeien tot kat. Pure meme-energie, on-chain transparantie.</p>
     </section>
   </main>
 
   <script type="module">
-    /* ===== CONFIG ===== */
+    /* ========= CONFIG ========= */
     const CONFIG = {
       RPCS: [
         "https://rpc.helius.xyz/?api-key=0053b3c9-a47d-4e7e-b76b-dbdc46f36189",
         "https://api.mainnet-beta.solana.com"
       ],
-      MINT: "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk", // CBS mint
-      TREASURY: "8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd", // team/treasury
-      PRICES: { FOOD_PACK_10: 100, CBS_CAP: 2500 }
+      MINT: "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk",
+      TREASURY: "8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd",
+      PRICES: { FOOD_PACK_10: 100, MOUSE: 800, COLLAR: 1800 }
     };
-    const short = (pk)=>pk.slice(0,4)+"…"+pk.slice(-4);
+    const $=(q,r=document)=>r.querySelector(q);
+    const short=(pk)=>pk.slice(0,4)+"…"+pk.slice(-4);
 
-    /* ===== Marquee ===== */
-    const mq = document.getElementById("mqTrack");
-    if(mq){
-      const phrase = "NO PRESALE • NO VC • ON-CHAIN • COMMUNITY BUILDS SOVEREIGNTY • ";
-      mq.innerHTML = Array.from({length:12},()=>`<span>${phrase}</span>`).join("");
+    /* ========= MARQUEE ========= */
+    const mq=$("#mqTrack");
+    if(mq){ const phrase="NO PRESALE • NO VC • ON-CHAIN • COMMUNITY BUILDS SOVEREIGNTY • ";
+      mq.innerHTML=Array.from({length:12},()=>`<span>${phrase}</span>`).join(""); }
+
+    /* ========= STATE ========= */
+    const DEF = {
+      hunger:100, fun:100, clean:100,
+      feeds:0,
+      toy:"ball", mouseOwned:false,
+      collarOwned:false, collarEquipped:false,
+      xp:0, stage:"kitten", // kitten/teen/cat
+      poop:0, lastTick:Date.now(),
+      anim:null // {type:'feed'|'playBall'|'playMouse', t:0.., data:{}}
+    };
+    const S = JSON.parse(localStorage.getItem("cbs_cat_v1")||"null") || DEF;
+    const save=()=>localStorage.setItem("cbs_cat_v1", JSON.stringify(S));
+
+    /* ========= UI refs ========= */
+    const barH=$("#barH"), barF=$("#barF"), barC=$("#barC");
+    const statusEl=$("#status"); const xpTxt=$("#xpTxt"); const ageTxt=$("#ageTxt");
+
+    const setStatus=(t)=>statusEl.textContent=t;
+    const clamp=(n)=>Math.max(0,Math.min(100,n));
+    function updateBars(){ barH.style.width=S.hunger+"%"; barF.style.width=S.fun+"%"; barC.style.width=S.clean+"%"; }
+    function updateAge(){
+      // simpele groei: 0-30 xp = kitten, 30-80 = teen, 80+ = cat
+      S.stage = S.xp>=80 ? "cat" : S.xp>=30 ? "teen" : "kitten";
+      ageTxt.textContent = S.stage==="kitten" ? "Kitten" : (S.stage==="teen" ? "Jonge kat" : "Kat");
+      xpTxt.textContent = S.xp|0;
     }
 
-    /* ===== Pet state ===== */
-    const DEF = { hunger:100, fun:100, clean:100, feeds:0, hasCap:false, lastTick:Date.now(), poop:0 };
-    const s = JSON.parse(localStorage.getItem("cbs_pet_v1")||"null") || structuredClone(DEF);
-    const save=()=>localStorage.setItem("cbs_pet_v1", JSON.stringify(s));
-
-    const el = (q,r=document)=>r.querySelector(q);
-    const canvas = document.getElementById("petCanvas");
+    /* ========= CANVAS & ANIMATIE ========= */
+    const canvas=document.getElementById("petCanvas");
     const ctx = canvas.getContext("2d");
-    const barH=el("#barH"), barF=el("#barF"), barC=el("#barC");
-    const statusEl=el("#status");
+    const W=canvas.width, H=canvas.height;
+    const groundY = H-30;
 
-    function clamp(n){return Math.max(0,Math.min(100,n));}
-    function setStatus(t){ statusEl.textContent=t; }
-    function renderBars(){ barH.style.width=s.hunger+"%"; barF.style.width=s.fun+"%"; barC.style.width=s.clean+"%"; }
+    // simpele physics
+    let cat = { x: W*0.58, y: groundY-40, vx:0, vy:0, facing:1 }; // facing 1:right, -1:left
+    function drawCat(){
+      const scale = S.stage==="kitten"?0.8:(S.stage==="teen"?1.0:1.2);
+      const baseX=cat.x, baseY=cat.y;
+      ctx.save();
+      ctx.translate(baseX, baseY);
+      ctx.scale(scale, scale);
+      ctx.lineJoin="round"; ctx.lineCap="round";
 
-    function drawPet(){
-      ctx.clearRect(0,0,canvas.width,canvas.height);
-      ctx.fillStyle="#0b141a"; ctx.fillRect(0,0,canvas.width,canvas.height);
-      ctx.fillStyle="#0a1f22"; ctx.fillRect(0,190,canvas.width,40);
+      // tail
+      ctx.strokeStyle="#14e7d6"; ctx.lineWidth=6;
+      ctx.beginPath(); ctx.moveTo(-28,10); ctx.quadraticCurveTo(-48,0,-60,12); ctx.stroke();
+
       // body
-      ctx.fillStyle="#2bffe4"; ctx.beginPath(); ctx.ellipse(130,140,55,45,0,0,Math.PI*2); ctx.fill();
-      // eyes + mouth
-      ctx.fillStyle="#012022"; ctx.beginPath(); ctx.arc(110,130,6,0,Math.PI*2); ctx.fill();
-      ctx.beginPath(); ctx.arc(150,130,6,0,Math.PI*2); ctx.fill();
-      ctx.strokeStyle="#012022"; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(130,146,14,0.2*Math.PI,0.8*Math.PI); ctx.stroke();
-      // cap
-      if(s.hasCap){
-        ctx.fillStyle="#0feedd"; ctx.fillRect(95,98,70,10);
-        ctx.beginPath(); ctx.ellipse(130,98,35,12,0,0,Math.PI,true); ctx.fill();
-        ctx.fillStyle="#00161a"; ctx.font="bold 10px monospace"; ctx.fillText("CBS",116,100);
+      ctx.fillStyle="#2bffe4";
+      ctx.beginPath(); ctx.ellipse(0,10,34,26,0,0,Math.PI*2); ctx.fill();
+
+      // head
+      ctx.beginPath(); ctx.ellipse(0,-18,24,20,0,0,Math.PI*2); ctx.fill();
+
+      // ears
+      ctx.beginPath(); ctx.moveTo(-12,-32); ctx.lineTo(-2,-24); ctx.lineTo(-18,-20); ctx.closePath(); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(12,-32); ctx.lineTo(2,-24); ctx.lineTo(18,-20); ctx.closePath(); ctx.fill();
+
+      // face
+      ctx.fillStyle="#012022";
+      ctx.beginPath(); ctx.arc(-6,-20,3,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(6,-20,3,0,Math.PI*2); ctx.fill();
+      ctx.strokeStyle="#012022"; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.arc(0,-12,6,0.1*Math.PI,0.9*Math.PI); ctx.stroke();
+
+      // collar?
+      if(S.collarEquipped){
+        ctx.strokeStyle="#00161a"; ctx.lineWidth=8;
+        ctx.beginPath(); ctx.arc(0,-8,16,0,Math.PI*2); ctx.stroke();
+        ctx.strokeStyle="#0feedd"; ctx.lineWidth=6;
+        ctx.beginPath(); ctx.arc(0,-8,16,0,Math.PI*2); ctx.stroke();
+        ctx.fillStyle="#00161a"; ctx.font="bold 9px monospace";
+        ctx.textAlign="center"; ctx.fillText("CBS",0,-5);
       }
-      // poop
-      for(let i=0;i<s.poop;i++){
-        ctx.fillStyle="#6b4b2a"; const x=40+i*22;
-        ctx.beginPath(); ctx.arc(x,178,6,0,Math.PI*2); ctx.fill();
-        ctx.beginPath(); ctx.arc(x,173,4,0,Math.PI*2); ctx.fill();
+
+      ctx.restore();
+    }
+
+    // objects for animations
+    let food=null; // {x,y,amount:1..0}
+    let toy=null;  // {type:'ball'|'mouse', x,y, vx, vy, rot}
+
+    function drawGround(){
+      ctx.fillStyle="#0b141a"; ctx.fillRect(0,0,W,H);
+      ctx.fillStyle="#0a1f22"; ctx.fillRect(0,groundY,W,H-groundY);
+    }
+    function drawFood(){
+      if(!food) return;
+      // bowl + fish shrinking
+      // bowl
+      ctx.fillStyle="#0feedd";
+      ctx.beginPath(); ctx.ellipse(food.x, groundY-6, 22, 8, 0, 0, Math.PI*2); ctx.fill();
+      // fish
+      const f = Math.max(0,food.amount);
+      if(f>0){
+        ctx.fillStyle="#c1f7ff";
+        ctx.beginPath(); ctx.ellipse(food.x, groundY-10, 8*f, 5*f, 0, 0, Math.PI*2); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(food.x-8*f, groundY-10);
+        ctx.lineTo(food.x-12*f, groundY-8); ctx.lineTo(food.x-12*f, groundY-12); ctx.closePath(); ctx.fill();
+      }
+    }
+    function drawToy(){
+      if(!toy) return;
+      if(toy.type==="ball"){
+        ctx.fillStyle="#ffd27a";
+        ctx.beginPath(); ctx.arc(toy.x,toy.y,8,0,Math.PI*2); ctx.fill();
+        ctx.strokeStyle="#e8b95e"; ctx.stroke();
+      }else{ // mouse
+        ctx.fillStyle="#cfc0aa";
+        ctx.beginPath(); ctx.ellipse(toy.x,toy.y,10,6,0,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle="#806f5a";
+        ctx.beginPath(); ctx.arc(toy.x+8,toy.y-2,2,0,Math.PI*2); ctx.fill(); // nose
+        // tail
+        ctx.strokeStyle="#cfc0aa"; ctx.lineWidth=2;
+        ctx.beginPath(); ctx.moveTo(toy.x-10,toy.y); ctx.quadraticCurveTo(toy.x-18,toy.y-8,toy.x-26,toy.y-2); ctx.stroke();
       }
     }
 
-    function tickOnce(force=false){
-      const now=Date.now(), dt=now - s.lastTick;
-      if(dt>=10000 || force){
-        s.hunger=clamp(s.hunger-3); s.fun=clamp(s.fun-2); s.clean=clamp(s.clean-2);
-        if(Math.random()<0.25 && s.poop<3) s.poop++;
-        s.lastTick=now; save(); renderBars(); drawPet();
+    function stepAnim(dt){
+      // simple gravity for toy
+      if(toy){
+        toy.x += toy.vx*dt; toy.y += toy.vy*dt;
+        toy.vy += 900*dt;
+        if(toy.y>groundY-8){ toy.y=groundY-8; toy.vy *= -0.45; toy.vx *= 0.86; if(Math.abs(toy.vy)<60) toy.vy=0; }
+        // cat chases toy
+        const dx = toy.x - cat.x;
+        cat.facing = dx>=0?1:-1;
+        cat.vx = Math.max(-120, Math.min(120, dx*2));
+        cat.x += cat.vx*dt;
+        // clamp
+        cat.x = Math.max(30, Math.min(W-30, cat.x));
+      }
+      // move to food and eat
+      if(food){
+        const dx = food.x - cat.x;
+        cat.facing = dx>=0?1:-1;
+        cat.vx = Math.max(-100, Math.min(100, dx*2));
+        cat.x += cat.vx*dt;
+        if(Math.abs(dx)<16 && food.amount>0){
+          food.amount -= 0.6*dt; // eat speed
+          if(food.amount<=0){ food=null; }
+        }
       }
     }
-    setInterval(()=>tickOnce(false), 2000);
 
-    document.getElementById("feedBtn").addEventListener("click", ()=>{
-      if(s.feeds>0){ s.hunger=clamp(s.hunger+25); s.feeds--; setStatus(`Gevoerd. Rantsoenen over: ${s.feeds}`); tickOnce(true); }
-      else setStatus("Geen voer meer. Koop een Food Pack in de shop.");
+    let lastT=performance.now();
+    function loop(now){
+      const dt = Math.min(0.033, (now-lastT)/1000); lastT=now;
+      stepAnim(dt);
+      drawGround(); drawFood(); drawToy(); drawCat();
+      requestAnimationFrame(loop);
+    }
+    requestAnimationFrame(loop);
+
+    /* ========= GAME LOGIC ========= */
+    function decayTick(force=false){
+      const now=Date.now(), dt=now-S.lastTick;
+      if(dt>=8000 || force){
+        S.hunger=clamp(S.hunger-3); S.fun=clamp(S.fun-2); S.clean=clamp(S.clean-2);
+        if(Math.random()<0.25 && S.poop<3) S.poop++;
+        S.xp = Math.min(999, S.xp + 1.2); // langzaam groeien
+        S.lastTick=now; save(); updateBars(); updateAge();
+      }
+    }
+    setInterval(()=>decayTick(false), 2000);
+
+    // Buttons
+    $("#feedBtn").addEventListener("click", ()=>{
+      if(S.feeds<=0){ setStatus("Geen voer. Koop een Food Pack in de shop."); return; }
+      S.feeds--; S.hunger=clamp(S.hunger+25); S.clean=clamp(S.clean-2);
+      // spawn food near cat
+      food = { x: Math.max(40, Math.min(W-40, cat.x+ (cat.facing>0? 40 : -40))), amount:1 };
+      S.xp = Math.min(999, S.xp+3);
+      save(); updateBars(); updateAge(); setStatus(`Smak smak! Feeds left: ${S.feeds}`);
+      decayTick(true);
     });
-    document.getElementById("playBtn").addEventListener("click", ()=>{
-      s.fun=clamp(s.fun+25); setStatus("Spelen! 🎉"); tickOnce(true);
+
+    let selectedToy="ball";
+    $("#toyBall").addEventListener("click", ()=>{ selectedToy="ball"; setStatus("Toy set: Ball"); });
+    $("#toyMouse").addEventListener("click", ()=>{ if(!S.mouseOwned){ setStatus("Koop eerst het muisje."); return;} selectedToy="mouse"; setStatus("Toy set: Mouse"); });
+
+    $("#playBtn").addEventListener("click", ()=>{
+      S.fun=clamp(S.fun+22);
+      const t = selectedToy;
+      if(t==="ball"){
+        toy = { type:"ball", x: cat.x, y: cat.y-20, vx: 220*cat.facing, vy: -360 };
+      }else{
+        toy = { type:"mouse", x: cat.x, y: cat.y-10, vx: 160*cat.facing, vy: -280 };
+      }
+      S.xp = Math.min(999, S.xp+2.5);
+      save(); updateBars(); updateAge(); setStatus("Speeltijd!");
+      decayTick(true);
     });
-    document.getElementById("cleanBtn").addEventListener("click", ()=>{
-      if(s.poop>0){ s.poop=0; s.clean=clamp(s.clean+30); setStatus("Helemaal schoon ✨"); tickOnce(true); }
+
+    $("#cleanBtn").addEventListener("click", ()=>{
+      if(S.poop>0){ S.poop=0; S.clean=clamp(S.clean+30); setStatus("Schoon! ✨"); S.xp=Math.min(999,S.xp+1); }
       else setStatus("Niks op te ruimen.");
+      save(); updateBars(); updateAge(); decayTick(true);
     });
 
-    renderBars(); drawPet(); tickOnce(true);
+    // Collar equip/remove
+    function refreshEquipButtons(){
+      $("#equipCollar").disabled = !S.collarOwned || S.collarEquipped;
+      $("#removeCollar").disabled = !S.collarEquipped;
+      $("#toyMouse").disabled = !S.mouseOwned;
+    }
+    $("#equipCollar").addEventListener("click", ()=>{ if(!S.collarOwned) return; S.collarEquipped=true; save(); refreshEquipButtons(); setStatus("CBS Collar equipped."); });
+    $("#removeCollar").addEventListener("click", ()=>{ S.collarEquipped=false; save(); refreshEquipButtons(); setStatus("Collar removed."); });
 
-    /* ===== Wallet & CBS betalingen ===== */
+    // initial render
+    updateBars(); updateAge(); refreshEquipButtons(); decayTick(true);
+
+    /* ========= WALLET & PAYMENTS ========= */
     async function imp(p,f){ try{return await import(p);}catch{ return await import(f);} }
     const web3 = await imp("https://esm.sh/@solana/web3.js@1.95.3","https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js");
     const spl  = await imp("https://esm.sh/@solana/spl-token@0.4.7","https://unpkg.com/@solana/spl-token@0.4.7/lib/index.iife.min.js");
@@ -301,7 +447,7 @@
     async function ensureDecimals(){ try{ const m=await getMint(connection,CBS_MINT); decimals=m.decimals??9; }catch{} }
     function uiToRaw(ui){ return BigInt(Math.round(Number(ui) * (10**decimals))); }
 
-    const wStatus=document.getElementById("wStatus"), info=document.getElementById("info");
+    const wStatus=$("#wStatus"), info=$("#info");
     async function connect(){
       provider = detectProvider();
       if(!provider){ wStatus.textContent="Geen wallet gevonden (installeer Phantom)."; return; }
@@ -311,7 +457,6 @@
       await ensureDecimals();
       return pk;
     }
-
     async function payCBS(uiAmount, purpose){
       if(!provider?.publicKey) await connect();
       const owner = provider.publicKey;
@@ -332,47 +477,39 @@
       return sig;
     }
 
-    document.getElementById("connectBtn").addEventListener("click", ()=>connect());
-    document.getElementById("buyFood").addEventListener("click", async ()=>{
+    $("#connectBtn").addEventListener("click", ()=>connect());
+
+    $("#buyFood").addEventListener("click", async ()=>{
       try{
         info.textContent="Wallet openen…";
         const sig = await payCBS(CONFIG.PRICES.FOOD_PACK_10,"FOOD_PACK_10");
-        s.feeds += 10; save(); renderBars(); drawPet();
-        info.innerHTML=`Food Pack toegevoegd (×10). <span class="mono">${sig.slice(0,8)}…</span>`;
+        S.feeds += 10; save(); updateBars(); setStatus("Food Pack toegevoegd (×10).");
+        info.innerHTML=`✔ Food Pack. <a class="mono" href="https://solscan.io/tx/${sig}" target="_blank" rel="noopener">${sig.slice(0,8)}…</a>`;
       }catch{ info.textContent="Betaling mislukt/geannuleerd." }
     });
-    document.getElementById("buyCap").addEventListener("click", async ()=>{
+    $("#buyMouse").addEventListener("click", async ()=>{
       try{
         info.textContent="Wallet openen…";
-        const sig = await payCBS(CONFIG.PRICES.CBS_CAP,"CBS_CAP");
-        s.hasCap = true; save(); drawPet();
-        info.innerHTML=`CBS Cap geactiveerd. <span class="mono">${sig.slice(0,8)}…</span>`;
+        const sig = await payCBS(CONFIG.PRICES.MOUSE,"MOUSE");
+        S.mouseOwned = true; save(); refreshEquipButtons();
+        info.innerHTML=`✔ Mouse Toy ontgrendeld. <a class="mono" href="https://solscan.io/tx/${sig}" target="_blank" rel="noopener">${sig.slice(0,8)}…</a>`;
+        setStatus("Muisje gekocht! Kies ‘Toy: Mouse’ om ermee te spelen.");
+      }catch{ info.textContent="Betaling mislukt/geannuleerd." }
+    });
+    $("#buyCollar").addEventListener("click", async ()=>{
+      try{
+        info.textContent="Wallet openen…";
+        const sig = await payCBS(CONFIG.PRICES.COLLAR,"COLLAR");
+        S.collarOwned = true; S.collarEquipped = true; save(); refreshEquipButtons();
+        info.innerHTML=`✔ CBS Collar gekocht. <a class="mono" href="https://solscan.io/tx/${sig}" target="_blank" rel="noopener">${sig.slice(0,8)}…</a>`;
+        setStatus("CBS Collar equipped 😺");
       }catch{ info.textContent="Betaling mislukt/geannuleerd." }
     });
 
-    /* Optioneel: houders-aanduiding (snelle schatting via largest accounts) */
-    async function rpcCall(method, params=[]){
-      let lastErr;
-      for(const url of CONFIG.RPCS){
-        try{
-          const res = await fetch(url,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({jsonrpc:"2.0",id:1,method,params})});
-          if(!res.ok){ lastErr=new Error("HTTP "+res.status); continue; }
-          const j=await res.json(); if(j.error){ lastErr=new Error(j.error.message||"RPC error"); continue; }
-          return j.result;
-        }catch(e){ lastErr=e; }
-      }
-      throw lastErr||new Error("All RPCs failed");
-    }
-    try{
-      const r = await rpcCall("getTokenLargestAccounts",[CONFIG.MINT,{commitment:"confirmed"}]);
-      const guess = (r?.value||[]).length ? `${(r.value.length)}+` : "—";
-      const hs = document.getElementById("holdersSticker");
-      if(hs){ hs.textContent = `HOLDERS: ${guess}`; hs.style.display="inline-flex"; }
-    }catch{}
-
-    /* Zet prijzen tekst (als je ooit wijzigen wil) */
-    document.getElementById("priceFood").textContent = `${CONFIG.PRICES.FOOD_PACK_10} CBS`;
-    document.getElementById("priceCap").textContent  = `${CONFIG.PRICES.CBS_CAP} CBS`;
+    // Prices text
+    $("#priceFood").textContent = `${CONFIG.PRICES.FOOD_PACK_10} CBS`;
+    $("#priceMouse").textContent = `${CONFIG.PRICES.MOUSE} CBS`;
+    $("#priceCollar").textContent = `${CONFIG.PRICES.COLLAR} CBS`;
   </script>
 </body>
 </html>
