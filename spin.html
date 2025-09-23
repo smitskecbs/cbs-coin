@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CBS Spin‑Wheel — Fair & Transparent</title>
+  <style>
+    :root{
+      --bg1:#0b1020; --bg2:#070a14; --card:#11182a; --muted:#91a4c7; --accent:#2dd4bf; --warn:#ef4444; --ok:#22c55e;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Cantarell, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji"; background:linear-gradient(180deg,var(--bg1),var(--bg2)); color:#e6eef8}
+    .wrap{max-width:1200px;margin:0 auto;padding:20px}
+    .grid{display:grid; gap:18px; grid-template-columns:1fr;}
+    @media(min-width:1000px){.grid{grid-template-columns:1fr 1fr}}
+    .card{background:linear-gradient(180deg,#0f172a,#0b1324); border:1px solid #1e293b; border-radius:16px; padding:16px; box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    h1{margin:4px 0 14px; font-weight:800; letter-spacing:.3px}
+    h2{margin:6px 0 12px; font-size:16px}
+    textarea,input{background:#0a1224; border:1px solid #283347; color:#e6eef8; border-radius:12px; padding:10px; width:100%}
+    textarea{min-height:160px; resize:vertical; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:13px}
+    input{height:40px; font-family:ui-monospace, monospace; font-size:12px}
+    .row{display:flex; gap:10px; flex-wrap:wrap}
+    button{background:#0f1c33; border:1px solid #2b3b55; color:#e6eef8; padding:10px 14px; border-radius:12px; cursor:pointer}
+    button.primary{background:#0b3b36; border-color:#1e776b}
+    button.primary:hover{background:#13584f}
+    button:disabled{opacity:.5; cursor:not-allowed}
+    table{width:100%; border-collapse:collapse; font-size:13px}
+    th,td{padding:8px 10px; border-bottom:1px dashed #23314a}
+    th{text-align:left; color:#c7d7f4}
+    .muted{color:#9fb2d8}
+    .badge{display:inline-block; padding:3px 8px; border-radius:999px; background:#0c1a2f; border:1px solid #2b3b55; font-size:12px}
+    .winner{background:#081421; border:1px solid #26405a; padding:8px 10px; border-radius:12px}
+    .canvasWrap{aspect-ratio:1/1; width:100%; max-width:640px; margin:0 auto}
+    .pointer{position:relative}
+    .small{font-size:12px}
+    .warn{color:var(--warn)}
+    .ok{color:var(--ok)}
+    .pill{display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid #2b3b55; background:#0c1a2f; font-size:12px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="row" style="align-items:center; justify-content:space-between">
+      <div>
+        <h1>CBS Spin‑Wheel 🎯</h1>
+        <div class="muted">Fair • Transparent • Stream‑ready • Stand‑alone HTML</div>
+      </div>
+      <div class="badge">v1.1</div>
+    </header>
+
+    <div class="grid">
+      <!-- Controls -->
+      <section class="card">
+        <h2>1) Plak wallets (één per regel) of "wallet,count"</h2>
+        <div class="row">
+          <div style="flex:1 1 340px">
+            <textarea id="inputWallets" placeholder="9xQeWvG...
+9xQeWvG...,3
+# comment regels worden genegeerd
+..."></textarea>
+            <div class="row small muted" style="margin-top:6px">
+              <span class="pill">Tip: CSV/TXT import kan ook →</span>
+            </div>
+          </div>
+          <div style="flex:1 1 260px">
+            <label class="muted small">Bestand importeren (.txt/.csv)</label>
+            <input id="fileInput" type="file" accept=".txt,.csv" />
+            <div class="small muted" style="margin-top:6px">Herkenning: elke regel als <em>wallet</em> of <em>wallet,count</em>. Lege regels en regels die beginnen met <code>#</code> worden genegeerd.</div>
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button class="primary" id="btnGenerate">Generate wheel</button>
+          <button id="btnClear">Clear</button>
+          <button id="btnRemoveInvalid" title="Verwijder ongeldige regels uit het tekstvak">Verwijder ongeldige</button>
+        </div>
+        <div id="validationBox" class="small" style="margin-top:8px"></div>
+      </section>
+
+      <!-- Provably fair -->
+      <section class="card">
+        <h2>2) Provably‑fair (optioneel)</h2>
+        <div class="row">
+          <div style="flex:1 1 280px">
+            <label class="muted" for="clientSeed">Client seed (door community)</label>
+            <input id="clientSeed" placeholder="bv. CBS-ARMY-2025" />
+          </div>
+          <div style="flex:1 1 280px">
+            <label class="muted" for="serverSeedHash">Server seed hash (deel vóór het spinnen)</label>
+            <div class="row">
+              <input id="serverSeedHash" readonly placeholder="Klik ‘Lock server seed’" />
+              <button id="copyHash">Copy</button>
+            </div>
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button class="primary" id="lockSeed">Lock server seed</button>
+          <button id="resetSeed">Reset</button>
+        </div>
+        <div id="serverSeedReveal" class="muted" style="margin-top:6px; word-break:break-all"></div>
+      </section>
+
+      <!-- Entrants table -->
+      <section class="card">
+        <h2>3) Deelnemers</h2>
+        <div id="entrantsEmpty" class="muted">Nog geen deelnemers. Plak wallets en klik <em>Generate wheel</em>.</div>
+        <div id="entrantsWrap" style="display:none; max-height:260px; overflow:auto; border:1px solid #21314a; border-radius:12px">
+          <table>
+            <thead>
+              <tr><th>Wallet</th><th style="text-align:right">Entries</th></tr>
+            </thead>
+            <tbody id="entrantsBody"></tbody>
+          </table>
+        </div>
+        <div style="margin-top:8px" class="muted">Totaal gewogen entries: <strong id="totalEntries">0</strong></div>
+      </section>
+
+      <!-- Wheel -->
+      <section class="card">
+        <div class="canvasWrap pointer">
+          <canvas id="wheel"></canvas>
+        </div>
+        <div class="row" style="margin-top:12px; align-items:center">
+          <button class="primary" id="btnSpin" disabled>Spin</button>
+          <button id="btnProof" disabled>Download proof (.json)</button>
+          <div id="winnerBox" class="winner" style="margin-left:auto; display:none"></div>
+        </div>
+        <div class="muted" style="margin-top:8px">Tip: stream deze pagina, deel de server‑seed‑hash vóór het spinnen, draai het wiel live, en deel daarna de JSON‑proof.</div>
+      </section>
+    </div>
+  </div>
+
+<script>
+// ===== Helpers =====
+function $(id){ return document.getElementById(id); }
+function shorten(addr){ if(!addr) return ""; const s = addr.trim(); return s.length<=10? s : s.slice(0,4)+"…"+s.slice(-4); }
+function copyToClipboard(text){ if(!text) return; navigator.clipboard.writeText(text); }
+
+// Basic Solana address validator (Base58, 32–44 chars, excludes 0 O I l)
+const reBase58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+function isLikelySolAddress(s){ return reBase58.test(s.trim()); }
+
+function randomHex(len=64){
+  const bytes = new Uint8Array(len/2);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function sha256Hex(str){
+  const enc = new TextEncoder();
+  const buf = await crypto.subtle.digest('SHA-256', enc.encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+// ===== State =====
+let entrants = []; // [{wallet, entries}]
+let expanded = []; // [wallet, wallet, ...] (weighted)
+let rotation = 0;  // radians
+let spinning = false;
+let winner = null; // {wallet,index}
+let spinCount = 0;
+
+let clientSeed = '';
+let serverSeed = '';
+let serverSeedHash = '';
+let locked = false;
+
+// ===== Elements =====
+const ta = $('inputWallets');
+const fileInput = $('fileInput');
+const btnGen = $('btnGenerate');
+const btnClear = $('btnClear');
+const btnRemoveInvalid = $('btnRemoveInvalid');
+const clientSeedInput = $('clientSeed');
+const serverSeedHashInput = $('serverSeedHash');
+const copyHashBtn = $('copyHash');
+const btnLock = $('lockSeed');
+const btnReset = $('resetSeed');
+const serverSeedReveal = $('serverSeedReveal');
+const entrantsEmpty = $('entrantsEmpty');
+const entrantsWrap = $('entrantsWrap');
+const entrantsBody = $('entrantsBody');
+const totalEntriesEl = $('totalEntries');
+const canvas = $('wheel');
+const btnSpin = $('btnSpin');
+const btnProof = $('btnProof');
+const winnerBox = $('winnerBox');
+const validationBox = $('validationBox');
+
+// ===== Wheel drawing =====
+function drawWheel(){
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const size = canvas.clientWidth || canvas.parentElement.clientWidth;
+  const w = size * dpr, h = size * dpr;
+  canvas.width = w; canvas.height = h;
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.clearRect(0,0,w,h);
+
+  const cx = w/2, cy = h/2; const r = Math.min(w,h)*0.46;
+
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(rotation);
+
+  const n = Math.max(1, expanded.length);
+  const slice = Math.PI*2 / n;
+
+  for(let i=0;i<n;i++){
+    const a0 = i*slice, a1 = a0 + slice;
+    const hue = (i*360)/n;
+    ctx.fillStyle = `hsl(${hue},70%,${n>40?45:55}%)`;
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.arc(0,0,r,a0,a1);
+    ctx.closePath();
+    ctx.fill();
+
+    ctx.save();
+    ctx.rotate(a0 + slice/2);
+    ctx.fillStyle = '#fff';
+    ctx.font = `${Math.max(12, Math.min(20, r*0.07)) * dpr}px ui-sans-serif, system-ui`;
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.scale(1/dpr,1/dpr);
+    ctx.translate((r-12)*dpr,0);
+    const label = shorten(expanded[i] || '');
+    ctx.fillText(label,0,0);
+    ctx.restore();
+  }
+
+  // Hub
+  ctx.beginPath();
+  ctx.fillStyle = '#0f172a';
+  ctx.arc(0,0,r*0.12,0,Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+
+  // Pointer triangle at top
+  ctx.beginPath();
+  ctx.fillStyle = '#ef4444';
+  const pW = Math.min(w,h)*0.03, pH = Math.min(w,h)*0.06;
+  ctx.moveTo(cx, cy - r - 6*dpr);
+  ctx.lineTo(cx - pW, cy - r - 6*dpr - pH);
+  ctx.lineTo(cx + pW, cy - r - 6*dpr - pH);
+  ctx.closePath();
+  ctx.fill();
+
+  // Rim
+  ctx.beginPath();
+  ctx.strokeStyle = '#94a3b8';
+  ctx.lineWidth = Math.max(2, r*0.03);
+  ctx.arc(cx, cy, r, 0, Math.PI*2);
+  ctx.stroke();
+}
+
+window.addEventListener('resize', drawWheel);
+
+// ===== Parsing & validation =====
+function parseLines(text){
+  return text.split(/
++/).map(l=>l.trim()).filter(Boolean).filter(l=>!l.startsWith('#'));
+}
+function findInvalidLines(lines){
+  const invalid = [];
+  for(const line of lines){
+    let addr = line, cnt = 1;
+    if(line.includes(',')){
+      const [a,c] = line.split(',');
+      addr = (a||'').trim();
+      const n = parseInt(String(c).trim(),10);
+      if(!(Number.isFinite(n) && n>0)) invalid.push(line);
+    }
+    if(!isLikelySolAddress(addr)) invalid.push(line);
+  }
+  return invalid;
+}
+function renderValidation(){
+  const lines = parseLines(ta.value);
+  const invalid = findInvalidLines(lines);
+  if(lines.length===0){ validationBox.innerHTML = ''; return; }
+  if(invalid.length===0){
+    validationBox.innerHTML = `<span class="ok">✔ Alle ${lines.length} regels lijken geldig.</span>`;
+  } else {
+    const sample = invalid.slice(0,5).map(s=>`<code>${s.replace(/</g,'&lt;')}</code>`).join(', ');
+    validationBox.innerHTML = `<span class="warn">⚠ ${invalid.length} ongeldige regel(s) gedetecteerd.</span> <span class="muted small">Voorbeeld: ${sample}${invalid.length>5?' …':''}</span>`;
+  }
+}
+
+// Remove invalid lines in-place
+function removeInvalidFromTextarea(){
+  const lines = parseLines(ta.value);
+  const invalidSet = new Set(findInvalidLines(lines));
+  const kept = lines.filter(l=>!invalidSet.has(l));
+  ta.value = kept.join('
+');
+  renderValidation();
+}
+
+// ===== Logic =====
+function normalize(){
+  const map = new Map();
+  const lines = parseLines(ta.value);
+  const invalid = findInvalidLines(lines);
+  if(invalid.length>0){
+    alert(`Er zijn ${invalid.length} ongeldige regels. Klik op "Verwijder ongeldige" of corrigeer ze.`);
+    return;
+  }
+  lines.forEach(line=>{
+    let addr = line, cnt = 1;
+    if(line.includes(',')){
+      const [a,c] = line.split(',');
+      addr = (a||'').trim();
+      const n = parseInt(String(c).trim(),10);
+      cnt = Number.isFinite(n) && n>0 ? n : 1;
+    }
+    if(!map.has(addr)) map.set(addr,0);
+    map.set(addr, map.get(addr)+cnt);
+  });
+  entrants = Array.from(map.entries()).map(([wallet, entries])=>({wallet, entries}));
+  entrants.sort((a,b)=> b.entries - a.entries);
+  expanded = entrants.flatMap(e=> Array.from({length:e.entries}, ()=> e.wallet));
+
+  // UI
+  entrantsBody.innerHTML = '';
+  if(entrants.length===0){
+    entrantsEmpty.style.display='block';
+    entrantsWrap.style.display='none';
+  }else{
+    entrantsEmpty.style.display='none';
+    entrantsWrap.style.display='block';
+    for(const e of entrants){
+      const tr = document.createElement('tr');
+      const td1 = document.createElement('td'); td1.textContent = e.wallet; td1.style.fontFamily='ui-monospace,monospace';
+      const td2 = document.createElement('td'); td2.textContent = e.entries; td2.style.textAlign='right';
+      tr.appendChild(td1); tr.appendChild(td2); entrantsBody.appendChild(tr);
+    }
+  }
+  totalEntriesEl.textContent = expanded.length;
+  winner = null; winnerBox.style.display='none'; winnerBox.textContent='';
+  rotation = 0; drawWheel();
+  btnSpin.disabled = expanded.length===0;
+  btnProof.disabled = expanded.length===0;
+}
+
+async function lockServer(){
+  if(locked) return;
+  serverSeed = randomHex(64);
+  serverSeedHash = await sha256Hex(serverSeed);
+  serverSeedHashInput.value = serverSeedHash;
+  locked = true;
+}
+function resetSeeds(){
+  clientSeed = '';
+  serverSeed = '';
+  serverSeedHash = '';
+  locked = false;
+  clientSeedInput.value='';
+  serverSeedHashInput.value='';
+  serverSeedReveal.textContent='';
+}
+
+async function deterministicIndex(n, spinNo){
+  if(n<=0) return 0;
+  const ss = serverSeed || randomHex(64);
+  const cs = clientSeed || '';
+  const msg = `${ss}|${cs}|${spinNo}`;
+  const hex = await sha256Hex(msg);
+  const val = BigInt('0x' + hex.slice(0,16));
+  return Number(val % BigInt(n));
+}
+function angleForIndex(idx, total){
+  const slice = (Math.PI*2)/total;
+  return (Math.PI*3)/2 - (idx + 0.5)*slice; // point to 12 o'clock
+}
+
+async function spin(){
+  if(!expanded.length || spinning) return;
+  spinning = true; winner = null; winnerBox.style.display='none';
+  const total = expanded.length; const nextSpin = spinCount + 1;
+  // keep client seed in sync
+  clientSeed = clientSeedInput.value.trim();
+  const idx = await deterministicIndex(total, nextSpin);
+  const target = angleForIndex(idx, total);
+
+  const fullSpins = 6 + Math.floor(Math.random()*4);
+  const finalAngle = target + fullSpins * Math.PI * 2;
+  const start = performance.now();
+  const startRot = rotation % (Math.PI*2);
+  const duration = 6000;
+  function easeOutCubic(t){ return 1 - Math.pow(1 - t, 3); }
+  function frame(now){
+    const t = Math.min(1, (now-start)/duration);
+    const eased = easeOutCubic(t);
+    const current = startRot + eased*(finalAngle - startRot);
+    rotation = current; drawWheel();
+    if(t<1){ requestAnimationFrame(frame); }
+    else{
+      const winWallet = expanded[idx];
+      winner = { wallet: winWallet, index: idx };
+      spinCount = nextSpin; spinning = false;
+      winnerBox.style.display='block';
+      winnerBox.innerHTML = `Winner: <strong style="font-family:ui-monospace,monospace">${winWallet}</strong>`;
+      if(!locked){ // if they forgot to lock, reveal what was used
+        (async()=>{
+          const ss = serverSeed || randomHex(64);
+          const hh = await sha256Hex(ss);
+          serverSeed = ss; serverSeedHash = hh;
+          serverSeedHashInput.value = serverSeedHash;
+        })();
+      }
+      serverSeedReveal.innerHTML = `Server seed (na spin): <span style="font-family:ui-monospace,monospace">${serverSeed}</span>`;
+    }
+  }
+  requestAnimationFrame(frame);
+}
+
+function downloadProof(){
+  if(!expanded.length) return;
+  const proof = {
+    protocol: 'CBS Spin‑Wheel v1',
+    timestamp: new Date().toISOString(),
+    serverSeedHash, serverSeed, clientSeed, spinCount,
+    entrants, expandedCount: expanded.length, winner
+  };
+  const blob = new Blob([JSON.stringify(proof,null,2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `cbs-spin-proof-${spinCount}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+
+// ===== File import =====
+fileInput.addEventListener('change', async (e)=>{
+  const f = e.target.files && e.target.files[0];
+  if(!f) return;
+  const text = await f.text();
+  const existing = ta.value ? (ta.value.endsWith('
+') ? ta.value : ta.value+'
+') : '';
+  ta.value = existing + text.trim() + '
+';
+  renderValidation();
+});
+
+// ===== Events =====
+btnGen.addEventListener('click', normalize);
+btnClear.addEventListener('click', ()=>{
+  ta.value=''; entrants=[]; expanded=[]; entrantsBody.innerHTML='';
+  entrantsEmpty.style.display='block'; entrantsWrap.style.display='none';
+  totalEntriesEl.textContent='0'; rotation=0; drawWheel();
+  btnSpin.disabled=true; btnProof.disabled=true; winnerBox.style.display='none'; validationBox.innerHTML='';
+});
+btnRemoveInvalid.addEventListener('click', removeInvalidFromTextarea);
+btnLock.addEventListener('click', lockServer);
+btnReset.addEventListener('click', resetSeeds);
+copyHashBtn.addEventListener('click', ()=> copyToClipboard(serverSeedHashInput.value));
+btnSpin.addEventListener('click', spin);
+btnProof.addEventListener('click', downloadProof);
+ta.addEventListener('input', renderValidation);
+
+// init
+drawWheel();
+</script>
+</body>
+</html>
