@@ -48,7 +48,7 @@
         <h1>CBS Ticker Raffle 🎟️</h1>
         <div class="muted small">One-bar scroller → auto stops after 10–15s</div>
       </div>
-      <div class="pill">v1.0 (Ticker)</div>
+      <div class="pill">v1.0.1 (Ticker)</div>
     </header>
 
     <div class="grid">
@@ -57,6 +57,7 @@
         <textarea id="input" placeholder="9xQeWvG...\nHk3n9...R5xA,3\n..."></textarea>
         <div id="validation" class="small" style="margin-top:6px"></div>
         <div class="row" style="margin-top:8px">
+          <button id="btnNormalize">Normalize spacing</button>
           <button id="btnBuild" class="primary">Build list</button>
           <button id="btnClear">Clear</button>
         </div>
@@ -137,6 +138,7 @@ const validation = $("validation");
 const strip = $("strip");
 const viewport = $("viewport");
 const winnerBox = $("winnerBox");
+const btnNormalize = $("btnNormalize");
 const btnBuild = $("btnBuild");
 const btnClear = $("btnClear");
 const btnStart10 = $("btnStart10");
@@ -150,9 +152,18 @@ const btnLock = $("btnLock");
 const btnReset = $("btnReset");
 const seedReveal = $("seedReveal");
 
-function parseLines(text){
-  return text.split(/\\n+/).map(l=>l.trim()).filter(Boolean);
+function parseAny(text){
+  // Accept both newline-separated and space-separated tokens
+  // Keep wallet,count pairs intact (spaces are not expected inside addresses)
+  const rough = text.trim().split(/\s+/); // split on ANY whitespace
+  return rough.filter(Boolean);
 }
+
+// Backward compatible: one-per-line parsing (unused but kept for reference)
+// function parseLines(text){
+//   return text.split(/\\n+/).map(l=>l.trim()).filter(Boolean);
+// }
+
 function findInvalid(lines){
   const bad=[];
   for(const line of lines){
@@ -168,27 +179,34 @@ function findInvalid(lines){
   return bad;
 }
 function renderValidationBox(){
-  const lines=parseLines(input.value);
-  const bad=findInvalid(lines);
-  if(!lines.length){ validation.innerHTML=""; return; }
+  const tokens=parseAny(input.value);
+  const bad=findInvalid(tokens);
+  if(!tokens.length){ validation.innerHTML=""; return; }
   if(!bad.length){
-    validation.innerHTML="<span class='ok'>✔ All lines look valid.</span>";
+    validation.innerHTML="<span class='ok'>✔ All addresses look valid.</span>";
   } else {
     const sample = bad.slice(0,5).map(s=>"<code>"+s.replace(/</g,"&lt;")+"</code>").join(", ");
-    validation.innerHTML = "<span class='warn'>⚠ "+bad.length+" invalid line(s).</span> <span class='small muted'>e.g. "+sample+(bad.length>5?" …":"")+"</span>";
+    validation.innerHTML = "<span class='warn'>⚠ "+bad.length+" invalid item(s).</span> <span class='small muted'>e.g. "+sample+(bad.length>5?" …":"")+"</span>";
   }
 }
 
+function normalizeSpacing(){
+  // Convert any sequence of whitespace into newlines for readability
+  const tokens = parseAny(input.value);
+  input.value = tokens.join("\\n");
+  renderValidationBox();
+}
+
 function buildList(){
-  const lines=parseLines(input.value);
-  const bad=findInvalid(lines);
-  if(bad.length){ alert("There are "+bad.length+" invalid lines. Fix them before building."); return; }
+  const tokens=parseAny(input.value);
+  const bad=findInvalid(tokens);
+  if(bad.length){ alert("There are "+bad.length+" invalid items. Fix/normalize before building."); return; }
 
   const map=new Map();
-  for(const line of lines){
-    let addr=line, cnt=1;
-    if(line.includes(",")){
-      const [a,c]=line.split(",");
+  for(const token of tokens){
+    let addr=token, cnt=1;
+    if(token.includes(",")){
+      const [a,c]=token.split(",");
       addr=(a||"").trim();
       const n=parseInt(String(c).trim(),10);
       cnt=Number.isFinite(n)&&n>0?n:1;
@@ -204,8 +222,7 @@ function buildList(){
 }
 
 function renderStrip(){
-  // Build a long strip repeating entries to allow long travel
-  const repeat = 40; // big enough for 10-15s travel
+  const repeat = 40;
   const items = [];
   for(let r=0;r<repeat;r++){
     for(const w of expanded){
@@ -213,7 +230,6 @@ function renderStrip(){
     }
   }
   strip.innerHTML = items.join("");
-  // reset transform
   strip.style.transform = "translateX(0px)";
   startOffset = 0;
 }
@@ -233,18 +249,15 @@ function getItemWidth(){
 }
 
 function chooseTargetOffset(ms){
-  // Decide winner index using deterministic seeds (or random if not locked).
   const n = expanded.length;
   spinCount += 1;
   const pickWinner = async ()=>{
     const idx = await deterministicIndex(n, spinCount);
-    // Stop on the idx positioned at center pointer after traveling several loops
     const itemW = getItemWidth();
     const vpW = viewport.getBoundingClientRect().width;
     const centerX = vpW/2;
-    const baseLoops = 20; // ensures long travel
+    const baseLoops = 20;
     const globalIndex = baseLoops*n + idx;
-    // target left translation to bring center of globalIndex under pointer line
     const target = globalIndex*itemW + (itemW/2) - centerX;
     return { idx, target };
   };
@@ -259,7 +272,7 @@ function animateTo(target, ms){
   const dur = ms;
   function easeOutCubic(t){ return 1 - Math.pow(1-t,3); }
   function frame(now){
-    const t = Math.min(1, (now-startTs)/dur);
+    const t = Math.min(1, (now-start)/dur);
     const eased = easeOutCubic(t);
     const off = start + dist*eased;
     strip.style.transform = `translateX(${-off}px)`;
@@ -279,13 +292,11 @@ async function startRun(ms){
   if(running){ return; }
   clientSeed = clientSeedInput.value.trim();
   const { idx, target } = await chooseTargetOffset(ms);
-  // store winner index for reveal
   strip.dataset.winIdx = idx;
   strip.dataset.ms = ms;
   winnerBox.style.display="none";
   animateTo(target, ms);
   if(!locked){
-    // auto-generate server seed/hash if not locked (still revealed after)
     const ss = serverSeed || randomHex(64);
     const hh = await sha256Hex(ss);
     serverSeed = ss; serverSeedHash = hh; serverSeedHashInput.value = serverSeedHash;
@@ -296,11 +307,10 @@ function stopNow(){
   if(!running) return;
   running=false;
   if(animReq) cancelAnimationFrame(animReq);
-  revealWinner(); // stops wherever it is (not deterministic to entry)
+  revealWinner();
 }
 
 function revealWinner(){
-  // Compute which item sits under pointer center
   const itemW = getItemWidth();
   const vpW = viewport.getBoundingClientRect().width;
   const centerX = vpW/2;
@@ -315,7 +325,7 @@ function revealWinner(){
 function downloadProof(){
   if(!expanded.length) return;
   const proof = {
-    protocol: "CBS Ticker Raffle v1",
+    protocol: "CBS Ticker Raffle v1.0.1",
     timestamp: new Date().toISOString(),
     serverSeedHash, serverSeed, clientSeed, spinCount,
     entrants,
@@ -328,21 +338,9 @@ function downloadProof(){
   URL.revokeObjectURL(url);
 }
 
-// Seeds
-async function lockSeed(){
-  if(locked) return;
-  serverSeed = randomHex(64);
-  serverSeedHash = await sha256Hex(serverSeed);
-  serverSeedHashInput.value = serverSeedHash;
-  locked = true;
-}
-function resetSeed(){
-  serverSeed = ""; serverSeedHash=""; clientSeed=""; locked=false;
-  serverSeedHashInput.value=""; clientSeedInput.value=""; seedReveal.textContent="";
-}
-
 // Events
 input.addEventListener("input", renderValidationBox);
+btnNormalize.addEventListener("click", normalizeSpacing);
 btnBuild.addEventListener("click", buildList);
 btnClear.addEventListener("click", ()=>{ input.value=""; validation.innerHTML=""; entrants=[]; expanded=[]; strip.innerHTML=""; winnerBox.style.display="none"; });
 btnStart10.addEventListener("click", ()=> startRun(10000));
@@ -350,11 +348,21 @@ btnStart15.addEventListener("click", ()=> startRun(15000));
 btnStop.addEventListener("click", stopNow);
 btnProof.addEventListener("click", downloadProof);
 btnCopyHash.addEventListener("click", ()=> copy(serverSeedHashInput.value));
-btnLock.addEventListener("click", lockSeed);
-btnReset.addEventListener("click", resetSeed);
+btnLock.addEventListener("click", async ()=>{
+  if(locked) return;
+  serverSeed = randomHex(64);
+  serverSeedHash = await sha256Hex(serverSeed);
+  serverSeedHashInput.value = serverSeedHash;
+  locked = true;
+});
+btnReset.addEventListener("click", ()=>{
+  serverSeed = ""; serverSeedHash=""; clientSeed=""; locked=false;
+  serverSeedHashInput.value=""; clientSeedInput.value=""; seedReveal.textContent="";
+});
 
 // init
 renderValidationBox();
 </script>
 </body>
 </html>
+
