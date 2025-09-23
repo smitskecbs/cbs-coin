@@ -55,10 +55,7 @@
         <h2>1) Plak wallets (één per regel) of "wallet,count"</h2>
         <div class="row">
           <div style="flex:1 1 340px">
-            <textarea id="inputWallets" placeholder="9xQeWvG...
-9xQeWvG...,3
-# comment regels worden genegeerd
-..."></textarea>
+            <textarea id="inputWallets" placeholder="9xQeWvG...\n9xQeWvG...,3\n# comment regels worden genegeerd\n..."></textarea>
             <div class="row small muted" style="margin-top:6px">
               <span class="pill">Tip: CSV/TXT import kan ook →</span>
             </div>
@@ -257,8 +254,7 @@ window.addEventListener('resize', drawWheel);
 
 // ===== Parsing & validation =====
 function parseLines(text){
-  return text.split(/
-+/).map(l=>l.trim()).filter(Boolean).filter(l=>!l.startsWith('#'));
+  return text.split(/\n+/).map(l=>l.trim()).filter(Boolean).filter(l=>!l.startsWith('#'));
 }
 function findInvalidLines(lines){
   const invalid = [];
@@ -291,8 +287,7 @@ function removeInvalidFromTextarea(){
   const lines = parseLines(ta.value);
   const invalidSet = new Set(findInvalidLines(lines));
   const kept = lines.filter(l=>!invalidSet.has(l));
-  ta.value = kept.join('
-');
+  ta.value = kept.join('\n');
   renderValidation();
 }
 
@@ -435,11 +430,8 @@ fileInput.addEventListener('change', async (e)=>{
   const f = e.target.files && e.target.files[0];
   if(!f) return;
   const text = await f.text();
-  const existing = ta.value ? (ta.value.endsWith('
-') ? ta.value : ta.value+'
-') : '';
-  ta.value = existing + text.trim() + '
-';
+  const existing = ta.value ? (ta.value.endsWith('\n') ? ta.value : ta.value+'\n') : '';
+  ta.value = existing + text.trim() + '\n';
   renderValidation();
 });
 
