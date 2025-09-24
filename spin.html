@@ -1,150 +1,247 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CBS Ticker Raffle — Simple Scroll Draw</title>
+  <title>CBS Ticker Raffle — Showcase Edition</title>
+  <meta name="description" content="CBS single-bar ticker raffle with provably-fair lock/reveal." />
   <style>
     :root{
-      --bg1:#0b1020; --bg2:#070a14; --card:#11182a; --muted:#9fb2d8;
-      --accent:#2dd4bf; --warn:#ef4444; --ok:#22c55e;
+      --bg1:#070a14; --bg2:#0b1020; --card:#0e1628; --muted:#9fb2d8; --text:#e8f0ff;
+      --accent:#2dd4bf; --accent-2:#7c3aed; --border:#1f2a44; --warn:#ef4444; --ok:#22c55e; --red:#ef4444;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
-    body{margin:0; font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial;
-         background:linear-gradient(180deg,var(--bg1),var(--bg2)); color:#e6eef8}
-    .wrap{max-width:1100px;margin:0 auto;padding:18px}
-    .card{background:linear-gradient(180deg,#0f172a,#0b1324); border:1px solid #1e293b; border-radius:16px; padding:16px;
-          box-shadow:0 10px 30px rgba(0,0,0,.25)}
-    h1{margin:0 0 8px; font-weight:800}
+    body{
+      margin:0; color:var(--text);
+      font-family:ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Inter, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      background:
+        radial-gradient(1200px 600px at 10% 0%, rgba(124,58,237,.15), transparent 60%),
+        radial-gradient(1200px 600px at 90% 10%, rgba(45,212,191,.12), transparent 60%),
+        linear-gradient(180deg,var(--bg1),var(--bg2));
+    }
+    .wrap{max-width:1200px;margin:0 auto;padding:24px}
+    .hero{
+      display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px;
+    }
+    .title{
+      display:flex; align-items:center; gap:14px;
+    }
+    .logo{
+      width:42px; height:42px; border-radius:12px; background:
+        linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow:0 10px 30px rgba(124,58,237,.35), 0 6px 18px rgba(45,212,191,.25);
+    }
+    h1{margin:0; font-weight:800; letter-spacing:.2px}
+    .badge{padding:6px 10px; border:1px solid var(--border); background:rgba(255,255,255,.02);
+      border-radius:999px; font-size:12px}
+    .grid{display:grid; gap:18px; grid-template-columns:1fr}
+    @media(min-width:1024px){.grid{grid-template-columns:1.2fr .8fr}}
+
+    .card{
+      background:linear-gradient(180deg,#0f172a, #0b1324);
+      border:1px solid var(--border); border-radius:18px; padding:16px;
+      box-shadow:0 10px 30px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.03);
+    }
+    .card h2{margin:4px 0 10px; font-size:18px}
     .muted{color:var(--muted)}
-    textarea,input{background:#0a1224; border:1px solid #283347; color:#e6eef8; border-radius:12px; padding:10px; width:100%}
-    textarea{min-height:140px; resize:vertical; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:13px}
-    input{height:40px; font-family:ui-monospace,Menlo,Consolas,monospace; font-size:12px}
-    button{background:#0f1c33; border:1px solid #2b3b55; color:#e6eef8; padding:10px 14px; border-radius:12px; cursor:pointer}
-    button.primary{background:#0b3b36; border-color:#1e776b}
-    button.primary:hover{background:#13584f}
-    button:disabled{opacity:.6; cursor:not-allowed}
-    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
-    .pill{display:inline-block; padding:2px 8px; border-radius:999px; border:1px solid #2b3b55; background:#0c1a2f; font-size:12px}
     .small{font-size:12px}
-    .ok{color:var(--ok)} .warn{color:var(--warn)}
-    .grid{display:grid; gap:16px; grid-template-columns:1fr}
-    @media(min-width:980px){.grid{grid-template-columns:1fr 1fr}}
-    /* Ticker styles */
-    .ticker-wrap{position:relative; border:1px solid #21314a; border-radius:14px; padding:12px; background:#0c1529}
-    .viewport{position:relative; overflow:hidden; height:64px; border-radius:10px; background:#0b1426}
+    label{display:block; font-size:12px; color:var(--muted); margin-bottom:6px}
+    textarea,input{
+      width:100%; background:#0a1224; border:1px solid #283347; color:var(--text);
+      border-radius:12px; padding:10px;
+    }
+    textarea{min-height:160px; resize:vertical; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:13px}
+    input{height:40px; font-family:ui-monospace, Menlo, Consolas, monospace; font-size:12px}
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    .spacer{height:8px}
+    button{
+      background:#0f1c33; border:1px solid #2b3b55; color:var(--text);
+      padding:10px 14px; border-radius:12px; cursor:pointer; transition:transform .08s ease, background .2s ease;
+    }
+    button:hover{transform:translateY(-1px)}
+    button:active{transform:translateY(0)}
+    button.primary{background:linear-gradient(135deg, #0b3b36, #10304f); border-color:#1e776b}
+    button.accent{background:linear-gradient(135deg, #1a0f33, #22114b); border-color:#3d2b83}
+    button.ghost{background:transparent}
+    button:disabled{opacity:.55; cursor:not-allowed}
+
+    .tickersec{grid-column:1/-1}
+    .stickynote{
+      padding:8px 10px; border-radius:12px; border:1px dashed var(--border); background:rgba(255,255,255,.02)
+    }
+
+    /* Ticker */
+    .ticker-wrap{position:relative; border:1px solid var(--border); border-radius:18px; padding:14px; background:#0c1529;
+      box-shadow:inset 0 1px 0 rgba(255,255,255,.04)}
+    .headerbar{display:flex; justify-content:space-between; align-items:center; margin-bottom:10px}
+    .countdown{font-family:ui-monospace, Menlo, Consolas, monospace; font-weight:700}
+    .progress{height:6px; width:100%; background:#0b1426; border:1px solid #21314a; border-radius:999px; overflow:hidden}
+    .progress > div{height:100%; width:0%; background:linear-gradient(90deg, var(--accent), var(--accent-2)); transition:width .12s ease}
+
+    .viewport{position:relative; overflow:hidden; height:80px; border-radius:12px; background:#0b1426; border:1px solid #1a2842}
     .strip{position:absolute; left:0; top:0; height:100%; white-space:nowrap; will-change:transform}
-    .item{display:inline-flex; align-items:center; justify-content:center; height:100%; width:220px;
-          border-right:1px dashed #24334b; font-family:ui-monospace,Menlo,Consolas,monospace}
-    .pointer{position:absolute; top:6px; left:50%; transform:translateX(-50%); height:52px; width:0; border-left:2px solid #ef4444}
-    .winner-box{margin-top:10px; background:#081421; border:1px solid #26405a; padding:8px 10px; border-radius:12px; display:none}
+    .item{
+      display:inline-flex; align-items:center; justify-content:center; height:100%; width:260px;
+      border-right:1px dashed #24334b; font-family:ui-monospace, Menlo, Consolas, monospace;
+      font-size:16px; letter-spacing:.2px;
+    }
+    .pointer{
+      position:absolute; top:12px; left:50%; transform:translateX(-50%); height:56px; width:0; border-left:3px solid var(--red);
+      filter:drop-shadow(0 0 6px rgba(239,68,68,.5));
+    }
+    .centerGlow{
+      pointer-events:none; position:absolute; top:0; left:50%; transform:translateX(-50%);
+      width:280px; height:100%; border-left:1px solid rgba(255,255,255,.08); border-right:1px solid rgba(255,255,255,.08);
+      box-shadow:inset 0 0 60px rgba(124,58,237,.18), inset 0 0 120px rgba(45,212,191,.14);
+    }
+    .winner-box{
+      margin-top:12px; display:none; align-items:center; gap:10px; background:#081421; border:1px solid #26405a;
+      padding:10px 12px; border-radius:12px;
+    }
+    .winner-box strong{font-family:ui-monospace, Menlo, Consolas, monospace; font-size:15px}
+
+    .pill{display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px;
+      border:1px solid var(--border); background:rgba(255,255,255,.02); font-size:12px}
+    .ok{color:var(--ok)} .warn{color:var(--warn)}
+
+    .note{
+      font-size:12px; color:var(--muted);
+      margin-top:8px
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <header class="row" style="justify-content:space-between">
-      <div>
-        <h1>CBS Ticker Raffle 🎟️</h1>
-        <div class="muted small">One-bar scroller → auto stops after 10–15s</div>
+    <div class="hero">
+      <div class="title">
+        <div class="logo"></div>
+        <div>
+          <h1>CBS Ticker Raffle — Showcase</h1>
+          <div class="muted small">Single-bar scroller • Custom duration • Provably-fair lock/reveal</div>
+        </div>
       </div>
-      <div class="pill">v1.0.1 (Ticker)</div>
-    </header>
+      <div class="badge">v1.1</div>
+    </div>
 
     <div class="grid">
+      <!-- LEFT: entrants & controls -->
       <section class="card">
-        <h3>1) Paste wallets (one per line) — optional: <code>wallet,count</code></h3>
+        <h2>1) Deelnemers invoer</h2>
+        <label for="input">Plak wallets (één per regel) of <code>wallet,count</code>.</label>
         <textarea id="input" placeholder="9xQeWvG...\nHk3n9...R5xA,3\n..."></textarea>
         <div id="validation" class="small" style="margin-top:6px"></div>
-        <div class="row" style="margin-top:8px">
+        <div class="spacer"></div>
+        <div class="row">
           <button id="btnNormalize">Normalize spacing</button>
+          <button id="btnRemoveInvalid">Remove invalid</button>
           <button id="btnBuild" class="primary">Build list</button>
-          <button id="btnClear">Clear</button>
+          <button id="btnClear" class="ghost">Clear</button>
         </div>
+        <div class="note">Adrescheck: Solana Base58 (32–44 chars). Spaties in adressen zijn ongeldig.</div>
       </section>
 
+      <!-- RIGHT: provably fair -->
       <section class="card">
-        <h3>2) Provably-fair (optional)</h3>
+        <h2>2) Provably-fair (optioneel)</h2>
         <div class="row">
-          <div style="flex:1 1 280px">
-            <label class="muted small">Client seed (community)</label>
+          <div style="flex:1 1 240px">
+            <label>Client seed (door community)</label>
             <input id="clientSeed" placeholder="CBS-ARMY-2025"/>
           </div>
-          <div style="flex:1 1 280px">
-            <label class="muted small">Server seed hash (commit before start)</label>
+          <div style="flex:1 1 240px">
+            <label>Server seed hash (deel vóór start)</label>
             <div class="row">
-              <input id="serverSeedHash" readonly placeholder="Click ‘Lock’"/>
+              <input id="serverSeedHash" readonly placeholder="Klik ‘Lock’"/>
               <button id="btnCopyHash">Copy</button>
             </div>
           </div>
         </div>
-        <div class="row" style="margin-top:8px">
-          <button id="btnLock" class="primary">Lock</button>
+        <div class="spacer"></div>
+        <div class="row">
+          <button id="btnLock" class="accent">Lock</button>
           <button id="btnReset">Reset</button>
         </div>
-        <div id="seedReveal" class="small muted" style="margin-top:6px; word-break:break-all"></div>
+        <div id="seedReveal" class="note" style="word-break:break-all"></div>
       </section>
 
-      <section class="card" style="grid-column:1/-1">
-        <h3>3) Ticker</h3>
+      <!-- TICKER -->
+      <section class="card tickersec">
+        <h2>3) Ticker & Trekking</h2>
+        <div class="stickynote">
+          <span class="pill"><span>⏱</span> Duur (seconden)</span>
+          <input id="durationSec" type="number" min="3" max="60" value="12" style="width:90px; margin-left:8px" />
+        </div>
+        <div class="spacer"></div>
         <div class="ticker-wrap">
+          <div class="headerbar">
+            <div class="row">
+              <button id="btnStart" class="primary">Start</button>
+              <button id="btnStop">Stop</button>
+              <button id="btnProof">Download proof (.json)</button>
+              <button id="btnCopyWinner">Copy winner</button>
+            </div>
+            <div class="countdown" id="countdown">00:12</div>
+          </div>
+          <div class="progress"><div id="progressFill"></div></div>
           <div class="viewport" id="viewport">
             <div class="strip" id="strip"></div>
+            <div class="centerGlow"></div>
             <div class="pointer"></div>
           </div>
-          <div class="row" style="margin-top:10px">
-            <button id="btnStart10" class="primary">Start (10s)</button>
-            <button id="btnStart15" class="">Start (15s)</button>
-            <button id="btnStop" class="">Stop</button>
-            <button id="btnProof" class="">Download proof (.json)</button>
-            <div id="winnerBox" class="winner-box"></div>
-          </div>
-          <div class="small muted" style="margin-top:6px">
-            Tip: Share the server seed hash before starting. After it stops, the server seed is revealed and a proof file can be downloaded.
-          </div>
+          <div class="winner-box" id="winnerBox"><span>Winner:</span> <strong id="winnerText"></strong></div>
+          <div class="note">Tip: deel de server-seed-hash vóór starten. Na de stop wordt de server-seed onthuld en kun je een proof.json downloaden.</div>
         </div>
       </section>
     </div>
   </div>
 
 <script>
-// ===== Helpers =====
-function $(id){ return document.getElementById(id); }
-function shorten(s){ if(!s) return ""; const t=s.trim(); return t.length<=12 ? t : t.slice(0,6)+"…"+t.slice(-6); }
+/* ===== Helpers ===== */
+const $ = (id)=> document.getElementById(id);
 const reBase58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
-function isAddr(s){ return reBase58.test((s||"").trim()); }
-function copy(text){ if(text) navigator.clipboard.writeText(text); }
+const isAddr = (s)=> reBase58.test((s||"").trim());
+const shorten = (s)=> !s ? "" : (s.length<=14 ? s : s.slice(0,7)+"…"+s.slice(-7));
+const copy = (t)=> t && navigator.clipboard.writeText(t);
 function randomHex(len=64){ const b=new Uint8Array(len/2); crypto.getRandomValues(b); return Array.from(b).map(x=>x.toString(16).padStart(2,"0")).join(""); }
 async function sha256Hex(s){ const d=await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)); return Array.from(new Uint8Array(d)).map(b=>b.toString(16).padStart(2,"0")).join(""); }
 
-// ===== State =====
+/* ===== State ===== */
 let entrants = [];   // [{wallet, entries}]
 let expanded = [];   // weighted wallets
 let spinCount = 0;
 let running = false;
 let startTs = 0;
-let duration = 10000;
-let targetOffset = 0;
 let startOffset = 0;
 let animReq = null;
+let targetOffset = 0;
+let animDur = 12000;
 
 let serverSeed = "";
 let serverSeedHash = "";
 let clientSeed = "";
 let locked = false;
 
+/* ===== Elements ===== */
 const input = $("input");
 const validation = $("validation");
 const strip = $("strip");
 const viewport = $("viewport");
+const countdown = $("countdown");
+const progressFill = $("progressFill");
 const winnerBox = $("winnerBox");
+const winnerText = $("winnerText");
+const durationSecInput = $("durationSec");
+
 const btnNormalize = $("btnNormalize");
+const btnRemoveInvalid = $("btnRemoveInvalid");
 const btnBuild = $("btnBuild");
 const btnClear = $("btnClear");
-const btnStart10 = $("btnStart10");
-const btnStart15 = $("btnStart15");
+const btnStart = $("btnStart");
 const btnStop = $("btnStop");
 const btnProof = $("btnProof");
+const btnCopyWinner = $("btnCopyWinner");
+
 const clientSeedInput = $("clientSeed");
 const serverSeedHashInput = $("serverSeedHash");
 const btnCopyHash = $("btnCopyHash");
@@ -152,29 +249,19 @@ const btnLock = $("btnLock");
 const btnReset = $("btnReset");
 const seedReveal = $("seedReveal");
 
-function parseAny(text){
-  // Accept both newline-separated and space-separated tokens
-  // Keep wallet,count pairs intact (spaces are not expected inside addresses)
-  const rough = text.trim().split(/\s+/); // split on ANY whitespace
-  return rough.filter(Boolean);
-}
-
-// Backward compatible: one-per-line parsing (unused but kept for reference)
-// function parseLines(text){
-//   return text.split(/\\n+/).map(l=>l.trim()).filter(Boolean);
-// }
-
-function findInvalid(lines){
+/* ===== Parsing & validation ===== */
+function parseAny(text){ return text.trim().split(/\s+/).filter(Boolean); }
+function findInvalid(items){
   const bad=[];
-  for(const line of lines){
-    let addr=line, cnt=1;
-    if(line.includes(",")){
-      const [a,c]=line.split(",");
+  for(const token of items){
+    let addr=token, cnt=1;
+    if(token.includes(",")){
+      const [a,c]=token.split(",");
       addr=(a||"").trim();
-      const n = parseInt(String(c).trim(),10);
-      if(!(Number.isFinite(n)&&n>0)) bad.push(line);
+      const n=parseInt(String(c).trim(),10);
+      if(!(Number.isFinite(n)&&n>0)) bad.push(token);
     }
-    if(!isAddr(addr)) bad.push(line);
+    if(!isAddr(addr)) bad.push(token);
   }
   return bad;
 }
@@ -189,18 +276,23 @@ function renderValidationBox(){
     validation.innerHTML = "<span class='warn'>⚠ "+bad.length+" invalid item(s).</span> <span class='small muted'>e.g. "+sample+(bad.length>5?" …":"")+"</span>";
   }
 }
-
 function normalizeSpacing(){
-  // Convert any sequence of whitespace into newlines for readability
   const tokens = parseAny(input.value);
-  input.value = tokens.join("\\n");
+  input.value = tokens.join("\n");
+  renderValidationBox();
+}
+function removeInvalid(){
+  const tokens=parseAny(input.value);
+  const badSet=new Set(findInvalid(tokens));
+  const kept=tokens.filter(t=>!badSet.has(t));
+  input.value = kept.join("\n");
   renderValidationBox();
 }
 
 function buildList(){
   const tokens=parseAny(input.value);
   const bad=findInvalid(tokens);
-  if(bad.length){ alert("There are "+bad.length+" invalid items. Fix/normalize before building."); return; }
+  if(bad.length){ alert("There are "+bad.length+" invalid items. Fix/normalize or use Remove invalid."); return; }
 
   const map=new Map();
   for(const token of tokens){
@@ -218,22 +310,28 @@ function buildList(){
   expanded = entrants.flatMap(e=>Array.from({length:e.entries},()=>e.wallet));
   if(!expanded.length){ alert("No entrants."); return; }
   renderStrip();
-  winnerBox.style.display="none";
+  winnerBox.style.display="none"; winnerText.textContent="";
 }
 
+/* ===== Ticker rendering ===== */
 function renderStrip(){
-  const repeat = 40;
+  // Build a long strip repeating entries to allow long travel
+  const repeat = 40; // enough for long travel
   const items = [];
   for(let r=0;r<repeat;r++){
-    for(const w of expanded){
-      items.push(`<div class="item">${shorten(w)}</div>`);
-    }
+    for(const w of expanded){ items.push(`<div class="item">${shorten(w)}</div>`); }
   }
   strip.innerHTML = items.join("");
   strip.style.transform = "translateX(0px)";
   startOffset = 0;
 }
 
+function getItemWidth(){
+  const first = strip.querySelector(".item");
+  return first ? first.getBoundingClientRect().width : 260;
+}
+
+/* ===== Deterministic winner ===== */
 async function deterministicIndex(n, spinNo){
   if(n<=0) return 0;
   const ss = serverSeed || randomHex(64);
@@ -243,59 +341,63 @@ async function deterministicIndex(n, spinNo){
   return Number(val % BigInt(n));
 }
 
-function getItemWidth(){
-  const first = strip.querySelector(".item");
-  return first ? first.getBoundingClientRect().width : 220;
-}
-
-function chooseTargetOffset(ms){
+async function chooseTargetOffset(ms){
   const n = expanded.length;
   spinCount += 1;
-  const pickWinner = async ()=>{
-    const idx = await deterministicIndex(n, spinCount);
-    const itemW = getItemWidth();
-    const vpW = viewport.getBoundingClientRect().width;
-    const centerX = vpW/2;
-    const baseLoops = 20;
-    const globalIndex = baseLoops*n + idx;
-    const target = globalIndex*itemW + (itemW/2) - centerX;
-    return { idx, target };
-  };
-  return pickWinner();
+  const idx = await deterministicIndex(n, spinCount);
+  const itemW = getItemWidth();
+  const vpW = viewport.getBoundingClientRect().width;
+  const centerX = vpW/2;
+  const baseLoops = 20; // ensures long travel
+  const globalIndex = baseLoops*n + idx;
+  const target = globalIndex*itemW + (itemW/2) - centerX;
+  return { idx, target };
+}
+
+/* ===== Animation ===== */
+function setCountdown(msLeft){
+  const secs = Math.max(0, Math.ceil(msLeft/1000));
+  const s = String(secs).padStart(2,"0");
+  countdown.textContent = `00:${s}`;
+  const total = animDur || 1;
+  const pct = Math.min(100, Math.max(0, Math.round(100*(1 - msLeft/total))));
+  progressFill.style.width = pct + "%";
 }
 
 function animateTo(target, ms){
   running = true;
-  startTs = performance.now();
   const start = startOffset;
   const dist = target - start;
-  const dur = ms;
+  animDur = ms;
+  startTs = performance.now();
+
   function easeOutCubic(t){ return 1 - Math.pow(1-t,3); }
   function frame(now){
-    const t = Math.min(1, (now-start)/dur);
+    const t = Math.min(1, (now - startTs) / animDur);
     const eased = easeOutCubic(t);
     const off = start + dist*eased;
     strip.style.transform = `translateX(${-off}px)`;
+    setCountdown((1 - t) * animDur);
     if(t<1 && running){
       animReq = requestAnimationFrame(frame);
     } else {
       running=false;
       startOffset = target;
+      setCountdown(0);
       revealWinner();
     }
   }
   animReq = requestAnimationFrame(frame);
 }
 
-async function startRun(ms){
+async function startRun(){
   if(!expanded.length){ alert("Build the list first."); return; }
   if(running){ return; }
+  const sec = Math.max(3, Math.min(60, parseInt(durationSecInput.value||"12",10)));
   clientSeed = clientSeedInput.value.trim();
-  const { idx, target } = await chooseTargetOffset(ms);
-  strip.dataset.winIdx = idx;
-  strip.dataset.ms = ms;
-  winnerBox.style.display="none";
-  animateTo(target, ms);
+  const { target } = await chooseTargetOffset(sec*1000);
+  winnerBox.style.display="none"; winnerText.textContent="";
+  animateTo(target, sec*1000);
   if(!locked){
     const ss = serverSeed || randomHex(64);
     const hh = await sha256Hex(ss);
@@ -307,7 +409,7 @@ function stopNow(){
   if(!running) return;
   running=false;
   if(animReq) cancelAnimationFrame(animReq);
-  revealWinner();
+  revealWinner(); // stop wherever it is (non-deterministic if manual stop)
 }
 
 function revealWinner(){
@@ -317,50 +419,63 @@ function revealWinner(){
   const idx = Math.round((startOffset + centerX - (itemW/2)) / itemW) % expanded.length;
   const safeIdx = ((idx % expanded.length) + expanded.length) % expanded.length;
   const wallet = expanded[safeIdx];
-  winnerBox.style.display="block";
-  winnerBox.innerHTML = `Winner: <strong style="font-family:ui-monospace,Menlo,Consolas,monospace">${wallet}</strong>`;
-  seedReveal.innerHTML = `Server seed (revealed): <span style="font-family:ui-monospace">${serverSeed}</span>`;
+  winnerText.textContent = wallet;
+  winnerBox.style.display="flex";
+  seedReveal.innerHTML = `Server seed (gebruikt): <span style="font-family:ui-monospace,Menlo,Consolas,monospace">${serverSeed}</span>`;
 }
 
 function downloadProof(){
   if(!expanded.length) return;
   const proof = {
-    protocol: "CBS Ticker Raffle v1.0.1",
+    protocol: "CBS Ticker Raffle v1.1",
     timestamp: new Date().toISOString(),
     serverSeedHash, serverSeed, clientSeed, spinCount,
     entrants,
     expandedCount: expanded.length,
-    winner: winnerBox.textContent.trim()
+    winner: winnerText.textContent.trim()
   };
   const blob = new Blob([JSON.stringify(proof,null,2)], {type:"application/json"});
   const url = URL.createObjectURL(blob);
-  const a=document.createElement("a"); a.href=url; a.download=`cbs-ticker-proof-${spinCount}.json`; document.body.appendChild(a); a.click(); a.remove();
+  const a = document.createElement("a");
+  a.href = url; a.download = `cbs-ticker-proof-${spinCount}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
   URL.revokeObjectURL(url);
 }
 
-// Events
-input.addEventListener("input", renderValidationBox);
-btnNormalize.addEventListener("click", normalizeSpacing);
-btnBuild.addEventListener("click", buildList);
-btnClear.addEventListener("click", ()=>{ input.value=""; validation.innerHTML=""; entrants=[]; expanded=[]; strip.innerHTML=""; winnerBox.style.display="none"; });
-btnStart10.addEventListener("click", ()=> startRun(10000));
-btnStart15.addEventListener("click", ()=> startRun(15000));
-btnStop.addEventListener("click", stopNow);
-btnProof.addEventListener("click", downloadProof);
-btnCopyHash.addEventListener("click", ()=> copy(serverSeedHashInput.value));
-btnLock.addEventListener("click", async ()=>{
+/* ===== Seeds ===== */
+async function lockSeed(){
   if(locked) return;
   serverSeed = randomHex(64);
   serverSeedHash = await sha256Hex(serverSeed);
   serverSeedHashInput.value = serverSeedHash;
   locked = true;
-});
-btnReset.addEventListener("click", ()=>{
+}
+function resetSeed(){
   serverSeed = ""; serverSeedHash=""; clientSeed=""; locked=false;
   serverSeedHashInput.value=""; clientSeedInput.value=""; seedReveal.textContent="";
+}
+
+/* ===== Events ===== */
+$("input").addEventListener("input", renderValidationBox);
+btnNormalize.addEventListener("click", normalizeSpacing);
+btnRemoveInvalid.addEventListener("click", removeInvalid);
+btnBuild.addEventListener("click", buildList);
+btnClear.addEventListener("click", ()=>{
+  input.value=""; validation.innerHTML=""; entrants=[]; expanded=[]; strip.innerHTML="";
+  winnerBox.style.display="none"; winnerText.textContent="";
+  progressFill.style.width = "0%"; countdown.textContent = "00:12";
 });
 
-// init
+btnStart.addEventListener("click", startRun);
+btnStop.addEventListener("click", stopNow);
+btnProof.addEventListener("click", downloadProof);
+btnCopyWinner.addEventListener("click", ()=> copy(winnerText.textContent.trim()));
+
+btnCopyHash.addEventListener("click", ()=> copy(serverSeedHashInput.value));
+btnLock.addEventListener("click", lockSeed);
+btnReset.addEventListener("click", resetSeed);
+
+/* init */
 renderValidationBox();
 </script>
 </body>
