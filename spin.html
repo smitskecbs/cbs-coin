@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CBS Ticker Raffle — Showcase Edition</title>
-  <meta name="description" content="CBS single-bar ticker raffle with provably-fair lock/reveal." />
+  <meta name="description" content="CBS single-bar ticker raffle with provably-fair lock/reveal, holder check, and 48h hold verification." />
   <style>
     :root{
       --bg1:#070a14; --bg2:#0b1020; --card:#0e1628; --muted:#9fb2d8; --text:#e8f0ff;
@@ -21,28 +21,17 @@
         linear-gradient(180deg,var(--bg1),var(--bg2));
     }
     .wrap{max-width:1200px;margin:0 auto;padding:24px}
-    .hero{
-      display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px;
-    }
-    .title{
-      display:flex; align-items:center; gap:14px;
-    }
-    .logo{
-      width:42px; height:42px; border-radius:12px; background:
-        linear-gradient(135deg, var(--accent), var(--accent-2));
-      box-shadow:0 10px 30px rgba(124,58,237,.35), 0 6px 18px rgba(45,212,191,.25);
-    }
+    .hero{display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px}
+    .title{display:flex; align-items:center; gap:14px}
+    .logo{width:42px; height:42px; border-radius:12px; background:linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow:0 10px 30px rgba(124,58,237,.35), 0 6px 18px rgba(45,212,191,.25)}
     h1{margin:0; font-weight:800; letter-spacing:.2px}
-    .badge{padding:6px 10px; border:1px solid var(--border); background:rgba(255,255,255,.02);
-      border-radius:999px; font-size:12px}
+    .badge{padding:6px 10px; border:1px solid var(--border); background:rgba(255,255,255,.02); border-radius:999px; font-size:12px}
     .grid{display:grid; gap:18px; grid-template-columns:1fr}
     @media(min-width:1024px){.grid{grid-template-columns:1.2fr .8fr}}
 
-    .card{
-      background:linear-gradient(180deg,#0f172a, #0b1324);
-      border:1px solid var(--border); border-radius:18px; padding:16px;
-      box-shadow:0 10px 30px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.03);
-    }
+    .card{background:linear-gradient(180deg,#0f172a, #0b1324); border:1px solid var(--border); border-radius:18px; padding:16px;
+      box-shadow:0 10px 30px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.03)}
     .card h2{margin:4px 0 10px; font-size:18px}
     .muted{color:var(--muted)}
     .small{font-size:12px}
@@ -67,9 +56,7 @@
     button:disabled{opacity:.55; cursor:not-allowed}
 
     .tickersec{grid-column:1/-1}
-    .stickynote{
-      padding:8px 10px; border-radius:12px; border:1px dashed var(--border); background:rgba(255,255,255,.02)
-    }
+    .stickynote{padding:8px 10px; border-radius:12px; border:1px dashed var(--border); background:rgba(255,255,255,.02)}
 
     /* Ticker */
     .ticker-wrap{position:relative; border:1px solid var(--border); border-radius:18px; padding:14px; background:#0c1529;
@@ -86,15 +73,11 @@
       border-right:1px dashed #24334b; font-family:ui-monospace, Menlo, Consolas, monospace;
       font-size:16px; letter-spacing:.2px;
     }
-    .pointer{
-      position:absolute; top:12px; left:50%; transform:translateX(-50%); height:56px; width:0; border-left:3px solid var(--red);
-      filter:drop-shadow(0 0 6px rgba(239,68,68,.5));
-    }
-    .centerGlow{
-      pointer-events:none; position:absolute; top:0; left:50%; transform:translateX(-50%);
+    .pointer{position:absolute; top:12px; left:50%; transform:translateX(-50%); height:56px; width:0; border-left:3px solid var(--red);
+      filter:drop-shadow(0 0 6px rgba(239,68,68,.5))}
+    .centerGlow{pointer-events:none; position:absolute; top:0; left:50%; transform:translateX(-50%);
       width:280px; height:100%; border-left:1px solid rgba(255,255,255,.08); border-right:1px solid rgba(255,255,255,.08);
-      box-shadow:inset 0 0 60px rgba(124,58,237,.18), inset 0 0 120px rgba(45,212,191,.14);
-    }
+      box-shadow:inset 0 0 60px rgba(124,58,237,.18), inset 0 0 120px rgba(45,212,191,.14)}
     .winner-box{
       margin-top:12px; display:none; align-items:center; gap:10px; background:#081421; border:1px solid #26405a;
       padding:10px 12px; border-radius:12px;
@@ -104,11 +87,15 @@
     .pill{display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px;
       border:1px solid var(--border); background:rgba(255,255,255,.02); font-size:12px}
     .ok{color:var(--ok)} .warn{color:var(--warn)}
+    .note{font-size:12px; color:var(--muted); margin-top:8px}
 
-    .note{
-      font-size:12px; color:var(--muted);
-      margin-top:8px
+    .config{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin:8px 0}
+    .config .pill input[type="number"], .config .pill input[type="text"]{
+      height:28px; padding:4px 8px; border-radius:10px; border:1px solid #2b3b55; background:#0a1224; color:var(--text);
+      font-family:ui-monospace, Menlo, Consolas, monospace; font-size:12px
     }
+    .status{font-size:12px; margin-left:auto}
+    .toolbar{display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:8px}
   </style>
 </head>
 <body>
@@ -118,10 +105,10 @@
         <div class="logo"></div>
         <div>
           <h1>CBS Ticker Raffle — Showcase</h1>
-          <div class="muted small">Single-bar scroller • Custom duration • Provably-fair lock/reveal</div>
+          <div class="muted small">Single-bar scroller • Custom duration • Provably-fair lock/reveal • Holder + 48h check</div>
         </div>
       </div>
-      <div class="badge">v1.1</div>
+      <div class="badge">v1.3</div>
     </div>
 
     <div class="grid">
@@ -168,11 +155,17 @@
       <!-- TICKER -->
       <section class="card tickersec">
         <h2>3) Ticker & Trekking</h2>
-        <div class="stickynote">
-          <span class="pill"><span>⏱</span> Duur (seconden)</span>
-          <input id="durationSec" type="number" min="3" max="60" value="12" style="width:90px; margin-left:8px" />
+
+        <!-- Holder + 48h check config -->
+        <div class="config">
+          <span class="pill">⏱ Duur (s) <input id="durationSec" type="number" min="3" max="60" value="12" style="width:72px; margin-left:6px" /></span>
+          <label class="pill"><input id="autoSkip" type="checkbox" checked style="margin-right:6px"> Auto-skip non-holders</label>
+          <span class="pill">Min CBS <input id="minCbs" type="number" min="0" step="1" value="1" style="width:80px; margin-left:6px" /></span>
+          <label class="pill"><input id="enforceHold" type="checkbox" checked style="margin-right:6px"> Enforce hold window</label>
+          <span class="pill">Hours <input id="holdHours" type="number" min="1" max="168" step="1" value="48" style="width:80px; margin-left:6px" /></span>
+          <span class="pill" style="flex:1 1 260px">RPC <input id="rpcUrl" type="text" value="https://api.mainnet-beta.solana.com" style="width:100%; margin-left:6px" /></span>
         </div>
-        <div class="spacer"></div>
+
         <div class="ticker-wrap">
           <div class="headerbar">
             <div class="row">
@@ -189,14 +182,29 @@
             <div class="centerGlow"></div>
             <div class="pointer"></div>
           </div>
-          <div class="winner-box" id="winnerBox"><span>Winner:</span> <strong id="winnerText"></strong></div>
-          <div class="note">Tip: deel de server-seed-hash vóór starten. Na de stop wordt de server-seed onthuld en kun je een proof.json downloaden.</div>
+
+          <div class="winner-box" id="winnerBox">
+            <span>Winner:</span> <strong id="winnerText"></strong>
+            <span id="holderInfo" class="small muted"></span>
+            <button id="btnReroll" style="margin-left:auto; display:none">Reroll</button>
+            <button id="btnRetryCheck" class="ghost" style="display:none">Retry check</button>
+          </div>
+
+          <div class="toolbar">
+            <button id="btnExportCsv">Download winners CSV</button>
+            <span class="small muted">CSV bevat: wallet, tijd, CBS balance, 48h status, reden</span>
+          </div>
+
+          <div class="note">Tip: deel de server-seed-hash vóór starten. Na de stop wordt de server-seed onthuld en kun je een proof.json + winners CSV downloaden.</div>
         </div>
       </section>
     </div>
   </div>
 
 <script>
+/* ===== Constants ===== */
+const CBS_MINT = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
+
 /* ===== Helpers ===== */
 const $ = (id)=> document.getElementById(id);
 const reBase58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
@@ -222,6 +230,10 @@ let serverSeedHash = "";
 let clientSeed = "";
 let locked = false;
 
+let autoSkips = 0;
+const MAX_AUTO_SKIPS_FACTOR = 2; // safety limit
+let winnersLog = []; // for CSV
+
 /* ===== Elements ===== */
 const input = $("input");
 const validation = $("validation");
@@ -231,7 +243,16 @@ const countdown = $("countdown");
 const progressFill = $("progressFill");
 const winnerBox = $("winnerBox");
 const winnerText = $("winnerText");
+const holderInfo = $("holderInfo");
+const btnReroll = $("btnReroll");
+const btnRetryCheck = $("btnRetryCheck");
+
 const durationSecInput = $("durationSec");
+const autoSkipInput = $("autoSkip");
+const minCbsInput = $("minCbs");
+const enforceHoldInput = $("enforceHold");
+const holdHoursInput = $("holdHours");
+const rpcUrlInput = $("rpcUrl");
 
 const btnNormalize = $("btnNormalize");
 const btnRemoveInvalid = $("btnRemoveInvalid");
@@ -241,6 +262,7 @@ const btnStart = $("btnStart");
 const btnStop = $("btnStop");
 const btnProof = $("btnProof");
 const btnCopyWinner = $("btnCopyWinner");
+const btnExportCsv = $("btnExportCsv");
 
 const clientSeedInput = $("clientSeed");
 const serverSeedHashInput = $("serverSeedHash");
@@ -310,12 +332,12 @@ function buildList(){
   expanded = entrants.flatMap(e=>Array.from({length:e.entries},()=>e.wallet));
   if(!expanded.length){ alert("No entrants."); return; }
   renderStrip();
-  winnerBox.style.display="none"; winnerText.textContent="";
+  winnerBox.style.display="none"; winnerText.textContent=""; holderInfo.textContent="";
+  autoSkips = 0;
 }
 
 /* ===== Ticker rendering ===== */
 function renderStrip(){
-  // Build a long strip repeating entries to allow long travel
   const repeat = 40; // enough for long travel
   const items = [];
   for(let r=0;r<repeat;r++){
@@ -396,7 +418,7 @@ async function startRun(){
   const sec = Math.max(3, Math.min(60, parseInt(durationSecInput.value||"12",10)));
   clientSeed = clientSeedInput.value.trim();
   const { target } = await chooseTargetOffset(sec*1000);
-  winnerBox.style.display="none"; winnerText.textContent="";
+  winnerBox.style.display="none"; winnerText.textContent=""; holderInfo.textContent=""; btnReroll.style.display="none"; btnRetryCheck.style.display="none";
   animateTo(target, sec*1000);
   if(!locked){
     const ss = serverSeed || randomHex(64);
@@ -422,22 +444,205 @@ function revealWinner(){
   winnerText.textContent = wallet;
   winnerBox.style.display="flex";
   seedReveal.innerHTML = `Server seed (gebruikt): <span style="font-family:ui-monospace,Menlo,Consolas,monospace">${serverSeed}</span>`;
+  // Verify holdings & 48h hold
+  verifyWinner(wallet);
 }
 
+/* ===== RPC helpers ===== */
+async function rpcCall(method, params, rpcUrl){
+  const body = { jsonrpc: "2.0", id: 1, method, params };
+  const res = await fetch(rpcUrl, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  if(!res.ok) throw new Error("RPC HTTP "+res.status);
+  const j = await res.json();
+  if(j.error) throw new Error(j.error.message || "RPC error");
+  return j;
+}
+async function getTokenAccounts(owner, rpcUrl, mint){
+  const j = await rpcCall("getTokenAccountsByOwner", [owner, { mint }, { encoding: "jsonParsed" }], rpcUrl);
+  return (j.result?.value || []).map(v => ({ pubkey: v.pubkey, info: v.account.data.parsed.info }));
+}
+async function getCbsBalance(owner, rpcUrl){
+  const accounts = await getTokenAccounts(owner, rpcUrl, CBS_MINT);
+  let total = 0;
+  for(const {info} of accounts){
+    const amt = info.tokenAmount;
+    const ui = typeof amt.uiAmount === "number" ? amt.uiAmount : parseFloat(amt.uiAmountString || "0");
+    total += (isFinite(ui) ? ui : 0);
+  }
+  return { total, accounts };
+}
+
+/* ===== Holder + 48h verification ===== */
+async function verifyWinner(wallet){
+  const rpc = (rpcUrlInput.value || "").trim() || "https://api.mainnet-beta.solana.com";
+  const min = Math.max(0, Number(minCbsInput.value || 1));
+  const enforceHold = enforceHoldInput.checked;
+  const windowHours = Math.max(1, parseInt(holdHoursInput.value || "48", 10));
+
+  holderInfo.textContent = " • checking CBS balance…";
+  btnReroll.style.display = "none";
+  btnRetryCheck.style.display = "none";
+
+  const nowIso = new Date().toISOString();
+
+  try{
+    const { total, accounts } = await getCbsBalance(wallet, rpc);
+    const hasMin = total >= min;
+    let holdOk = true;
+    let holdReason = "ok";
+    let seenTx = 0;
+
+    if(enforceHold && accounts.length > 0){
+      holderInfo.textContent = ` • holds ${total.toLocaleString()} CBS — scanning ${windowHours}h…`;
+      const since = Math.floor(Date.now()/1000) - windowHours*3600;
+
+      // For each token account, walk recent signatures and check post balances
+      for(const { pubkey } of accounts){
+        let beforeSig = null;
+        let done = false;
+        while(!done){
+          const args = beforeSig ? [pubkey, { limit: 100, before: beforeSig }] : [pubkey, { limit: 100 }];
+          const sigs = await rpcCall("getSignaturesForAddress", args, rpc);
+          const list = sigs.result || [];
+          if(list.length === 0){ done = true; break; }
+          for(const entry of list){
+            if(!entry.blockTime){ continue; }
+            if(entry.blockTime < since){ done = true; break; }
+            // fetch tx
+            const txr = await rpcCall("getTransaction", [entry.signature, { encoding: "jsonParsed", maxSupportedTransactionVersion: 0 }], rpc);
+            const meta = txr.result && txr.result.meta;
+            if(!meta){ continue; }
+            const pre = meta.preTokenBalances || [];
+            const post = meta.postTokenBalances || [];
+            const pickAmt = (arr)=>{
+              for(const b of arr){
+                if(b.mint === CBS_MINT && b.owner === wallet){
+                  const ta = b.uiTokenAmount || b.tokenAmount;
+                  if(!ta) continue;
+                  return typeof ta.uiAmount === "number" ? ta.uiAmount : parseFloat(ta.uiAmountString || "0");
+                }
+              }
+              return null;
+            };
+            const preAmt = pickAmt(pre);
+            const postAmt = pickAmt(post);
+            if(postAmt != null){
+              if(postAmt < min){
+                holdOk = false;
+                holdReason = "post_balance_below_min";
+                break;
+              }
+              if(preAmt != null and postAmt < preAmt and postAmt < min){
+                holdOk = false;
+                holdReason = "reduced_below_min";
+                break;
+              }
+            }
+            seenTx++;
+          }
+          if(!done and list.length < 100) done = true;
+          else if(!done) beforeSig = list[list.length-1].signature;
+          if(!holdOk) break;
+        }
+        if(!holdOk) break;
+      }
+    }
+
+    // Decide eligibility
+    let eligible = hasMin && (!enforceHold || holdOk);
+    let reason = eligible ? "eligible" : (!hasMin ? "no_holder" : "hold_fail");
+
+    holderInfo.textContent =
+      ` • holds ${total.toLocaleString()} CBS ${hasMin ? "✅" : "❌ NO HOLDER"}`
+      + (enforceHold ? ` • ${windowHours}h ${holdOk ? "✅" : "❌"}` : "");
+
+    // Log for CSV
+    winnersLog.push({
+      time: nowIso,
+      wallet,
+      cbs_balance: total,
+      min_required: min,
+      hold_enforced: enforceHold,
+      hours: windowHours,
+      hold_ok: holdOk,
+      eligible,
+      reason
+    });
+
+    // Auto-skip if not eligible
+    if(!eligible){
+      btnReroll.style.display = "inline-block";
+      if(autoSkipInput.checked){
+        const maxSkips = Math.max(5, expanded.length * MAX_AUTO_SKIPS_FACTOR);
+        if(autoSkips < maxSkips){
+          autoSkips++;
+          setTimeout(()=> startRun(), 1200);
+        }
+      }
+    }else{
+      autoSkips = 0;
+    }
+  }catch(err){
+    holderInfo.textContent = " • RPC error (verification failed)";
+    btnRetryCheck.style.display = "inline-block";
+    winnersLog.push({
+      time: new Date().toISOString(),
+      wallet,
+      cbs_balance: null,
+      min_required: Number(minCbsInput.value || 1),
+      hold_enforced: enforceHoldInput.checked,
+      hours: Number(holdHoursInput.value || 48),
+      hold_ok: null,
+      eligible: null,
+      reason: "rpc_error"
+    });
+  }
+}
+
+/* ===== Proof & CSV ===== */
 function downloadProof(){
   if(!expanded.length) return;
   const proof = {
-    protocol: "CBS Ticker Raffle v1.1",
+    protocol: "CBS Ticker Raffle v1.3",
     timestamp: new Date().toISOString(),
     serverSeedHash, serverSeed, clientSeed, spinCount,
     entrants,
     expandedCount: expanded.length,
-    winner: winnerText.textContent.trim()
+    lastWinner: winnerText.textContent.trim()
   };
   const blob = new Blob([JSON.stringify(proof,null,2)], {type:"application/json"});
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url; a.download = `cbs-ticker-proof-${spinCount}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+function toCsvRow(obj){
+  const esc = (v)=>{
+    if(v==null) return "";
+    const s = String(v);
+    if(/[",\n]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
+    return s;
+  };
+  return [
+    esc(obj.time),
+    esc(obj.wallet),
+    esc(obj.cbs_balance),
+    esc(obj.min_required),
+    esc(obj.hold_enforced),
+    esc(obj.hours),
+    esc(obj.hold_ok),
+    esc(obj.eligible),
+    esc(obj.reason)
+  ].join(",");
+}
+function exportWinnersCsv(){
+  const header = "time,wallet,cbs_balance,min_required,hold_enforced,hours,hold_ok,eligible,reason\n";
+  const rows = winnersLog.map(toCsvRow).join("\n");
+  const blob = new Blob([header + rows], {type:"text/csv"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = `cbs-winners-${Date.now()}.csv`;
   document.body.appendChild(a); a.click(); a.remove();
   URL.revokeObjectURL(url);
 }
@@ -462,14 +667,18 @@ btnRemoveInvalid.addEventListener("click", removeInvalid);
 btnBuild.addEventListener("click", buildList);
 btnClear.addEventListener("click", ()=>{
   input.value=""; validation.innerHTML=""; entrants=[]; expanded=[]; strip.innerHTML="";
-  winnerBox.style.display="none"; winnerText.textContent="";
+  winnerBox.style.display="none"; winnerText.textContent=""; holderInfo.textContent="";
   progressFill.style.width = "0%"; countdown.textContent = "00:12";
+  autoSkips = 0;
 });
 
 btnStart.addEventListener("click", startRun);
 btnStop.addEventListener("click", stopNow);
 btnProof.addEventListener("click", downloadProof);
 btnCopyWinner.addEventListener("click", ()=> copy(winnerText.textContent.trim()));
+btnExportCsv.addEventListener("click", exportWinnersCsv);
+btnReroll.addEventListener("click", startRun);
+btnRetryCheck.addEventListener("click", ()=> verifyWinner(winnerText.textContent.trim()));
 
 btnCopyHash.addEventListener("click", ()=> copy(serverSeedHashInput.value));
 btnLock.addEventListener("click", lockSeed);
@@ -480,4 +689,3 @@ renderValidationBox();
 </script>
 </body>
 </html>
-
