@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CBS Ticker Raffle — Showcase Edition</title>
-  <meta name="description" content="CBS single-bar ticker raffle with provably-fair lock/reveal, holder check, and 48h hold verification." />
+  <meta name="description" content="CBS single-bar ticker raffle with provably-fair lock/reveal, holder check, and 48h hold verification. Robust input sanitizer." />
   <style>
     :root{
       --bg1:#070a14; --bg2:#0b1020; --card:#0e1628; --muted:#9fb2d8; --text:#e8f0ff;
@@ -105,17 +105,17 @@
         <div class="logo"></div>
         <div>
           <h1>CBS Ticker Raffle — Showcase</h1>
-          <div class="muted small">Single-bar scroller • Custom duration • Provably-fair lock/reveal • Holder + 48h check</div>
+          <div class="muted small">Single-bar scroller • Provably-fair lock/reveal • Holder + 48h check • Robust input cleaner</div>
         </div>
       </div>
-      <div class="badge">v1.3</div>
+      <div class="badge">v1.4</div>
     </div>
 
     <div class="grid">
       <!-- LEFT: entrants & controls -->
       <section class="card">
         <h2>1) Deelnemers invoer</h2>
-        <label for="input">Plak wallets (één per regel) of <code>wallet,count</code>.</label>
+        <label for="input">Plak wallets (één per regel) of <code>wallet,count</code>. (Cleaner verwijdert onzichtbare spaties automatisch.)</label>
         <textarea id="input" placeholder="9xQeWvG...\nHk3n9...R5xA,3\n..."></textarea>
         <div id="validation" class="small" style="margin-top:6px"></div>
         <div class="spacer"></div>
@@ -125,7 +125,7 @@
           <button id="btnBuild" class="primary">Build list</button>
           <button id="btnClear" class="ghost">Clear</button>
         </div>
-        <div class="note">Adrescheck: Solana Base58 (32–44 chars). Spaties in adressen zijn ongeldig.</div>
+        <div class="note">Adrescheck: Solana Base58 (32–44 tekens). Onzichtbare/extra spaties worden automatisch gestript.</div>
       </section>
 
       <!-- RIGHT: provably fair -->
@@ -192,10 +192,10 @@
 
           <div class="toolbar">
             <button id="btnExportCsv">Download winners CSV</button>
-            <span class="small muted">CSV bevat: wallet, tijd, CBS balance, 48h status, reden</span>
+            <span class="small muted">CSV: wallet, tijd, CBS balance, 48h status, reden</span>
           </div>
 
-          <div class="note">Tip: deel de server-seed-hash vóór starten. Na de stop wordt de server-seed onthuld en kun je een proof.json + winners CSV downloaden.</div>
+          <div class="note">De pagina onthult de server-seed na de trek en kan proof.json + winners CSV downloaden.</div>
         </div>
       </section>
     </div>
@@ -208,11 +208,29 @@ const CBS_MINT = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
 /* ===== Helpers ===== */
 const $ = (id)=> document.getElementById(id);
 const reBase58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+/* Onzichtbare/rare spaties: NBSP, zero-width, BOM, etc. */
+const INVISIBLE_RE = /[\u00A0\u1680\u2000-\u200B\u202F\u205F\u3000\u2060\ufeff]/g;
+
 const isAddr = (s)=> reBase58.test((s||"").trim());
 const shorten = (s)=> !s ? "" : (s.length<=14 ? s : s.slice(0,7)+"…"+s.slice(-7));
 const copy = (t)=> t && navigator.clipboard.writeText(t);
 function randomHex(len=64){ const b=new Uint8Array(len/2); crypto.getRandomValues(b); return Array.from(b).map(x=>x.toString(16).padStart(2,"0")).join(""); }
 async function sha256Hex(s){ const d=await crypto.subtle.digest("SHA-256", new TextEncoder().encode(s)); return Array.from(new Uint8Array(d)).map(b=>b.toString(16).padStart(2,"0")).join(""); }
+
+/* ===== Input sanitizer ===== */
+function sanitizeToken(raw){
+  if(!raw) return "";
+  let s = String(raw)
+    .replace(/\r/g,"")
+    .replace(INVISIBLE_RE,"")        // verwijder onzichtbare spaties
+    .replace(/[ \t]/g,"")            // verwijder normale spaties/tabjes IN het token
+    .trim();
+  return s;
+}
+function normalizeRawText(text){
+  // Maak elk whitespace-blok tot newline; trim daarna.
+  return String(text||"").replace(/\r/g,"").replace(/\s+/g,"\n").trim();
+}
 
 /* ===== State ===== */
 let entrants = [];   // [{wallet, entries}]
@@ -272,18 +290,33 @@ const btnReset = $("btnReset");
 const seedReveal = $("seedReveal");
 
 /* ===== Parsing & validation ===== */
-function parseAny(text){ return text.trim().split(/\s+/).filter(Boolean); }
+function parseAny(text){
+  const norm = normalizeRawText(text);
+  if(!norm) return [];
+  const lines = norm.split("\n").filter(Boolean);
+  // Laat tokens met komma intact (wallet,count)
+  return lines.map(sanitizeToken).filter(Boolean);
+}
+function parseTokenToEntry(token){
+  // Ondersteunt: "wallet"  of  "wallet,count"
+  let addr = token, cnt = 1;
+  if(token.includes(",")){
+    const parts = token.split(",");
+    addr = sanitizeToken(parts[0]||"");
+    const c = sanitizeToken(parts[1]||"1");
+    const n = parseInt(c,10);
+    cnt = Number.isFinite(n)&&n>0 ? n : 1;
+  }else{
+    addr = sanitizeToken(token);
+  }
+  return { addr, cnt };
+}
 function findInvalid(items){
   const bad=[];
   for(const token of items){
-    let addr=token, cnt=1;
-    if(token.includes(",")){
-      const [a,c]=token.split(",");
-      addr=(a||"").trim();
-      const n=parseInt(String(c).trim(),10);
-      if(!(Number.isFinite(n)&&n>0)) bad.push(token);
-    }
+    const { addr, cnt } = parseTokenToEntry(token);
     if(!isAddr(addr)) bad.push(token);
+    else if(!(Number.isFinite(cnt)&&cnt>0)) bad.push(token);
   }
   return bad;
 }
@@ -292,10 +325,13 @@ function renderValidationBox(){
   const bad=findInvalid(tokens);
   if(!tokens.length){ validation.innerHTML=""; return; }
   if(!bad.length){
-    validation.innerHTML="<span class='ok'>✔ All addresses look valid.</span>";
+    validation.innerHTML="<span class='ok'>✔ Alles ziet er goed uit (cleaner actief).</span>";
   } else {
-    const sample = bad.slice(0,5).map(s=>"<code>"+s.replace(/</g,"&lt;")+"</code>").join(", ");
-    validation.innerHTML = "<span class='warn'>⚠ "+bad.length+" invalid item(s).</span> <span class='small muted'>e.g. "+sample+(bad.length>5?" …":"")+"</span>";
+    const sample = bad.slice(0,5).map(s=>{
+      const safe = s.replace(/</g,"&lt;");
+      return "<code>"+safe+"</code>";
+    }).join(", ");
+    validation.innerHTML = "<span class='warn'>⚠ "+bad.length+" ongeldige item(s).</span> <span class='small muted'>Voorbeeld: "+sample+(bad.length>5?" …":"")+"</span>";
   }
 }
 function normalizeSpacing(){
@@ -310,27 +346,20 @@ function removeInvalid(){
   input.value = kept.join("\n");
   renderValidationBox();
 }
-
 function buildList(){
   const tokens=parseAny(input.value);
   const bad=findInvalid(tokens);
-  if(bad.length){ alert("There are "+bad.length+" invalid items. Fix/normalize or use Remove invalid."); return; }
+  if(bad.length){ alert("Er zijn "+bad.length+" ongeldige items. Normalize/clean of klik ‘Remove invalid’."); return; }
 
   const map=new Map();
   for(const token of tokens){
-    let addr=token, cnt=1;
-    if(token.includes(",")){
-      const [a,c]=token.split(",");
-      addr=(a||"").trim();
-      const n=parseInt(String(c).trim(),10);
-      cnt=Number.isFinite(n)&&n>0?n:1;
-    }
+    const { addr, cnt } = parseTokenToEntry(token);
     map.set(addr, (map.get(addr)||0)+cnt);
   }
   entrants = Array.from(map.entries()).map(([wallet,entries])=>({wallet,entries}));
   entrants.sort((a,b)=>b.entries-a.entries);
   expanded = entrants.flatMap(e=>Array.from({length:e.entries},()=>e.wallet));
-  if(!expanded.length){ alert("No entrants."); return; }
+  if(!expanded.length){ alert("Geen deelnemers."); return; }
   renderStrip();
   winnerBox.style.display="none"; winnerText.textContent=""; holderInfo.textContent="";
   autoSkips = 0;
@@ -338,7 +367,7 @@ function buildList(){
 
 /* ===== Ticker rendering ===== */
 function renderStrip(){
-  const repeat = 40; // enough for long travel
+  const repeat = 40; // genoeg lengte
   const items = [];
   for(let r=0;r<repeat;r++){
     for(const w of expanded){ items.push(`<div class="item">${shorten(w)}</div>`); }
@@ -347,7 +376,6 @@ function renderStrip(){
   strip.style.transform = "translateX(0px)";
   startOffset = 0;
 }
-
 function getItemWidth(){
   const first = strip.querySelector(".item");
   return first ? first.getBoundingClientRect().width : 260;
@@ -362,7 +390,6 @@ async function deterministicIndex(n, spinNo){
   const val = BigInt("0x"+hex.slice(0,16));
   return Number(val % BigInt(n));
 }
-
 async function chooseTargetOffset(ms){
   const n = expanded.length;
   spinCount += 1;
@@ -370,7 +397,7 @@ async function chooseTargetOffset(ms){
   const itemW = getItemWidth();
   const vpW = viewport.getBoundingClientRect().width;
   const centerX = vpW/2;
-  const baseLoops = 20; // ensures long travel
+  const baseLoops = 20; // lange run
   const globalIndex = baseLoops*n + idx;
   const target = globalIndex*itemW + (itemW/2) - centerX;
   return { idx, target };
@@ -385,7 +412,6 @@ function setCountdown(msLeft){
   const pct = Math.min(100, Math.max(0, Math.round(100*(1 - msLeft/total))));
   progressFill.style.width = pct + "%";
 }
-
 function animateTo(target, ms){
   running = true;
   const start = startOffset;
@@ -411,9 +437,8 @@ function animateTo(target, ms){
   }
   animReq = requestAnimationFrame(frame);
 }
-
 async function startRun(){
-  if(!expanded.length){ alert("Build the list first."); return; }
+  if(!expanded.length){ alert("Eerst ‘Build list’."); return; }
   if(running){ return; }
   const sec = Math.max(3, Math.min(60, parseInt(durationSecInput.value||"12",10)));
   clientSeed = clientSeedInput.value.trim();
@@ -426,14 +451,12 @@ async function startRun(){
     serverSeed = ss; serverSeedHash = hh; serverSeedHashInput.value = serverSeedHash;
   }
 }
-
 function stopNow(){
   if(!running) return;
   running=false;
   if(animReq) cancelAnimationFrame(animReq);
-  revealWinner(); // stop wherever it is (non-deterministic if manual stop)
+  revealWinner();
 }
-
 function revealWinner(){
   const itemW = getItemWidth();
   const vpW = viewport.getBoundingClientRect().width;
@@ -444,7 +467,6 @@ function revealWinner(){
   winnerText.textContent = wallet;
   winnerBox.style.display="flex";
   seedReveal.innerHTML = `Server seed (gebruikt): <span style="font-family:ui-monospace,Menlo,Consolas,monospace">${serverSeed}</span>`;
-  // Verify holdings & 48h hold
   verifyWinner(wallet);
 }
 
@@ -489,14 +511,11 @@ async function verifyWinner(wallet){
     const { total, accounts } = await getCbsBalance(wallet, rpc);
     const hasMin = total >= min;
     let holdOk = true;
-    let holdReason = "ok";
-    let seenTx = 0;
 
     if(enforceHold && accounts.length > 0){
       holderInfo.textContent = ` • holds ${total.toLocaleString()} CBS — scanning ${windowHours}h…`;
       const since = Math.floor(Date.now()/1000) - windowHours*3600;
 
-      // For each token account, walk recent signatures and check post balances
       for(const { pubkey } of accounts){
         let beforeSig = null;
         let done = false;
@@ -508,7 +527,6 @@ async function verifyWinner(wallet){
           for(const entry of list){
             if(!entry.blockTime){ continue; }
             if(entry.blockTime < since){ done = true; break; }
-            // fetch tx
             const txr = await rpcCall("getTransaction", [entry.signature, { encoding: "jsonParsed", maxSupportedTransactionVersion: 0 }], rpc);
             const meta = txr.result && txr.result.meta;
             if(!meta){ continue; }
@@ -527,20 +545,11 @@ async function verifyWinner(wallet){
             const preAmt = pickAmt(pre);
             const postAmt = pickAmt(post);
             if(postAmt != null){
-              if(postAmt < min){
-                holdOk = false;
-                holdReason = "post_balance_below_min";
-                break;
-              }
-              if(preAmt != null and postAmt < preAmt and postAmt < min){
-                holdOk = false;
-                holdReason = "reduced_below_min";
-                break;
-              }
+              if(postAmt < min){ holdOk = false; break; }
+              if(preAmt != null && postAmt < preAmt && postAmt < min){ holdOk = false; break; }
             }
-            seenTx++;
           }
-          if(!done and list.length < 100) done = true;
+          if(!done && list.length < 100) done = true;
           else if(!done) beforeSig = list[list.length-1].signature;
           if(!holdOk) break;
         }
@@ -548,15 +557,10 @@ async function verifyWinner(wallet){
       }
     }
 
-    // Decide eligibility
-    let eligible = hasMin && (!enforceHold || holdOk);
-    let reason = eligible ? "eligible" : (!hasMin ? "no_holder" : "hold_fail");
+    const eligible = hasMin && (!enforceHold || holdOk);
+    const holdBadge = enforceHold ? ` • ${windowHours}h ${holdOk ? "✅" : "❌"}` : "";
+    holderInfo.textContent = ` • holds ${total.toLocaleString()} CBS ${hasMin ? "✅" : "❌ NO HOLDER"}${holdBadge}`;
 
-    holderInfo.textContent =
-      ` • holds ${total.toLocaleString()} CBS ${hasMin ? "✅" : "❌ NO HOLDER"}`
-      + (enforceHold ? ` • ${windowHours}h ${holdOk ? "✅" : "❌"}` : "");
-
-    // Log for CSV
     winnersLog.push({
       time: nowIso,
       wallet,
@@ -566,10 +570,9 @@ async function verifyWinner(wallet){
       hours: windowHours,
       hold_ok: holdOk,
       eligible,
-      reason
+      reason: eligible ? "eligible" : (!hasMin ? "no_holder" : "hold_fail")
     });
 
-    // Auto-skip if not eligible
     if(!eligible){
       btnReroll.style.display = "inline-block";
       if(autoSkipInput.checked){
@@ -603,7 +606,7 @@ async function verifyWinner(wallet){
 function downloadProof(){
   if(!expanded.length) return;
   const proof = {
-    protocol: "CBS Ticker Raffle v1.3",
+    protocol: "CBS Ticker Raffle v1.4",
     timestamp: new Date().toISOString(),
     serverSeedHash, serverSeed, clientSeed, spinCount,
     entrants,
@@ -618,23 +621,8 @@ function downloadProof(){
   URL.revokeObjectURL(url);
 }
 function toCsvRow(obj){
-  const esc = (v)=>{
-    if(v==null) return "";
-    const s = String(v);
-    if(/[",\n]/.test(s)) return '"' + s.replace(/"/g,'""') + '"';
-    return s;
-  };
-  return [
-    esc(obj.time),
-    esc(obj.wallet),
-    esc(obj.cbs_balance),
-    esc(obj.min_required),
-    esc(obj.hold_enforced),
-    esc(obj.hours),
-    esc(obj.hold_ok),
-    esc(obj.eligible),
-    esc(obj.reason)
-  ].join(",");
+  const esc = (v)=>{ if(v==null) return ""; const s=String(v); return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s; };
+  return [esc(obj.time),esc(obj.wallet),esc(obj.cbs_balance),esc(obj.min_required),esc(obj.hold_enforced),esc(obj.hours),esc(obj.hold_ok),esc(obj.eligible),esc(obj.reason)].join(",");
 }
 function exportWinnersCsv(){
   const header = "time,wallet,cbs_balance,min_required,hold_enforced,hours,hold_ok,eligible,reason\n";
@@ -689,3 +677,4 @@ renderValidationBox();
 </script>
 </body>
 </html>
+
