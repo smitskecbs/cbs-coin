@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>CBS Ticker Raffle — v1.5</title>
-<meta name="description" content="CBS ticker raffle met TXT/CSV import, provably-fair, holder-check en 48h hold, plus RPC failover."/>
+<title>CBS Ticker Raffle — v1.6</title>
+<meta name="description" content="CBS ticker raffle met TXT/CSV import, provably-fair, holder-check en 48h hold, met RPC-failover."/>
 <style>
 :root{
   --bg1:#070a14; --bg2:#0b1020; --card:#0e1628; --muted:#9fb2d8; --text:#e8f0ff;
@@ -65,15 +65,9 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .winner-box{margin-top:12px;display:none;align-items:center;gap:10px;background:#081421;border:1px solid #26405a;padding:10px 12px;border-radius:12px}
 .winner-box strong{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:15px}
 .pill{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,.02);font-size:12px}
-.ok{color:var(--ok)} .warn{color:var(--warn)} .note{font-size:12px;color:var(--muted);margin-top:8px}
-.config{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}
-.config .pill input[type="number"],.config .pill input[type="text"]{height:28px;padding:4px 8px;border-radius:10px;border:1px solid #2b3b55;background:#0a1224;color:var(--text);
-  font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
-.toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
-.import{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
+.ok{color:var(--ok)} .warn{color:var(--warn)}
 .rpcStatus{margin-left:auto;font-size:12px}
-.bad{color:#ff9f9f}
-.good{color:#8affb3}
+.note{font-size:12px;color:var(--muted);margin-top:8px}
 </style>
 </head>
 <body>
@@ -86,7 +80,7 @@ button:disabled{opacity:.55;cursor:not-allowed}
         <div class="muted small">TXT/CSV import • Provably-fair • Holder + 48h hold • RPC-failover</div>
       </div>
     </div>
-    <div class="badge">v1.5</div>
+    <div class="badge">v1.6</div>
   </div>
 
   <div class="grid">
@@ -96,10 +90,10 @@ button:disabled{opacity:.55;cursor:not-allowed}
       <label for="input">Plak wallets (1 per regel) of <code>wallet,count</code>. Cleaner verwijdert onzichtbare spaties automatisch.</label>
       <textarea id="input" placeholder="9xQeWvG...\nHk3n9...R5xA,3\n..."></textarea>
 
-      <div class="import">
-        <input id="fileInput" type="file" accept=".txt,.csv" />
+      <div class="row" style="margin-top:8px">
+        <input id="fileInput" type="file" accept=".txt,.csv"/>
         <button id="btnImport" class="accent">Import TXT/CSV</button>
-        <span class="small muted">Format: één per regel, of <code>wallet,count</code>. Headers en lege regels oké.</span>
+        <span class="small muted">Format: 1 per regel of <code>wallet,count</code>. Headers/lege regels oké.</span>
       </div>
 
       <div id="validation" class="small" style="margin-top:6px"></div>
@@ -141,7 +135,7 @@ button:disabled{opacity:.55;cursor:not-allowed}
     <section class="card tickersec">
       <h2>3) Ticker & Trekking</h2>
 
-      <div class="config">
+      <div class="row" style="gap:8px;flex-wrap:wrap;margin:8px 0">
         <span class="pill">⏱ Duur (s)
           <input id="durationSec" type="number" min="3" max="60" value="12" style="width:72px;margin-left:6px"/>
         </span>
@@ -149,7 +143,9 @@ button:disabled{opacity:.55;cursor:not-allowed}
         <span class="pill">Min CBS <input id="minCbs" type="number" min="0" step="1" value="1" style="width:80px;margin-left:6px"/></span>
         <label class="pill"><input id="enforceHold" type="checkbox" checked style="margin-right:6px"> Enforce hold window</label>
         <span class="pill">Hours <input id="holdHours" type="number" min="1" max="168" step="1" value="48" style="width:80px;margin-left:6px"/></span>
-        <span class="pill" style="flex:1 1 260px">RPC <input id="rpcUrl" type="text" value="https://rpc.ankr.com/solana" style="width:100%;margin-left:6px"/></span>
+        <span class="pill" style="flex:1 1 260px">RPC
+          <input id="rpcUrl" type="text" value="https://mainnet.helius-rpc.com/?api-key=a9a11d45-2d40-4da0-a3b6-557b855f1e5c" style="width:100%;margin-left:6px"/>
+        </span>
         <span id="rpcStatus" class="rpcStatus muted">RPC: not checked</span>
       </div>
 
@@ -178,21 +174,21 @@ button:disabled{opacity:.55;cursor:not-allowed}
           <button id="btnRetryCheck" class="ghost" style="display:none">Retry check</button>
         </div>
 
-        <div class="toolbar">
+        <div class="row" style="gap:8px;margin-top:8px">
           <button id="btnExportCsv">Download winners CSV</button>
           <span class="small muted">CSV: wallet, tijd, CBS balance, 48h status, reden</span>
         </div>
-        <div class="note">De pagina onthult de server-seed na de trek en kan proof.json + winners CSV downloaden.</div>
+        <div class="note">Na de stop wordt de server-seed onthuld en kun je proof.json + winners CSV downloaden.</div>
       </div>
     </section>
   </div>
 </div>
 
 <script>
-/* === Config === */
+/* === Project constants === */
 const CBS_MINT = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
 const RPC_FALLBACKS = [
-  // volgorde van proberen; jouw RPC komt er altijd eerst voor
+  "https://mainnet.helius-rpc.com/?api-key=a9a11d45-2d40-4da0-a3b6-557b855f1e5c", // jouw key (UI kan ‘m overschrijven)
   "https://rpc.ankr.com/solana",
   "https://api.mainnet-beta.solana.com",
   "https://solana-api.projectserum.com"
@@ -214,7 +210,7 @@ function sanitizeToken(raw){
   return String(raw)
     .replace(/\r/g,"")
     .replace(INVISIBLE_RE,"")
-    .replace(/[ \t]/g,"")  // alle zichtbare spaties/tabjes binnen token weg
+    .replace(/[ \t]/g,"")
     .trim();
 }
 function normalizeRawText(text){
@@ -247,17 +243,11 @@ function findInvalid(items){
 }
 
 /* === State === */
-let entrants=[];       // [{wallet, entries}]
-let expanded=[];       // weighted
-let spinCount=0;
-let running=false;
-let startTs=0; let startOffset=0; let animReq=null; let animDur=12000;
-
+let entrants=[]; let expanded=[]; let spinCount=0;
+let running=false; let startTs=0; let startOffset=0; let animReq=null; let animDur=12000;
 let serverSeed=""; let serverSeedHash=""; let clientSeed=""; let locked=false;
-
 let autoSkips=0; const MAX_AUTO_SKIPS_FACTOR=2;
-let winnersLog=[];
-let activeRpc = null;
+let winnersLog=[]; let activeRpc=null;
 
 /* === Elements === */
 const input=$("input"), validation=$("validation"), strip=$("strip"), viewport=$("viewport");
@@ -268,7 +258,6 @@ const durationSecInput=$("durationSec"), autoSkipInput=$("autoSkip"), minCbsInpu
 const enforceHoldInput=$("enforceHold"), holdHoursInput=$("holdHours"), rpcUrlInput=$("rpcUrl");
 const rpcStatus=$("rpcStatus");
 const fileInput=$("fileInput"), btnImport=$("btnImport");
-
 const btnNormalize=$("btnNormalize"), btnRemoveInvalid=$("btnRemoveInvalid"), btnBuild=$("btnBuild"), btnClear=$("btnClear");
 const btnStart=$("btnStart"), btnStop=$("btnStop"), btnProof=$("btnProof"), btnCopyWinner=$("btnCopyWinner"), btnExportCsv=$("btnExportCsv");
 const clientSeedInput=$("clientSeed"), serverSeedHashInput=$("serverSeedHash"), btnCopyHash=$("btnCopyHash"), btnLock=$("btnLock"), btnReset=$("btnReset"), seedReveal=$("seedReveal");
@@ -293,15 +282,10 @@ btnImport.addEventListener("click", async ()=>{
   const f=fileInput.files && fileInput.files[0];
   if(!f){ alert("Kies eerst een .txt of .csv bestand."); return; }
   const text=await f.text();
-  // split op newline/komma/semicolon; schoonmaken; headerregels (# ...) negeren
   const raw=String(text).replace(/\r/g,"");
   const parts=raw.split(/\n|,|;/g).map(x=>x.trim()).filter(Boolean);
   const cleaned=[];
-  for(const p of parts){
-    if(/^#/.test(p)) continue;
-    cleaned.push(sanitizeToken(p));
-  }
-  // zet in textarea (1 per regel)
+  for(const p of parts){ if(/^#/.test(p)) continue; cleaned.push(sanitizeToken(p)); }
   input.value=cleaned.join("\n");
   renderValidationBox();
 });
@@ -393,14 +377,12 @@ async function rpcCall(method, params){
     try{
       const body={jsonrpc:"2.0",id:1,method,params};
       const res=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
-      if(!res.ok){ if(res.status===403) throw new Error("403 Forbidden"); else throw new Error("HTTP "+res.status); }
+      if(!res.ok){ throw new Error("HTTP "+res.status); }
       const j=await res.json(); if(j.error) throw new Error(j.error.message||"RPC error");
-      if(activeRpc!==url){ activeRpc=url; rpcStatus.innerHTML=`RPC: <span class="good">${url}</span>`; }
+      if(activeRpc!==url){ activeRpc=url; rpcStatus.innerHTML=`RPC: <span class="ok">${url}</span>`; }
       return j;
     }catch(e){
-      lastErr=e;
-      rpcStatus.innerHTML=`RPC: <span class="bad">${url} failed (${e.message})</span>`;
-      // probeer volgende
+      lastErr=e; rpcStatus.innerHTML=`RPC: <span class="warn">${url} (${e.message})</span>`;
     }
   }
   throw lastErr || new Error("All RPCs failed");
@@ -487,7 +469,7 @@ async function verifyWinner(wallet){
 /* === Proof & CSV === */
 function downloadProof(){
   if(!expanded.length) return;
-  const proof={protocol:"CBS Ticker Raffle v1.5",timestamp:new Date().toISOString(),serverSeedHash,serverSeed,clientSeed,spinCount,entrants,expandedCount:expanded.length,lastWinner:winnerText.textContent.trim(),activeRpc};
+  const proof={protocol:"CBS Ticker Raffle v1.6",timestamp:new Date().toISOString(),serverSeedHash,serverSeed,clientSeed,spinCount,entrants,expandedCount:expanded.length,lastWinner:winnerText.textContent.trim(),activeRpc};
   const blob=new Blob([JSON.stringify(proof,null,2)],{type:"application/json"}); const url=URL.createObjectURL(blob);
   const a=document.createElement("a"); a.href=url; a.download=`cbs-ticker-proof-${spinCount}.json`; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
 }
@@ -509,17 +491,9 @@ btnProof.addEventListener("click",downloadProof); btnCopyWinner.addEventListener
 btnReroll.addEventListener("click",startRun); btnRetryCheck.addEventListener("click",()=>verifyWinner(winnerText.textContent.trim()));
 btnCopyHash.addEventListener("click",()=>copy(serverSeedHashInput.value)); btnLock.addEventListener("click",lockSeed); btnReset.addEventListener("click",resetSeed);
 
-/* === Initial RPC health check (optional) === */
-(async ()=>{
-  try{
-    await rpcCall("getHealth",[]);
-  }catch(e){
-    // niets; failover doet z'n werk bij de eerste echte call
-  }
-})();
+/* === Initial ping === */
+(async ()=>{ try{ await rpcCall("getHealth",[]);}catch(e){} })();
 renderValidationBox();
 </script>
 </body>
 </html>
-
-
