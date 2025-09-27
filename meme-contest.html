@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>$CBS — Meme Contest Winners</title>
-<meta name="description" content="CBS Meme Contest — winners announcement with names, prizes, reasons, and direct X links.">
+<meta name="description" content="CBS Meme Contest — dramatic reveal with countdown and winners announcement.">
 <meta name="theme-color" content="#2dd4bf">
 
 <style>
@@ -12,6 +12,8 @@
   --bg1:#070a14; --bg2:#0b1020; --card:#0e1628; --muted:#9fb2d8; --text:#e8f0ff;
   --accent:#2dd4bf; --accent2:#7c3aed; --border:#1e2943; --gold:#facc15;
 }
+
+/* ===== Base ===== */
 *{box-sizing:border-box}
 html,body{height:100%}
 body{
@@ -21,10 +23,54 @@ body{
     radial-gradient(1200px 700px at 0% -10%, rgba(124,58,237,.18), transparent 60%),
     radial-gradient(1000px 600px at 100% 0%, rgba(45,212,191,.16), transparent 60%),
     linear-gradient(180deg,var(--bg1),var(--bg2));
+  overflow:hidden; /* tijdens splash */
 }
 .wrap{max-width:1100px;margin:0 auto;padding:18px}
 
-/* header */
+/* ===== Splash / Reveal ===== */
+.splash{
+  position:fixed; inset:0; z-index:9999;
+  display:flex; align-items:center; justify-content:center; flex-direction:column; gap:16px;
+  background:
+    radial-gradient(1300px 800px at 50% -20%, rgba(124,58,237,.18), transparent 50%),
+    radial-gradient(1200px 700px at 100% 0%, rgba(45,212,191,.14), transparent 55%),
+    linear-gradient(180deg,#050810,#0a1222);
+  transition:opacity .9s ease, filter .9s ease, transform .9s ease;
+}
+.splash.hide{
+  opacity:0; filter:blur(8px); transform:scale(1.02); pointer-events:none;
+}
+.splash .skip{
+  position:absolute; top:14px; right:14px;
+  font-size:12px; color:var(--text); background:rgba(255,255,255,.08);
+  border:1px solid #25324a; padding:8px 12px; border-radius:999px; cursor:pointer;
+}
+.splash .logoBox{
+  width:140px; height:140px; border-radius:24px; overflow:hidden; background:#0b1223;
+  box-shadow:0 20px 60px rgba(45,212,191,.25), 0 12px 36px rgba(124,58,237,.35);
+}
+.splash .logoBox img{width:100%; height:100%; object-fit:cover}
+.splash .line{
+  font-weight:900; letter-spacing:.3px; text-transform:uppercase;
+  font-size:28px; color:#fff; text-align:center;
+  text-shadow:0 2px 0 #0008, 0 8px 30px rgba(0,0,0,.5);
+}
+.splash .count{
+  font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
+  font-size:108px; line-height:1; color:#fef3c7; letter-spacing:2px;
+  text-shadow:
+    0 2px 0 #000, 0 4px 0 #000,
+    0 10px 30px rgba(0,0,0,.6);
+  transform:scale(.9); opacity:.85;
+}
+.pop{animation:pop .48s ease}
+@keyframes pop{
+  0%{transform:scale(.75); opacity:.2}
+  55%{transform:scale(1.08); opacity:1}
+  100%{transform:scale(1); opacity:.95}
+}
+
+/* ===== Page Header ===== */
 .header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:12px}
 .brand{display:flex;align-items:center;gap:12px}
 .logo{width:56px;height:56px;border-radius:14px;overflow:hidden;background:#0b1223;
@@ -34,7 +80,7 @@ h1{margin:0;font-weight:900;letter-spacing:.2px}
 .sub{color:var(--muted);font-size:13px}
 .badge{font-size:12px;padding:8px 12px;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,.04)}
 
-/* board */
+/* ===== Board ===== */
 .board{
   position:relative;padding:14px;
   background:
@@ -52,7 +98,7 @@ h1{margin:0;font-weight:900;letter-spacing:.2px}
   padding:10px 12px;border-radius:14px;border:2px solid #1115;box-shadow:0 10px 30px rgba(0,0,0,.25)}
 .sticker small{display:block;font-weight:700;opacity:.8}
 
-/* cards */
+/* ===== Cards ===== */
 .card{
   background:linear-gradient(180deg,#0f172a,#0b1324);
   border:1px solid var(--border); border-radius:18px; padding:14px;
@@ -65,7 +111,6 @@ h1{margin:0;font-weight:900;letter-spacing:.2px}
 .grid{display:grid;gap:14px}
 @media(min-width:900px){.grid{grid-template-columns:1.35fr .65fr}}
 
-/* winners */
 .winners{display:grid;gap:14px;margin-top:12px}
 @media(min-width:700px){.winners{grid-template-columns:1fr 1fr}}
 @media(min-width:1000px){.winners{grid-template-columns:1.15fr .85fr}}
@@ -89,7 +134,7 @@ h1{margin:0;font-weight:900;letter-spacing:.2px}
 }
 .btn:hover{transform:translateY(-1px)} .btn:active{transform:translateY(0)}
 
-/* headline meme style */
+/* ===== Fancy headline ===== */
 .headline{
   font-family: Impact, Haettenschweiler, "Arial Black", sans-serif;
   text-transform: uppercase;
@@ -106,10 +151,27 @@ h1{margin:0;font-weight:900;letter-spacing:.2px}
 .headline .glow{color:#fef3c7}
 
 .footer{margin-top:14px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+
+/* show content smoothly after splash */
+.main-ready{opacity:0; transform:translateY(6px); transition:opacity .6s ease .15s, transform .6s ease .15s}
+.main-ready.show{opacity:1; transform:none}
+
+/* allow scroll after splash */
+.allow-scroll{overflow:auto}
 </style>
 </head>
 <body>
-  <div class="wrap">
+
+  <!-- ===== Dramatic Splash Reveal ===== -->
+  <div class="splash" id="splash">
+    <button class="skip" id="skipBtn" title="Skip (S)">Skip</button>
+    <div class="logoBox"><img src="logo.png" alt="CBS logo"></div>
+    <div class="line">The winner is…</div>
+    <div class="count" id="count">10</div>
+  </div>
+
+  <!-- ===== Main Page ===== -->
+  <div class="wrap main-ready" id="main">
     <header class="header">
       <div class="brand">
         <div class="logo"><img src="logo.png" alt="CBS logo"></div>
@@ -180,6 +242,56 @@ h1{margin:0;font-weight:900;letter-spacing:.2px}
       <div class="muted">Contact: smitskecbs@gmail.com • cbs.coin12@gmail.com</div>
     </footer>
   </div>
+
+<script>
+(function(){
+  const splash = document.getElementById('splash');
+  const countEl = document.getElementById('count');
+  const main = document.getElementById('main');
+  const skipBtn = document.getElementById('skipBtn');
+
+  let n = 10;
+  let ticking = true;
+
+  function next(){
+    if(!ticking) return;
+    countEl.textContent = n;
+    countEl.classList.remove('pop');
+    // force reflow to restart animation
+    void countEl.offsetWidth;
+    countEl.classList.add('pop');
+
+    if(n > 1){
+      n -= 1;
+      setTimeout(next, 1000);
+    } else {
+      // little pause on "1"
+      setTimeout(endReveal, 900);
+    }
+  }
+
+  function endReveal(){
+    ticking = false;
+    splash.classList.add('hide');
+    document.body.classList.add('allow-scroll');
+    // show main content slightly after fade out start
+    setTimeout(()=> main.classList.add('show'), 200);
+  }
+
+  // Skip controls
+  function skip(){
+    if(!ticking) return;
+    endReveal();
+  }
+  skipBtn.addEventListener('click', skip);
+  splash.addEventListener('click', skip);
+  document.addEventListener('keydown', (e)=>{
+    if(e.key.toLowerCase() === 's') skip();
+  });
+
+  // start after short intro delay
+  setTimeout(next, 800);
+})();
+</script>
 </body>
 </html>
-
