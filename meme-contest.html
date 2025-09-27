@@ -23,7 +23,7 @@ body{
     radial-gradient(1200px 700px at 0% -10%, rgba(124,58,237,.18), transparent 60%),
     radial-gradient(1000px 600px at 100% 0%, rgba(45,212,191,.16), transparent 60%),
     linear-gradient(180deg,var(--bg1),var(--bg2));
-  overflow:hidden; /* tijdens splash */
+  overflow:hidden; /* block scroll during splash */
 }
 .wrap{max-width:1100px;margin:0 auto;padding:18px}
 
@@ -35,10 +35,14 @@ body{
     radial-gradient(1300px 800px at 50% -20%, rgba(124,58,237,.18), transparent 50%),
     radial-gradient(1200px 700px at 100% 0%, rgba(45,212,191,.14), transparent 55%),
     linear-gradient(180deg,#050810,#0a1222);
-  transition:opacity .9s ease, filter .9s ease, transform .9s ease;
+  /* slower, deeper blur transition */
+  transition: opacity 1.8s ease, filter 2.6s ease, transform 1.8s ease;
 }
 .splash.hide{
-  opacity:0; filter:blur(8px); transform:scale(1.02); pointer-events:none;
+  opacity: 0;
+  filter: blur(28px) saturate(.9);
+  transform: scale(1.035);
+  pointer-events: none;
 }
 .splash .skip{
   position:absolute; top:14px; right:14px;
@@ -153,7 +157,7 @@ h1{margin:0;font-weight:900;letter-spacing:.2px}
 .footer{margin-top:14px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
 
 /* show content smoothly after splash */
-.main-ready{opacity:0; transform:translateY(6px); transition:opacity .6s ease .15s, transform .6s ease .15s}
+.main-ready{opacity:0; transform:translateY(6px); transition:opacity .9s ease .4s, transform .9s ease .4s}
 .main-ready.show{opacity:1; transform:none}
 
 /* allow scroll after splash */
@@ -163,7 +167,7 @@ h1{margin:0;font-weight:900;letter-spacing:.2px}
 <body>
 
   <!-- ===== Dramatic Splash Reveal ===== -->
-  <div class="splash" id="splash">
+  <div class="splash" id="splash" aria-live="polite">
     <button class="skip" id="skipBtn" title="Skip (S)">Skip</button>
     <div class="logoBox"><img src="logo.png" alt="CBS logo"></div>
     <div class="line">The winner is…</div>
@@ -257,39 +261,42 @@ h1{margin:0;font-weight:900;letter-spacing:.2px}
     if(!ticking) return;
     countEl.textContent = n;
     countEl.classList.remove('pop');
-    // force reflow to restart animation
-    void countEl.offsetWidth;
+    void countEl.offsetWidth; // restart animation
     countEl.classList.add('pop');
 
     if(n > 1){
       n -= 1;
       setTimeout(next, 1000);
     } else {
-      // little pause on "1"
-      setTimeout(endReveal, 900);
+      // hold on "1" a bit longer for drama
+      setTimeout(endReveal, 1200);
     }
   }
 
   function endReveal(){
     ticking = false;
     splash.classList.add('hide');
-    document.body.classList.add('allow-scroll');
-    // show main content slightly after fade out start
-    setTimeout(()=> main.classList.add('show'), 200);
+
+    // main fades in a bit later (so blur lingers nicely)
+    setTimeout(()=> main.classList.add('show'), 1200);
+
+    // only then allow scrolling so the transition feels smooth
+    setTimeout(()=> document.body.classList.add('allow-scroll'), 1800);
   }
 
-  // Skip controls
   function skip(){
     if(!ticking) return;
     endReveal();
   }
+
+  // Skip controls
   skipBtn.addEventListener('click', skip);
   splash.addEventListener('click', skip);
   document.addEventListener('keydown', (e)=>{
     if(e.key.toLowerCase() === 's') skip();
   });
 
-  // start after short intro delay
+  // start after a short intro delay
   setTimeout(next, 800);
 })();
 </script>
