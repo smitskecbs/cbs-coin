@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CBS — FIRST AMA Script Builder</title>
+<meta name="description" content="Generate a 60s comic-style video script and on-screen captions for your FIRST AMA." />
+<meta name="theme-color" content="#2dd4bf" />
+<style>
+:root{
+  --bg1:#070a14; --bg2:#0b1020; --card:#0e1628; --muted:#a6b6da; --text:#e8f0ff;
+  --accent:#2dd4bf; --accent2:#7c3aed; --border:#1e2943; --ok:#22c55e;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0; color:var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  background:
+    radial-gradient(1200px 700px at 0% -10%, rgba(124,58,237,.18), transparent 60%),
+    radial-gradient(900px 600px at 100% 0%, rgba(45,212,191,.16), transparent 60%),
+    linear-gradient(180deg,var(--bg1),var(--bg2));
+}
+.wrap{max-width:1100px;margin:0 auto;padding:18px}
+.header{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+h1{margin:0;font-weight:900;letter-spacing:.2px}
+.badge{font-size:12px;padding:8px 12px;border-radius:999px;border:1px solid var(--border);background:rgba(255,255,255,.04)}
+.card{
+  background:linear-gradient(180deg,#0f172a,#0b1324);
+  border:1px solid var(--border); border-radius:18px; padding:14px;
+  box-shadow:0 10px 30px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.03);
+  margin-top:14px;
+}
+.grid{display:grid;gap:14px}
+@media(min-width:900px){.grid{grid-template-columns:1.05fr .95fr}}
+label{font-size:12px;color:var(--muted)}
+input,textarea,select{
+  width:100%; background:#0a1224; border:1px solid #27334a; color:var(--text);
+  border-radius:10px; padding:10px; font-size:14px
+}
+.row{display:grid;grid-template-columns:1fr 1fr; gap:10px}
+@media(max-width:700px){.row{grid-template-columns:1fr}}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:12px;cursor:pointer;
+  background:linear-gradient(135deg,#1a0f33,#22114b); border:1px solid #3d2b83; color:var(--text); text-decoration:none; font-weight:700
+}
+.btn:hover{transform:translateY(-1px)} .btn:active{transform:translateY(0)}
+.btn.primary{background:linear-gradient(135deg,#0b3b36,#10304f);border-color:#1e776b}
+.small{font-size:12px}
+.mono{font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:13px}
+.output{white-space:pre-wrap}
+.kicker{font-weight:800;letter-spacing:.3px;color:var(--accent)}
+.ok{color:var(--ok)}
+hr{border:0;border-top:1px solid #22304a;margin:10px 0}
+.copy-bar{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+.notice{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="header">
+    <div>
+      <h1>FIRST AMA — Video Script Builder</h1>
+      <div class="kicker">CBS • Community Builds Sovereignty</div>
+    </div>
+    <div class="badge">Offline tool • Paste into your editor/CapCut/Canva</div>
+  </header>
+
+  <section class="card">
+    <h2>1) Fill your AMA details</h2>
+    <div class="row">
+      <div>
+        <label>AMA Title</label>
+        <input id="title" value="FIRST AMA">
+      </div>
+      <div>
+        <label>Language</label>
+        <select id="lang">
+          <option value="en" selected>English</option>
+          <option value="nl">Nederlands</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Date (e.g. 28 Sep 2025)</label>
+        <input id="date" placeholder="28 Sep 2025">
+      </div>
+      <div>
+        <label>Time + TZ (e.g. 20:00 CET)</label>
+        <input id="time" placeholder="20:00 CET">
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Platform link (Telegram/X Space/etc.)</label>
+        <input id="platform" placeholder="https://t.me/yourgroup">
+      </div>
+      <div>
+        <label>X handle (host)</label>
+        <input id="xhandle" placeholder="@CBS_Coin" value="@CBS_Coin">
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Key themes (comma-separated)</label>
+        <input id="themes" value="Freedom, Community, Digital Sovereignty">
+      </div>
+      <div>
+        <label>CTA footer (optional)</label>
+        <input id="cta" placeholder="Follow @CBS_Coin & join Telegram">
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Add project one-liner (optional)</label>
+        <input id="oneLiner" placeholder="CBS: believers-only, provably-fair, built on Solana">
+      </div>
+      <div>
+        <label>Video duration target</label>
+        <select id="duration">
+          <option value="60" selected>~60s</option>
+          <option value="45">~45s</option>
+          <option value="90">~90s</option>
+        </select>
+      </div>
+    </div>
+
+    <div style="margin-top:10px;display:flex;gap:10px;flex-wrap:wrap">
+      <button class="btn primary" id="genBtn">Generate</button>
+      <span class="notice">Tip: daarna kun je alles kopiëren of als .txt downloaden.</span>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>2) Voice-over script (timeline)</h2>
+    <div class="copy-bar">
+      <button class="btn" data-copy="#voOut">Copy VO</button>
+      <button class="btn" id="downloadVO">Download VO .txt</button>
+      <span class="ok" id="voCopied" hidden>Copied ✓</span>
+    </div>
+    <div id="voOut" class="output mono"></div>
+  </section>
+
+  <section class="card">
+    <h2>3) On-screen text cues</h2>
+    <div class="copy-bar">
+      <button class="btn" data-copy="#screenOut">Copy On-Screen</button>
+      <button class="btn" id="downloadScreen">Download On-Screen .txt</button>
+      <span class="ok" id="screenCopied" hidden>Copied ✓</span>
+    </div>
+    <div id="screenOut" class="output mono"></div>
+  </section>
+
+  <section class="card">
+    <h2>4) Promo copy for X (post & pin)</h2>
+    <div class="copy-bar">
+      <button class="btn" data-copy="#xOut">Copy X Post</button>
+      <button class="btn" id="downloadX">Download X .txt</button>
+      <span class="ok" id="xCopied" hidden>Copied ✓</span>
+    </div>
+    <div id="xOut" class="output mono"></div>
+  </section>
+
+  <footer class="card">
+    <div class="small">Made for CBS • You can host this as <code>/first-ama.html</code> on your GitHub Pages. No external libs.</div>
+  </footer>
+</div>
+
+<script>
+const $ = sel => document.querySelector(sel);
+
+function buildText({lang,title,date,time,platform,xhandle,themes,cta,oneLiner,duration}){
+  const t = (themes || '').split(',').map(s=>s.trim()).filter(Boolean);
+  const k1 = t[0] || 'Freedom';
+  const k2 = t[1] || 'Community';
+  const k3 = t[2] || 'Digital Sovereignty';
+  const dur = parseInt(duration||'60',10);
+
+  // Timings rough for ~60s; we compress/expand a little
+  const seg = dur>=85 ? {a:5,b:10,c:15,d:20,e:20,cta:10}
+           : dur>=55 ? {a:3,b:10,c:10,d:15,e:15,cta:7}
+                     : {a:3,b:8,c:8,d:10,e:10,cta:6};
+
+  const VO = {
+    en: [
+`0–${seg.a}s
+"${title}. From an idea on a phone… to a live conversation with the community."`,
+
+`${seg.a}–${seg.a+seg.b}s
+"Hosted by ${xhandle}. We’ll talk about ${k1.toLowerCase()}, ${k2.toLowerCase()}, and ${k3.toLowerCase()} on Solana."`,
+
+`${seg.a+seg.b}–${seg.a+seg.b+seg.c}s
+"${oneLiner || 'Believers-only, provably-fair, built by the community.'}"`,
+
+`${seg.a+seg.b+seg.c}–${seg.a+seg.b+seg.c+seg.d}s
+"Join the FIRST AMA: ${date} • ${time}. Platform: ${platform}."`,
+
+`${seg.a+seg.b+seg.c+seg.d}–${seg.a+seg.b+seg.c+seg.d+seg.e}s
+"Bring your questions. We’ll cover roadmap, contests, and how to build sovereignty together."`,
+
+`${dur - seg.cta}–${dur}s
+"${cta || 'Follow ' + xhandle + ' and hop into Telegram — see you there!'}"`
+],
+    nl: [
+`0–${seg.a}s
+"${title}. Van een idee op een telefoon… naar een live gesprek met de community."`,
+
+`${seg.a}–${seg.a+seg.b}s
+"Gehost door ${xhandle}. We praten over ${k1.toLowerCase()}, ${k2.toLowerCase()} en ${k3.toLowerCase()} op Solana."`,
+
+`${seg.a+seg.b}–${seg.a+seg.b+seg.c}s
+"${oneLiner || 'Believers-only, provably-fair, gebouwd door de community.'}"`,
+
+`${seg.a+seg.b+seg.c}–${seg.a+seg.b+seg.c+seg.d}s
+"Mis de FIRST AMA niet: ${date} • ${time}. Platform: ${platform}."`,
+
+`${seg.a+seg.b+seg.c+seg.d}–${seg.a+seg.b+seg.c+seg.d+seg.e}s
+"Neem je vragen mee. We bespreken roadmap, contests en hoe we samen soevereiniteit bouwen."`,
+
+`${dur - seg.cta}–${dur}s
+"${cta || 'Volg ' + xhandle + ' en join Telegram — tot daar!'}"`
+]
+  };
+
+  const SCREEN = {
+    en: [
+`0–${seg.a}s:  FIRST AMA`,
+`${seg.a}–${seg.a+seg.b}s:  Host ${xhandle} • ${k1} • ${k2} • ${k3}`,
+`${seg.a+seg.b}–${seg.a+seg.b+seg.c}s:  ${oneLiner || 'Believers-only • Provably-fair'}`,
+`${seg.a+seg.b+seg.c}–${seg.a+seg.b+seg.c+seg.d}s:  ${date} • ${time} • ${platform}`,
+`${seg.a+seg.b+seg.c+seg.d}–${seg.a+seg.b+seg.c+seg.d+seg.e}s:  Bring your questions`,
+`${dur - seg.cta}–${dur}s:  ${cta || 'Follow ' + xhandle + ' • Join TG'}`
+],
+    nl: [
+`0–${seg.a}s:  FIRST AMA`,
+`${seg.a}–${seg.a+seg.b}s:  Host ${xhandle} • ${k1} • ${k2} • ${k3}`,
+`${seg.a+seg.b}–${seg.a+seg.b+seg.c}s:  ${oneLiner || 'Believers-only • Provably-fair'}`,
+`${seg.a+seg.b+seg.c}–${seg.a+seg.b+seg.c+seg.d}s:  ${date} • ${time} • ${platform}`,
+`${seg.a+seg.b+seg.c+seg.d}–${seg.a+seg.b+seg.c+seg.d+seg.e}s:  Neem je vragen mee`,
+`${dur - seg.cta}–${dur}s:  ${cta || 'Volg ' + xhandle + ' • Join TG'}`
+]
+  };
+
+  const XPOST = {
+    en:
+`🎙️ ${title}
+
+📅 ${date} • 🕗 ${time}
+📍 ${platform}
+Host: ${xhandle}
+
+We’ll talk ${k1}, ${k2}, ${k3}, roadmap & provably-fair community contests.
+${oneLiner ? '— ' + oneLiner : ''}
+
+${cta || 'Follow ' + xhandle + ' and join our Telegram — see you there!'}
+
+#CBS #Solana #AMA`,
+    nl:
+`🎙️ ${title}
+
+📅 ${date} • 🕗 ${time}
+📍 ${platform}
+Host: ${xhandle}
+
+We praten over ${k1}, ${k2}, ${k3}, roadmap & provably-fair community contests.
+${oneLiner ? '— ' + oneLiner : ''}
+
+${cta || 'Volg ' + xhandle + ' en join onze Telegram — tot daar!'}
+
+#CBS #Solana #AMA`
+  };
+
+  return {
+    vo: VO[lang].join('\n\n'),
+    screen: SCREEN[lang].join('\n'),
+    xpost: XPOST[lang]
+  };
+}
+
+function gen(){
+  const payload = {
+    title: $('#title').value.trim() || 'FIRST AMA',
+    lang: $('#lang').value,
+    date: $('#date').value.trim() || 'TBA',
+    time: $('#time').value.trim() || 'TBA',
+    platform: $('#platform').value.trim() || 'TBA',
+    xhandle: $('#xhandle').value.trim() || '@CBS_Coin',
+    themes: $('#themes').value.trim(),
+    cta: $('#cta').value.trim(),
+    oneLiner: $('#oneLiner').value.trim(),
+    duration: $('#duration').value
+  };
+  const out = buildText(payload);
+  $('#voOut').textContent = out.vo;
+  $('#screenOut').textContent = out.screen;
+  $('#xOut').textContent = out.xpost;
+}
+$('#genBtn').addEventListener('click', gen);
+
+// copy & download helpers
+document.querySelectorAll('[data-copy]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const sel = btn.getAttribute('data-copy');
+    const el = document.querySelector(sel);
+    navigator.clipboard.writeText(el.textContent||'').then(()=>{
+      const flag = (sel==='#voOut')?'#voCopied':(sel==='#screenOut')?'#screenCopied':'#xCopied';
+      const f = document.querySelector(flag);
+      f.hidden=false; setTimeout(()=>f.hidden=true,1200);
+    });
+  });
+});
+function download(name, text){
+  const blob = new Blob([text], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+$('#downloadVO').addEventListener('click', ()=> download('first-ama-VO.txt', $('#voOut').textContent||''));
+$('#downloadScreen').addEventListener('click', ()=> download('first-ama-on-screen.txt', $('#screenOut').textContent||''));
+$('#downloadX').addEventListener('click', ()=> download('first-ama-xpost.txt', $('#xOut').textContent||''));
+
+// initial generate
+gen();
+</script>
+</body>
+</html>
