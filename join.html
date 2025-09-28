@@ -114,11 +114,12 @@
   </footer>
 
   <script>
-    // ======= Config =======
+    // ======= Config (with Helius) =======
+    const HELIUS_KEY = 'a9a11d45-2d40-4da0-a3b6-557b855f1e5c';
     const CONFIG = {
       CBS_MINT: 'B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk',
       MIN_USD: 5, // holders must have at least $5 worth of CBS
-      RPC_URL: 'https://api.mainnet-beta.solana.com', // replace with your Helius if desired
+      RPC_URL: `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`,
       SUBMIT_EMAIL: 'cbs.coin12@gmail.com',
       CBS_PRICE_USD_FALLBACK: null // e.g. 0.0001
     };
@@ -286,8 +287,7 @@
           'Link: ' + (payload.link || '-'),
           'Time: ' + payload.timestamp
         ];
-        var body = encodeURIComponent(bodyLines.join('
-'));
+        var body = encodeURIComponent(bodyLines.join('\n'));
         return 'mailto:' + CONFIG.SUBMIT_EMAIL + '?subject=' + encodeURIComponent(subject) + '&body=' + body;
       }
 
