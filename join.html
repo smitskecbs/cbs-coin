@@ -7,34 +7,57 @@
   <meta name="description" content="Gated idea submission form for CBS holders (requires ≥ $5 in CBS)">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@solana/web3.js@1.95.1/lib/index.iife.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
-    :root{ --bg:#070a12; --ring:#22c55e; --text:#e5efff; }
-    body{ background: radial-gradient(1200px 700px at 15% -10%, #0e1631 0%, #070a12 55%), #070a12; color:var(--text); }
-    .glass{ background: linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02)); backdrop-filter: blur(10px); }
-    .btn{ @apply rounded-xl px-4 py-2 transition; }
-    .btn-primary{ background: var(--ring); color:#0a0f1c; font-weight: 700; }
-    .btn-muted{ background: rgba(255,255,255,.08); }
+    :root{ --bg:#070a12; --bg2:#0b1227; --ring:#22c55e; --ring2:#a3e635; --text:#e5efff; --muted:#a5b4fc; }
+    body{ font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; background: radial-gradient(1200px 700px at 15% -10%, #0e1631 0%, var(--bg) 55%), var(--bg2); color:var(--text); }
+    .glass{ background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03)); backdrop-filter: blur(10px); border:1px solid rgba(255,255,255,.1); }
+    .neon{ box-shadow: 0 0 0 .5px rgba(255,255,255,.2), 0 0 25px rgba(34,197,94,.25), inset 0 0 25px rgba(34,197,94,.08); }
     .chip{ border:1px solid rgba(255,255,255,.18); border-radius:9999px; padding:.2rem .6rem; }
     .hidden{ display:none; }
     a{ color:#9dd7ff; }
+    /* Meme mode */
+    body.meme{ background: radial-gradient(1200px 700px at 15% -10%, #1a1a00 0%, #0a0a00 60%), #090909; }
+    body.meme .meme-head{ font-family: Bangers, Inter, system-ui; letter-spacing:.5px; text-shadow: 0 2px #000, 0 6px rgba(0,0,0,.4); }
+    body.meme .sticker{ transform: rotate(-6deg); border:2px dashed #fff; background:#111; }
+    @keyframes floaty{ 0%{transform:translateY(0)} 50%{transform:translateY(-6px)} 100%{transform:translateY(0)} }
   </style>
 </head>
 <body class="min-h-screen">
-  <header class="max-w-4xl mx-auto px-4 pt-10">
-    <div class="flex items-start gap-4">
-      <div class="shrink-0 mt-1">
-        <!-- CBS logo placeholder circle -->
-        <div class="h-10 w-10 rounded-full" style="background:conic-gradient(from 180deg, #22c55e, #0ea5e9, #8b5cf6)"></div>
+  <!-- NAV -->
+  <nav class="max-w-5xl mx-auto px-4 pt-6">
+    <div class="flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <img src="logo.png" alt="CBS" class="h-10 w-10 rounded-full ring-2 ring-[var(--ring)]" onerror="this.style.display='none'"/>
+        <span class="text-xl font-extrabold tracking-tight">CBS Holders Gate</span>
       </div>
-      <div>
-        <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight">CBS Idea Submission</h1>
-        <p class="mt-2 text-sm md:text-base opacity-85">Holders-only access · You need at least <span class="font-semibold">$5</span> worth of CBS to open the form.</p>
-        <div class="mt-2 text-xs opacity-70">Mint: <code id="mintLabel" class="opacity-90"></code> · Threshold: <span id="usdMinLabel">$5</span></div>
+      <div class="flex items-center gap-2">
+        <label class="text-xs opacity-75">Meme mode</label>
+        <button id="memeToggle" class="px-3 py-1 rounded-xl bg-white/10 hover:bg-white/20">ON/OFF</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HEADER -->
+  <header class="max-w-5xl mx-auto px-4 pt-6">
+    <div class="glass neon rounded-2xl p-5 md:p-7">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight meme-head">Submit Your CBS Idea 💡</h1>
+          <p class="mt-2 text-sm md:text-base opacity-85">Holders-only · You need at least <span class="font-semibold">$5</span> worth of CBS to open the form.</p>
+          <div class="mt-2 text-xs opacity-70">Mint: <code id="mintLabel" class="opacity-90"></code> · Threshold: <span id="usdMinLabel">$5</span></div>
+        </div>
+        <div class="hidden md:block">
+          <div class="sticker rounded-2xl p-3 rotate-1">
+            <div class="text-center text-xs opacity-80">Community Builds</div>
+            <div class="text-center text-lg font-extrabold" style="font-family:Bangers, Inter">SOVEREIGNTY</div>
+          </div>
+        </div>
       </div>
     </div>
   </header>
 
-  <main class="max-w-4xl mx-auto px-4 py-6">
+  <main class="max-w-5xl mx-auto px-4 py-6">
     <!-- Wallet connect / status -->
     <section class="glass rounded-2xl p-5 shadow-lg">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -45,19 +68,19 @@
           <div id="valueText" class="text-xs mt-1 opacity-70"></div>
         </div>
         <div class="flex gap-2">
-          <button id="connectBtn" class="btn btn-muted hover:brightness-110">Connect</button>
-          <button id="checkBtn" class="btn btn-primary disabled:opacity-40" disabled>Verify holdings</button>
+          <button id="connectBtn" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20">Connect</button>
+          <button id="checkBtn" class="px-4 py-2 rounded-xl bg-[var(--ring)] text-black font-bold disabled:opacity-40" disabled>Verify holdings</button>
         </div>
       </div>
       <div id="phantomHint" class="mt-3 text-sm hidden">
-        No wallet detected. Install <a class="underline" href="https://phantom.app/" target="_blank" rel="noreferrer">Phantom</a> and reload.
+        No wallet detected. Install <a class="underline" href="https://phantom.app/" target="_blank" rel="noreferrer">Phantom</a> and reload. This page requires HTTPS (works on GitHub Pages).
       </div>
       <div id="gateMsg" class="mt-4 text-sm"></div>
     </section>
 
     <!-- Gated form -->
     <section id="formWrap" class="glass rounded-2xl p-6 shadow-xl mt-6 hidden">
-      <h2 class="text-2xl font-bold mb-2">Submit your idea</h2>
+      <h2 class="text-2xl font-extrabold mb-2">Submit your idea</h2>
       <p class="text-sm opacity-80 mb-6">Only visible to CBS holders. Your wallet address is auto-filled.</p>
 
       <form id="ideaForm" class="grid gap-4">
@@ -85,8 +108,8 @@
         </div>
 
         <div class="flex items-center gap-3 mt-2">
-          <button id="submitBtn" type="submit" class="btn btn-primary">Send</button>
-          <button id="copyBtn" type="button" class="btn btn-muted">Copy as JSON</button>
+          <button id="submitBtn" type="submit" class="px-4 py-2 rounded-xl bg-[var(--ring)] text-black font-bold">Send</button>
+          <button id="copyBtn" type="button" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20">Copy as JSON</button>
           <span id="saveToast" class="text-xs opacity-70"></span>
         </div>
         <p class="text-xs opacity-60">This page stores nothing server-side. Submission opens your email client (mailto) and also copies JSON to clipboard so you can send it via Telegram.</p>
@@ -94,7 +117,7 @@
     </section>
   </main>
 
-  <footer class="max-w-4xl mx-auto px-4 pb-10 mt-8 text-xs opacity-60">
+  <footer class="max-w-5xl mx-auto px-4 pb-10 mt-8 text-xs opacity-60">
     CBS Coin — Community Builds Sovereignty
   </footer>
 
@@ -105,7 +128,6 @@
       MIN_USD: 5, // holders must have at least $5 worth of CBS
       RPC_URL: 'https://api.mainnet-beta.solana.com', // replace with your Helius if desired
       SUBMIT_EMAIL: 'cbs.coin12@gmail.com',
-      // Optional manual fallback if price APIs fail
       CBS_PRICE_USD_FALLBACK: null // e.g. 0.0001
     };
 
@@ -113,6 +135,9 @@
     document.getElementById('usdMinLabel').textContent = `$${CONFIG.MIN_USD}`;
 
     // ======= Elements =======
+    const memeToggle = document.getElementById('memeToggle');
+    memeToggle.addEventListener('click', ()=> document.body.classList.toggle('meme'));
+
     const connectBtn = document.getElementById('connectBtn');
     const checkBtn   = document.getElementById('checkBtn');
     const statusText = document.getElementById('statusText');
@@ -135,6 +160,14 @@
 
     const shorten = (s)=> s ? s.slice(0,4)+"…"+s.slice(-4) : '';
 
+    // Robust provider detection (Phantom first)
+    function getProvider(){
+      const anyWindow = window;
+      if (anyWindow.phantom?.solana && anyWindow.phantom.solana.isPhantom) return anyWindow.phantom.solana;
+      if (anyWindow.solana?.isPhantom) return anyWindow.solana;
+      return null;
+    }
+
     // --- Price helpers (Jupiter first, then quote, then manual) ---
     async function getUsdPriceFromJupiter(mint){
       try{
@@ -149,14 +182,12 @@
 
     async function getUsdPriceViaQuote(mint){
       try{
-        // We need decimals to build a 1 token amount
         const conn = new solanaWeb3.Connection(CONFIG.RPC_URL, 'confirmed');
         const info = await conn.getParsedAccountInfo(new solanaWeb3.PublicKey(mint));
         const decimals = info?.value?.data?.parsed?.info?.decimals ?? 9;
         const amount = BigInt(10) ** BigInt(decimals);
         const url = `https://lite-api.jup.ag/swap/v1/quote?inputMint=${mint}&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=${amount.toString()}&slippageBps=50&restrictIntermediateTokens=true`;
         const q = await (await fetch(url, { headers: { 'accept':'application/json' } })).json();
-        // Try multiple shapes
         const out = q?.outAmount || q?.data?.outAmount || q?.quoteResponse?.outAmount;
         if(!out) return null;
         const usdc = Number(out) / 1_000_000; // USDC has 6 decimals
@@ -174,21 +205,21 @@
 
     // --- Wallet connect ---
     async function connectWallet(){
-      const provider = window.solana;
-      if(!provider || !provider.isPhantom){
-        phantomHint.classList.remove('hidden');
-        return;
-      }
+      const provider = getProvider();
+      if(!provider){ phantomHint.classList.remove('hidden'); return; }
       try{
-        const resp = await provider.connect();
-        walletPubkey = resp.publicKey.toString();
+        const resp = await provider.connect({ onlyIfTrusted:false });
+        walletPubkey = resp.publicKey?.toString?.() || provider.publicKey?.toString?.() || null;
+        if(!walletPubkey){ throw new Error('No public key from provider'); }
         statusText.textContent = 'Connected';
         pubkeyText.textContent = shorten(walletPubkey);
         checkBtn.disabled = false;
         walletInput.value = walletPubkey;
+        gateMsg.textContent = '';
       }catch(e){
         statusText.textContent = 'Not connected';
-        gateMsg.textContent = 'Wallet connection rejected.';
+        gateMsg.textContent = 'Wallet connection rejected or failed.';
+        console.error(e);
       }
     }
 
@@ -207,12 +238,8 @@
           const t = res.value[0].account.data.parsed.info.tokenAmount;
           ui = Number(t.uiAmount||0);
         }
-        // get price
         const price = await getCBSPriceUSD();
-        if(!price){
-          gateMsg.innerHTML = '⚠️ Could not fetch CBS price. Please try again later.';
-          return;
-        }
+        if(!price){ gateMsg.innerHTML = '⚠️ Could not fetch CBS price. Please try again later.'; return; }
         const usdValue = ui * price;
         valueText.textContent = `CBS: ${ui.toLocaleString(undefined,{maximumFractionDigits:2})} · Est. value: $${usdValue.toFixed(2)} (price: $${price.toFixed(6)}/CBS)`;
         if(usdValue >= Number(CONFIG.MIN_USD)){
@@ -287,11 +314,13 @@
 
     // Autoconnect if trusted
     (async ()=>{
-      if(window.solana && window.solana.isPhantom){
+      const provider = getProvider();
+      if(provider){
         try{
-          const resp = await window.solana.connect({ onlyIfTrusted: true });
-          if(resp?.publicKey){
-            walletPubkey = resp.publicKey.toString();
+          const resp = await provider.connect({ onlyIfTrusted: true });
+          const pk = resp?.publicKey?.toString?.() || provider.publicKey?.toString?.();
+          if(pk){
+            walletPubkey = pk;
             statusText.textContent = 'Connected';
             pubkeyText.textContent = shorten(walletPubkey);
             checkBtn.disabled = false;
