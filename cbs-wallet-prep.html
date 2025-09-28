@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>CBS Wallet Prep — valideren • dedupe • hash</title>
+<meta name="description" content="Plak of importeer Solana-wallets, valideer, dedupe, sorteer en exporteer met SHA-256 hash.">
+<style>
+:root{
+  --bg:#0b1020; --panel:#0e1628; --muted:#9fb2d8; --text:#e8f0ff;
+  --border:#1e2943; --ok:#22c55e; --warn:#ef4444; --accent:#2dd4bf; --accent2:#7c3aed;
+}
+*{box-sizing:border-box} html,body{height:100%}
+body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial;background:linear-gradient(180deg,#070a14,#0b1020);color:var(--text)}
+.wrap{max-width:1000px;margin:0 auto;padding:16px}
+h1{margin:0 0 8px;font-weight:900}
+.card{background:linear-gradient(180deg,#0f172a,#0b1324);border:1px solid var(--border);border-radius:16px;padding:14px;
+  box-shadow:0 10px 30px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.03); margin-top:12px}
+label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}
+textarea,input{width:100%;background:#0a1224;border:1px solid #283347;color:var(--text);border-radius:12px;padding:10px}
+textarea{min-height:200px;resize:vertical;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px}
+input{height:40px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+button{background:#0f1c33;border:1px solid #2b3b55;color:var(--text);padding:10px 14px;border-radius:12px;cursor:pointer}
+button:hover{transform:translateY(-1px)} button:active{transform:translateY(0)}
+button.primary{background:linear-gradient(135deg,#0b3b36,#10304f);border-color:#1e776b}
+button.accent{background:linear-gradient(135deg,#1a0f33,#22114b);border-color:#3d2b83}
+.badge{font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:999px;background:rgba(255,255,255,.04)}
+.stat{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border:1px solid var(--border);border-radius:10px;background:rgba(255,255,255,.03);font-size:12px}
+.ok{color:var(--ok)} .warn{color:var(--warn)}
+.small{font-size:12px;color:var(--muted)}
+code{background:#0a1224;border:1px solid #283347;border-radius:6px;padding:2px 6px}
+pre{white-space:pre-wrap;word-break:break-word;background:#081425;border:1px solid #1a2842;border-radius:10px;padding:10px;color:#cfe2ff}
+.drop{border:2px dashed #2b3b55;border-radius:12px;padding:12px;text-align:center;color:var(--muted)}
+footer{margin-top:10px;font-size:12px;color:var(--muted);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="row" style="justify-content:space-between">
+    <div>
+      <h1>CBS Wallet Prep</h1>
+      <div class="small">Valideer • dedupe • sorteer • exporteer • <b>SHA-256 hash</b> voor integriteit</div>
+    </div>
+    <div class="badge">Client-side • No server</div>
+  </header>
+
+  <section class="card">
+    <label for="txt">Plak wallets (één per regel). Formaat: <code>9xQe...abc</code> of <code>wallet,count</code>.</label>
+    <textarea id="txt" placeholder="9xQeWvG...\nHk3n9...R5xA\n..."></textarea>
+    <div class="row" style="margin-top:8px">
+      <button id="btnNormalize">Normalize</button>
+      <button id="btnValidate" class="primary">Validate + Dedupe + Sort</button>
+      <button id="btnClear">Clear</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <div class="stat">Valid: <span id="countValid">0</span></div>
+      <div class="stat">Invalid: <span id="countInvalid">0</span></div>
+      <div class="stat">Unique wallets: <span id="countUnique">0</span></div>
+    </div>
+    <div id="invalidBox" class="small" style="margin-top:8px"></div>
+  </section>
+
+  <section class="card">
+    <div class="row" style="justify-content:space-between;align-items:center">
+      <div class="row">
+        <button id="btnExport" class="primary">Export .txt</button>
+        <button id="btnHash" class="accent">Genereer SHA-256 hash</button>
+        <button id="btnCopyHash">Copy hash</button>
+      </div>
+      <div class="row">
+        <label class="drop" style="cursor:pointer">
+          <input id="file" type="file" accept=".txt,.csv" style="display:none">
+          ⬆️ Bestand importeren (.txt/.csv) — of sleep hierheen
+        </label>
+      </div>
+    </div>
+    <div id="hashBox" class="small" style="margin-top:8px"></div>
+  </section>
+
+  <section class="card">
+    <h3 style="margin:0 0 6px">Preview (gemaskeerd voor screenshot)</h3>
+    <div id="preview" class="small"></div>
+  </section>
+
+  <section class="card">
+    <h3 style="margin:0 0 6px">Tekst om met de groep te delen</h3>
+    <pre id="shareText"></pre>
+  </section>
+
+  <footer>
+    <div>Solana Base58 check (32–44 chars). Dubbele regels worden verwijderd, sortering A→Z.</div>
+    <div>Tip: deel <b>hash + bestand</b> vóór de trekking voor extra vertrouwen.</div>
+  </footer>
+</div>
+
+<script>
+const reB58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+const $ = id => document.getElementById(id);
+const txt = $("txt"), invalidBox = $("invalidBox");
+const countValid = $("countValid"), countInvalid = $("countInvalid"), countUnique = $("countUnique");
+const preview = $("preview"), shareText = $("shareText");
+const hashBox = $("hashBox");
+
+function parseLines(raw){
+  return raw.split(/\r?\n/).map(s => s.trim()).filter(Boolean);
+}
+function normalize(){
+  const lines = parseLines(txt.value).map(s => s.replace(/\s+/g,''));
+  txt.value = lines.join("\n");
+}
+function validate(){
+  const lines = parseLines(txt.value);
+  let valid = [], invalid = [];
+  for(const line of lines){
+    if(line.includes(",")){
+      const [w,c] = line.split(",");
+      const w2 = (w||"").trim();
+      const ok = reB58.test(w2) && (!c || /^\d+$/.test(c.trim()));
+      (ok ? valid : invalid).push(line);
+    } else {
+      (reB58.test(line) ? valid : invalid).push(line);
+    }
+  }
+  // dedupe by wallet (ignoring counts)
+  const map = new Map();
+  for(const v of valid){
+    if(v.includes(",")){
+      const [w,c] = v.split(",");
+      const key = w.trim();
+      const n = Math.max(1, parseInt((c||"1").trim(),10)||1);
+      map.set(key, (map.get(key)||0)+n);
+    } else {
+      map.set(v, (map.get(v)||0)+1);
+    }
+  }
+  const unique = Array.from(map.entries()).sort((a,b)=> a[0].localeCompare(b[0]));
+  // update textarea in canonical form
+  txt.value = unique.map(([w,n]) => n>1 ? `${w},${n}` : w).join("\n");
+
+  // stats
+  countValid.textContent = valid.length;
+  countInvalid.textContent = invalid.length;
+  countUnique.textContent = unique.length;
+
+  // invalid examples
+  if(invalid.length){
+    const sample = invalid.slice(0,10).map(s=>`• ${s}`).join("\n");
+    invalidBox.innerHTML = `<span class="warn">⚠ Ongeldige regels: ${invalid.length}</span><br><pre>${sample}${invalid.length>10?'\n…':''}</pre>`;
+  } else {
+    invalidBox.innerHTML = `<span class="ok">✔ Alles lijkt geldig.</span>`;
+  }
+
+  // masked preview
+  preview.innerHTML = unique.slice(0,30).map(([w,n])=>{
+    const short = w.slice(0,6)+"…"+w.slice(-6);
+    return `${short}${n>1?` ×${n}`:''}`;
+  }).join("<br>") + (unique.length>30? "<br>…": "");
+
+  // prepare share text (without hash yet)
+  shareText.textContent = [
+    "CBS — Building Together wallet list (candidate pool)",
+    `Unique wallets: ${unique.length}`,
+    "Format: one per line, optional ,count for weighted entries.",
+    "",
+    txt.value
+  ].join("\n");
+}
+
+async function sha256Hex(str){
+  const enc = new TextEncoder().encode(str);
+  const buf = await crypto.subtle.digest('SHA-256', enc);
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function makeHash(){
+  const hash = await sha256Hex(txt.value.trim()+"\n"); // newline for stability
+  hashBox.innerHTML = `SHA-256: <code id="hashVal">${hash}</code>`;
+  // append to share text
+  const lines = shareText.textContent.split("\n");
+  lines.splice(1,0,`SHA-256: ${hash}`);
+  shareText.textContent = lines.join("\n");
+}
+
+function exportTxt(){
+  const blob = new Blob([txt.value], {type:"text/plain"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "cbs_wallets.txt";
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(a.href);
+}
+
+function copyHash(){
+  const el = document.getElementById("hashVal");
+  if(!el) return;
+  navigator.clipboard.writeText(el.textContent);
+  alert("Hash copied to clipboard.");
+}
+
+// File import + drag&drop
+$("file").addEventListener("change", (e)=>{
+  const f = e.target.files?.[0]; if(!f) return;
+  const reader = new FileReader();
+  reader.onload = ()=> { txt.value = (reader.result||"").toString(); validate(); };
+  reader.readAsText(f);
+});
+document.addEventListener("dragover", e=>{ e.preventDefault(); });
+document.addEventListener("drop", e=>{
+  e.preventDefault();
+  const f = e.dataTransfer.files?.[0]; if(!f) return;
+  const reader = new FileReader();
+  reader.onload = ()=> { txt.value = (reader.result||"").toString(); validate(); };
+  reader.readAsText(f);
+});
+
+// Buttons
+$("btnNormalize").addEventListener("click", normalize);
+$("btnValidate").addEventListener("click", validate);
+$("btnClear").addEventListener("click", ()=>{ txt.value=""; invalidBox.innerHTML=""; countValid.textContent="0"; countInvalid.textContent="0"; countUnique.textContent="0"; preview.innerHTML=""; shareText.textContent=""; hashBox.innerHTML=""; });
+$("btnExport").addEventListener("click", exportTxt);
+$("btnHash").addEventListener("click", makeHash);
+$("btnCopyHash").addEventListener("click", copyHash);
+
+// Auto-validate when typing stops
+let tmr=null; txt.addEventListener("input", ()=>{ clearTimeout(tmr); tmr=setTimeout(validate, 300); });
+
+// init
+validate();
+</script>
+</body>
+</html>
