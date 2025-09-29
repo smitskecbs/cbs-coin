@@ -24,12 +24,17 @@
 <body class="min-h-screen">
   <!-- NAV -->
   <nav class="max-w-5xl mx-auto px-4 pt-6">
-    <div class="flex items-center justify-between gap-4">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
       <div class="flex items-center gap-3">
         <img src="logo.png" alt="CBS" class="h-10 w-10 rounded-full ring-2 ring-[var(--ring)]" onerror="this.style.display='none'"/>
         <span class="text-xl font-extrabold tracking-tight">CBS Holders Gate</span>
       </div>
-      <div class="text-xs opacity-70">Mint: <code id="mintLabel" class="opacity-90"></code> · Threshold: <span id="usdMinLabel">$5</span></div>
+      <div class="flex items-center flex-wrap gap-x-2 gap-y-1 text-[11px] sm:text-xs opacity-70">
+        <span>Mint:</span>
+        <code id="mintLabel" class="opacity-90 max-w-[72vw] sm:max-w-none break-all sm:break-normal"></code>
+        <span class="hidden sm:inline">·</span>
+        <span>Threshold: <span id="usdMinLabel">$5</span></span>
+      </div>
     </div>
   </nav>
 
@@ -40,6 +45,7 @@
         <div>
           <h1 class="meme-title text-4xl md:text-5xl font-extrabold tracking-tight">Submit Your CBS Idea 💡</h1>
           <p class="mt-2 text-sm md:text-base opacity-85">Holders-only · You need at least <span class="font-semibold">$5</span> worth of CBS to open the form.</p>
+          <div class="mt-3 text-xs opacity-80">Solo-built, community-led — fair launch (no presale), equal opportunity for all.</div>
           <div class="mt-3 text-xs opacity-75">Tip: open this page in Chrome/Brave (not inside Telegram/Twitter in-app browsers) and over HTTPS so wallet extensions can connect.</div>
         </div>
         <div class="hidden md:block">
@@ -125,8 +131,20 @@
     };
 
     document.addEventListener('DOMContentLoaded', function(){
-      document.getElementById('mintLabel').textContent = CONFIG.CBS_MINT;
-      document.getElementById('usdMinLabel').textContent = '$' + CONFIG.MIN_USD;
+      const mintLabelEl = document.getElementById('mintLabel');
+      const usdMinLabelEl = document.getElementById('usdMinLabel');
+      mintLabelEl.title = CONFIG.CBS_MINT;
+
+      function shortMintForNav(s){
+        // Shorten on small screens to avoid overlap
+        return (window.innerWidth < 640) ? (s.slice(0,6) + '…' + s.slice(-6)) : s;
+      }
+      function renderMint(){
+        mintLabelEl.textContent = shortMintForNav(CONFIG.CBS_MINT);
+      }
+      renderMint();
+      window.addEventListener('resize', renderMint);
+      usdMinLabelEl.textContent = '$' + CONFIG.MIN_USD;
 
       const connectBtn = document.getElementById('connectBtn');
       const checkBtn   = document.getElementById('checkBtn');
@@ -143,7 +161,6 @@
       const ideaInput  = document.getElementById('ideaInput');
       const valueInput = document.getElementById('valueInput');
       const linkInput  = document.getElementById('linkInput');
-      const submitBtn  = document.getElementById('submitBtn');
       const copyBtn    = document.getElementById('copyBtn');
       const saveToast  = document.getElementById('saveToast');
 
@@ -291,7 +308,7 @@
         return 'mailto:' + CONFIG.SUBMIT_EMAIL + '?subject=' + encodeURIComponent(subject) + '&body=' + body;
       }
 
-      ideaForm.addEventListener('submit', function(e){
+      document.getElementById('ideaForm').addEventListener('submit', function(e){
         e.preventDefault();
         var p = buildPayload();
         if(!p.wallet){ alert('No wallet address. Please connect your wallet.'); return; }
@@ -305,7 +322,7 @@
         }).catch(function(){});
       });
 
-      copyBtn.addEventListener('click', function(){
+      document.getElementById('copyBtn').addEventListener('click', function(){
         var p = buildPayload();
         var json = JSON.stringify(p, null, 2);
         navigator.clipboard.writeText(json).then(function(){
@@ -326,3 +343,4 @@
   </script>
 </body>
 </html>
+
