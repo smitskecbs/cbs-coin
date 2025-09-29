@@ -17,7 +17,6 @@
     .chip{ border:1px solid rgba(255,255,255,.18); border-radius:9999px; padding:.2rem .6rem; }
     .hidden{ display:none; }
     a{ color:#9dd7ff; }
-    /* Meme vibe */
     .meme-title{ font-family: Bangers, Inter, system-ui; letter-spacing:.5px; text-shadow: 0 2px #000, 0 6px rgba(0,0,0,.35); }
     .sticker{ transform: rotate(-3deg); border:2px dashed #fff; background:#0f0f0f; padding:.35rem .6rem; display:inline-block; }
   </style>
@@ -47,12 +46,12 @@
           <h1 class="meme-title text-4xl md:text-5xl font-extrabold tracking-tight">Submit Your CBS Idea 💡</h1>
           <p class="mt-2 text-sm md:text-base opacity-85">Holders-only · You need at least <span class="font-semibold">$5</span> worth of CBS to open the form.</p>
 
-          <!-- SHORT HOW-TO INSTEAD OF "SOLO-BUILT" TEXT -->
+          <!-- Short how-to -->
           <div class="mt-3 text-xs opacity-80">
             <strong>How to submit:</strong> Connect wallet → Verify you hold ≥ $5 CBS → Fill the form → Your email opens & JSON is copied (you can paste it in Telegram). No server storage.
           </div>
           <div class="mt-3 text-xs opacity-75">
-            Tip: open this page over HTTPS. On mobile, use your wallet’s in-app browser (e.g. Phantom → browser icon → open this URL).
+            Tip: open over HTTPS. On mobile, use your wallet’s in-app browser (Phantom → browser icon → paste this URL). Or tap “Open in Phantom” below.
           </div>
         </div>
         <div class="hidden md:block">
@@ -75,6 +74,7 @@
         <div class="flex flex-wrap gap-2">
           <button id="connectBtn" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20">Connect Phantom</button>
           <button id="checkBtn" class="px-4 py-2 rounded-xl bg-[var(--ring)] text-black font-bold disabled:opacity-40" disabled>Verify holdings</button>
+          <button id="openPhantomBtn" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20">Open in Phantom</button>
           <button id="copyLinkBtn" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20">Copy page link</button>
         </div>
       </div>
@@ -154,69 +154,80 @@
       window.addEventListener('resize', renderMint);
       usdMinLabelEl.textContent = '$' + CONFIG.MIN_USD;
 
-      const connectBtn = document.getElementById('connectBtn');
-      const checkBtn   = document.getElementById('checkBtn');
-      const statusText = document.getElementById('statusText');
-      const pubkeyText = document.getElementById('pubkeyText');
-      const valueText  = document.getElementById('valueText');
-      const phantomHint= document.getElementById('phantomHint');
-      const gateMsg    = document.getElementById('gateMsg');
-      const formWrap   = document.getElementById('formWrap');
+      const connectBtn   = document.getElementById('connectBtn');
+      const checkBtn     = document.getElementById('checkBtn');
+      const openPhantomBtn = document.getElementById('openPhantomBtn');
+      const copyLinkBtn  = document.getElementById('copyLinkBtn');
+      const statusText   = document.getElementById('statusText');
+      const pubkeyText   = document.getElementById('pubkeyText');
+      const valueText    = document.getElementById('valueText');
+      const phantomHint  = document.getElementById('phantomHint');
+      const gateMsg      = document.getElementById('gateMsg');
+      const formWrap     = document.getElementById('formWrap');
 
-      const ideaForm   = document.getElementById('ideaForm');
-      const walletInput= document.getElementById('walletInput');
-      const contactInput= document.getElementById('contactInput');
-      const ideaInput  = document.getElementById('ideaInput');
-      const valueInput = document.getElementById('valueInput');
-      const linkInput  = document.getElementById('linkInput');
-      const copyBtn    = document.getElementById('copyBtn');
-      const copyLinkBtn= document.getElementById('copyLinkBtn');
-      const saveToast  = document.getElementById('saveToast');
+      const ideaForm     = document.getElementById('ideaForm');
+      const walletInput  = document.getElementById('walletInput');
+      const contactInput = document.getElementById('contactInput');
+      const ideaInput    = document.getElementById('ideaInput');
+      const valueInput   = document.getElementById('valueInput');
+      const linkInput    = document.getElementById('linkInput');
+      const copyBtn      = document.getElementById('copyBtn');
+      const saveToast    = document.getElementById('saveToast');
 
-      var walletPubkey = null;
+      let walletPubkey = null;
 
       function shorten(s){ return s ? s.slice(0,4) + '…' + s.slice(-4) : ''; }
 
       // Provider detection — return Phantom provider if present
       function getProvider(){
-        var w = window;
+        const w = window;
         if (w.phantom && w.phantom.solana && w.phantom.solana.isPhantom) return w.phantom.solana;
         if (w.solana && w.solana.isPhantom) return w.solana;
         return null;
       }
 
       // Detect common in-app browsers
-      var ua = navigator.userAgent || '';
-      var webview = /(FBAN|FBAV|Instagram|Twitter|Telegram)/i.test(ua);
+      const ua = navigator.userAgent || '';
+      const webview = /(FBAN|FBAV|Instagram|Twitter|Telegram)/i.test(ua);
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(ua);
+
+      // Open this page in Phantom's in-app browser via universal link (best-effort)
+      function buildPhantomBrowseLinks(url){
+        const enc = encodeURIComponent(url);
+        return {
+          pathStyle: `https://phantom.app/ul/browse/${enc}`, // some builds support /browse/<url>
+          queryStyle: `https://phantom.app/ul/browse?url=${enc}` // fallback with ?url=
+        };
+      }
 
       async function getUsdPriceFromJupiter(mint){
         try{
-          var url = 'https://lite-api.jup.ag/price/v3?ids=' + mint;
-          var res = await fetch(url, { headers: { 'accept':'application/json' } });
-          var json = await res.json();
-          var rec = (json && (json[mint] || (json.data && json.data[mint]))) || null;
-          var price = rec && (rec.usdPrice != null ? rec.usdPrice : rec.price);
+          const url = 'https://lite-api.jup.ag/price/v3?ids=' + mint;
+          const res = await fetch(url, { headers: { 'accept':'application/json' } });
+          const json = await res.json();
+          const rec = (json && (json[mint] || (json.data && json.data[mint]))) || null;
+          const price = rec && (rec.usdPrice != null ? rec.usdPrice : rec.price);
           return (typeof price === 'number') ? price : null;
         }catch(e){ return null; }
       }
 
       async function getUsdPriceViaQuote(mint){
         try{
-          var conn = new solanaWeb3.Connection(CONFIG.RPC_URL, 'confirmed');
-          var info = await conn.getParsedAccountInfo(new solanaWeb3.PublicKey(mint));
-          var decimals = (info && info.value && info.value.data && info.value.data.parsed && info.value.data.parsed.info && info.value.data.parsed.info.decimals) || 9;
-          var amount = BigInt(10) ** BigInt(decimals);
-          var url = 'https://lite-api.jup.ag/swap/v1/quote?inputMint=' + mint + '&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=' + amount.toString() + '&slippageBps=50&restrictIntermediateTokens=true';
-          var q = await (await fetch(url, { headers: { 'accept':'application/json' } })).json();
-          var out = (q && (q.outAmount || (q.data && q.data.outAmount) || (q.quoteResponse && q.quoteResponse.outAmount))) || null;
+          const conn = new solanaWeb3.Connection(CONFIG.RPC_URL, 'confirmed');
+          const info = await conn.getParsedAccountInfo(new solanaWeb3.PublicKey(mint));
+          const decimals = (info && info.value && info.value.data && info.value.data.parsed && info.value.data.parsed.info && info.value.data.parsed.info.decimals) || 9;
+          const amount = BigInt(10) ** BigInt(decimals);
+          const url = 'https://lite-api.jup.ag/swap/v1/quote?inputMint=' + mint + '&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=' + amount.toString() + '&slippageBps=50&restrictIntermediateTokens=true';
+          const q = await (await fetch(url, { headers: { 'accept':'application/json' } })).json();
+          const out = (q && (q.outAmount || (q.data && q.data.outAmount) || (q.quoteResponse && q.quoteResponse.outAmount))) || null;
           if(!out) return null;
-          var usdc = Number(out) / 1000000; // USDC has 6 decimals
+          const usdc = Number(out) / 1_000_000; // USDC has 6 decimals
           return usdc;
         }catch(e){ return null; }
       }
 
       async function getCBSPriceUSD(){
-        var p = await getUsdPriceFromJupiter(CONFIG.CBS_MINT);
+        let p = await getUsdPriceFromJupiter(CONFIG.CBS_MINT);
         if(p) return p;
         p = await getUsdPriceViaQuote(CONFIG.CBS_MINT);
         if(p) return p;
@@ -224,15 +235,15 @@
       }
 
       async function connectWallet(){
-        var provider = getProvider();
+        const provider = getProvider();
         if(!provider){
           phantomHint.classList.remove('hidden');
-          if(webview){ gateMsg.textContent = 'Open this page in Chrome/Brave or use your wallet’s in-app browser. In-app browsers like Telegram/X block extensions.'; }
+          if(webview){ gateMsg.textContent = 'Open in Chrome/Brave or use your wallet’s in-app browser. In-app browsers like Telegram/X block extensions.'; }
           return;
         }
         try{
           if (provider.on) {
-            provider.on('connect', function(pk){
+            provider.on('connect', (pk)=>{
               try{
                 walletPubkey = (pk && pk.toString && pk.toString()) || (provider.publicKey && provider.publicKey.toString && provider.publicKey.toString()) || null;
                 if(walletPubkey){
@@ -245,7 +256,7 @@
               }catch(_){ }
             });
           }
-          var resp = await provider.connect({ onlyIfTrusted:false });
+          const resp = await provider.connect({ onlyIfTrusted:false });
           walletPubkey = (resp && resp.publicKey && resp.publicKey.toString && resp.publicKey.toString()) || (provider.publicKey && provider.publicKey.toString && provider.publicKey.toString()) || null;
           if(!walletPubkey){ throw new Error('No public key from provider'); }
           statusText.textContent = 'Connected';
@@ -265,18 +276,18 @@
         valueText.textContent = '';
         try{
           if(!walletPubkey){ gateMsg.textContent = 'No wallet connected.'; return; }
-          var conn = new solanaWeb3.Connection(CONFIG.RPC_URL, 'confirmed');
-          var owner = new solanaWeb3.PublicKey(walletPubkey);
-          var mint  = new solanaWeb3.PublicKey(CONFIG.CBS_MINT);
-          var res = await conn.getParsedTokenAccountsByOwner(owner, { mint: mint });
-          var ui = 0;
+          const conn = new solanaWeb3.Connection(CONFIG.RPC_URL, 'confirmed');
+          const owner = new solanaWeb3.PublicKey(walletPubkey);
+          const mint  = new solanaWeb3.PublicKey(CONFIG.CBS_MINT);
+          const res = await conn.getParsedTokenAccountsByOwner(owner, { mint: mint });
+          let ui = 0;
           if(res.value && res.value.length){
-            var t = res.value[0].account.data.parsed.info.tokenAmount;
+            const t = res.value[0].account.data.parsed.info.tokenAmount;
             ui = Number(t.uiAmount || 0);
           }
-          var price = await getCBSPriceUSD();
+          const price = await getCBSPriceUSD();
           if(!price){ gateMsg.innerHTML = 'Could not fetch CBS price. Please try again later.'; return; }
-          var usdValue = ui * price;
+          const usdValue = ui * price;
           valueText.textContent = 'CBS: ' + ui.toLocaleString(undefined,{maximumFractionDigits:2}) + ' · Est. value: $' + usdValue.toFixed(2) + ' (price: $' + price.toFixed(6) + '/CBS)';
           if(usdValue >= Number(CONFIG.MIN_USD)){
             gateMsg.innerHTML = 'Access granted · Estimated CBS value: <span class="chip">$' + usdValue.toFixed(2) + '</span>';
@@ -304,8 +315,8 @@
       }
 
       function toMailto(payload){
-        var subject = 'CBS Idea — ' + shorten(payload.wallet);
-        var bodyLines = [
+        const subject = 'CBS Idea — ' + shorten(payload.wallet);
+        const bodyLines = [
           'Wallet: ' + payload.wallet,
           'Contact: ' + (payload.contact || '-'),
           'Idea: ' + payload.idea,
@@ -313,18 +324,18 @@
           'Link: ' + (payload.link || '-'),
           'Time: ' + payload.timestamp
         ];
-        var body = encodeURIComponent(bodyLines.join('\n'));
+        const body = encodeURIComponent(bodyLines.join('\n'));
         return 'mailto:' + CONFIG.SUBMIT_EMAIL + '?subject=' + encodeURIComponent(subject) + '&body=' + body;
       }
 
-      document.getElementById('ideaForm').addEventListener('submit', function(e){
+      ideaForm.addEventListener('submit', function(e){
         e.preventDefault();
-        var p = buildPayload();
+        const p = buildPayload();
         if(!p.wallet){ alert('No wallet address. Please connect your wallet.'); return; }
         if(!p.idea || !p.expectedOutcome){ alert('Please fill in your idea and expected outcome.'); return; }
-        var href = toMailto(p);
+        const href = toMailto(p);
         window.location.href = href;
-        var json = JSON.stringify(p, null, 2);
+        const json = JSON.stringify(p, null, 2);
         navigator.clipboard.writeText(json).then(function(){
           saveToast.textContent = 'JSON copied to clipboard';
           setTimeout(function(){ saveToast.textContent = ''; }, 3000);
@@ -332,8 +343,8 @@
       });
 
       copyBtn.addEventListener('click', function(){
-        var p = buildPayload();
-        var json = JSON.stringify(p, null, 2);
+        const p = buildPayload();
+        const json = JSON.stringify(p, null, 2);
         navigator.clipboard.writeText(json).then(function(){
           saveToast.textContent = 'JSON copied!';
           setTimeout(function(){ saveToast.textContent = ''; }, 3000);
@@ -354,11 +365,27 @@
         });
       });
 
+      openPhantomBtn.addEventListener('click', function(){
+        const url = window.location.href;
+        const links = buildPhantomBrowseLinks(url);
+        // Prefer query style (works on more builds), then path style fallback
+        const a = document.createElement('a');
+        a.rel = 'noreferrer';
+        a.target = '_self';
+        a.href = links.queryStyle;
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(()=>{ a.remove(); }, 1000);
+      });
+
       connectBtn.addEventListener('click', connectWallet);
       checkBtn.addEventListener('click', checkHoldings);
 
-      var provider = getProvider();
+      const provider = getProvider();
       if(!provider){ phantomHint.classList.remove('hidden'); }
+
+      // Hide the "Open in Phantom" button on desktop
+      if(!isMobile){ openPhantomBtn.classList.add('hidden'); }
     });
   </script>
 </body>
