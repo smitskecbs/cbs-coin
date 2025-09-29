@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CBS Idea Submission — Holders Only</title>
   <meta name="description" content="Gated idea submission form for CBS holders (requires ≥ $5 in CBS)">
+  <meta name="theme-color" content="#0b1227" />
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/@solana/web3.js@1.95.1/lib/index.iife.min.js" defer></script>
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
@@ -45,8 +46,14 @@
         <div>
           <h1 class="meme-title text-4xl md:text-5xl font-extrabold tracking-tight">Submit Your CBS Idea 💡</h1>
           <p class="mt-2 text-sm md:text-base opacity-85">Holders-only · You need at least <span class="font-semibold">$5</span> worth of CBS to open the form.</p>
-          <div class="mt-3 text-xs opacity-80">Solo-built, community-led — fair launch (no presale), equal opportunity for all.</div>
-          <div class="mt-3 text-xs opacity-75">Tip: open this page in Chrome/Brave (not inside Telegram/Twitter in-app browsers) and over HTTPS so wallet extensions can connect.</div>
+
+          <!-- SHORT HOW-TO INSTEAD OF "SOLO-BUILT" TEXT -->
+          <div class="mt-3 text-xs opacity-80">
+            <strong>How to submit:</strong> Connect wallet → Verify you hold ≥ $5 CBS → Fill the form → Your email opens & JSON is copied (you can paste it in Telegram). No server storage.
+          </div>
+          <div class="mt-3 text-xs opacity-75">
+            Tip: open this page over HTTPS. On mobile, use your wallet’s in-app browser (e.g. Phantom → browser icon → open this URL).
+          </div>
         </div>
         <div class="hidden md:block">
           <div class="sticker rounded-xl">Community Builds <strong>SOVEREIGNTY</strong></div>
@@ -65,13 +72,14 @@
           <div id="pubkeyText" class="text-sm opacity-80"></div>
           <div id="valueText" class="text-xs mt-1 opacity-70"></div>
         </div>
-        <div class="flex gap-2">
+        <div class="flex flex-wrap gap-2">
           <button id="connectBtn" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20">Connect Phantom</button>
           <button id="checkBtn" class="px-4 py-2 rounded-xl bg-[var(--ring)] text-black font-bold disabled:opacity-40" disabled>Verify holdings</button>
+          <button id="copyLinkBtn" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20">Copy page link</button>
         </div>
       </div>
       <div id="phantomHint" class="mt-3 text-sm hidden">
-        No wallet detected. Install <a class="underline" href="https://phantom.app/" target="_blank" rel="noreferrer">Phantom</a> and reload. This page requires HTTPS.
+        No wallet detected. Install <a class="underline" href="https://phantom.app/" target="_blank" rel="noreferrer">Phantom</a> and reload. On mobile, open this page in the Phantom in-app browser.
       </div>
       <div id="gateMsg" class="mt-4 text-sm"></div>
     </section>
@@ -131,12 +139,12 @@
     };
 
     document.addEventListener('DOMContentLoaded', function(){
+      // Render mint nicely in nav (short on small screens)
       const mintLabelEl = document.getElementById('mintLabel');
       const usdMinLabelEl = document.getElementById('usdMinLabel');
       mintLabelEl.title = CONFIG.CBS_MINT;
 
       function shortMintForNav(s){
-        // Shorten on small screens to avoid overlap
         return (window.innerWidth < 640) ? (s.slice(0,6) + '…' + s.slice(-6)) : s;
       }
       function renderMint(){
@@ -162,6 +170,7 @@
       const valueInput = document.getElementById('valueInput');
       const linkInput  = document.getElementById('linkInput');
       const copyBtn    = document.getElementById('copyBtn');
+      const copyLinkBtn= document.getElementById('copyLinkBtn');
       const saveToast  = document.getElementById('saveToast');
 
       var walletPubkey = null;
@@ -176,7 +185,7 @@
         return null;
       }
 
-      // In-app browser hint
+      // Detect common in-app browsers
       var ua = navigator.userAgent || '';
       var webview = /(FBAN|FBAV|Instagram|Twitter|Telegram)/i.test(ua);
 
@@ -218,7 +227,7 @@
         var provider = getProvider();
         if(!provider){
           phantomHint.classList.remove('hidden');
-          if(webview){ gateMsg.textContent = 'Open this page in Chrome/Brave. In-app browsers block extensions.'; }
+          if(webview){ gateMsg.textContent = 'Open this page in Chrome/Brave or use your wallet’s in-app browser. In-app browsers like Telegram/X block extensions.'; }
           return;
         }
         try{
@@ -322,7 +331,7 @@
         }).catch(function(){});
       });
 
-      document.getElementById('copyBtn').addEventListener('click', function(){
+      copyBtn.addEventListener('click', function(){
         var p = buildPayload();
         var json = JSON.stringify(p, null, 2);
         navigator.clipboard.writeText(json).then(function(){
@@ -331,6 +340,17 @@
         }).catch(function(){
           saveToast.textContent = 'Copy failed (browser permission)';
           setTimeout(function(){ saveToast.textContent = ''; }, 3000);
+        });
+      });
+
+      copyLinkBtn.addEventListener('click', function(){
+        const url = window.location.href;
+        navigator.clipboard.writeText(url).then(function(){
+          gateMsg.textContent = 'Link copied. Open Phantom → Browser icon → Paste URL to connect.';
+          setTimeout(function(){ gateMsg.textContent=''; }, 4000);
+        }).catch(function(){
+          gateMsg.textContent = 'Copy failed. Long-press the address bar to copy the URL.';
+          setTimeout(function(){ gateMsg.textContent=''; }, 4000);
         });
       });
 
@@ -343,4 +363,3 @@
   </script>
 </body>
 </html>
-
