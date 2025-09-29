@@ -45,13 +45,11 @@
         <div>
           <h1 class="meme-title text-4xl md:text-5xl font-extrabold tracking-tight">Submit Your CBS Idea 💡</h1>
           <p class="mt-2 text-sm md:text-base opacity-85">Holders-only · You need at least <span class="font-semibold">$5</span> worth of CBS to open the form.</p>
-
-          <!-- Short how-to -->
           <div class="mt-3 text-xs opacity-80">
-            <strong>How to submit:</strong> Connect wallet → Verify you hold ≥ $5 CBS → Fill the form → Your email opens & JSON is copied (you can paste it in Telegram). No server storage.
+            <strong>How to submit:</strong> Connect wallet (or paste address) → Verify ≥ $5 CBS → Fill form → Your email opens & JSON is copied. No server storage.
           </div>
           <div class="mt-3 text-xs opacity-75">
-            Tip: open over HTTPS. On mobile, use your wallet’s in-app browser (Phantom → browser icon → paste this URL). Or tap “Open in Phantom” below.
+            Tip: use HTTPS. On mobile, open this page in your wallet’s in-app browser (Phantom/Solflare/Backpack/OKX). You can also paste your public address below.
           </div>
         </div>
         <div class="hidden md:block">
@@ -68,18 +66,30 @@
         <div>
           <div class="text-sm opacity-80">Wallet</div>
           <div id="statusText" class="text-lg font-semibold">Not connected</div>
+          <div id="walletName" class="text-xs opacity-70"></div>
           <div id="pubkeyText" class="text-sm opacity-80"></div>
           <div id="valueText" class="text-xs mt-1 opacity-70"></div>
         </div>
         <div class="flex flex-wrap gap-2">
-          <button id="connectBtn" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20">Connect Phantom</button>
+          <button id="connectBtn" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20">Connect Wallet (Auto)</button>
           <button id="checkBtn" class="px-4 py-2 rounded-xl bg-[var(--ring)] text-black font-bold disabled:opacity-40" disabled>Verify holdings</button>
           <button id="openPhantomBtn" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20">Open in Phantom</button>
           <button id="copyLinkBtn" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20">Copy page link</button>
         </div>
       </div>
+
+      <!-- View-only verify (any wallet) -->
+      <div class="mt-3 flex flex-col sm:flex-row gap-2">
+        <input id="manualAddr" class="w-full sm:w-96 rounded-xl bg-white/5 border border-white/10 px-3 py-2"
+               placeholder="Paste any Solana wallet address (view-only)" />
+        <button id="manualVerifyBtn" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20">
+          Verify without connecting
+        </button>
+      </div>
+
       <div id="phantomHint" class="mt-3 text-sm hidden">
-        No wallet detected. Install <a class="underline" href="https://phantom.app/" target="_blank" rel="noreferrer">Phantom</a> and reload. On mobile, open this page in the Phantom in-app browser.
+        No wallet detected. Install a Solana wallet (Phantom, Solflare, Backpack, OKX) and reload.
+        On mobile, open this page in your wallet’s in-app browser.
       </div>
       <div id="gateMsg" class="mt-4 text-sm"></div>
     </section>
@@ -93,7 +103,7 @@
         <div class="grid md:grid-cols-2 gap-4">
           <div>
             <label class="block text-sm mb-1">Wallet address</label>
-            <input id="walletInput" type="text" readonly class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="Connect wallet to fill in" />
+            <input id="walletInput" type="text" readonly class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="Connect wallet or paste address" />
           </div>
           <div>
             <label class="block text-sm mb-1">Contact (optional)</label>
@@ -132,10 +142,10 @@
     const HELIUS_KEY = 'a9a11d45-2d40-4da0-a3b6-557b855f1e5c';
     const CONFIG = {
       CBS_MINT: 'B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk',
-      MIN_USD: 5, // holders must have at least $5 worth of CBS
+      MIN_USD: 5,
       RPC_URL: `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`,
       SUBMIT_EMAIL: 'cbs.coin12@gmail.com',
-      CBS_PRICE_USD_FALLBACK: null // e.g. 0.0001
+      CBS_PRICE_USD_FALLBACK: null
     };
 
     document.addEventListener('DOMContentLoaded', function(){
@@ -143,61 +153,63 @@
       const mintLabelEl = document.getElementById('mintLabel');
       const usdMinLabelEl = document.getElementById('usdMinLabel');
       mintLabelEl.title = CONFIG.CBS_MINT;
-
-      function shortMintForNav(s){
-        return (window.innerWidth < 640) ? (s.slice(0,6) + '…' + s.slice(-6)) : s;
-      }
-      function renderMint(){
-        mintLabelEl.textContent = shortMintForNav(CONFIG.CBS_MINT);
-      }
+      function shortMintForNav(s){ return (window.innerWidth < 640) ? (s.slice(0,6) + '…' + s.slice(-6)) : s; }
+      function renderMint(){ mintLabelEl.textContent = shortMintForNav(CONFIG.CBS_MINT); }
       renderMint();
       window.addEventListener('resize', renderMint);
       usdMinLabelEl.textContent = '$' + CONFIG.MIN_USD;
 
-      const connectBtn   = document.getElementById('connectBtn');
-      const checkBtn     = document.getElementById('checkBtn');
-      const openPhantomBtn = document.getElementById('openPhantomBtn');
-      const copyLinkBtn  = document.getElementById('copyLinkBtn');
-      const statusText   = document.getElementById('statusText');
-      const pubkeyText   = document.getElementById('pubkeyText');
-      const valueText    = document.getElementById('valueText');
-      const phantomHint  = document.getElementById('phantomHint');
-      const gateMsg      = document.getElementById('gateMsg');
-      const formWrap     = document.getElementById('formWrap');
-
-      const ideaForm     = document.getElementById('ideaForm');
-      const walletInput  = document.getElementById('walletInput');
-      const contactInput = document.getElementById('contactInput');
-      const ideaInput    = document.getElementById('ideaInput');
-      const valueInput   = document.getElementById('valueInput');
-      const linkInput    = document.getElementById('linkInput');
-      const copyBtn      = document.getElementById('copyBtn');
-      const saveToast    = document.getElementById('saveToast');
+      // Elements
+      const connectBtn      = document.getElementById('connectBtn');
+      const checkBtn        = document.getElementById('checkBtn');
+      const openPhantomBtn  = document.getElementById('openPhantomBtn');
+      const copyLinkBtn     = document.getElementById('copyLinkBtn');
+      const statusText      = document.getElementById('statusText');
+      const walletNameEl    = document.getElementById('walletName');
+      const pubkeyText      = document.getElementById('pubkeyText');
+      const valueText       = document.getElementById('valueText');
+      const phantomHint     = document.getElementById('phantomHint');
+      const gateMsg         = document.getElementById('gateMsg');
+      const formWrap        = document.getElementById('formWrap');
+      const ideaForm        = document.getElementById('ideaForm');
+      const walletInput     = document.getElementById('walletInput');
+      const contactInput    = document.getElementById('contactInput');
+      const ideaInput       = document.getElementById('ideaInput');
+      const valueInput      = document.getElementById('valueInput');
+      const linkInput       = document.getElementById('linkInput');
+      const copyBtn         = document.getElementById('copyBtn');
+      const saveToast       = document.getElementById('saveToast');
+      const manualAddr      = document.getElementById('manualAddr');
+      const manualVerifyBtn = document.getElementById('manualVerifyBtn');
 
       let walletPubkey = null;
 
       function shorten(s){ return s ? s.slice(0,4) + '…' + s.slice(-4) : ''; }
 
-      // Provider detection — return Phantom provider if present
-      function getProvider(){
+      // Detect multiple providers
+      function getAnyProvider(){
         const w = window;
-        if (w.phantom && w.phantom.solana && w.phantom.solana.isPhantom) return w.phantom.solana;
-        if (w.solana && w.solana.isPhantom) return w.solana;
+        // Phantom
+        if (w.phantom && w.phantom.solana && w.phantom.solana.isPhantom) return { name:'Phantom', provider:w.phantom.solana };
+        if (w.solana && w.solana.isPhantom) return { name:'Phantom', provider:w.solana };
+        // Solflare
+        if (w.solflare && w.solflare.isSolflare) return { name:'Solflare', provider:w.solflare };
+        // Backpack
+        if (w.backpack && w.backpack.solana && w.backpack.solana.isBackpack) return { name:'Backpack', provider:w.backpack.solana };
+        // OKX
+        if (w.okxwallet && w.okxwallet.solana) return { name:'OKX', provider:w.okxwallet.solana };
+        // Fallback generic
+        if (w.solana) return { name:'Solana Wallet', provider:w.solana };
         return null;
       }
 
-      // Detect common in-app browsers
       const ua = navigator.userAgent || '';
-      const webview = /(FBAN|FBAV|Instagram|Twitter|Telegram)/i.test(ua);
       const isMobile = /Android|iPhone|iPad|iPod/i.test(ua);
 
-      // Open this page in Phantom's in-app browser via universal link (best-effort)
-      function buildPhantomBrowseLinks(url){
+      // Phantom deeplink (best-effort)
+      function buildPhantomBrowseLink(url){
         const enc = encodeURIComponent(url);
-        return {
-          pathStyle: `https://phantom.app/ul/browse/${enc}`, // some builds support /browse/<url>
-          queryStyle: `https://phantom.app/ul/browse?url=${enc}` // fallback with ?url=
-        };
+        return `https://phantom.app/ul/browse?url=${enc}`;
       }
 
       async function getUsdPriceFromJupiter(mint){
@@ -221,8 +233,7 @@
           const q = await (await fetch(url, { headers: { 'accept':'application/json' } })).json();
           const out = (q && (q.outAmount || (q.data && q.data.outAmount) || (q.quoteResponse && q.quoteResponse.outAmount))) || null;
           if(!out) return null;
-          const usdc = Number(out) / 1_000_000; // USDC has 6 decimals
-          return usdc;
+          return Number(out) / 1_000_000; // USDC 6 decimals
         }catch(e){ return null; }
       }
 
@@ -235,12 +246,13 @@
       }
 
       async function connectWallet(){
-        const provider = getProvider();
-        if(!provider){
+        const found = getAnyProvider();
+        if(!found){
           phantomHint.classList.remove('hidden');
-          if(webview){ gateMsg.textContent = 'Open in Chrome/Brave or use your wallet’s in-app browser. In-app browsers like Telegram/X block extensions.'; }
+          gateMsg.textContent = 'No wallet provider detected. On mobile, open this page inside your wallet app (Phantom/Solflare/Backpack/OKX) or paste your address below.';
           return;
         }
+        const provider = found.provider;
         try{
           if (provider.on) {
             provider.on('connect', (pk)=>{
@@ -248,24 +260,27 @@
                 walletPubkey = (pk && pk.toString && pk.toString()) || (provider.publicKey && provider.publicKey.toString && provider.publicKey.toString()) || null;
                 if(walletPubkey){
                   statusText.textContent = 'Connected';
+                  walletNameEl.textContent = 'Provider: ' + found.name;
                   pubkeyText.textContent = shorten(walletPubkey);
                   checkBtn.disabled = false;
                   walletInput.value = walletPubkey;
                   gateMsg.textContent = '';
                 }
-              }catch(_){ }
+              }catch(_){}
             });
           }
           const resp = await provider.connect({ onlyIfTrusted:false });
           walletPubkey = (resp && resp.publicKey && resp.publicKey.toString && resp.publicKey.toString()) || (provider.publicKey && provider.publicKey.toString && provider.publicKey.toString()) || null;
-          if(!walletPubkey){ throw new Error('No public key from provider'); }
+          if(!walletPubkey) throw new Error('No public key from provider');
           statusText.textContent = 'Connected';
+          walletNameEl.textContent = 'Provider: ' + found.name;
           pubkeyText.textContent = shorten(walletPubkey);
           checkBtn.disabled = false;
           walletInput.value = walletPubkey;
           gateMsg.textContent = '';
         }catch(e){
           statusText.textContent = 'Not connected';
+          walletNameEl.textContent = '';
           gateMsg.textContent = 'Wallet connection rejected or failed.';
           console.error(e);
         }
@@ -275,7 +290,7 @@
         gateMsg.textContent = 'Checking holdings...';
         valueText.textContent = '';
         try{
-          if(!walletPubkey){ gateMsg.textContent = 'No wallet connected.'; return; }
+          if(!walletPubkey){ gateMsg.textContent = 'No wallet connected or pasted.'; return; }
           const conn = new solanaWeb3.Connection(CONFIG.RPC_URL, 'confirmed');
           const owner = new solanaWeb3.PublicKey(walletPubkey);
           const mint  = new solanaWeb3.PublicKey(CONFIG.CBS_MINT);
@@ -331,7 +346,7 @@
       ideaForm.addEventListener('submit', function(e){
         e.preventDefault();
         const p = buildPayload();
-        if(!p.wallet){ alert('No wallet address. Please connect your wallet.'); return; }
+        if(!p.wallet){ alert('No wallet address. Connect or paste your address.'); return; }
         if(!p.idea || !p.expectedOutcome){ alert('Please fill in your idea and expected outcome.'); return; }
         const href = toMailto(p);
         window.location.href = href;
@@ -357,7 +372,7 @@
       copyLinkBtn.addEventListener('click', function(){
         const url = window.location.href;
         navigator.clipboard.writeText(url).then(function(){
-          gateMsg.textContent = 'Link copied. Open Phantom → Browser icon → Paste URL to connect.';
+          gateMsg.textContent = 'Link copied. Open your wallet → Browser icon → Paste URL to connect.';
           setTimeout(function(){ gateMsg.textContent=''; }, 4000);
         }).catch(function(){
           gateMsg.textContent = 'Copy failed. Long-press the address bar to copy the URL.';
@@ -367,12 +382,10 @@
 
       openPhantomBtn.addEventListener('click', function(){
         const url = window.location.href;
-        const links = buildPhantomBrowseLinks(url);
-        // Prefer query style (works on more builds), then path style fallback
         const a = document.createElement('a');
         a.rel = 'noreferrer';
         a.target = '_self';
-        a.href = links.queryStyle;
+        a.href = buildPhantomBrowseLink(url);
         document.body.appendChild(a);
         a.click();
         setTimeout(()=>{ a.remove(); }, 1000);
@@ -381,10 +394,27 @@
       connectBtn.addEventListener('click', connectWallet);
       checkBtn.addEventListener('click', checkHoldings);
 
-      const provider = getProvider();
-      if(!provider){ phantomHint.classList.remove('hidden'); }
+      // Manual verify (view-only)
+      manualVerifyBtn.addEventListener('click', () => {
+        const addr = (manualAddr.value || '').trim();
+        try {
+          new solanaWeb3.PublicKey(addr); // validate
+          walletPubkey = addr;
+          statusText.textContent = 'View-only (pasted)';
+          walletNameEl.textContent = 'Provider: Manual address';
+          pubkeyText.textContent = shorten(walletPubkey);
+          checkBtn.disabled = false;
+          walletInput.value = walletPubkey;
+          gateMsg.textContent = '';
+          checkHoldings();
+        } catch {
+          gateMsg.textContent = 'Invalid Solana address.';
+        }
+      });
 
-      // Hide the "Open in Phantom" button on desktop
+      // Initial hints
+      const providerFound = getAnyProvider();
+      if(!providerFound){ phantomHint.classList.remove('hidden'); }
       if(!isMobile){ openPhantomBtn.classList.add('hidden'); }
     });
   </script>
