@@ -16,13 +16,35 @@
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root{ --bg:#070a12; --bg2:#0b1227; --ring:#22c55e; --text:#e5efff; }
-    body{ font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; background: radial-gradient(1200px 700px at 15% -10%, #0e1631 0%, var(--bg) 55%), var(--bg2); color:var(--text); }
-    .glass{ background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03)); backdrop-filter: blur(10px); border:1px solid rgba(255,255,255,.1); }
-    .neon{ box-shadow: 0 0 0 .5px rgba(255,255,255,.2), 0 0 25px rgba(34,197,94,.25), inset 0 0 25px rgba(34,197,94,.08); }
+    :root{
+      --bg:#070a12; --bg2:#0b1227; --text:#e5efff;
+      --accentG:#22c55e; /* green */
+      --accentP:#a78bfa; /* purple */
+    }
+    body{
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+      /* dubbele radial voor groen/paars aura */
+      background:
+        radial-gradient(1200px 700px at 15% -10%, #0e1631 0%, var(--bg) 55%),
+        radial-gradient(900px 500px at 120% 120%, #2a0e31 0%, rgba(0,0,0,0) 60%),
+        var(--bg2);
+      color:var(--text);
+    }
+    .glass{ background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03));
+            backdrop-filter: blur(10px); border:1px solid rgba(255,255,255,.1); }
+    /* Glow nu mix groen + paars */
+    .neon{
+      box-shadow:
+        0 0 0 .5px rgba(255,255,255,.2),
+        0 0 25px rgba(34,197,94,.22),
+        0 0 35px rgba(167,139,250,.22),
+        inset 0 0 25px rgba(34,197,94,.08),
+        inset 0 0 35px rgba(167,139,250,.08);
+    }
     .meme-title{ font-family: Bangers, Inter, system-ui; letter-spacing:.5px; text-shadow: 0 2px #000, 0 6px rgba(0,0,0,.35); }
     a{ color:#9dd7ff; }
     .chip{ border:1px solid rgba(255,255,255,.18); border-radius:9999px; padding:.15rem .55rem; }
+    .btn-accent{ background: linear-gradient(90deg, var(--accentG), var(--accentP)); color:#0a0a0a; font-weight:800; }
   </style>
 </head>
 <body class="min-h-screen">
@@ -31,7 +53,8 @@
   <nav class="max-w-6xl mx-auto px-4 py-4">
     <div class="flex items-center justify-between gap-4">
       <a href="index.html" class="flex items-center gap-3">
-        <img src="logo.png" class="h-10 w-10 rounded-full ring-2 ring-[var(--ring)]" alt="CBS" />
+        <!-- ring verwijderd -->
+        <img src="logo.png" class="h-10 w-10 rounded-full" alt="CBS" />
         <span class="font-extrabold tracking-tight">CBS Coin</span>
       </a>
       <div class="hidden md:flex items-center gap-4 text-sm">
@@ -58,11 +81,18 @@
     </div>
   </nav>
 
-  <!-- BRAND STRIP (logo + banner) -->
+  <!-- BRAND STRIP (logo + banner + tagline) -->
   <section class="max-w-6xl mx-auto px-4">
-    <div class="glass rounded-2xl p-3 md:p-4 flex items-center gap-4">
-      <img src="logo.png" alt="CBS Logo" class="h-12 w-12 md:h-16 md:w-16 rounded-full ring-2 ring-[var(--ring)]" onerror="this.style.display='none'">
-      <img src="CBS_COIN_banner.png" alt="CBS Banner" class="h-12 md:h-16 w-auto rounded-xl ring-1 ring-white/10 object-contain" onerror="this.style.display='none'">
+    <div class="glass rounded-2xl p-3 md:p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <div class="flex items-center gap-4">
+        <!-- logo zonder groene ring -->
+        <img src="logo.png" alt="CBS Logo" class="h-16 w-16 md:h-20 md:w-20 rounded-full" onerror="this.style.display='none'">
+        <!-- banner groter gemaakt -->
+        <img src="CBS_COIN_banner.png" alt="CBS Banner" class="h-16 md:h-24 w-auto rounded-xl ring-1 ring-white/10 object-contain" onerror="this.style.display='none'">
+      </div>
+      <div class="text-sm md:text-base font-semibold tracking-wide text-right">
+        CBS — Community Builds <span style="color:var(--accentP)">Sovereignty</span>
+      </div>
     </div>
   </section>
 
@@ -81,7 +111,7 @@
             <span id="copyToast" class="ml-2 text-xs opacity-70"></span>
           </div>
           <div class="flex flex-wrap gap-2 mt-5">
-            <a href="#buy" class="px-4 py-2 rounded-xl bg-[var(--ring)] text-black font-bold">Buy $CBS</a>
+            <a href="#buy" class="px-4 py-2 rounded-xl btn-accent">Buy $CBS</a>
             <a href="#chart" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20">Open Chart</a>
             <a href="#contest" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20">Join Contest</a>
           </div>
@@ -100,7 +130,7 @@
       <h2 class="meme-title text-3xl font-extrabold">Buy $CBS in 60s</h2>
       <p class="mt-2 text-sm opacity-85">Swap SOL → CBS on Raydium. Set slippage ~0.5–1% if needed.</p>
       <div class="mt-4 grid sm:grid-cols-2 gap-3">
-        <a class="px-4 py-3 rounded-xl bg-[var(--ring)] text-black font-bold text-center"
+        <a class="px-4 py-3 rounded-xl btn-accent text-center"
            href="https://raydium.io/swap/?inputMint=So11111111111111111111111111111111111111112&outputMint=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk" target="_blank" rel="noreferrer">Open Raydium Swap</a>
         <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-center"
            href="https://phantom.app/ul/browse?url=https%3A%2F%2Fraydium.io%2Fswap%2F%3FinputMint%3DSo11111111111111111111111111111111111111112%26outputMint%3DB9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk">Open in Phantom (mobile)</a>
@@ -123,7 +153,7 @@
 
   <!-- TOKEN -->
   <section id="token" class="max-w-6xl mx-auto px-4 pb-8">
-    <div class="grid lg-grid-cols-2 lg:grid-cols-2 gap-6">
+    <div class="grid lg:grid-cols-2 gap-6">
       <div class="glass rounded-2xl p-6">
         <h3 class="meme-title text-3xl font-extrabold">Token facts</h3>
         <ul class="mt-3 text-sm leading-7 opacity-90">
@@ -161,7 +191,7 @@
         Winner is selected at random and receives <strong>$100</strong> to execute + <strong>$50</strong> bonus if targets are met.
       </p>
       <div class="mt-4">
-        <a class="px-4 py-2 rounded-xl bg-[var(--ring)] text-black font-bold" href="join.html">Submit your idea →</a>
+        <a class="px-4 py-2 rounded-xl btn-accent" href="join.html">Submit your idea →</a>
       </div>
       <p class="mt-2 text-xs opacity-70">Never connect your wallet on unknown sites. We never ask for seed phrases.</p>
     </div>
@@ -235,4 +265,3 @@
   </script>
 </body>
 </html>
-
