@@ -1,610 +1,202 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CBS Coin – Community Builds Sovereignty</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CBS Coin — Community Builds Sovereignty</title>
+  <meta name="description" content="CBS Coin (CBS) — fair-launch SPL memecoin on Solana. No presale, community-led.">
+  <meta name="theme-color" content="#0b1227" />
 
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+  <!-- Open Graph / Twitter -->
+  <meta property="og:title" content="CBS Coin — Community Builds Sovereignty" />
+  <meta property="og:description" content="Fair-launch SPL memecoin on Solana. No presale. Community-led." />
+  <meta property="og:image" content="assets/cbs-og.png" />
+  <meta property="twitter:card" content="summary_large_image" />
 
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    :root{
-      --bg1:#070b0f; --bg2:#0d141b;
-      --card:#0e151c; --card2:#0a1117;
-      --fg:#eafffb; --muted:#a8d6cd; --note:#7ee9dc;
-      --accent:#5afff0; --accent2:#2bffe4;
-      --shadow: 0 22px 48px rgba(0,255,230,.10), inset 0 0 0 1px rgba(0,255,240,.10);
-      --radius:18px;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0; font-family:'Orbitron',sans-serif; color:var(--fg);
-      background:
-        radial-gradient(900px 600px at 100% -10%, rgba(0,255,230,.10), transparent 60%),
-        radial-gradient(700px 500px at -10% 110%, rgba(138,99,246,.06), transparent 60%),
-        linear-gradient(135deg,var(--bg1),var(--bg2));
-      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
-    }
-
-    /* ===== Header ===== */
-    .topbar{ position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:.8rem 1rem; backdrop-filter:blur(6px); background:linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0)); border-bottom:1px solid rgba(0,255,240,.08); }
-    .brand{display:flex; align-items:center; gap:.7rem}
-    .brand img{width:38px; height:38px; border-radius:10px; filter:drop-shadow(0 0 10px rgba(0,255,230,.35))}
-    .brand h1{margin:0; font-size:1.05rem; letter-spacing:.4px; font-weight:700; color:#bffef2}
-
-    .top-actions{display:flex; align-items:center; gap:.5rem}
-    .pill-btn{ background:linear-gradient(180deg, var(--accent), var(--accent2)); color:#012022; font-weight:900; border:1px solid rgba(0,255,240,.45); padding:.5rem .8rem; border-radius:12px; cursor:pointer; box-shadow:0 8px 18px rgba(0,255,230,.18), inset 0 -6px 10px rgba(0,0,0,.15); transition:transform .12s ease, box-shadow .12s ease, filter .12s ease; white-space:nowrap; }
-    .pill-btn:hover{ transform:translateY(-1px); box-shadow:0 10px 22px rgba(0,255,230,.26) }
-
-    /* Social icons */
-    .social{ display:flex; align-items:center; gap:.6rem; padding:.25rem .4rem; border-radius:12px; background:linear-gradient(180deg, rgba(0,255,230,.05), rgba(0,255,230,.02)); border:1px solid rgba(0,255,240,.12); }
-    .icon-link{ display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:10px; background:linear-gradient(180deg, rgba(0,255,230,.06), rgba(0,255,230,.02)); border:1px solid rgba(0,255,240,.18); box-shadow:inset 0 0 0 1px rgba(0,255,240,.06); transition:transform .12s ease, box-shadow .12s ease, filter .12s ease; color:#79ffee; text-decoration:none; }
-    .icon-link:hover{ transform:translateY(-1px); box-shadow:0 0 16px rgba(0,255,230,.35); color:#bffef2; filter:brightness(1.05) }
-    .icon{ width:20px; height:20px; display:block; }
-    .sr-only{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,1px,1px); border:0; }
-
-    /* ===== Layout ===== */
-    .container{ max-width:1100px; margin:0 auto; padding:1.2rem 1rem 2.2rem }
-
-    .hero{ display:grid; grid-template-columns:1fr; gap:1.1rem; align-items:center; padding:1.25rem; margin:12px auto 20px; border-radius:var(--radius); background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35)); border:1px solid rgba(0,255,240,.18); box-shadow:var(--shadow); position:relative; overflow:hidden; text-align:center; }
-    .hero .logo-wrap{ position:relative; width:120px; height:120px; margin:0 auto; border-radius:16px; overflow:hidden; background:radial-gradient(closest-side, rgba(0,255,230,.18), rgba(0,255,230,.04) 58%, transparent 62%); display:grid; place-items:center; }
-    .hero .logo-wrap::after{ content:""; position:absolute; inset:-8%; border-radius:18px; box-shadow:0 0 0 2px rgba(0,255,230,.18), inset 0 0 30px rgba(0,255,230,.14); pointer-events:none; }
-    .hero .logo{width:86%; height:86%; object-fit:contain}
-    .badge{display:inline-flex; align-items:center; gap:.45rem; font-weight:900; letter-spacing:.2px; margin:.25rem 0 0; color:#061515}
-    .badge span{padding:.32rem .55rem; border-radius:10px; background:linear-gradient(180deg, var(--accent), var(--accent2)); border:1px solid rgba(0,255,240,.45); box-shadow:0 8px 18px rgba(0,255,230,.18)}
-    .hero h2{ margin:.25rem 0 0; color:var(--note); font-size:1.4rem; font-weight:700 }
-    .hero p{ margin:.35rem 0 0; color:var(--muted); font-size:1rem }
-
-    /* ===== Cards, CTA, Tiles, Footer ===== */
-    .grid{ display:grid; gap:16px; grid-template-columns:repeat(12,1fr) }
-    .card{ grid-column:span 12; background:linear-gradient(180deg, var(--card), var(--card2)); border:1px solid rgba(0,255,240,.14); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px; }
-    .card h3{ margin:.2rem 0 .6rem; color:#bffef2; font-size:1.05rem }
-    .card p{ margin:0 0 .9rem; color:var(--muted); font-size:.95rem }
-    .cta-grid{ display:grid; gap:14px; grid-template-columns:repeat(12,1fr) }
-    .cta{ grid-column:span 12; display:flex; align-items:center; justify-content:space-between; gap:14px; padding:18px; border-radius:16px; background:linear-gradient(180deg, rgba(0,255,230,.06), rgba(0,255,230,.02)), #0c1218; border:1.5px solid rgba(0,255,240,.22); box-shadow:0 20px 40px rgba(0,255,230,.10), inset 0 0 0 1px rgba(0,255,240,.06); }
-    .cta h4{ margin:0 0 .25rem; font-size:1.05rem }
-    .cta small{ color:var(--muted) }
-    .btn{ display:inline-flex; align-items:center; justify-content:center; min-width:120px; padding:12px 18px; border-radius:10px; text-decoration:none; font-weight:900; font-size:.94rem; color:#001010; background:linear-gradient(180deg, var(--accent), var(--accent2)); border:1px solid rgba(0,255,240,.7); box-shadow:0 0 12px rgba(0,255,230,.55), 0 0 24px rgba(0,255,230,.25), inset 0 -8px 14px rgba(0,0,0,.14); transition:transform .15s ease, box-shadow .15s ease, filter .15s ease; white-space:nowrap; }
-    .btn:hover{ transform:translateY(-2px) scale(1.03); box-shadow:0 0 16px rgba(0,255,230,.75), 0 0 32px rgba(0,255,230,.35) }
-    .tiles{ display:grid; gap:14px; grid-template-columns:repeat(12,1fr) }
-    .tile{ grid-column:span 12; display:flex; flex-direction:column; justify-content:space-between; gap:10px; padding:16px; border-radius:14px; background:linear-gradient(180deg, #081015, #0a1118); border:1px solid rgba(0,255,240,.2); box-shadow:inset 0 0 0 1px rgba(0,255,240,.05), 0 8px 20px rgba(0,255,230,.08); position:relative; min-height:120px; }
-    .tile h5{ margin:0; font-size:1rem; color:#d9fffb }
-    .tile small{ color:var(--muted) }
-    .tile .btn{ align-self:flex-end; margin-top:6px }
-    footer{ margin:24px auto 40px; text-align:center; color:var(--muted) }
-    footer .footer-links{ display:flex; align-items:center; justify-content:center; gap:.6rem; margin:.5rem 0 }
-    footer a{ color:#79ffee; text-decoration:none }
-    footer a:hover{ text-decoration:underline }
-
-    /* Responsive */
-    @media (min-width:640px){ .hero{ grid-template-columns:150px 1fr; text-align:left; gap:1.35rem } .hero .logo-wrap{ width:140px; height:140px; margin:0 } .hero h2,.hero p{text-align:left} }
-    @media (min-width:980px){ .hero{ grid-template-columns:190px 1fr; gap:1.75rem; padding:1.8rem } .hero .logo-wrap{ width:180px; height:180px } .hero h2{font-size:1.6rem} }
-    /* ===== Meme mode (zichtbaar verschil, blijft groen) ===== */
-    body.meme{
-      background:
-        radial-gradient(900px 600px at 0% 0%, rgba(0,255,220,.12), transparent 60%),
-        radial-gradient(700px 500px at 100% 100%, rgba(0,220,255,.10), transparent 60%),
-        linear-gradient(135deg,#060b0e,#0b1117);
-    }
-    body.meme .hero{ border-color: rgba(0,255,240,.28); box-shadow:0 28px 60px rgba(0,255,230,.14), inset 0 0 0 1px rgba(0,255,240,.10) }
-    body.meme .badge span{ box-shadow:0 10px 22px rgba(0,255,230,.26); filter:brightness(1.06) }
-    body.meme .btn{ box-shadow:0 0 18px rgba(0,255,230,.65), 0 0 36px rgba(0,255,230,.32), inset 0 -8px 14px rgba(0,0,0,.18) }
-    body.meme .cta{ background:linear-gradient(180deg, rgba(0,255,230,.08), rgba(0,255,230,.03)), #0c141a }
-    body.meme .tile{ background:linear-gradient(180deg, #081215, #0a141a) }
-    body.meme .hero .logo-wrap{ transform:rotate(-2deg) scale(1.02) }
-    body.meme .hero h2{ text-shadow:0 0 18px rgba(0,255,220,.35) }
-
-    /* ===== Mobile header fix: geen horizontaal vegen nodig ===== */
-    @media (max-width:520px){
-      .top-actions{ flex-wrap:wrap; justify-content:flex-end; gap:.45rem }
-      .social{ order:2; width:100%; justify-content:flex-end }
-      .icon-link{ width:32px; height:32px }
-      .pill-btn{ padding:.44rem .6rem; font-size:.9rem }
-      .brand h1{ font-size:.95rem }
-    }
-  /* ===== Meme mode speels ===== */
-    body.meme{
-      background:
-        radial-gradient(1000px 800px at 50% -20%, rgba(255,0,200,.18), transparent 60%),
-        radial-gradient(900px 700px at 120% 120%, rgba(0,255,200,.12), transparent 60%),
-        linear-gradient(135deg,#111,#191919);
-      animation: bgShift 12s ease-in-out infinite alternate;
-    }
-    @keyframes bgShift{ from{background-position:0 0,0 0,0 0} to{background-position:20px 40px,-40px -20px,0 0} }
-
-    body.meme .hero{
-      border:2px dashed rgba(255,0,200,.4);
-      transform:rotate(-1deg);
-      background:linear-gradient(135deg, rgba(255,255,255,.05), rgba(0,0,0,.3));
-      text-align:center;
-    }
-    body.meme .hero .logo-wrap{
-      transform:rotate(8deg) scale(1.1);
-      background:radial-gradient(circle at 30% 30%, rgba(255,0,200,.25), transparent 70%);
-    }
-    body.meme .hero h2{
-      color:#ffbdf5;
-      font-size:1.8rem;
-      text-shadow:2px 2px 0 #000,0 0 12px rgba(255,0,200,.6);
-      transform:rotate(-2deg);
-    }
-    body.meme .hero p{ color:#ffe9fb }
-    body.meme .badge span{ background:linear-gradient(90deg,#ff8af6,#79ffee); color:#111 }
-
-    body.meme .card{ border:2px solid rgba(255,0,200,.25); background:linear-gradient(180deg,#1a0f1a,#111); }
-    body.meme .cta{ border-radius:30px; background:linear-gradient(45deg,#ffbdf5,#79ffee); color:#111; }
-    body.meme .cta h4{ color:#111 }
-    body.meme .cta .btn{ background:linear-gradient(180deg,#ffe2fa,#fff); color:#111; box-shadow:0 0 16px rgba(255,0,200,.45) }
-
-    body.meme .tile{ border-radius:20px; transform:rotate(1deg); background:linear-gradient(135deg,#ffbdf5 0%,#222 100%); }
-    body.meme .tile h5{ color:#111 }
-    body.meme .tile small{ color:#222 }
-    body.meme .tile .btn{ background:linear-gradient(90deg,#79ffee,#ffbdf5); color:#111 }
-  /* ===== Visibility toggles ===== */
-    .meme-only{ display:none }
-    .pro-only{ display:block }
-    body.meme .meme-only{ display:block }
-    body.meme .pro-only{ display:none }
-
-    /* ===== Meme mode – distinct playful layout ===== */
-    body.meme{
-      background:
-        radial-gradient(900px 600px at 0% 0%, rgba(0,255,180,.18), transparent 60%),
-        radial-gradient(700px 500px at 100% 100%, rgba(0,210,255,.14), transparent 60%),
-        linear-gradient(135deg,#061014,#0a1016);
-    }
-    /* Marquee ribbon */
-    .meme-ribbon{
-      position:relative; overflow:hidden; border-radius:16px; border:2px dashed rgba(0,255,210,.45);
-      background:linear-gradient(180deg, rgba(0,255,210,.12), rgba(0,255,210,.06));
-      box-shadow:0 12px 28px rgba(0,255,210,.12), inset 0 0 0 1px rgba(0,255,210,.22);
-    }
-    .meme-ribbon .track{ display:flex; gap:2rem; white-space:nowrap; animation:scroll 16s linear infinite }
-    .meme-ribbon b{ color:#0d1616; background:#79ffee; padding:.35rem .7rem; border-radius:10px; box-shadow:0 6px 16px rgba(0,255,210,.35) }
-    @keyframes scroll{ from{ transform:translateX(0) } to{ transform:translateX(-50%) } }
-
-    /* Meme hero */
-    .meme-hero{ position:relative; padding:18px; margin:12px 0 18px; border-radius:20px;
-      background:linear-gradient(180deg, #07161a, #081a1f);
-      border:2px solid rgba(0,255,210,.35); box-shadow:0 22px 48px rgba(0,255,210,.12), inset 0 0 0 1px rgba(0,255,210,.14);
-    }
-    .meme-hero .wrap{ display:grid; grid-template-columns:1fr; gap:14px; align-items:center }
-    .meme-hero h2{ margin:0; font-size:1.5rem; letter-spacing:.2px; color:#bffef2 }
-    .meme-hero p{ margin:.35rem 0 0; color:#a8d6cd }
-    .meme-sticker{ position:absolute; font-size:22px; filter:drop-shadow(0 6px 16px rgba(0,0,0,.35)) }
-    .meme-sticker.s1{ top:-8px; left:10px; transform:rotate(-12deg) }
-    .meme-sticker.s2{ top:8px; right:14px; transform:rotate(8deg) }
-    .meme-sticker.s3{ bottom:-6px; right:18px; transform:rotate(-6deg) }
-    .meme-hero .logo-burst{ width:120px; height:120px; border-radius:16px; display:grid; place-items:center; margin:0 auto; background:radial-gradient(closest-side, rgba(0,255,210,.22), rgba(0,255,210,.06) 60%, transparent 62%); border:1px solid rgba(0,255,210,.28) }
-    .meme-hero .logo-burst img{ width:86%; height:86%; object-fit:contain }
-
-    /* Meme CTA grid */
-    .meme-cta-grid{ display:grid; gap:12px; grid-template-columns:repeat(12,1fr) }
-    .meme-card{ grid-column:span 12; border-radius:18px; padding:14px; position:relative;
-      background:linear-gradient(180deg, #06151a, #07191f); border:2px solid rgba(0,255,210,.28);
-      box-shadow:0 16px 36px rgba(0,255,210,.12), inset 0 0 0 1px rgba(0,255,210,.10)
-    }
-    .meme-card h4{ margin:0 0 .25rem; }
-    .meme-card small{ color:#a8d6cd }
-    .meme-tag{ position:absolute; top:-10px; left:12px; background:#79ffee; color:#06201c; font-weight:900; font-size:.8rem; padding:.2rem .5rem; border-radius:10px; border:1px solid rgba(0,255,210,.5) }
-
-    /* Meme buttons */
-    .meme-btn{ display:inline-flex; align-items:center; justify-content:center; min-width:120px; padding:11px 16px; border-radius:12px; text-decoration:none; font-weight:900; font-size:.95rem; color:#042; background:linear-gradient(180deg,#79ffee,#2bffe4); border:1px solid rgba(0,255,210,.7); box-shadow:0 0 14px rgba(0,255,210,.55),0 0 26px rgba(0,255,210,.25), inset 0 -8px 14px rgba(0,0,0,.14) }
-    .meme-btn:hover{ transform:translateY(-2px) scale(1.02) }
-
-    @media (min-width:640px){ .meme-hero .wrap{ grid-template-columns:160px 1fr } .meme-hero .logo-burst{ margin:0 } }
-    @media (min-width:980px){ .meme-hero{ padding:22px } .meme-hero .logo-burst{ width:170px; height:170px } }
-</style>
+    :root{ --bg:#070a12; --bg2:#0b1227; --ring:#22c55e; --text:#e5efff; }
+    body{ font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; background: radial-gradient(1200px 700px at 15% -10%, #0e1631 0%, var(--bg) 55%), var(--bg2); color:var(--text); }
+    .glass{ background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03)); backdrop-filter: blur(10px); border:1px solid rgba(255,255,255,.1); }
+    .neon{ box-shadow: 0 0 0 .5px rgba(255,255,255,.2), 0 0 25px rgba(34,197,94,.25), inset 0 0 25px rgba(34,197,94,.08); }
+    .meme-title{ font-family: Bangers, Inter, system-ui; letter-spacing:.5px; text-shadow: 0 2px #000, 0 6px rgba(0,0,0,.35); }
+    a{ color:#9dd7ff; }
+    .chip{ border:1px solid rgba(255,255,255,.18); border-radius:9999px; padding:.15rem .55rem; }
+  </style>
 </head>
-<body>
-  <!-- ===== Header ===== -->
-  <header class="topbar">
-    <div class="brand">
-      <img src="logo.png" alt="CBS Logo">
-      <h1>CBS Coin</h1>
+<body class="min-h-screen">
+
+  <!-- NAV -->
+  <nav class="max-w-6xl mx-auto px-4 py-4">
+    <div class="flex items-center justify-between gap-4">
+      <a href="#" class="flex items-center gap-3">
+        <img src="assets/cbs-logo-512.png" class="h-10 w-10 rounded-full ring-2 ring-[var(--ring)]" alt="CBS" />
+        <span class="font-extrabold tracking-tight">CBS Coin</span>
+      </a>
+      <div class="hidden md:flex items-center gap-4 text-sm">
+        <a href="#buy" class="hover:underline">Buy</a>
+        <a href="#chart" class="hover:underline">Chart</a>
+        <a href="#token" class="hover:underline">Token</a>
+        <a href="#contest" class="hover:underline">Contest</a>
+        <a href="#proofs" class="hover:underline">Proofs</a>
+        <a href="links.html" class="chip">Links</a>
+      </div>
+      <div class="md:hidden">
+        <button id="menuBtn" class="px-3 py-2 rounded-lg bg-white/10">Menu</button>
+      </div>
     </div>
+    <div id="mobileMenu" class="hidden md:hidden mt-3 grid gap-2 text-sm">
+      <a href="#buy">Buy</a>
+      <a href="#chart">Chart</a>
+      <a href="#token">Token</a>
+      <a href="#contest">Contest</a>
+      <a href="#proofs">Proofs</a>
+      <a href="links.html">Links</a>
+    </div>
+  </nav>
 
-    <div class="top-actions">
-      <nav class="social" aria-label="Social links">
-        <a class="icon-link" href="https://x.com/CBS_Coin" target="_blank" rel="noopener" aria-label="X (Twitter)">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M4 4h3.7l4.6 6 5.3-6H22l-7.5 8.4L22 20h-3.7l-5-6.5L7.4 20H2.1l8.3-9.3L4 4Z" fill="currentColor"/>
-          </svg>
-          <span class="sr-only">X</span>
-        </a>
-        <a class="icon-link" href="https://t.me/CBS_Coin" target="_blank" rel="noopener" aria-label="Telegram">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M21.9 4.6c.3-.9-.5-1.3-1.3-1L2.5 10.3c-.9.4-.9 1 .2 1.3l4.8 1.5 1.8 5.8c.2.9.7 1 .9 0l1.3-4.2 5.1 3.8c.7.5 1.3.2 1.5-.7l3.8-13.2Z" fill="currentColor"/>
-          </svg>
-          <span class="sr-only">Telegram</span>
-        </a>
-        <a class="icon-link" href="https://discord.gg/DxSB3ERQ" target="_blank" rel="noopener" aria-label="Discord">
-          <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path d="M19.6 5.1A16 16 0 0 0 15.8 4l-.2.3c1 .2 1.9.6 2.8 1.2a8.7 8.7 0 0 0-3.2-1c-.3 0-.5.2-.6.4a12 12 0 0 0-5.6 0c-.2 0-.4-.3-.6-.4-1 .1-2 .5-3 1a13 13 0 0 1 2.7-1.2L8 4a16 16 0 0 0-3.8 1.1C1.6 8.7.9 12 1.1 15.2c1.4 1 2.9 1.7 4.5 2.1l.8-1.3c-.4-.1-.9-.3-1.3-.5l.3-.3c2.6 1.2 5.5 1.2 8 0l.3.3c-.4.2-.8.4-1.2.5l.7 1.3c1.6-.4 3.2-1.1 4.6-2.1.3-3.6-.5-6.9-2-10.5ZM9.1 13.6c-.8 0-1.5-.7-1.5-1.6 0-.8.7-1.5 1.5-1.5s1.5.7 1.5 1.5c0 .9-.7 1.6-1.5 1.6Zm5.8 0c-.8 0-1.5-.7-1.5-1.6 0-.8.7-1.5 1.5-1.5s1.6.7 1.6 1.5c0 .9-.8 1.6-1.6 1.6Z" fill="currentColor"/>
-          </svg>
-          <span class="sr-only">Discord</span>
-        </a>
-      </nav>
-
-      <button id="themeBtn" class="pill-btn" title="Switch Pro/Meme">Meme Mode ✨</button>
-      <button id="langSwitch" class="pill-btn">NL 🇳🇱</button>
+  <!-- HERO -->
+  <header class="max-w-6xl mx-auto px-4">
+    <div class="glass neon rounded-2xl p-6 md:p-10">
+      <div class="grid md:grid-cols-2 gap-6 md:gap-10 items-center">
+        <div>
+          <h1 class="meme-title text-5xl md:text-6xl font-extrabold">CBS Coin</h1>
+          <p class="mt-3 text-base md:text-lg opacity-90">
+            Fair-launch <span class="font-semibold">SPL</span> memecoin on <span class="font-semibold">Solana</span>. No presale. Community-led, execution-first.
+          </p>
+          <div class="mt-4 text-sm opacity-80">
+            Mint / CA: <code id="mint">B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code>
+            <button id="copyMint" class="ml-2 px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-xs">Copy</button>
+            <span id="copyToast" class="ml-2 text-xs opacity-70"></span>
+          </div>
+          <div class="flex flex-wrap gap-2 mt-5">
+            <a href="#buy" class="px-4 py-2 rounded-xl bg-[var(--ring)] text-black font-bold">Buy $CBS</a>
+            <a href="#chart" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20">Open Chart</a>
+            <a href="#contest" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20">Join Contest</a>
+          </div>
+          <div class="mt-3 text-xs opacity-70">Never share seed phrases. Use only official links.</div>
+        </div>
+        <div class="hidden md:block">
+          <img src="assets/hero-cbs.png" alt="CBS" class="rounded-2xl w-full ring-1 ring-white/10" onerror="this.style.display='none'">
+        </div>
+      </div>
     </div>
   </header>
 
-  <!-- ===== EN Content ===== -->
-  <div id="content-en">
-    <div class="container">
-      <!-- MEME MODE: EN -->
-      <section class="meme-only meme-ribbon">
-        <div class="track">
-          <b>MEME MODE</b><span>·</span><b>NO VC</b><span>·</span><b>COMMUNITY FIRST</b><span>·</span><b>SERIOUS MISSION</b><span>·</span><b>BUILD & LEARN</b><span>·</span>
-          <b>MEME MODE</b><span>·</span><b>NO VC</b><span>·</span><b>COMMUNITY FIRST</b><span>·</span><b>SERIOUS MISSION</b><span>·</span><b>BUILD & LEARN</b>
-        </div>
-      </section>
-      <section class="meme-only meme-hero">
-        <span class="meme-sticker s1">🚀</span>
-        <span class="meme-sticker s2">🧠</span>
-        <span class="meme-sticker s3">🔥</span>
-        <div class="wrap">
-          <div class="logo-burst"><img src="logo.png" alt="CBS Logo"></div>
-          <div>
-            <h2>Can’t Be Stopped — CBS!</h2>
-            <p>Community coin with meme energy and a serious plan. No VC, no presale — learn & build together.</p>
-            <div style="display:flex; gap:.6rem; flex-wrap:wrap; margin-top:.6rem">
-              <a class="meme-btn" href="buy.html">Buy CBS</a>
-              <a class="meme-btn" href="burn.html">Burn</a>
-              <a class="meme-btn" href="game.html">Games</a>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section class="meme-only meme-cta-grid">
-        <div class="meme-card">
-          <span class="meme-tag">New</span>
-          <h4>🐴 Mister Horse Mint</h4>
-          <small>Free mint for CBS holders (≥ 2,500).</small>
-          <div style="margin-top:.5rem"><a class="meme-btn" href="mister-horse.html">Open mint</a></div>
-        </div>
-        <div class="meme-card">
-          <span class="meme-tag">DAO</span>
-          <h4>🗳️ Team Wallet Poll</h4>
-          <small>Practice poll – off-chain test.</small>
-          <div style="margin-top:.5rem"><a class="meme-btn" href="poll-teamwallet.html">Vote</a></div>
-        </div>
-      </section>
-      <section class="hero pro-only">
-        <div class="logo-wrap"><img class="logo" src="logo.png" alt="CBS Logo"></div>
-        <div>
-          <div class="badge"><span>LIVE ON SOLANA</span></div>
-          <h2>Community Builds Sovereignty</h2>
-          <p>CBS Coin is a community-driven token on Solana. Breaking chains together.</p>
-          <p><small><em>Meme energy with a serious mission — an experiment by an eager, self‑taught dev learning and building together with the community.</em></small></p>
-        </div>
-      </section>
-
-      <!-- Primary actions -->
-      <section class="grid pro-only">
-        <div class="card">
-          <h3>Start here</h3>
-          <div class="cta-grid">
-            <div class="cta">
-              <div>
-                <h4>🎮 Games Hub</h4>
-                <small>Play Snake, Jump, Stack & more in one place.</small>
-              </div>
-              <a class="btn" href="game.html">Open hub</a>
-            </div>
-
-            <div class="cta">
-              <div>
-                <h4>🛒 Buy CBS</h4>
-                <small>Get your first CBS tokens in a few clicks.</small>
-              </div>
-              <a class="btn" href="buy.html">Buy CBS</a>
-            </div>
-
-            <div class="cta">
-              <div>
-                <h4>🔥 Burn & Stats</h4>
-                <small>Burn CBS and see the live counter.</small>
-              </div>
-              <a class="btn" href="burn.html">Open burn</a>
-            </div>
-
-            <div class="cta">
-              <div>
-                <h4>🐴 Mister Horse Mint</h4>
-                <small>Free mint for CBS holders (≥ 2,500).</small>
-              </div>
-              <a class="btn" href="mister-horse.html">Open mint</a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- More pages -->
-      <section class="grid">
-        <div class="card">
-          <h3>More pages</h3>
-          <div class="tiles">
-            <div class="tile">
-              <div>
-                <h5>🗳️ Team Wallet Poll (DAO practice)</h5>
-                <small>Training poll; data stored in Supabase (off-chain, test only).</small>
-              </div>
-              <a class="btn" href="poll-teamwallet.html">Open</a>
-            </div>
-
-            <div class="tile">
-              <div>
-                <h5>📜 Litepaper 2.0</h5>
-                <small>Overview & principles</small>
-              </div>
-              <a class="btn" href="litepaper2.0.html">Open</a>
-            </div>
-
-            <div class="tile">
-              <div>
-                <h5>🗺️ Roadmap</h5>
-                <small>What we’re building next</small>
-              </div>
-              <a class="btn" href="roadmap.html">Open</a>
-            </div>
-
-            <div class="tile">
-              <div>
-                <h5>📊 Tokenomics</h5>
-                <small>Supply & distribution</small>
-              </div>
-              <a class="btn" href="tokenomics.html">Open</a>
-            </div>
-
-            <div class="tile">
-              <div>
-                <h5>🌐 Community</h5>
-                <small>Memes, updates & links</small>
-              </div>
-              <a class="btn" href="community.html">Open</a>
-            </div>
-
-            <div class="tile">
-              <div>
-                <h5>❓ FAQ</h5>
-                <small>Answers to common questions</small>
-              </div>
-              <a class="btn" href="faq.html">Open</a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <footer>
-        <div>Join the community</div>
-        <div class="footer-links">
-          <nav class="social" aria-label="Social links">
-            <a class="icon-link" href="https://x.com/CBS_Coin" target="_blank" rel="noopener" aria-label="X (Twitter)">
-              <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M4 4h3.7l4.6 6 5.3-6H22l-7.5 8.4L22 20h-3.7l-5-6.5L7.4 20H2.1l8.3-9.3L4 4Z" fill="currentColor"/>
-              </svg>
-              <span class="sr-only">X</span>
-            </a>
-            <a class="icon-link" href="https://t.me/CBS_Coin" target="_blank" rel="noopener" aria-label="Telegram">
-              <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M21.9 4.6c.3-.9-.5-1.3-1.3-1L2.5 10.3c-.9.4-.9 1 .2 1.3l4.8 1.5 1.8 5.8c.2.9.7 1 .9 0l1.3-4.2 5.1 3.8c.7.5 1.3.2 1.5-.7l3.8-13.2Z" fill="currentColor"/>
-              </svg>
-              <span class="sr-only">Telegram</span>
-            </a>
-            <a class="icon-link" href="https://discord.gg/DxSB3ERQ" target="_blank" rel="noopener" aria-label="Discord">
-              <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M19.6 5.1A16 16 0 0 0 15.8 4l-.2.3c1 .2 1.9.6 2.8 1.2a8.7 8.7 0 0 0-3.2-1c-.3 0-.5.2-.6.4a12 12 0 0 0-5.6 0c-.2 0-.4-.3-.6-.4-1 .1-2 .5-3 1a13 13 0 0 1 2.7-1.2L8 4a16 16 0 0 0-3.8 1.1C1.6 8.7.9 12 1.1 15.2c1.4 1 2.9 1.7 4.5 2.1l.8-1.3c-.4-.1-.9-.3-1.3-.5l.3-.3c2.6 1.2 5.5 1.2 8 0l.3.3c-.4.2-.8.4-1.2.5l.7 1.3c1.6-.4 3.2-1.1 4.6-2.1.3-3.6-.5-6.9-2-10.5ZM9.1 13.6c-.8 0-1.5-.7-1.5-1.6 0-.8.7-1.5 1.5-1.5s1.5.7 1.5 1.5c0 .9-.7 1.6-1.5 1.6Zm5.8 0c-.8 0-1.5-.7-1.5-1.6 0-.8.7-1.5 1.5-1.5s1.6.7 1.6 1.5c0 .9-.8 1.6-1.6 1.6Z" fill="currentColor"/>
-              </svg>
-              <span class="sr-only">Discord</span>
-            </a>
-          </nav>
-        </div>
-        Contact: <a href="mailto:cbs.coin12@gmail.com">cbs.coin12@gmail.com</a>
-      </footer>
+  <!-- BUY -->
+  <section id="buy" class="max-w-6xl mx-auto px-4 py-8">
+    <div class="glass rounded-2xl p-6">
+      <h2 class="meme-title text-3xl font-extrabold">Buy $CBS in 60s</h2>
+      <p class="mt-2 text-sm opacity-85">Swap SOL → CBS on Raydium. Set slippage ~0.5–1% if needed.</p>
+      <div class="mt-4 grid sm:grid-cols-2 gap-3">
+        <a class="px-4 py-3 rounded-xl bg-[var(--ring)] text-black font-bold text-center"
+           href="https://raydium.io/swap/?inputMint=So11111111111111111111111111111111111111112&outputMint=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk" target="_blank" rel="noreferrer">Open Raydium Swap</a>
+        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-center"
+           href="https://phantom.app/ul/browse?url=https%3A%2F%2Fraydium.io%2Fswap%2F%3FinputMint%3DSo11111111111111111111111111111111111111112%26outputMint%3DB9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk">Open in Phantom (mobile)</a>
+      </div>
+      <div class="mt-3 text-sm">
+        Charts: <a href="https://dexscreener.com/solana/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk" target="_blank" rel="noreferrer">DexScreener</a> ·
+        <a href="https://birdeye.so/solana/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk" target="_blank" rel="noreferrer">Birdeye</a> ·
+        Explorer: <a href="https://solscan.io/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk" target="_blank" rel="noreferrer">Solscan</a>
+      </div>
     </div>
-  </div>
+  </section>
 
-  <!-- ===== NL Content ===== -->
-  <div id="content-nl" style="display:none">
-    <div class="container">
-      <!-- MEME MODE: NL -->
-      <section class="meme-only meme-ribbon">
-        <div class="track">
-          <b>MEME MODE</b><span>·</span><b>GEEN VC</b><span>·</span><b>COMMUNITY EERST</b><span>·</span><b>SERIEUZE MISSIE</b><span>·</span><b>BOUW & LEER</b><span>·</span>
-          <b>MEME MODE</b><span>·</span><b>GEEN VC</b><span>·</span><b>COMMUNITY EERST</b><span>·</span><b>SERIEUZE MISSIE</b><span>·</span><b>BOUW & LEER</b>
-        </div>
-      </section>
-      <section class="meme-only meme-hero">
-        <span class="meme-sticker s1">🚀</span>
-        <span class="meme-sticker s2">🧠</span>
-        <span class="meme-sticker s3">🔥</span>
-        <div class="wrap">
-          <div class="logo-burst"><img src="logo.png" alt="CBS Logo"></div>
-          <div>
-            <h2>Can’t Be Stopped — CBS!</h2>
-            <p>Meme‑energie met een serieuze koers. Geen VC, geen presale — samen leren en bouwen.</p>
-            <div style="display:flex; gap:.6rem; flex-wrap:wrap; margin-top:.6rem">
-              <a class="meme-btn" href="buy.html">Koop CBS</a>
-              <a class="meme-btn" href="burn.html">Burn</a>
-              <a class="meme-btn" href="game.html">Games</a>
-            </div>
-          </div>
-        </div>
-      </section>
-      <section class="meme-only meme-cta-grid">
-        <div class="meme-card">
-          <span class="meme-tag">Nieuw</span>
-          <h4>🐴 Mister Horse Mint</h4>
-          <small>Gratis mint voor CBS‑houders (≥ 2.500).</small>
-          <div style="margin-top:.5rem"><a class="meme-btn" href="mister-horse.html">Openen</a></div>
-        </div>
-        <div class="meme-card">
-          <span class="meme-tag">DAO</span>
-          <h4>🗳️ Team Wallet Poll</h4>
-          <small>Oefenpoll – off‑chain test.</small>
-          <div style="margin-top:.5rem"><a class="meme-btn" href="poll-teamwallet.html">Stemmen</a></div>
-        </div>
-      </section>
-      <section class="hero">
-        <div class="logo-wrap"><img class="logo" src="logo.png" alt="CBS Logo"></div>
-        <div>
-          <div class="badge"><span>LIVE OP SOLANA</span></div>
-          <h2>Community Builds Sovereignty</h2>
-          <p>CBS Coin is een door de community gedreven token op Solana. Samen de ketens breken.</p>
-          <p><small><em>Meme‑energie met een serieuze boodschap — een experiment van een leergierige, onervaren dev die samen met de community wil bouwen en groeien.</em></small></p>
-        </div>
-      </section>
-
-      <!-- Primaire acties -->
-      <section class="grid">
-        <div class="card">
-          <h3>Begin hier</h3>
-          <div class="cta-grid">
-            <div class="cta">
-              <div>
-                <h4>🎮 Games Hub</h4>
-                <small>Speel Snake, Jump, Stack & meer op één plek.</small>
-              </div>
-              <a class="btn" href="game.html">Naar hub</a>
-            </div>
-
-            <div class="cta">
-              <div>
-                <h4>🛒 Koop CBS</h4>
-                <small>Haal je eerste CBS-tokens in een paar klikken.</small>
-              </div>
-              <a class="btn" href="buy.html">Koop CBS</a>
-            </div>
-
-            <div class="cta">
-              <div>
-                <h4>🔥 Burn & Teller</h4>
-                <small>Brand CBS en bekijk de live teller.</small>
-              </div>
-              <a class="btn" href="burn.html">Openen</a>
-            </div>
-
-            <div class="cta">
-              <div>
-                <h4>🐴 Mister Horse Mint</h4>
-                <small>Gratis mint voor CBS-houders (≥ 2.500).</small>
-              </div>
-              <a class="btn" href="mister-horse.html">Openen</a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Meer pagina's -->
-      <section class="grid">
-        <div class="card">
-          <h3>Meer pagina’s</h3>
-          <div class="tiles">
-            <div class="tile">
-              <div>
-                <h5>🗳️ Team Wallet Poll (DAO-oefening)</h5>
-                <small>Training poll; data in Supabase (off-chain, alleen test).</small>
-              </div>
-              <a class="btn" href="poll-teamwallet.html">Openen</a>
-            </div>
-
-            <div class="tile">
-              <div>
-                <h5>📜 Litepaper 2.0</h5>
-                <small>Overzicht & principes</small>
-              </div>
-              <a class="btn" href="litepaper2.0.html">Openen</a>
-            </div>
-
-            <div class="tile">
-              <div>
-                <h5>🗺️ Roadmap</h5>
-                <small>Wat we als volgende bouwen</small>
-              </div>
-              <a class="btn" href="roadmap.html">Openen</a>
-            </div>
-
-            <div class="tile">
-              <div>
-                <h5>📊 Tokenomics</h5>
-                <small>Aanbod & distributie</small>
-              </div>
-              <a class="btn" href="tokenomics.html">Openen</a>
-            </div>
-
-            <div class="tile">
-              <div>
-                <h5>🌐 Community</h5>
-                <small>Memes, updates & links</small>
-              </div>
-              <a class="btn" href="community.html">Openen</a>
-            </div>
-
-            <div class="tile">
-              <div>
-                <h5>❓ FAQ</h5>
-                <small>Antwoorden op veelgestelde vragen</small>
-              </div>
-              <a class="btn" href="faq.html">Openen</a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <footer>
-        <div>Sluit je aan bij de community</div>
-        <div class="footer-links">
-          <nav class="social" aria-label="Social links">
-            <a class="icon-link" href="https://x.com/CBS_Coin" target="_blank" rel="noopener" aria-label="X (Twitter)">
-              <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M4 4h3.7l4.6 6 5.3-6H22l-7.5 8.4L22 20h-3.7l-5-6.5L7.4 20H2.1l8.3-9.3L4 4Z" fill="currentColor"/>
-              </svg>
-              <span class="sr-only">X</span>
-            </a>
-            <a class="icon-link" href="https://t.me/CBS_Coin" target="_blank" rel="noopener" aria-label="Telegram">
-              <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M21.9 4.6c.3-.9-.5-1.3-1.3-1L2.5 10.3c-.9.4-.9 1 .2 1.3l4.8 1.5 1.8 5.8c.2.9.7 1 .9 0l1.3-4.2 5.1 3.8c.7.5 1.3.2 1.5-.7l3.8-13.2Z" fill="currentColor"/>
-              </svg>
-              <span class="sr-only">Telegram</span>
-            </a>
-            <a class="icon-link" href="https://discord.gg/DxSB3ERQ" target="_blank" rel="noopener" aria-label="Discord">
-              <svg class="icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path d="M19.6 5.1A16 16 0 0 0 15.8 4l-.2.3c1 .2 1.9.6 2.8 1.2a8.7 8.7 0 0 0-3.2-1c-.3 0-.5.2-.6.4a12 12 0 0 0-5.6 0c-.2 0-.4-.3-.6-.4-1 .1-2 .5-3 1a13 13 0 0 1 2.7-1.2L8 4a16 16 0 0 0-3.8 1.1C1.6 8.7.9 12 1.1 15.2c1.4 1 2.9 1.7 4.5 2.1l.8-1.3c-.4-.1-.9-.3-1.3-.5l.3-.3c2.6 1.2 5.5 1.2 8 0l.3.3c-.4.2-.8.4-1.2.5l.7 1.3c1.6-.4 3.2-1.1 4.6-2.1.3-3.6-.5-6.9-2-10.5ZM9.1 13.6c-.8 0-1.5-.7-1.5-1.6 0-.8.7-1.5 1.5-1.5s1.5.7 1.5 1.5c0 .9-.7 1.6-1.5 1.6Zm5.8 0c-.8 0-1.5-.7-1.5-1.6 0-.8.7-1.5 1.5-1.5s1.6.7 1.6 1.5c0 .9-.8 1.6-1.6 1.6Z" fill="currentColor"/>
-              </svg>
-              <span class="sr-only">Discord</span>
-            </a>
-          </nav>
-        </div>
-        Contact: <a href="mailto:cbs.coin12@gmail.com">cbs.coin12@gmail.com</a>
-      </footer>
+  <!-- CHART -->
+  <section id="chart" class="max-w-6xl mx-auto px-4 pb-8">
+    <div class="glass rounded-2xl p-2">
+      <iframe src="https://dexscreener.com/solana/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk?embed=1&theme=dark"
+              class="w-full h-[620px] rounded-xl" frameborder="0"></iframe>
     </div>
-  </div>
+  </section>
 
-  <!-- ===== Toggles ===== -->
+  <!-- TOKEN -->
+  <section id="token" class="max-w-6xl mx-auto px-4 pb-8">
+    <div class="grid lg:grid-cols-2 gap-6">
+      <div class="glass rounded-2xl p-6">
+        <h3 class="meme-title text-3xl font-extrabold">Token facts</h3>
+        <ul class="mt-3 text-sm leading-7 opacity-90">
+          <li>Chain: <strong>Solana (SPL)</strong> · Decimals: <strong>9</strong></li>
+          <li>Max supply: <strong>100,000,000 CBS</strong></li>
+          <li>Burned: <strong>10,000,000 CBS</strong> (<a href="#proofs">proofs</a>)</li>
+          <li>Current total supply: <strong>90,000,000 CBS</strong></li>
+        </ul>
+        <div class="mt-4 text-sm opacity-80">
+          Live tokenomics available on our dashboard. <a href="tokenomics.html">Open dashboard →</a>
+        </div>
+      </div>
+      <div class="glass rounded-2xl p-6">
+        <h3 class="meme-title text-3xl font-extrabold">Why CBS?</h3>
+        <ul class="mt-3 text-sm leading-7 opacity-90">
+          <li>Fair launch — <strong>no presale</strong>, equal start.</li>
+          <li>Community-led, execution-first. Small budgets, measurable results.</li>
+          <li>Clear links & on-chain proofs. No seed phrases. </li>
+        </ul>
+        <div class="mt-4 flex gap-2">
+          <a class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20" href="links.html">All official links</a>
+          <a class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20" href="#proofs">Proofs</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CONTEST -->
+  <section id="contest" class="max-w-6xl mx-auto px-4 pb-8">
+    <div class="glass rounded-2xl p-6">
+      <h3 class="meme-title text-3xl font-extrabold">Holders-Only Contest</h3>
+      <p class="mt-2 text-sm opacity-85">
+        Holders with ≥ <strong>$5 CBS</strong> can submit an idea that’s doable for <strong>$100</strong> and includes a clear expected outcome.
+        Winner is selected at random and receives <strong>$100</strong> to execute + <strong>$50</strong> bonus if targets are met.
+      </p>
+      <div class="mt-4">
+        <a class="px-4 py-2 rounded-xl bg-[var(--ring)] text-black font-bold" href="join.html">Submit your idea →</a>
+      </div>
+      <p class="mt-2 text-xs opacity-70">Never connect your wallet on unknown sites. We never ask for seed phrases.</p>
+    </div>
+  </section>
+
+  <!-- PROOFS -->
+  <section id="proofs" class="max-w-6xl mx-auto px-4 pb-12">
+    <div class="glass rounded-2xl p-6">
+      <h3 class="meme-title text-3xl font-extrabold">On-chain proofs</h3>
+      <ul class="mt-3 text-sm leading-7 opacity-90 list-disc pl-5">
+        <li>Token (SPL) — <a target="_blank" rel="noreferrer" href="https://solscan.io/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk">Solscan token page</a></li>
+        <li>Raydium CBS–WSOL pool (creation) — <a target="_blank" rel="noreferrer" href="https://solscan.io/account/8HSvu732XpKoBgSse414VJZDAA8Q2fdcm17Kv1xbYAu3">Solscan pool account</a></li>
+        <!-- TODO: vervang onderstaande met je echte burn-transactie link -->
+        <li>Burn — 10,000,000 CBS (SPL Burn) — <a target="_blank" rel="noreferrer" href="#">Add Solscan burn TX link</a></li>
+        <!-- TODO: als je LP-tokens verbrand/gelockt hebt, link het bewijs hier -->
+        <li>LP status — <a target="_blank" rel="noreferrer" href="#">Add LP burn/lock proof (optional)</a></li>
+      </ul>
+    </div>
+  </section>
+
+  <footer class="max-w-6xl mx-auto px-4 pb-10 text-xs opacity-60">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <div>CBS Coin — Community Builds Sovereignty</div>
+      <div class="flex gap-3">
+        <a href="https://x.com/<!-- TODO: your_x_handle -->" target="_blank" rel="noreferrer">X/Twitter</a>
+        <a href="https://t.me/CBS_Coin" target="_blank" rel="noreferrer">Telegram</a>
+        <a href="mailto:cbs.coin12@gmail.com">cbs.coin12@gmail.com</a>
+      </div>
+    </div>
+  </footer>
+
   <script>
-    const langBtn = document.getElementById('langSwitch');
-    const themeBtn = document.getElementById('themeBtn');
-    const en = document.getElementById('content-en');
-    const nl = document.getElementById('content-nl');
-    let isEN = true;
-
-    langBtn.addEventListener('click', ()=>{
-      isEN = !isEN;
-      en.style.display = isEN ? 'block' : 'none';
-      nl.style.display = isEN ? 'none'  : 'block';
-      langBtn.textContent = isEN ? 'NL 🇳🇱' : 'EN 🇬🇧';
-      window.scrollTo({ top:0, behavior:'smooth' });
+    // Mobile menu
+    document.getElementById('menuBtn')?.addEventListener('click', ()=>{
+      const el = document.getElementById('mobileMenu');
+      el.classList.toggle('hidden');
     });
-
-    themeBtn.addEventListener('click', ()=>{
-      document.body.classList.toggle('meme');
-      themeBtn.textContent = document.body.classList.contains('meme') ? 'Pro Mode 💼' : 'Meme Mode ✨';
+    // Copy mint
+    document.getElementById('copyMint').addEventListener('click', ()=>{
+      const s = document.getElementById('mint').textContent.trim();
+      navigator.clipboard.writeText(s).then(()=>{
+        const t = document.getElementById('copyToast');
+        t.textContent = 'Copied';
+        setTimeout(()=> t.textContent = '', 2000);
+      });
     });
   </script>
 </body>
 </html>
-
