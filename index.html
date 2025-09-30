@@ -1,156 +1,317 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CBS — Logo Glow Exporter</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&display=swap" rel="stylesheet">
-<style>
-  :root{ --bg:#0b1227; --fg:#e5efff; --g:#22c55e; --p:#a78bfa; }
-  body{ margin:0; font-family:Inter,system-ui,Segoe UI,Arial; background:var(--bg); color:var(--fg); }
-  .wrap{ max-width:900px; margin:32px auto; padding:0 16px; }
-  .card{ background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03)); border:1px solid rgba(255,255,255,.12); border-radius:16px; padding:16px; }
-  .row{ display:flex; gap:16px; flex-wrap:wrap; align-items:center; }
-  .btn{ background:linear-gradient(90deg, var(--g), var(--p)); color:#0a0a0a; font-weight:800; border:none; border-radius:12px; padding:10px 14px; cursor:pointer; }
-  .ghost{ background:rgba(255,255,255,.08); color:#fff; }
-  .hint{ opacity:.75; font-size:.9rem; }
-  canvas{ background:transparent; max-width:100%; border-radius:12px; border:1px dashed rgba(255,255,255,.15); }
-  code{ background:rgba(255,255,255,.08); padding:2px 6px; border-radius:6px; }
-</style>
-</head>
-<body>
-  <div class="wrap">
-    <h1 style="margin:0 0 8px 0;">CBS — Logo Glow Exporter</h1>
-    <p class="hint">Laadt <code>logo.png</code> (in deze map) en exporteert PNG’s met groen/paars neon-gloed voor Telegram & X.</p>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CBS Coin — Community Builds Sovereignty</title>
+  <meta name="description" content="CBS Coin (CBS) — fair-launch SPL memecoin on Solana. No presale, community-led." />
+  <meta name="theme-color" content="#0b1227" />
 
-    <div class="card" style="margin-top:16px">
-      <div class="row">
-        <button class="btn" id="export512">Export Telegram 512×512</button>
-        <button class="btn" id="export1024">Export X PFP 1024×1024</button>
-        <button class="btn" id="exportHeader">Export X Header 1500×500</button>
-        <label class="ghost btn" style="display:inline-flex; align-items:center; gap:8px;">
-          <input type="file" id="fileInput" accept="image/*" style="display:none">
-          Load different logo…
-        </label>
+  <!-- Social -->
+  <meta property="og:title" content="CBS Coin — Community Builds Sovereignty" />
+  <meta property="og:description" content="Fair-launch SPL memecoin on Solana. No presale. Community-led." />
+  <meta property="og:image" content="assets/cbs-og.png" />
+  <meta property="twitter:card" content="summary_large_image" />
+
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    :root{
+      --bg:#070a12; --bg2:#0b1227; --text:#e5efff;
+      --accentG:#22c55e;  /* green */
+      --accentP:#a78bfa;  /* purple */
+    }
+    body{
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+      /* mix van groen/paars aura */
+      background:
+        radial-gradient(1200px 700px at 15% -10%, #0e1631 0%, var(--bg) 55%),
+        radial-gradient(900px 500px at 120% 120%, #2a0e31 0%, rgba(0,0,0,0) 60%),
+        var(--bg2);
+      color:var(--text);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    .glass{
+      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03));
+      backdrop-filter: blur(10px);
+      border:1px solid rgba(255,255,255,.1);
+    }
+    .neon{
+      box-shadow:
+        0 0 0 .5px rgba(255,255,255,.2),
+        0 0 25px rgba(34,197,94,.22),
+        0 0 35px rgba(167,139,250,.22),
+        inset 0 0 25px rgba(34,197,94,.08),
+        inset 0 0 35px rgba(167,139,250,.08);
+    }
+    .glow{
+      /* zachte groen/paars gloed rond images */
+      filter: drop-shadow(0 0 14px rgba(34,197,94,.55))
+              drop-shadow(0 0 22px rgba(167,139,250,.45));
+    }
+    .meme-title{ font-family: Bangers, Inter, system-ui; letter-spacing:.5px; text-shadow: 0 2px #000, 0 6px rgba(0,0,0,.35); }
+    a{ color:#9dd7ff; }
+    .chip{ border:1px solid rgba(255,255,255,.18); border-radius:9999px; padding:.15rem .55rem; }
+    .btn-accent{ background: linear-gradient(90deg, var(--accentG), var(--accentP)); color:#0a0a0a; font-weight:800; }
+    code{ background: rgba(255,255,255,.06); padding:.15rem .35rem; border-radius:.5rem; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <!-- NAV -->
+  <nav class="max-w-6xl mx-auto px-4 py-4">
+    <div class="flex items-center justify-between gap-4">
+      <a href="index.html" class="flex items-center gap-3">
+        <!-- Logo zonder ring -->
+        <img src="logo.png" class="h-10 w-10 rounded-full" alt="CBS" />
+        <span class="font-extrabold tracking-tight">CBS Coin</span>
+      </a>
+      <div class="hidden md:flex items-center gap-4 text-sm">
+        <a href="#buy" class="hover:underline">Buy</a>
+        <a href="#chart" class="hover:underline">Chart</a>
+        <a href="#token" class="hover:underline">Token</a>
+        <a href="#contest" class="hover:underline">Contest</a>
+        <a href="#proofs" class="hover:underline">Proofs</a>
+        <a href="burn.html" class="hover:underline">Burns</a>
+        <a href="links.html" class="chip">Links</a>
       </div>
-      <p class="hint" style="margin-top:8px">Tip: Gebruik een PNG met transparante achtergrond voor het mooiste resultaat.</p>
-      <div class="row" style="margin-top:16px">
-        <canvas id="cvs" width="1024" height="1024"></canvas>
+      <div class="md:hidden">
+        <button id="menuBtn" class="px-3 py-2 rounded-lg bg-white/10">Menu</button>
       </div>
     </div>
-  </div>
+    <div id="mobileMenu" class="hidden md:hidden mt-3 grid gap-2 text-sm">
+      <a href="#buy">Buy</a>
+      <a href="#chart">Chart</a>
+      <a href="#token">Token</a>
+      <a href="#contest">Contest</a>
+      <a href="#proofs">Proofs</a>
+      <a href="burn.html">Burns</a>
+      <a href="links.html">Links</a>
+    </div>
+  </nav>
 
-<script>
-(function(){
-  const g = '#22c55e', p = '#a78bfa';
-  const cvs = document.getElementById('cvs');
-  const ctx = cvs.getContext('2d');
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
+  <!-- BRAND STRIP (grotere banner + glow + tagline) -->
+  <section class="max-w-6xl mx-auto px-4">
+    <div class="glass rounded-2xl p-3 md:p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="flex items-center gap-4">
+        <!-- logo zonder groene ring + glow -->
+        <img src="logo.png" alt="CBS Logo" class="h-20 w-20 md:h-24 md:w-24 rounded-full glow" onerror="this.style.display='none'">
+        <!-- BANNER NOG GROTER + glow (object-contain zodat hij niet rekt) -->
+        <img src="CBS_COIN_banner.png" alt="CBS Banner" class="h-28 md:h-36 w-auto glow rounded-xl ring-1 ring-white/10 object-contain" onerror="this.style.display='none'">
+      </div>
+      <div class="text-sm md:text-base font-semibold tracking-wide md:text-right">
+        CBS — Community Builds <span style="color:var(--accentP)">Sovereignty</span>
+      </div>
+    </div>
+  </section>
 
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.src = 'logo.png'; // laad automatisch jouw logo
+  <!-- HERO -->
+  <header class="max-w-6xl mx-auto px-4 mt-4">
+    <div class="glass neon rounded-2xl p-6 md:p-10">
+      <div class="grid md:grid-cols-2 gap-6 md:gap-10 items-center">
+        <div>
+          <h1 class="meme-title text-5xl md:text-6xl font-extrabold">CBS Coin</h1>
+          <p class="mt-3 text-base md:text-lg opacity-90">
+            Fair-launch <span class="font-semibold">SPL</span> memecoin on <span class="font-semibold">Solana</span>. No presale. Community-led, execution-first.
+          </p>
+          <div class="mt-4 text-sm opacity-80">
+            Mint / CA: <code id="mint">B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code>
+            <button id="copyMint" class="ml-2 px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-xs">Copy</button>
+            <span id="copyToast" class="ml-2 text-xs opacity-70"></span>
+          </div>
+          <div class="flex flex-wrap gap-2 mt-5">
+            <a href="#buy" class="px-4 py-2 rounded-xl btn-accent">Buy $CBS</a>
+            <a href="#chart" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20">Open Chart</a>
+            <a href="#contest" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20">Join Contest</a>
+          </div>
+          <div class="mt-3 text-xs opacity-70">Never share seed phrases. Use only official links.</div>
+        </div>
+        <div class="hidden md:block">
+          <img src="assets/hero-cbs.png" alt="CBS" class="rounded-2xl w-full ring-1 ring-white/10" onerror="this.style.display='none'">
+        </div>
+      </div>
+    </div>
+  </header>
 
-  function clear(w,h){
-    cvs.width = w; cvs.height = h;
-    ctx.clearRect(0,0,w,h);
-  }
+  <!-- BUY -->
+  <section id="buy" class="max-w-6xl mx-auto px-4 py-8">
+    <div class="glass rounded-2xl p-6">
+      <h2 class="meme-title text-3xl font-extrabold">Buy $CBS in 60s</h2>
+      <p class="mt-2 text-sm opacity-85">Swap SOL → CBS on Raydium. Set slippage ~0.5–1% if needed.</p>
+      <div class="mt-4 grid sm:grid-cols-2 gap-3">
+        <a class="px-4 py-3 rounded-xl btn-accent text-center"
+           href="https://raydium.io/swap/?inputMint=So11111111111111111111111111111111111111112&outputMint=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk" target="_blank" rel="noreferrer">Open Raydium Swap</a>
+        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-center"
+           href="https://phantom.app/ul/browse?url=https%3A%2F%2Fraydium.io%2Fswap%2F%3FinputMint%3DSo11111111111111111111111111111111111111112%26outputMint%3DB9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk">Open in Phantom (mobile)</a>
+      </div>
+      <div class="mt-3 text-sm">
+        Charts: <a href="https://dexscreener.com/solana/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk" target="_blank" rel="noreferrer">DexScreener</a> ·
+        <a href="https://birdeye.so/solana/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk" target="_blank" rel="noreferrer">Birdeye</a> ·
+        Explorer: <a href="https://solscan.io/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk" target="_blank" rel="noreferrer">Solscan</a>
+      </div>
+    </div>
+  </section>
 
-  // tekent zachte neon-glows achter de logo
-  function drawGlow(w,h,centerScale=0.7){
-    const cx = w/2, cy = h/2;
-    const maxR = Math.min(w,h)*0.46;
+  <!-- CHART -->
+  <section id="chart" class="max-w-6xl mx-auto px-4 pb-8">
+    <div class="glass rounded-2xl p-2">
+      <iframe src="https://dexscreener.com/solana/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk?embed=1&theme=dark"
+              class="w-full h-[620px] rounded-xl" frameborder="0"></iframe>
+    </div>
+  </section>
 
-    // paarse brede gloed
-    const gradP = ctx.createRadialGradient(cx,cy,0, cx,cy,maxR);
-    gradP.addColorStop(0, 'rgba(167,139,250,0.55)');
-    gradP.addColorStop(1, 'rgba(167,139,250,0.00)');
-    ctx.fillStyle = gradP;
-    ctx.beginPath(); ctx.arc(cx,cy,maxR,0,Math.PI*2); ctx.fill();
+  <!-- TOKEN -->
+  <section id="token" class="max-w-6xl mx-auto px-4 pb-8">
+    <div class="grid lg:grid-cols-2 gap-6">
+      <div class="glass rounded-2xl p-6">
+        <h3 class="meme-title text-3xl font-extrabold">Token facts</h3>
+        <ul class="mt-3 text-sm leading-7 opacity-90">
+          <li>Chain: <strong>Solana (SPL)</strong> · Decimals: <strong>9</strong></li>
+          <li>Max supply: <strong>100,000,000 CBS</strong></li>
+          <li>Burned: <strong>10,000,000 CBS</strong> (<a href="#proofs">proofs</a>, <a href="burn.html">burn page</a>)</li>
+          <li>Current total supply: <strong>90,000,000 CBS</strong></li>
+        </ul>
+        <div class="mt-4 text-sm opacity-80">
+          Live tokenomics available on our dashboard. <a href="tokenomics.html">Open dashboard →</a>
+        </div>
+      </div>
+      <div class="glass rounded-2xl p-6">
+        <h3 class="meme-title text-3xl font-extrabold">Why CBS?</h3>
+        <ul class="mt-3 text-sm leading-7 opacity-90">
+          <li>Fair launch — <strong>no presale</strong>, equal start.</li>
+          <li>Community-led, execution-first. Small budgets, measurable results.</li>
+          <li>Clear links & on-chain proofs. No seed phrases.</li>
+        </ul>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <a class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20" href="links.html">All official links</a>
+          <a class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20" href="burn.html">Burn page</a>
+          <a class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20" href="#proofs">Proofs</a>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    // groene gloed iets kleiner
-    const gradG = ctx.createRadialGradient(cx,cy,0, cx,cy,maxR*0.75);
-    gradG.addColorStop(0, 'rgba(34,197,94,0.60)');
-    gradG.addColorStop(1, 'rgba(34,197,94,0.00)');
-    ctx.fillStyle = gradG;
-    ctx.beginPath(); ctx.arc(cx,cy,maxR*0.9,0,Math.PI*2); ctx.fill();
+  <!-- CONTEST -->
+  <section id="contest" class="max-w-6xl mx-auto px-4 pb-8">
+    <div class="glass rounded-2xl p-6">
+      <h3 class="meme-title text-3xl font-extrabold">Holders-Only Contest</h3>
+      <p class="mt-2 text-sm opacity-85">
+        Holders with ≥ <strong>$5 CBS</strong> can submit an idea that’s doable for <strong>$100</strong> and includes a clear expected outcome.
+        Winner is selected at random and receives <strong>$100</strong> to execute + <strong>$50</strong> bonus if targets are met.
+      </p>
+      <div class="mt-4">
+        <a class="px-4 py-2 rounded-xl btn-accent" href="join.html">Submit your idea →</a>
+      </div>
+      <p class="mt-2 text-xs opacity-70">Never connect your wallet on unknown sites. We never ask for seed phrases.</p>
+    </div>
+  </section>
 
-    // subtiele highlight ring
-    ctx.strokeStyle = 'rgba(255,255,255,0.12)';
-    ctx.lineWidth = Math.max(2, Math.min(w,h)*0.004);
-    ctx.beginPath(); ctx.arc(cx,cy,maxR*0.97,0,Math.PI*2); ctx.stroke();
-  }
+  <!-- PROOFS (links-only) -->
+  <section id="proofs" class="max-w-6xl mx-auto px-4 pb-12">
+    <div class="glass rounded-2xl p-6">
+      <h3 class="meme-title text-3xl font-extrabold">On-chain proofs</h3>
+      <div class="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-center"
+           target="_blank" rel="noreferrer"
+           href="https://solscan.io/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk">Token (Solscan)</a>
 
-  function drawLogoCentered(w,h,scale=0.7, keepAspect=true){
-    const L = img;
-    if(!L.complete) return;
-    const size = Math.min(w,h)*scale;
-    let dw = size, dh = size;
-    if(keepAspect){
-      const r = L.width / L.height;
-      if(r>1){ dh = size; dw = size*r; } else { dw = size; dh = size/r; }
-      const maxW = size*1.0, maxH = size*1.0;
-      // fit within square
-      const s = Math.min(maxW/dw, maxH/dh);
-      dw *= s; dh *= s;
+        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-center"
+           target="_blank" rel="noreferrer"
+           href="https://solscan.io/account/8HSvu732XpKoBgSse414VJZDAA8Q2fdcm17Kv1xbYAu3">Raydium pool (account)</a>
+
+        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-center"
+           target="_blank" rel="noreferrer" href="burn.html">Burn page</a>
+
+        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-center"
+           target="_blank" rel="noreferrer"
+           href="https://solscan.io/tx/4W9J2vSFA1eqqmmmehWD9bePwJtCxFC3JxdAi3Tw1wSJVZfrTmptgCoVcAokXawdCsbwef1FiotTuDdP8AjLtDF2">Supply burn — tx</a>
+
+        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-center"
+           target="_blank" rel="noreferrer"
+           href="https://solscan.io/tx/3kxwZseWFza2USuwbYR2Vf14mDLbq64Dz7yNiRZFFYiHNyERwhsyUHuFAjCS5JmAji25fuq6Wbg5kPk5owND8YPx">LP burn — private</a>
+
+        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-center"
+           target="_blank" rel="noreferrer"
+           href="https://solscan.io/tx/2HJLSaq4LVgy6RC4GV7NjLMNx953esfjEC3YTD1QjyJVQJ4MVz4VKTAdfm9ox7soimXQGcfDjdocssTpktwhrBx5">LP burn — team</a>
+
+        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-center"
+           target="_blank" rel="noreferrer"
+           href="https://solscan.io/tx/3rDU5Rew4R6Diy2by7rdbzRuQfKZwaG2Wo3JgMBaYNL32umYcDV9H4DGXthT2EESBCweVjViiQYBcvr2fk4Y46Ky">LP burn — creator #1</a>
+
+        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-center"
+           target="_blank" rel="noreferrer"
+           href="https://solscan.io/tx/2qTz5bQ43WprAomGoCYbvQR6i97x6wdSWhV3EvzWEnW59fBoEyzvn16RC4T6TSnDaPaCLTt3EKryStY1ewjzsrGd">LP burn — creator #2</a>
+      </div>
+    </div>
+  </section>
+
+  <footer class="max-w-6xl mx-auto px-4 pb-10 text-xs opacity-60">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+      <div>CBS Coin — Community Builds Sovereignty</div>
+      <div class="flex gap-3">
+        <a href="https://x.com/<!-- TODO: your_x_handle -->" target="_blank" rel="noreferrer">X/Twitter</a>
+        <a href="https://t.me/CBS_Coin" target="_blank" rel="noreferrer">Telegram</a>
+        <a href="mailto:cbs.coin12@gmail.com">cbs.coin12@gmail.com</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // --- Helpers ---
+    function $(id){ return document.getElementById(id); }
+
+    function copyToClipboard(text){
+      try{
+        if (navigator.clipboard && window.isSecureContext) {
+          return navigator.clipboard.writeText(text);
+        } else {
+          // Fallback voor oudere/in-app browsers
+          var ta = document.createElement('textarea');
+          ta.value = text;
+          ta.style.position = 'fixed';
+          ta.style.left = '-9999px';
+          document.body.appendChild(ta);
+          ta.focus();
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          return Promise.resolve();
+        }
+      }catch(e){
+        return Promise.reject(e);
+      }
     }
-    const dx = (w - dw)/2;
-    const dy = (h - dh)/2;
-    ctx.drawImage(L, dx, dy, dw, dh);
-  }
 
-  function download(filename){
-    const a = document.createElement('a');
-    a.download = filename;
-    a.href = cvs.toDataURL('image/png');
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  }
-
-  function renderAndDownload(w,h,logoScale, name){
-    clear(w,h);
-    // header (breed) heeft andere glow-vorm
-    if(w>h){
-      // ovale glows
-      const cx = w/2, cy = h/2;
-      const rx = w*0.35, ry = h*0.45;
-      const grdP = ctx.createRadialGradient(cx,cy,0, cx,cy,Math.max(rx,ry));
-      grdP.addColorStop(0,'rgba(167,139,250,0.5)');
-      grdP.addColorStop(1,'rgba(167,139,250,0.0)');
-      ctx.fillStyle = grdP; ctx.fillRect(0,0,w,h);
-
-      const grdG = ctx.createRadialGradient(cx,cy,0, cx,cy,Math.max(rx*0.7,ry*0.7));
-      grdG.addColorStop(0,'rgba(34,197,94,0.55)');
-      grdG.addColorStop(1,'rgba(34,197,94,0.0)');
-      ctx.fillStyle = grdG; ctx.fillRect(0,0,w,h);
-
-      // subtiele rand
-      ctx.strokeStyle = 'rgba(255,255,255,0.10)';
-      ctx.lineWidth = Math.max(2, Math.min(w,h)*0.004);
-      ctx.strokeRect(ctx.lineWidth/2, ctx.lineWidth/2, w-ctx.lineWidth, h-ctx.lineWidth);
-    }else{
-      drawGlow(w,h,logoScale);
+    // --- Mobile menu ---
+    var menuBtn = $('menuBtn');
+    var mobileMenu = $('mobileMenu');
+    if (menuBtn && mobileMenu) {
+      menuBtn.addEventListener('click', function(){
+        if (mobileMenu.classList.contains('hidden')) {
+          mobileMenu.classList.remove('hidden');
+        } else {
+          mobileMenu.classList.add('hidden');
+        }
+      });
     }
-    drawLogoCentered(w,h,logoScale);
-    download(name);
-  }
 
-  // eerste preview zodra logo geladen is
-  img.onload = ()=>{ renderAndDownload(512,512,0.72,'preview.png'); };
-
-  // UI
-  document.getElementById('export512').addEventListener('click', ()=> renderAndDownload(512,512,0.74,'CBS_logo_glow_512.png'));
-  document.getElementById('export1024').addEventListener('click', ()=> renderAndDownload(1024,1024,0.70,'CBS_logo_glow_1024.png'));
-  document.getElementById('exportHeader').addEventListener('click', ()=> renderAndDownload(1500,500,0.40,'CBS_header_glow_1500x500.png'));
-
-  document.getElementById('fileInput').addEventListener('change', (e)=>{
-    const f = e.target.files[0]; if(!f) return;
-    const url = URL.createObjectURL(f);
-    img.onload = ()=>{ URL.revokeObjectURL(url); };
-    img.src = url;
-  });
-})();
-</script>
+    // --- Copy mint button ---
+    var copyBtn = $('copyMint');
+    var toast = $('copyToast');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', function(){
+        var s = ($('mint') && $('mint').textContent) ? $('mint').textContent.trim() : '';
+        if(!s) return;
+        copyToClipboard(s).then(function(){
+          if(toast){ toast.textContent = 'Copied'; setTimeout(function(){ toast.textContent=''; }, 2000); }
+        }).catch(function(){
+          if(toast){ toast.textContent = 'Copy failed'; setTimeout(function(){ toast.textContent=''; }, 2000); }
+        });
+      });
+    }
+  </script>
 </body>
 </html>
 
