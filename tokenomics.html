@@ -10,6 +10,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- Solana Web3 for live wallet reads -->
+  <script src="https://unpkg.com/@solana/web3.js@1.95.1/lib/index.iife.min.js"></script>
+
   <style>
     :root{ --bg:#070a12; --bg2:#0b1227; --ring:#22c55e; --text:#e5efff; }
     body{ font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; background: radial-gradient(1200px 700px at 15% -10%, #0e1631 0%, var(--bg) 55%), var(--bg2); color:var(--text); }
@@ -22,6 +25,9 @@
     .stat .value{ font-size:1.1rem; font-weight:800; }
     .input{ background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12); border-radius:.75rem; padding:.5rem .75rem; color:var(--text); width:100%; }
     code{ background: rgba(255,255,255,.06); padding:.2rem .35rem; border-radius:.5rem; }
+    .btn{ display:inline-flex; align-items:center; justify-content:center; border-radius:0.75rem; padding:.65rem 1rem; }
+    .btn-ghost{ background:rgba(255,255,255,.08); }
+    .btn-primary{ background:var(--ring); color:#0a0a0a; font-weight:800; }
   </style>
 </head>
 <body class="min-h-screen">
@@ -56,7 +62,7 @@
           <p class="mt-3 text-sm md:text-base opacity-85">
             Mint / CA: <code id="mint">B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code> · Decimals: 9
           </p>
-          <p class="mt-1 text-xs opacity-70">Data sources: Jupiter price API, optional supply endpoints on this site, and manual inputs for distribution.</p>
+          <p class="mt-1 text-xs opacity-70">Data sources: Jupiter price API, optional supply endpoints on this site, Solana RPC (Helius) for live wallet balances.</p>
         </div>
         <div class="hidden md:block">
           <img src="assets/hero-cbs.png" alt="CBS" class="rounded-2xl w-full ring-1 ring-white/10" onerror="this.style.display='none'">
@@ -135,45 +141,73 @@
     </div>
   </section>
 
-  <!-- WALLETS (labels) -->
+  <!-- LIVE TEAM WALLET -->
   <section class="max-w-6xl mx-auto px-4 pb-8">
     <div class="glass rounded-2xl p-6">
-      <h2 class="meme-title text-3xl font-extrabold">Wallet labels</h2>
-      <p class="mt-2 text-sm opacity-85">Optional: list important addresses with labels. Click to open on Solscan.</p>
-      <div class="grid md:grid-cols-2 gap-4 mt-3">
+      <h2 class="meme-title text-3xl font-extrabold">Team wallet (live)</h2>
+      <div class="grid md:grid-cols-2 gap-4 items-start mt-2">
         <div class="text-sm">
-          <div class="opacity-70">Treasury (example)</div>
-          <a class="break-all" target="_blank" rel="noreferrer" href="#">Add address</a>
+          <div class="opacity-70">Address</div>
+          <a id="teamAddr" class="break-all" target="_blank" rel="noreferrer"
+             href="https://solscan.io/address/8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd">8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd</a>
+          <div class="mt-3 grid grid-cols-2 gap-3">
+            <div class="stat">
+              <div class="label">CBS Balance</div>
+              <div class="value" id="teamCbs">—</div>
+            </div>
+            <div class="stat">
+              <div class="label">Est. Value (USD)</div>
+              <div class="value" id="teamUsd">$—</div>
+            </div>
+          </div>
+          <div class="mt-3 text-xs opacity-70" id="teamUpdate">Updated: —</div>
         </div>
         <div class="text-sm">
-          <div class="opacity-70">Marketing/Contest (example)</div>
-          <a class="break-all" target="_blank" rel="noreferrer" href="#">Add address</a>
+          <div class="opacity-70">Quick links</div>
+          <div class="mt-2 grid gap-2">
+            <a class="btn btn-ghost" target="_blank" rel="noreferrer"
+               href="https://solscan.io/address/8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd">Open on Solscan</a>
+            <button id="refreshTeam" class="btn btn-primary">Refresh</button>
+          </div>
+          <div class="mt-2 text-xs opacity-70">Reads CBS token balance via Solana RPC (Helius). USD estimation uses current Jupiter price.</div>
         </div>
       </div>
-      <p class="mt-3 text-xs opacity-70">Tip: To avoid doxxing private wallets, only list addresses intended for public transparency.</p>
     </div>
   </section>
 
-  <!-- PROOFS -->
+  <!-- PROOFS (links-only) -->
   <section class="max-w-6xl mx-auto px-4 pb-12">
     <div class="glass rounded-2xl p-6">
       <h2 class="meme-title text-3xl font-extrabold">On-chain proofs</h2>
-      <ul class="mt-3 text-sm leading-7 opacity-90 list-disc pl-5">
-        <li>Token (SPL) — <a target="_blank" rel="noreferrer" href="https://solscan.io/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk">Solscan token page</a></li>
-        <li>Raydium CBS–WSOL pool (creation) — <a target="_blank" rel="noreferrer" href="https://solscan.io/account/8HSvu732XpKoBgSse414VJZDAA8Q2fdcm17Kv1xbYAu3">Solscan pool account</a></li>
-        <li>Supply burn — 10,000,000 CBS (SPL Token Program: Burn):<br>
-          <a target="_blank" rel="noreferrer" href="https://solscan.io/tx/4W9J2vSFA1eqqmmmehWD9bePwJtCxFC3JxdAi3Tw1wSJVZfrTmptgCoVcAokXawdCsbwef1FiotTuDdP8AjLtDF2">Burn tx #1 (private wallet)</a>
-        </li>
-        <li>LP burns (liquidity locked) — to incinerator <code>1nc1nerator11111111111111111111111111111111</code>:
-          <ul class="list-disc pl-5">
-            <li>Private wallet — <a target="_blank" rel="noreferrer" href="https://solscan.io/tx/3kxwZseWFza2USuwbYR2Vf14mDLbq64Dz7yNiRZFFYiHNyERwhsyUHuFAjCS5JmAji25fuq6Wbg5kPk5owND8YPx">tx</a></li>
-            <li>Team/authority wallet — <a target="_blank" rel="noreferrer" href="https://solscan.io/tx/2HJLSaq4LVgy6RC4GV7NjLMNx953esfjEC3YTD1QjyJVQJ4MVz4VKTAdfm9ox7soimXQGcfDjdocssTpktwhrBx5">tx</a></li>
-            <li>Creator wallet — <a target="_blank" rel="noreferrer" href="https://solscan.io/tx/3rDU5Rew4R6Diy2by7rdbzRuQfKZwaG2Wo3JgMBaYNL32umYcDV9H4DGXthT2EESBCweVjViiQYBcvr2fk4Y46Ky">tx1</a>,
-              <a target="_blank" rel="noreferrer" href="https://solscan.io/tx/2qTz5bQ43WprAomGoCYbvQR6i97x6wdSWhV3EvzWEnW59fBoEyzvn16RC4T6TSnDaPaCLTt3EKryStY1ewjzsrGd">tx2</a></li>
-          </ul>
-        </li>
-      </ul>
-      <p class="mt-2 text-xs opacity-70">LP burns lock liquidity; supply burns reduce CBS total supply.</p>
+      <div class="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-center"
+           target="_blank" rel="noreferrer"
+           href="https://solscan.io/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk">Token (Solscan)</a>
+
+        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-center"
+           target="_blank" rel="noreferrer"
+           href="https://solscan.io/account/8HSvu732XpKoBgSse414VJZDAA8Q2fdcm17Kv1xbYAu3">Raydium pool (account)</a>
+
+        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-center"
+           target="_blank" rel="noreferrer"
+           href="https://solscan.io/tx/4W9J2vSFA1eqqmmmehWD9bePwJtCxFC3JxdAi3Tw1wSJVZfrTmptgCoVcAokXawdCsbwef1FiotTuDdP8AjLtDF2">Supply burn — tx</a>
+
+        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-center"
+           target="_blank" rel="noreferrer"
+           href="https://solscan.io/tx/3kxwZseWFza2USuwbYR2Vf14mDLbq64Dz7yNiRZFFYiHNyERwhsyUHuFAjCS5JmAji25fuq6Wbg5kPk5owND8YPx">LP burn — private</a>
+
+        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-center"
+           target="_blank" rel="noreferrer"
+           href="https://solscan.io/tx/2HJLSaq4LVgy6RC4GV7NjLMNx953esfjEC3YTD1QjyJVQJ4MVz4VKTAdfm9ox7soimXQGcfDjdocssTpktwhrBx5">LP burn — team</a>
+
+        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-center"
+           target="_blank" rel="noreferrer"
+           href="https://solscan.io/tx/3rDU5Rew4R6Diy2by7rdbzRuQfKZwaG2Wo3JgMBaYNL32umYcDV9H4DGXthT2EESBCweVjViiQYBcvr2fk4Y46Ky">LP burn — creator #1</a>
+
+        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-center"
+           target="_blank" rel="noreferrer"
+           href="https://solscan.io/tx/2qTz5bQ43WprAomGoCYbvQR6i97x6wdSWhV3EvzWEnW59fBoEyzvn16RC4T6TSnDaPaCLTt3EKryStY1ewjzsrGd">LP burn — creator #2</a>
+      </div>
     </div>
   </section>
 
@@ -191,11 +225,16 @@
   <script>
     // ======= Config =======
     const MINT = 'B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk';
+    const TEAM_WALLET = '8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd';
     const SUPPLY_ENDPOINTS = {
       total: '/data/total_supply.txt',          // optional; plain number e.g. 90000000
       circ:  '/data/circulating_supply.txt'     // optional; plain number e.g. 90000000
     };
     const FALLBACK = { total: 90000000, circ: 90000000, max: 100000000, burned: 10000000 };
+
+    // Helius RPC (same key as your join page)
+    const HELIUS_KEY = 'a9a11d45-2d40-4da0-a3b6-557b855f1e5c';
+    const RPC_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
 
     // ======= Utils =======
     const fmt = (n)=> (typeof n==='number' && isFinite(n)) ? n.toLocaleString(undefined) : '—';
@@ -219,7 +258,6 @@
 
     async function getPriceUSD(mint){
       try{
-        // Jupiter lite price API
         const url = 'https://lite-api.jup.ag/price/v3?ids=' + mint;
         const res = await fetch(url, { headers:{'accept':'application/json'} });
         const json = await res.json();
@@ -266,7 +304,6 @@
         }
       });
 
-      // Legend text
       const pct = (v)=> (total>0 ? (v/total*100).toFixed(2) : '0.00') + '%';
       document.getElementById('distLegend').innerHTML = `
         <div class="grid md:grid-cols-2 gap-2">
@@ -276,6 +313,33 @@
           <div>Circulating (float): <strong>${fmt(float)}</strong> (${pct(float)})</div>
         </div>
       `;
+    }
+
+    // ======= Live Team Wallet =======
+    let cbsPriceUSD = null;
+    async function fetchTeamCBSBalance(){
+      try{
+        const conn = new solanaWeb3.Connection(RPC_URL, 'confirmed');
+        const owner = new solanaWeb3.PublicKey(TEAM_WALLET);
+        const mint  = new solanaWeb3.PublicKey(MINT);
+        const res = await conn.getParsedTokenAccountsByOwner(owner, { mint });
+        let ui = 0;
+        if(res.value && res.value.length){
+          const t = res.value[0].account.data.parsed.info.tokenAmount;
+          ui = Number(t.uiAmount || 0);
+        }
+        setText('teamCbs', ui.toLocaleString(undefined, {maximumFractionDigits:2}));
+        if(cbsPriceUSD){
+          const usd = ui * cbsPriceUSD;
+          setText('teamUsd', '$' + usd.toLocaleString(undefined, {maximumFractionDigits:2}));
+        }
+        document.getElementById('teamUpdate').textContent = 'Updated: ' + new Date().toLocaleString();
+      }catch(e){
+        setText('teamCbs', '—');
+        setText('teamUsd', '$—');
+        document.getElementById('teamUpdate').textContent = 'Updated: error';
+        console.error(e);
+      }
     }
 
     // ======= Init =======
@@ -294,15 +358,19 @@
       document.getElementById('inpReserves').value = 0;
 
       // Price + MC
-      const price = await getPriceUSD(MINT);
-      if(price){ setText('price', '$' + price.toLocaleString(undefined, {maximumFractionDigits:8})); }
+      cbsPriceUSD = await getPriceUSD(MINT);
+      if(cbsPriceUSD){ setText('price', '$' + cbsPriceUSD.toLocaleString(undefined, {maximumFractionDigits:8})); }
       else { setText('price', '$—'); }
-      updateMcap(price, s.circ);
+      updateMcap(cbsPriceUSD, s.circ);
 
-      // Draw chart
+      // Chart
       recalcAndDraw();
 
-      // Apply handler
+      // Team wallet live
+      await fetchTeamCBSBalance();
+      document.getElementById('refreshTeam').addEventListener('click', fetchTeamCBSBalance);
+
+      // Apply handler (distribution)
       document.getElementById('btnApply').addEventListener('click', ()=>{
         chartData.burned = Number(document.getElementById('inpBurn').value||0);
         chartData.treasury = Number(document.getElementById('inpTreasury').value||0);
@@ -318,4 +386,3 @@
   </script>
 </body>
 </html>
-
