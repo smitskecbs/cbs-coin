@@ -26,7 +26,7 @@
     .meme-title{ font-family: Bangers, Inter, system-ui; letter-spacing:.5px; text-shadow: 0 2px #000, 0 6px rgba(0,0,0,.35); }
     code{ background: rgba(255,255,255,.06); padding:.2rem .35rem; border-radius:.5rem; word-break: break-all; }
 
-    /* Mobile micro‑tweaks */
+    /* Mobile tweaks */
     @media (max-width: 480px){
       .hero-pad{ padding: 1rem !important; }
       .stat-card{ padding: .6rem .75rem !important; }
@@ -34,14 +34,14 @@
   </style>
 </head>
 <body class="min-h-screen">
-  <!-- NAV (matches index.html style) -->
+  <!-- NAV: logo only (same vibe as index) -->
   <nav class="max-w-6xl mx-auto px-4 py-4">
     <div class="flex items-center justify-between gap-4">
       <a href="index.html" class="flex items-center gap-3">
         <img src="logo.png" class="h-10 w-10 rounded-xl ring-2 ring-[var(--ring)]" alt="CBS" />
         <span class="font-extrabold tracking-tight">CBS Coin</span>
       </a>
-      <!-- Rechtsboven: geen links gewenst -->
+      <!-- No right-side links -->
     </div>
   </nav>
 
@@ -54,7 +54,7 @@
           <p class="mt-3 text-sm md:text-base opacity-85">
             Mint / CA: <code id="mint">B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code> · Decimals: <span id="decimals">—</span>
           </p>
-          <p class="mt-1 text-xs opacity-70">Data sources: Jupiter/DexScreener (price), Solana RPC (Helius) voor on‑chain supply & team balance. Geen off‑chain files nodig.</p>
+          <p class="mt-1 text-xs opacity-70">On‑chain via Helius (supply & team balance). Price via secure proxy → Birdeye; fallback naar Jupiter/DexScreener.</p>
         </div>
         <div class="hidden md:block">
           <img src="assets/hero-cbs.png" alt="CBS" class="rounded-2xl w-full ring-1 ring-white/10" onerror="this.style.display='none'">
@@ -68,7 +68,10 @@
     <div class="grid md:grid-cols-3 gap-4">
       <div class="stat-card flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-3 md:px-4 py-3">
         <div class="text-xs opacity-75">Price (USD)</div>
-        <div class="text-lg font-extrabold truncate max-w-[55%] text-right" id="price">$—</div>
+        <div class="text-right">
+          <div class="text-lg font-extrabold truncate max-w-[100%]" id="price">$—</div>
+          <div class="text-[10px] opacity-60" id="priceSrc">—</div>
+        </div>
       </div>
       <div class="stat-card flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-3 md:px-4 py-3">
         <div class="text-xs opacity-75">Current Supply (on‑chain)</div>
@@ -76,7 +79,9 @@
       </div>
       <div class="stat-card flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-3 md:px-4 py-3">
         <div class="text-xs opacity-75">Market Cap (est.)</div>
-        <div class="text-lg font-extrabold truncate max-w-[55%] text-right" id="mcap">$—</div>
+        <div class="text-right">
+          <div class="text-lg font-extrabold truncate max-w-[100%]" id="mcap">$—</div>
+        </div>
       </div>
     </div>
 
@@ -204,30 +209,36 @@
     const HELIUS_KEY = 'a9a11d45-2d40-4da0-a3b6-557b855f1e5c';
     const RPC_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
 
-    // Birdeye (optioneel) — zet hier je API key als je Birdeye live prijs wil gebruiken
-    const BIRDEYE_KEY = '' // <-- vul jouw Birdeye X-API-KEY hier in (anders vallen we terug op Jupiter/DexScreener);
+    // Birdeye via secure serverless proxy (same origin)
+    // If your proxy runs on the same Vercel project, this relative URL works directly
+    const BIRDEYE_PROXY = '/api/birdeye-price';
 
     // ======= Utils =======
     const fmt = (n, fd=0)=> (typeof n==='number' && isFinite(n)) ? n.toLocaleString(undefined, {maximumFractionDigits:fd}) : '—';
     function setText(id, text){ const el = document.getElementById(id); if(el) el.textContent = text; }
     function setErr(msg){ const e = document.getElementById('err'); if(!e) return; e.textContent = msg || ''; }
 
+    // ======= Price (Birdeye proxy → Jupiter → DexScreener) =======
     async function getPriceUSD_Birdeye(mint){
-      if(!BIRDEYE_KEY) return null;
       try{
-        const url = `https://public-api.birdeye.so/defi/price?address=${mint}&chain=solana`;
-        const res = await fetch(url, { headers:{ 'accept':'application/json', 'X-API-KEY': BIRDEYE_KEY, 'x-chain':'solana' } });
-        if(!res.ok) throw new Error('HTTP ' + res.status);
-        const j = await res.json();
-        const raw = j?.data?.value ?? j?.data?.price ?? j?.data?.priceUsd ?? j?.price ?? j?.value;
-        const p = typeof raw === 'number' ? raw : Number(raw);
-        return (p && isFinite(p)) ? p : null;
-      }catch(e){ console.warn('Birdeye price error', e); return null; }
+        const url = `${BIRDEYE_PROXY}?address=${mint}`;
+        const res = await fetch(url, { headers:{ 'accept':'application/json' } });
+        if(res.ok){
+          const j = await res.json();
+          const raw = j?.price ?? j?.data?.value ?? j?.data?.price ?? j?.data?.priceUsd ?? j?.price ?? j?.value;
+          const p = typeof raw === 'number' ? raw : Number(raw);
+          if(p && isFinite(p)) return { price:p, src:'Birdeye' };
+        }
+      }catch(_){ }
+      return { price:null, src:null };
     }
 
     async function getPriceUSD(mint){
+      // 1) Birdeye via proxy
       const be = await getPriceUSD_Birdeye(mint);
-      if(be) return be;
+      if(be.price){ document.getElementById('priceSrc').textContent = be.src; return be.price; }
+
+      // 2) Jupiter
       try{
         const url = 'https://price.jup.ag/v6/price?ids=' + mint;
         const res = await fetch(url, { headers:{'accept':'application/json'} });
@@ -235,34 +246,31 @@
           const json = await res.json();
           const rec = json?.data?.[mint];
           const price = rec?.price ?? rec?.usdPrice;
-          if(typeof price === 'number' && isFinite(price)) return price;
+          if(typeof price === 'number' && isFinite(price)){
+            document.getElementById('priceSrc').textContent = 'Jupiter';
+            return price;
+          }
         }
       }catch(_){ }
+
+      // 3) DexScreener
       try{
         const ds = await fetch('https://api.dexscreener.com/latest/dex/tokens/' + mint);
         if(ds.ok){
           const j = await ds.json();
           const pair = j?.pairs?.[0];
           const p = Number(pair?.priceUsd);
-          if(isFinite(p)) return p;
+          if(isFinite(p)){
+            document.getElementById('priceSrc').textContent = 'DexScreener';
+            return p;
+          }
         }
       }catch(_){ }
-      return null;
-    }
-      }catch(_){}
-      // Fallback: DexScreener
-      try{
-        const ds = await fetch('https://api.dexscreener.com/latest/dex/tokens/' + mint);
-        if(ds.ok){
-          const j = await ds.json();
-          const pair = j?.pairs?.[0];
-          const p = Number(pair?.priceUsd);
-          if(isFinite(p)) return p;
-        }
-      }catch(_){}
+      document.getElementById('priceSrc').textContent = '—';
       return null;
     }
 
+    // ======= On-chain supply & team balance =======
     async function getMintSupply(){
       const conn = new solanaWeb3.Connection(RPC_URL, 'confirmed');
       const mintPk = new solanaWeb3.PublicKey(MINT);
@@ -279,7 +287,6 @@
       const res = await conn.getParsedTokenAccountsByOwner(owner, { mint });
       let ui = 0;
       if(res.value && res.value.length){
-        // Sum any multiple token accounts just in case
         ui = res.value.reduce((sum, it)=>{
           const t = it.account.data.parsed.info.tokenAmount;
           const v = Number(t.uiAmount || 0);
@@ -334,7 +341,7 @@
         setText('burned', fmt(burned));
 
         const price = await getPriceUSD(MINT);
-        if(price) setText('price', '$' + fmt(price, 8)); else setText('price', '$—');
+        if(price) setText('price', '$' + fmt(price, 8)); else { setText('price', '$—'); document.getElementById('priceSrc').textContent = '—'; }
         const mcap = (price && currentSupply) ? price * currentSupply : null;
         setText('mcap', mcap ? ('$' + fmt(mcap)) : '$—');
 
@@ -373,4 +380,3 @@
   </script>
 </body>
 </html>
-
