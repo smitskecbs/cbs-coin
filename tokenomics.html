@@ -24,7 +24,13 @@
     .glass{ background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03)); backdrop-filter: blur(10px); border:1px solid rgba(255,255,255,.1); }
     .neon{ box-shadow: 0 0 0 .5px rgba(255,255,255,.2), 0 0 25px rgba(36,230,181,.25), inset 0 0 25px rgba(36,230,181,.08); }
     .meme-title{ font-family: Bangers, Inter, system-ui; letter-spacing:.5px; text-shadow: 0 2px #000, 0 6px rgba(0,0,0,.35); }
-    code{ background: rgba(255,255,255,.06); padding:.2rem .35rem; border-radius:.5rem; }
+    code{ background: rgba(255,255,255,.06); padding:.2rem .35rem; border-radius:.5rem; word-break: break-all; }
+
+    /* Mobile micro‑tweaks */
+    @media (max-width: 480px){
+      .hero-pad{ padding: 1rem !important; }
+      .stat-card{ padding: .6rem .75rem !important; }
+    }
   </style>
 </head>
 <body class="min-h-screen">
@@ -35,30 +41,20 @@
         <img src="logo.png" class="h-10 w-10 rounded-xl ring-2 ring-[var(--ring)]" alt="CBS" />
         <span class="font-extrabold tracking-tight">CBS Coin</span>
       </a>
-      <div class="hidden md:flex items-center gap-4 text-sm">
-        <a href="index.html#buy" class="hover:underline">Buy</a>
-        <a href="index.html#chart" class="hover:underline">Chart</a>
-        <a href="index.html#token" class="hover:underline">Token</a>
-        <a href="index.html#contest" class="hover:underline">Contest</a>
-        <a href="links.html" class="hover:underline">Links</a>
-        <span class="px-2 py-1 rounded-full bg-white/10 text-xs">Tokenomics</span>
-      </div>
-      <div class="md:hidden">
-        <a class="px-3 py-2 rounded-lg bg-white/10" href="index.html">Home</a>
-      </div>
+      <!-- Rechtsboven: geen links gewenst -->
     </div>
   </nav>
 
   <!-- HEADER / HERO -->
   <header class="max-w-6xl mx-auto px-4">
-    <div class="glass neon rounded-2xl p-6 md:p-10">
+    <div class="glass neon rounded-2xl p-6 md:p-10 hero-pad">
       <div class="grid md:grid-cols-2 gap-6 md:gap-10 items-center">
         <div>
           <h1 class="meme-title text-5xl md:text-6xl font-extrabold">Tokenomics (Live)</h1>
           <p class="mt-3 text-sm md:text-base opacity-85">
             Mint / CA: <code id="mint">B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code> · Decimals: <span id="decimals">—</span>
           </p>
-          <p class="mt-1 text-xs opacity-70">Data sources: Jupiter/DexScreener (price), Solana RPC (Helius) for on‑chain mint supply & team balance. Geen off‑chain files nodig.</p>
+          <p class="mt-1 text-xs opacity-70">Data sources: Jupiter/DexScreener (price), Solana RPC (Helius) voor on‑chain supply & team balance. Geen off‑chain files nodig.</p>
         </div>
         <div class="hidden md:block">
           <img src="assets/hero-cbs.png" alt="CBS" class="rounded-2xl w-full ring-1 ring-white/10" onerror="this.style.display='none'">
@@ -70,30 +66,30 @@
   <!-- TOP STATS -->
   <section class="max-w-6xl mx-auto px-4 py-8">
     <div class="grid md:grid-cols-3 gap-4">
-      <div class="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+      <div class="stat-card flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-3 md:px-4 py-3">
         <div class="text-xs opacity-75">Price (USD)</div>
-        <div class="text-lg font-extrabold" id="price">$—</div>
+        <div class="text-lg font-extrabold truncate max-w-[55%] text-right" id="price">$—</div>
       </div>
-      <div class="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+      <div class="stat-card flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-3 md:px-4 py-3">
         <div class="text-xs opacity-75">Current Supply (on‑chain)</div>
         <div class="text-lg font-extrabold" id="current">—</div>
       </div>
-      <div class="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+      <div class="stat-card flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-3 md:px-4 py-3">
         <div class="text-xs opacity-75">Market Cap (est.)</div>
-        <div class="text-lg font-extrabold" id="mcap">$—</div>
+        <div class="text-lg font-extrabold truncate max-w-[55%] text-right" id="mcap">$—</div>
       </div>
     </div>
 
     <div class="grid md:grid-cols-3 gap-4 mt-4">
-      <div class="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+      <div class="stat-card flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-3 md:px-4 py-3">
         <div class="text-xs opacity-75">Max Supply</div>
         <div class="text-lg font-extrabold" id="max">100,000,000</div>
       </div>
-      <div class="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+      <div class="stat-card flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-3 md:px-4 py-3">
         <div class="text-xs opacity-75">Total Burned (calc)</div>
         <div class="text-lg font-extrabold" id="burned">—</div>
       </div>
-      <div class="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+      <div class="stat-card flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-3 md:px-4 py-3">
         <div class="text-xs opacity-75">Circulating (est.)</div>
         <div class="text-lg font-extrabold" id="circ">—</div>
       </div>
@@ -108,7 +104,7 @@
     <div class="grid lg:grid-cols-2 gap-6">
       <div class="glass rounded-2xl p-6">
         <h2 class="meme-title text-3xl font-extrabold">Supply distribution</h2>
-        <p class="mt-2 text-sm opacity-85">Team balance wordt live ingelezen. Vul Reserves voor airdrops/lockups. Grafiek update direct.</p>
+        <p class="mt-2 text-sm opacity-85">Team balance live. Vul Reserves voor airdrops/lockups. Grafiek update direct.</p>
         <div class="grid md:grid-cols-3 gap-3 mt-4">
           <div>
             <label class="text-sm">Burned (auto)</label>
@@ -129,7 +125,7 @@
         </div>
       </div>
       <div class="glass rounded-2xl p-6">
-        <canvas id="distChart" style="max-height:380px;"></canvas>
+        <div class="w-full h-[280px] md:h-[380px]"><canvas id="distChart" class="w-full h-full"></canvas></div>
         <div class="mt-3 text-sm opacity-85" id="distLegend"></div>
       </div>
     </div>
@@ -145,13 +141,13 @@
           <a id="teamAddr" class="break-all" target="_blank" rel="noreferrer"
              href="https://solscan.io/address/8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd">8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd</a>
           <div class="mt-3 grid grid-cols-2 gap-3">
-            <div class="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+            <div class="stat-card flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-3 md:px-4 py-3">
               <div class="text-xs opacity-75">CBS Balance</div>
               <div class="text-lg font-extrabold" id="teamCbs">—</div>
             </div>
-            <div class="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+            <div class="stat-card flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-3 md:px-4 py-3">
               <div class="text-xs opacity-75">Est. Value (USD)</div>
-              <div class="text-lg font-extrabold" id="teamUsd">$—</div>
+              <div class="text-lg font-extrabold truncate max-w-[60%] text-right" id="teamUsd">$—</div>
             </div>
           </div>
           <div class="mt-3 text-xs opacity-70" id="teamUpdate">Updated: —</div>
@@ -208,13 +204,30 @@
     const HELIUS_KEY = 'a9a11d45-2d40-4da0-a3b6-557b855f1e5c';
     const RPC_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
 
+    // Birdeye (optioneel) — zet hier je API key als je Birdeye live prijs wil gebruiken
+    const BIRDEYE_KEY = '' // <-- vul jouw Birdeye X-API-KEY hier in (anders vallen we terug op Jupiter/DexScreener);
+
     // ======= Utils =======
     const fmt = (n, fd=0)=> (typeof n==='number' && isFinite(n)) ? n.toLocaleString(undefined, {maximumFractionDigits:fd}) : '—';
     function setText(id, text){ const el = document.getElementById(id); if(el) el.textContent = text; }
     function setErr(msg){ const e = document.getElementById('err'); if(!e) return; e.textContent = msg || ''; }
 
+    async function getPriceUSD_Birdeye(mint){
+      if(!BIRDEYE_KEY) return null;
+      try{
+        const url = `https://public-api.birdeye.so/defi/price?address=${mint}&chain=solana`;
+        const res = await fetch(url, { headers:{ 'accept':'application/json', 'X-API-KEY': BIRDEYE_KEY, 'x-chain':'solana' } });
+        if(!res.ok) throw new Error('HTTP ' + res.status);
+        const j = await res.json();
+        const raw = j?.data?.value ?? j?.data?.price ?? j?.data?.priceUsd ?? j?.price ?? j?.value;
+        const p = typeof raw === 'number' ? raw : Number(raw);
+        return (p && isFinite(p)) ? p : null;
+      }catch(e){ console.warn('Birdeye price error', e); return null; }
+    }
+
     async function getPriceUSD(mint){
-      // Try Jupiter first
+      const be = await getPriceUSD_Birdeye(mint);
+      if(be) return be;
       try{
         const url = 'https://price.jup.ag/v6/price?ids=' + mint;
         const res = await fetch(url, { headers:{'accept':'application/json'} });
@@ -224,6 +237,18 @@
           const price = rec?.price ?? rec?.usdPrice;
           if(typeof price === 'number' && isFinite(price)) return price;
         }
+      }catch(_){ }
+      try{
+        const ds = await fetch('https://api.dexscreener.com/latest/dex/tokens/' + mint);
+        if(ds.ok){
+          const j = await ds.json();
+          const pair = j?.pairs?.[0];
+          const p = Number(pair?.priceUsd);
+          if(isFinite(p)) return p;
+        }
+      }catch(_){ }
+      return null;
+    }
       }catch(_){}
       // Fallback: DexScreener
       try{
@@ -277,7 +302,16 @@
       ];
       const ctx = document.getElementById('distChart').getContext('2d');
       if(chart) chart.destroy();
-      chart = new Chart(ctx, { type:'doughnut', data:{ labels, datasets:[{ data }] }, options:{ plugins:{ legend:{ display:false } }, cutout:'55%' } });
+      chart = new Chart(ctx, {
+        type:'doughnut',
+        data:{ labels, datasets:[{ data }] },
+        options:{
+          responsive:true,
+          maintainAspectRatio:false,
+          plugins:{ legend:{ display:false } },
+          cutout:'55%'
+        }
+      });
       const pct = (v)=> (total>0 ? (v/total*100).toFixed(2) : '0.00') + '%';
       document.getElementById('distLegend').innerHTML = `
         <div class="grid md:grid-cols-2 gap-2">
