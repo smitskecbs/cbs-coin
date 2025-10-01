@@ -4,39 +4,35 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CBS Coin — Tokenomics (Live)</title>
-  <meta name="description" content="Live tokenomics for CBS Coin (CBS): price, market cap, supply, distribution and on-chain proofs." />
+  <meta name="description" content="Live tokenomics for CBS Coin (CBS): price, market cap, on‑chain supply, distribution and proofs." />
   <meta name="theme-color" content="#0b1227" />
 
-  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <!-- Fonts & Tailwind -->
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Orbitron:wght@400;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { cbs: { bg:'#070a12', bg2:'#0b1227', ring:'#24e6b5', text:'#e5efff' } } } } }
+  </script>
+
+  <!-- Charts & Solana -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <!-- Solana Web3 for live wallet reads -->
   <script src="https://unpkg.com/@solana/web3.js@1.95.1/lib/index.iife.min.js"></script>
 
   <style>
-    :root{ --bg:#070a12; --bg2:#0b1227; --ring:#22c55e; --text:#e5efff; }
+    :root{ --bg:#070a12; --bg2:#0b1227; --ring:#24e6b5; --text:#e5efff; }
     body{ font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; background: radial-gradient(1200px 700px at 15% -10%, #0e1631 0%, var(--bg) 55%), var(--bg2); color:var(--text); }
     .glass{ background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03)); backdrop-filter: blur(10px); border:1px solid rgba(255,255,255,.1); }
-    .neon{ box-shadow: 0 0 0 .5px rgba(255,255,255,.2), 0 0 25px rgba(34,197,94,.25), inset 0 0 25px rgba(34,197,94,.08); }
+    .neon{ box-shadow: 0 0 0 .5px rgba(255,255,255,.2), 0 0 25px rgba(36,230,181,.25), inset 0 0 25px rgba(36,230,181,.08); }
     .meme-title{ font-family: Bangers, Inter, system-ui; letter-spacing:.5px; text-shadow: 0 2px #000, 0 6px rgba(0,0,0,.35); }
-    a{ color:#9dd7ff; }
-    .stat{ display:flex; align-items:center; justify-content:space-between; background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.08); border-radius:14px; padding:.9rem 1rem; }
-    .stat .label{ font-size:.8rem; opacity:.75; }
-    .stat .value{ font-size:1.1rem; font-weight:800; }
-    .input{ background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12); border-radius:.75rem; padding:.5rem .75rem; color:var(--text); width:100%; }
     code{ background: rgba(255,255,255,.06); padding:.2rem .35rem; border-radius:.5rem; }
-    .btn{ display:inline-flex; align-items:center; justify-content:center; border-radius:0.75rem; padding:.65rem 1rem; }
-    .btn-ghost{ background:rgba(255,255,255,.08); }
-    .btn-primary{ background:var(--ring); color:#0a0a0a; font-weight:800; }
   </style>
 </head>
 <body class="min-h-screen">
-
-  <!-- NAV -->
+  <!-- NAV (matches index.html style) -->
   <nav class="max-w-6xl mx-auto px-4 py-4">
     <div class="flex items-center justify-between gap-4">
       <a href="index.html" class="flex items-center gap-3">
-        <img src="logo.png" class="h-10 w-10 rounded-full ring-2 ring-[var(--ring)]" alt="CBS" />
+        <img src="logo.png" class="h-10 w-10 rounded-xl ring-2 ring-[var(--ring)]" alt="CBS" />
         <span class="font-extrabold tracking-tight">CBS Coin</span>
       </a>
       <div class="hidden md:flex items-center gap-4 text-sm">
@@ -53,16 +49,16 @@
     </div>
   </nav>
 
-  <!-- HEADER -->
+  <!-- HEADER / HERO -->
   <header class="max-w-6xl mx-auto px-4">
     <div class="glass neon rounded-2xl p-6 md:p-10">
       <div class="grid md:grid-cols-2 gap-6 md:gap-10 items-center">
         <div>
           <h1 class="meme-title text-5xl md:text-6xl font-extrabold">Tokenomics (Live)</h1>
           <p class="mt-3 text-sm md:text-base opacity-85">
-            Mint / CA: <code id="mint">B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code> · Decimals: 9
+            Mint / CA: <code id="mint">B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code> · Decimals: <span id="decimals">—</span>
           </p>
-          <p class="mt-1 text-xs opacity-70">Data sources: Jupiter price API, optional supply endpoints on this site, Solana RPC (Helius) for live wallet balances.</p>
+          <p class="mt-1 text-xs opacity-70">Data sources: Jupiter (price), Solana RPC (Helius) for on‑chain mint supply and team balance. No off‑chain files needed.</p>
         </div>
         <div class="hidden md:block">
           <img src="assets/hero-cbs.png" alt="CBS" class="rounded-2xl w-full ring-1 ring-white/10" onerror="this.style.display='none'">
@@ -71,67 +67,64 @@
     </div>
   </header>
 
-  <!-- STATS -->
+  <!-- TOP STATS -->
   <section class="max-w-6xl mx-auto px-4 py-8">
     <div class="grid md:grid-cols-3 gap-4">
-      <div class="stat">
-        <div class="label">Price (USD)</div>
-        <div class="value" id="price">$—</div>
+      <div class="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+        <div class="text-xs opacity-75">Price (USD)</div>
+        <div class="text-lg font-extrabold" id="price">$—</div>
       </div>
-      <div class="stat">
-        <div class="label">Circulating Supply</div>
-        <div class="value" id="circ">—</div>
+      <div class="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+        <div class="text-xs opacity-75">Current Supply (on‑chain)</div>
+        <div class="text-lg font-extrabold" id="current">—</div>
       </div>
-      <div class="stat">
-        <div class="label">Market Cap (est.)</div>
-        <div class="value" id="mcap">$—</div>
+      <div class="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+        <div class="text-xs opacity-75">Market Cap (est.)</div>
+        <div class="text-lg font-extrabold" id="mcap">$—</div>
       </div>
     </div>
 
     <div class="grid md:grid-cols-3 gap-4 mt-4">
-      <div class="stat">
-        <div class="label">Total Supply</div>
-        <div class="value" id="total">—</div>
+      <div class="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+        <div class="text-xs opacity-75">Max Supply</div>
+        <div class="text-lg font-extrabold" id="max">100,000,000</div>
       </div>
-      <div class="stat">
-        <div class="label">Max Supply</div>
-        <div class="value" id="max">100,000,000</div>
+      <div class="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+        <div class="text-xs opacity-75">Total Burned (calc)</div>
+        <div class="text-lg font-extrabold" id="burned">—</div>
       </div>
-      <div class="stat">
-        <div class="label">Burned (supply)</div>
-        <div class="value" id="burned">10,000,000</div>
+      <div class="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+        <div class="text-xs opacity-75">Circulating (est.)</div>
+        <div class="text-lg font-extrabold" id="circ">—</div>
       </div>
     </div>
 
-    <div class="mt-3 text-xs opacity-70">
-      Supply tries to load from <code>/data/circulating_supply.txt</code> and <code>/data/total_supply.txt</code>. If not found, falls back to 90,000,000.
-    </div>
+    <p class="mt-3 text-xs opacity-70">Burned = Max − CurrentSupply (from on‑chain mint). Circulating = CurrentSupply − Team − Reserves (you can set Reserves below). LP burns don’t change supply.</p>
   </section>
 
-  <!-- DISTRIBUTION -->
+  <!-- DISTRIBUTION + CHART -->
   <section class="max-w-6xl mx-auto px-4 pb-8">
     <div class="grid lg:grid-cols-2 gap-6">
       <div class="glass rounded-2xl p-6">
         <h2 class="meme-title text-3xl font-extrabold">Supply distribution</h2>
-        <p class="mt-2 text-sm opacity-85">Adjust the fields to reflect your current allocation. The chart updates instantly.</p>
+        <p class="mt-2 text-sm opacity-85">Live team balance is fetched on‑chain. Edit reserves to reflect airdrops/locked allocations. The chart updates instantly.</p>
         <div class="grid md:grid-cols-3 gap-3 mt-4">
           <div>
-            <label class="text-sm">Burned</label>
-            <input id="inpBurn" class="input mt-1" type="number" min="0" step="1" value="10000000">
+            <label class="text-sm">Burned (auto)</label>
+            <input id="inpBurn" class="w-full mt-1 px-3 py-2 rounded-xl bg-white/5 border border-white/10" type="number" min="0" step="1" value="0" readonly>
           </div>
           <div>
-            <label class="text-sm">Treasury/Team</label>
-            <input id="inpTreasury" class="input mt-1" type="number" min="0" step="1" value="0">
+            <label class="text-sm">Treasury / Team (auto)</label>
+            <input id="inpTreasury" class="w-full mt-1 px-3 py-2 rounded-xl bg-white/5 border border-white/10" type="number" min="0" step="1" value="0" readonly>
           </div>
           <div>
-            <label class="text-sm">Reserves/Airdrops</label>
-            <input id="inpReserves" class="input mt-1" type="number" min="0" step="1" value="0">
+            <label class="text-sm">Reserves / Airdrops</label>
+            <input id="inpReserves" class="w-full mt-1 px-3 py-2 rounded-xl bg-white/5 border border-white/10" type="number" min="0" step="1" value="0">
           </div>
         </div>
-        <div class="mt-3 text-xs opacity-70">“Circulating (float)” is computed as <code>Total − Burned − Treasury − Reserves</code>. LP-burns lock liquidity but do not change supply.</div>
-        <div class="mt-4">
+        <div class="mt-4 flex items-center gap-3">
           <button id="btnApply" class="px-4 py-2 rounded-xl bg-[var(--ring)] text-black font-bold">Apply</button>
-          <span id="distToast" class="ml-2 text-xs opacity-70"></span>
+          <span id="distToast" class="text-xs opacity-70"></span>
         </div>
       </div>
       <div class="glass rounded-2xl p-6">
@@ -142,7 +135,7 @@
   </section>
 
   <!-- LIVE TEAM WALLET -->
-  <section class="max-w-6xl mx-auto px-4 pb-8">
+  <section class="max-w-6xl mx-auto px-4 pb-8" id="team">
     <div class="glass rounded-2xl p-6">
       <h2 class="meme-title text-3xl font-extrabold">Team wallet (live)</h2>
       <div class="grid md:grid-cols-2 gap-4 items-start mt-2">
@@ -151,13 +144,13 @@
           <a id="teamAddr" class="break-all" target="_blank" rel="noreferrer"
              href="https://solscan.io/address/8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd">8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd</a>
           <div class="mt-3 grid grid-cols-2 gap-3">
-            <div class="stat">
-              <div class="label">CBS Balance</div>
-              <div class="value" id="teamCbs">—</div>
+            <div class="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+              <div class="text-xs opacity-75">CBS Balance</div>
+              <div class="text-lg font-extrabold" id="teamCbs">—</div>
             </div>
-            <div class="stat">
-              <div class="label">Est. Value (USD)</div>
-              <div class="value" id="teamUsd">$—</div>
+            <div class="flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-4 py-3">
+              <div class="text-xs opacity-75">Est. Value (USD)</div>
+              <div class="text-lg font-extrabold" id="teamUsd">$—</div>
             </div>
           </div>
           <div class="mt-3 text-xs opacity-70" id="teamUpdate">Updated: —</div>
@@ -165,9 +158,10 @@
         <div class="text-sm">
           <div class="opacity-70">Quick links</div>
           <div class="mt-2 grid gap-2">
-            <a class="btn btn-ghost" target="_blank" rel="noreferrer"
+            <a class="inline-flex items-center justify-center rounded-xl px-4 py-2 bg-white/10 hover:bg-white/20"
+               target="_blank" rel="noreferrer"
                href="https://solscan.io/address/8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd">Open on Solscan</a>
-            <button id="refreshTeam" class="btn btn-primary">Refresh</button>
+            <button id="refreshTeam" class="inline-flex items-center justify-center rounded-xl px-4 py-2 bg-[var(--ring)] text-black font-bold">Refresh</button>
           </div>
           <div class="mt-2 text-xs opacity-70">Reads CBS token balance via Solana RPC (Helius). USD estimation uses current Jupiter price.</div>
         </div>
@@ -175,47 +169,28 @@
     </div>
   </section>
 
-  <!-- PROOFS (links-only) -->
+  <!-- ON-CHAIN PROOFS (links) -->
   <section class="max-w-6xl mx-auto px-4 pb-12">
     <div class="glass rounded-2xl p-6">
-      <h2 class="meme-title text-3xl font-extrabold">On-chain proofs</h2>
-      <div class="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
-        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-center"
-           target="_blank" rel="noreferrer"
-           href="https://solscan.io/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk">Token (Solscan)</a>
-
-        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-center"
-           target="_blank" rel="noreferrer"
-           href="https://solscan.io/account/8HSvu732XpKoBgSse414VJZDAA8Q2fdcm17Kv1xbYAu3">Raydium pool (account)</a>
-
-        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-center"
-           target="_blank" rel="noreferrer"
-           href="https://solscan.io/tx/4W9J2vSFA1eqqmmmehWD9bePwJtCxFC3JxdAi3Tw1wSJVZfrTmptgCoVcAokXawdCsbwef1FiotTuDdP8AjLtDF2">Supply burn — tx</a>
-
-        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-center"
-           target="_blank" rel="noreferrer"
-           href="https://solscan.io/tx/3kxwZseWFza2USuwbYR2Vf14mDLbq64Dz7yNiRZFFYiHNyERwhsyUHuFAjCS5JmAji25fuq6Wbg5kPk5owND8YPx">LP burn — private</a>
-
-        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-center"
-           target="_blank" rel="noreferrer"
-           href="https://solscan.io/tx/2HJLSaq4LVgy6RC4GV7NjLMNx953esfjEC3YTD1QjyJVQJ4MVz4VKTAdfm9ox7soimXQGcfDjdocssTpktwhrBx5">LP burn — team</a>
-
-        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-center"
-           target="_blank" rel="noreferrer"
-           href="https://solscan.io/tx/3rDU5Rew4R6Diy2by7rdbzRuQfKZwaG2Wo3JgMBaYNL32umYcDV9H4DGXthT2EESBCweVjViiQYBcvr2fk4Y46Ky">LP burn — creator #1</a>
-
-        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20 text-center"
-           target="_blank" rel="noreferrer"
-           href="https://solscan.io/tx/2qTz5bQ43WprAomGoCYbvQR6i97x6wdSWhV3EvzWEnW59fBoEyzvn16RC4T6TSnDaPaCLTt3EKryStY1ewjzsrGd">LP burn — creator #2</a>
+      <h2 class="meme-title text-3xl font-extrabold">On‑chain proofs</h2>
+      <div class="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-3 text-center">
+        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20" target="_blank" rel="noreferrer" href="https://solscan.io/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk">Token (Solscan)</a>
+        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20" target="_blank" rel="noreferrer" href="https://solscan.io/account/8HSvu732XpKoBgSse414VJZDAA8Q2fdcm17Kv1xbYAu3">Raydium pool (account)</a>
+        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20" target="_blank" rel="noreferrer" href="https://solscan.io/tx/4W9J2vSFA1eqqmmmehWD9bePwJtCxFC3JxdAi3Tw1wSJVZfrTmptgCoVcAokXawdCsbwef1FiotTuDdP8AjLtDF2">Supply burn — tx</a>
+        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20" target="_blank" rel="noreferrer" href="https://solscan.io/tx/3kxwZseWFza2USuwbYR2Vf14mDLbq64Dz7yNiRZFFYiHNyERwhsyUHuFAjCS5JmAji25fuq6Wbg5kPk5owND8YPx">LP burn — private</a>
+        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20" target="_blank" rel="noreferrer" href="https://solscan.io/tx/2HJLSaq4LVgy6RC4GV7NjLMNx953esfjEC3YTD1QjyJVQJ4MVz4VKTAdfm9ox7soimXQGcfDjdocssTpktwhrBx5">LP burn — team</a>
+        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20" target="_blank" rel="noreferrer" href="https://solscan.io/tx/3rDU5Rew4R6Diy2by7rdbzRuQfKZwaG2Wo3JgMBaYNL32umYcDV9H4DGXthT2EESBCweVjViiQYBcvr2fk4Y46Ky">LP burn — creator #1</a>
+        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20" target="_blank" rel="noreferrer" href="https://solscan.io/tx/2qTz5bQ43WprAomGoCYbvQR6i97x6wdSWhV3EvzWEnW59fBoEyzvn16RC4T6TSnDaPaCLTt3EKryStY1ewjzsrGd">LP burn — creator #2</a>
       </div>
     </div>
   </section>
 
+  <!-- FOOTER -->
   <footer class="max-w-6xl mx-auto px-4 pb-10 text-xs opacity-60">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
       <div>CBS Coin — Community Builds Sovereignty</div>
       <div class="flex gap-3">
-        <a href="https://x.com/<!-- TODO: your_x_handle -->" target="_blank" rel="noreferrer">X/Twitter</a>
+        <a href="https://x.com/" target="_blank" rel="noreferrer">X/Twitter</a>
         <a href="https://t.me/CBS_Coin" target="_blank" rel="noreferrer">Telegram</a>
         <a href="mailto:cbs.coin12@gmail.com">cbs.coin12@gmail.com</a>
       </div>
@@ -226,160 +201,145 @@
     // ======= Config =======
     const MINT = 'B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk';
     const TEAM_WALLET = '8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd';
-    const SUPPLY_ENDPOINTS = {
-      total: '/data/total_supply.txt',          // optional; plain number e.g. 90000000
-      circ:  '/data/circulating_supply.txt'     // optional; plain number e.g. 90000000
-    };
-    const FALLBACK = { total: 90000000, circ: 90000000, max: 100000000, burned: 10000000 };
+    const MAX_SUPPLY = 100_000_000; // canonical max
 
-    // Helius RPC (same key as your join page)
+    // Helius RPC
     const HELIUS_KEY = 'a9a11d45-2d40-4da0-a3b6-557b855f1e5c';
     const RPC_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
 
     // ======= Utils =======
-    const fmt = (n)=> (typeof n==='number' && isFinite(n)) ? n.toLocaleString(undefined) : '—';
+    const fmt = (n, fd=0)=> (typeof n==='number' && isFinite(n)) ? n.toLocaleString(undefined, {maximumFractionDigits:fd}) : '—';
     function setText(id, text){ const el = document.getElementById(id); if(el) el.textContent = text; }
-
-    async function fetchTxtNumber(url){
-      try{
-        const r = await fetch(url, {cache:'no-store'});
-        if(!r.ok) throw new Error('HTTP ' + r.status);
-        const t = (await r.text()).trim();
-        const n = Number(t.replace(/[, ]+/g,''));
-        return isFinite(n) ? n : null;
-      }catch(_){ return null; }
-    }
-
-    async function getSupply(){
-      const total = await fetchTxtNumber(SUPPLY_ENDPOINTS.total) ?? FALLBACK.total;
-      const circ  = await fetchTxtNumber(SUPPLY_ENDPOINTS.circ)  ?? FALLBACK.circ;
-      return { total, circ, max: FALLBACK.max, burned: FALLBACK.burned };
-    }
 
     async function getPriceUSD(mint){
       try{
-        const url = 'https://lite-api.jup.ag/price/v3?ids=' + mint;
+        const url = 'https://price.jup.ag/v6/price?ids=' + mint;
         const res = await fetch(url, { headers:{'accept':'application/json'} });
         const json = await res.json();
-        const rec = (json && (json[mint] || (json.data && json.data[mint]))) || null;
-        const price = rec && (rec.usdPrice != null ? rec.usdPrice : rec.price);
+        const rec = json?.data?.[mint];
+        const price = rec?.price || rec?.usdPrice || null;
         return (typeof price === 'number') ? price : null;
       }catch(_){ return null; }
     }
 
-    function updateMcap(price, circ){
-      if(price && circ){
-        const mc = price * circ;
-        setText('mcap', '$' + mc.toLocaleString(undefined, {maximumFractionDigits:0}));
-      }else{
-        setText('mcap', '$—');
+    async function getMintSupply(){
+      const conn = new solanaWeb3.Connection(RPC_URL, 'confirmed');
+      const mintPk = new solanaWeb3.PublicKey(MINT);
+      const info = await conn.getParsedAccountInfo(mintPk);
+      const parsed = info?.value?.data?.parsed?.info;
+      const decimals = Number(parsed?.decimals ?? 0);
+      const rawSupply = BigInt(parsed?.supply ?? '0');
+      const supply = Number(rawSupply) / Math.pow(10, decimals);
+      return { supply, decimals };
+    }
+
+    async function getTeamCBSBalance(){
+      const conn = new solanaWeb3.Connection(RPC_URL, 'confirmed');
+      const owner = new solanaWeb3.PublicKey(TEAM_WALLET);
+      const mint  = new solanaWeb3.PublicKey(MINT);
+      const res = await conn.getParsedTokenAccountsByOwner(owner, { mint });
+      let ui = 0;
+      if(res.value && res.value.length){
+        const t = res.value[0].account.data.parsed.info.tokenAmount;
+        ui = Number(t.uiAmount || 0);
       }
+      return ui;
     }
 
     // ======= Chart =======
-    let chart, chartData = { burned: FALLBACK.burned, treasury: 0, reserves: 0, total: FALLBACK.total };
-    function recalcAndDraw(){
-      const total = chartData.total;
-      const burned = Math.max(0, Number(chartData.burned)||0);
-      const treasury = Math.max(0, Number(chartData.treasury)||0);
-      const reserves = Math.max(0, Number(chartData.reserves)||0);
-      const float = Math.max(0, total - burned - treasury - reserves);
-
-      const data = [burned, treasury, reserves, float];
+    let chart;
+    function drawDistribution({total, burned, team, reserves}){
+      const float = Math.max(0, total - burned - team - reserves);
+      const data = [burned, team, reserves, float];
       const labels = [
         `Burned (${fmt(burned)})`,
-        `Treasury (${fmt(treasury)})`,
+        `Treasury (${fmt(team)})`,
         `Reserves (${fmt(reserves)})`,
         `Circulating (float) (${fmt(float)})`
       ];
-
       const ctx = document.getElementById('distChart').getContext('2d');
-      if(chart){ chart.destroy(); }
-      chart = new Chart(ctx, {
-        type: 'doughnut',
-        data: { labels, datasets: [{ data }] },
-        options: {
-          plugins: { legend: { display: false } },
-          cutout: '55%'
-        }
-      });
-
+      if(chart) chart.destroy();
+      chart = new Chart(ctx, { type:'doughnut', data:{ labels, datasets:[{ data }] }, options:{ plugins:{ legend:{ display:false } }, cutout:'55%' } });
       const pct = (v)=> (total>0 ? (v/total*100).toFixed(2) : '0.00') + '%';
       document.getElementById('distLegend').innerHTML = `
         <div class="grid md:grid-cols-2 gap-2">
           <div>Burned: <strong>${fmt(burned)}</strong> (${pct(burned)})</div>
-          <div>Treasury: <strong>${fmt(treasury)}</strong> (${pct(treasury)})</div>
+          <div>Treasury: <strong>${fmt(team)}</strong> (${pct(team)})</div>
           <div>Reserves: <strong>${fmt(reserves)}</strong> (${pct(reserves)})</div>
           <div>Circulating (float): <strong>${fmt(float)}</strong> (${pct(float)})</div>
-        </div>
-      `;
+        </div>`;
     }
 
-    // ======= Live Team Wallet =======
-    let cbsPriceUSD = null;
-    async function fetchTeamCBSBalance(){
+    // ======= INIT =======
+    async function init(){
       try{
-        const conn = new solanaWeb3.Connection(RPC_URL, 'confirmed');
-        const owner = new solanaWeb3.PublicKey(TEAM_WALLET);
-        const mint  = new solanaWeb3.PublicKey(MINT);
-        const res = await conn.getParsedTokenAccountsByOwner(owner, { mint });
-        let ui = 0;
-        if(res.value && res.value.length){
-          const t = res.value[0].account.data.parsed.info.tokenAmount;
-          ui = Number(t.uiAmount || 0);
-        }
-        setText('teamCbs', ui.toLocaleString(undefined, {maximumFractionDigits:2}));
-        if(cbsPriceUSD){
-          const usd = ui * cbsPriceUSD;
-          setText('teamUsd', '$' + usd.toLocaleString(undefined, {maximumFractionDigits:2}));
-        }
+        // On‑chain mint supply & decimals
+        const { supply:currentSupply, decimals } = await getMintSupply();
+        setText('decimals', String(decimals));
+        setText('current', fmt(currentSupply));
+
+        // Burned from on‑chain
+        const burned = Math.max(0, MAX_SUPPLY - currentSupply);
+        setText('burned', fmt(burned));
+
+        // Price & market cap
+        const price = await getPriceUSD(MINT);
+        if(price) setText('price', '$' + fmt(price, 8));
+        const mcap = (price && currentSupply) ? price * currentSupply : null;
+        setText('mcap', mcap ? ('$' + fmt(mcap)) : '$—');
+
+        // Team wallet balance live
+        const teamBal = await getTeamCBSBalance();
+        setText('teamCbs', fmt(teamBal, 2));
+        if(price) setText('teamUsd', '$' + fmt(teamBal * price, 2));
         document.getElementById('teamUpdate').textContent = 'Updated: ' + new Date().toLocaleString();
+
+        // Circulating estimate (reserves default 0)
+        const reserves = Number(document.getElementById('inpReserves').value || 0);
+        const circ = Math.max(0, currentSupply - teamBal - reserves);
+        setText('circ', fmt(circ));
+
+        // Prefill readonly inputs & draw chart
+        document.getElementById('inpBurn').value = Math.floor(burned);
+        document.getElementById('inpTreasury').value = Math.floor(teamBal);
+        drawDistribution({ total: currentSupply, burned, team: teamBal, reserves });
+
+        // Handlers
+        document.getElementById('refreshTeam').addEventListener('click', async ()=>{
+          const teamNow = await getTeamCBSBalance();
+          setText('teamCbs', fmt(teamNow, 2));
+          if(price) setText('teamUsd', '$' + fmt(teamNow * price, 2));
+          document.getElementById('teamUpdate').textContent = 'Updated: ' + new Date().toLocaleString();
+
+          const reservesNow = Number(document.getElementById('inpReserves').value || 0);
+          const circNow = Math.max(0, currentSupply - teamNow - reservesNow);
+          setText('circ', fmt(circNow));
+          drawDistribution({ total: currentSupply, burned, team: teamNow, reserves: reservesNow });
+        });
+
+        document.getElementById('btnApply').addEventListener('click', ()=>{
+          const reservesNow = Number(document.getElementById('inpReserves').value || 0);
+          const teamNow = Number(document.getElementById('inpTreasury').value || teamBal);
+          const floatNow = Math.max(0, currentSupply - teamNow - reservesNow);
+          setText('circ', fmt(floatNow));
+          drawDistribution({ total: currentSupply, burned, team: teamNow, reserves: reservesNow });
+          const t = document.getElementById('distToast');
+          t.textContent = 'Updated';
+          setTimeout(()=> t.textContent = '', 1500);
+        });
+
       }catch(e){
+        console.error(e);
+        // Graceful fallbacks
+        setText('price', '$—');
+        setText('current', '—');
+        setText('mcap', '$—');
+        setText('burned', '—');
+        setText('circ', '—');
         setText('teamCbs', '—');
         setText('teamUsd', '$—');
         document.getElementById('teamUpdate').textContent = 'Updated: error';
-        console.error(e);
       }
-    }
-
-    // ======= Init =======
-    async function init(){
-      // Load supply
-      const s = await getSupply();
-      chartData.total = s.total;
-      setText('total', fmt(s.total));
-      setText('circ', fmt(s.circ));
-      setText('max', fmt(s.max));
-      setText('burned', fmt(s.burned));
-
-      // Prefill distribution inputs
-      document.getElementById('inpBurn').value = s.burned;
-      document.getElementById('inpTreasury').value = 0;
-      document.getElementById('inpReserves').value = 0;
-
-      // Price + MC
-      cbsPriceUSD = await getPriceUSD(MINT);
-      if(cbsPriceUSD){ setText('price', '$' + cbsPriceUSD.toLocaleString(undefined, {maximumFractionDigits:8})); }
-      else { setText('price', '$—'); }
-      updateMcap(cbsPriceUSD, s.circ);
-
-      // Chart
-      recalcAndDraw();
-
-      // Team wallet live
-      await fetchTeamCBSBalance();
-      document.getElementById('refreshTeam').addEventListener('click', fetchTeamCBSBalance);
-
-      // Apply handler (distribution)
-      document.getElementById('btnApply').addEventListener('click', ()=>{
-        chartData.burned = Number(document.getElementById('inpBurn').value||0);
-        chartData.treasury = Number(document.getElementById('inpTreasury').value||0);
-        chartData.reserves = Number(document.getElementById('inpReserves').value||0);
-        recalcAndDraw();
-        const t = document.getElementById('distToast');
-        t.textContent = 'Updated';
-        setTimeout(()=> t.textContent = '', 1500);
-      });
     }
 
     init();
