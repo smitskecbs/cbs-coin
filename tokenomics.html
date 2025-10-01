@@ -58,7 +58,7 @@
           <p class="mt-3 text-sm md:text-base opacity-85">
             Mint / CA: <code id="mint">B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code> · Decimals: <span id="decimals">—</span>
           </p>
-          <p class="mt-1 text-xs opacity-70">Data sources: Jupiter (price), Solana RPC (Helius) for on‑chain mint supply and team balance. No off‑chain files needed.</p>
+          <p class="mt-1 text-xs opacity-70">Data sources: Jupiter/DexScreener (price), Solana RPC (Helius) for on‑chain mint supply & team balance. Geen off‑chain files nodig.</p>
         </div>
         <div class="hidden md:block">
           <img src="assets/hero-cbs.png" alt="CBS" class="rounded-2xl w-full ring-1 ring-white/10" onerror="this.style.display='none'">
@@ -99,7 +99,8 @@
       </div>
     </div>
 
-    <p class="mt-3 text-xs opacity-70">Burned = Max − CurrentSupply (from on‑chain mint). Circulating = CurrentSupply − Team − Reserves (you can set Reserves below). LP burns don’t change supply.</p>
+    <div id="err" class="mt-3 text-xs text-red-300"></div>
+    <p class="mt-2 text-xs opacity-70">Burned = Max − CurrentSupply (on‑chain). Circulating = CurrentSupply − Team − Reserves. LP burns veranderen de supply niet.</p>
   </section>
 
   <!-- DISTRIBUTION + CHART -->
@@ -107,7 +108,7 @@
     <div class="grid lg:grid-cols-2 gap-6">
       <div class="glass rounded-2xl p-6">
         <h2 class="meme-title text-3xl font-extrabold">Supply distribution</h2>
-        <p class="mt-2 text-sm opacity-85">Live team balance is fetched on‑chain. Edit reserves to reflect airdrops/locked allocations. The chart updates instantly.</p>
+        <p class="mt-2 text-sm opacity-85">Team balance wordt live ingelezen. Vul Reserves voor airdrops/lockups. Grafiek update direct.</p>
         <div class="grid md:grid-cols-3 gap-3 mt-4">
           <div>
             <label class="text-sm">Burned (auto)</label>
@@ -163,7 +164,7 @@
                href="https://solscan.io/address/8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd">Open on Solscan</a>
             <button id="refreshTeam" class="inline-flex items-center justify-center rounded-xl px-4 py-2 bg-[var(--ring)] text-black font-bold">Refresh</button>
           </div>
-          <div class="mt-2 text-xs opacity-70">Reads CBS token balance via Solana RPC (Helius). USD estimation uses current Jupiter price.</div>
+          <div class="mt-2 text-xs opacity-70">Leest CBS‑saldo via Solana RPC (Helius). USD = live prijs × saldo.</div>
         </div>
       </div>
     </div>
@@ -210,26 +211,39 @@
     // ======= Utils =======
     const fmt = (n, fd=0)=> (typeof n==='number' && isFinite(n)) ? n.toLocaleString(undefined, {maximumFractionDigits:fd}) : '—';
     function setText(id, text){ const el = document.getElementById(id); if(el) el.textContent = text; }
+    function setErr(msg){ const e = document.getElementById('err'); if(!e) return; e.textContent = msg || ''; }
 
     async function getPriceUSD(mint){
+      // Try Jupiter first
       try{
         const url = 'https://price.jup.ag/v6/price?ids=' + mint;
         const res = await fetch(url, { headers:{'accept':'application/json'} });
-        const json = await res.json();
-        const rec = json?.data?.[mint];
-        const price = rec?.price || rec?.usdPrice || null;
-        return (typeof price === 'number') ? price : null;
-      }catch(_){ return null; }
+        if(res.ok){
+          const json = await res.json();
+          const rec = json?.data?.[mint];
+          const price = rec?.price ?? rec?.usdPrice;
+          if(typeof price === 'number' && isFinite(price)) return price;
+        }
+      }catch(_){}
+      // Fallback: DexScreener
+      try{
+        const ds = await fetch('https://api.dexscreener.com/latest/dex/tokens/' + mint);
+        if(ds.ok){
+          const j = await ds.json();
+          const pair = j?.pairs?.[0];
+          const p = Number(pair?.priceUsd);
+          if(isFinite(p)) return p;
+        }
+      }catch(_){}
+      return null;
     }
 
     async function getMintSupply(){
       const conn = new solanaWeb3.Connection(RPC_URL, 'confirmed');
       const mintPk = new solanaWeb3.PublicKey(MINT);
-      const info = await conn.getParsedAccountInfo(mintPk);
-      const parsed = info?.value?.data?.parsed?.info;
-      const decimals = Number(parsed?.decimals ?? 0);
-      const rawSupply = BigInt(parsed?.supply ?? '0');
-      const supply = Number(rawSupply) / Math.pow(10, decimals);
+      const { value } = await conn.getTokenSupply(mintPk);
+      const supply = Number(value.uiAmountString || value.uiAmount || 0);
+      const decimals = Number(value.decimals || 0);
       return { supply, decimals };
     }
 
@@ -240,8 +254,12 @@
       const res = await conn.getParsedTokenAccountsByOwner(owner, { mint });
       let ui = 0;
       if(res.value && res.value.length){
-        const t = res.value[0].account.data.parsed.info.tokenAmount;
-        ui = Number(t.uiAmount || 0);
+        // Sum any multiple token accounts just in case
+        ui = res.value.reduce((sum, it)=>{
+          const t = it.account.data.parsed.info.tokenAmount;
+          const v = Number(t.uiAmount || 0);
+          return sum + (isFinite(v) ? v : 0);
+        }, 0);
       }
       return ui;
     }
@@ -270,79 +288,55 @@
         </div>`;
     }
 
-    // ======= INIT =======
-    async function init(){
+    // ======= INIT / REFRESH =======
+    async function refreshAll(){
+      setErr('');
       try{
-        // On‑chain mint supply & decimals
         const { supply:currentSupply, decimals } = await getMintSupply();
         setText('decimals', String(decimals));
         setText('current', fmt(currentSupply));
 
-        // Burned from on‑chain
         const burned = Math.max(0, MAX_SUPPLY - currentSupply);
         setText('burned', fmt(burned));
 
-        // Price & market cap
         const price = await getPriceUSD(MINT);
-        if(price) setText('price', '$' + fmt(price, 8));
+        if(price) setText('price', '$' + fmt(price, 8)); else setText('price', '$—');
         const mcap = (price && currentSupply) ? price * currentSupply : null;
         setText('mcap', mcap ? ('$' + fmt(mcap)) : '$—');
 
-        // Team wallet balance live
         const teamBal = await getTeamCBSBalance();
         setText('teamCbs', fmt(teamBal, 2));
-        if(price) setText('teamUsd', '$' + fmt(teamBal * price, 2));
+        if(price) setText('teamUsd', '$' + fmt(teamBal * price, 2)); else setText('teamUsd', '$—');
         document.getElementById('teamUpdate').textContent = 'Updated: ' + new Date().toLocaleString();
 
-        // Circulating estimate (reserves default 0)
         const reserves = Number(document.getElementById('inpReserves').value || 0);
         const circ = Math.max(0, currentSupply - teamBal - reserves);
         setText('circ', fmt(circ));
 
-        // Prefill readonly inputs & draw chart
         document.getElementById('inpBurn').value = Math.floor(burned);
         document.getElementById('inpTreasury').value = Math.floor(teamBal);
         drawDistribution({ total: currentSupply, burned, team: teamBal, reserves });
-
-        // Handlers
-        document.getElementById('refreshTeam').addEventListener('click', async ()=>{
-          const teamNow = await getTeamCBSBalance();
-          setText('teamCbs', fmt(teamNow, 2));
-          if(price) setText('teamUsd', '$' + fmt(teamNow * price, 2));
-          document.getElementById('teamUpdate').textContent = 'Updated: ' + new Date().toLocaleString();
-
-          const reservesNow = Number(document.getElementById('inpReserves').value || 0);
-          const circNow = Math.max(0, currentSupply - teamNow - reservesNow);
-          setText('circ', fmt(circNow));
-          drawDistribution({ total: currentSupply, burned, team: teamNow, reserves: reservesNow });
-        });
-
-        document.getElementById('btnApply').addEventListener('click', ()=>{
-          const reservesNow = Number(document.getElementById('inpReserves').value || 0);
-          const teamNow = Number(document.getElementById('inpTreasury').value || teamBal);
-          const floatNow = Math.max(0, currentSupply - teamNow - reservesNow);
-          setText('circ', fmt(floatNow));
-          drawDistribution({ total: currentSupply, burned, team: teamNow, reserves: reservesNow });
-          const t = document.getElementById('distToast');
-          t.textContent = 'Updated';
-          setTimeout(()=> t.textContent = '', 1500);
-        });
-
       }catch(e){
         console.error(e);
-        // Graceful fallbacks
-        setText('price', '$—');
-        setText('current', '—');
-        setText('mcap', '$—');
-        setText('burned', '—');
-        setText('circ', '—');
-        setText('teamCbs', '—');
-        setText('teamUsd', '$—');
-        document.getElementById('teamUpdate').textContent = 'Updated: error';
+        setErr(e?.message || 'Unknown error while loading live data');
       }
+    }
+
+    async function init(){
+      await refreshAll();
+      document.getElementById('refreshTeam').addEventListener('click', refreshAll);
+      document.getElementById('btnApply').addEventListener('click', async ()=>{
+        await refreshAll();
+        const t = document.getElementById('distToast');
+        t.textContent = 'Updated';
+        setTimeout(()=> t.textContent = '', 1500);
+      });
+      // Auto refresh every 60s
+      setInterval(refreshAll, 60000);
     }
 
     init();
   </script>
 </body>
 </html>
+
