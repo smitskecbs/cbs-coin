@@ -31,6 +31,8 @@
       .hero-pad{ padding: 1rem !important; }
       .stat-card{ padding: .6rem .75rem !important; }
     }
+    /* Hide any debug/status text in production */
+    #err, #priceSrc{ display:none; }
   </style>
 </head>
 <body class="min-h-screen">
@@ -54,7 +56,7 @@
           <p class="mt-3 text-sm md:text-base opacity-85">
             Mint / CA: <code id="mint">B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code> · Decimals: <span id="decimals">—</span>
           </p>
-          <p class="mt-1 text-xs opacity-70">On‑chain via Helius (supply & team balance). Price via secure proxy → Birdeye; fallback naar Jupiter/DexScreener.</p>
+          <p class="mt-1 text-xs opacity-70">Live token stats: prijs, supply, verdeling en on‑chain proofs.</p>
         </div>
         <div class="hidden md:block">
           <img src="assets/hero-cbs.png" alt="CBS" class="rounded-2xl w-full ring-1 ring-white/10" onerror="this.style.display='none'">
@@ -165,7 +167,7 @@
                href="https://solscan.io/address/8Y7wEBB15f8mpQ7H5Wa1pVdo1TNSg2KE7rLKApHUk5Zd">Open on Solscan</a>
             <button id="refreshTeam" class="inline-flex items-center justify-center rounded-xl px-4 py-2 bg-[var(--ring)] text-black font-bold">Refresh</button>
           </div>
-          <div class="mt-2 text-xs opacity-70">Leest CBS‑saldo via Solana RPC (Helius). USD = live prijs × saldo.</div>
+          <div class="mt-2 text-xs opacity-70">Live CBS‑saldo. USD = prijs × saldo.</div>
         </div>
       </div>
     </div>
@@ -216,7 +218,7 @@
     // ======= Utils =======
     const fmt = (n, fd=0)=> (typeof n==='number' && isFinite(n)) ? n.toLocaleString(undefined, {maximumFractionDigits:fd}) : '—';
     function setText(id, text){ const el = document.getElementById(id); if(el) el.textContent = text; }
-    function setErr(msg){ const e = document.getElementById('err'); if(!e) return; e.textContent = msg || ''; }
+    function setErr(_msg){ /* hidden in production */ }
 
     // ======= Price (Birdeye proxy → Jupiter → DexScreener) =======
     async function getPriceUSD_Birdeye(mint){
@@ -380,5 +382,3 @@
   </script>
 </body>
 </html>
-
-
