@@ -1,116 +1,198 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>CBS Coin — Community Builds Sovereignty</title>
-  <meta name="description" content="CBS Coin — a meme with a serious message: Community Builds Sovereignty." />
-  <meta name="theme-color" content="#0b1227" />
+  <meta name="description" content="CBS Coin — a meme with a serious message: Community Builds Sovereignty. An experiment for and by the community.">
 
   <!-- Social (optional) -->
-  <meta property="og:title" content="CBS Coin — Community Builds Sovereignty" />
-  <meta property="og:description" content="A meme with a serious message. An experiment for and by the community." />
-  <meta property="og:image" content="assets/cbs-og.png" />
-  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="og:title" content="CBS Coin — Community Builds Sovereignty">
+  <meta property="og:description" content="A meme with a serious message. An experiment for and by the community.">
+  <meta property="og:image" content="assets/cbs-og.png">
+  <meta property="twitter:card" content="summary_large_image">
 
-  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
-  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
   <style>
     :root{
-      --bg:#070a12; --bg2:#0b1227; --text:#e5efff;
-      --accentG:#22c55e;  /* green */
-      --accentP:#a78bfa;  /* purple */
+      --bg:#000000;
+      --fg:#e5e7eb;        /* zacht wit */
+      --muted:#cbd5e1;     /* licht grijsblauw */
+      --card:#0a0a0a;      /* bijna zwart, voor het vak */
+      --border:#222;       /* subtiele rand */
+      --radius:18px;
+
+      /* glow kleuren voor links/branding */
+      --g:#22c55e; /* groen */
+      --p:#a78bfa; /* paars */
     }
+    *{box-sizing:border-box}
+    html,body{height:100%}
     body{
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial;
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--fg);
+      background:var(--bg);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    .wrap{max-width:980px;margin:0 auto;padding:18px 16px 40px}
+
+    /* BRAND CARD (logo + banner in één vak) */
+    .brand-card{
+      position:relative;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:10px;
+      overflow:hidden;
+    }
+    .banner{
+      width:100%;
+      height:200px;
+      object-fit:contain;
+      display:block;
+      background:#000; /* strak zwart achter transparante banners */
+    }
+    .logo{
+      position:absolute;
+      left:16px;
+      bottom:16px;
+      width:92px;
+      height:92px;
+      border-radius:50%;
+      object-fit:cover;
+      background:#000; /* zodat transparante randen mooi mixen */
+      /* subtiele paarse+groene gloed */
+      filter:
+        drop-shadow(0 0 14px rgba(34,197,94,.55))
+        drop-shadow(0 0 22px rgba(167,139,250,.45));
+    }
+    .tagline{
+      position:absolute;
+      top:12px; right:12px;
+      font-weight:700;
+      font-size:.9rem;
+      color:#fff;
+      background:rgba(0,0,0,.55);
+      border:1px solid rgba(255,255,255,.12);
+      padding:.35rem .6rem;
+      border-radius:10px;
+      backdrop-filter:blur(4px);
+    }
+    .tagline .emph{ color:var(--p); }
+
+    @media (min-width:720px){
+      .banner{ height:280px; }
+      .logo{ left:20px; bottom:20px; width:120px; height:120px; }
+    }
+
+    /* COPY */
+    h1{
+      margin:22px 0 8px;
+      font-size:2.25rem;
+      line-height:1.15;
+      letter-spacing:.2px;
+      color:#fff;
+      font-weight:800;
+    }
+    p{
+      margin:.6rem 0;
+      font-size:1.05rem;
+      line-height:1.75;
+      color:var(--muted);
+      max-width:70ch;
+    }
+
+    /* SOCIAL BUTTONS — meme stijl met glow */
+    .socials{
+      margin-top:18px;
+      display:flex; gap:14px; flex-wrap:wrap; align-items:flex-start;
+    }
+    .social-btn{
+      position:relative;
+      width:68px; height:68px;
+      border-radius:20px;
+      display:grid; place-items:center;
+      text-decoration:none;
+      border:1px solid rgba(255,255,255,.12);
       background:
-        radial-gradient(1200px 700px at 15% -10%, #0e1631 0%, var(--bg) 55%),
-        radial-gradient(900px 500px at 120% 120%, #2a0e31 0%, rgba(0,0,0,0) 60%),
-        var(--bg2);
-      color:var(--text);
-      -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
-    }
-    .glass{
-      background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03));
-      backdrop-filter: blur(10px);
-      border:1px solid rgba(255,255,255,.1);
-    }
-    .neon{
+        radial-gradient(120% 120% at 20% 20%, rgba(34,197,94,.35), transparent 60%),
+        radial-gradient(120% 120% at 80% 80%, rgba(167,139,250,.35), transparent 60%),
+        #0a0a0a;
       box-shadow:
-        0 0 0 .5px rgba(255,255,255,.18),
-        0 0 24px rgba(34,197,94,.22),
-        0 0 36px rgba(167,139,250,.22),
-        inset 0 0 20px rgba(34,197,94,.08),
-        inset 0 0 30px rgba(167,139,250,.08);
+        0 0 18px rgba(34,197,94,.25),
+        0 0 24px rgba(167,139,250,.20);
+      transform: rotate(-2deg);
+      transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
     }
-    .meme-title{
-      font-family: Bangers, Inter, system-ui;
-      letter-spacing:.5px;
-      text-shadow: 0 2px #000, 0 6px rgba(0,0,0,.35);
+    .social-btn:hover{
+      transform: rotate(0deg) scale(1.03);
+      box-shadow:
+        0 0 22px rgba(34,197,94,.33),
+        0 0 30px rgba(167,139,250,.28);
+      filter: saturate(1.1);
     }
-    .glow{
-      filter: drop-shadow(0 0 14px rgba(34,197,94,.55))
-              drop-shadow(0 0 22px rgba(167,139,250,.45));
+    .social-btn svg{ width:36px; height:36px; display:block }
+    .label{
+      margin-top:6px;
+      font-size:.8rem; font-weight:800; color:#fff;
+      background:rgba(255,255,255,.06);
+      border:1px dashed rgba(255,255,255,.18);
+      border-radius:10px;
+      padding:.2rem .5rem;
+      transform: rotate(-2deg);
     }
-    .tagline{ color: var(--text); }
-    .tagline .emph{ color: var(--accentP); font-weight: 800; }
-    a{ color:#9dd7ff; }
+
+    /* LINK CHIPS (paars+groen gloed) */
+    .links{ margin-top:22px; display:flex; gap:10px; flex-wrap:wrap }
+    .link-chip{
+      display:inline-flex; align-items:center; gap:.45rem;
+      font-weight:800; font-size:.95rem; color:#0a0a0a;
+      padding:.6rem .9rem; border-radius:9999px; text-decoration:none;
+      background:linear-gradient(90deg, var(--g), var(--p));
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow: 0 0 18px rgba(34,197,94,.25), 0 0 24px rgba(167,139,250,.20);
+      transition:transform .12s ease, box-shadow .12s ease, opacity .2s ease;
+    }
+    .link-chip:hover{ transform:translateY(-1px); box-shadow:
+        0 0 22px rgba(34,197,94,.33),
+        0 0 30px rgba(167,139,250,.28);}
+    .link-chip svg{ width:18px; height:18px }
+
+    /* footer klein en rustig */
+    footer{
+      margin:36px 0 8px;
+      color:#8b8b8b;
+      font-size:.9rem;
+    }
   </style>
 </head>
-<body class="min-h-screen">
+<body>
+  <main class="wrap">
 
-  <!-- WRAPPER -->
-  <main class="max-w-5xl mx-auto px-4 py-8 md:py-12">
-
-    <!-- BRAND CARD: banner + overlappend logo + tagline -->
-    <section class="glass neon rounded-2xl p-3 md:p-4">
-      <div class="relative overflow-hidden rounded-xl">
-        <!-- Banner -->
-        <img src="CBS_COIN_banner.png"
-             alt="CBS Banner"
-             class="w-full h-40 md:h-56 object-contain bg-black/20 glow"
-             onerror="this.style.display='none'"/>
-
-        <!-- Logo overlappend (linkeronder/centraal) -->
-        <img src="logo.png"
-             alt="CBS Logo"
-             class="absolute left-4 bottom-4 md:left-6 md:bottom-6 h-16 w-16 md:h-24 md:w-24 rounded-full glow"
-             onerror="this.style.display='none'"/>
-
-        <!-- Tagline rechtsboven op het vak -->
-        <div class="absolute right-4 top-4 md:right-5 md:top-5 text-xs md:text-sm font-semibold tracking-wide bg-black/30 rounded-lg px-2 py-1">
-          CBS — Community Builds <span class="emph">Sovereignty</span>
-        </div>
-      </div>
+    <!-- Brand card: banner + overlappend logo + tagline -->
+    <section class="brand-card">
+      <img class="banner" src="CBS_COIN_banner.png" alt="CBS Banner" onerror="this.style.display='none'">
+      <img class="logo" src="logo.png" alt="CBS Logo" onerror="this.style.display='none'">
+      <div class="tagline">CBS — Community Builds <span class="emph">Sovereignty</span></div>
     </section>
 
-    <!-- SHORT COPY (English only) -->
-    <section class="mt-6 md:mt-8">
-      <h1 class="meme-title text-4xl md:text-5xl font-extrabold">What is CBS Coin?</h1>
-      <p class="mt-3 text-base md:text-lg leading-relaxed opacity-90">
+    <!-- Korte uitleg (engels) -->
+    <section>
+      <h1>What is CBS Coin?</h1>
+      <p>
         <strong>CBS Coin</strong> is a meme with a serious message: <em>Community Builds Sovereignty</em>.
-        It’s a fair-launch SPL token on Solana—no presale, no insiders—built by one developer
-        and steered by holders. Think of it as a live experiment in bottom-up coordination:
-        small budgets, measurable outcomes, transparent on-chain proofs. A community project,
-        for and by the community.
+        It’s a fair-launch SPL token on Solana—no presale, no insiders—built by one developer and steered by holders.
+        Think of it as a live experiment in bottom-up coordination: small budgets, measurable outcomes,
+        transparent on-chain proofs. A community project, for and by the community.
       </p>
-    </section>
 
-  </main>
-
-  <!-- (optionele) FOOTER: laat ik beknopt houden -->
-  <footer class="max-w-5xl mx-auto px-4 pb-10 text-xs opacity-60">
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-      <div>CBS Coin — A meme with a serious message</div>
-      <div class="flex gap-3">
-        <a href="mailto:cbs.coin12@gmail.com">cbs.coin12@gmail.com</a>
-        <!-- Voeg je socials weer toe als je ze later zichtbaar wilt maken -->
-        <!-- <a href="https://x.com/..." target="_blank" rel="noreferrer">X</a>
-        <a href="https://t.me/CBS_Coin" target="_blank" rel="noreferrer">Telegram</a> -->
-      </div>
-    </div>
-  </footer>
-
-</body>
-</html>
-
+      <!-- Socials -->
+      <div class="socials">
+        <!-- Telegram -->
+        <div>
+          <a class="social-btn
