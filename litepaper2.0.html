@@ -5,97 +5,103 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>CBS Coin – Litepaper 2.0</title>
 
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet"/>
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"/>
 
   <style>
     :root{
-      --bg1:#0a0c10; --bg2:#0f141b;
-      --card:#0f151c; --card2:#0c1016;
-      --fg:#eafffb; --muted:#a8d6cd; --note:#7ee9dc;
-      --accent1:#7dffe9; --accent2:#55f1e7;
-      --border:rgba(0,255,240,.18);
-      --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
-      --radius:18px;
+      --bg:#ffffff;               /* white background */
+      --fg:#111827;               /* slate-900 */
+      --muted:#4b5563;            /* slate-600 */
+      --note:#0f172a;             /* slate-900 (headings) */
+      --border:#e5e7eb;           /* gray-200 */
+      --card:#ffffff;             /* white cards */
+      --radius:14px;
+      --link:#0ea5e9;             /* sky-500 */
+      --link-hover:#0284c7;       /* sky-600 */
     }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
-      margin:0; font-family:'Orbitron',sans-serif; color:var(--fg);
-      background:
-        radial-gradient(900px 600px at 100% -10%, rgba(0,255,230,.10), transparent 60%),
-        radial-gradient(700px 500px at -10% 110%, rgba(0,170,255,.09), transparent 60%),
-        linear-gradient(135deg,var(--bg1),var(--bg2));
+      margin:0;
+      font-family:'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--fg);
+      background:var(--bg);
       -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
     }
 
+    /* Topbar */
     .topbar{
       position:sticky; top:0; z-index:20;
       display:flex; align-items:center; justify-content:space-between;
-      padding:.8rem 1rem; backdrop-filter:blur(6px);
-      background:linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0));
-      border-bottom:1px solid rgba(0,255,240,.08);
+      padding:.9rem 1rem;
+      background:#fff;
+      border-bottom:1px solid var(--border);
     }
-    .brand{display:flex; align-items:center; gap:.7rem}
-    .brand img{width:38px; height:38px; border-radius:10px; filter:drop-shadow(0 0 10px rgba(0,255,230,.35))}
-    .brand h1{margin:0; font-size:1.05rem; font-weight:700; color:#bffef2}
+    .brand{display:flex; align-items:center; gap:.65rem}
+    .brand img{width:40px; height:40px; border-radius:8px}
+    .brand h1{margin:0; font-size:1.05rem; font-weight:800; color:#0f172a}
     .switch{
-      background:linear-gradient(180deg,var(--accent1),var(--accent2));
-      color:#012022; font-weight:900; border:1px solid rgba(0,255,240,.45);
-      padding:.55rem .9rem; border-radius:12px; cursor:pointer;
-      box-shadow:0 8px 18px rgba(0,255,230,.18), inset 0 -6px 10px rgba(0,0,0,.15);
-      transition:transform .12s ease, box-shadow .12s ease;
+      background:#fff; color:#111; font-weight:700; border:1px solid var(--border);
+      padding:.5rem .9rem; border-radius:10px; cursor:pointer;
     }
-    .switch:hover{ transform:translateY(-1px); box-shadow:0 10px 22px rgba(0,255,230,.26) }
+    .switch:hover{ background:#f8fafc }
 
-    .container{ max-width:1100px; margin:0 auto; padding:1.2rem 1rem 2.2rem }
+    /* Layout */
+    .container{ max-width:980px; margin:0 auto; padding:1.25rem 1rem 2.25rem }
 
+    /* Hero */
     .hero{
-      display:grid; grid-template-columns:120px 1fr; gap:1.2rem; align-items:center;
-      padding:1.2rem; margin:10px auto 18px; border-radius:var(--radius);
-      background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35));
-      border:1px solid var(--border); box-shadow:var(--shadow);
+      display:grid; grid-template-columns:110px 1fr; gap:1.1rem; align-items:center;
+      padding:1.1rem; margin:12px auto 18px; border-radius:var(--radius);
+      background:var(--card);
+      border:1px solid var(--border);
     }
     .logo-wrap{
-      position:relative; width:120px; height:120px; border-radius:16px; overflow:hidden;
-      background:radial-gradient(closest-side, rgba(0,255,230,.18), rgba(0,255,230,.04) 58%, transparent 62%);
-      display:grid; place-items:center;
-    }
-    .logo-wrap::after{
-      content:""; position:absolute; inset:-8%; border-radius:18px;
-      box-shadow:0 0 0 2px rgba(0,255,230,.18), inset 0 0 30px rgba(0,255,230,.14);
-      pointer-events:none;
+      width:110px; height:110px; border-radius:12px; overflow:hidden;
+      background:#fff; display:grid; place-items:center; border:1px solid var(--border);
     }
     .logo{width:86%; height:86%; object-fit:contain}
-    .hero h2{ margin:.15rem 0 0; color:var(--note); font-size:1.05rem; font-weight:600 }
+    .hero h2{ margin:.2rem 0 0; color:var(--note); font-size:1.05rem; font-weight:800 }
     .hero p{ margin:.35rem 0 0; color:var(--muted); font-size:.95rem }
 
+    /* Sections */
     .section{
-      background:linear-gradient(180deg,var(--card),var(--card2));
+      background:var(--card);
       border:1px solid var(--border);
       border-radius:var(--radius);
       padding:22px; margin:18px 0;
-      box-shadow:var(--shadow);
     }
-    h2{ color:#bffef2; margin:.2rem 0 1rem; font-size:1.15rem }
-    h3{ color:#d9fffb; margin:.4rem 0 .4rem; font-size:1.05rem }
-    p{ color:var(--fg); line-height:1.6; margin:.5rem 0 }
-    ul{ color:var(--fg); margin:.2rem 0 1rem 1.2rem; line-height:1.6 }
+    h2{ color:#0f172a; margin:.2rem 0 1rem; font-size:1.15rem; font-weight:800 }
+    h3{ color:#0f172a; margin:.4rem 0 .5rem; font-size:1.05rem; font-weight:700 }
+    p{ color:var(--fg); line-height:1.65; margin:.55rem 0 }
+    ul{ color:var(--fg); margin:.2rem 0 1rem 1.2rem; line-height:1.65 }
+    a{ color:var(--link); text-decoration:none }
+    a:hover{ color:var(--link-hover); text-decoration:underline }
 
+    /* Tokenomics chart */
     .tokenomics{ display:flex; gap:1.2rem; align-items:center; flex-wrap:wrap }
     .chart-container{
-      width:220px; height:220px; padding:10px; border-radius:14px;
-      background:linear-gradient(180deg,#0b1217,#0a1015);
-      border:1px solid rgba(0,255,240,.14);
-      box-shadow:inset 0 0 0 1px rgba(0,255,240,.05), 0 8px 20px rgba(0,255,230,.08);
+      width:220px; height:220px; padding:10px; border-radius:12px;
+      background:#fff;
+      border:1px solid var(--border);
     }
 
-    footer{ margin:28px 0 10px; text-align:center; color:var(--muted); font-size:.95rem }
-    footer a{ color:#79ffee; text-decoration:none }
-    footer a:hover{ text-decoration:underline }
+    footer{ margin:28px 0 20px; text-align:center; color:#6b7280; font-size:.95rem }
+    footer a{ color:var(--link) }
 
     @media (max-width:640px){
-      .hero{ grid-template-columns:1fr; text-align:center }
-      .logo-wrap{ margin:0 auto }
+      .hero{ grid-template-columns:1fr; text-align:left }
+      .logo-wrap{ margin:0 }
+    }
+
+    /* Print-friendly */
+    @media print {
+      .topbar{ position:static; border-bottom:none; }
+      .switch{ display:none; }
+      body{ background:#fff; color:#000 }
+      .section, .hero{ break-inside:avoid; box-shadow:none }
+      a{ color:#000; text-decoration:underline }
     }
   </style>
 </head>
@@ -333,14 +339,18 @@
           labels:['Creator','Pool','Exploiter','Community'],
           datasets:[{
             data:[40.77,14.12,13.97,31.14],
-            backgroundColor:['#7dffe9','#55f1e7','#73ffd9','#5ad1ff'],
-            borderColor:'#071017',
+            backgroundColor:['#1f77b4','#aec7e8','#ffbb78','#98df8a'],
+            borderColor:'#ffffff',
             borderWidth:1
           }]
         },
         options:{
-          plugins:{ legend:{ labels:{ color:'#c8fff2', font:{ family:'Orbitron', size:12 } } } },
-          cutout:'55',
+          plugins:{
+            legend:{
+              labels:{ color:'#111827', font:{ family:'Inter', size:12, weight:'600' } }
+            }
+          },
+          cutout:'55'
         }
       });
     }
@@ -353,4 +363,3 @@
   </footer>
 </body>
 </html>
-
