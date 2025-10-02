@@ -3,17 +3,15 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CBS Coin — Burns & Proofs (Live)</title>
-  <meta name="description" content="Live burn metrics for CBS: total burned supply, current supply, burn percentage, and on‑chain proofs." />
+  <title>CBS Coin — Burn Tokens (Live)</title>
+  <meta name="description" content="Burn CBS tokens directly from your wallet. Connect Phantom/Solflare/Backpack and execute an on‑chain SPL Token burn safely." />
   <meta name="theme-color" content="#0b1227" />
 
   <!-- Fonts & Tailwind -->
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- Chart.js for the burn donut -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <!-- Solana Web3 for on-chain reads -->
+  <!-- Solana Web3 (browser IIFE) -->
   <script src="https://unpkg.com/@solana/web3.js@1.95.1/lib/index.iife.min.js"></script>
 
   <style>
@@ -25,12 +23,9 @@
     code{ background: rgba(255,255,255,.06); padding:.2rem .35rem; border-radius:.5rem; word-break: break-all; }
 
     /* Mobile tweaks */
-    @media (max-width: 480px){
-      .hero-pad{ padding: 1rem !important; }
-      .stat-card{ padding: .6rem .75rem !important; }
-    }
+    @media (max-width: 480px){ .hero-pad{ padding: 1rem !important; } }
 
-    /* Hide debug text in production */
+    /* Hide debug */
     #err{ display:none; }
   </style>
 </head>
@@ -51,11 +46,11 @@
     <div class="glass neon rounded-2xl p-6 md:p-10 hero-pad">
       <div class="grid md:grid-cols-2 gap-6 md:gap-10 items-center">
         <div>
-          <h1 class="meme-title text-5xl md:text-6xl font-extrabold">Supply Burns</h1>
+          <h1 class="meme-title text-5xl md:text-6xl font-extrabold">Burn CBS</h1>
           <p class="mt-3 text-sm md:text-base opacity-85">
-            Official Mint / CA: <code>B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code>
+            Official Mint / CA: <code id="mint">B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code>
           </p>
-          <p class="mt-1 text-xs opacity-70">Live burn stats: total burned supply, current supply, burn %, and on‑chain proofs. Data is read on‑chain.</p>
+          <p class="mt-1 text-xs opacity-70">Burn tokens from **your** wallet using the SPL Token <em>BurnChecked</em> instruction. This permanently reduces supply. <strong>Irreversible.</strong></p>
         </div>
         <div class="hidden md:block">
           <img src="assets/hero-cbs.png" alt="CBS" class="rounded-2xl w-full ring-1 ring-white/10" onerror="this.style.display='none'">
@@ -64,61 +59,56 @@
     </div>
   </header>
 
-  <!-- STATS -->
+  <!-- BURN PANEL -->
   <section class="max-w-6xl mx-auto px-4 py-8">
-    <div class="grid md:grid-cols-4 gap-4">
-      <div class="stat-card flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-3 md:px-4 py-3 min-w-0">
-        <div class="text-xs opacity-75">Total Burned (calc)</div>
-        <div class="text-right min-w-0"><div class="text-lg font-extrabold truncate" id="burned">—</div></div>
+    <div class="glass rounded-2xl p-6">
+      <h2 class="meme-title text-3xl font-extrabold">Burn from wallet</h2>
+
+      <div class="grid md:grid-cols-3 gap-4 mt-4">
+        <div class="bg-white/5 border border-white/10 rounded-xl p-3">
+          <div class="text-xs opacity-75">Wallet</div>
+          <div class="flex items-center gap-2 mt-1">
+            <div id="walletAddr" class="text-sm break-all opacity-90">Not connected</div>
+            <button id="btnConnect" class="ml-auto px-3 py-1.5 rounded-lg bg-[var(--ring)] text-black text-sm font-bold">Connect</button>
+            <button id="btnDisconnect" class="ml-auto px-3 py-1.5 rounded-lg bg-white/10 text-sm font-bold hidden">Disconnect</button>
+          </div>
+        </div>
+        <div class="bg-white/5 border border-white/10 rounded-xl p-3">
+          <div class="text-xs opacity-75">Balance (CBS)</div>
+          <div class="text-lg font-extrabold" id="bal">—</div>
+        </div>
+        <div class="bg-white/5 border border-white/10 rounded-xl p-3">
+          <div class="text-xs opacity-75">Decimals</div>
+          <div class="text-lg font-extrabold" id="decimals">—</div>
+        </div>
       </div>
-      <div class="stat-card flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-3 md:px-4 py-3 min-w-0">
-        <div class="text-xs opacity-75">Current Supply</div>
-        <div class="text-right min-w-0"><div class="text-lg font-extrabold truncate" id="current">—</div></div>
+
+      <div class="grid md:grid-cols-[1fr_auto] gap-3 mt-4 items-end">
+        <div>
+          <label class="text-sm">Amount to burn</label>
+          <div class="flex gap-2 mt-1">
+            <input id="amt" class="w-full px-3 py-2 rounded-xl bg-white/5 border border-white/10" type="number" min="0" step="any" placeholder="0.0">
+            <button id="btnMax" class="px-3 py-2 rounded-xl bg-white/10 text-sm font-bold">MAX</button>
+          </div>
+          <div class="text-xs opacity-70 mt-1">This burns tokens from your associated CBS token account.</div>
+        </div>
+        <button id="btnBurn" class="px-4 py-3 rounded-xl bg-red-400/90 hover:bg-red-400 text-black font-extrabold">Burn</button>
       </div>
-      <div class="stat-card flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-3 md:px-4 py-3 min-w-0">
-        <div class="text-xs opacity-75">Max Supply</div>
-        <div class="text-right min-w-0"><div class="text-lg font-extrabold truncate" id="max">100,000,000</div></div>
-      </div>
-      <div class="stat-card flex items-center justify-between bg-white/5 border border-white/10 rounded-xl px-3 md:px-4 py-3 min-w-0">
-        <div class="text-xs opacity-75">Burn %</div>
-        <div class="text-right min-w-0"><div class="text-lg font-extrabold truncate" id="burnPct">—</div></div>
-      </div>
+
+      <div class="mt-4 text-xs opacity-70" id="status">Status: ready.</div>
+      <div class="mt-1 text-xs" id="lastTx"></div>
     </div>
-    <div id="err" class="mt-3 text-xs text-red-300"></div>
   </section>
 
-  <!-- DONUT + QUICK NOTES -->
-  <section class="max-w-6xl mx-auto px-4 pb-8">
-    <div class="grid lg:grid-cols-2 gap-6">
-      <div class="glass rounded-2xl p-6">
-        <div class="w-full h-[280px] md:h-[380px]"><canvas id="burnChart" class="w-full h-full"></canvas></div>
-        <div class="mt-3 text-sm opacity-85" id="burnLegend"></div>
-      </div>
-      <div class="glass rounded-2xl p-6">
-        <h2 class="meme-title text-3xl font-extrabold">How burns are calculated</h2>
-        <ul class="list-disc pl-5 mt-2 text-sm opacity-85 space-y-1">
-          <li><strong>Total Burned</strong> = Max Supply − Current Supply (on‑chain).</li>
-          <li>LP burns lock liquidity but do not change token supply.</li>
-          <li>All values refresh automatically every 60s; you can also click Refresh.</li>
-        </ul>
-        <button id="refresh" class="mt-4 inline-flex items-center justify-center rounded-xl px-4 py-2 bg-[var(--ring)] text-black font-bold">Refresh</button>
-      </div>
-    </div>
-  </section>
-
-  <!-- ON‑CHAIN PROOFS -->
+  <!-- SAFETY NOTE -->
   <section class="max-w-6xl mx-auto px-4 pb-12">
     <div class="glass rounded-2xl p-6">
-      <h2 class="meme-title text-3xl font-extrabold">On‑chain proofs</h2>
-      <div class="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-3 text-center">
-        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20" target="_blank" rel="noreferrer" href="https://solscan.io/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk">Token (Solscan)</a>
-        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20" target="_blank" rel="noreferrer" href="https://solscan.io/account/8HSvu732XpKoBgSse414VJZDAA8Q2fdcm17Kv1xbYAu3">Raydium pool (account)</a>
-        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20" target="_blank" rel="noreferrer" href="https://solscan.io/tx/4W9J2vSFA1eqqmmmehWD9bePwJtCxFC3JxdAi3Tw1wSJVZfrTmptgCoVcAokXawdCsbwef1FiotTuDdP8AjLtDF2">Supply burn — tx</a>
-        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20" target="_blank" rel="noreferrer" href="https://solscan.io/tx/3kxwZseWFza2USuwbYR2Vf14mDLbq64Dz7yNiRZFFYiHNyERwhsyUHuFAjCS5JmAji25fuq6Wbg5kPk5owND8YPx">LP burn — private</a>
-        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20" target="_blank" rel="noreferrer" href="https://solscan.io/tx/2HJLSaq4LVgy6RC4GV7NjLMNx953esfjEC3YTD1QjyJVQJ4MVz4VKTAdfm9ox7soimXQGcfDjdocssTpktwhrBx5">LP burn — team</a>
-        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20" target="_blank" rel="noreferrer" href="https://solscan.io/tx/3rDU5Rew4R6Diy2by7rdbzRuQfKZwaG2Wo3JgMBaYNL32umYcDV9H4DGXthT2EESBCweVjViiQYBcvr2fk4Y46Ky">LP burn — creator #1</a>
-        <a class="px-4 py-3 rounded-xl bg-white/10 hover:bg-white/20" target="_blank" rel="noreferrer" href="https://solscan.io/tx/2qTz5bQ43WprAomGoCYbvQR6i97x6wdSWhV3EvzWEnW59fBoEyzvn16RC4T6TSnDaPaCLTt3EKryStY1ewjzsrGd">LP burn — creator #2</a>
-      </div>
+      <h3 class="meme-title text-2xl font-extrabold">Safety</h3>
+      <ul class="list-disc pl-5 mt-2 text-sm opacity-85 space-y-1">
+        <li>Only **you** can burn tokens from your account. Wallet must sign the transaction.</li>
+        <li>Burn is done with SPL Token <em>BurnChecked</em> and reduces on‑chain supply; it cannot be undone.</li>
+        <li>Make sure you have a small amount of SOL for fees.</li>
+      </ul>
     </div>
   </section>
 
@@ -137,78 +127,192 @@
   <script>
     // ======= Config =======
     const MINT = 'B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk';
-    const MAX_SUPPLY = 100_000_000; // canonical max
-
-    // Helius RPC (on‑chain reads)
     const HELIUS_KEY = 'a9a11d45-2d40-4da0-a3b6-557b855f1e5c';
     const RPC_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
 
-    // ======= Utils =======
-    const fmt = (n, fd=0)=> (typeof n==='number' && isFinite(n)) ? n.toLocaleString(undefined, {maximumFractionDigits:fd}) : '—';
-    function setText(id, text){ const el = document.getElementById(id); if(el) el.textContent = text; }
-    function setErr(_msg){ /* hidden */ }
+    // Program IDs
+    const TOKEN_PROGRAM_ID = new solanaWeb3.PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+    const TOKEN_2022_PROGRAM_ID = new solanaWeb3.PublicKey('TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb');
+    const ASSOCIATED_TOKEN_PROGRAM_ID = new solanaWeb3.PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
 
-    // ======= On-chain supply =======
-    async function getMintSupply(){
-      const conn = new solanaWeb3.Connection(RPC_URL, 'confirmed');
-      const mintPk = new solanaWeb3.PublicKey(MINT);
-      const { value } = await conn.getTokenSupply(mintPk);
-      const supply = Number(value.uiAmountString || value.uiAmount || 0);
-      const decimals = Number(value.decimals || 0);
-      return { supply, decimals };
+    // ======= Helpers =======
+    const $ = (id)=> document.getElementById(id);
+    const setStatus = (t)=> { const s=$('status'); if(s) s.textContent = 'Status: ' + t; }
+    const fmt = (n, fd=6)=> (typeof n==='number' && isFinite(n)) ? n.toLocaleString(undefined, {maximumFractionDigits:fd}) : '—';
+
+    function wallet(){
+      // Phantom / Backpack / Solflare (Wallet Standard compatible expose window.solana)
+      return window.solana || window.phantom?.solana || window.backpack?.solana || null;
     }
 
-    // ======= Burn donut =======
-    let chart;
-    function drawBurnDonut({ total, burned }){
-      const remaining = Math.max(0, total - burned);
-      const ctx = document.getElementById('burnChart').getContext('2d');
-      if(chart) chart.destroy();
-      chart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-          labels: [
-            `Burned (${fmt(burned)})`,
-            `Remaining (${fmt(remaining)})`
-          ],
-          datasets: [{ data: [burned, remaining] }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          cutout: '55%'
+    async function getTokenProgramForMint(conn, mintPk){
+      const info = await conn.getAccountInfo(mintPk);
+      if(!info) throw new Error('Mint not found');
+      const owner = info.owner.toBase58();
+      if(owner === TOKEN_2022_PROGRAM_ID.toBase58()) return TOKEN_2022_PROGRAM_ID;
+      return TOKEN_PROGRAM_ID; // default
+    }
+
+    function getAtaAddress(ownerPk, mintPk, tokenProgramId){
+      return solanaWeb3.PublicKey.findProgramAddressSync([
+        ownerPk.toBuffer(),
+        tokenProgramId.toBuffer(),
+        mintPk.toBuffer()
+      ], ASSOCIATED_TOKEN_PROGRAM_ID)[0];
+    }
+
+    async function getDecimals(conn, mintPk){
+      const { value } = await conn.getTokenSupply(mintPk);
+      return Number(value.decimals || 0);
+    }
+
+    async function loadBalance(conn, ownerPk, mintPk, tokenProgramId){
+      const ata = getAtaAddress(ownerPk, mintPk, tokenProgramId);
+      const acc = await conn.getTokenAccountBalance(ata).catch(()=>null);
+      return { ata, uiAmount: acc?.value?.uiAmount || 0 };
+    }
+
+    function toRaw(amountUi, decimals){
+      const s = String(amountUi);
+      if(!/^[0-9]*\.?[0-9]*$/.test(s)) return null;
+      const [ints, decs=''] = s.split('.');
+      const padded = (decs + '0'.repeat(decimals)).slice(0, decimals);
+      const raw = BigInt(ints || '0') * (BigInt(10) ** BigInt(decimals)) + BigInt(padded || '0');
+      return raw;
+    }
+
+    function makeBurnCheckedIx(account, mint, owner, amountRaw, decimals, programId){
+      // TokenInstruction.BurnChecked = 15
+      const data = new Uint8Array(1 + 8 + 1);
+      data[0] = 15;
+      // amount as u64 LE
+      let x = BigInt(amountRaw);
+      for(let i=0;i<8;i++){ data[1+i] = Number(x & 0xffn); x >>= 8n; }
+      data[9] = decimals & 0xff;
+      const keys = [
+        { pubkey: account, isSigner:false, isWritable:true },
+        { pubkey: mint,    isSigner:false, isWritable:true },
+        { pubkey: owner,   isSigner:true,  isWritable:false },
+      ];
+      return new solanaWeb3.TransactionInstruction({ keys, programId, data });
+    }
+
+    async function connectWallet(){
+      const w = wallet();
+      if(!w) throw new Error('No compatible wallet found. Please install Phantom / Backpack / Solflare.');
+      const res = await w.connect();
+      return new solanaWeb3.PublicKey(res.publicKey?.toString() || w.publicKey?.toString());
+    }
+
+    async function signAndSend(provider, conn, tx){
+      tx.feePayer = provider.publicKey;
+      const { blockhash } = await conn.getLatestBlockhash('finalized');
+      tx.recentBlockhash = blockhash;
+      if(provider.signAndSendTransaction){
+        const sigRes = await provider.signAndSendTransaction(tx);
+        return typeof sigRes === 'string' ? sigRes : sigRes.signature;
+      }
+      if(provider.signTransaction){
+        const signed = await provider.signTransaction(tx);
+        const sig = await conn.sendRawTransaction(signed.serialize(), { skipPreflight:false });
+        return sig;
+      }
+      throw new Error('Wallet cannot sign transactions');
+    }
+
+    // ======= UI Logic =======
+    const conn = new solanaWeb3.Connection(RPC_URL, 'confirmed');
+    const MINT_PK = new solanaWeb3.PublicKey(MINT);
+    let DECIMALS = 9;
+
+    async function refreshAfterConnect(pubkey){
+      $('walletAddr').textContent = pubkey.toBase58();
+      const programId = await getTokenProgramForMint(conn, MINT_PK);
+      DECIMALS = await getDecimals(conn, MINT_PK);
+      $('decimals').textContent = String(DECIMALS);
+      const { uiAmount } = await loadBalance(conn, pubkey, MINT_PK, programId);
+      $('bal').textContent = fmt(uiAmount, 6);
+    }
+
+    async function init(){
+      try{
+        // try load decimals early
+        DECIMALS = await getDecimals(conn, MINT_PK);
+        $('decimals').textContent = String(DECIMALS);
+      }catch(_){}
+
+      $('btnConnect').addEventListener('click', async()=>{
+        try{
+          const w = wallet();
+          if(!w) throw new Error('Wallet not found');
+          const pubkey = await connectWallet();
+          $('btnConnect').classList.add('hidden');
+          $('btnDisconnect').classList.remove('hidden');
+          await refreshAfterConnect(pubkey);
+          setStatus('wallet connected');
+        }catch(e){ setStatus('connect failed: ' + (e?.message||e)); }
+      });
+
+      $('btnDisconnect').addEventListener('click', ()=>{
+        try{ wallet()?.disconnect?.(); }catch(_){ }
+        $('walletAddr').textContent = 'Not connected';
+        $('btnDisconnect').classList.add('hidden');
+        $('btnConnect').classList.remove('hidden');
+        setStatus('disconnected');
+      });
+
+      $('btnMax').addEventListener('click', ()=>{
+        const txt = $('bal').textContent || '0';
+        const v = Number(txt.replace(/,/g,''));
+        if(isFinite(v)) $('amt').value = String(v);
+      });
+
+      $('btnBurn').addEventListener('click', async()=>{
+        try{
+          const w = wallet();
+          if(!w || !w.publicKey) throw new Error('Connect your wallet first');
+          const ownerPk = new solanaWeb3.PublicKey(w.publicKey.toString());
+          const programId = await getTokenProgramForMint(conn, MINT_PK);
+
+          const amountUi = Number($('amt').value);
+          if(!amountUi || amountUi <= 0) throw new Error('Enter an amount > 0');
+
+          const raw = toRaw(amountUi, DECIMALS);
+          if(raw === null || raw <= 0n) throw new Error('Invalid amount');
+
+          // get ATA and build BurnChecked
+          const ata = getAtaAddress(ownerPk, MINT_PK, programId);
+          const ix = makeBurnCheckedIx(ata, MINT_PK, ownerPk, raw, DECIMALS, programId);
+          const tx = new solanaWeb3.Transaction().add(ix);
+
+          setStatus('signing…');
+          const sig = await signAndSend(w, conn, tx);
+          setStatus('sent. awaiting confirmation…');
+          await conn.confirmTransaction(sig, 'confirmed');
+          setStatus('confirmed');
+          $('lastTx').innerHTML = `Last tx: <a class="underline" href="https://solscan.io/tx/${sig}" target="_blank" rel="noreferrer">${sig}</a>`;
+
+          // refresh balance
+          await refreshAfterConnect(ownerPk);
+        }catch(e){
+          console.error(e);
+          setStatus('error: ' + (e?.message||e));
         }
       });
-      const pct = (v)=> (total>0 ? (v/total*100).toFixed(2) : '0.00') + '%';
-      document.getElementById('burnLegend').innerHTML = `
-        <div class="grid md:grid-cols-2 gap-2">
-          <div>Burned: <strong>${fmt(burned)}</strong> (${pct(burned)})</div>
-          <div>Remaining: <strong>${fmt(remaining)}</strong> (${pct(remaining)})</div>
-        </div>`;
-    }
 
-    // ======= Refresh =======
-    async function refreshAll(){
+      // Auto-populate if wallet is already injected & connected
       try{
-        const { supply: currentSupply } = await getMintSupply();
-        const burned = Math.max(0, MAX_SUPPLY - currentSupply);
-        const burnPct = (MAX_SUPPLY > 0) ? (burned / MAX_SUPPLY * 100) : 0;
-
-        setText('current', fmt(currentSupply));
-        setText('burned', fmt(burned));
-        setText('burnPct', burnPct.toFixed(2) + '%');
-
-        drawBurnDonut({ total: MAX_SUPPLY, burned });
-      }catch(e){
-        console.error(e);
-        setErr(e?.message || 'Error');
-      }
+        const w = wallet();
+        if(w?.isConnected && w.publicKey){
+          $('btnConnect').classList.add('hidden');
+          $('btnDisconnect').classList.remove('hidden');
+          await refreshAfterConnect(new solanaWeb3.PublicKey(w.publicKey.toString()));
+        }
+      }catch(_){ }
     }
 
-    document.getElementById('refresh').addEventListener('click', refreshAll);
-    refreshAll();
-    setInterval(refreshAll, 60000);
+    init();
   </script>
 </body>
 </html>
+
