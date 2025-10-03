@@ -3,18 +3,20 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>CBS Coin – X Banner Builder</title>
+<title>CBS Coin — X Banner Builder (Drag & Drop)</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="preload" as="style" onload="this.rel='stylesheet'">
 <style>
   :root{ --bg1:#0a1426; --bg2:#0f223f; --fg:#eaf2ff; --muted:#bcd1ff; --accent:#a78bfa; }
   *{box-sizing:border-box}
   body{margin:0;background:#050a14;color:var(--fg);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-  .wrap{max-width:1120px;margin:18px auto;padding:0 14px}
+  .wrap{max-width:1180px;margin:18px auto;padding:0 14px}
   .panel{background:#0b1324;border:1px solid #1e2a44;border-radius:14px;padding:12px}
   .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .group{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:8px}
   label{font-size:.86rem;opacity:.85}
   input,select{background:#0d1830;border:1px solid #243555;color:var(--fg);border-radius:10px;padding:8px 10px;font:inherit}
   input[type="range"]{width:160px}
+  input[type="file"]{padding:6px}
   button{background:linear-gradient(135deg,#22c55e,#37f4d3);color:#0a0a0a;border:0;border-radius:12px;font-weight:800;padding:10px 14px;cursor:pointer}
   button.secondary{background:#14203a;color:#eaf2ff;border:1px solid #243555}
   .hint{font-size:.8rem;opacity:.8}
@@ -23,35 +25,30 @@
   .badge{display:inline-flex;gap:6px;align-items:center;background:#0d1830;border:1px solid #243555;border-radius:999px;padding:6px 10px;font-size:.8rem}
   .preview{width:100%;overflow:auto}
   svg{max-width:100%;height:auto;display:block;background:linear-gradient(180deg,var(--bg1),var(--bg2))}
-  /* crisper raster */
   image{image-rendering:crisp-edges; image-rendering:-webkit-optimize-contrast;}
+  .handle-hint{font-size:.78rem; opacity:.75; margin-left:6px}
 </style>
 </head>
 <body>
   <div class="wrap">
     <div class="panel">
       <div class="row">
-        <label>Title</label>
-        <input id="title" value="CBS COIN"/>
-        <label>Subtitle</label>
-        <input id="subtitle" value="Community Builds Sovereignty" style="min-width:260px"/>
-        <label>Accent</label>
-        <input id="accent" type="color" value="#a78bfa"/>
+        <label>Title</label><input id="title" value="CBS COIN"/>
+        <label>Subtitle</label><input id="subtitle" value="Community Builds Sovereignty" style="min-width:260px"/>
+        <label>Accent</label><input id="accent" type="color" value="#a78bfa"/>
         <label>Layout</label>
         <select id="layout">
-          <option value="right">Logo right</option>
+          <option value="right" selected>Logo right</option>
           <option value="left">Logo left</option>
           <option value="center">Logo center, text right</option>
+          <option value="custom">Custom (dragged)</option>
         </select>
-        <label>Logo URL</label>
-        <input id="logoUrl" style="min-width:320px" value="logo.png"/>
       </div>
 
-      <div class="row" style="margin-top:8px">
-        <label>Logo size</label><input id="logoSize" type="range" min="140" max="360" value="260"/>
-        <label>Logo offset X</label><input id="offsetX" type="range" min="-220" max="220" value="0"/>
-        <label>Logo offset Y</label><input id="offsetY" type="range" min="-140" max="140" value="0"/>
-        <label><input id="crisp" type="checkbox" checked> Crisp logo (no blur)</label>
+      <div class="group">
+        <label>Logo URL</label><input id="logoUrl" style="min-width:320px" value="logo.png"/>
+        <label>or Upload</label><input id="logoFile" type="file" accept="image/*"/>
+        <label>Logo size</label><input id="logoSize" type="range" min="140" max="380" value="260"/>
         <label><input id="showFlames" type="checkbox"> Flames</label>
         <label>Candles</label>
         <select id="candlesMode">
@@ -60,10 +57,21 @@
           <option value="down">Downtrend</option>
           <option value="side">Sideways</option>
         </select>
-        <label>Density</label><input id="candlesN" type="range" min="20" max="120" value="60"/>
+        <label>Density</label><input id="candlesN" type="range" min="20" max="140" value="60"/>
+        <label>Grid</label><input id="gridOn" type="checkbox" checked>
       </div>
 
-      <div class="row" style="margin-top:8px">
+      <div class="group">
+        <label>BG Top</label><input id="bg1" type="color" value="#0a1426"/>
+        <label>BG Bottom</label><input id="bg2" type="color" value="#0f223f"/>
+        <button id="reset" class="secondary">Reset positions</button>
+        <span class="handle-hint">Tip: sleep het <b>logo</b>, de <b>titel</b> en de <b>CTA-knop</b> direct op de canvas.</span>
+      </div>
+
+      <div class="group">
+        <label><input id="ctaOn" type="checkbox"> Show CTA</label>
+        <label>CTA Text</label><input id="ctaText" value="Trade CBS"/>
+        <label>CTA Color</label><input id="ctaColor" type="color" value="#22c55e"/>
         <label>Export scale</label>
         <select id="scale">
           <option value="1">1×</option>
@@ -72,15 +80,15 @@
         </select>
         <button id="download">Download PNG (1500×500)</button>
         <button id="downloadPost" class="secondary">Download Post (1200×675)</button>
-        <button id="downloadSticker" class="secondary">Download Sticker (512×512, PNG)</button>
+        <button id="downloadSticker" class="secondary">Download Sticker (512×512 PNG)</button>
       </div>
 
-      <div class="hint">Logo staat nu op <code>logo.png</code>. Zet “Flames” aan voor vlammen rond het logo. Kies “Candles” voor een achtergrondgrafiek. Gebruik 2× of 3× voor haarscherpe export.</div>
+      <div class="hint">Logo is standaard <code>logo.png</code>. Upload werkt ook (blijft lokaal). Flames & candles zijn optioneel. Sleep elementen om te positioneren.</div>
     </div>
 
     <div class="canvas-wrap">
       <div class="bar">
-        <div class="badge">Preview · X Header 1500×500</div>
+        <div class="badge">Preview · X Header 1500×500 · Drag enabled</div>
       </div>
       <div class="preview">
         <!-- SVG PREVIEW -->
@@ -90,11 +98,10 @@
               <path d="M60 0H0V60" fill="none" stroke="#2a3d69" stroke-opacity="0.18"/>
             </pattern>
             <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stop-color="#0a1426"/>
-              <stop offset="100%" stop-color="#0f223f"/>
+              <stop id="g1" offset="0%" stop-color="#0a1426"/>
+              <stop id="g2" offset="100%" stop-color="#0f223f"/>
             </linearGradient>
             <clipPath id="clipCircle"><circle id="clipC" cx="1300" cy="250" r="130"/></clipPath>
-            <!-- tiny flame gradient -->
             <radialGradient id="flameGrad" cx="50%" cy="60%" r="60%">
               <stop offset="0%" stop-color="#fff2b6"/>
               <stop offset="55%" stop-color="#ff9a3d"/>
@@ -106,18 +113,26 @@
           <rect x="0" y="0" width="1500" height="500" fill="url(#g)"/>
           <rect id="gridRect" x="0" y="0" width="1500" height="500" fill="url(#pGrid)"/>
 
-          <!-- Candles (drawn by JS) -->
+          <!-- Candles -->
           <g id="candles"></g>
 
-          <!-- Text block -->
-          <g id="textBlock">
-            <text id="t1" x="80" y="180" font-size="96" font-weight="800" fill="#ffffff">CBS COIN</text>
-            <text id="t2" x="80" y="255" font-size="38" fill="#d1e2ff">Community Builds Sovereignty</text>
-            <rect id="accentLine" x="80" y="285" width="440" height="3" fill="var(--accent)"/>
+          <!-- Text block (wrapped for dragging) -->
+          <g id="textWrap" data-drag="text">
+            <g id="textBlock">
+              <text id="t1" x="80" y="180" font-size="96" font-weight="800" fill="#ffffff">CBS COIN</text>
+              <text id="t2" x="80" y="255" font-size="38" fill="#d1e2ff">Community Builds Sovereignty</text>
+              <rect id="accentLine" x="80" y="285" width="440" height="3" fill="var(--accent)"/>
+            </g>
           </g>
 
-          <!-- Logo + flames -->
-          <g id="logoGroup">
+          <!-- CTA (draggable) -->
+          <g id="ctaWrap" data-drag="cta" opacity="0">
+            <rect id="ctaRect" x="80" y="320" rx="14" ry="14" width="220" height="44" fill="#22c55e"/>
+            <text id="ctaLabel" x="98" y="349" font-size="22" font-weight="800" fill="#0a0a0a">Trade CBS</text>
+          </g>
+
+          <!-- Logo + flames (draggable) -->
+          <g id="logoWrap" data-drag="logo">
             <circle id="ringOuter" cx="1300" cy="250" r="136" fill="none" stroke="#ffffff" stroke-opacity="0.55" stroke-width="2"/>
             <image id="logoImg" href="logo.png" x="1170" y="120" width="260" height="260" preserveAspectRatio="xMidYMid slice" clip-path="url(#clipCircle)"/>
             <g id="flames" opacity="0"></g>
@@ -128,59 +143,86 @@
   </div>
 
 <script>
+  const $ = (id)=>document.getElementById(id);
   const els = {
-    title: t('title'), subtitle: t('subtitle'), accent: t('accent'), layout: t('layout'),
-    logoUrl: t('logoUrl'), logoSize: t('logoSize'), offsetX: t('offsetX'), offsetY: t('offsetY'),
-    showFlames: t('showFlames'), crisp: t('crisp'), candlesMode: t('candlesMode'), candlesN: t('candlesN'),
-    scale: t('scale'),
-    svg: t('svg'), t1: t('t1'), t2: t('t2'), accentLine: t('accentLine'), gridRect: t('gridRect'),
-    logoImg: t('logoImg'), ringOuter: t('ringOuter'), clipC: t('clipC'), textBlock: t('textBlock'),
-    flames: t('flames'), candles: t('candles'),
+    title: $('title'), subtitle: $('subtitle'), accent: $('accent'), layout: $('layout'),
+    logoUrl: $('logoUrl'), logoFile: $('logoFile'), logoSize: $('logoSize'),
+    showFlames: $('showFlames'), candlesMode: $('candlesMode'), candlesN: $('candlesN'),
+    gridOn: $('gridOn'), bg1: $('bg1'), bg2: $('bg2'),
+    ctaOn: $('ctaOn'), ctaText: $('ctaText'), ctaColor: $('ctaColor'),
+    scale: $('scale'),
+    svg: $('svg'), g1: $('g1'), g2: $('g2'),
+    t1: $('t1'), t2: $('t2'), accentLine: $('accentLine'),
+    textWrap: $('textWrap'), ctaWrap: $('ctaWrap'),
+    ctaRect: $('ctaRect'), ctaLabel: $('ctaLabel'),
+    gridRect: $('gridRect'), candles: $('candles'),
+    logoWrap: $('logoWrap'), logoImg: $('logoImg'), clipC: $('clipC'), ringOuter: $('ringOuter'),
+    flames: $('flames'),
   };
-  function t(id){ return document.getElementById(id); }
 
-  function update(){
+  // ----- State (positions in absolute SVG px) -----
+  const state = {
+    logo: { x:1300, y:250, r:130, size:260 },
+    text: { x:0, y:0 },
+    cta:  { x:0, y:0 },
+    layout:'right'
+  };
+
+  // ----- Update all visuals -----
+  function update(all=true){
     // Text
     els.t1.textContent = els.title.value || '';
     els.t2.textContent = els.subtitle.value || '';
     els.accentLine.setAttribute('fill', els.accent.value || '#a78bfa');
-    els.accentLine.setAttribute('width', String(Math.max(180, Math.min(640, els.t1.getComputedTextLength() * 0.6))));
+    const tLen = els.t1.getComputedTextLength ? els.t1.getComputedTextLength() : 480;
+    els.accentLine.setAttribute('width', String(Math.max(180, Math.min(640, tLen * 0.6))));
 
-    // Logo
+    // Background + grid
+    els.g1.setAttribute('stop-color', els.bg1.value);
+    els.g2.setAttribute('stop-color', els.bg2.value);
+    els.gridRect.setAttribute('opacity', els.gridOn.checked ? '1' : '0');
+
+    // Layout presets (unless user set custom drag)
+    if(els.layout.value !== 'custom'){
+      state.layout = els.layout.value;
+      if(state.layout==='right'){ state.logo.x=1300; state.logo.y=250; state.text.x=0;   state.text.y=0; }
+      if(state.layout==='left'){  state.logo.x=240;  state.logo.y=250; state.text.x=420; state.text.y=0; }
+      if(state.layout==='center'){state.logo.x=260;  state.logo.y=250; state.text.x=520; state.text.y=0; }
+    }
+
+    // Logo size + image
     const size = Number(els.logoSize.value);
-    const offX = Number(els.offsetX.value);
-    const offY = Number(els.offsetY.value);
-    let cx = 1300, cy = 250;
-    const layout = els.layout.value;
-    if(layout==='left'){ cx = 240; cy = 250; els.textBlock.setAttribute('transform','translate(420,0)'); }
-    else if(layout==='center'){ cx = 260; cy = 250; els.textBlock.setAttribute('transform','translate(520,0)'); }
-    else { els.textBlock.setAttribute('transform','translate(0,0)'); }
-
-    cx += offX; cy += offY;
+    state.logo.size = size; state.logo.r = size/2;
     els.logoImg.setAttribute('href', els.logoUrl.value || 'logo.png');
-    els.clipC.setAttribute('cx', cx); els.clipC.setAttribute('cy', cy); els.clipC.setAttribute('r', size/2);
-    els.logoImg.setAttribute('x', cx - size/2); els.logoImg.setAttribute('y', cy - size/2);
+
+    // Apply positions (logo)
+    const cx = state.logo.x, cy = state.logo.y, r = state.logo.r;
+    els.clipC.setAttribute('cx', cx); els.clipC.setAttribute('cy', cy); els.clipC.setAttribute('r', r);
+    els.logoImg.setAttribute('x', cx - r); els.logoImg.setAttribute('y', cy - r);
     els.logoImg.setAttribute('width', size); els.logoImg.setAttribute('height', size);
-    els.ringOuter.setAttribute('cx', cx); els.ringOuter.setAttribute('cy', cy); els.ringOuter.setAttribute('r', size/2 + 6);
+    els.ringOuter.setAttribute('cx', cx); els.ringOuter.setAttribute('cy', cy); els.ringOuter.setAttribute('r', r + 6);
 
-    // crisp vs blur (drop shadow disabled by default)
-    els.logoImg.style.filter = els.crisp.checked ? 'none' : 'drop-shadow(0 4px 4px rgba(0,0,0,.35))';
+    // Text & CTA positions
+    els.textWrap.setAttribute('transform', `translate(${state.text.x},${state.text.y})`);
+    els.ctaWrap.setAttribute('transform',  `translate(${state.cta.x},${state.cta.y})`);
 
-    // Grid toggle
-    els.gridRect.setAttribute('opacity', 1);
+    // CTA content
+    const showCTA = els.ctaOn.checked;
+    els.ctaWrap.setAttribute('opacity', showCTA ? '1' : '0');
+    els.ctaLabel.textContent = els.ctaText.value || 'Trade CBS';
+    els.ctaRect.setAttribute('fill', els.ctaColor.value);
 
     // Flames
-    drawFlames(cx, cy, size/2);
+    drawFlames(cx, cy, r);
 
     // Candles
     drawCandles(els.candlesMode.value, Number(els.candlesN.value));
   }
 
+  // ----- Flames around logo -----
   function drawFlames(cx, cy, r){
-    const g = els.flames;
-    const on = els.showFlames.checked;
-    g.setAttribute('opacity', on ? '1' : '0');
-    g.innerHTML = '';
+    const g = els.flames, on = els.showFlames.checked;
+    g.innerHTML = ''; g.setAttribute('opacity', on ? '1' : '0');
     if(!on) return;
     const baseY = cy + r * 0.65;
     const widths = [0.9, 1.2, 1.4, 1.1, 0.95];
@@ -188,26 +230,19 @@
     for(let i=0;i<offsets.length;i++){
       const w = 60*widths[i], h = 110*widths[i];
       const x = cx + offsets[i]*r - w/2, y = baseY - h/2;
-      const id = 'fl'+i+'-'+Date.now();
-      // outer soft ellipse glow
       g.insertAdjacentHTML('beforeend', `<ellipse cx="${x+w/2}" cy="${y+h*0.85}" rx="${w/1.8}" ry="${h/3}" fill="rgba(255,140,50,.35)"></ellipse>`);
-      // teardrop polygon
       g.insertAdjacentHTML('beforeend', `
-        <g>
-          <polygon points="${x+w/2},${y} ${x+w*0.18},${y+h*0.7} ${x+w*0.33},${y+h*0.9} ${x+w*0.67},${y+h*0.9} ${x+w*0.82},${y+h*0.7}"
-            fill="url(#flameGrad)"></polygon>
-        </g>`);
+        <polygon points="${x+w/2},${y} ${x+w*0.18},${y+h*0.7} ${x+w*0.33},${y+h*0.9} ${x+w*0.67},${y+h*0.9} ${x+w*0.82},${y+h*0.7}"
+          fill="url(#flameGrad)"></polygon>`);
     }
   }
 
+  // ----- Synthetic candles -----
   function drawCandles(mode, n){
-    const g = els.candles;
-    g.innerHTML='';
+    const g = els.candles; g.innerHTML='';
     if(mode==='none'){ return; }
     const W=1500, H=500, margin=60;
-    // make a synthetic series
-    let price = 100;
-    const pts=[];
+    let price = 100; const pts=[];
     const bias = mode==='up' ? 0.8 : mode==='down' ? -0.8 : 0;
     for(let i=0;i<n*4;i++){
       price += (Math.random()*2.2-1.4) + bias*(Math.random()*0.8);
@@ -221,17 +256,50 @@
     for(let i=0;i<n;i++){
       const o=pts[i*4], c=pts[i*4+3], hi=Math.max(...pts.slice(i*4,i*4+4)), lo=Math.min(...pts.slice(i*4,i*4+4));
       const yo=Y(o), yc=Y(c), yh=Y(hi), yl=Y(lo);
-      const up = c>=o;
-      const fill = up ? '#2ed3a3' : '#f25a70';
-      const x = margin + i*step;
-      const xm = x + Math.floor(cw/2);
+      const up = c>=o; const fill = up ? '#2ed3a3' : '#f25a70';
+      const x = margin + i*step; const xm = x + Math.floor(cw/2);
       const y0=Math.min(yo,yc), y1=Math.max(yo,yc)||y0+3;
       g.insertAdjacentHTML('beforeend', `<line x1="${xm}" y1="${yh}" x2="${xm}" y2="${yl}" stroke="rgba(230,240,255,.85)" stroke-width="2"/>`);
       g.insertAdjacentHTML('beforeend', `<rect x="${x}" y="${y0}" width="${cw}" height="${y1-y0}" rx="5" fill="${fill}" stroke="rgba(8,16,30,.9)" stroke-width="3"/>`);
     }
   }
 
-  // EXPORTS
+  // ----- Drag & drop (logo/text/cta) -----
+  const dragState = { id:null, dx:0, dy:0 };
+  const svgPoint = (evt)=>{
+    const pt = els.svg.createSVGPoint();
+    pt.x = evt.clientX; pt.y = evt.clientY;
+    return pt.matrixTransform(els.svg.getScreenCTM().inverse());
+  };
+
+  els.svg.addEventListener('pointerdown', (e)=>{
+    const target = e.target.closest('[data-drag]');
+    if(!target) return;
+    const id = target.getAttribute('data-drag');
+    dragState.id = id;
+    const p = svgPoint(e);
+    if(id==='logo'){ dragState.dx = p.x - state.logo.x; dragState.dy = p.y - state.logo.y; }
+    if(id==='text'){ dragState.dx = p.x - state.text.x; dragState.dy = p.y - state.text.y; }
+    if(id==='cta'){  dragState.dx = p.x - state.cta.x;  dragState.dy = p.y - state.cta.y;  }
+    els.svg.setPointerCapture(e.pointerId);
+    els.layout.value = 'custom';
+  });
+
+  els.svg.addEventListener('pointermove', (e)=>{
+    if(!dragState.id) return;
+    const p = svgPoint(e);
+    if(dragState.id==='logo'){ state.logo.x = p.x - dragState.dx; state.logo.y = p.y - dragState.dy; }
+    if(dragState.id==='text'){ state.text.x = p.x - dragState.dx; state.text.y = p.y - dragState.dy; }
+    if(dragState.id==='cta'){  state.cta.x  = p.x - dragState.dx; state.cta.y  = p.y - dragState.dy; }
+    update(false);
+  });
+
+  els.svg.addEventListener('pointerup', (e)=>{
+    if(dragState.id){ els.svg.releasePointerCapture(e.pointerId); }
+    dragState.id=null;
+  });
+
+  // ----- Export helpers -----
   function svgToPng(svgEl, w, h, filename, scale=2, transparent=false){
     const svgData = new XMLSerializer().serializeToString(svgEl);
     const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
@@ -240,7 +308,7 @@
       const canvas = document.createElement('canvas');
       canvas.width = w*scale; canvas.height = h*scale;
       const ctx = canvas.getContext('2d');
-      if(!transparent){ ctx.fillStyle = '#0a1426'; ctx.fillRect(0,0,canvas.width,canvas.height); }
+      if(!transparent){ ctx.fillStyle = els.bg1.value; ctx.fillRect(0,0,canvas.width,canvas.height); }
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
       const a = document.createElement('a'); a.download = filename;
       a.href = canvas.toDataURL('image/png');
@@ -249,12 +317,9 @@
     img.src = url;
   }
 
-  // Sticker: build a minimal SVG on the fly (transparent)
   function downloadSticker(){
-    const size = 512;
-    const cx = size/2, cy = size/2, r = 200;
-    const flames = els.showFlames.checked;
-    const href = els.logoUrl.value || 'logo.png';
+    const size = 512, cx = size/2, cy = size/2, r = 200;
+    const flames = els.showFlames.checked; const href = els.logoUrl.value || 'logo.png';
     const svg =
 `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
   <defs>
@@ -293,13 +358,38 @@
     img.src = url;
   }
 
-  // Hook up UI
-  ['input','change'].forEach(evt=>{ document.querySelectorAll('input,select').forEach(el=> el.addEventListener(evt, update)); });
-  update();
+  // ----- Events -----
+  ['input','change'].forEach(evt=>{
+    document.querySelectorAll('input,select').forEach(el=> el.addEventListener(evt, ()=>update(true)));
+  });
+  $('download').addEventListener('click', ()=> svgToPng(els.svg, 1500, 500, 'cbs_x_banner.png', Number(els.scale.value)));
+  $('downloadPost').addEventListener('click', ()=> svgToPng(els.svg, 1200, 675, 'cbs_post_image.png', Number(els.scale.value)));
+  $('downloadSticker').addEventListener('click', downloadSticker);
+  $('reset').addEventListener('click', ()=>{
+    els.layout.value='right';
+    state.logo={x:1300,y:250,r:130,size:260};
+    state.text={x:0,y:0}; state.cta={x:0,y:0};
+    update(true);
+  });
 
-  document.getElementById('download').addEventListener('click', ()=> svgToPng(els.svg, 1500, 500, 'cbs_x_banner.png', Number(els.scale.value)));
-  document.getElementById('downloadPost').addEventListener('click', ()=> svgToPng(els.svg, 1200, 675, 'cbs_post_image.png', Number(els.scale.value)));
-  document.getElementById('downloadSticker').addEventListener('click', downloadSticker);
+  // Logo upload -> object URL
+  els.logoFile.addEventListener('change', (e)=>{
+    const f = e.target.files[0]; if(!f) return;
+    const url = URL.createObjectURL(f);
+    els.logoUrl.value = url;
+    update(true);
+  });
+
+  // CTA toggle keeps default under text
+  els.ctaOn.addEventListener('change', ()=>{
+    if(els.ctaOn.checked && state.cta.x===0 && state.cta.y===0){
+      state.cta = {x:0,y:0}; // under text block; user can drag later
+    }
+    update(true);
+  });
+
+  // Init
+  update(true);
 </script>
 </body>
 </html>
