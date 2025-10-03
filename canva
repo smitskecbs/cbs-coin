@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>CBS Coin – X Banner Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="preload" as="style" onload="this.rel='stylesheet'">
+<style>
+  :root{
+    --bg1:#0a1426; --bg2:#0f223f; --fg:#eaf2ff; --muted:#bcd1ff; --accent:#a78bfa;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#050a14;color:var(--fg);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+  .wrap{max-width:1120px;margin:18px auto;padding:0 14px}
+  .panel{background:#0b1324;border:1px solid #1e2a44;border-radius:14px;padding:12px}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  label{font-size:.86rem;opacity:.85}
+  input,select{background:#0d1830;border:1px solid #243555;color:var(--fg);border-radius:10px;padding:8px 10px;font:inherit}
+  input[type="range"]{width:160px}
+  button{background:linear-gradient(135deg,#22c55e,#37f4d3);color:#0a0a0a;border:0;border-radius:12px;font-weight:800;padding:10px 14px;cursor:pointer}
+  button.secondary{background:#14203a;color:#eaf2ff;border:1px solid #243555}
+  .grid{display:grid;grid-template-columns:1fr;gap:14px}
+  .hint{font-size:.8rem;opacity:.8}
+  .canvas-wrap{background:#0b1324;border:1px solid #1e2a44;border-radius:14px;padding:12px}
+  .bar{display:flex;justify-content:space-between;align-items:center;margin:10px 0}
+  .badge{display:inline-flex;gap:6px;align-items:center;background:#0d1830;border:1px solid #243555;border-radius:999px;padding:6px 10px;font-size:.8rem}
+  .preview{width:100%;overflow:auto}
+  svg{max-width:100%;height:auto;display:block;background:linear-gradient(180deg,var(--bg1),var(--bg2))}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="panel">
+      <div class="row">
+        <label>Title</label>
+        <input id="title" value="CBS COIN"/>
+        <label>Subtitle</label>
+        <input id="subtitle" value="Community Builds Sovereignty" style="min-width:260px"/>
+        <label>Accent</label>
+        <input id="accent" type="color" value="#a78bfa"/>
+        <label>Layout</label>
+        <select id="layout">
+          <option value="right">Logo right</option>
+          <option value="left">Logo left</option>
+          <option value="center">Logo center, text right</option>
+        </select>
+        <label>Logo URL</label>
+        <input id="logoUrl" style="min-width:320px" value="https://smitskecbs.github.io/cbs-coin/logo.png"/>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <label>Logo size</label><input id="logoSize" type="range" min="140" max="340" value="240"/>
+        <label>Logo offset X</label><input id="offsetX" type="range" min="-200" max="200" value="0"/>
+        <label>Logo offset Y</label><input id="offsetY" type="range" min="-120" max="120" value="0"/>
+        <label><input id="showGrid" type="checkbox" checked> Subtle grid</label>
+        <button id="download">Download PNG (1500×500)</button>
+        <button id="downloadPost" class="secondary">Download Post (1200×675)</button>
+      </div>
+      <div class="hint">Tip: pas tekst/kleuren aan, schuif aan de logo‑sliders en download als PNG. Alles gebeurt lokaal in je browser.</div>
+    </div>
+
+    <div class="canvas-wrap">
+      <div class="bar">
+        <div class="badge">Preview · X Header 1500×500</div>
+      </div>
+      <div class="preview">
+        <!-- SVG PREVIEW -->
+        <svg id="svg" width="1500" height="500" viewBox="0 0 1500 500" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <!-- background grid pattern -->
+            <pattern id="pGrid" width="60" height="60" patternUnits="userSpaceOnUse">
+              <path d="M60 0H0V60" fill="none" stroke="#2a3d69" stroke-opacity="0.18"/>
+            </pattern>
+            <clipPath id="clipCircle"><circle id="clipC" cx="1300" cy="250" r="120"/></clipPath>
+            <filter id="drop" x="-20%" y="-20%" width="140%" height="140%">
+              <feGaussianBlur stdDeviation="4" result="b"/>
+              <feOffset dy="4"/>
+              <feMerge>
+                <feMergeNode/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+          <!-- gradient bg -->
+          <rect x="0" y="0" width="1500" height="500" fill="url(#g)"/>
+          <defs>
+            <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#0a1426"/>
+              <stop offset="100%" stop-color="#0f223f"/>
+            </linearGradient>
+          </defs>
+          <rect id="gridRect" x="0" y="0" width="1500" height="500" fill="url(#pGrid)"/>
+
+          <!-- Text block (updated by JS) -->
+          <g id="textBlock">
+            <text id="t1" x="80" y="180" font-size="96" font-weight="800" fill="#ffffff">CBS COIN</text>
+            <text id="t2" x="80" y="255" font-size="38" fill="#d1e2ff">Community Builds Sovereignty</text>
+            <rect id="accentLine" x="80" y="285" width="440" height="3" fill="var(--accent)"/>
+          </g>
+
+          <!-- Logo circle -->
+          <g id="logoGroup">
+            <circle id="ringOuter" cx="1300" cy="250" r="126" fill="none" stroke="#ffffff" stroke-opacity="0.55" stroke-width="2"/>
+            <image id="logoImg" href="https://smitskecbs.github.io/cbs-coin/logo.png" x="1180" y="130" width="240" height="240" preserveAspectRatio="xMidYMid slice" clip-path="url(#clipCircle)" filter="url(#drop)"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+<script>
+  const els = {
+    title: document.getElementById('title'),
+    subtitle: document.getElementById('subtitle'),
+    accent: document.getElementById('accent'),
+    layout: document.getElementById('layout'),
+    logoUrl: document.getElementById('logoUrl'),
+    logoSize: document.getElementById('logoSize'),
+    offsetX: document.getElementById('offsetX'),
+    offsetY: document.getElementById('offsetY'),
+    showGrid: document.getElementById('showGrid'),
+    svg: document.getElementById('svg'),
+    t1: document.getElementById('t1'),
+    t2: document.getElementById('t2'),
+    accentLine: document.getElementById('accentLine'),
+    gridRect: document.getElementById('gridRect'),
+    logoImg: document.getElementById('logoImg'),
+    ringOuter: document.getElementById('ringOuter'),
+    clipC: document.getElementById('clipC'),
+    textBlock: document.getElementById('textBlock'),
+  };
+
+  function update(){
+    // Text
+    els.t1.textContent = els.title.value || '';
+    els.t2.textContent = els.subtitle.value || '';
+    els.accentLine.setAttribute('width', String(Math.max(180, Math.min(640, (els.t1.textLength?.baseVal?.value||420)*0.6))));
+
+    // Accent color
+    const acc = els.accent.value || '#a78bfa';
+    els.accentLine.setAttribute('fill', acc);
+
+    // Grid toggle
+    els.gridRect.setAttribute('opacity', els.showGrid.checked ? '1' : '0');
+
+    // Logo asset
+    els.logoImg.setAttribute('href', els.logoUrl.value || 'logo.png');
+
+    // Layout & size/offsets
+    const size = Number(els.logoSize.value);
+    const offX = Number(els.offsetX.value);
+    const offY = Number(els.offsetY.value);
+    let cx = 1300, cy = 250; // default right
+
+    if(els.layout.value === 'left'){ cx = 240; cy = 250; els.textBlock.setAttribute('transform','translate(420,0)'); }
+    else if(els.layout.value === 'center'){ cx = 260; cy = 250; els.textBlock.setAttribute('transform','translate(520,0)'); }
+    else { cx = 1300; cy = 250; els.textBlock.setAttribute('transform','translate(0,0)'); }
+
+    cx += offX; cy += offY;
+
+    els.clipC.setAttribute('cx', cx); els.clipC.setAttribute('cy', cy); els.clipC.setAttribute('r', size/2);
+    els.logoImg.setAttribute('x', cx - size/2); els.logoImg.setAttribute('y', cy - size/2);
+    els.logoImg.setAttribute('width', size); els.logoImg.setAttribute('height', size);
+    els.ringOuter.setAttribute('cx', cx); els.ringOuter.setAttribute('cy', cy); els.ringOuter.setAttribute('r', size/2 + 6);
+  }
+
+  ['input','change'].forEach(evt=>{
+    document.querySelectorAll('input,select').forEach(el=> el.addEventListener(evt, update));
+  });
+  update();
+
+  function svgToPng(svgEl, w, h, filename){
+    const svgData = new XMLSerializer().serializeToString(svgEl);
+    const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = function(){
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#0a1426'; ctx.fillRect(0,0,w,h);
+      ctx.drawImage(img, 0, 0, w, h);
+      const a = document.createElement('a');
+      a.download = filename;
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+    };
+    img.src = url;
+  }
+
+  document.getElementById('download').addEventListener('click', ()=> svgToPng(els.svg, 1500, 500, 'cbs_x_banner.png'));
+  document.getElementById('downloadPost').addEventListener('click', ()=> svgToPng(els.svg, 1200, 675, 'cbs_post_image.png'));
+</script>
+</body>
+</html>
