@@ -6,9 +6,7 @@
 <title>CBS Coin – X Banner Builder</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="preload" as="style" onload="this.rel='stylesheet'">
 <style>
-  :root{
-    --bg1:#0a1426; --bg2:#0f223f; --fg:#eaf2ff; --muted:#bcd1ff; --accent:#a78bfa;
-  }
+  :root{ --bg1:#0a1426; --bg2:#0f223f; --fg:#eaf2ff; --muted:#bcd1ff; --accent:#a78bfa; }
   *{box-sizing:border-box}
   body{margin:0;background:#050a14;color:var(--fg);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
   .wrap{max-width:1120px;margin:18px auto;padding:0 14px}
@@ -19,13 +17,14 @@
   input[type="range"]{width:160px}
   button{background:linear-gradient(135deg,#22c55e,#37f4d3);color:#0a0a0a;border:0;border-radius:12px;font-weight:800;padding:10px 14px;cursor:pointer}
   button.secondary{background:#14203a;color:#eaf2ff;border:1px solid #243555}
-  .grid{display:grid;grid-template-columns:1fr;gap:14px}
   .hint{font-size:.8rem;opacity:.8}
-  .canvas-wrap{background:#0b1324;border:1px solid #1e2a44;border-radius:14px;padding:12px}
+  .canvas-wrap{background:#0b1324;border:1px solid #1e2a44;border-radius:14px;padding:12px;margin-top:12px}
   .bar{display:flex;justify-content:space-between;align-items:center;margin:10px 0}
   .badge{display:inline-flex;gap:6px;align-items:center;background:#0d1830;border:1px solid #243555;border-radius:999px;padding:6px 10px;font-size:.8rem}
   .preview{width:100%;overflow:auto}
   svg{max-width:100%;height:auto;display:block;background:linear-gradient(180deg,var(--bg1),var(--bg2))}
+  /* crisper raster */
+  image{image-rendering:crisp-edges; image-rendering:-webkit-optimize-contrast;}
 </style>
 </head>
 <body>
@@ -45,17 +44,38 @@
           <option value="center">Logo center, text right</option>
         </select>
         <label>Logo URL</label>
-        <input id="logoUrl" style="min-width:320px" value="https://smitskecbs.github.io/cbs-coin/logo.png"/>
+        <input id="logoUrl" style="min-width:320px" value="logo.png"/>
       </div>
+
       <div class="row" style="margin-top:8px">
-        <label>Logo size</label><input id="logoSize" type="range" min="140" max="340" value="240"/>
-        <label>Logo offset X</label><input id="offsetX" type="range" min="-200" max="200" value="0"/>
-        <label>Logo offset Y</label><input id="offsetY" type="range" min="-120" max="120" value="0"/>
-        <label><input id="showGrid" type="checkbox" checked> Subtle grid</label>
+        <label>Logo size</label><input id="logoSize" type="range" min="140" max="360" value="260"/>
+        <label>Logo offset X</label><input id="offsetX" type="range" min="-220" max="220" value="0"/>
+        <label>Logo offset Y</label><input id="offsetY" type="range" min="-140" max="140" value="0"/>
+        <label><input id="crisp" type="checkbox" checked> Crisp logo (no blur)</label>
+        <label><input id="showFlames" type="checkbox"> Flames</label>
+        <label>Candles</label>
+        <select id="candlesMode">
+          <option value="none">None</option>
+          <option value="up" selected>Uptrend</option>
+          <option value="down">Downtrend</option>
+          <option value="side">Sideways</option>
+        </select>
+        <label>Density</label><input id="candlesN" type="range" min="20" max="120" value="60"/>
+      </div>
+
+      <div class="row" style="margin-top:8px">
+        <label>Export scale</label>
+        <select id="scale">
+          <option value="1">1×</option>
+          <option value="2" selected>2×</option>
+          <option value="3">3×</option>
+        </select>
         <button id="download">Download PNG (1500×500)</button>
         <button id="downloadPost" class="secondary">Download Post (1200×675)</button>
+        <button id="downloadSticker" class="secondary">Download Sticker (512×512, PNG)</button>
       </div>
-      <div class="hint">Tip: pas tekst/kleuren aan, schuif aan de logo‑sliders en download als PNG. Alles gebeurt lokaal in je browser.</div>
+
+      <div class="hint">Logo staat nu op <code>logo.png</code>. Zet “Flames” aan voor vlammen rond het logo. Kies “Candles” voor een achtergrondgrafiek. Gebruik 2× of 3× voor haarscherpe export.</div>
     </div>
 
     <div class="canvas-wrap">
@@ -66,41 +86,41 @@
         <!-- SVG PREVIEW -->
         <svg id="svg" width="1500" height="500" viewBox="0 0 1500 500" xmlns="http://www.w3.org/2000/svg">
           <defs>
-            <!-- background grid pattern -->
             <pattern id="pGrid" width="60" height="60" patternUnits="userSpaceOnUse">
               <path d="M60 0H0V60" fill="none" stroke="#2a3d69" stroke-opacity="0.18"/>
             </pattern>
-            <clipPath id="clipCircle"><circle id="clipC" cx="1300" cy="250" r="120"/></clipPath>
-            <filter id="drop" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur stdDeviation="4" result="b"/>
-              <feOffset dy="4"/>
-              <feMerge>
-                <feMergeNode/>
-                <feMergeNode in="SourceGraphic"/>
-              </feMerge>
-            </filter>
-          </defs>
-          <!-- gradient bg -->
-          <rect x="0" y="0" width="1500" height="500" fill="url(#g)"/>
-          <defs>
             <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stop-color="#0a1426"/>
               <stop offset="100%" stop-color="#0f223f"/>
             </linearGradient>
+            <clipPath id="clipCircle"><circle id="clipC" cx="1300" cy="250" r="130"/></clipPath>
+            <!-- tiny flame gradient -->
+            <radialGradient id="flameGrad" cx="50%" cy="60%" r="60%">
+              <stop offset="0%" stop-color="#fff2b6"/>
+              <stop offset="55%" stop-color="#ff9a3d"/>
+              <stop offset="100%" stop-color="rgba(255,80,20,0)"/>
+            </radialGradient>
           </defs>
+
+          <!-- background -->
+          <rect x="0" y="0" width="1500" height="500" fill="url(#g)"/>
           <rect id="gridRect" x="0" y="0" width="1500" height="500" fill="url(#pGrid)"/>
 
-          <!-- Text block (updated by JS) -->
+          <!-- Candles (drawn by JS) -->
+          <g id="candles"></g>
+
+          <!-- Text block -->
           <g id="textBlock">
             <text id="t1" x="80" y="180" font-size="96" font-weight="800" fill="#ffffff">CBS COIN</text>
             <text id="t2" x="80" y="255" font-size="38" fill="#d1e2ff">Community Builds Sovereignty</text>
             <rect id="accentLine" x="80" y="285" width="440" height="3" fill="var(--accent)"/>
           </g>
 
-          <!-- Logo circle -->
+          <!-- Logo + flames -->
           <g id="logoGroup">
-            <circle id="ringOuter" cx="1300" cy="250" r="126" fill="none" stroke="#ffffff" stroke-opacity="0.55" stroke-width="2"/>
-            <image id="logoImg" href="https://smitskecbs.github.io/cbs-coin/logo.png" x="1180" y="130" width="240" height="240" preserveAspectRatio="xMidYMid slice" clip-path="url(#clipCircle)" filter="url(#drop)"/>
+            <circle id="ringOuter" cx="1300" cy="250" r="136" fill="none" stroke="#ffffff" stroke-opacity="0.55" stroke-width="2"/>
+            <image id="logoImg" href="logo.png" x="1170" y="120" width="260" height="260" preserveAspectRatio="xMidYMid slice" clip-path="url(#clipCircle)"/>
+            <g id="flames" opacity="0"></g>
           </g>
         </svg>
       </div>
@@ -109,86 +129,178 @@
 
 <script>
   const els = {
-    title: document.getElementById('title'),
-    subtitle: document.getElementById('subtitle'),
-    accent: document.getElementById('accent'),
-    layout: document.getElementById('layout'),
-    logoUrl: document.getElementById('logoUrl'),
-    logoSize: document.getElementById('logoSize'),
-    offsetX: document.getElementById('offsetX'),
-    offsetY: document.getElementById('offsetY'),
-    showGrid: document.getElementById('showGrid'),
-    svg: document.getElementById('svg'),
-    t1: document.getElementById('t1'),
-    t2: document.getElementById('t2'),
-    accentLine: document.getElementById('accentLine'),
-    gridRect: document.getElementById('gridRect'),
-    logoImg: document.getElementById('logoImg'),
-    ringOuter: document.getElementById('ringOuter'),
-    clipC: document.getElementById('clipC'),
-    textBlock: document.getElementById('textBlock'),
+    title: t('title'), subtitle: t('subtitle'), accent: t('accent'), layout: t('layout'),
+    logoUrl: t('logoUrl'), logoSize: t('logoSize'), offsetX: t('offsetX'), offsetY: t('offsetY'),
+    showFlames: t('showFlames'), crisp: t('crisp'), candlesMode: t('candlesMode'), candlesN: t('candlesN'),
+    scale: t('scale'),
+    svg: t('svg'), t1: t('t1'), t2: t('t2'), accentLine: t('accentLine'), gridRect: t('gridRect'),
+    logoImg: t('logoImg'), ringOuter: t('ringOuter'), clipC: t('clipC'), textBlock: t('textBlock'),
+    flames: t('flames'), candles: t('candles'),
   };
+  function t(id){ return document.getElementById(id); }
 
   function update(){
     // Text
     els.t1.textContent = els.title.value || '';
     els.t2.textContent = els.subtitle.value || '';
-    els.accentLine.setAttribute('width', String(Math.max(180, Math.min(640, (els.t1.textLength?.baseVal?.value||420)*0.6))));
+    els.accentLine.setAttribute('fill', els.accent.value || '#a78bfa');
+    els.accentLine.setAttribute('width', String(Math.max(180, Math.min(640, els.t1.getComputedTextLength() * 0.6))));
 
-    // Accent color
-    const acc = els.accent.value || '#a78bfa';
-    els.accentLine.setAttribute('fill', acc);
-
-    // Grid toggle
-    els.gridRect.setAttribute('opacity', els.showGrid.checked ? '1' : '0');
-
-    // Logo asset
-    els.logoImg.setAttribute('href', els.logoUrl.value || 'logo.png');
-
-    // Layout & size/offsets
+    // Logo
     const size = Number(els.logoSize.value);
     const offX = Number(els.offsetX.value);
     const offY = Number(els.offsetY.value);
-    let cx = 1300, cy = 250; // default right
-
-    if(els.layout.value === 'left'){ cx = 240; cy = 250; els.textBlock.setAttribute('transform','translate(420,0)'); }
-    else if(els.layout.value === 'center'){ cx = 260; cy = 250; els.textBlock.setAttribute('transform','translate(520,0)'); }
-    else { cx = 1300; cy = 250; els.textBlock.setAttribute('transform','translate(0,0)'); }
+    let cx = 1300, cy = 250;
+    const layout = els.layout.value;
+    if(layout==='left'){ cx = 240; cy = 250; els.textBlock.setAttribute('transform','translate(420,0)'); }
+    else if(layout==='center'){ cx = 260; cy = 250; els.textBlock.setAttribute('transform','translate(520,0)'); }
+    else { els.textBlock.setAttribute('transform','translate(0,0)'); }
 
     cx += offX; cy += offY;
-
+    els.logoImg.setAttribute('href', els.logoUrl.value || 'logo.png');
     els.clipC.setAttribute('cx', cx); els.clipC.setAttribute('cy', cy); els.clipC.setAttribute('r', size/2);
     els.logoImg.setAttribute('x', cx - size/2); els.logoImg.setAttribute('y', cy - size/2);
     els.logoImg.setAttribute('width', size); els.logoImg.setAttribute('height', size);
     els.ringOuter.setAttribute('cx', cx); els.ringOuter.setAttribute('cy', cy); els.ringOuter.setAttribute('r', size/2 + 6);
+
+    // crisp vs blur (drop shadow disabled by default)
+    els.logoImg.style.filter = els.crisp.checked ? 'none' : 'drop-shadow(0 4px 4px rgba(0,0,0,.35))';
+
+    // Grid toggle
+    els.gridRect.setAttribute('opacity', 1);
+
+    // Flames
+    drawFlames(cx, cy, size/2);
+
+    // Candles
+    drawCandles(els.candlesMode.value, Number(els.candlesN.value));
   }
 
-  ['input','change'].forEach(evt=>{
-    document.querySelectorAll('input,select').forEach(el=> el.addEventListener(evt, update));
-  });
-  update();
+  function drawFlames(cx, cy, r){
+    const g = els.flames;
+    const on = els.showFlames.checked;
+    g.setAttribute('opacity', on ? '1' : '0');
+    g.innerHTML = '';
+    if(!on) return;
+    const baseY = cy + r * 0.65;
+    const widths = [0.9, 1.2, 1.4, 1.1, 0.95];
+    const offsets = [-0.55,-0.25,0,0.25,0.55];
+    for(let i=0;i<offsets.length;i++){
+      const w = 60*widths[i], h = 110*widths[i];
+      const x = cx + offsets[i]*r - w/2, y = baseY - h/2;
+      const id = 'fl'+i+'-'+Date.now();
+      // outer soft ellipse glow
+      g.insertAdjacentHTML('beforeend', `<ellipse cx="${x+w/2}" cy="${y+h*0.85}" rx="${w/1.8}" ry="${h/3}" fill="rgba(255,140,50,.35)"></ellipse>`);
+      // teardrop polygon
+      g.insertAdjacentHTML('beforeend', `
+        <g>
+          <polygon points="${x+w/2},${y} ${x+w*0.18},${y+h*0.7} ${x+w*0.33},${y+h*0.9} ${x+w*0.67},${y+h*0.9} ${x+w*0.82},${y+h*0.7}"
+            fill="url(#flameGrad)"></polygon>
+        </g>`);
+    }
+  }
 
-  function svgToPng(svgEl, w, h, filename){
+  function drawCandles(mode, n){
+    const g = els.candles;
+    g.innerHTML='';
+    if(mode==='none'){ return; }
+    const W=1500, H=500, margin=60;
+    // make a synthetic series
+    let price = 100;
+    const pts=[];
+    const bias = mode==='up' ? 0.8 : mode==='down' ? -0.8 : 0;
+    for(let i=0;i<n*4;i++){
+      price += (Math.random()*2.2-1.4) + bias*(Math.random()*0.8);
+      price = Math.max(70, Math.min(140, price));
+      pts.push(price);
+    }
+    const low = Math.min(...pts), high = Math.max(...pts);
+    const Y = (p)=> Math.round(margin + (1-(p-low)/(high-low))*(H-2*margin));
+    const cw = Math.max(4, Math.floor((W-2*margin)/n * 0.5));
+    const step = Math.floor((W-2*margin)/n);
+    for(let i=0;i<n;i++){
+      const o=pts[i*4], c=pts[i*4+3], hi=Math.max(...pts.slice(i*4,i*4+4)), lo=Math.min(...pts.slice(i*4,i*4+4));
+      const yo=Y(o), yc=Y(c), yh=Y(hi), yl=Y(lo);
+      const up = c>=o;
+      const fill = up ? '#2ed3a3' : '#f25a70';
+      const x = margin + i*step;
+      const xm = x + Math.floor(cw/2);
+      const y0=Math.min(yo,yc), y1=Math.max(yo,yc)||y0+3;
+      g.insertAdjacentHTML('beforeend', `<line x1="${xm}" y1="${yh}" x2="${xm}" y2="${yl}" stroke="rgba(230,240,255,.85)" stroke-width="2"/>`);
+      g.insertAdjacentHTML('beforeend', `<rect x="${x}" y="${y0}" width="${cw}" height="${y1-y0}" rx="5" fill="${fill}" stroke="rgba(8,16,30,.9)" stroke-width="3"/>`);
+    }
+  }
+
+  // EXPORTS
+  function svgToPng(svgEl, w, h, filename, scale=2, transparent=false){
     const svgData = new XMLSerializer().serializeToString(svgEl);
     const url = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgData);
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
+    const img = new Image(); img.crossOrigin = 'anonymous';
     img.onload = function(){
       const canvas = document.createElement('canvas');
-      canvas.width = w; canvas.height = h;
+      canvas.width = w*scale; canvas.height = h*scale;
       const ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#0a1426'; ctx.fillRect(0,0,w,h);
-      ctx.drawImage(img, 0, 0, w, h);
-      const a = document.createElement('a');
-      a.download = filename;
+      if(!transparent){ ctx.fillStyle = '#0a1426'; ctx.fillRect(0,0,canvas.width,canvas.height); }
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const a = document.createElement('a'); a.download = filename;
       a.href = canvas.toDataURL('image/png');
       a.click();
     };
     img.src = url;
   }
 
-  document.getElementById('download').addEventListener('click', ()=> svgToPng(els.svg, 1500, 500, 'cbs_x_banner.png'));
-  document.getElementById('downloadPost').addEventListener('click', ()=> svgToPng(els.svg, 1200, 675, 'cbs_post_image.png'));
+  // Sticker: build a minimal SVG on the fly (transparent)
+  function downloadSticker(){
+    const size = 512;
+    const cx = size/2, cy = size/2, r = 200;
+    const flames = els.showFlames.checked;
+    const href = els.logoUrl.value || 'logo.png';
+    const svg =
+`<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+  <defs>
+    <clipPath id="c"><circle cx="${cx}" cy="${cy}" r="${r}"/></clipPath>
+    <radialGradient id="fg" cx="50%" cy="60%" r="60%">
+      <stop offset="0%" stop-color="#fff2b6"/><stop offset="55%" stop-color="#ff9a3d"/>
+      <stop offset="100%" stop-color="rgba(255,80,20,0)"/>
+    </radialGradient>
+  </defs>
+  ${flames ? `<g opacity="1">
+    <ellipse cx="${cx}" cy="${cy+r*0.9}" rx="${r*0.8}" ry="${r*0.28}" fill="rgba(255,140,50,.28)"/>
+    ${[-0.55,-0.25,0,0.25,0.55].map((ox,i)=> {
+      const w=70*(1+Math.abs(ox)*0.3), h=110*(1+Math.abs(ox)*0.2);
+      const x=cx+ox*r-w/2, y=cy+r*0.55-h/2;
+      return `<polygon points="${x+w/2},${y} ${x+w*0.18},${y+h*0.7} ${x+w*0.33},${y+h*0.9} ${x+w*0.67},${y+h*0.9} ${x+w*0.82},${y+h*0.7}" fill="url(#fg)"/>`
+    }).join('')}
+  </g>` : '' }
+  <image href="${href}" x="${cx-r}" y="${cy-r}" width="${r*2}" height="${r*2}" clip-path="url(#c)"/>
+  <circle cx="${cx}" cy="${cy}" r="${r+6}" fill="none" stroke="rgba(255,255,255,.65)" stroke-width="3"/>
+</svg>`;
+    const blob = new Blob([svg], {type:'image/svg+xml'});
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width=size; canvas.height=size;
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0,0,size,size);
+      ctx.drawImage(img,0,0,size,size);
+      const a = document.createElement('a');
+      a.download = 'cbs_sticker_512.png';
+      a.href = canvas.toDataURL('image/png');
+      a.click();
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
+  }
+
+  // Hook up UI
+  ['input','change'].forEach(evt=>{ document.querySelectorAll('input,select').forEach(el=> el.addEventListener(evt, update)); });
+  update();
+
+  document.getElementById('download').addEventListener('click', ()=> svgToPng(els.svg, 1500, 500, 'cbs_x_banner.png', Number(els.scale.value)));
+  document.getElementById('downloadPost').addEventListener('click', ()=> svgToPng(els.svg, 1200, 675, 'cbs_post_image.png', Number(els.scale.value)));
+  document.getElementById('downloadSticker').addEventListener('click', downloadSticker);
 </script>
 </body>
 </html>
+
