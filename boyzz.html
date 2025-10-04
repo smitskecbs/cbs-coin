@@ -4,262 +4,189 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>THE BOYZZ – MEME MINT</title>
-
-  <!-- MEME fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Anton&display=swap" rel="stylesheet">
-
   <style>
     :root{
       --ink:#0b0b0b; --paper:#fffdf5;
       --green:#27ffb0; --pink:#ff55c9; --yellow:#ffe24a; --blue:#4de1ff; --red:#ff6a6a;
-      --mint:#28f3c6; --shadow:0 12px 0 #000, 0 0 0 3px #000;
-      --round:18px;
+      --mint:#28f3c6; --shadow:0 12px 0 #000, 0 0 0 3px #000; --round:18px;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
       margin:0; color:#000; background:#111;
       background:
-        radial-gradient(700px 500px at 100% -10%, rgba(255,255,255,.06), transparent 60%),
-        radial-gradient(600px 400px at -10% 110%, rgba(255,255,255,.05), transparent 60%),
-        #0d0d0d;
-      font-family: 'Anton', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+        radial-gradient(420px 320px at 20% 15%, rgba(255,255,255,.08), transparent 60%),
+        radial-gradient(420px 320px at 70% 25%, rgba(255,255,255,.06), transparent 60%),
+        linear-gradient(180deg,#0f0f0f,#151515);
+      font-family: 'Anton', system-ui, sans-serif;
       letter-spacing:.2px;
     }
-    .wrap{max-width:1100px;margin:0 auto;padding:18px}
-    .brand{display:flex;align-items:center;gap:10px}
-    .brand img{width:60px;height:60px;border-radius:14px;box-shadow:0 8px 0 #000, 0 0 0 3px #000}
-    .brand h1{margin:0;color:#fffdf5;text-shadow:0 4px 0 #000;font: 42px/1 'Bangers', cursive;letter-spacing:1px}
-    .pill{display:inline-block;border-radius:999px;border:3px solid #000;background:#fff;padding:.35rem .7rem;font-weight:800}
+    .wrap{max-width:1080px;margin:0 auto;padding:16px}
+    .header{display:flex;align-items:center;gap:12px;color:#fff}
+    .logo{width:54px;height:54px;border-radius:12px;background:#000 url('collection.png') center/cover no-repeat;border:3px solid #000;box-shadow:0 0 0 3px #fff}
+    h1{font-family:'Bangers', cursive; font-size:40px; letter-spacing:.6px; color:#fff; margin:0}
+    .badge{margin-left:auto;background:#fff;color:#000;padding:.35rem .7rem;border-radius:999px;border:3px solid #000;box-shadow:var(--shadow);font-weight:900}
 
-    .grid{display:grid;gap:16px;grid-template-columns:repeat(12,1fr)}
-    .card{grid-column:span 12;background:#fffdf5;border-radius:22px;padding:18px;box-shadow:var(--shadow)}
-    @media (min-width:980px){ .col-6{grid-column:span 6} }
+    .card{background:#fffdf5;border-radius:22px;border:3px solid #000;box-shadow:var(--shadow);padding:18px;margin:16px 0}
+    .hero{display:flex;gap:16px;align-items:center}
+    .hero .img{width:120px;height:120px;border-radius:18px;background:#000 url('collection.png') center/cover no-repeat;border:3px solid #000;box-shadow:var(--shadow)}
+    .hero h2{font-family:'Bangers',cursive;font-size:28px;margin:0}
+    .muted{opacity:.7}
 
-    h2,h3{margin:.1rem 0 .6rem;font: 34px/1 'Bangers', cursive;letter-spacing:1px}
-    .muted{color:#333;font-weight:500}
-    .btn{display:inline-flex;align-items:center;justify-content:center;min-width:170px;padding:14px 20px;border-radius:16px;border:3px solid #000;
-         background:linear-gradient(180deg,#8dffe9,#58f3e9); box-shadow:var(--shadow); font:900 24px/1.1 'Bangers', cursive; cursor:pointer}
-    .btn.secondary{background:linear-gradient(180deg,#ffe67c,#ffd857)}
-    .btn:disabled{opacity:.55;cursor:not-allowed}
-    .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+    .grid{display:grid;grid-template-columns:1fr;gap:16px}
+    @media(min-width:960px){ .grid{grid-template-columns:1fr 1fr} }
 
-    .stat{display:flex;gap:10px;align-items:center;margin:.3rem 0}
-    .prog{height:20px;border:3px solid #000;border-radius:12px;overflow:hidden;background:#fff}
-    .prog > b{display:block;height:100%;background:#28f3c6}
-
-    .note-ok{color:#0a7a55;font-weight:800}
-    .note-warn{color:#bf2b2b;font-weight:800}
-    .links a{color:#0ef;text-decoration:none}
-
-    .hero{display:grid;grid-template-columns:120px 1fr;gap:14px;align-items:center;margin:10px 0 18px}
-    .hero .imgBox{width:120px;height:120px;border-radius:18px;overflow:hidden;border:3px solid #000;box-shadow:var(--shadow)}
-    .hero img{width:100%;height:100%;object-fit:cover}
+    .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+    select, .btn, .pill{
+      font-family:'Anton',system-ui,sans-serif; border:3px solid #000; border-radius:14px;
+      padding:.7rem 1rem; box-shadow:var(--shadow); background:#fff;
+    }
+    select{cursor:pointer}
+    .btn{cursor:pointer; background:linear-gradient(180deg,#71ffe8,#32f6d9); min-width:160px; font-weight:900}
+    .btn.secondary{background:linear-gradient(180deg,#ffe879,#ffd84a)}
+    .btn:disabled{opacity:.55; cursor:not-allowed}
+    .pill{background:#fff}
+    .progress{height:18px;border:3px solid #000;border-radius:14px;box-shadow:var(--shadow);background:#fff;overflow:hidden}
+    .bar{height:100%;background:#ffe24a;width:0%}
+    .ok{color:#0a8f52}
+    .warn{color:#c41717}
+    a{color:#0077ff;text-decoration:none}
+    footer{color:#fff;opacity:.8;text-align:center;margin:28px 0}
   </style>
 </head>
 <body>
   <div class="wrap">
-
-    <div class="brand">
-      <img src="collection.png" alt="The Boyzz">
+    <div class="header">
+      <div class="logo" title="The Boyzz"></div>
       <h1>THE BOYZZ – MEME MINT</h1>
-      <span class="pill" id="netLbl">Mainnet</span>
+      <div class="badge">Mainnet</div>
     </div>
 
-    <section class="card hero" style="background:#fff7d7">
-      <div class="imgBox"><img src="collection.png" alt="Collection"></div>
+    <div class="card hero">
+      <div class="img" aria-hidden="true"></div>
       <div>
-        <h2 style="margin:0 0 .2rem">CBS Holders Free Mint</h2>
-        <p class="muted" style="margin:.2rem 0 0">
-          Free mint for wallets holding <b>≥ 1 CBS</b>. You only pay network/storage. On-chain guard enforces the CBS check.
-        </p>
+        <h2>CBS HOLDERS FREE MINT</h2>
+        <div class="muted">Free mint for wallets holding ≥ 1 CBS. You only pay network/storage fees. On-chain guard enforces the CBS check.</div>
       </div>
-    </section>
+    </div>
 
-    <section class="grid">
-      <div class="card col-6">
-        <h3>Wallet</h3>
-        <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px">
-          <select id="walletSel" class="pill">
+    <div class="grid">
+      <div class="card">
+        <h3>WALLET</h3>
+        <div class="row">
+          <select id="walletSel" title="Choose wallet">
             <option value="auto">Auto detect</option>
             <option value="phantom">Phantom</option>
             <option value="solflare">Solflare</option>
           </select>
           <button id="btnConnect" class="btn">CONNECT</button>
         </div>
-        <p class="muted" id="walletStatus">—</p>
+        <div id="connected" class="muted" style="margin-top:8px;">–</div>
 
-        <div class="pill" style="margin-top:10px">
-          CBS Mint&nbsp; <span class="mono" id="cbsMintLbl">B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</span>
+        <div class="row" style="margin-top:12px">
+          <span class="pill">CBS Mint&nbsp;<span class="mono" id="cbsMintLbl">B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</span></span>
         </div>
-
-        <p style="margin:.6rem 0 0"><b>Your CBS balance:</b> <span id="cbsBal">—</span> CBS</p>
-        <p id="msg" class="muted" style="margin:.2rem 0 0"></p>
-
-        <div id="mobileLinks" class="links" style="margin-top:10px;display:none">
-          <a id="openPhantom" class="pill" href="#" target="_blank" rel="noreferrer">Open in Phantom App</a>
-          <a id="openSolflare" class="pill" href="#" target="_blank" rel="noreferrer">Open in Solflare App</a>
-        </div>
+        <div style="margin-top:8px"><b>Your CBS balance:</b> <span id="cbsBal">–</span> CBS</div>
+        <div id="msg" class="muted" style="margin-top:10px;"></div>
       </div>
 
-      <div class="card col-6">
-        <h3>Drop stats</h3>
-        <p><b>Candy Machine:</b> <span id="cmLbl" class="mono">—</span> <a id="cmSol" class="mono" target="_blank" rel="noreferrer"></a></p>
-        <div class="stat"><span><b>Minted:</b> <span id="minted">0</span> / <span id="available">0</span></span></div>
-        <div class="prog"><b id="bar" style="width:0%"></b></div>
-        <div style="display:flex;gap:10px;margin-top:10px;align-items:center">
+      <div class="card">
+        <h3>DROP STATS</h3>
+        <div><b>Candy Machine:</b> <span id="cmLbl">–</span></div>
+        <div style="margin:8px 0"><b>Minted:</b> <span id="minted">0</span> / <span id="available">0</span></div>
+        <div class="progress"><div id="bar" class="bar"></div></div>
+        <div class="row" style="margin-top:12px">
           <button id="btnRefresh" class="btn secondary">REFRESH</button>
           <span class="pill">Price: FREE (≥ 1 CBS)</span>
         </div>
       </div>
-    </section>
+    </div>
 
-    <section class="card" style="margin-top:14px">
-      <h3>Mint now</h3>
-      <p class="muted">Button enables when your wallet holds ≥ 1 CBS. Guard enforces this on-chain.</p>
-      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
-        <button id="btnMint" class="btn" disabled>🚀 MINT</button>
-        <span id="soldBadge" class="pill" style="display:none;background:#ffe2e2">Sold out</span>
+    <div class="card" style="text-align:center">
+      <h3 style="font-family:'Bangers',cursive;font-size:28px;margin:6px 0">MINT NOW</h3>
+      <div class="muted">Button enables when your wallet holds ≥ 1 CBS. Guard enforces this on-chain.</div>
+      <div style="margin-top:14px">
+        <button id="btnMint" class="btn" style="font-size:22px;min-width:220px" disabled>🚀 MINT</button>
       </div>
-    </section>
+    </div>
 
-    <section class="card" style="background:#eaffff">
-      <h3>XYFE LAB – STICKERS & ART</h3>
-      <p class="muted">Collab between CBS and artist <b>XYFE</b>. Check his sticker art & drops:</p>
-      <p class="links"><a class="pill" href="https://t.me/xyfelab" target="_blank" rel="noreferrer">Telegram: @xyfelab</a></p>
-    </section>
-
+    <footer>
+      Need help? <a href="mailto:cbs.coin12@gmail.com">cbs.coin12@gmail.com</a> • Artist: <a href="https://t.me/xyfelab" target="_blank" rel="noreferrer">@xyfelab</a>
+    </footer>
   </div>
 
   <script type="module">
-    // ===== Imports =====
+    // ---------------- Imports ----------------
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
     import { publicKey, generateSigner, transactionBuilder, some } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
     import { mplCandyMachine, fetchCandyMachine, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.2.0";
-    import { setComputeUnitLimit } from "https://esm.sh/@metaplex-foundation/mpl-toolbox@0.9.1";
+    import { setComputeUnitLimit, setComputeUnitPrice } from "https://esm.sh/@metaplex-foundation/mpl-toolbox@0.9.1";
 
-    // ✅ Alleen Phantom & Solflare
-    import { PhantomWalletAdapter }   from "https://esm.sh/@solana/wallet-adapter-phantom@0.9.25";
-    import { SolflareWalletAdapter }  from "https://esm.sh/@solana/wallet-adapter-solflare@0.6.28";
-    import { Connection, PublicKey }  from "https://esm.sh/@solana/web3.js@1.95.3";
+    import { Connection, PublicKey } from "https://esm.sh/@solana/web3.js@1.95.3";
+    import { getAssociatedTokenAddressSync } from "https://esm.sh/@solana/spl-token@0.4.3";
 
-    // ===== Config =====
+    import { PhantomWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-phantom@0.9.25";
+    import { SolflareWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-solflare@0.6.7";
+
+    // ---------------- Config ----------------
     const DEFAULTS = {
-      // jouw CM
-      CM: "D7GAWHtTAo5iyTQAFdSpnDM1r1bDJQdzft2e3NXiTbSf",
+      CM: "D7GAWHTTAo5iyTQAFdSpnDM1r1bDJQdzft2e3NXiTbSf",             // jouw CM ID
       CBS_MINT: "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk",
-      THRESHOLD_UI: 1,
-      // Helius key (Boyzz)
-      RPC: "https://mainnet.helius-rpc.com/?api-key=0eb350f0-a032-468c-8b03-b8b079e09611"
+      RPC: "https://mainnet.helius-rpc.com/?api-key=0eb350f0-a032-468c-8b03-b8b079e09611", // jouw Helius key
+      MIN_CBS: 1,
+      CUPL: 600_000,               // compute unit limit
+      CUPR: 5_000                  // microLamports (priority fee ~0.000005 SOL)
     };
 
-    // Query overrides
+    // Allow overrides via query params
     const qs = new URLSearchParams(location.search);
-    const CM_ADDR = qs.get("cm")  || DEFAULTS.CM;
+    const CM_ADDR = qs.get("cm") || DEFAULTS.CM;
     const RPC_URL = qs.get("rpc") || DEFAULTS.RPC;
-    const GROUP   = qs.get("group"); // optional guard group label
 
-    // ===== Helpers =====
+    // ---------------- Helpers ----------------
     const $ = (id)=>document.getElementById(id);
     const setTxt = (id,v)=>{ const el=$(id); if(el) el.textContent=v; };
-    const note = (msg, kind="muted")=>{
-      const el=$("msg");
-      if(!el) return;
-      el.textContent = msg || "";
-      el.className = kind==="ok" ? "note-ok" : kind==="warn" ? "note-warn" : "muted";
-    };
-    const fmt = (n)=>Number(n ?? 0).toLocaleString("en-US");
+    const note = (msg, kind="muted")=>{ const el=$("msg"); if(!el) return; el.textContent=msg; el.className=kind; };
 
-    // ===== Chain setup =====
+    // ---------------- Chain setup ----------------
     const connection = new Connection(RPC_URL, "confirmed");
     const umi = createUmi(RPC_URL).use(mplCandyMachine()).use(mplTokenMetadata());
-    let wallet, cm, connected=false, SOLD_OUT=false;
-
     const CBS_MINT = new PublicKey(DEFAULTS.CBS_MINT);
-    const THRESHOLD = DEFAULTS.THRESHOLD_UI;
 
-    // Show CM info
-    setTxt("cmLbl", CM_ADDR);
-    (()=>{
-      const a=$("cmSol");
-      a.textContent="(Solscan)";
-      a.href=`https://solscan.io/account/${CM_ADDR}`;
-    })();
+    let wallet=null, connected=false, cm=null, soldOut=false;
 
-    // ===== Wallet adapters =====
-    function makeAdapter(kind="auto"){
-      if(kind==="phantom") return new PhantomWalletAdapter();
-      if(kind==="solflare") return new SolflareWalletAdapter();
-      // auto-detect
-      if (window.phantom?.solana?.isPhantom) return new PhantomWalletAdapter();
-      if (window.solflare?.isSolflare)       return new SolflareWalletAdapter();
-      // fallback
-      return new PhantomWalletAdapter();
+    async function pickWallet(){
+      const val = $("walletSel").value;
+      if(val==="solflare") return new SolflareWalletAdapter();
+      if(val==="phantom") return new PhantomWalletAdapter();
+      // auto
+      if (window?.phantom?.solana?.isPhantom) return new PhantomWalletAdapter();
+      return new SolflareWalletAdapter();
     }
 
     async function connectWallet(){
       try{
-        const sel = $("walletSel")?.value || "auto";
-        wallet = makeAdapter(sel);
+        wallet = await pickWallet();
         await wallet.connect();
         umi.use(walletAdapterIdentity(wallet));
         connected = true;
-        const pk = wallet.publicKey?.toBase58?.() || wallet.publicKey?.toString?.() || "";
-        setTxt("walletStatus", `Connected: ${pk.slice(0,6)}…${pk.slice(-6)}`);
+        const pk = wallet.publicKey.toBase58();
+        setTxt("connected", `Connected: ${pk.slice(0,6)}…${pk.slice(-6)}`);
         note("");
         await checkHolderAndToggle();
       }catch(e){
         console.error(e);
-        note("Connection failed.", "warn");
+        note("Wallet connect failed.", "warn");
       }
     }
 
-    // Mobile deep links
-    (function setupMobileLinks(){
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      if(!isMobile) return;
-      const base = location.href.split('#')[0];
-      $("mobileLinks").style.display = "";
-      $("openPhantom").href = `https://phantom.app/ul/browse/${encodeURIComponent(base)}`;
-      $("openSolflare").href = `https://solflare.com/ul/v1/browse/${encodeURIComponent(base)}`;
-    })();
-
-    // ===== Stats / refresh =====
-    async function refresh(){
-      try{
-        cm = await fetchCandyMachine(umi, publicKey(CM_ADDR));
-        const minted = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? cm.itemsMinted ?? 0);
-        const avail  = Number(cm.itemsAvailable ?? cm.data?.itemsAvailable ?? cm.itemsLoaded ?? cm.data?.itemsLoaded ?? 0);
-        setTxt("minted", fmt(minted));
-        setTxt("available", fmt(avail));
-        $("bar").style.width = (avail>0? (100* minted/avail) : 0) + "%";
-        setSoldOutUI(avail > 0 && minted >= avail);
-      }catch(e){
-        console.error(e);
-        note("Failed to load Candy Machine.", "warn");
-      }
-    }
-
-    function setSoldOutUI(isSold){
-      SOLD_OUT = !!isSold;
-      const badge = $("soldBadge");
-      const btn = $("btnMint");
-      if (isSold){
-        if (badge) badge.style.display = "";
-        if (btn){ btn.disabled = true; btn.textContent = "Sold out"; }
-      } else {
-        if (badge) badge.style.display = "none";
-        if (btn){ btn.disabled = false; btn.textContent = "🚀 MINT"; }
-      }
-    }
-
-    // ===== CBS holder check =====
     async function getCbsUiBalance(ownerPk){
       const res = await connection.getParsedTokenAccountsByOwner(ownerPk, { mint: CBS_MINT });
       let total = 0;
-      for(const acc of (res.value||[])){
+      for (const acc of (res.value||[])) {
         const ui = acc.account?.data?.parsed?.info?.tokenAmount?.uiAmount;
         total += Number(ui||0);
       }
@@ -270,64 +197,95 @@
       if(!connected) return;
       try{
         const bal = await getCbsUiBalance(wallet.publicKey);
-        setTxt("cbsBal", fmt(bal));
-        const ok = bal >= THRESHOLD;
-        if (!SOLD_OUT) $("btnMint").disabled = !ok;
-        note(ok ? "CBS requirement met, you can mint ✅" : "You need at least 1 CBS to mint.", ok ? "ok" : "warn");
+        setTxt("cbsBal", new Intl.NumberFormat().format(bal));
+        const ok = bal >= DEFAULTS.MIN_CBS;
+        if (!soldOut) $("btnMint").disabled = !ok;
+        note(ok ? "You meet the CBS requirement. ✅" : "You need ≥ 1 CBS to mint.", ok?"ok":"warn");
       }catch(e){
-        console.error(e);
-        note("Failed to read CBS balance.", "warn");
+        console.error(e); note("Failed to load balance.","warn");
       }
     }
 
-    // ===== Mint =====
+    async function refresh(){
+      try{
+        setTxt("cmLbl","–");
+        cm = await fetchCandyMachine(umi, publicKey(CM_ADDR));
+        setTxt("cmLbl", CM_ADDR);
+        const minted = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? cm.itemsMinted ?? 0);
+        const avail  = Number(cm.itemsAvailable ?? cm.data?.itemsAvailable ?? cm.itemsLoaded ?? cm.data?.itemsLoaded ?? 0);
+        setTxt("minted", minted); setTxt("available", avail);
+        const pct = avail>0 ? Math.min(100, Math.round((minted/avail)*100)) : 0;
+        const bar = $("bar"); if(bar) bar.style.width = pct+"%";
+        soldOut = avail>0 && minted>=avail;
+        if (soldOut) { $("btnMint").disabled = true; note("Sold out.","warn"); }
+      }catch(e){
+        console.error(e); note("Candy Machine load failed.","warn");
+      }
+    }
+
     async function doMint(){
       try{
-        if(!connected || SOLD_OUT) return;
+        if (!connected || soldOut) return;
         await checkHolderAndToggle();
-        if($("btnMint").disabled) return;
+        if ($("btnMint").disabled) return;
+
         note("Sending mint…");
-        const nftMint = generateSigner(umi);
-        const args = {
-          candyMachine: publicKey(CM_ADDR),
-          candyGuard: cm.mintAuthority,
-          nftMint,
-          collectionMint: cm.collectionMint,
-          collectionUpdateAuthority: cm.authority,
-          ...(GROUP ? { group: GROUP } : {}),
-          mintArgs: { tokenGate: some({ mint: publicKey(DEFAULTS.CBS_MINT) }) }
-        };
-        const tx = transactionBuilder()
-          .add(setComputeUnitLimit(umi, { units: 600_000 }))
-          .add(mintV2(umi, args));
+        // retry logic for expired blockhash
+        let tries=0, lastErr=null;
+        while(tries<3){
+          try{
+            await umi.rpc.refreshLatestBlockhash(); // fresh blockhash
+            const nftMint = generateSigner(umi);
+            const args = {
+              candyMachine: publicKey(CM_ADDR),
+              candyGuard: cm.mintAuthority,
+              nftMint,
+              collectionMint: cm.collectionMint,
+              collectionUpdateAuthority: cm.authority,
+              mintArgs: { tokenGate: some({ mint: publicKey(DEFAULTS.CBS_MINT) }) }
+            };
+            const tx = transactionBuilder()
+              .add(setComputeUnitLimit(umi, { units: DEFAULTS.CUPL }))
+              .add(setComputeUnitPrice(umi, { microLamports: DEFAULTS.CUPR }))
+              .add(mintV2(umi, args));
 
-        const resSig = await tx.sendAndConfirm(umi);
-        const sig = (typeof resSig === 'string') ? resSig : (resSig?.signature || (Array.isArray(resSig) ? resSig[0] : String(resSig)));
-
-        note("Mint confirmed ✅ " + sig, "ok");
-        const p = document.createElement('p');
-        p.className='note-ok';
-        p.innerHTML=`<a target="_blank" rel="noreferrer" href="https://solscan.io/tx/${sig}">View on Solscan</a>`;
-        $("msg").after(p);
-
-        await refresh();
-        await checkHolderAndToggle();
+            const sig = await tx.sendAndConfirm(umi);
+            const sigStr = typeof sig === "string" ? sig : (sig?.signature || (Array.isArray(sig) ? sig[0] : String(sig)));
+            note(`Mint confirmed ✅ ${sigStr}`,"ok");
+            const a=document.createElement("p");
+            a.innerHTML=`<a target="_blank" rel="noreferrer" href="https://solscan.io/tx/${sigStr}">View on Solscan</a>`;
+            a.className="ok"; $("msg").after(a);
+            await refresh(); await checkHolderAndToggle();
+            return;
+          }catch(e){
+            lastErr = e;
+            const m=(e?.message||"").toLowerCase();
+            if (m.includes("block height exceeded") || m.includes("blockhash") || m.includes("expired")) {
+              tries++; continue; // retry with fresh blockhash
+            }
+            // user rejected?
+            if (m.includes("user rejected") || m.includes("reject")) {
+              note("Transaction was rejected in the wallet.","warn"); return;
+            }
+            throw e;
+          }
+        }
+        throw lastErr || new Error("Mint failed after retries.");
       }catch(e){
         console.error(e);
-        const msg = e?.message || e?.data?.message || e?.toString?.() || "Unexpected error";
-        note("Mint failed: " + msg, "warn");
+        note(`Mint failed: ${(e?.message||e)}`, "warn");
       }
     }
 
-    // ===== Wire up =====
-    $("btnConnect")?.addEventListener("click", connectWallet);
-    $("btnRefresh")?.addEventListener("click", async ()=>{ await refresh(); if(connected) await checkHolderAndToggle(); });
-    $("btnMint")?.addEventListener("click", doMint);
+    // Wire up
+    $("btnConnect").addEventListener("click", connectWallet);
+    $("btnMint").addEventListener("click", doMint);
+    $("btnRefresh").addEventListener("click", async ()=>{ await refresh(); if (connected) await checkHolderAndToggle(); });
 
     // Init
-    $("netLbl").textContent = "Mainnet";
+    setTxt("cbsMintLbl", DEFAULTS.CBS_MINT);
     setTxt("cmLbl", CM_ADDR);
-    await refresh();
+    refresh();
   </script>
 </body>
 </html>
