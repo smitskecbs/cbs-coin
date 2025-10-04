@@ -4,7 +4,8 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>The Boyzz – CBS Holders Mint</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+  <!-- Fonts: meme-stijl (Anton/Bangers) + Orbitron voor body -->
+  <link href="https://fonts.googleapis.com/css2?family=Anton:wght@400&family=Bangers&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <style>
     :root{ --bg1:#0a0c10; --bg2:#0f141b; --card:#0f151c; --card2:#0c1016; --fg:#eafffb; --muted:#a8d6cd; --note:#7ee9dc; --ok:#24e6b5; --warn:#ffad7a; --accent:#6ffff0; --radius:18px; --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10); }
     *{box-sizing:border-box} html,body{height:100%}
@@ -22,13 +23,14 @@
     .hero{ display:grid; grid-template-columns:120px 1fr; gap:1.2rem; align-items:center; padding:1.2rem; margin:10px auto 18px; border-radius:var(--radius); background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35)); border:1px solid rgba(0,255,240,.18); box-shadow:var(--shadow); }
     .hero .logo-wrap{ position:relative; width:120px; height:120px; border-radius:16px; overflow:hidden; background:radial-gradient(closest-side, rgba(0,255,230,.18), rgba(0,255,230,.04) 58%, transparent 62%); display:grid; place-items:center; }
     .hero .logo{ width:86%; height:86%; object-fit:contain }
-    .hero h2{ margin:.15rem 0 0; color:var(--note); font-size:1.1rem; font-weight:700 }
-    .hero p{ margin:.35rem 0 0; color:var(--muted); font-size:.95rem }
+    .hero h2{ margin:.15rem 0 0; color:#fff; font-size:1.25rem; font-weight:700 }
+    /* Meme caption-stijl */
+    .meme{ font-family:'Anton', Impact, Haettenschweiler, 'Arial Black', sans-serif; text-transform:uppercase; letter-spacing:.5px; color:#fff; text-shadow: 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000, -2px -2px 0 #000, 0 2px 0 #000, 2px 0 0 #000, 0 -2px 0 #000, -2px 0 0 #000; }
     .statusRow{ display:flex; gap:8px; align-items:center; margin-top:8px }
     .grid{ display:grid; gap:16px; grid-template-columns:repeat(12,1fr) }
     .card{ grid-column:span 12; background:linear-gradient(180deg, var(--card), var(--card2)); border:1px solid rgba(0,255,240,.14); border-radius:var(--radius); box-shadow:var(--shadow); padding:18px; }
     @media (min-width:980px){ .col-6{ grid-column:span 6 } }
-    .card h3{ margin:.2rem 0 .6rem; color:#bffef2; font-size:1.05rem }
+    .card h3{ margin:.2rem 0 .6rem; color:#bffef2; font-size:1.05rem; font-family:'Anton', Impact, Haettenschweiler, 'Arial Black', sans-serif; text-transform:uppercase; letter-spacing:.4px }
     .row{display:flex; flex-wrap:wrap; gap:12px; align-items:center}
     .mono{font-family:ui-monospace,Menlo,Monaco,Consolas,monospace}
     .muted{color:var(--muted)} .ok{color:var(--ok)} .warn{color:var(--warn)}
@@ -37,12 +39,16 @@
     .btn:disabled{ opacity:.55; cursor:not-allowed }
     footer{ margin:24px auto 40px; text-align:center; color:var(--muted) } footer a{ color:#79ffee; text-decoration:none }
     .badge{border:1px solid rgba(0,255,240,.25); border-radius:10px; padding:.25rem .5rem; font-size:.8rem; color:var(--muted)}
+    /* Promo kaart */
+    .promo-grid{display:grid; grid-template-columns:110px 1fr; gap:14px; align-items:center}
+    .promo-img{width:100%; border-radius:12px; border:1px solid rgba(255,255,255,.12)}
+    .promo h3{font-size:1.15rem}
   </style>
 </head>
 <body>
   <header class="topbar">
     <div class="brand">
-      <img src="logo.png" alt="The Boyzz"><h1>The Boyzz</h1>
+      <img src="logo.png" alt="The Boyzz"><h1 class="meme" style="font-size:1.1rem">The Boyzz</h1>
     </div>
     <div class="actions">
       <span class="pill" id="netLbl">Mainnet</span>
@@ -55,7 +61,7 @@
     <section class="hero">
       <div class="logo-wrap"><img class="logo" src="../collection.png" alt="The Boyzz by Xyfe" onerror="this.src='logo.png'"/></div>
       <div>
-        <h2 id="t_title">The Boyzz – CBS Holders Mint</h2>
+        <h2 id="t_title" class="meme">The Boyzz – CBS Holders Mint</h2>
         <p id="t_sub" class="muted">Gratis mint voor wallets met ≥ <b>1 CBS</b>. Alleen netwerk- en opslagkosten.</p>
         <div class="statusRow">
           <span id="soldBadge" class="pill warn" style="display:none">Uitverkocht</span>
@@ -92,12 +98,28 @@
 
     <section class="grid" style="margin-top:8px;">
       <div class="card">
-        <h3>🎟️ <span id="t_mint">Mint</span></h3>
+        <h3 class="meme" style="font-size:1.15rem">🎟️ <span id="t_mint">Mint</span></h3>
         <div class="row" id="mintRow">
           <button id="btnMint" class="btn" disabled>Mint NFT</button>
         </div>
         <p class="muted" style="margin-top:8px;" id="t_note">De knop wordt actief als je wallet ≥ 1 CBS heeft. De on-chain guard controleert dit ook.</p>
         <p class="warn" id="soldMsg" style="display:none; margin-top:8px;">Uitverkocht. Er komt snel een nieuwe drop.</p>
+      </div>
+    </section>
+
+    <!-- Promo: Xyfe Lab -->
+    <section class="grid" style="margin-top:8px;">
+      <div class="card promo">
+        <div class="promo-grid">
+          <img class="promo-img" src="../collection.png" alt="The Boyzz by Xyfe" onerror="this.style.display='none'"/>
+          <div>
+            <h3 class="meme">XYFE LAB – STICKERS & ART</h3>
+            <p class="muted">Support de artiest achter <b>The Boyzz</b>! Check zijn stickers, drops en behind‑the‑scenes in de Telegram community.</p>
+            <div class="row">
+              <a class="btn" href="https://t.me/xyfelab" target="_blank" rel="noopener noreferrer">Volg Xyfe op Telegram</a>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -121,8 +143,6 @@
       CBS_MINT: "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk",
       THRESHOLD_UI: 1,  // guard amount = 1 CBS
       RPC: "https://mainnet.helius-rpc.com/?api-key=0eb350f0-a032-468c-8b03-b8b079e09611"
-      // Tip: vervang RPC hier door je Helius endpoint voor betere stabiliteit
-      // RPC: "https://mainnet.helius-rpc.com/?api-key=..."
     };
 
     // Overrides via query params
@@ -299,13 +319,12 @@
         if($("btnMint").disabled) return;
         note(T("minting"));
 
-        // Laad (nogmaals) CM zodat we juiste guard/authority hebben
         cm = cm || await fetchCandyMachine(umi, publicKey(CM_ADDR));
 
         const nftMint = generateSigner(umi);
         const args = {
           candyMachine: publicKey(CM_ADDR),
-          candyGuard: cm.mintAuthority,        // is je Candy Guard PDA
+          candyGuard: cm.mintAuthority,
           nftMint,
           collectionMint: cm.collectionMint,
           collectionUpdateAuthority: cm.authority,
