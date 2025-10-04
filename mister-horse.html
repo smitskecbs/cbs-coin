@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Mister Horse – CBS Holders Only Mint</title>
+  <title>The Boyzz – CBS Holders Mint</title>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <style>
     :root{ --bg1:#0a0c10; --bg2:#0f141b; --card:#0f151c; --card2:#0c1016; --fg:#eafffb; --muted:#a8d6cd; --note:#7ee9dc; --ok:#24e6b5; --warn:#ffad7a; --accent:#6ffff0; --radius:18px; --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10); }
@@ -42,7 +42,7 @@
 <body>
   <header class="topbar">
     <div class="brand">
-      <img src="logo.png" alt="CBS Logo"><h1>CBS Coin</h1>
+      <img src="logo.png" alt="The Boyzz"><h1>The Boyzz</h1>
     </div>
     <div class="actions">
       <span class="pill" id="netLbl">Mainnet</span>
@@ -53,10 +53,10 @@
 
   <div class="container">
     <section class="hero">
-      <div class="logo-wrap"><img class="logo" src="logo.png" alt="Mister Horse"></div>
+      <div class="logo-wrap"><img class="logo" src="../collection.png" alt="The Boyzz by Xyfe" onerror="this.src='logo.png'"/></div>
       <div>
-        <h2 id="t_title">Mister Horse – CBS Holders Only Mint</h2>
-        <p id="t_sub" class="muted">Gratis mint voor wallets met ≥ <b>2.500 CBS</b>. Alleen netwerk- en opslagkosten.</p>
+        <h2 id="t_title">The Boyzz – CBS Holders Mint</h2>
+        <p id="t_sub" class="muted">Gratis mint voor wallets met ≥ <b>1 CBS</b>. Alleen netwerk- en opslagkosten.</p>
         <div class="statusRow">
           <span id="soldBadge" class="pill warn" style="display:none">Uitverkocht</span>
         </div>
@@ -83,7 +83,7 @@
         <h3>📊 <span id="t_drop">Drop</span></h3>
         <p id="cmRow"><b id="t_cm">Candy Machine:</b> <span id="cmLbl" class="mono">—</span> <a id="cmSol" class="mono" target="_blank" rel="noreferrer"></a></p>
         <p><b id="t_minted">Minted:</b> <span id="minted">…</span> / <span id="available">…</span></p>
-        <p><b id="t_price">Prijs:</b> <span id="price">Free (CBS ≥ 2 500)</span></p>
+        <p><b id="t_price">Prijs:</b> <span id="price">Free (CBS ≥ 1)</span></p>
         <div class="row" style="margin-top:8px;">
           <button id="btnRefresh" class="btn secondary">↻ <span id="t_refresh">Verversen</span></button>
         </div>
@@ -96,18 +96,8 @@
         <div class="row" id="mintRow">
           <button id="btnMint" class="btn" disabled>Mint NFT</button>
         </div>
-        <p class="muted" style="margin-top:8px;" id="t_note">De knop wordt actief als je wallet ≥ 2.500 CBS heeft. De on-chain guard controleert dit ook.</p>
+        <p class="muted" style="margin-top:8px;" id="t_note">De knop wordt actief als je wallet ≥ 1 CBS heeft. De on-chain guard controleert dit ook.</p>
         <p class="warn" id="soldMsg" style="display:none; margin-top:8px;">Uitverkocht. Er komt snel een nieuwe drop.</p>
-      </div>
-    </section>
-
-    <!-- Coming soon / Binnenkort -->
-    <section class="grid" id="comingSection" style="margin-top:8px; display:none;">
-      <div class="card">
-        <h3>✨ <span id="t_comingTitle">Binnenkort: nieuwe NFT-collectie</span></h3>
-        <p id="t_comingDesc" class="muted">
-          We werken aan een nieuwe drop (10 stuks) met een andere artiest. Blijf ons volgen voor de datum en mint-link.
-        </p>
       </div>
     </section>
 
@@ -124,14 +114,15 @@
     import { setComputeUnitLimit } from "https://esm.sh/@metaplex-foundation/mpl-toolbox@0.9.1";
     import { PhantomWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-phantom@0.9.25";
     import { Connection, PublicKey } from "https://esm.sh/@solana/web3.js@1.95.3";
-    import { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID } from "https://esm.sh/@solana/spl-token@0.4.3";
 
-    // ---------- Config ----------
+    // ---------- Config (Boyzz / jouw CM) ----------
     const DEFAULTS = {
-      CM: "A7vfGTsyE9xDYJRMvR3nZ2oNntcaB7ZCFtUBpjipQc4F",
+      CM: "D7GAWHtTAo5iyTQAFdSpnDM1r1bDJQdzft2e3NXiTbSf",   // jouw Candy Machine
       CBS_MINT: "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk",
-      THRESHOLD_UI: 2500,
-      RPC: "https://mainnet.helius-rpc.com/?api-key=0053b3c9-a47d-4e7e-b76b-dbdc46f36189"
+      THRESHOLD_UI: 1,  // guard amount = 1 CBS
+      RPC: "https://api.mainnet-beta.solana.com"
+      // Tip: vervang RPC hier door je Helius endpoint voor betere stabiliteit
+      // RPC: "https://mainnet.helius-rpc.com/?api-key=..."
     };
 
     // Overrides via query params
@@ -148,37 +139,33 @@
         connect:"Wallet verbinden",
         connected:(pk)=>`Verbonden: ${pk.slice(0,6)}…${pk.slice(-6)}`,
         needHttps:"(Open deze pagina via HTTPS)",
-        title:"Mister Horse – CBS Holders Only Mint",
-        sub:"Gratis mint voor wallets met ≥ 2.500 CBS. Alleen netwerk- en opslagkosten.",
+        title:"The Boyzz – CBS Holders Mint",
+        sub:"Gratis mint voor wallets met ≥ 1 CBS. Alleen netwerk- en opslagkosten.",
         wallet:"Wallet", balance:"Jouw CBS balans:",
         drop:"Drop", cm:"Candy Machine:", minted:"Minted:", price:"Prijs:",
         refresh:"Verversen", mint:"Mint",
-        note:"De knop wordt actief als je wallet ≥ 2.500 CBS heeft. De on-chain guard controleert dit ook.",
+        note:"De knop wordt actief als je wallet ≥ 1 CBS heeft. De on-chain guard controleert dit ook.",
         okReady:"Je voldoet aan de CBS-eis, je kunt minten ✅",
-        warnNeed:"Je hebt minimaal 2.500 CBS nodig om te minten.",
+        warnNeed:"Je hebt minimaal 1 CBS nodig om te minten.",
         errConnect:"Verbinden mislukt.", errLoad:"Candy Machine laden mislukt.", errMint:"Mint mislukt.",
         minting:"Mint wordt verzonden…", mintedOk:(sig)=>`Mint bevestigd ✅ ${sig}`,
-        soldOut:"Uitverkocht", soldNote:"Uitverkocht. Er komt snel een nieuwe drop.",
-        comingTitle:"Binnenkort: nieuwe NFT-collectie",
-        comingDesc:"We werken aan een nieuwe drop (10 stuks) met een andere artiest. Blijf ons volgen voor de datum en mint-link."
+        soldOut:"Uitverkocht", soldNote:"Uitverkocht. Er komt snel een nieuwe drop."
       },
       en: {
         connect:"Connect Wallet",
         connected:(pk)=>`Connected: ${pk.slice(0,6)}…${pk.slice(-6)}`,
         needHttps:"(Open this page over HTTPS)",
-        title:"Mister Horse – CBS Holders Only Mint",
-        sub:"Free mint for wallets holding ≥ 2,500 CBS. Network/storage fees only.",
+        title:"The Boyzz – CBS Holders Mint",
+        sub:"Free mint for wallets holding ≥ 1 CBS. Network/storage fees only.",
         wallet:"Wallet", balance:"Your CBS balance:",
         drop:"Drop", cm:"Candy Machine:", minted:"Minted:", price:"Price:",
         refresh:"Refresh", mint:"Mint",
-        note:"Button becomes active when your wallet holds ≥ 2,500 CBS. The on-chain guard enforces this too.",
+        note:"Button becomes active when your wallet holds ≥ 1 CBS. The on-chain guard enforces this too.",
         okReady:"CBS requirement met, you can mint ✅",
-        warnNeed:"You need at least 2,500 CBS to mint.",
+        warnNeed:"You need at least 1 CBS to mint.",
         errConnect:"Connection failed.", errLoad:"Failed to load Candy Machine.", errMint:"Mint failed.",
         minting:"Sending mint…", mintedOk:(sig)=>`Mint confirmed ✅ ${sig}`,
-        soldOut:"Sold out", soldNote:"Sold out. New drop coming soon.",
-        comingTitle:"Coming soon: new NFT collection",
-        comingDesc:"We’re collaborating with a new artist for the next 10-piece drop. Date and mint link soon."
+        soldOut:"Sold out", soldNote:"Sold out. New drop coming soon."
       }
     };
     let LANG_CUR = (LANG==="en"?"en":"nl");
@@ -202,11 +189,7 @@
       setTxt("t_price", T("price"));
       setTxt("t_refresh", T("refresh"));
       setTxt("t_mint", T("mint"));
-      setTxt("t_note", T("note"));
-      setTxt("t_comingTitle", T("comingTitle"));
-      setTxt("t_comingDesc", T("comingDesc"));
       $("langSwitch").textContent = LANG_CUR==="nl"?"EN 🇬🇧":"NL 🇳🇱";
-      // Update sold UI texts if visible
       $("soldBadge").textContent = T("soldOut");
       if (SOLD_OUT) {
         setTxt("price", T("soldOut"));
@@ -226,7 +209,6 @@
     $("langSwitch")?.addEventListener("click", ()=>{ LANG_CUR=(LANG_CUR==="nl"?"en":"nl"); applyLang(); });
     applyLang();
 
-    // ---------- Hints ----------
     if (location.protocol!=="https:" && location.hostname!=="localhost") note(T("needHttps"), "warn");
 
     // ---------- Load CM / Stats ----------
@@ -245,7 +227,7 @@
         const avail  = Number(cm.itemsAvailable ?? cm.data?.itemsAvailable ?? cm.itemsLoaded ?? cm.data?.itemsLoaded ?? 0);
         setTxt("minted", fmt(minted));
         setTxt("available", fmt(avail));
-        setTxt("price","Free (CBS ≥ 2 500)");
+        setTxt("price","Free (CBS ≥ 1)");
         setSoldOutUI(avail > 0 && minted >= avail);
         note("");
       }catch(e){ console.error(e); note(T("errLoad"),"warn"); }
@@ -255,24 +237,20 @@
       SOLD_OUT = !!isSold;
       const badge = $("soldBadge");
       const btn = $("btnMint");
-      const mintRow = $("mintRow");
       const noteEl = $("t_note");
       const soldMsg = $("soldMsg");
-      const coming = $("comingSection");
       if (isSold){
         if (badge) badge.style.display = "";
         if (btn){ btn.disabled = true; btn.textContent = LANG_CUR==="nl"?"Uitverkocht":"Sold out"; }
         if (noteEl){ noteEl.style.display = "none"; }
-        if (soldMsg){ soldMsg.style.display = ""; soldMsg.textContent = T("soldNote"); }
-        if (coming){ coming.style.display = ""; }
-        setTxt("price", T("soldOut"));
+        if (soldMsg){ soldMsg.style.display = ""; soldMsg.textContent = I18N[LANG_CUR].soldNote; }
+        setTxt("price", I18N[LANG_CUR].soldOut);
       } else {
         if (badge) badge.style.display = "none";
         if (btn){ btn.disabled = false; btn.textContent = LANG_CUR==="nl"?"Mint NFT":"Mint NFT"; }
         if (noteEl){ noteEl.style.display = ""; }
         if (soldMsg){ soldMsg.style.display = "none"; }
-        if (coming){ coming.style.display = "none"; }
-        setTxt("price","Free (CBS ≥ 2 500)");
+        setTxt("price","Free (CBS ≥ 1)");
       }
     }
 
@@ -280,9 +258,13 @@
     async function connectWallet(){
       try{
         wallet = new PhantomWalletAdapter();
-        await wallet.connect(); if(!wallet.publicKey) throw new Error("Geen publicKey van wallet");
-        umi.use(walletAdapterIdentity(wallet)); connected = true;
-        const pk = wallet.publicKey.toBase58(); setTxt("walletStatus", I18N[LANG_CUR].connected(pk)); note("");
+        await wallet.connect();
+        if(!wallet.publicKey) throw new Error("Geen publicKey van wallet");
+        umi.use(walletAdapterIdentity(wallet));
+        connected = true;
+        const pk = wallet.publicKey.toBase58();
+        setTxt("walletStatus", I18N[LANG_CUR].connected(pk));
+        note("");
         await checkHolderAndToggle();
       }catch(e){ console.error(e); note(T("errConnect"),"warn"); }
     }
@@ -290,7 +272,11 @@
     // ---------- CBS holder check ----------
     async function getCbsUiBalance(ownerPk){
       const res = await connection.getParsedTokenAccountsByOwner(ownerPk, { mint: CBS_MINT });
-      let total = 0; for(const acc of (res.value||[])){ const ui = acc.account?.data?.parsed?.info?.tokenAmount?.uiAmount; total += Number(ui||0); }
+      let total = 0;
+      for(const acc of (res.value||[])){
+        const ui = acc.account?.data?.parsed?.info?.tokenAmount?.uiAmount;
+        total += Number(ui||0);
+      }
       return total;
     }
 
@@ -300,7 +286,6 @@
         const bal = await getCbsUiBalance(wallet.publicKey);
         setTxt("cbsBal", fmt(bal));
         const ok = bal >= THRESHOLD;
-        // Alleen togglen als NIET uitverkocht
         if (!SOLD_OUT) $("btnMint").disabled = !ok;
         note(ok?T("okReady"):T("warnNeed"), ok?"ok":"warn");
       }catch(e){ console.error(e); note(T("errLoad"),"warn"); }
@@ -313,27 +298,34 @@
         await checkHolderAndToggle();
         if($("btnMint").disabled) return;
         note(T("minting"));
+
+        // Laad (nogmaals) CM zodat we juiste guard/authority hebben
+        cm = cm || await fetchCandyMachine(umi, publicKey(CM_ADDR));
+
         const nftMint = generateSigner(umi);
         const args = {
           candyMachine: publicKey(CM_ADDR),
-          candyGuard: cm.mintAuthority,
+          candyGuard: cm.mintAuthority,        // is je Candy Guard PDA
           nftMint,
           collectionMint: cm.collectionMint,
           collectionUpdateAuthority: cm.authority,
           ...(GROUP ? { group: GROUP } : {}),
           mintArgs: { tokenGate: some({ mint: publicKey(DEFAULTS.CBS_MINT) }) }
         };
+
         const tx = transactionBuilder()
           .add(setComputeUnitLimit(umi, { units: 600_000 }))
           .add(mintV2(umi, args));
+
         const resSig = await tx.sendAndConfirm(umi);
         const sig = (typeof resSig === 'string') ? resSig : (resSig?.signature || (Array.isArray(resSig) ? resSig[0] : String(resSig)));
-        note(()=>I18N[LANG_CUR].mintedOk(sig),"ok");
+        note(I18N[LANG_CUR].mintedOk(sig),"ok");
         const href = `https://solscan.io/tx/${sig}`;
         const p = document.createElement('p'); p.className='ok';
         p.innerHTML=`<a target="_blank" rel="noreferrer" href="${href}">Bekijk op Solscan</a>`;
         $("msg").after(p);
-        await refresh(); await checkHolderAndToggle();
+        await refresh();
+        await checkHolderAndToggle();
       }catch(e){ console.error(e); note(T("errMint"),"warn"); }
     }
 
