@@ -2,195 +2,179 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>The Boyzz – Meme Mint</title>
-  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>THE BOYZZ – MEME MINT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
     :root{
-      --bg:#0e0e0e;
-      --paper:#f9edcf;
-      --ink:#101010;
-      --muted:#5b5b5b;
-      --accent:#22e3c2;
-      --btn:#73f3df;
-      --edge:#111;
+      --bg:#0b0e11;
+      --paper:#f5e8c9;
+      --ink:#0d0d0d;
+      --edge:#000000;
+      --mint:#89f6df;
+      --pill:#fff2b7;
+      --ok:#0fbf86;
+      --warn:#ff5a4d;
+      --muted:#3b3f45;
       --radius:16px;
-      --thin:2px;
+      --shadow:0 10px 25px rgba(0,0,0,.25);
     }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
-      margin:0; background:radial-gradient(900px 600px at 110% -10%, rgba(255,255,255,.06), transparent 60%), #0a0a0a;
-      color:var(--ink); -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
-      font-family:Inter,system-ui,Arial,Helvetica,sans-serif;
+      margin:0; background:var(--bg); color:var(--ink);
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,Helvetica,sans-serif;
     }
 
-    .wrap{max-width:1100px; margin:0 auto; padding:18px 12px 32px}
-    .card{
-      background:var(--paper);
-      border:var(--thin) solid var(--edge);
-      border-radius:var(--radius);
-      box-shadow:0 3px 0 rgba(0,0,0,.6);
+    /* ====== LAYOUT ====== */
+    .wrap{max-width:1100px; margin:20px auto 64px; padding:0 14px}
+    .card{background:var(--paper); border-radius:20px; box-shadow:var(--shadow); border:2px solid #111}
+    .row{display:grid; gap:16px}
+    @media (min-width:960px){ .row-2{grid-template-columns:1fr 1fr} }
+
+    /* ====== HEADER ====== */
+    .hero{display:grid; grid-template-columns:88px 1fr auto; align-items:center; gap:14px; padding:14px 16px}
+    .brand-logo{
+      width:88px; height:88px; border-radius:16px; overflow:hidden; background:#111; display:grid; place-items:center;
+      border:2px solid #111;
+    }
+    .brand-logo img{
+      width:100%; height:auto; object-fit:contain;
+      /* voorkom smal/uitrekken op mobiel */
+      aspect-ratio:auto;
+    }
+    .title{
+      font:800 34px/1 "Bangers", cursive; letter-spacing:.5px; margin:0 0 6px;
+      background:linear-gradient(90deg,#7ef1ff,#b88cff,#ffd37a,#7ef1ff);
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+    }
+    .subtitle{margin:0; font-weight:600}
+    .netBadge{
+      font-weight:800; padding:10px 14px; border-radius:999px; background:#fff; border:2px solid #111;
+      box-shadow:inset 0 -6px rgba(0,0,0,.08);
     }
 
-    .hero{ display:flex; gap:16px; align-items:center; padding:18px }
-    .logo{ width:64px; height:64px; border-radius:12px; background:#000 url('collection.png') center/cover no-repeat; border:1px solid #000 }
-    .title{ margin:0; font-family:Bangers,system-ui; font-size:42px; letter-spacing:.4px; line-height:1; }
-
-    /* Regenboog alleen op grote koppen; kleine labels blijven zwart */
-    .rainbow{
-      display:inline-block;               /* voorkomt clippen van laatste letter */
-      padding-right:.12em;                /* mini-marge zodat de laatste glyph niet wordt afgesneden */
-      background:linear-gradient(90deg,#ff5252,#ffbd2f,#22cc88,#40c9ff,#a259ff);
-      background-size:300% 100%;
-      -webkit-background-clip:text; background-clip:text;
-      -webkit-text-fill-color:transparent;
-      animation:rbw 10s linear infinite;
+    /* ====== PANELS ====== */
+    .panel{padding:16px}
+    .h3{
+      font:800 30px/1 "Bangers", cursive; margin:0 0 12px;
+      background:linear-gradient(90deg,#7ef1ff,#b88cff,#ffd37a,#7ef1ff);
+      -webkit-background-clip:text; background-clip:text; color:transparent;
+      letter-spacing:.5px;
     }
-    @keyframes rbw{0%{background-position:0% 50%}100%{background-position:300% 50%}}
 
-    .badge{ margin-left:auto; padding:6px 12px; border:var(--thin) solid var(--edge); border-radius:999px; background:#fff; font-weight:700 }
+    /* ====== CONTROLS ====== */
+    .sel{appearance:none; border:2px solid #111; border-radius:14px; padding:11px 12px; font-weight:700; min-width:150px; background:#fff}
+    .connect{border:0; background:linear-gradient(#9cf7e6,#69e9d1); padding:12px 18px; border-radius:14px; font-weight:900; box-shadow:0 8px 0 #128a74; transform:translateY(0); transition:.08s; border:2px solid #111}
+    .connect:active{transform:translateY(2px); box-shadow:0 6px 0 #128a74}
+    .refresh{border:2px solid #111; background:var(--pill); padding:10px 14px; border-radius:12px; font-weight:900}
+    .pricePill{border:2px solid #111; padding:10px 14px; border-radius:12px; background:#fff; font-weight:900}
 
-    .grid{display:grid; gap:16px; grid-template-columns:repeat(12,1fr)}
-    .span-6{grid-column:span 12}
-    @media(min-width:980px){ .span-6{grid-column:span 6} }
+    .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+    .box{border:2px solid #111; border-radius:16px; padding:10px 12px; background:#fff}
+    .muted{color:var(--muted)} .ok{color:var(--ok)} .warn{color:var(--warn)}
 
-    .sec{ padding:16px }
-    .sec h2{ margin:0 0 12px; font-family:Bangers,system-ui; font-size:28px; letter-spacing:.6px; }
-    .sec h2 .rainbow{ display:inline-block }
+    /* ====== PROGRESS ====== */
+    .bar{width:100%; height:14px; background:#111; border-radius:999px; overflow:hidden; border:2px solid #111}
+    .bar .fill{height:100%; width:0%; background:repeating-linear-gradient(90deg,#b88cff 0 10px,#ffd37a 10px 20px,#7ef1ff 20px 30px); transition:width .35s ease}
 
-    .row{ display:flex; flex-wrap:wrap; gap:10px; align-items:center }
+    /* ====== MINT BUTTON ====== */
+    .mintBtn{display:inline-flex; align-items:center; gap:10px; border:2px solid #111; background:linear-gradient(#9cf7e6,#69e9d1); padding:14px 20px; border-radius:16px; font-weight:900; box-shadow:0 10px 0 #128a74; transform:translateY(0); transition:.08s}
+    .mintBtn:active{transform:translateY(2px); box-shadow:0 8px 0 #128a74}
+    .mintBtn:disabled{opacity:.55; cursor:not-allowed; box-shadow:none; transform:none}
 
-    .select, .mono{
-      padding:10px 12px; border:var(--thin) solid var(--edge); border-radius:12px; background:#fff;
-      font-family:Inter,system-ui; font-size:14px; color:var(--ink);
-    }
-    .mono{ font-family:ui-monospace,Menlo,Monaco,Consolas,monospace; word-break:break-word; overflow-wrap:anywhere }
+    /* ====== FOOTER / XYFE ====== */
+    .xyfe{display:grid; grid-template-columns:72px 1fr auto; gap:14px; align-items:center; padding:16px}
+    .xyfe .logo{width:72px; height:72px; border-radius:12px; overflow:hidden; border:2px solid #111; display:grid; place-items:center; background:#111}
+    .xyfe .logo img{width:100%; height:auto; object-fit:contain}
+    .tgBtn{border:2px solid #111; padding:12px 16px; border-radius:12px; background:#fff; font-weight:900}
 
-    .btn{
-      display:inline-flex; align-items:center; justify-content:center; gap:.6rem;
-      padding:12px 18px; border:var(--thin) solid var(--edge); border-radius:12px;
-      background:linear-gradient(180deg,var(--btn),#49e7cf);
-      font-weight:800; color:#083833; cursor:pointer;
-      box-shadow:0 4px 0 rgba(0,0,0,.7);
-      transition:transform .05s ease;
-    }
-    .btn:active{ transform:translateY(1px) }
-    .btn.secondary{ background:#fff }
-    .btn:disabled{ opacity:.55; cursor:not-allowed }
-
-    .muted{color:var(--muted)}
-    .ok{color:#0e9e73}
-    .warn{color:#d9483b}
-
-    .bar{ height:14px; border:var(--thin) solid var(--edge); border-radius:999px; background:#111; overflow:hidden }
-    .bar>i{ display:block; height:100%; background:#49e7cf; width:0% }
-
-    .label{ font-weight:700; color:#111 }
-
-    footer{ margin-top:18px; text-align:center; color:#9aa; }
-    footer a{ color:#79ffee; text-decoration:none }
-
-    @media(max-width:520px){
-      .title{ font-size:36px }
-      .hero{ padding:14px }
-      .sec{ padding:14px }
-      .mono{ font-size:13px }
+    /* mobile tighten */
+    @media (max-width:520px){
+      .hero{grid-template-columns:64px 1fr auto}
+      .brand-logo{width:64px; height:64px}
+      .title{font-size:28px}
+      .xyfe{grid-template-columns:56px 1fr auto}
+      .xyfe .logo{width:56px; height:56px}
     }
   </style>
 </head>
 <body>
   <div class="wrap">
-
-    <!-- HERO -->
+    <!-- Header -->
     <section class="card hero">
-      <div class="logo" aria-hidden="true"></div>
-      <div>
-        <h1 class="title"><span class="rainbow">THE BOYZZ – MEME MINT</span></h1>
-        <p class="muted" style="margin:.25rem 0 0">
-          Free mint for wallets holding <b class="label">&ge; 1 CBS</b>. You only pay network/storage fees. On-chain guard enforces the CBS check.
-        </p>
+      <div class="brand-logo">
+        <!-- voorkom vervormen: img houdt z’n verhouding -->
+        <img src="collection.png" alt="THE BOYZZ">
       </div>
-      <div class="badge">Mainnet</div>
+      <div>
+        <h1 class="title">THE BOYZZ – MEME MINT</h1>
+        <p class="subtitle">Free mint for wallets holding <b class="ok">≥ 1 CBS</b>. You only pay network/storage fees. On-chain guard enforces the CBS check.</p>
+      </div>
+      <div><span class="netBadge">Mainnet</span></div>
     </section>
 
-    <!-- WALLET + DROP -->
-    <section class="grid" style="margin-top:12px">
-      <!-- WALLET -->
-      <div class="card span-6 sec">
-        <h2><span class="rainbow">Wallet</span></h2>
-
-        <div class="row">
-          <select id="walletSelect" class="select" aria-label="Wallet">
+    <!-- Wallet & Drop -->
+    <section class="row row-2" style="margin-top:16px">
+      <div class="card panel">
+        <h2 class="h3">WALLET</h2>
+        <div class="row" style="grid-template-columns:160px 1fr; align-items:center">
+          <select id="walletSelect" class="sel">
             <option value="auto" selected>Auto detect</option>
             <option value="phantom">Phantom</option>
           </select>
+          <button id="btnConnect" class="connect">CONNECT</button>
+        </div>
+        <p id="walletInfo" class="muted" style="margin:10px 0 8px">–</p>
 
-          <button id="btnConnect" class="btn">CONNECT</button>
+        <div class="box mono" style="margin-top:6px">
+          <span style="font-weight:800; letter-spacing:.3px">CBS Mint</span>
+          <span id="cbsMint" style="margin-left:8px">B9z8cEWFmc7LvQtjKSaLoKwW5MJmGRCWqs1DPKupCfkk</span>
         </div>
 
-        <p id="walletInfo" class="muted" style="margin:.6rem 0 0">–</p>
-
-        <div style="margin-top:10px">
-          <div class="label" style="margin-bottom:6px">CBS Mint</div>
-          <div id="cbsMint" class="mono">B9z8cEWFmc7LvQtjKSaLoKwW5MJmGRCWqs1DPKupCfkk</div>
-        </div>
-
-        <div style="margin-top:12px">
-          <span class="label">Your CBS balance:</span> <span id="cbsBal">–</span> <span class="muted">CBS</span>
-        </div>
-
-        <p id="msg" class="muted" style="margin-top:6px"></p>
+        <p style="margin:12px 0 6px;"><b>Your CBS balance:</b> <span id="cbsBal" class="mono">0</span> CBS</p>
+        <p id="msg" class="warn" style="margin:6px 0 0">You need at least 1 CBS to mint.</p>
       </div>
 
-      <!-- DROP -->
-      <div class="card span-6 sec">
-        <h2><span class="rainbow">Drop stats</span></h2>
+      <div class="card panel">
+        <h2 class="h3">DROP STATS</h2>
+        <div class="box mono" style="margin-bottom:10px">
+          <b>Candy Machine:</b> <span id="cmLbl">–</span>
+        </div>
 
-        <p class="mono" style="margin:.2rem 0 .6rem">
-          <span class="label">Candy Machine:</span>
-          <span id="cmLbl" style="word-break:break-word">–</span>
-        </p>
+        <div class="bar" aria-label="Mint progress"><div id="barFill" class="fill"></div></div>
 
-        <div class="bar" aria-label="Mint progress"><i id="barFill"></i></div>
-
-        <div class="row" style="margin-top:10px">
-          <button id="btnRefresh" class="btn secondary">REFRESH</button>
-          <div class="select" style="font-weight:700">Price: <span id="price">FREE (≥ 1 CBS)</span></div>
+        <div class="row" style="grid-template-columns:160px 1fr; margin-top:12px">
+          <button id="btnRefresh" class="refresh">REFRESH</button>
+          <div class="pricePill">Price: <span id="price">FREE (≥ 1 CBS)</span></div>
         </div>
       </div>
     </section>
 
-    <!-- MINT -->
-    <section class="card sec" style="margin-top:12px">
-      <h2><span class="rainbow">Mint now</span></h2>
-      <p class="muted" style="margin-top:0">
-        Button enables when your wallet holds <b class="label">&ge; 1 CBS</b>. Guard enforces this on-chain.
-      </p>
-      <div class="row" style="margin-top:6px">
-        <button id="btnMint" class="btn" disabled>
-          <span>🚀</span> MINT
+    <!-- Mint -->
+    <section class="card panel" style="margin-top:16px">
+      <h2 class="h3">MINT NOW</h2>
+      <p class="muted" style="margin-top:4px">Button enables when your wallet holds <b>≥ 1 CBS</b>. Guard enforces this on-chain.</p>
+      <div style="margin-top:14px">
+        <button id="btnMint" class="mintBtn" disabled>
+          <span style="font-size:20px">🚀</span> MINT
         </button>
       </div>
     </section>
 
-    <!-- ARTIST -->
-    <section class="card sec" style="margin-top:12px; display:flex; gap:14px; align-items:center; flex-wrap:wrap">
-      <div class="logo" aria-hidden="true" style="width:56px;height:56px"></div>
-      <div style="flex:1">
-        <h3 class="title" style="font-size:28px; margin:0 0 4px"><span class="rainbow">XYFE LAB – Stickers & Art</span></h3>
+    <!-- XYFE LAB -->
+    <section class="card xyfe" style="margin-top:16px">
+      <div class="logo"><img src="collection.png" alt="BOYZZ"></div>
+      <div>
+        <h3 class="h3" style="margin:0 0 6px; font-size:28px">XYFE LAB – STICKERS & ART</h3>
         <p class="muted" style="margin:0">Collab artist for this drop. Follow for sticker drops & new pieces.</p>
       </div>
-      <a class="btn secondary" href="https://t.me/xyfelab" target="_blank" rel="noreferrer" style="font-weight:900">Join TG: @xyfelab</a>
+      <a class="tgBtn" target="_blank" rel="noreferrer" href="https://t.me/xyfelab">Join TG: @xyfelab</a>
     </section>
-
-    <footer style="opacity:.85">Need help? <a href="mailto:cbs.coin12@gmail.com">cbs.coin12@gmail.com</a></footer>
   </div>
 
-  <!-- ==================== SCRIPT ==================== -->
+  <!-- ====== SCRIPT ====== -->
   <script type="module">
-    // Libs
     import { Connection, PublicKey } from "https://esm.sh/@solana/web3.js@1.95.3";
     import { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from "https://esm.sh/@solana/spl-token@0.4.3";
 
@@ -212,43 +196,41 @@
 
     const qs = new URLSearchParams(location.search);
     const CM_ADDR = (qs.get("cm") || DEFAULTS.CM).trim();
-    const RPC_URL = qs.get("rpc") || DEFAULTS.RPC;
+    const RPC_URL = (qs.get("rpc") || DEFAULTS.RPC).trim();
+    const CBS_MINT = (qs.get("cbs") || DEFAULTS.CBS_MINT).trim();
+    const DEBUG = qs.get("debug") === "1";
 
-    // ---------- Helpers ----------
     const $ = id => document.getElementById(id);
+    const set = (id,txt)=>{ const el=$(id); if(el) el.textContent = txt; };
+    const log = (...a)=>{ if(DEBUG) console.log("[DEBUG]",...a); };
     const note = (msg, cls="muted") => { const el=$("msg"); if(!el) return; el.textContent = msg || ""; el.className = cls; };
     const fmt = n => Number(n ?? 0).toLocaleString("en-US");
 
-    // ---------- Chain clients ----------
+    set("cmLbl", CM_ADDR);
+    set("cbsMint", CBS_MINT);
+
     const connection = new Connection(RPC_URL, "confirmed");
     const umi = createUmi(RPC_URL).use(mplCandyMachine()).use(mplTokenMetadata());
 
-    // State
     let wallet, connected=false, cm, SOLD=false;
 
-    // UI init
-    $("cmLbl").textContent = CM_ADDR;
-
-    // ---------- Load CM ----------
     async function refresh(){
       try{
         cm = await fetchCandyMachine(umi, publicKey(CM_ADDR));
         const minted = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
         const avail  = Number(cm.itemsAvailable ?? cm.data?.itemsAvailable ?? cm.itemsLoaded ?? 0);
-        const pct = (avail>0)? Math.min(100, Math.round(100*minted/avail)) : 0;
+        const pct = (avail>0) ? Math.min(100, Math.round(100*minted/avail)) : 0;
         $("barFill").style.width = pct + "%";
         SOLD = avail>0 && minted>=avail;
-        $("price").textContent = SOLD ? "SOLD OUT" : "FREE (≥ 1 CBS)";
+        set("price", SOLD ? "SOLD OUT" : "FREE (≥ 1 CBS)");
       }catch(e){
         console.error(e);
-        $("cmLbl").textContent = "–";
-        note("Candy Machine load failed.","warn");
+        set("cmLbl","–"); note("Candy Machine load failed.","warn");
       }
     }
 
-    // ---------- Wallet connect ----------
     function providerFromSelect(){
-      const sel = $("walletSelect").value;
+      const sel = $("walletSelect")?.value || "auto";
       if (sel==="phantom" && window?.phantom?.solana) return "phantom";
       if (sel==="auto"){
         if (window?.phantom?.solana) return "phantom";
@@ -259,49 +241,48 @@
     async function connectWallet(){
       try{
         const which = providerFromSelect();
-        if (which!=="phantom") throw new Error("Please install Phantom (or pick Phantom in the selector).");
-
+        if (which!=="phantom") throw new Error("Please install/open Phantom.");
         wallet = new PhantomWalletAdapter();
         await wallet.connect(); if(!wallet.publicKey) throw new Error("No wallet public key");
         umi.use(walletAdapterIdentity(wallet)); connected = true;
-
         const pk = wallet.publicKey.toBase58();
-        $("walletInfo").textContent = `Connected: ${pk.slice(0,6)}…${pk.slice(-6)}`;
+        set("walletInfo", `Connected: ${pk.slice(0,6)}…${pk.slice(-6)}`);
         await checkHolderAndToggle();
       }catch(e){ console.error(e); note(e.message || "Connection failed.","warn"); }
     }
 
-    // ---------- CBS BALANCE (ATA -> fallback scan; SPL + Token-2022) ----------
-    async function getAtaUi(mintStr, owner, programId){
+    async function getAtaUi(mintPk, owner, programId){
       try{
-        const ata = getAssociatedTokenAddressSync(new PublicKey(mintStr), owner, false, programId);
-        const { value } = await connection.getTokenAccountBalance(ata);
-        return Number(value?.uiAmount || 0);
+        const ata = getAssociatedTokenAddressSync(mintPk, owner, false, programId);
+        const r = await connection.getTokenAccountBalance(ata);
+        const ui = Number(r?.value?.uiAmount || 0);
+        log("ATA", programId.toBase58?.() || "prog", ata.toBase58?.(), "ui:", ui);
+        return ui;
       }catch(_){ return 0; }
     }
 
     async function getCbsUiBalance(ownerPk){
       const owner = new PublicKey(ownerPk);
-      const mint  = DEFAULTS.CBS_MINT;
-
-      // 1) Snelpad: check de 2 mogelijke ATA's
+      const mintPk = new PublicKey(CBS_MINT);
       let total = 0;
-      total += await getAtaUi(mint, owner, TOKEN_PROGRAM_ID);
-      total += await getAtaUi(mint, owner, TOKEN_2022_PROGRAM_ID);
-      if (total > 0) return total;
 
-      // 2) Fallback: scan alle tokenaccounts onder beide programma's
-      const [classic, t22] = await Promise.all([
-        connection.getParsedTokenAccountsByOwner(owner, { programId: TOKEN_PROGRAM_ID }),
-        connection.getParsedTokenAccountsByOwner(owner, { programId: TOKEN_2022_PROGRAM_ID }).catch(()=>({value:[]}))
-      ]);
-      for (const it of [...(classic.value||[]), ...(t22.value||[])]){
-        try{
-          const info = it?.account?.data?.parsed?.info;
-          if (info?.mint === mint){
-            total += Number(info?.tokenAmount?.uiAmount || 0);
-          }
-        }catch(_){}
+      // Snel: beide ATA's (SPL + Token-2022)
+      for (const prog of [TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID]){
+        total += await getAtaUi(mintPk, owner, prog);
+      }
+      if (total>0) return total;
+
+      // Fallback: scan alle tokenaccounts onder beide programma's
+      for (const prog of [TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID]){
+        const res = await connection.getParsedTokenAccountsByOwner(owner, { programId: prog }).catch(()=>({value:[]}));
+        for (const it of (res?.value || [])){
+          try{
+            const info = it.account?.data?.parsed?.info;
+            if (info?.mint === CBS_MINT){
+              total += Number(info?.tokenAmount?.uiAmount || 0);
+            }
+          }catch(_){}
+        }
       }
       return total;
     }
@@ -310,14 +291,13 @@
       if(!connected) return;
       try{
         const bal = await getCbsUiBalance(wallet.publicKey);
-        $("cbsBal").textContent = fmt(bal);
+        set("cbsBal", fmt(bal));
         const ok = bal >= DEFAULTS.THRESHOLD;
         if (!SOLD) $("btnMint").disabled = !ok;
         note(ok ? "CBS OK, you can mint ✅" : "You need at least 1 CBS to mint.", ok?"ok":"warn");
       }catch(e){ console.error(e); note("Could not load CBS balance.","warn"); }
     }
 
-    // ---------- MINT ----------
     async function doMint(){
       try{
         if(!connected || SOLD) return;
@@ -325,8 +305,7 @@
         if ($("btnMint").disabled) return;
 
         note("Sending mint…","muted");
-
-        // Verse blockhash voorkomt 'blockhash not found'
+        // Simulatie-fix: dwing verse blockhash op RPC-laag
         await umi.rpc.getLatestBlockhash({ commitment: "processed" });
 
         const nftMint = generateSigner(umi);
@@ -336,7 +315,7 @@
           nftMint,
           collectionMint: cm.collectionMint,
           collectionUpdateAuthority: cm.authority,
-          mintArgs: { tokenGate: some({ mint: publicKey(DEFAULTS.CBS_MINT) }) }
+          mintArgs: { tokenGate: some({ mint: publicKey(CBS_MINT) }) }
         };
 
         const tx = transactionBuilder()
@@ -345,14 +324,11 @@
 
         const sig = await tx.sendAndConfirm(umi);
         const s = Array.isArray(sig) ? sig[0] : (sig?.signature || sig);
-
         note("Mint confirmed ✅","ok");
         const a=document.createElement("a");
-        a.href = `https://solscan.io/tx/${s}`; a.target="_blank"; a.rel="noreferrer";
-        a.textContent="View on Solscan";
+        a.href = `https://solscan.io/tx/${s}`; a.target="_blank"; a.rel="noreferrer"; a.textContent="View on Solscan";
         const p=document.createElement("p"); p.className="ok"; p.appendChild(a);
         $("msg").after(p);
-
         await refresh(); await checkHolderAndToggle();
       }catch(e){
         console.error(e);
@@ -361,13 +337,12 @@
       }
     }
 
-    // ---------- Wire up ----------
     $("btnConnect").addEventListener("click", connectWallet);
     $("btnRefresh").addEventListener("click", async ()=>{ await refresh(); if(connected) await checkHolderAndToggle(); });
     $("btnMint").addEventListener("click", doMint);
 
-    // Initial
     await refresh();
   </script>
 </body>
 </html>
+
