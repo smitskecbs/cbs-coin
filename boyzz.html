@@ -30,6 +30,7 @@
     .brand{display:flex;align-items:center;gap:10px}
     .brand img{width:60px;height:60px;border-radius:14px;box-shadow:0 8px 0 #000, 0 0 0 3px #000}
     .brand h1{margin:0;color:#fffdf5;text-shadow:0 4px 0 #000;font: 42px/1 'Bangers', cursive;letter-spacing:1px}
+    .pill{display:inline-block;border-radius:999px;border:3px solid #000;background:#fff;padding:.35rem .7rem;font-weight:800}
 
     .grid{display:grid;gap:16px;grid-template-columns:repeat(12,1fr)}
     .card{grid-column:span 12;background:#fffdf5;border-radius:22px;padding:18px;box-shadow:var(--shadow)}
@@ -37,7 +38,6 @@
 
     h2,h3{margin:.1rem 0 .6rem;font: 34px/1 'Bangers', cursive;letter-spacing:1px}
     .muted{color:#333;font-weight:500}
-    .pill{display:inline-block;border-radius:999px;border:3px solid #000;background:#fff;padding:.35rem .7rem;font-weight:800}
     .btn{display:inline-flex;align-items:center;justify-content:center;min-width:170px;padding:14px 20px;border-radius:16px;border:3px solid #000;
          background:linear-gradient(180deg,#8dffe9,#58f3e9); box-shadow:var(--shadow); font:900 24px/1.1 'Bangers', cursive; cursor:pointer}
     .btn.secondary{background:linear-gradient(180deg,#ffe67c,#ffd857)}
@@ -84,7 +84,6 @@
             <option value="auto">Auto detect</option>
             <option value="phantom">Phantom</option>
             <option value="solflare">Solflare</option>
-            <option value="backpack">Backpack</option>
           </select>
           <button id="btnConnect" class="btn">CONNECT</button>
         </div>
@@ -95,7 +94,7 @@
         </div>
 
         <p style="margin:.6rem 0 0"><b>Your CBS balance:</b> <span id="cbsBal">—</span> CBS</p>
-        <p id="msg" class="muted" style="margin:.2rem 0 0"> </p>
+        <p id="msg" class="muted" style="margin:.2rem 0 0"></p>
 
         <div id="mobileLinks" class="links" style="margin-top:10px;display:none">
           <a id="openPhantom" class="pill" href="#" target="_blank" rel="noreferrer">Open in Phantom App</a>
@@ -140,25 +139,27 @@
     import { mplCandyMachine, fetchCandyMachine, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.2.0";
     import { setComputeUnitLimit } from "https://esm.sh/@metaplex-foundation/mpl-toolbox@0.9.1";
-    import { PhantomWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-phantom@0.9.25";
-    import { SolflareWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-solflare@0.6.28";
-    import { BackpackWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-backpack@0.3.7";
-    import { Connection, PublicKey } from "https://esm.sh/@solana/web3.js@1.95.3";
+
+    // ✅ Alleen Phantom & Solflare
+    import { PhantomWalletAdapter }   from "https://esm.sh/@solana/wallet-adapter-phantom@0.9.25";
+    import { SolflareWalletAdapter }  from "https://esm.sh/@solana/wallet-adapter-solflare@0.6.28";
+    import { Connection, PublicKey }  from "https://esm.sh/@solana/web3.js@1.95.3";
 
     // ===== Config =====
     const DEFAULTS = {
-      CM: "D7GAWHtTAo5iyTQAFdSpnDM1r1bDJQdzft2e3NXiTbSf", // override with ?cm=<pubkey> if needed
+      // jouw CM
+      CM: "D7GAWHtTAo5iyTQAFdSpnDM1r1bDJQdzft2e3NXiTbSf",
       CBS_MINT: "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk",
       THRESHOLD_UI: 1,
-      // Helius API key you gave for Boyzz (public here is fine; rotate later if needed)
+      // Helius key (Boyzz)
       RPC: "https://mainnet.helius-rpc.com/?api-key=0eb350f0-a032-468c-8b03-b8b079e09611"
     };
 
     // Query overrides
     const qs = new URLSearchParams(location.search);
-    const CM_ADDR = qs.get("cm") || DEFAULTS.CM;
+    const CM_ADDR = qs.get("cm")  || DEFAULTS.CM;
     const RPC_URL = qs.get("rpc") || DEFAULTS.RPC;
-    const GROUP = qs.get("group"); // optional guard group label
+    const GROUP   = qs.get("group"); // optional guard group label
 
     // ===== Helpers =====
     const $ = (id)=>document.getElementById(id);
@@ -191,12 +192,10 @@
     function makeAdapter(kind="auto"){
       if(kind==="phantom") return new PhantomWalletAdapter();
       if(kind==="solflare") return new SolflareWalletAdapter();
-      if(kind==="backpack") return new BackpackWalletAdapter();
       // auto-detect
       if (window.phantom?.solana?.isPhantom) return new PhantomWalletAdapter();
-      if (window.solflare?.isSolflare) return new SolflareWalletAdapter();
-      if (window.backpack?.solana?.isBackpack) return new BackpackWalletAdapter();
-      // fallback: phantom adapter (will show install)
+      if (window.solflare?.isSolflare)       return new SolflareWalletAdapter();
+      // fallback
       return new PhantomWalletAdapter();
     }
 
@@ -327,6 +326,7 @@
 
     // Init
     $("netLbl").textContent = "Mainnet";
+    setTxt("cmLbl", CM_ADDR);
     await refresh();
   </script>
 </body>
