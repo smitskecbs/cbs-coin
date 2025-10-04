@@ -93,7 +93,6 @@
     .promo .cta{ font-size:18px }
     .promo .go{ padding:10px 18px; border-radius:18px; border:4px solid var(--frame); background:linear-gradient(180deg, #ffe381, #ffd54d); font-weight:900; box-shadow:0 8px 0 #000, 0 0 0 4px #000 inset; }
 
-    /* Small tweaks */
     .kv{ font-weight:900 }
     .kv b{ font-family:'Bangers', cursive; letter-spacing:1px; font-size:22px }
 
@@ -195,7 +194,7 @@
 
   <!-- ======= JS / Chain ======= -->
   <script type="module">
-    // --- Imports (ESM) ---
+    // ---------- Imports ----------
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
     import { publicKey, generateSigner, transactionBuilder, some } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
@@ -205,8 +204,9 @@
     import { PhantomWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-phantom@0.9.25";
     import { BackpackWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-backpack@0.1.7";
     import { Connection, PublicKey } from "https://esm.sh/@solana/web3.js@1.95.3";
+    import { TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID } from "https://esm.sh/@solana/spl-token@0.4.3";
 
-    // --- Config ---
+    // ---------- Config ----------
     const DEFAULTS = {
       CM:  "D7GAWHtTAo5iyTQAFdSpnDM1r1bDJQdzft2e3NXiTbSf",
       CBS_MINT: "B9z8cEWFmc7LvQtjKSaLoKwW5MJmGRCWqs1DPKupCfkk",
@@ -214,20 +214,12 @@
       RPC: "https://mainnet.helius-rpc.com/?api-key=0eb350f0-a032-468c-8b03-b8b079e09611"
     };
 
-    // --- Query params overrides ---
+    // ---------- Query params ----------
     const qs = new URLSearchParams(location.search);
     const CM_ADDR = qs.get("cm") || DEFAULTS.CM;
     const RPC_URL = qs.get("rpc") || DEFAULTS.RPC;
     const DEBUG = qs.get("debug") === "1";
 
-    // --- Base58 sanity for CM ---
-    const isBase58 = (s)=> /^[1-9A-HJ-NP-Za-km-z]+$/.test(s||"");
-    if(!isBase58(CM_ADDR)){
-      document.getElementById("msg").textContent = "CM address looks invalid (not base58).";
-      document.getElementById("msg").className = "note warn";
-    }
-
-    // --- Chain setup ---
     const connection = new Connection(RPC_URL, "confirmed");
     const umi = createUmi(RPC_URL).use(mplCandyMachine()).use(mplTokenMetadata());
 
@@ -236,7 +228,6 @@
     const CBS_MINT = new PublicKey(DEFAULTS.CBS_MINT);
     const THRESHOLD = Number(DEFAULTS.THRESHOLD || 1);
 
-    // --- Helpers ---
     const $ = (id)=>document.getElementById(id);
     const setTxt = (id,v)=>{ const el=$(id); if(el) el.textContent=v; };
     const fmt = (n)=> Number(n||0).toLocaleString("en-US");
@@ -247,21 +238,14 @@
       $("btnMint").disabled = isSold || !connected;
     }
 
-    // --- Wallet detection (Phantom / Backpack) ---
     function getAdapter(which){
-      if(which==="backpack"){
-        const a = new BackpackWalletAdapter();
-        return a;
-      }
-      // default Phantom
-      const p = new PhantomWalletAdapter();
-      return p;
+      if(which==="backpack") return new BackpackWalletAdapter();
+      return new PhantomWalletAdapter();
     }
     function pickAdapter(){
       const sel = $("walletSel").value;
       if(sel==="phantom") return getAdapter("phantom");
       if(sel==="backpack") return getAdapter("backpack");
-      // Auto
       if (window.backpack?.solana?.isBackpack) return getAdapter("backpack");
       return getAdapter("phantom");
     }
@@ -282,7 +266,7 @@
       }
     }
 
-    // --- Stats / CM ---
+    // ---------- Stats / CM ----------
     async function refresh(){
       try{
         setTxt("cmLbl",""); setTxt("minted","0"); setTxt("available","0"); $("bar").style.width = "0%";
@@ -304,13 +288,23 @@
       }
     }
 
-    // --- CBS Holder check ---
+    // ---------- BETERE CBS-HOLDER CHECK ----------
+    // Haal alle token-accounts op voor zowel SPL (klassiek) als Token-2022
+    // en filter daarna lokaal op de CBS mint. Dit omzeilt de mint-filter bug.
     async function getCbsUiBalance(ownerPk){
-      const res = await connection.getParsedTokenAccountsByOwner(ownerPk, { mint: CBS_MINT });
+      const [classic, t22] = await Promise.all([
+        connection.getParsedTokenAccountsByOwner(ownerPk, { programId: TOKEN_PROGRAM_ID }),
+        connection.getParsedTokenAccountsByOwner(ownerPk, { programId: TOKEN_2022_PROGRAM_ID }).catch(()=>({value:[]}))
+      ]);
+      const want = CBS_MINT.toBase58();
+      const all = [...(classic.value||[]), ...(t22.value||[])];
       let total = 0;
-      for(const acc of res.value||[]){
-        const ui = acc.account?.data?.parsed?.info?.tokenAmount?.uiAmount;
-        total += Number(ui||0);
+      for (const acc of all){
+        const info = acc?.account?.data?.parsed?.info;
+        if (!info) continue;
+        if (info.mint === want){
+          total += Number(info?.tokenAmount?.uiAmount || 0);
+        }
       }
       return total;
     }
@@ -318,7 +312,8 @@
     async function checkHolderAndToggle(){
       if(!connected) return;
       try{
-        const bal = await getCbsUiBalance(new PublicKey(wallet.publicKey.toBase58()));
+        const owner = new PublicKey(wallet.publicKey.toBase58());
+        const bal = await getCbsUiBalance(owner);
         setTxt("cbsBal", fmt(bal));
         const ok = bal >= THRESHOLD;
         if (!SOLD_OUT) $("btnMint").disabled = !ok;
@@ -331,14 +326,14 @@
       }
     }
 
-    // --- Mint ---
+    // ---------- Mint ----------
     async function doMint(){
       try{
         if(!connected || SOLD_OUT) return;
         $("mintMsg").textContent = "Sending mint...";
         const nftMint = generateSigner(umi);
 
-        // Get a fresh blockhash (avoid “blockhash not found” on slow confirms)
+        // Frisse blockhash voorkomt 'blockhash not found'
         await connection.getLatestBlockhash("finalized");
 
         const args = {
@@ -372,7 +367,7 @@
       }
     }
 
-    // --- Wire up ---
+    // ---------- Wire up ----------
     $("btnConnect").addEventListener("click", connectWallet);
     $("btnRefresh").addEventListener("click", async ()=>{ await refresh(); if(connected) await checkHolderAndToggle(); });
     $("btnMint").addEventListener("click", doMint);
