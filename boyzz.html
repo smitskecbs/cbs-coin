@@ -4,13 +4,16 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>The Boyzz – CBS Holders Mint</title>
-  <!-- Fonts: meme-stijl (Anton/Bangers) + Orbitron voor body -->
+  <!-- Meme fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Anton:wght@400&family=Bangers&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    :root{ --bg1:#0a0c10; --bg2:#0f141b; --card:#0f151c; --card2:#0c1016; --fg:#eafffb; --muted:#a8d6cd; --note:#7ee9dc; --ok:#24e6b5; --warn:#ffad7a; --accent:#6ffff0; --radius:18px; --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10); }
+    :root{ --bg1:#0a0c10; --bg2:#0f141b; --card:#0f151c; --card2:#0c1016; --fg:#eafffb; --muted:#a8d6cd; --ok:#24e6b5; --warn:#ffad7a; --radius:18px; --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10); }
     *{box-sizing:border-box} html,body{height:100%}
     body{ margin:0; font-family:'Orbitron',sans-serif; color:var(--fg);
-      background: radial-gradient(900px 600px at 100% -10%, rgba(0,255,230,.10), transparent 60%), radial-gradient(700px 500px at -10% 110%, rgba(0,170,255,.09), transparent 60%), linear-gradient(135deg,var(--bg1),var(--bg2)); -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+      background: radial-gradient(900px 600px at 100% -10%, rgba(0,255,230,.10), transparent 60%),
+                  radial-gradient(700px 500px at -10% 110%, rgba(0,170,255,.09), transparent 60%),
+                  linear-gradient(135deg,var(--bg1),var(--bg2));
+      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
     .topbar{position:sticky; top:0; z-index:20; display:flex; align-items:center; justify-content:space-between; gap:.75rem; padding:.8rem 1rem; backdrop-filter:blur(6px); background:linear-gradient(180deg, rgba(0,0,0,.45), rgba(0,0,0,0)); border-bottom:1px solid rgba(0,255,240,.08);}
     .brand{display:flex; align-items:center; gap:.7rem}
     .brand img{width:38px; height:38px; border-radius:10px; filter:drop-shadow(0 0 10px rgba(0,255,230,.35))}
@@ -24,7 +27,6 @@
     .hero .logo-wrap{ position:relative; width:120px; height:120px; border-radius:16px; overflow:hidden; background:radial-gradient(closest-side, rgba(0,255,230,.18), rgba(0,255,230,.04) 58%, transparent 62%); display:grid; place-items:center; }
     .hero .logo{ width:86%; height:86%; object-fit:contain }
     .hero h2{ margin:.15rem 0 0; color:#fff; font-size:1.25rem; font-weight:700 }
-    /* Meme caption-stijl */
     .meme{ font-family:'Anton', Impact, Haettenschweiler, 'Arial Black', sans-serif; text-transform:uppercase; letter-spacing:.5px; color:#fff; text-shadow: 2px 2px 0 #000, -2px 2px 0 #000, 2px -2px 0 #000, -2px -2px 0 #000, 0 2px 0 #000, 2px 0 0 #000, 0 -2px 0 #000, -2px 0 0 #000; }
     .statusRow{ display:flex; gap:8px; align-items:center; margin-top:8px }
     .grid{ display:grid; gap:16px; grid-template-columns:repeat(12,1fr) }
@@ -39,10 +41,8 @@
     .btn:disabled{ opacity:.55; cursor:not-allowed }
     footer{ margin:24px auto 40px; text-align:center; color:var(--muted) } footer a{ color:#79ffee; text-decoration:none }
     .badge{border:1px solid rgba(0,255,240,.25); border-radius:10px; padding:.25rem .5rem; font-size:.8rem; color:var(--muted)}
-    /* Promo kaart */
     .promo-grid{display:grid; grid-template-columns:110px 1fr; gap:14px; align-items:center}
     .promo-img{width:100%; border-radius:12px; border:1px solid rgba(255,255,255,.12)}
-    .promo h3{font-size:1.15rem}
   </style>
 </head>
 <body>
@@ -114,7 +114,7 @@
           <img class="promo-img" src="../collection.png" alt="The Boyzz by Xyfe" onerror="this.style.display='none'"/>
           <div>
             <h3 class="meme">XYFE LAB – STICKERS & ART</h3>
-            <p class="muted">Support de artiest achter <b>The Boyzz</b>! Check zijn stickers, drops en behind‑the‑scenes in de Telegram community.</p>
+            <p class="muted">Support de artiest achter <b>The Boyzz</b>! Check zijn stickers, drops en behind-the-scenes in de Telegram community.</p>
             <div class="row">
               <a class="btn" href="https://t.me/xyfelab" target="_blank" rel="noopener noreferrer">Volg Xyfe op Telegram</a>
             </div>
@@ -137,11 +137,11 @@
     import { PhantomWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-phantom@0.9.25";
     import { Connection, PublicKey } from "https://esm.sh/@solana/web3.js@1.95.3";
 
-    // ---------- Config (Boyzz / jouw CM) ----------
+    // ---------- Config ----------
     const DEFAULTS = {
-      CM: "D7GAWHtTAo5iyTQAFdSpnDM1r1bDJQdzft2e3NXiTbSf",   // jouw Candy Machine
+      CM: "D7GAWHtTAo5iyTQAFdSpnDM1r1bDJQdzft2e3NXiTbSf",
       CBS_MINT: "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk",
-      THRESHOLD_UI: 1,  // guard amount = 1 CBS
+      THRESHOLD_UI: 1, // 1 CBS
       RPC: "https://mainnet.helius-rpc.com/?api-key=0eb350f0-a032-468c-8b03-b8b079e09611"
     };
 
@@ -150,8 +150,8 @@
     const CM_ADDR = qs.get("cm") || DEFAULTS.CM;
     const RPC_URL = qs.get("rpc") || DEFAULTS.RPC;
     const LANG = (qs.get("lang") || "nl").toLowerCase();
-    const GROUP = qs.get("group"); // optioneel: guard group label
-    const DEBUG = qs.get("debug") === "1"; // verberg CM-gegevens standaard; toon met ?debug=1
+    const GROUP = qs.get("group"); // optioneel guard group
+    const DEBUG = qs.get("debug") === "1";
 
     // ---------- i18n ----------
     const I18N = {
@@ -194,7 +194,11 @@
     // ---------- UI helpers ----------
     const $ = (id)=>document.getElementById(id);
     const setTxt = (id,v)=>{ const el=$(id); if(el) el.textContent=(typeof v==='function'?v():v); };
-    const note = (msg, kind="info")=>{ const el=$("msg"); if(!el) return; el.textContent=(typeof msg==='function'?msg():msg)||""; el.className=kind==="ok"?"ok":kind==="warn"?"warn":"muted"; };
+    const note = (msg, kind="info")=>{
+      const el=$("msg"); if(!el) return;
+      el.textContent=(typeof msg==='function'?msg():msg)||"";
+      el.className=kind==="ok"?"ok":kind==="warn"?"warn":"muted";
+    };
     const fmt = (n)=>Number(n ?? 0).toLocaleString(LANG_CUR==="nl"?"nl-NL":"en-US");
 
     function applyLang(){
@@ -211,10 +215,6 @@
       setTxt("t_mint", T("mint"));
       $("langSwitch").textContent = LANG_CUR==="nl"?"EN 🇬🇧":"NL 🇳🇱";
       $("soldBadge").textContent = T("soldOut");
-      if (SOLD_OUT) {
-        setTxt("price", T("soldOut"));
-        const soldMsg = $("soldMsg"); if (soldMsg){ soldMsg.textContent = T("soldNote"); }
-      }
     }
 
     // ---------- Chain setup ----------
@@ -225,7 +225,6 @@
     const CBS_MINT = new PublicKey(DEFAULTS.CBS_MINT);
     const THRESHOLD = DEFAULTS.THRESHOLD_UI;
 
-    // ---------- Lang switch ----------
     $("langSwitch")?.addEventListener("click", ()=>{ LANG_CUR=(LANG_CUR==="nl"?"en":"nl"); applyLang(); });
     applyLang();
 
@@ -243,6 +242,7 @@
         const cmSol = $("cmSol"); if (cmSol){ cmSol.textContent = DEBUG ? "(Solscan)" : ""; cmSol.href = cmHref; }
         const cmRow = $("cmRow"); if (cmRow){ cmRow.style.display = DEBUG ? "" : "none"; }
         const cmShortEl = $("cmShort"); if (cmShortEl){ cmShortEl.style.display = DEBUG ? "" : "none"; }
+
         const minted = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? cm.itemsMinted ?? 0);
         const avail  = Number(cm.itemsAvailable ?? cm.data?.itemsAvailable ?? cm.itemsLoaded ?? cm.data?.itemsLoaded ?? 0);
         setTxt("minted", fmt(minted));
@@ -320,8 +320,8 @@
         note(T("minting"));
 
         cm = cm || await fetchCandyMachine(umi, publicKey(CM_ADDR));
-
         const nftMint = generateSigner(umi);
+
         const args = {
           candyMachine: publicKey(CM_ADDR),
           candyGuard: cm.mintAuthority,
@@ -329,7 +329,11 @@
           collectionMint: cm.collectionMint,
           collectionUpdateAuthority: cm.authority,
           ...(GROUP ? { group: GROUP } : {}),
-          mintArgs: { tokenGate: some({ mint: publicKey(DEFAULTS.CBS_MINT) }) }
+          // IMPORTANT: include both tokenGate and mintLimit args (fix)
+          mintArgs: {
+            tokenGate: some({ mint: publicKey(DEFAULTS.CBS_MINT) }),
+            mintLimit: some({ id: 1 })
+          }
         };
 
         const tx = transactionBuilder()
@@ -337,15 +341,24 @@
           .add(mintV2(umi, args));
 
         const resSig = await tx.sendAndConfirm(umi);
-        const sig = (typeof resSig === 'string') ? resSig : (resSig?.signature || (Array.isArray(resSig) ? resSig[0] : String(resSig)));
+        const sig = (typeof resSig === 'string')
+          ? resSig
+          : (resSig?.signature || (Array.isArray(resSig) ? resSig[0] : String(resSig)));
+
         note(I18N[LANG_CUR].mintedOk(sig),"ok");
         const href = `https://solscan.io/tx/${sig}`;
         const p = document.createElement('p'); p.className='ok';
         p.innerHTML=`<a target="_blank" rel="noreferrer" href="${href}">Bekijk op Solscan</a>`;
         $("msg").after(p);
+
         await refresh();
         await checkHolderAndToggle();
-      }catch(e){ console.error(e); note(T("errMint"),"warn"); }
+      }catch(e){
+        console.error(e);
+        // toon iets meer detail als beschikbaar
+        const msg = (e && (e.message || e.toString())) || T("errMint");
+        note("Mint mislukt: " + msg, "warn");
+      }
     }
 
     // ---------- Wire up ----------
