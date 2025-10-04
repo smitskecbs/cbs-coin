@@ -1,17 +1,10 @@
 {
   "version": 2,
-  "builds": [
-    { "src": "api/*.js", "use": "@vercel/node" },
-    { "src": "*.html", "use": "@vercel/static" }
-  ],
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api/$1.js" },
-    { "src": "/(.*)", "dest": "/$1.html" }
-  ]
-}
-{
   "cleanUrls": true,
   "redirects": [
-    { "source": "/", "destination": "/site/boyzz.html" }
+    { "source": "/", "destination": "/site/boyzz.html", "statusCode": 308 }
+  ],
+  "routes": [
+    { "src": "^/([^\\.]+)$", "dest": "/$1.html" }
   ]
 }
