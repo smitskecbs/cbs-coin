@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>THE BOYZZ — Free Meme Mint</title>
 
-  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/>
 
   <style>
@@ -97,19 +96,15 @@
     .note{margin:8px 0 0; color:var(--muted)}
     .ok{color:var(--ok)} .warn{color:var(--warn)} .err{color:var(--err)}
 
-    .footer{
-      margin-top:16px; display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap
-    }
+    .footer{margin-top:16px; display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap}
     .promo{display:flex; gap:10px; align-items:center}
     .promo img{width:56px;height:56px;border-radius:12px;object-fit:cover; border:1px solid rgba(255,255,255,.2)}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <!-- HERO -->
     <section class="hero">
       <div class="logoBox">
-        <!-- Jouw logo -->
         <img class="logo" src="collection.png" alt="THE BOYZZ" onerror="this.style.visibility='hidden'"/>
       </div>
       <div>
@@ -119,7 +114,6 @@
     </section>
 
     <div class="grid" style="margin-top:14px;">
-      <!-- WALLET -->
       <section class="card">
         <h2 class="h3">Wallet</h2>
         <div class="row">
@@ -138,7 +132,6 @@
         <p class="note"><a id="cbsSol" class="mono" target="_blank" rel="noreferrer">View CBS on Solscan</a></p>
       </section>
 
-      <!-- DROP -->
       <section class="card">
         <h2 class="h3">Drop Status</h2>
         <div class="row">
@@ -155,17 +148,15 @@
         </div>
       </section>
 
-      <!-- MINT -->
       <section class="card span2">
         <h2 class="h3">Mint</h2>
-        <p class="note">Button enables when wallet holds ≥ 1 CBS. Candy Guard enforces this on-chain. Limit: 1 per wallet.</p>
+        <p class="note">Button enables when your wallet holds ≥ 1 CBS. Candy Guard enforces this on-chain. Limit: 1 per wallet.</p>
         <div class="row" style="margin-top:10px;">
           <button id="btnMint" class="btn" disabled>🚀 Mint</button>
           <span id="mintMsg" class="note"></span>
         </div>
       </section>
 
-      <!-- PROMO -->
       <section class="card span2">
         <div class="footer">
           <div class="promo">
@@ -182,7 +173,6 @@
   </div>
 
   <script type="module">
-    // ---------- Imports ----------
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
     import { publicKey, generateSigner, transactionBuilder, some } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
@@ -190,7 +180,7 @@
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.2.0";
     import { setComputeUnitLimit } from "https://esm.sh/@metaplex-foundation/mpl-toolbox@0.9.1";
     import { PhantomWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-phantom@0.9.25";
-    import { Connection, PublicKey } from "https://esm.sh/@solana/web3.js@1.95.3";
+    import { Connection, PublicKey, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.95.3";
 
     // ---------- Config ----------
     const DEFAULTS = {
@@ -199,32 +189,27 @@
       RPC: "https://mainnet.helius-rpc.com/?api-key=0eb350f0-a032-468c-8b03-b8b079e09611",
       THRESHOLD: 1
     };
+    // Minimale SOL voor rent (veiligheidsmarge)
+    const MIN_SOL_RENT = 0.02; // 0.02–0.03 SOL aanhouden
 
-    // URL overrides (optioneel)
     const qs = new URLSearchParams(location.search);
     const CM_ADDR  = qs.get("cm")  || DEFAULTS.CM;
     const CBS_MINT = qs.get("cbs") || DEFAULTS.CBS;
     const RPC_URL  = qs.get("rpc") || DEFAULTS.RPC;
     const DEBUG    = qs.get("debug")==="1";
 
-    // ---------- DOM helpers ----------
     const $ = (id)=>document.getElementById(id);
     const setTxt = (el,v)=>{ if(typeof el==='string') el=$(el); if(!el) return; el.textContent=v; };
     const fmt = (n)=>Number(n ?? 0).toLocaleString("en-US");
 
-    // Fill velden
     $("cbsField").value = CBS_MINT;
     $("cbsSol").href   = "https://solscan.io/token/"+CBS_MINT;
     $("cmField").value = CM_ADDR;
     $("cmSol").href    = "https://solscan.io/account/"+CM_ADDR;
 
-    // ---------- Chain setup ----------
     const connection = new Connection(RPC_URL, "confirmed");
     const umi = createUmi(RPC_URL).use(mplCandyMachine()).use(mplTokenMetadata());
     let wallet, connected=false, cm, SOLD_OUT=false;
-
-    // Vooraf-raming: ~0.018 SOL is meestal genoeg voor rent (mint+assoc. account+metadata)
-    const MIN_RENT_LAMPORTS = 18_000_000;
 
     async function getCbsBalance(ownerPk){
       const res = await connection.getParsedTokenAccountsByOwner(ownerPk, { mint: new PublicKey(CBS_MINT) });
@@ -235,9 +220,9 @@
       }
       return total;
     }
-    async function getSolLamports(ownerPk){
-      try { return await connection.getBalance(ownerPk); }
-      catch { return 0; }
+    async function getSolBalance(ownerPk){
+      const lamports = await connection.getBalance(ownerPk, "confirmed");
+      return lamports / LAMPORTS_PER_SOL;
     }
 
     function setSoldUI(minted, available){
@@ -284,65 +269,72 @@
       }
     }
 
-    // ---------- State & Checks ----------
     async function updateHolderState(){
       if (!connected || !wallet?.publicKey) return;
       try{
-        const [balCbs, balSolLamports] = await Promise.all([
+        const [cbs, sol] = await Promise.all([
           getCbsBalance(wallet.publicKey),
-          getSolLamports(wallet.publicKey)
+          getSolBalance(wallet.publicKey),
         ]);
+        setTxt("cbsBal", fmt(cbs));
 
-        setTxt("cbsBal", fmt(balCbs));
+        const hasCBS = cbs >= DEFAULTS.THRESHOLD;
+        const hasSOL = sol >= MIN_SOL_RENT;
 
-        const hasCBS = balCbs >= DEFAULTS.THRESHOLD;
-        const hasSOL = balSolLamports >= MIN_RENT_LAMPORTS;
+        let msg = [];
+        if (!hasCBS) msg.push("You need at least 1 CBS to mint.");
+        if (!hasSOL) msg.push(`You need ~${MIN_SOL_RENT} SOL available to cover account rent.`);
 
-        if (!hasCBS) {
-          $("holderMsg").className = "note warn";
-          setTxt("holderMsg", "You need at least 1 CBS to mint.");
-        } else if (!hasSOL) {
-          $("holderMsg").className = "note warn";
-          const need = (MIN_RENT_LAMPORTS / 1e9).toFixed(3);
-          const have = (balSolLamports / 1e9).toFixed(3);
-          setTxt("holderMsg", `You need ~${need} SOL for rent. Wallet has ${have} SOL.`);
-        } else {
+        if (msg.length === 0){
           $("holderMsg").className = "note ok";
-          setTxt("holderMsg", "CBS OK, you can mint ✅");
+          setTxt("holderMsg","CBS OK, you can mint ✅");
+        } else {
+          $("holderMsg").className = "note warn";
+          setTxt("holderMsg", msg.join(" "));
         }
 
-        if (!SOLD_OUT) $("btnMint").disabled = !(hasCBS && hasSOL);
+        $("btnMint").disabled = SOLD_OUT || !hasCBS || !hasSOL;
       }catch(e){
         console.error(e);
         $("holderMsg").className="note err";
-        setTxt("holderMsg","Could not read balances.");
+        setTxt("holderMsg","Could not read wallet balances.");
       }
+    }
+
+    function showTxLink(signature){
+      if (!signature) return;
+      const a = document.createElement("a");
+      a.href = "https://solscan.io/tx/"+signature;
+      a.target="_blank"; a.rel="noreferrer";
+      a.textContent = "View tx";
+      a.style.marginLeft="8px";
+      $("mintMsg").appendChild(a);
     }
 
     async function doMint(){
       try{
         if(!connected || SOLD_OUT) return;
-
-        // Preflight: CBS + SOL-rent check
-        const [balCbs, lamports] = await Promise.all([
-          getCbsBalance(wallet.publicKey),
-          getSolLamports(wallet.publicKey)
-        ]);
-        if (balCbs < DEFAULTS.THRESHOLD) {
-          $("mintMsg").className="note warn";
-          setTxt("mintMsg","Guard: need ≥ 1 CBS.");
-          return;
-        }
-        if (lamports < MIN_RENT_LAMPORTS) {
-          $("mintMsg").className="note warn";
-          const need = (MIN_RENT_LAMPORTS/1e9).toFixed(3);
-          setTxt("mintMsg", `Not enough SOL for rent (~${need} SOL needed).`);
-          return;
-        }
-
         $("btnMint").disabled = true;
         $("mintMsg").className="note";
         setTxt("mintMsg","Sending mint…");
+
+        // Pre-checks nogmaals vlak voor mint
+        const [cbs, sol] = await Promise.all([
+          getCbsBalance(wallet.publicKey),
+          getSolBalance(wallet.publicKey),
+        ]);
+        if (cbs < DEFAULTS.THRESHOLD){
+          $("mintMsg").className="note warn";
+          setTxt("mintMsg","Guard: wallet mist ≥ 1 CBS.");
+          $("btnMint").disabled = false;
+          return;
+        }
+        if (sol < MIN_SOL_RENT){
+          $("mintMsg").className="note warn";
+          setTxt("mintMsg",`Te weinig SOL voor rent (heb ${sol.toFixed(4)} SOL, nodig ~${MIN_SOL_RENT} SOL).`);
+          $("btnMint").disabled = false;
+          return;
+        }
 
         await refresh();
         const before = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
@@ -361,21 +353,21 @@
           .add(setComputeUnitLimit(umi, { units: 600_000 }))
           .add(mintV2(umi, args));
 
-        let signature = null;
-        try {
+        let signature;
+        try{
           const sigRes = await tx.sendAndConfirm(umi);
-          signature = Array.isArray(sigRes) ? sigRes[0] :
-                      (typeof sigRes === "string" ? sigRes : sigRes?.signature || null);
-        } catch (err) {
-          const msg = String(err?.message || err);
+          signature = Array.isArray(sigRes) ? sigRes[0] : (typeof sigRes==='string' ? sigRes : sigRes?.signature);
+        }catch(err){
+          const msg = (err?.cause?.message || err?.message || "").toLowerCase();
           $("mintMsg").className="note err";
-          if (msg.includes("insufficient lamports")) {
-            setTxt("mintMsg", "Mint failed: not enough SOL for rent.");
-          } else if (msg.toLowerCase().includes("blockhash")) {
-            setTxt("mintMsg", "Mint failed: blockhash expired. Press Refresh and try again.");
+          if (msg.includes("insufficient lamports") || msg.includes("insufficient funds")) {
+            setTxt("mintMsg","Te weinig SOL voor account rents. Stort ~0.02–0.03 SOL en probeer opnieuw.");
+          } else if (msg.includes("token gate") || msg.includes("missing cbs")) {
+            setTxt("mintMsg","Guard: wallet mist ≥ 1 CBS.");
           } else {
-            setTxt("mintMsg", "Mint failed: " + msg);
+            setTxt("mintMsg","Mint failed (simulation).");
           }
+          showTxLink(signature);
           $("btnMint").disabled = false;
           return;
         }
@@ -385,24 +377,15 @@
 
         if (after <= before) {
           $("mintMsg").className="note err";
-          setTxt("mintMsg","Guard blocked the mint (limit or gate). Only fees may have been paid.");
-          if (signature) {
-            const a=document.createElement("a");
-            a.href="https://solscan.io/tx/"+signature; a.target="_blank"; a.rel="noreferrer"; a.textContent="View tx";
-            a.style.marginLeft="8px"; $("mintMsg").appendChild(a);
-          }
+          setTxt("mintMsg","Mint is niet doorgegaan (guard/voorwaarden).");
+          showTxLink(signature);
           $("btnMint").disabled = false;
           return;
         }
 
         $("mintMsg").className="note ok";
         setTxt("mintMsg","Mint confirmed ✅ ");
-        if (signature) {
-          const a=document.createElement("a");
-          a.href="https://solscan.io/tx/"+signature; a.target="_blank"; a.rel="noreferrer"; a.textContent="View on Solscan";
-          a.style.marginLeft="8px"; $("mintMsg").appendChild(a);
-        }
-
+        showTxLink(signature);
         await updateHolderState();
       }catch(e){
         console.error(e);
@@ -412,12 +395,10 @@
       }
     }
 
-    // ---------- Wire up ----------
     $("btnConnect").addEventListener("click", connectWallet);
     $("btnRefresh").addEventListener("click", async ()=>{ await refresh(); if(connected) await updateHolderState(); });
     $("btnMint").addEventListener("click", doMint);
 
-    // Init
     (async () => { await refresh(); })();
   </script>
 </body>
