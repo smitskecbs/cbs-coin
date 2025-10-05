@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>THE BOYZZ — MEME MINT</title>
+  <title>THE BOYZZ — Free Meme Mint</title>
 
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/>
@@ -11,184 +11,176 @@
   <style>
     :root{
       --bg:#0e0f12;
-      --card:#eadbb3;
-      --ink:#111318;
-      --line:#101316;
-      --accent:#58f5d6;
-      --btn:#94f3de;
-      --btnText:#042b25;
-      --ok:#19d59f;
+      --panel:#0f1218;
+      --card:#151a23;
+      --ink:#e9fbff;
+      --muted:#a9c9d0;
+      --accent:#7dffe9;
+      --accent2:#7ab7ff;
+      --ok:#1fe39f;
       --warn:#ffb167;
       --err:#ff6b6b;
-      --ring: 0 1px 0 rgba(0,0,0,.35), inset 0 2px 0 rgba(255,255,255,.25);
+      --ring:0 12px 30px rgba(0,0,0,.25), inset 0 0 0 1px rgba(255,255,255,.06);
     }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
-      margin:0; background:radial-gradient(1200px 800px at 110% -10%,rgba(140,255,220,.12),transparent 50%), var(--bg);
-      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; color:var(--ink);
-      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; overflow-x:hidden;
+      margin:0; background:
+        radial-gradient(900px 700px at 110% -10%,rgba(125,255,233,.15),transparent 60%),
+        radial-gradient(900px 700px at -10% 110%,rgba(122,183,255,.14),transparent 60%),
+        var(--bg);
+      color:var(--ink);
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+      overflow-x:hidden;
     }
-    .wrap{max-width:1040px;margin:0 auto;padding:14px 14px 60px}
-    .header{
-      background:var(--card); border-radius:18px; box-shadow:var(--ring);
-      padding:14px 16px; display:flex; align-items:center; justify-content:space-between; gap:12px;
-      border:3px solid var(--line);
+
+    /* Layout */
+    .wrap{max-width:1100px;margin:0 auto;padding:16px 14px 48px}
+    .hero{
+      display:grid; grid-template-columns:100px 1fr; gap:14px; align-items:center;
+      background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));
+      border-radius:18px; box-shadow:var(--ring); border:1px solid rgba(255,255,255,.08);
+      padding:14px;
     }
-    .brand{display:flex; align-items:center; gap:12px}
-    .brand img{width:56px;height:56px;border-radius:14px;display:block;object-fit:cover}
+    .logoBox{width:100px;height:100px;border-radius:14px;overflow:hidden;background:#0c1016;display:grid;place-items:center}
+    .logo{width:100%;height:100%;object-fit:contain}
     .title{
-      margin:0; line-height:1;
-      font: 48px/1 "Bangers", system-ui;
-      letter-spacing:.5px;
-      background:linear-gradient(90deg,#7af,#7ff27e,#ffde59,#ff7ab6,#7af);
+      margin:0; font:46px/1 "Bangers", system-ui; letter-spacing:.4px;
+      background:linear-gradient(90deg,#7ab7ff,#7dffe9,#ffde59,#ff7ab6,#7ab7ff);
       background-size:300% 100%; -webkit-background-clip:text; background-clip:text; color:transparent;
       animation: rainbow 8s linear infinite;
-      text-shadow:0 3px 0 rgba(0,0,0,.06);
+      text-shadow:0 3px 0 rgba(0,0,0,.25);
     }
+    .sub{margin:6px 0 0; color:var(--muted); font-weight:600}
+
     @keyframes rainbow{0%{background-position:0% 0}100%{background-position:300% 0}}
-    .chip{font-weight:800;border-radius:999px;padding:10px 16px;background:#fff; box-shadow:var(--ring); border:2px solid var(--line)}
-    .chip small{opacity:.75}
 
-    .grid{display:grid; gap:16px; grid-template-columns:1fr 1fr}
+    .grid{display:grid; gap:14px; grid-template-columns:1fr}
+    @media (min-width: 940px){ .grid{grid-template-columns:1fr 1fr} }
     .card{
-      background:var(--card); border-radius:18px; border:3px solid var(--line); box-shadow:var(--ring); padding:14px;
+      background:linear-gradient(180deg,var(--card),rgba(21,26,35,.7));
+      border:1px solid rgba(255,255,255,.08); border-radius:18px; box-shadow:var(--ring); padding:14px;
     }
-    .span2{grid-column:span 2}
+    .span2{grid-column:1/-1}
 
-    .sec-title{
-      display:inline-block; font: 34px/1 "Bangers", system-ui; letter-spacing:.3px; margin:4px 0 12px;
-      padding:6px 12px; border-radius:14px; background:#fff; box-shadow:var(--ring); border:2px solid var(--line);
-      background-image:linear-gradient(90deg,#8cf,#8f8,#ffea7d,#ff8bd6,#8cf); background-size:250% 100%; color:transparent;
-      -webkit-background-clip:text; background-clip:text;
-      animation: rainbow 10s linear infinite;
-    }
+    .h3{margin:2px 0 10px; font:30px/1 "Bangers",system-ui; letter-spacing:.3px}
+    .p{margin:0;color:var(--muted)}
+    .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+    .mono{font-family:ui-monospace,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
 
-    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-    .field{flex:1; min-width:240px}
-    .input{
-      width:100%; padding:12px 14px; border-radius:12px; border:2px solid var(--line); background:#fff;
-      font-weight:600; color:#333; box-shadow:var(--ring);
-    }
     .pill{
-      display:inline-flex; align-items:center; gap:8px; font-weight:700; border-radius:12px; padding:10px 12px;
-      border:2px solid var(--line); background:#fff; box-shadow:var(--ring)
+      display:inline-flex; align-items:center; gap:8px; padding:10px 12px; border-radius:12px;
+      background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14); color:var(--ink); font-weight:700;
+    }
+    .badge{
+      display:inline-flex; align-items:center; padding:8px 10px; border-radius:10px;
+      background:linear-gradient(90deg,#7ab7ff,#7dffe9,#ffde59,#ff7ab6);
+      color:#00141a; font-weight:900; border:1px solid rgba(255,255,255,.25);
+    }
+    input.read{
+      width:100%; min-width:260px; padding:11px 12px; border-radius:12px;
+      border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.05); color:var(--ink); font-weight:700;
     }
 
     .btn{
-      display:inline-flex; align-items:center; justify-content:center; gap:8px; min-width:140px;
-      padding:12px 18px; border-radius:14px; border:3px solid var(--line);
-      background:linear-gradient(180deg,var(--btn),#6ee8cf);
-      color:var(--btnText); font-weight:900; box-shadow:0 10px 30px rgba(0,0,0,.08), inset 0 -4px 0 rgba(0,0,0,.12);
-      cursor:pointer; text-decoration:none;
+      display:inline-flex; align-items:center; justify-content:center; gap:10px;
+      min-width:150px; padding:12px 18px; border-radius:14px; cursor:pointer;
+      background:linear-gradient(180deg,#7dffe9,#47f0d3); color:#03221e; font-weight:900;
+      border:1px solid rgba(255,255,255,.18); box-shadow:0 16px 35px rgba(2,240,210,.15), inset 0 -6px 0 rgba(0,0,0,.18);
+      text-decoration:none;
     }
-    .btn.secondary{background:#fff}
+    .btn.secondary{background:linear-gradient(180deg,#ffffff,#e8fbff); color:#05212a}
     .btn:disabled{opacity:.55; cursor:not-allowed}
 
-    .note{margin:8px 0 0; color:#444}
-    .ok{color:var(--ok)} .warn{color:#f59f00} .err{color:var(--err)}
-    .mono{font-family:ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+    .meter{height:10px;border-radius:8px;background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18); overflow:hidden}
+    .meter > i{display:block;height:100%; background:linear-gradient(90deg,#1fe39f,#7dffe9); width:0%}
 
-    .meter{height:10px;border-radius:8px;border:2px solid var(--line);background:#fff; box-shadow:var(--ring); overflow:hidden}
-    .meter > i{display:block;height:100%; background:linear-gradient(90deg,#19d59f,#58f5d6); width:0%}
+    .note{margin:8px 0 0; color:var(--muted)}
+    .ok{color:var(--ok)} .warn{color:var(--warn)} .err{color:var(--err)}
 
-    .foot{margin-top:14px; display:flex; align-items:center; justify-content:space-between; gap:8px}
-    .promo{display:flex; align-items:center; gap:10px}
-    .promo img{width:54px;height:54px;border-radius:12px;border:2px solid var(--line); background:#fff}
-
-    @media (max-width: 860px){
-      .grid{grid-template-columns:1fr}
-      .title{font-size:40px}
-      .brand img{width:48px;height:48px}
+    .footer{
+      margin-top:16px; display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap
     }
+    .promo{display:flex; gap:10px; align-items:center}
+    .promo img{width:56px;height:56px;border-radius:12px;object-fit:cover; border:1px solid rgba(255,255,255,.2)}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <!-- Header -->
-    <header class="header">
-      <div class="brand">
-        <!-- Use your collection.png as the logo (falls back gracefully if not found) -->
-        <img src="collection.png" alt="The Boyzz Logo" onerror="this.style.visibility='hidden'"/>
-        <h1 class="title">THE BOYZZ — MEME MINT</h1>
+    <!-- HERO -->
+    <section class="hero">
+      <div class="logoBox">
+        <!-- Gebruik je collection.png -->
+        <img class="logo" src="collection.png" alt="THE BOYZZ" onerror="this.style.visibility='hidden'"/>
       </div>
-      <div class="chip">Mainnet</div>
-    </header>
+      <div>
+        <h1 class="title">THE BOYZZ — Free Meme Mint</h1>
+        <p class="sub">Holders-only: need ≥ 1 CBS token. No bot tax — only Solana network fees.</p>
+      </div>
+    </section>
 
-    <main class="grid" style="margin-top:12px;">
-      <!-- Wallet -->
+    <div class="grid" style="margin-top:14px;">
+      <!-- WALLET -->
       <section class="card">
-        <div class="sec-title">Wallet</div>
-
+        <h2 class="h3">Wallet</h2>
         <div class="row">
-          <select id="walletSelect" class="pill">
-            <option value="auto">Auto detect</option>
-            <option value="phantom">Phantom</option>
-          </select>
-
-          <button id="btnConnect" class="btn">Connect</button>
+          <button id="btnConnect" class="btn">Connect Phantom</button>
+          <span id="who" class="note mono">—</span>
         </div>
 
-        <p id="who" class="note mono" style="margin-top:8px;">Connected: –</p>
-
-        <div class="row" style="margin-top:8px;">
-          <span class="pill">CBS Mint</span>
-          <input id="cbsMintField" class="input field mono" readonly/>
+        <div class="row" style="margin-top:10px;">
+          <span class="badge">CBS mint</span>
+          <input id="cbsField" class="read mono" readonly>
         </div>
 
-        <p class="note" style="margin-top:8px;">
-          Your CBS balance: <b id="cbsBal">–</b> CBS
-        </p>
+        <p class="note" style="margin-top:8px;">Your CBS balance: <b id="cbsBal">—</b> CBS</p>
+        <p id="holderMsg" class="note warn">You need at least 1 CBS to mint.</p>
 
-        <p id="holderMsg" class="note warn">You need at least <b>1 CBS</b> to mint.</p>
-
-        <p class="note"><a class="mono" id="cbsSolscan" href="#" target="_blank" rel="noreferrer">View on Solscan</a></p>
+        <p class="note"><a id="cbsSol" class="mono" target="_blank" rel="noreferrer">View CBS on Solscan</a></p>
       </section>
 
-      <!-- Drop stats -->
+      <!-- DROP -->
       <section class="card">
-        <div class="sec-title">Drop Stats</div>
-
+        <h2 class="h3">Drop Status</h2>
         <div class="row">
-          <span class="pill">Candy Machine</span>
-          <input id="cmField" class="input field mono" readonly/>
+          <span class="badge">Candy Machine</span>
+          <input id="cmField" class="read mono" readonly>
         </div>
 
-        <div class="meter" style="margin:10px 0 8px;">
-          <i id="meterFill" style="width:0%"></i>
-        </div>
+        <div class="meter" style="margin:10px 0 8px;"><i id="meterFill"></i></div>
+        <p class="note">Minted: <b id="minted">0</b> / <b id="available">0</b></p>
 
-        <div class="row" style="gap:12px;">
+        <div class="row" style="margin-top:8px;">
           <button id="btnRefresh" class="btn secondary">Refresh</button>
-          <span class="pill">Price: <b>FREE (≥ 1 CBS)</b></span>
-          <span class="pill">Minted: <b id="minted">0</b> / <b id="available">0</b></span>
+          <a id="cmSol" class="btn secondary" target="_blank" rel="noreferrer">Open in Solscan</a>
         </div>
       </section>
 
-      <!-- Mint -->
+      <!-- MINT -->
       <section class="card span2">
-        <div class="sec-title">Mint Now</div>
-        <p class="note">Button enables when your wallet holds ≥ <b>1 CBS</b>. Guard enforces this on-chain.</p>
-        <div class="row" style="margin-top:8px;">
+        <h2 class="h3">Mint</h2>
+        <p class="note">Button enables when wallet holds ≥ 1 CBS. Candy Guard enforces this on-chain. Limit: 1 per wallet.</p>
+        <div class="row" style="margin-top:10px;">
           <button id="btnMint" class="btn" disabled>🚀 Mint</button>
           <span id="mintMsg" class="note"></span>
         </div>
       </section>
 
-      <!-- Promo -->
+      <!-- PROMO -->
       <section class="card span2">
-        <div class="foot">
+        <div class="footer">
           <div class="promo">
-            <img src="collection.png" alt="Boyzz"/>
+            <img src="collection.png" alt="XYFE LAB"/>
             <div>
-              <div class="sec-title" style="margin:0;">XYFE LAB — STICKERS & ART</div>
+              <div class="h3" style="margin:0;">XYFE LAB — Stickers & Art</div>
               <div class="note">Collab artist for this drop. Follow for sticker drops & new pieces.</div>
             </div>
           </div>
           <a class="btn secondary" href="https://t.me/xyfelab" target="_blank" rel="noreferrer">Join TG: @xyfelab</a>
         </div>
       </section>
-    </main>
+    </div>
   </div>
 
   <script type="module">
@@ -204,43 +196,42 @@
 
     // ---------- Config ----------
     const DEFAULTS = {
-      // ✅ Correct Candy Machine ID (letter “o” in Ao5iy)
       CM:  "D7GAWHtTAo5iyTQAFdSpnDM1r1bDJQdzft2e3NXiTbSf",
-      // ✅ CBS mint (token gate)
       CBS: "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk",
-      // ✅ Your Helius RPC key
       RPC: "https://mainnet.helius-rpc.com/?api-key=0eb350f0-a032-468c-8b03-b8b079e09611",
+      THRESHOLD: 1
     };
 
-    // Query param overrides (useful for quick testing)
+    // Allow overrides for quick tests
     const qs = new URLSearchParams(location.search);
-    const CM_ADDR = qs.get("cm")  || DEFAULTS.CM;
-    const CBS_ADDR= qs.get("cbs") || DEFAULTS.CBS;
-    const RPC_URL = qs.get("rpc") || DEFAULTS.RPC;
-    const DEBUG   = qs.get("debug")==="1";
+    const CM_ADDR  = qs.get("cm")  || DEFAULTS.CM;
+    const CBS_MINT = qs.get("cbs") || DEFAULTS.CBS;
+    const RPC_URL  = qs.get("rpc") || DEFAULTS.RPC;
+    const DEBUG    = qs.get("debug")==="1";
 
-    // ---------- DOM ----------
+    // ---------- DOM helpers ----------
     const $ = (id)=>document.getElementById(id);
-    const setTxt = (el, v)=>{ if (typeof el==='string') el=$(el); if (!el) return; el.textContent = v; };
+    const setTxt = (el,v)=>{ if(typeof el==='string') el=$(el); if(!el) return; el.textContent=v; };
     const fmt = (n)=>Number(n ?? 0).toLocaleString("en-US");
 
-    $("cbsMintField").value = CBS_ADDR;
-    $("cbsSolscan").href = "https://solscan.io/token/"+CBS_ADDR;
-    $("cmField").value  = CM_ADDR;
+    // Fill read-only fields
+    $("cbsField").value = CBS_MINT;
+    $("cbsSol").href   = "https://solscan.io/token/"+CBS_MINT;
+    $("cmField").value = CM_ADDR;
+    $("cmSol").href    = "https://solscan.io/account/"+CM_ADDR;
 
     // ---------- Chain setup ----------
     const connection = new Connection(RPC_URL, "confirmed");
     const umi = createUmi(RPC_URL).use(mplCandyMachine()).use(mplTokenMetadata());
-    let wallet, connected = false, cm, SOLD_OUT = false;
+    let wallet, connected=false, cm, SOLD_OUT=false;
 
-    // ---------- Helpers ----------
+    // ---------- Functions ----------
     async function getCbsBalance(ownerPk){
-      // Web3 connection returns parsed token accounts
-      const res = await connection.getParsedTokenAccountsByOwner(ownerPk, { mint: new PublicKey(CBS_ADDR) });
+      const res = await connection.getParsedTokenAccountsByOwner(ownerPk, { mint: new PublicKey(CBS_MINT) });
       let total = 0;
-      for (const acc of (res.value||[])) {
+      for (const acc of (res.value||[])){
         const ui = acc.account?.data?.parsed?.info?.tokenAmount?.uiAmount;
-        total += Number(ui || 0);
+        total += Number(ui||0);
       }
       return total;
     }
@@ -248,97 +239,118 @@
     function setSoldUI(minted, available){
       setTxt("minted", fmt(minted));
       setTxt("available", fmt(available));
-      const pct = (available>0) ? Math.min(100, Math.max(0, (minted/available)*100)) : 0;
+      const pct = (available>0) ? Math.min(100, Math.max(0,(minted/available)*100)) : 0;
       $("meterFill").style.width = pct.toFixed(2)+"%";
       SOLD_OUT = (available>0 && minted >= available);
-      $("btnMint").disabled = $("btnMint").disabled || SOLD_OUT;
+      if (SOLD_OUT) {
+        $("btnMint").disabled = true;
+        setTxt("mintMsg", "Sold out");
+      }
     }
 
-    // ---------- Load CM / Stats ----------
     async function refresh(){
       try{
         cm = await fetchCandyMachine(umi, publicKey(CM_ADDR));
         const minted = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? cm.itemsMinted ?? 0);
         const avail  = Number(cm.itemsAvailable ?? cm.data?.itemsAvailable ?? cm.itemsLoaded ?? cm.data?.itemsLoaded ?? 0);
         setSoldUI(minted, avail);
-        if (DEBUG) console.debug("[DEBUG] cm loaded:", { minted, avail });
+        if (DEBUG) console.debug("[cm]", {minted, avail});
       }catch(e){
         console.error(e);
+        setTxt("mintMsg","Failed to load drop data."); $("mintMsg").className="note err";
       }
     }
 
-    // ---------- Wallet connect ----------
     async function connectWallet(){
       try{
-        // currently we use Phantom (mobile in-app works too)
+        // Show install hint if Phantom is missing
+        if (!window?.solana?.isPhantom) {
+          window.open("https://phantom.app/download","_blank");
+          return;
+        }
         wallet = new PhantomWalletAdapter();
         await wallet.connect();
         umi.use(walletAdapterIdentity(wallet));
         connected = true;
         const pk = wallet.publicKey.toBase58();
-        setTxt("who", "Connected: "+pk.slice(0,5)+"…"+pk.slice(-5));
-
-        // load CBS balance + enable mint if OK
+        setTxt("who", "Connected: "+pk.slice(0,6)+"…"+pk.slice(-6));
         await updateHolderState();
       }catch(e){
         console.error(e);
-        setTxt("who","Connected: –");
+        setTxt("who","—");
       }
     }
 
     async function updateHolderState(){
-      if(!connected || !wallet?.publicKey) return;
+      if (!connected || !wallet?.publicKey) return;
       try{
         const bal = await getCbsBalance(wallet.publicKey);
         setTxt("cbsBal", fmt(bal));
-        const ok = bal >= 1;
-        $("holderMsg").className = "note " + (ok?"ok":"warn");
+        const ok = bal >= DEFAULTS.THRESHOLD;
+        $("holderMsg").className = "note "+(ok?"ok":"warn");
         setTxt("holderMsg", ok ? "CBS OK, you can mint ✅" : "You need at least 1 CBS to mint.");
         if (!SOLD_OUT) $("btnMint").disabled = !ok;
-        if (DEBUG) console.debug("[DEBUG] CBS balance:", bal);
       }catch(e){
         console.error(e);
-        $("holderMsg").className = "note err";
-        setTxt("holderMsg","Could not load CBS balance.");
+        $("holderMsg").className="note err";
+        setTxt("holderMsg","Could not read CBS balance.");
       }
     }
 
-    // ---------- Mint ----------
     async function doMint(){
       try{
         if(!connected || SOLD_OUT) return;
         $("btnMint").disabled = true;
+        $("mintMsg").className="note";
         setTxt("mintMsg","Sending mint…");
+
+        // baseline before
+        await refresh();
+        const before = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
 
         const nftMint = generateSigner(umi);
         const args = {
           candyMachine: publicKey(CM_ADDR),
-          candyGuard: cm.mintAuthority,               // CM is wrapped by Candy Guard
+          candyGuard: cm.mintAuthority,
           nftMint,
-          collectionMint: cm.collectionMint,          // collection data from CM
+          collectionMint: cm.collectionMint,
           collectionUpdateAuthority: cm.authority,
-          mintArgs: { tokenGate: some({ mint: publicKey(CBS_ADDR) }) }, // guard requires CBS
+          mintArgs: { tokenGate: some({ mint: publicKey(CBS_MINT) }) }
         };
 
         const tx = transactionBuilder()
           .add(setComputeUnitLimit(umi, { units: 600_000 }))
           .add(mintV2(umi, args));
 
-        const sig = await tx.sendAndConfirm(umi);
-        const signature = Array.isArray(sig) ? sig[0] : (typeof sig==='string' ? sig : sig?.signature);
-        setTxt("mintMsg","Mint confirmed ✅");
+        const sigRes = await tx.sendAndConfirm(umi);
+        const signature = Array.isArray(sigRes) ? sigRes[0] : (typeof sigRes==='string' ? sigRes : sigRes?.signature);
+
+        // after
+        await refresh();
+        const after = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
+
+        if (after <= before) {
+          $("mintMsg").className="note err";
+          setTxt("mintMsg","Guard blocked the mint (limit reached or missing CBS). Only network fees were paid.");
+          const a = document.createElement("a");
+          a.href = "https://solscan.io/tx/"+signature; a.target="_blank"; a.rel="noreferrer"; a.textContent="View tx";
+          a.style.marginLeft="8px"; $("mintMsg").appendChild(a);
+          $("btnMint").disabled = false;
+          return;
+        }
+
+        $("mintMsg").className="note ok";
+        setTxt("mintMsg","Mint confirmed ✅ ");
         const a = document.createElement("a");
         a.href = "https://solscan.io/tx/"+signature; a.target="_blank"; a.rel="noreferrer"; a.textContent="View on Solscan";
-        a.style.marginLeft = "8px";
-        $("mintMsg").appendChild(a);
+        a.style.marginLeft="8px"; $("mintMsg").appendChild(a);
 
-        await refresh();
         await updateHolderState();
       }catch(e){
         console.error(e);
+        $("mintMsg").className="note err";
+        setTxt("mintMsg","Mint failed: "+(e?.message||"Unexpected error"));
         $("btnMint").disabled = false;
-        $("mintMsg").className = "note err";
-        setTxt("mintMsg","Mint failed: "+(e?.message || "Unexpected error"));
       }
     }
 
@@ -347,8 +359,8 @@
     $("btnRefresh").addEventListener("click", async ()=>{ await refresh(); if(connected) await updateHolderState(); });
     $("btnMint").addEventListener("click", doMint);
 
-    // Init fields
-    await refresh();
+    // Init
+    (async () => { await refresh(); })();
   </script>
 </body>
 </html>
