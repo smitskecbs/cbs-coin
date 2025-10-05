@@ -201,6 +201,8 @@
       RPC: "https://mainnet.helius-rpc.com/?api-key=0eb350f0-a032-468c-8b03-b8b079e09611",
       THRESHOLD: 1
     };
+    // >>> BELANGRIJK: dit is de guard-id die on-chain staat (sugar guard show -> mint limit id: 2)
+    const MINT_LIMIT_ID = 2;
 
     // Allow overrides for quick tests
     const qs = new URLSearchParams(location.search);
@@ -263,7 +265,6 @@
 
     async function connectWallet(){
       try{
-        // Show install hint if Phantom is missing
         if (!window?.solana?.isPhantom) {
           window.open("https://phantom.app/download","_blank");
           return;
@@ -315,7 +316,11 @@
           nftMint,
           collectionMint: cm.collectionMint,
           collectionUpdateAuthority: cm.authority,
-          mintArgs: { tokenGate: some({ mint: publicKey(CBS_MINT) }) }
+          // >>> hier sturen we de guard-args mee
+          mintArgs: {
+            mintLimit: some({ id: MINT_LIMIT_ID }),
+            tokenGate: some({ mint: publicKey(CBS_MINT) })
+          }
         };
 
         const tx = transactionBuilder()
@@ -364,4 +369,3 @@
   </script>
 </body>
 </html>
-
