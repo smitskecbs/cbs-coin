@@ -186,14 +186,11 @@
     // ---------- Imports ----------
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
     import { publicKey, generateSigner, transactionBuilder, some } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
-    import { base58 as b58 } from "https://esm.sh/@metaplex-foundation/umi/serializers@1.4.1";
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
     import { mplCandyMachine, fetchCandyMachine, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.2.0";
-    import { setComputeUnitLimit } from "https://esm.sh/@metaplex-foundation/mpl-toolbox@0.9.1";
     import { PhantomWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-phantom@0.9.25";
     import { Connection, PublicKey } from "https://esm.sh/@solana/web3.js@1.95.3";
-    import bs58 from "https://esm.sh/bs58@5.0.0"; // <— voor signatures die Uint8Array zijn
 
     // ---------- Config ----------
     const DEFAULTS = {
@@ -297,17 +294,6 @@
       }
     }
 
-    function toSigString(sigLike){
-      // Umi kan string, Uint8Array of { signature } teruggeven
-      if (!sigLike) return "";
-      if (typeof sigLike === "string") return sigLike;
-      if (sigLike instanceof Uint8Array) return bs58.encode(sigLike);
-      if (typeof sigLike.signature === "string") return sigLike.signature;
-      if (sigLike.signature instanceof Uint8Array) return bs58.encode(sigLike.signature);
-      // ultieme fallback via umi serializer
-      try { return b58.serialize(sigLike).toString(); } catch(_) { return ""; }
-    }
-
     async function doMint(){
       try{
         if(!connected || SOLD_OUT) return;
@@ -315,7 +301,7 @@
         $("mintMsg").className="note";
         setTxt("mintMsg","Sending mint…");
 
-        // baseline
+        // baseline before
         await refresh();
         const before = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
 
@@ -330,48 +316,37 @@
         };
 
         const tx = transactionBuilder()
-          .add(setComputeUnitLimit(umi, { units: 600_000 }))
+          // NOTE: compute-unit helper weggehaald om import-404 te voorkomen
           .add(mintV2(umi, args));
 
-        const rawSig = await tx.sendAndConfirm(umi);
-        const signature = toSigString(rawSig);
+        const sigRes = await tx.sendAndConfirm(umi);
+        const signature = Array.isArray(sigRes) ? sigRes[0] : (typeof sigRes==='string' ? sigRes : sigRes?.signature);
 
-        // refresh en check of counter omhoog ging
+        // after
         await refresh();
         const after = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
 
         if (after <= before) {
           $("mintMsg").className="note err";
           setTxt("mintMsg","Mint failed or was blocked. Only network fees may have been paid.");
-          if (signature) {
-            const a = document.createElement("a");
-            a.href = "https://solscan.io/tx/"+encodeURIComponent(signature);
-            a.target="_blank"; a.rel="noreferrer"; a.textContent="  View tx";
-            a.style.marginLeft="8px"; $("mintMsg").appendChild(a);
-          }
+          const a = document.createElement("a");
+          a.href = "https://solscan.io/tx/"+signature; a.target="_blank"; a.rel="noreferrer"; a.textContent="View tx";
+          a.style.marginLeft="8px"; $("mintMsg").appendChild(a);
           $("btnMint").disabled = false;
           return;
         }
 
         $("mintMsg").className="note ok";
         setTxt("mintMsg","Mint confirmed ✅ ");
-        if (signature){
-          const a = document.createElement("a");
-          a.href = "https://solscan.io/tx/"+encodeURIComponent(signature);
-          a.target="_blank"; a.rel="noreferrer"; a.textContent="View on Solscan";
-          a.style.marginLeft="8px"; $("mintMsg").appendChild(a);
-        }
+        const a = document.createElement("a");
+        a.href = "https://solscan.io/tx/"+signature; a.target="_blank"; a.rel="noreferrer"; a.textContent="View on Solscan";
+        a.style.marginLeft="8px"; $("mintMsg").appendChild(a);
+
         await updateHolderState();
       }catch(e){
         console.error(e);
-        const msg = String(e?.message||"Unexpected error");
-
         $("mintMsg").className="note err";
-        if (/insufficient lamports/i.test(msg)) {
-          setTxt("mintMsg","Not enough SOL to cover fees/rent (try ≥ 0.02 SOL).");
-        } else {
-          setTxt("mintMsg","Mint failed: "+msg);
-        }
+        setTxt("mintMsg","Mint failed: "+(e?.message||"Unexpected error"));
         $("btnMint").disabled = false;
       }
     }
