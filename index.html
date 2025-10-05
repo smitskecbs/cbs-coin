@@ -12,15 +12,13 @@
   <style>
     :root{
       --bg:#000000;
-      --fg:#e5e7eb;        /* zacht wit */
-      --muted:#cbd5e1;     /* licht grijsblauw */
-      --card:#0a0a0a;      /* bijna zwart, voor het vak */
-      --border:#222;       /* subtiele rand */
+      --fg:#e5e7eb;
+      --muted:#cbd5e1;
+      --card:#0a0a0a;
+      --border:#222;
       --radius:18px;
-
-      /* glow kleuren */
-      --g:#22c55e; /* groen */
-      --p:#a78bfa; /* paars */
+      --g:#22c55e; /* green */
+      --p:#a78bfa; /* purple */
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -34,7 +32,7 @@
     }
     .wrap{max-width:980px;margin:0 auto;padding:18px 16px 40px}
 
-    /* BRAND CARD (logo + banner in één vak) */
+    /* BRAND CARD */
     .brand-card{
       position:relative;
       background:var(--card);
@@ -63,7 +61,6 @@
       .logo{ left:20px; bottom:20px; width:120px; height:120px; }
     }
 
-    /* COPY */
     h1{
       margin:22px 0 8px; font-size:2.25rem; line-height:1.15; letter-spacing:.2px; color:#fff; font-weight:800;
     }
@@ -71,7 +68,7 @@
       margin:.6rem 0; font-size:1.05rem; line-height:1.75; color:var(--muted); max-width:70ch;
     }
 
-    /* SOCIAL BUTTONS (meme glow) */
+    /* SOCIALS */
     .socials{ margin-top:18px; display:flex; gap:14px; flex-wrap:wrap; align-items:flex-start; }
     .social-btn{
       position:relative; width:68px; height:68px; border-radius:20px; display:grid; place-items:center; text-decoration:none;
@@ -96,7 +93,7 @@
       border-radius:10px; padding:.2rem .5rem; transform: rotate(-2deg); width:max-content;
     }
 
-    /* CTA ROW – custom meme buttons */
+    /* CTAs */
     .cta-row{ margin-top:22px; display:flex; flex-wrap:wrap; gap:14px; }
     .cta{
       position:relative; display:flex; align-items:center; gap:12px;
@@ -113,7 +110,7 @@
     .cta .title{ font-weight:900; letter-spacing:.3px; }
     .cta .hint{ font-size:.85rem; color:#cbd5e1 }
 
-    /* BURN button specifics (flames around round logo) */
+    /* BURN */
     .cta-burn .icon-wrap{
       position:relative; width:46px; height:46px; border-radius:50%; overflow:hidden;
       border:1px solid rgba(255,255,255,.15); background:#000;
@@ -139,7 +136,7 @@
       100% { transform: translateY(-18px) scale(var(--s,1)) rotate(2deg); opacity:0 }
     }
 
-    /* TOKENOMICS button specifics (mini candlestick chart) */
+    /* TOKENOMICS (candles) */
     .cta-candles .chart{
       width:60px; height:40px; position:relative; border:1px solid rgba(255,255,255,.14);
       background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
@@ -164,7 +161,7 @@
       50%    { transform: scaleY(1.25) translateZ(0) }
     }
 
-    /* LITEPAPER button specifics (logo + rotating ring) */
+    /* LITEPAPER */
     .cta-doc .icon-wrap{
       position:relative; width:46px; height:46px; border-radius:50%; overflow:hidden;
       border:1px solid rgba(255,255,255,.15); background:#000;
@@ -182,26 +179,45 @@
     }
     @keyframes spin{ to{ transform: rotate(360deg); } }
 
-    /* respect accessibility */
-    @media (prefers-reduced-motion: reduce){
-      .social-btn, .cta, .candle, .flame, .ring{ animation: none !important; transition:none !important; }
+    /* NEW: NFT – The Boyzz */
+    .cta-nft .icon-wrap{
+      position:relative; width:46px; height:46px; border-radius:12px; overflow:hidden;
+      border:1px solid rgba(255,255,255,.15); background:#0b0b0b;
+      display:grid; place-items:center;
+      box-shadow: 0 0 16px rgba(167,139,250,.35), 0 0 16px rgba(34,197,94,.25) inset;
+    }
+    .cta-nft .spark{
+      position:absolute; width:8px; height:8px; border-radius:2px; background:linear-gradient(135deg,#a78bfa,#22c55e);
+      animation: float 2.4s ease-in-out infinite;
+      opacity:.9;
+    }
+    .cta-nft .s1{ top:6px; left:8px; }
+    .cta-nft .s2{ bottom:6px; right:8px; animation-delay:.6s }
+    .cta-nft .s3{ top:10px; right:12px; animation-delay:1.2s }
+    @keyframes float{
+      0%,100%{ transform: translateY(0) rotate(0deg) }
+      50%{ transform: translateY(-4px) rotate(8deg) }
     }
 
-    /* footer */
+    /* reduce motion */
+    @media (prefers-reduced-motion: reduce){
+      .social-btn, .cta, .candle, .flame, .ring, .spark{ animation: none !important; transition:none !important; }
+    }
+
     footer{ margin:36px 0 8px; color:#8b8b8b; font-size:.9rem; }
   </style>
 </head>
 <body>
   <main class="wrap">
 
-    <!-- Brand card: banner + overlappend logo + tagline -->
+    <!-- Brand card -->
     <section class="brand-card">
       <img class="banner" src="CBS_COIN_banner.png" alt="CBS Banner" onerror="this.style.display='none'">
       <img class="logo" src="logo.png" alt="CBS Logo" onerror="this.style.display='none'">
       <div class="tagline">CBS — Community Builds <span class="emph">Sovereignty</span></div>
     </section>
 
-    <!-- Korte uitleg (engels) -->
+    <!-- Intro -->
     <section>
       <h1>What is CBS Coin?</h1>
       <p>
@@ -213,7 +229,6 @@
 
       <!-- Socials -->
       <div class="socials">
-        <!-- Telegram -->
         <div>
           <a class="social-btn" href="https://t.me/CBS_Coin" target="_blank" rel="noreferrer" aria-label="Join CBS on Telegram">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -223,7 +238,6 @@
           <div class="label">Telegram</div>
         </div>
 
-        <!-- X / Twitter -->
         <div>
           <a class="social-btn" href="https://x.com/CBS_Coin" target="_blank" rel="noreferrer" aria-label="Follow CBS on X">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -234,19 +248,13 @@
         </div>
       </div>
 
-      <!-- Custom meme buttons -->
+      <!-- CTAs -->
       <div class="cta-row" aria-label="Important CBS pages">
         <!-- BURN -->
         <a class="cta cta-burn" href="burn.html" aria-label="Open burns page">
           <div class="icon-wrap">
-            <!-- vlammetjes -->
-            <span class="flame"></span>
-            <span class="flame"></span>
-            <span class="flame"></span>
-            <span class="flame"></span>
-            <span class="flame"></span>
-            <span class="flame"></span>
-            <!-- logo -->
+            <span class="flame"></span><span class="flame"></span><span class="flame"></span>
+            <span class="flame"></span><span class="flame"></span><span class="flame"></span>
             <img src="logo.png" alt="CBS Logo">
           </div>
           <div>
@@ -268,7 +276,7 @@
           </div>
         </a>
 
-        <!-- LITEPAPER 2.0 (NEW) -->
+        <!-- LITEPAPER -->
         <a class="cta cta-doc" href="litepaper2.0.html" aria-label="Open litepaper 2.0">
           <div class="icon-wrap">
             <span class="ring" aria-hidden="true"></span>
@@ -279,8 +287,20 @@
             <div class="hint">Vision, token design, roadmap</div>
           </div>
         </a>
-      </div>
 
+        <!-- NEW: NFT – The Boyzz -->
+        <a class="cta cta-nft" href="boyzz.html" aria-label="Open The Boyzz NFT">
+          <div class="icon-wrap" aria-hidden="true">
+            <span class="spark s1"></span>
+            <span class="spark s2"></span>
+            <span class="spark s3"></span>
+          </div>
+          <div>
+            <div class="title">NFT – The Boyzz</div>
+            <div class="hint">Free mint for CBS holders</div>
+          </div>
+        </a>
+      </div>
     </section>
 
     <footer>© CBS Coin</footer>
