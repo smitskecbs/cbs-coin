@@ -186,12 +186,14 @@
     // ---------- Imports ----------
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
     import { publicKey, generateSigner, transactionBuilder, some } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
+    import { base58 as b58 } from "https://esm.sh/@metaplex-foundation/umi/serializers@1.4.1";
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
     import { mplCandyMachine, fetchCandyMachine, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.2.0";
     import { setComputeUnitLimit } from "https://esm.sh/@metaplex-foundation/mpl-toolbox@0.9.1";
     import { PhantomWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-phantom@0.9.25";
-    import { Connection, PublicKey, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.95.3";
+    import { Connection, PublicKey } from "https://esm.sh/@solana/web3.js@1.95.3";
+    import bs58 from "https://esm.sh/bs58@5.0.0"; // <— voor signatures die Uint8Array zijn
 
     // ---------- Config ----------
     const DEFAULTS = {
@@ -201,30 +203,30 @@
       THRESHOLD: 1
     };
 
-    // allow overrides via querystring
+    // Allow overrides for quick tests
     const qs = new URLSearchParams(location.search);
     const CM_ADDR  = qs.get("cm")  || DEFAULTS.CM;
     const CBS_MINT = qs.get("cbs") || DEFAULTS.CBS;
     const RPC_URL  = qs.get("rpc") || DEFAULTS.RPC;
     const DEBUG    = qs.get("debug")==="1";
 
-    // DOM helpers
+    // ---------- DOM helpers ----------
     const $ = (id)=>document.getElementById(id);
     const setTxt = (el,v)=>{ if(typeof el==='string') el=$(el); if(!el) return; el.textContent=v; };
     const fmt = (n)=>Number(n ?? 0).toLocaleString("en-US");
 
-    // Fill static fields
+    // Fill read-only fields
     $("cbsField").value = CBS_MINT;
     $("cbsSol").href   = "https://solscan.io/token/"+CBS_MINT;
     $("cmField").value = CM_ADDR;
     $("cmSol").href    = "https://solscan.io/account/"+CM_ADDR;
 
-    // Chain setup
+    // ---------- Chain setup ----------
     const connection = new Connection(RPC_URL, "confirmed");
     const umi = createUmi(RPC_URL).use(mplCandyMachine()).use(mplTokenMetadata());
     let wallet, connected=false, cm, SOLD_OUT=false;
 
-    // Read CBS balance
+    // ---------- Functions ----------
     async function getCbsBalance(ownerPk){
       const res = await connection.getParsedTokenAccountsByOwner(ownerPk, { mint: new PublicKey(CBS_MINT) });
       let total = 0;
@@ -235,13 +237,6 @@
       return total;
     }
 
-    // Preflight SOL budget (~0.02 SOL is veilig; logs lieten 0.01516 SOL zien)
-    async function checkSolBudget(pk){
-      const have = await connection.getBalance(pk);
-      const needLamports = 0.02 * LAMPORTS_PER_SOL; // veilige marge
-      return { ok: have >= needLamports, have, needLamports };
-    }
-
     function setSoldUI(minted, available){
       setTxt("minted", fmt(minted));
       setTxt("available", fmt(available));
@@ -250,8 +245,7 @@
       SOLD_OUT = (available>0 && minted >= available);
       if (SOLD_OUT) {
         $("btnMint").disabled = true;
-        $("mintMsg").className="note warn";
-        setTxt("mintMsg","Sold out");
+        setTxt("mintMsg", "Sold out");
       }
     }
 
@@ -261,11 +255,10 @@
         const minted = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? cm.itemsMinted ?? 0);
         const avail  = Number(cm.itemsAvailable ?? cm.data?.itemsAvailable ?? cm.itemsLoaded ?? cm.data?.itemsLoaded ?? 0);
         setSoldUI(minted, avail);
-        if (DEBUG) console.debug("[CM]", {minted, avail, cm});
+        if (DEBUG) console.debug("[cm]", {minted, avail});
       }catch(e){
         console.error(e);
-        $("mintMsg").className="note err";
-        setTxt("mintMsg","Failed to load drop data.");
+        setTxt("mintMsg","Failed to load drop data."); $("mintMsg").className="note err";
       }
     }
 
@@ -291,61 +284,38 @@
     async function updateHolderState(){
       if (!connected || !wallet?.publicKey) return;
       try{
-        const [balCbs, solBudget] = await Promise.all([
-          getCbsBalance(wallet.publicKey),
-          checkSolBudget(wallet.publicKey)
-        ]);
-
-        setTxt("cbsBal", fmt(balCbs));
-        const cbsOK = balCbs >= DEFAULTS.THRESHOLD;
-
-        let msg = "";
-        let cls = "note ";
-        let enable = cbsOK && !SOLD_OUT;
-
-        if (!cbsOK) {
-          msg = "You need at least 1 CBS to mint.";
-          cls += "warn";
-          enable = false;
-        } else if (!solBudget.ok) {
-          const have = (solBudget.have / LAMPORTS_PER_SOL).toFixed(6);
-          const need = (solBudget.needLamports / LAMPORTS_PER_SOL).toFixed(3);
-          msg = `Not enough SOL for account rent (have ${have}, need ≈ ${need} SOL).`;
-          cls += "warn";
-          enable = false;
-        } else {
-          msg = "CBS OK, you can mint ✅";
-          cls += "ok";
-        }
-
-        $("holderMsg").className = cls;
-        setTxt("holderMsg", msg);
-        $("btnMint").disabled = !enable;
+        const bal = await getCbsBalance(wallet.publicKey);
+        setTxt("cbsBal", fmt(bal));
+        const ok = bal >= DEFAULTS.THRESHOLD;
+        $("holderMsg").className = "note "+(ok?"ok":"warn");
+        setTxt("holderMsg", ok ? "CBS OK, you can mint ✅" : "You need at least 1 CBS to mint.");
+        if (!SOLD_OUT) $("btnMint").disabled = !ok;
       }catch(e){
         console.error(e);
         $("holderMsg").className="note err";
-        setTxt("holderMsg","Could not read balances.");
+        setTxt("holderMsg","Could not read CBS balance.");
       }
+    }
+
+    function toSigString(sigLike){
+      // Umi kan string, Uint8Array of { signature } teruggeven
+      if (!sigLike) return "";
+      if (typeof sigLike === "string") return sigLike;
+      if (sigLike instanceof Uint8Array) return bs58.encode(sigLike);
+      if (typeof sigLike.signature === "string") return sigLike.signature;
+      if (sigLike.signature instanceof Uint8Array) return bs58.encode(sigLike.signature);
+      // ultieme fallback via umi serializer
+      try { return b58.serialize(sigLike).toString(); } catch(_) { return ""; }
     }
 
     async function doMint(){
       try{
         if(!connected || SOLD_OUT) return;
-
-        // extra budget check vlak voor mint
-        const budget = await checkSolBudget(wallet.publicKey);
-        if (!budget.ok) {
-          const have = (budget.have / LAMPORTS_PER_SOL).toFixed(6);
-          const need = (budget.needLamports / LAMPORTS_PER_SOL).toFixed(3);
-          $("mintMsg").className="note warn";
-          setTxt("mintMsg", `Not enough SOL for mint accounts (have ${have}, need ≈ ${need} SOL).`);
-          return;
-        }
-
         $("btnMint").disabled = true;
         $("mintMsg").className="note";
         setTxt("mintMsg","Sending mint…");
 
+        // baseline
         await refresh();
         const before = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
 
@@ -363,9 +333,10 @@
           .add(setComputeUnitLimit(umi, { units: 600_000 }))
           .add(mintV2(umi, args));
 
-        const sigRes = await tx.sendAndConfirm(umi);
-        const signature = Array.isArray(sigRes) ? sigRes[0] : (typeof sigRes==='string' ? sigRes : sigRes?.signature);
+        const rawSig = await tx.sendAndConfirm(umi);
+        const signature = toSigString(rawSig);
 
+        // refresh en check of counter omhoog ging
         await refresh();
         const after = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
 
@@ -374,7 +345,8 @@
           setTxt("mintMsg","Mint failed or was blocked. Only network fees may have been paid.");
           if (signature) {
             const a = document.createElement("a");
-            a.href = "https://solscan.io/tx/"+signature; a.target="_blank"; a.rel="noreferrer"; a.textContent=" View tx";
+            a.href = "https://solscan.io/tx/"+encodeURIComponent(signature);
+            a.target="_blank"; a.rel="noreferrer"; a.textContent="  View tx";
             a.style.marginLeft="8px"; $("mintMsg").appendChild(a);
           }
           $("btnMint").disabled = false;
@@ -383,21 +355,28 @@
 
         $("mintMsg").className="note ok";
         setTxt("mintMsg","Mint confirmed ✅ ");
-        if (signature) {
+        if (signature){
           const a = document.createElement("a");
-          a.href = "https://solscan.io/tx/"+signature; a.target="_blank"; a.rel="noreferrer"; a.textContent="View on Solscan";
+          a.href = "https://solscan.io/tx/"+encodeURIComponent(signature);
+          a.target="_blank"; a.rel="noreferrer"; a.textContent="View on Solscan";
           a.style.marginLeft="8px"; $("mintMsg").appendChild(a);
         }
         await updateHolderState();
       }catch(e){
         console.error(e);
+        const msg = String(e?.message||"Unexpected error");
+
         $("mintMsg").className="note err";
-        setTxt("mintMsg","Mint failed: "+(e?.message||"Unexpected error"));
+        if (/insufficient lamports/i.test(msg)) {
+          setTxt("mintMsg","Not enough SOL to cover fees/rent (try ≥ 0.02 SOL).");
+        } else {
+          setTxt("mintMsg","Mint failed: "+msg);
+        }
         $("btnMint").disabled = false;
       }
     }
 
-    // Wire up
+    // ---------- Wire up ----------
     $("btnConnect").addEventListener("click", connectWallet);
     $("btnRefresh").addEventListener("click", async ()=>{ await refresh(); if(connected) await updateHolderState(); });
     $("btnMint").addEventListener("click", doMint);
