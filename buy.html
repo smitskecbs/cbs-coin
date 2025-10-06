@@ -7,24 +7,20 @@
   <meta name="description" content="See CBS markets on Dexscreener and learn how to buy with Phantom by pasting the mint address." />
   <meta name="theme-color" content="#0b1227" />
 
-  <!-- Fonts & Tailwind -->
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-
   <style>
     :root{ --bg:#070a12; --bg2:#0b1227; --ring:#24e6b5; --text:#e5efff; }
-    body{ font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; background: radial-gradient(1200px 700px at 15% -10%, #0e1631 0%, var(--bg) 55%), var(--bg2); color:var(--text); }
+    body{ font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial; background: radial-gradient(1200px 700px at 15% -10%, #0e1631 0%, var(--bg) 55%), var(--bg2); color:var(--text); }
     .glass{ background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03)); backdrop-filter: blur(10px); border:1px solid rgba(255,255,255,.1); }
     .neon{ box-shadow: 0 0 0 .5px rgba(255,255,255,.2), 0 0 25px rgba(36,230,181,.25), inset 0 0 25px rgba(36,230,181,.08); }
     .meme-title{ font-family: Bangers, Inter, system-ui; letter-spacing:.5px; text-shadow: 0 2px #000, 0 6px rgba(0,0,0,.35); }
     code{ background: rgba(255,255,255,.06); padding:.2rem .35rem; border-radius:.5rem; word-break: break-all; }
     .btn{ display:inline-flex; align-items:center; gap:.5rem; padding:.6rem .9rem; border-radius:.8rem; border:1px solid rgba(255,255,255,.12); background:#0f1734; }
     .btn:hover{ filter:brightness(1.1) }
-    @media (max-width: 480px){ .hero-pad{ padding: 1rem !important; } }
   </style>
 </head>
 <body class="min-h-screen">
-  <!-- NAV -->
   <nav class="max-w-6xl mx-auto px-4 py-4">
     <div class="flex items-center justify-between gap-4">
       <a href="index.html" class="flex items-center gap-3">
@@ -34,9 +30,8 @@
     </div>
   </nav>
 
-  <!-- HEADER / HERO -->
   <header class="max-w-6xl mx-auto px-4">
-    <div class="glass neon rounded-2xl p-6 md:p-10 hero-pad">
+    <div class="glass neon rounded-2xl p-6 md:p-10">
       <div class="grid md:grid-cols-2 gap-6 md:gap-10 items-center">
         <div>
           <h1 class="meme-title text-5xl md:text-6xl font-extrabold">Buy CBS</h1>
@@ -45,9 +40,7 @@
             <code id="mint">B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code>
             <button id="copyMint" class="btn text-xs">Copy</button>
           </p>
-          <p class="mt-1 text-xs opacity-70">
-            View price, liquidity and pairs below. To buy, use the **Phantom** swap by pasting the mint address.
-          </p>
+          <p class="mt-1 text-xs opacity-70">Live chart below. We auto-select the most liquid CBS pair on Dexscreener.</p>
         </div>
         <div class="hidden md:block">
           <img src="assets/hero-cbs.png" alt="CBS" class="rounded-2xl w-full ring-1 ring-white/10" onerror="this.style.display='none'">
@@ -56,65 +49,45 @@
     </div>
   </header>
 
-  <!-- MARKET: Dexscreener embed -->
+  <!-- MARKET: Dexscreener embed (auto-select best pair) -->
   <section class="max-w-6xl mx-auto px-4 py-8">
     <div class="glass rounded-2xl p-2 md:p-4">
-      <div class="w-full h-[720px]">
-        <!-- Dexscreener shows all CBS pairs using address= -->
-        <iframe
-          id="dex-frame"
-          class="w-full h-full rounded-xl"
-          src="https://dexscreener.com/solana?embed=1&theme=dark&address=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"
-          frameborder="0"
-          allow="clipboard-write; encrypted-media"
-        ></iframe>
+      <div class="flex items-center justify-between flex-wrap gap-3 px-2 md:px-3">
+        <div class="text-sm opacity-80">
+          <span id="pairName">Loading best pair…</span>
+          <span class="mx-2">•</span>
+          <span id="priceNow"></span>
+        </div>
+        <div class="flex items-center gap-2">
+          <a id="dexLink" class="btn text-xs" target="_blank" rel="noreferrer">Open on Dexscreener</a>
+          <a id="scanLink" class="btn text-xs" target="_blank" rel="noreferrer">View on Solscan</a>
+        </div>
       </div>
-    </div>
-    <div class="mt-3 flex flex-wrap gap-3">
-      <a class="btn text-xs" target="_blank" rel="noreferrer"
-         href="https://dexscreener.com/solana?address=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk">
-        Open on Dexscreener
-      </a>
-      <a class="btn text-xs" target="_blank" rel="noreferrer"
-         href="https://solscan.io/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk">
-        View on Solscan
-      </a>
+      <div class="w-full h-[720px] mt-2">
+        <iframe id="dexFrame" class="w-full h-full rounded-xl" src="about:blank" frameborder="0" allow="clipboard-write; encrypted-media"></iframe>
+      </div>
     </div>
   </section>
 
   <!-- HOW TO BUY (PHANTOM) -->
   <section class="max-w-6xl mx-auto px-4 pb-10">
     <div class="glass rounded-2xl p-6">
-      <h2 class="text-xl font-extrabold mb-2">How to buy with Phantom (no verification required)</h2>
+      <h2 class="text-xl font-extrabold mb-2">How to buy with Phantom</h2>
       <ol class="list-decimal pl-5 space-y-2 text-sm opacity-90">
-        <li>Install the <b>Phantom</b> wallet (Chrome, Firefox, or mobile) and create/restore your wallet.</li>
-        <li>Fund your wallet with a small amount of <b>SOL</b> for gas and swapping.</li>
-        <li>Open Phantom and go to <b>Swap</b>.</li>
+        <li>Install <b>Phantom</b> (browser or mobile) and create/restore your wallet.</li>
+        <li>Fund it with some <b>SOL</b> for gas & swapping.</li>
+        <li>Open Phantom → <b>Swap</b>.</li>
         <li>In the <b>To</b> field, paste our mint address:<br>
-          <code>B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code><br>
-          Phantom will fetch the token even if it’s not “verified”.</li>
-        <li>Set the <b>From</b> token to <b>SOL</b> (or USDC), enter the amount, and review the route.</li>
-        <li>If you see “Price Impact”/slippage, start small and adjust (e.g., 1–2%).</li>
-        <li>Confirm the swap in Phantom. After success, click <b>Manage Tokens → Add</b> if CBS isn’t visible yet, then paste the same mint to add it.</li>
+          <code>B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code>.
+          Phantom will detect the token even if it’s not “verified”.</li>
+        <li>Set <b>From</b> = SOL (or USDC), enter amount, confirm the route, and approve.</li>
+        <li>If price impact is high, try a smaller amount and adjust slippage (e.g., 1–2%).</li>
+        <li>If CBS doesn’t show in your list, click <b>Manage Tokens → Add</b> and paste the mint again.</li>
       </ol>
-      <p class="text-xs opacity-60 mt-3">
-        Safety: we never DM for keys. Only use the mint address above and links on this site. Swapping carries risk—do your own research.
-      </p>
-    </div>
-
-    <!-- Optional: Raydium backup instructions -->
-    <div class="glass rounded-2xl p-6 mt-4">
-      <h3 class="font-bold mb-2">Alternative: Swap on Raydium</h3>
-      <ol class="list-decimal pl-5 space-y-2 text-sm opacity-90">
-        <li>Open Raydium → <b>Swap</b>.</li>
-        <li>Set <b>From</b> = SOL (or USDC). Click the token selector for <b>To</b> and paste the mint:
-          <code>B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code>.</li>
-        <li>Choose amount, set slippage if needed, and confirm in Phantom.</li>
-      </ol>
+      <p class="text-xs opacity-60 mt-3">Safety: only use the mint above and links on this site. We never DM for keys/seed.</p>
     </div>
   </section>
 
-  <!-- FOOTER -->
   <footer class="max-w-6xl mx-auto px-4 pb-10 text-xs opacity-60">
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
       <div>CBS Coin — Community Builds Sovereignty</div>
@@ -127,17 +100,52 @@
   </footer>
 
   <script>
+    const MINT = 'B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk';
+
     // Copy mint helper
     document.getElementById('copyMint').addEventListener('click', async () => {
-      const mint = document.getElementById('mint').textContent.trim();
       try{
-        await navigator.clipboard.writeText(mint);
+        await navigator.clipboard.writeText(MINT);
         const btn = document.getElementById('copyMint');
-        const old = btn.textContent;
-        btn.textContent = 'Copied!';
-        setTimeout(()=>btn.textContent = old, 1200);
+        const old = btn.textContent; btn.textContent = 'Copied!'; setTimeout(()=>btn.textContent = old, 1200);
       }catch(e){}
     });
+
+    // Links
+    const frame = document.getElementById('dexFrame');
+    const dexLink = document.getElementById('dexLink');
+    const scanLink = document.getElementById('scanLink');
+    const pairName = document.getElementById('pairName');
+    const priceNow = document.getElementById('priceNow');
+    scanLink.href = `https://solscan.io/token/${MINT}`;
+    dexLink.href  = `https://dexscreener.com/solana?address=${MINT}`;
+
+    // Auto-pick best pair (highest liquidity) for the embed
+    async function loadBestPair(){
+      try{
+        const r = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${MINT}`);
+        const j = await r.json();
+        if (!j.pairs || !j.pairs.length) throw new Error('No pairs found');
+
+        // choose by highest USD liquidity
+        j.pairs.sort((a,b)=> (Number(b.liquidity?.usd||0)) - (Number(a.liquidity?.usd||0)));
+        const p = j.pairs[0];
+
+        const pairUrl = `https://dexscreener.com/${p.chainId}/${p.pairAddress}?embed=1&theme=dark`;
+        frame.src = pairUrl;
+        dexLink.href = `https://dexscreener.com/${p.chainId}/${p.pairAddress}`;
+
+        pairName.textContent = `${p.baseToken?.symbol || 'CBS'}/${p.quoteToken?.symbol || ''} on ${p.dexId?.toUpperCase?.() || 'DEX'}`;
+        if (p.priceUsd) priceNow.textContent = `Price: $${Number(p.priceUsd).toFixed(6)}`;
+
+      }catch(e){
+        // Fallback: token overview (still shows our mint)
+        frame.src = `https://dexscreener.com/solana?embed=1&theme=dark&address=${MINT}`;
+        pairName.textContent = 'Token overview (all CBS pairs)';
+        priceNow.textContent = '';
+      }
+    }
+    loadBestPair();
   </script>
 </body>
 </html>
