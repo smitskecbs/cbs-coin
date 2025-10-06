@@ -3,16 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CBS Coin — Buy CBS (Swap)</title>
-  <meta name="description" content="Buy CBS directly on this page using the Jupiter swap terminal. Connect your Solana wallet and swap SOL/USDC to CBS." />
+  <title>CBS Coin — Buy & Market (Dexscreener)</title>
+  <meta name="description" content="See CBS markets on Dexscreener and learn how to buy with Phantom by pasting the mint address." />
   <meta name="theme-color" content="#0b1227" />
 
   <!-- Fonts & Tailwind -->
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Jupiter Terminal (embedded swap) -->
-  <script src="https://terminal.jup.ag/main-v2.js" data-preload></script>
 
   <style>
     :root{ --bg:#070a12; --bg2:#0b1227; --ring:#24e6b5; --text:#e5efff; }
@@ -21,22 +18,19 @@
     .neon{ box-shadow: 0 0 0 .5px rgba(255,255,255,.2), 0 0 25px rgba(36,230,181,.25), inset 0 0 25px rgba(36,230,181,.08); }
     .meme-title{ font-family: Bangers, Inter, system-ui; letter-spacing:.5px; text-shadow: 0 2px #000, 0 6px rgba(0,0,0,.35); }
     code{ background: rgba(255,255,255,.06); padding:.2rem .35rem; border-radius:.5rem; word-break: break-all; }
-
-    /* Mobile tweaks */
-    @media (max-width: 480px){
-      .hero-pad{ padding: 1rem !important; }
-    }
+    .btn{ display:inline-flex; align-items:center; gap:.5rem; padding:.6rem .9rem; border-radius:.8rem; border:1px solid rgba(255,255,255,.12); background:#0f1734; }
+    .btn:hover{ filter:brightness(1.1) }
+    @media (max-width: 480px){ .hero-pad{ padding: 1rem !important; } }
   </style>
 </head>
 <body class="min-h-screen">
-  <!-- NAV: logo only (same as index) -->
+  <!-- NAV -->
   <nav class="max-w-6xl mx-auto px-4 py-4">
     <div class="flex items-center justify-between gap-4">
       <a href="index.html" class="flex items-center gap-3">
         <img src="logo.png" class="h-10 w-10 rounded-xl ring-2 ring-[var(--ring)]" alt="CBS" />
         <span class="font-extrabold tracking-tight">CBS Coin</span>
       </a>
-      <!-- No right-side links -->
     </div>
   </nav>
 
@@ -47,9 +41,13 @@
         <div>
           <h1 class="meme-title text-5xl md:text-6xl font-extrabold">Buy CBS</h1>
           <p class="mt-3 text-sm md:text-base opacity-85">
-            Official Mint / CA: <code id="mint">B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code>
+            Official Mint / CA:
+            <code id="mint">B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code>
+            <button id="copyMint" class="btn text-xs">Copy</button>
           </p>
-          <p class="mt-1 text-xs opacity-70">Swap SOL or USDC to CBS directly on this page. Connect your wallet inside the swap box.</p>
+          <p class="mt-1 text-xs opacity-70">
+            View price, liquidity and pairs below. To buy, use the **Phantom** swap by pasting the mint address.
+          </p>
         </div>
         <div class="hidden md:block">
           <img src="assets/hero-cbs.png" alt="CBS" class="rounded-2xl w-full ring-1 ring-white/10" onerror="this.style.display='none'">
@@ -58,13 +56,62 @@
     </div>
   </header>
 
-  <!-- SWAP (Jupiter Terminal Integrated) -->
+  <!-- MARKET: Dexscreener embed -->
   <section class="max-w-6xl mx-auto px-4 py-8">
     <div class="glass rounded-2xl p-2 md:p-4">
-      <!-- Height wrapper so the iframe fits nicely on mobile/desktop -->
-      <div class="w-full h-[640px] md:h-[720px]" id="jup-integrated"></div>
+      <div class="w-full h-[720px]">
+        <!-- Dexscreener shows all CBS pairs using address= -->
+        <iframe
+          id="dex-frame"
+          class="w-full h-full rounded-xl"
+          src="https://dexscreener.com/solana?embed=1&theme=dark&address=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"
+          frameborder="0"
+          allow="clipboard-write; encrypted-media"
+        ></iframe>
+      </div>
     </div>
-    <p class="text-xs opacity-60 mt-3">Powered by Jupiter Terminal. Best route across Solana DEXs. Fees are determined by the DEX route and network.</p>
+    <div class="mt-3 flex flex-wrap gap-3">
+      <a class="btn text-xs" target="_blank" rel="noreferrer"
+         href="https://dexscreener.com/solana?address=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk">
+        Open on Dexscreener
+      </a>
+      <a class="btn text-xs" target="_blank" rel="noreferrer"
+         href="https://solscan.io/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk">
+        View on Solscan
+      </a>
+    </div>
+  </section>
+
+  <!-- HOW TO BUY (PHANTOM) -->
+  <section class="max-w-6xl mx-auto px-4 pb-10">
+    <div class="glass rounded-2xl p-6">
+      <h2 class="text-xl font-extrabold mb-2">How to buy with Phantom (no verification required)</h2>
+      <ol class="list-decimal pl-5 space-y-2 text-sm opacity-90">
+        <li>Install the <b>Phantom</b> wallet (Chrome, Firefox, or mobile) and create/restore your wallet.</li>
+        <li>Fund your wallet with a small amount of <b>SOL</b> for gas and swapping.</li>
+        <li>Open Phantom and go to <b>Swap</b>.</li>
+        <li>In the <b>To</b> field, paste our mint address:<br>
+          <code>B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code><br>
+          Phantom will fetch the token even if it’s not “verified”.</li>
+        <li>Set the <b>From</b> token to <b>SOL</b> (or USDC), enter the amount, and review the route.</li>
+        <li>If you see “Price Impact”/slippage, start small and adjust (e.g., 1–2%).</li>
+        <li>Confirm the swap in Phantom. After success, click <b>Manage Tokens → Add</b> if CBS isn’t visible yet, then paste the same mint to add it.</li>
+      </ol>
+      <p class="text-xs opacity-60 mt-3">
+        Safety: we never DM for keys. Only use the mint address above and links on this site. Swapping carries risk—do your own research.
+      </p>
+    </div>
+
+    <!-- Optional: Raydium backup instructions -->
+    <div class="glass rounded-2xl p-6 mt-4">
+      <h3 class="font-bold mb-2">Alternative: Swap on Raydium</h3>
+      <ol class="list-decimal pl-5 space-y-2 text-sm opacity-90">
+        <li>Open Raydium → <b>Swap</b>.</li>
+        <li>Set <b>From</b> = SOL (or USDC). Click the token selector for <b>To</b> and paste the mint:
+          <code>B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code>.</li>
+        <li>Choose amount, set slippage if needed, and confirm in Phantom.</li>
+      </ol>
+    </div>
   </section>
 
   <!-- FOOTER -->
@@ -72,7 +119,7 @@
     <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
       <div>CBS Coin — Community Builds Sovereignty</div>
       <div class="flex gap-3">
-        <a href="https://x.com/" target="_blank" rel="noreferrer">X/Twitter</a>
+        <a href="https://x.com/CBS_Coin" target="_blank" rel="noreferrer">X/Twitter</a>
         <a href="https://t.me/CBS_Coin" target="_blank" rel="noreferrer">Telegram</a>
         <a href="mailto:cbs.coin12@gmail.com">cbs.coin12@gmail.com</a>
       </div>
@@ -80,35 +127,16 @@
   </footer>
 
   <script>
-    // ======= Config =======
-    const MINT = 'B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk';
-
-    // Use your Helius RPC for best reliability (you already have one on your site)
-    const HELIUS_KEY = 'a9a11d45-2d40-4da0-a3b6-557b855f1e5c';
-    const RPC_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
-
-    // ======= Jupiter Terminal init =======
-    window.addEventListener('DOMContentLoaded', () => {
-      // Integrated mode renders inside the target element (no extra wallet SDK needed)
-      window.Jupiter.init({
-        displayMode: 'integrated',
-        integratedTargetId: 'jup-integrated',
-        endpoint: RPC_URL,
-        // Make sure users always end up buying CBS
-        formProps: {
-          // Start with SOL -> CBS, but user can switch input to USDC/others
-          initialInputMint: 'So11111111111111111111111111111111111111112',
-          initialOutputMint: MINT,
-          fixedOutputMint: true,
-          swapMode: 'ExactIn' // user inputs how much SOL/USDC to spend
-        },
-        // If CBS is not yet on strict token list, allow showing it
-        strictTokenList: false,
-        defaultExplorer: 'Solscan',
-        // Nice height & responsive
-        containerStyles: { height: '100%', maxHeight: '720px' },
-        containerClassName: 'h-full max-h-[720px]'
-      });
+    // Copy mint helper
+    document.getElementById('copyMint').addEventListener('click', async () => {
+      const mint = document.getElementById('mint').textContent.trim();
+      try{
+        await navigator.clipboard.writeText(mint);
+        const btn = document.getElementById('copyMint');
+        const old = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(()=>btn.textContent = old, 1200);
+      }catch(e){}
     });
   </script>
 </body>
