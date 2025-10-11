@@ -1,201 +1,240 @@
-<!doctype html>
-<html lang="nl">
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>CBS — Holder Badge Mint</title>
-  <meta name="description" content="Mint je CBS Holder Badge. Toegang tot de besloten Telegram voor holders.">
-  <link rel="icon" href="logo.png" />
-
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
     :root{
-      --bg:#0c1117;         /* basis achtergrond */
-      --panel:#0f1621;      /* panel achtergrond */
-      --muted:#6b7b8f;      /* secundaire tekst */
-      --text:#e9eef6;       /* hoofdtekst */
-      --brand:#21d3c3;      /* accentkleur */
-      --brand-2:#0ea5a5;
-      --ring: rgba(33,211,195,.35);
-      --radius:16px;
+      --bg:#0a1426; --bg2:#0f223f; --card:#0c1a32; --fg:#eaf2ff; --muted:#bcd1ff;
+      --accent:#60e5c6; --accent2:#9ae6ff; --danger:#ff6b6b; --ok:#37e39f; --radius:16px;
+      --shadow:0 18px 50px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.05);
     }
     *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      background: radial-gradient(80% 120% at 50% -10%, #16202e 0%, var(--bg) 50%) fixed;
-      color:var(--text);
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
-      line-height:1.45;
-    }
-    .container{max-width:1100px;margin:0 auto;padding:24px}
-    header{margin-bottom:16px}
-    .hero{
-      border-radius:var(--radius);
-      overflow:hidden;
-      background:linear-gradient(180deg,#111927 0%, #0e1420 100%);
-      box-shadow: 0 10px 40px rgba(0,0,0,.35);
-    }
-    .hero img{
-      display:block;
-      width:100%;
-      height:auto;          /* geen crop; schaalt proportioneel */
-    }
-    .title-row{
-      display:flex;align-items:center;gap:12px;
-      margin-top:18px;margin-bottom:8px
-    }
-    .brand-badge{
-      width:52px;height:52px;flex:0 0 52px;
-      border-radius:999px;
-      background:#101826;
-      display:grid;place-items:center;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), 0 8px 28px rgba(0,0,0,.35);
-    }
-    .brand-badge img{width:36px;height:36px;object-fit:contain}
-    h1{font-size:clamp(22px,3.4vw,32px);margin:0}
-    .subtitle{color:var(--muted);font-size:.96rem}
-    .card{
-      background:linear-gradient(180deg,#0e1522 0%, #0a101a 100%);
-      border:1px solid rgba(255,255,255,.06);
-      border-radius:var(--radius);
-      box-shadow: 0 10px 30px rgba(0,0,0,.35);
-      padding:20px;
-    }
-    .grid{
-      display:grid; gap:18px;
-      grid-template-columns:1.1fr .9fr;
-    }
-    @media (max-width:900px){ .grid{grid-template-columns:1fr} }
-
-    .btn-row{display:flex;gap:12px;flex-wrap:wrap}
+    body{margin:0;background:linear-gradient(180deg,var(--bg),#071122);color:var(--fg);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+    .wrap{max-width:1120px;margin:22px auto;padding:0 14px}
+    .banner{width:100%;border-radius:18px;background:linear-gradient(180deg,#071428,#0c1e3a);box-shadow:var(--shadow);overflow:hidden}
+    header{padding:22px 18px}
+    h1{margin:0;font-size:34px;letter-spacing:.2px}
+    .sub{color:var(--muted);font-size:14px}
+    .panel{background:linear-gradient(180deg,var(--card),#0a1a31);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
+    .cols{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}
+    @media (max-width:900px){.cols{grid-template-columns:1fr}}
+    .stack{display:grid;gap:14px}
+    .hstack{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     button{
-      appearance:none; border:0; cursor:pointer;
-      padding:10px 16px; border-radius:12px;
-      background:#121b28; color:var(--text);
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
-      transition:.2s transform ease, .2s box-shadow ease, .2s background ease;
-      font-weight:600;
+      appearance:none;border:0;border-radius:12px;padding:12px 16px;font-weight:700;
+      color:#05121f;background:#172f57;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);
+      transition:.18s transform ease,.18s filter ease,.18s background ease
     }
-    button:hover{transform:translateY(-1px)}
-    .btn-primary{
-      background:linear-gradient(180deg, var(--brand) 0%, var(--brand-2) 100%);
-      color:#04201f; text-shadow: 0 1px 0 rgba(255,255,255,.35);
-      box-shadow: 0 8px 24px var(--ring);
-    }
-    .btn-primary:hover{box-shadow:0 10px 26px var(--ring)}
-    .btn-ghost{background:#101724}
-    .meta{
-      background:#0a121d;border:1px solid rgba(255,255,255,.06);
-      border-radius:12px;padding:14px 16px;
-      display:grid;gap:10px
-    }
-    .row{display:grid;grid-template-columns:150px 1fr;gap:10px}
-    .k{color:var(--muted)}
-    .mono{font-family: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
-    textarea{
-      width:100%;min-height:120px;resize:vertical;
-      background:#0a111a;color:var(--text);border:1px solid rgba(255,255,255,.06);
-      border-radius:12px;padding:12px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
-    }
-    footer{color:var(--muted);text-align:center;margin:28px 0 12px}
-    a{color:#73e1d9;text-decoration:none}
-    a:hover{text-decoration:underline}
+    button:hover{filter:brightness(1.05)}
+    button:active{transform:translateY(1px)}
+    .primary{background:linear-gradient(180deg,#1ac9a2,#13b58f);color:#001b16;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
+    .muted{background:#13284a;color:var(--muted)}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#12274a;color:var(--accent2);font-size:12px}
+    .kv{display:grid;grid-template-columns:140px 1fr;gap:6px 10px;font-size:14px}
+    .kv b{color:#bde8ff}
+    .log{width:100%;height:150px;background:#071427;border:0;color:#aee7ff;border-radius:12px;padding:10px;font-family:ui-monospace,Menlo,Consolas,monospace;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+    a{color:#97e9ff;text-decoration:none}
+    .tip{font-size:12px;color:#a7c5ff}
+    img.banner-img{width:100%;display:block;object-fit:cover;min-height:140px}
   </style>
 </head>
 <body>
-  <main class="container">
-    <!-- Banner -->
-    <div class="hero">
-      <!-- Zorg dat deze bestandsnaam exact in je repo staat -->
-      <img src="Banner-CBS-Coin.webp" alt="CBS Coin banner" />
+  <div class="wrap stack">
+    <div class="banner">
+      <!-- Exact filename (GitHub Pages is case-sensitive) -->
+      <img class="banner-img" src="Banner-CBS-Coin.webp" alt="CBS Coin banner">
+      <header class="stack">
+        <div class="hstack" style="justify-content:space-between">
+          <div class="stack" style="gap:6px">
+            <h1>CBS — Community Builds Sovereignty</h1>
+            <div class="sub">Holder Badge • Access to holders-only Telegram • Since 2025</div>
+          </div>
+          <span class="pill">Mainnet-Beta</span>
+        </div>
+      </header>
     </div>
 
-    <header>
-      <div class="title-row">
-        <div class="brand-badge"><img src="logo.png" alt="CBS logo" /></div>
-        <h1>CBS — Community Builds Sovereignty</h1>
-      </div>
-      <div class="subtitle">
-        Holder Badge • Sinds 2025 • Toegang tot besloten Telegram voor <strong>holders</strong>
-      </div>
-    </header>
+    <div class="panel stack">
+      <h2 style="margin:0 0 6px">Mint your <span style="color:var(--accent)">CBS Holder Badge</span></h2>
+      <div class="sub">Requirement: <b>≥ 1 CBS</b> in your wallet (token gate). Limit: <b>1 per wallet.</b></div>
 
-    <!-- Mint card -->
-    <section class="card">
-      <h2 style="margin:0 0 12px 0">Mint je <span style="color:var(--brand)">CBS Holder Badge</span></h2>
-      <div class="subtitle" style="margin-bottom:16px">
-        Vereist: ≥ <strong>1 CBS</strong> in je wallet (token-gate). Limiet: <strong>1 per wallet</strong>.
-      </div>
-
-      <div class="btn-row" style="margin-bottom:14px">
-        <button id="btn-connect" class="btn-ghost">Connect Wallet</button>
-        <button id="btn-mint" class="btn-primary">Mint</button>
-        <button id="btn-supply" class="btn-ghost">Supply</button>
-      </div>
-
-      <div class="grid" style="margin-top:6px">
-        <!-- Log -->
-        <div>
-          <textarea id="log" readonly>idle</textarea>
-          <div class="subtitle" style="margin-top:10px">
-            Tip: als je iets “vreemds” ziet, doe een harde refresh
-            <span class="mono">Ctrl + F5</span> (of <span class="mono">Cmd + Shift + R</span>).
+      <div class="cols">
+        <!-- Left -->
+        <div class="stack">
+          <div class="hstack">
+            <button id="btnConnect" class="muted">Connect Wallet</button>
+            <button id="btnMint" class="primary" disabled>Mint</button>
+            <button id="btnCheck" class="muted">Check balance</button>
           </div>
+          <textarea id="log" class="log" readonly>idle</textarea>
+          <div class="tip">Tip: if something looks off, hard refresh (Ctrl+F5).</div>
         </div>
 
-        <!-- Info -->
-        <div class="meta">
-          <div class="row">
-            <div class="k">Candy Machine:</div>
-            <div class="mono" id="cm">—</div>
-          </div>
-          <div class="row">
-            <div class="k">Candy Guard:</div>
-            <div class="mono" id="guard">—</div>
-          </div>
-          <div class="row">
-            <div class="k">Network:</div>
-            <div class="mono" id="network">—</div>
-          </div>
-          <div class="row">
-            <div class="k">View CM:</div>
-            <div>
-              <a href="https://solana.fm/address/CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd?cluster=mainnet-alpha" target="_blank" rel="noopener">SolanaFM</a>
+        <!-- Right (info) -->
+        <div class="panel" style="background:#0a1830">
+          <div class="kv">
+            <b>Status</b><span id="status">Disconnected</span>
+            <b>Your CBS</b><span id="cbs">—</span>
+            <b>Candy Machine</b><span><code id="cmid"></code></span>
+            <b>Candy Guard</b><span><code id="cguard"></code></span>
+            <b>Network</b><span>Mainnet-Beta</span>
+            <b>View CM</b>
+            <span>
+              <a id="solanafm" target="_blank" rel="noreferrer">SolanaFM</a>
               •
-              <a href="https://solscan.io/account/CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd" target="_blank" rel="noopener">Solscan</a>
-            </div>
-          </div>
-          <div class="row">
-            <div class="k">Supply:</div>
-            <div class="mono" id="supply">—</div>
+              <a id="solscan" target="_blank" rel="noreferrer">Solscan</a>
+            </span>
           </div>
         </div>
       </div>
-    </section>
+    </div>
 
-    <footer>
-      © CBS Coin • <a href="index.html">Home</a> • cbs.coin12@gmail.com
+    <footer class="hstack" style="justify-content:space-between;opacity:.9">
+      <div>© CBS Coin • <a href="https://smitskecbs.github.io/cbs-coin/" target="_blank">Home</a> • <a href="mailto:cbs.coin12@gmail.com">cbs.coin12@gmail.com</a></div>
+      <div><a href="https://t.me/CBS_Coin" target="_blank">Telegram</a></div>
     </footer>
-  </main>
+  </div>
 
-  <!-- JOUW bundel – automatisch init, niet zelf aanroepen -->
-  <script defer src="mint.bundle.js?v=6"></script>
+  <!-- web3.js for balance check -->
+  <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
 
-  <!-- Vriendelijke fallback als bundel ontbreekt/wordt geblokkeerd -->
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      setTimeout(() => {
-        if (!window.MintApp || typeof window.MintApp.init !== 'function') {
-          const log = document.getElementById('log');
-          if (log) {
-            log.value += (log.value ? '\n' : '') +
-              '⚠️ mint.bundle.js niet gevonden of geblokkeerd. Controleer filename & upload.';
+  <!-- Umi + Candy Machine v3 -->
+  <script type="module">
+    // ---------- Config (your exact keys) ----------
+    const HELIUS_RPC = "https://mainnet.helius-rpc.com/?api-key=a9a11d45-2d40-4da0-a3b6-557b855f1e5c";
+    const CANDY_MACHINE = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd";
+    const CANDY_GUARD   = "9m94QDkzsEoJLdfHMpyQUCgdS6fXSP1AeoEzf4RLmcUv";
+    const CBS_MINT      = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
+
+    // ---------- DOM helpers ----------
+    const $ = s => document.querySelector(s);
+    const log = (m) => { const el=$("#log"); el.value = (el.value?el.value+"\n":"")+m; el.scrollTop = el.scrollHeight; };
+
+    // Show IDs + explorers
+    $("#cmid").textContent   = CANDY_MACHINE;
+    $("#cguard").textContent = CANDY_GUARD;
+    $("#solanafm").href = `https://solana.fm/address/${CANDY_MACHINE}?cluster=mainnet-alpha`;
+    $("#solscan").href  = `https://solscan.io/account/${CANDY_MACHINE}`;
+
+    // ---------- web3.js connection for token-gate ----------
+    const web3 = window.solanaWeb3;
+    const connection = new web3.Connection(HELIUS_RPC, "confirmed");
+    let walletPubkey = null;
+
+    async function connectWallet() {
+      try {
+        if (!window.solana || !window.solana.isPhantom) {
+          alert("Please install Phantom Wallet.");
+          window.open("https://phantom.app/", "_blank");
+          return;
+        }
+        const resp = await window.solana.connect();
+        walletPubkey = new web3.PublicKey(resp.publicKey.toString());
+        $("#status").textContent = `Connected: ${walletPubkey.toBase58().slice(0,4)}…${walletPubkey.toBase58().slice(-4)}`;
+        log(`Connected: ${walletPubkey.toBase58()}`);
+        await checkCBS();
+      } catch (e) { log(`Connect error: ${e.message || e}`); }
+    }
+
+    async function checkCBS() {
+      if (!walletPubkey) return;
+      try {
+        const accounts = await connection.getParsedTokenAccountsByOwner(
+          walletPubkey,
+          { mint: new web3.PublicKey(CBS_MINT) }
+        );
+        let ui = 0;
+        if (accounts.value.length) {
+          ui = accounts.value
+            .map(a => a.account.data.parsed.info.tokenAmount.uiAmount || 0)
+            .reduce((a,b)=>a+b, 0);
+        }
+        $("#cbs").textContent = `${ui}`;
+        if (ui >= 1) {
+          $("#btnMint").disabled = false;
+          log("✅ Token gate OK: you hold ≥ 1 CBS.");
+        } else {
+          $("#btnMint").disabled = true;
+          log("⛔ Token gate: you need ≥ 1 CBS to mint.");
+        }
+      } catch (e) {
+        log(`Balance check failed: ${e.message || e}`);
+      }
+    }
+
+    $("#btnConnect").addEventListener("click", connectWallet);
+    $("#btnCheck").addEventListener("click", checkCBS);
+
+    // ---------- Umi / Candy Machine mint ----------
+    import { createUmi, publicKey, generateSigner } from "https://esm.sh/@metaplex-foundation/umi@0.10.9";
+    import { createSignerFromWalletAdapter, walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@0.10.9";
+    import { mplCandyMachine, fetchCandyMachine, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@0.7.2";
+
+    const umiBase = createUmi(HELIUS_RPC).use(mplCandyMachine());
+
+    function umiWithWallet() {
+      if (!window.solana?.isPhantom) throw new Error("Phantom not available");
+      const adapter = {
+        publicKey: { toBase58: () => window.solana.publicKey.toBase58() },
+        signTransaction: (tx) => window.solana.signTransaction(tx),
+        signAllTransactions: (txs) => window.solana.signAllTransactions(txs),
+        signMessage: (msg) => window.solana.signMessage(msg, "utf8"),
+      };
+      return umiBase.use(walletAdapterIdentity(createSignerFromWalletAdapter(adapter)));
+    }
+
+    async function doMint() {
+      try {
+        if (!walletPubkey) { await connectWallet(); if (!walletPubkey) return; }
+        await checkCBS();
+        if ($("#btnMint").disabled) { alert("You need at least 1 CBS in your wallet to mint."); return; }
+
+        $("#btnMint").disabled = true;
+        log("Preparing mint…");
+
+        const u = umiWithWallet();
+        const cmPk = publicKey(CANDY_MACHINE);
+        await fetchCandyMachine(u, cmPk); // ensure it exists / warm up
+
+        const nftMint = generateSigner(u);
+
+        const tx = await mintV2(u, {
+          candyMachine: cmPk,
+          candyGuard: publicKey(CANDY_GUARD), // uses your linked guard (token gate etc.)
+          nftMint,
+        });
+
+        const { signature } = await tx.sendAndConfirm(u, { confirm: { commitment: "confirmed" } });
+        log(`✅ Minted! Tx: ${signature}`);
+        alert("Mint successful! Check your wallet/NFTs.");
+      } catch (e) {
+        console.error(e);
+        log(`❌ Mint failed: ${e.message || e}`);
+        alert(`Mint failed:\n${e.message || e}`);
+      } finally {
+        $("#btnMint").disabled = false;
+      }
+    }
+
+    $("#btnMint").addEventListener("click", doMint);
+
+    // Optional auto-connect
+    (async () => {
+      try {
+        if (window.solana?.isPhantom) {
+          const r = await window.solana.connect({ onlyIfTrusted: true });
+          if (r?.publicKey) {
+            walletPubkey = new web3.PublicKey(r.publicKey.toString());
+            $("#status").textContent = `Connected: ${walletPubkey.toBase58().slice(0,4)}…${walletPubkey.toBase58().slice(-4)}`;
+            await checkCBS();
+            log("Auto-connected.");
           }
         }
-      }, 900);
-    });
+      } catch {}
+    })();
   </script>
 </body>
 </html>
-
