@@ -16,7 +16,6 @@
   }
   *{box-sizing:border-box}
   body{margin:0;background:linear-gradient(180deg,var(--bg),#061120);color:var(--ink);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
-
   .wrap{max-width:1100px;margin:22px auto;padding:0 14px}
 
   /* Top bar */
@@ -27,7 +26,7 @@
   .brand h2{margin:0;font-size:18px;letter-spacing:.3px}
   .toplinks a{color:var(--acc2);text-decoration:none;margin-left:14px;font-weight:600}
 
-  /* Hero banner */
+  /* Hero */
   .hero{border-radius:18px;background:linear-gradient(180deg,#081429,#0b1f3d);box-shadow:var(--shadow);overflow:hidden;margin-top:14px}
   .hero img{width:100%;display:block;object-fit:cover;min-height:140px}
   header{padding:20px 18px}
@@ -64,7 +63,7 @@
 </head>
 <body>
   <div class="wrap">
-    <!-- Top bar with logo -->
+    <!-- Top bar -->
     <div class="topbar">
       <div class="brand">
         <img src="logo.png" alt="CBS logo">
@@ -78,7 +77,6 @@
 
     <!-- Banner -->
     <div class="hero">
-      <!-- Exact filename (GitHub Pages is case-sensitive) -->
       <img src="Banner-CBS-Coin.webp" alt="CBS Coin banner">
       <header class="row" style="justify-content:space-between">
         <div class="stack" style="gap:6px">
@@ -102,7 +100,6 @@
             <button id="btnMint" class="primary" disabled>Mint</button>
             <button id="btnCheck" class="muted">Check balance</button>
           </div>
-
           <textarea id="log" class="log" readonly>idle</textarea>
           <div class="tip">Tip: if something looks off, hard refresh (Ctrl + F5).</div>
         </div>
@@ -110,8 +107,7 @@
         <!-- Right -->
         <div class="panel" style="background:#0a1a34">
           <div class="kv" id="statusBox">
-            <!-- Filled dynamically -->
-            <b>Status</b><span>Disconnected</span>
+            <b>Status</b><span id="statusText">Disconnected</span>
             <b>Your CBS</b><span id="cbs">—</span>
             <b>Candy Machine</b><span><code id="cmid"></code></span>
             <b>Candy Guard</b><span><code id="cguard"></code></span>
@@ -159,6 +155,10 @@
     const connection = new web3.Connection(HELIUS_RPC, "confirmed");
     let walletPubkey = null;
 
+    function setStatus(text){
+      $("#statusText").textContent = text;
+    }
+
     async function connectWallet() {
       try {
         if (!window.solana?.isPhantom) {
@@ -166,6 +166,7 @@
         }
         const r = await window.solana.connect();
         walletPubkey = new web3.PublicKey(r.publicKey.toString());
+        setStatus(`Connected: ${walletPubkey.toBase58().slice(0,4)}…${walletPubkey.toBase58().slice(-4)}`);
         log(`Connected: ${walletPubkey.toBase58()}`);
         await checkCBS();
         await updateSupplyBox();
@@ -194,14 +195,14 @@
     $("#btnConnect").addEventListener("click", connectWallet);
     $("#btnCheck").addEventListener("click", checkCBS);
 
-    /************ Umi (bundle-defaults) + CMv3 mint ************/
-    import { createUmi, publicKey, generateSigner } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults";
+    /************ Umi (correct imports) + CMv3 mint ************/
+    import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults";
+    import { publicKey, generateSigner } from "https://esm.sh/@metaplex-foundation/umi";
     import { walletAdapterIdentity, createSignerFromWalletAdapter } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata";
     import { mplCandyMachine, fetchCandyMachine, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine";
     import { setComputeUnitLimit, setComputeUnitPrice } from "https://esm.sh/@metaplex-foundation/mpl-toolbox";
 
-    // Base Umi with defaults + plugins
     const umiBase = createUmi(HELIUS_RPC)
       .use(mplTokenMetadata())
       .use(mplCandyMachine());
@@ -225,17 +226,9 @@
         const minted    = Number(cm.itemsRedeemed ?? 0);
         const available = Number(cm.itemsAvailable ?? 0);
         const remaining = Math.max(available - minted, 0);
-
-        // Update right panel
         $("#minted").textContent    = `${minted} / ${available}`;
         $("#remaining").textContent = `${remaining}`;
-
-        // Status line
-        const statusText = walletPubkey
-          ? `Connected: ${walletPubkey.toBase58().slice(0,4)}…${walletPubkey.toBase58().slice(-4)}`
-          : "Disconnected";
-        const box = document.getElementById("statusBox");
-        if (box) box.querySelector("span").textContent = statusText;
+        if (walletPubkey) setStatus(`Connected: ${walletPubkey.toBase58().slice(0,4)}…${walletPubkey.toBase58().slice(-4)}`);
       } catch (e) {
         log(`Supply read failed: ${e.message||e}`);
       }
@@ -258,7 +251,7 @@
 
         const nftMint = generateSigner(u);
 
-        // Better reliability on busy slots
+        // Reliability on busy slots
         setComputeUnitLimit(u, { units: 900_000 });
         setComputeUnitPrice(u, { microLamports: 10_000 }); // 0.00001 SOL priority
 
@@ -272,7 +265,6 @@
         log(`✅ Minted! Tx:\n${signature}`);
         log(`View: https://solscan.io/tx/${signature}`);
         alert("Mint successful! Check your wallet/NFTs.");
-
         await updateSupplyBox();
       }catch(e){
         console.error(e);
@@ -284,13 +276,14 @@
     }
     document.getElementById("btnMint").addEventListener("click", doMint);
 
-    // Initial data + optional auto-connect
+    // Initial load + optional auto-connect
     await updateSupplyBox();
     try{
       if(window.solana?.isPhantom){
         const r = await window.solana.connect({ onlyIfTrusted:true });
         if(r?.publicKey){
           walletPubkey = new web3.PublicKey(r.publicKey.toString());
+          setStatus(`Connected: ${walletPubkey.toBase58().slice(0,4)}…${walletPubkey.toBase58().slice(-4)}`);
           log("Auto-connected.");
           await checkCBS();
           await updateSupplyBox();
