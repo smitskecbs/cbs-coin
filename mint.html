@@ -3,9 +3,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CBS – Holder Badge Mint</title>
+  <title>CBS — Holder Badge Mint</title>
   <link rel="icon" href="logo.png" />
-  <link rel="preconnect" href="https://esm.sh">
   <style>
     :root{--bg:#0b0f14;--card:#121822;--muted:#93a1b1;--brand:#8be9fd}
     *{box-sizing:border-box} body{margin:0;background:linear-gradient(180deg,#0b0f14,#0f1622);color:#e6edf3;font:16px/1.5 system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
@@ -33,7 +32,6 @@
 </head>
 <body>
   <div class="wrap">
-    <!-- Banner met webp + png fallback -->
     <picture>
       <source srcset="Banner-CBS-Coin.webp" type="image/webp">
       <img class="banner" src="banner.png" alt="CBS banner">
@@ -79,51 +77,71 @@
     <footer>© CBS Coin • <a href="https://smitskecbs.github.io/cbs-coin/">Home</a> • cbs.coin12@gmail.com</footer>
   </div>
 
-  <!-- App (alle imports via esm.sh zodat ze NIET 404’en) -->
   <script type="module">
-    // ====== CONSTANTS ======
+    // ------- Config -------
     const RPC           = 'https://api.mainnet-beta.solana.com';
     const CM_ID         = 'CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd';
     const GUARD_ID      = '9m94QDkzsEoJLdfHMpyQUCgdS6fXSP1AeoEzf4RLmcUv';
     const MINT_LIMIT_ID = 1;
 
-    // ====== CDN’s (esm.sh transpileert alles naar ESM) ======
-    const [
-      { createUmi },
-      { publicKey },
-      cm,
-      cg,
-      { walletAdapterIdentity },
-      { PhantomWalletAdapter }
-    ] = await Promise.all([
-      import('https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1'),
-      import('https://esm.sh/@metaplex-foundation/umi@1'),
-      import('https://esm.sh/@metaplex-foundation/mpl-candy-machine@6'),
-      import('https://esm.sh/@metaplex-foundation/mpl-candy-guard@5'),
-      import('https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1'),
-      import('https://esm.sh/@solana/wallet-adapter-phantom@0.9.23')
-    ]);
-
-    const { mplCandyMachine, mintV2, fetchCandyMachine } = cm;
-    const { mplCandyGuard } = cg;
-
-    // ====== UI helpers ======
     const $ = (q)=>document.querySelector(q);
     const log = (m)=>{ const el=$('#log'); el.textContent += (el.textContent?'\n':'') + m; el.scrollTop=el.scrollHeight; };
     const setBusy = (b)=>{ $('#btnMint').disabled = b || !state.umi; $('#btnConnect').disabled = b; };
     const state = { umi:null };
 
-    // ====== read-only supply ======
+    // ------- Veilige ESM loader met fallbacks -------
+    async function i(urls){
+      for (const u of urls){
+        try { return await import(u); } catch(e){ /* try next */ }
+      }
+      throw new Error('Kon modules niet laden (CDN).');
+    }
+
+    // Altijd bundlen om “dynamic import” 404’s te voorkomen
+    const UBD = await i([
+      'https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1?bundle',
+      'https://unpkg.com/@metaplex-foundation/umi-bundle-defaults@1?module'
+    ]);
+    const UMI = await i([
+      'https://esm.sh/@metaplex-foundation/umi@1?bundle',
+      'https://unpkg.com/@metaplex-foundation/umi@1?module'
+    ]);
+    const CM  = await i([
+      'https://esm.sh/@metaplex-foundation/mpl-candy-machine@6?bundle',
+      'https://unpkg.com/@metaplex-foundation/mpl-candy-machine@6?module'
+    ]);
+    const CG  = await i([
+      'https://esm.sh/@metaplex-foundation/mpl-candy-guard@5?bundle',
+      'https://unpkg.com/@metaplex-foundation/mpl-candy-guard@5?module'
+    ]);
+    const AD  = await i([
+      'https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1?bundle',
+      'https://unpkg.com/@metaplex-foundation/umi-signer-wallet-adapters@1?module'
+    ]);
+    const PH  = await i([
+      'https://esm.sh/@solana/wallet-adapter-phantom@0.9.23?bundle',
+      'https://unpkg.com/@solana/wallet-adapter-phantom@0.9.23?module'
+    ]);
+
+    const { createUmi } = UBD;
+    const { publicKey } = UMI;
+    const { mplCandyMachine, mintV2, fetchCandyMachine } = CM;
+    // candy-guard kan CJS/ESM zijn; pak de export die er is
+    const mplCandyGuard = CG.mplCandyGuard ?? CG.default?.mplCandyGuard;
+    const { walletAdapterIdentity } = AD;
+    const { PhantomWalletAdapter } = PH;
+
+    // ------- read-only supply -------
     const umiRO = createUmi(RPC).use(mplCandyMachine()).use(mplCandyGuard());
     async function refreshSupply(){
       try{
         const acc = await fetchCandyMachine(umiRO, publicKey(CM_ID));
         $('#supply').textContent = `${Number(acc.itemsRedeemed)}/${Number(acc.data.itemsAvailable)}`;
-      }catch(e){ $('#supply').textContent='—'; console.warn(e); }
+      }catch{ $('#supply').textContent='—'; }
     }
     await refreshSupply();
 
-    // ====== Connect Phantom ======
+    // ------- Connect Phantom -------
     async function connect(){
       try{
         if(!window?.solana?.isPhantom){ window.open('https://phantom.app/', '_blank'); return; }
@@ -138,7 +156,7 @@
       }catch(e){ console.error(e); alert('Kon niet verbinden met Phantom.'); }
     }
 
-    // ====== Mint via Candy Guard ======
+    // ------- Mint -------
     async function mint(){
       if(!state.umi) return;
       setBusy(true); log('Mint start…');
