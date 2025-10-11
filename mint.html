@@ -10,7 +10,7 @@
     --bg:#070d19; --bg2:#0b1830;
     --card:#0d1e3a; --card2:#0b1933;
     --ink:#eaf2ff; --muted:#bcd1ff;
-    --acc:#36e1b6; --acc2:#8fe7ff; --warn:#ff8b8b;
+    --acc:#36e1b6; --acc2:#8fe7ff;
     --shadow:0 18px 48px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.05);
     --radius:16px;
   }
@@ -18,7 +18,6 @@
   body{margin:0;background:linear-gradient(180deg,var(--bg),#061120);color:var(--ink);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
   .wrap{max-width:1100px;margin:22px auto;padding:0 14px}
 
-  /* Top bar */
   .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;
     padding:10px 14px;background:#0a1830;border-radius:14px;box-shadow:var(--shadow)}
   .brand{display:flex;align-items:center;gap:12px}
@@ -26,7 +25,6 @@
   .brand h2{margin:0;font-size:18px;letter-spacing:.3px}
   .toplinks a{color:var(--acc2);text-decoration:none;margin-left:14px;font-weight:600}
 
-  /* Hero */
   .hero{border-radius:18px;background:linear-gradient(180deg,#081429,#0b1f3d);box-shadow:var(--shadow);overflow:hidden;margin-top:14px}
   .hero img{width:100%;display:block;object-fit:cover;min-height:140px}
   header{padding:20px 18px}
@@ -34,11 +32,9 @@
   .chip{padding:6px 10px;border-radius:999px;background:#142a52;color:var(--acc2);font-size:12px}
   .sub{color:var(--muted);font-size:14px}
 
-  /* Main card */
   .panel{background:linear-gradient(180deg,var(--card),var(--card2));border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
   .grid{display:grid;gap:16px;grid-template-columns:1.1fr .9fr}
   @media (max-width:900px){.grid{grid-template-columns:1fr}}
-
   .stack{display:grid;gap:14px}
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 
@@ -63,7 +59,6 @@
 </head>
 <body>
   <div class="wrap">
-    <!-- Top bar -->
     <div class="topbar">
       <div class="brand">
         <img src="logo.png" alt="CBS logo">
@@ -75,7 +70,6 @@
       </div>
     </div>
 
-    <!-- Banner -->
     <div class="hero">
       <img src="Banner-CBS-Coin.webp" alt="CBS Coin banner">
       <header class="row" style="justify-content:space-between">
@@ -87,13 +81,11 @@
       </header>
     </div>
 
-    <!-- Mint card -->
     <div class="panel stack" style="margin-top:16px">
       <h2 style="margin:0 0 6px">Mint your <span style="color:var(--acc)">CBS Holder Badge</span></h2>
       <div class="sub">Requirement: <b>≥ 1 CBS</b> in your wallet (token gate). Limit: <b>1 per wallet.</b></div>
 
       <div class="grid">
-        <!-- Left -->
         <div class="stack">
           <div class="row">
             <button id="btnConnect" class="muted">Connect Wallet</button>
@@ -104,7 +96,6 @@
           <div class="tip">Tip: if something looks off, hard refresh (Ctrl + F5).</div>
         </div>
 
-        <!-- Right -->
         <div class="panel" style="background:#0a1a34">
           <div class="kv" id="statusBox">
             <b>Status</b><span id="statusText">Disconnected</span>
@@ -133,45 +124,27 @@
   <!-- web3.js (token gate) -->
   <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
 
-  <!-- Umi + defaults + Token Metadata + Candy Machine + Toolbox -->
+  <!-- Modules -->
   <script type="module">
-    /************ CONFIG ************/
+    /******** CONFIG ********/
     const HELIUS_RPC    = "https://mainnet.helius-rpc.com/?api-key=a9a11d45-2d40-4da0-a3b6-557b855f1e5c";
     const CANDY_MACHINE = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd";
     const CANDY_GUARD   = "9m94QDkzsEoJLdfHMpyQUCgdS6fXSP1AeoEzf4RLmcUv";
     const CBS_MINT      = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
 
-    /************ UI helpers ************/
     const $ = s => document.querySelector(s);
     const log = (m) => { const el=$("#log"); el.value = (el.value?el.value+"\n":"")+m; el.scrollTop = el.scrollHeight; };
-
     $("#cmid").textContent   = CANDY_MACHINE;
     $("#cguard").textContent = CANDY_GUARD;
     $("#solanafm").href = `https://solana.fm/address/${CANDY_MACHINE}?cluster=mainnet-alpha`;
     $("#solscan").href  = `https://solscan.io/account/${CANDY_MACHINE}`;
 
-    /************ web3.js: token gate (CBS balance) ************/
+    /******** Wallet + balance (web3.js) ********/
     const web3 = window.solanaWeb3;
     const connection = new web3.Connection(HELIUS_RPC, "confirmed");
     let walletPubkey = null;
 
-    function setStatus(text){
-      $("#statusText").textContent = text;
-    }
-
-    async function connectWallet() {
-      try {
-        if (!window.solana?.isPhantom) {
-          alert("Please install Phantom Wallet."); window.open("https://phantom.app/", "_blank"); return;
-        }
-        const r = await window.solana.connect();
-        walletPubkey = new web3.PublicKey(r.publicKey.toString());
-        setStatus(`Connected: ${walletPubkey.toBase58().slice(0,4)}…${walletPubkey.toBase58().slice(-4)}`);
-        log(`Connected: ${walletPubkey.toBase58()}`);
-        await checkCBS();
-        await updateSupplyBox();
-      } catch(e){ log(`Connect error: ${e.message||e}`); }
-    }
+    function setStatus(t){ $("#statusText").textContent = t; }
 
     async function checkCBS() {
       if (!walletPubkey) return;
@@ -183,22 +156,16 @@
           .map(a => a.account.data.parsed.info.tokenAmount.uiAmount || 0)
           .reduce((a,b)=>a+b, 0);
         $("#cbs").textContent = ui.toString();
-        if (ui >= 1) {
-          $("#btnMint").disabled = false;
-          log("✅ Token gate OK: you hold ≥ 1 CBS.");
-        } else {
-          $("#btnMint").disabled = true;
-          log("⛔ Token gate: you need ≥ 1 CBS to mint.");
-        }
+        $("#btnMint").disabled = ui < 1;
+        log(ui >= 1 ? "✅ Token gate OK: you hold ≥ 1 CBS." : "⛔ Token gate: you need ≥ 1 CBS to mint.");
       } catch(e){ log(`Balance check failed: ${e.message||e}`); }
     }
-    $("#btnConnect").addEventListener("click", connectWallet);
-    $("#btnCheck").addEventListener("click", checkCBS);
 
-    /************ Umi (correct imports) + CMv3 mint ************/
+    /******** Umi + Phantom WalletAdapter ********/
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults";
     import { publicKey, generateSigner } from "https://esm.sh/@metaplex-foundation/umi";
     import { walletAdapterIdentity, createSignerFromWalletAdapter } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters";
+    import { PhantomWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-phantom";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata";
     import { mplCandyMachine, fetchCandyMachine, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine";
     import { setComputeUnitLimit, setComputeUnitPrice } from "https://esm.sh/@metaplex-foundation/mpl-toolbox";
@@ -207,22 +174,28 @@
       .use(mplTokenMetadata())
       .use(mplCandyMachine());
 
+    let phantom; // WalletAdapter instance
+
+    async function connectWalletAdapter(){
+      if (!phantom) phantom = new PhantomWalletAdapter();
+      if (!phantom.connected) await phantom.connect();     // will use window.solana provider
+      const pk = phantom.publicKey;                         // this is a real PublicKey with toBase58()
+      walletPubkey = new web3.PublicKey(pk.toBase58());
+      setStatus(`Connected: ${walletPubkey.toBase58().slice(0,4)}…${walletPubkey.toBase58().slice(-4)}`);
+      log(`Connected: ${walletPubkey.toBase58()}`);
+      await checkCBS();
+      await updateSupplyBox();
+    }
+
     function umiWithWallet() {
-      if (!window.solana?.isPhantom) throw new Error("Phantom not available");
-      const adapter = {
-        publicKey: { toBase58: () => window.solana.publicKey.toBase58() },
-        signTransaction: (tx) => window.solana.signTransaction(tx),
-        signAllTransactions: (txs) => window.solana.signAllTransactions(txs),
-        signMessage: (msg) => window.solana.signMessage(msg, "utf8"),
-      };
-      return umiBase.use(walletAdapterIdentity(createSignerFromWalletAdapter(adapter)));
+      if (!phantom || !phantom.connected) throw new Error("Wallet not connected");
+      return umiBase.use(walletAdapterIdentity(createSignerFromWalletAdapter(phantom)));
     }
 
     async function updateSupplyBox() {
       try {
-        const u = umiBase; // read-only
         const cmPk = publicKey(CANDY_MACHINE);
-        const cm = await fetchCandyMachine(u, cmPk);
+        const cm = await fetchCandyMachine(umiBase, cmPk);
         const minted    = Number(cm.itemsRedeemed ?? 0);
         const available = Number(cm.itemsAvailable ?? 0);
         const remaining = Math.max(available - minted, 0);
@@ -236,7 +209,7 @@
 
     async function doMint(){
       try{
-        if(!walletPubkey){ await connectWallet(); if(!walletPubkey) return; }
+        if(!phantom?.connected){ await connectWalletAdapter(); }
         await checkCBS();
         if(document.getElementById("btnMint").disabled){
           alert("You need at least 1 CBS to mint."); return;
@@ -248,7 +221,6 @@
         const u = umiWithWallet();
         const cmPk = publicKey(CANDY_MACHINE);
         await fetchCandyMachine(u, cmPk); // warm-up
-
         const nftMint = generateSigner(u);
 
         // Reliability on busy slots
@@ -274,23 +246,14 @@
         document.getElementById("btnMint").disabled = false;
       }
     }
+
+    // Buttons
+    document.getElementById("btnConnect").addEventListener("click", connectWalletAdapter);
+    document.getElementById("btnCheck").addEventListener("click", checkCBS);
     document.getElementById("btnMint").addEventListener("click", doMint);
 
-    // Initial load + optional auto-connect
+    // Initial counters
     await updateSupplyBox();
-    try{
-      if(window.solana?.isPhantom){
-        const r = await window.solana.connect({ onlyIfTrusted:true });
-        if(r?.publicKey){
-          walletPubkey = new web3.PublicKey(r.publicKey.toString());
-          setStatus(`Connected: ${walletPubkey.toBase58().slice(0,4)}…${walletPubkey.toBase58().slice(-4)}`);
-          log("Auto-connected.");
-          await checkCBS();
-          await updateSupplyBox();
-        }
-      }
-    }catch{}
   </script>
 </body>
 </html>
-
