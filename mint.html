@@ -89,47 +89,41 @@
     const setBusy = (b)=>{ $('#btnMint').disabled = b || !state.umi; $('#btnConnect').disabled = b; };
     const state = { umi:null };
 
-    // ------- Veilige ESM loader met fallbacks -------
+    // ------- Robust ESM loader with jsDelivr +esm (and esm.sh fallback) -------
     async function i(urls){
       for (const u of urls){
-        try { return await import(u); } catch(e){ /* try next */ }
+        try { return await import(u); } catch(e){ /* continue */ }
       }
       throw new Error('Kon modules niet laden (CDN).');
     }
 
-    // Altijd bundlen om “dynamic import” 404’s te voorkomen
+    // Pin to known-good versions and use +esm
     const UBD = await i([
-      'https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1?bundle',
-      'https://unpkg.com/@metaplex-foundation/umi-bundle-defaults@1?module'
+      'https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-bundle-defaults@1.4.1/+esm',
+      'https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1'
     ]);
     const UMI = await i([
-      'https://esm.sh/@metaplex-foundation/umi@1?bundle',
-      'https://unpkg.com/@metaplex-foundation/umi@1?module'
+      'https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi@1.4.1/+esm',
+      'https://esm.sh/@metaplex-foundation/umi@1.4.1'
     ]);
     const CM  = await i([
-      'https://esm.sh/@metaplex-foundation/mpl-candy-machine@6?bundle',
-      'https://unpkg.com/@metaplex-foundation/mpl-candy-machine@6?module'
+      'https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-candy-machine@6.1.0/+esm',
+      'https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0'
     ]);
     const CG  = await i([
-      'https://esm.sh/@metaplex-foundation/mpl-candy-guard@5?bundle',
-      'https://unpkg.com/@metaplex-foundation/mpl-candy-guard@5?module'
+      'https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-candy-guard@5.2.0/+esm',
+      'https://esm.sh/@metaplex-foundation/mpl-candy-guard@5.2.0'
     ]);
-    const AD  = await i([
-      'https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1?bundle',
-      'https://unpkg.com/@metaplex-foundation/umi-signer-wallet-adapters@1?module'
-    ]);
-    const PH  = await i([
-      'https://esm.sh/@solana/wallet-adapter-phantom@0.9.23?bundle',
-      'https://unpkg.com/@solana/wallet-adapter-phantom@0.9.23?module'
+    const WSTD = await i([
+      'https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-wallet-standard@1.0.3/+esm',
+      'https://esm.sh/@metaplex-foundation/umi-wallet-standard@1.0.3'
     ]);
 
     const { createUmi } = UBD;
     const { publicKey } = UMI;
     const { mplCandyMachine, mintV2, fetchCandyMachine } = CM;
-    // candy-guard kan CJS/ESM zijn; pak de export die er is
     const mplCandyGuard = CG.mplCandyGuard ?? CG.default?.mplCandyGuard;
-    const { walletAdapterIdentity } = AD;
-    const { PhantomWalletAdapter } = PH;
+    const { walletStandardIdentity } = WSTD;
 
     // ------- read-only supply -------
     const umiRO = createUmi(RPC).use(mplCandyMachine()).use(mplCandyGuard());
@@ -141,33 +135,32 @@
     }
     await refreshSupply();
 
-    // ------- Connect Phantom -------
+    // ------- Connect via Wallet Standard (Phantom etc.) -------
     async function connect(){
       try{
-        if(!window?.solana?.isPhantom){ window.open('https://phantom.app/', '_blank'); return; }
-        const adapter = new PhantomWalletAdapter();
-        await adapter.connect();
+        if(!window?.solana){ window.open('https://phantom.app/', '_blank'); return; }
+        await window.solana.connect(); // prompt user
         const umi = createUmi(RPC).use(mplCandyMachine()).use(mplCandyGuard());
-        umi.use(walletAdapterIdentity(adapter));
+        umi.use(walletStandardIdentity()); // picks up the connected wallet
         state.umi = umi;
         $('#btnMint').disabled = false;
         $('#btnConnect').textContent = 'Connected';
-        log('Verbonden: '+adapter.publicKey.toBase58());
-      }catch(e){ console.error(e); alert('Kon niet verbinden met Phantom.'); }
+        log('Verbonden: '+window.solana.publicKey?.toString?.());
+      }catch(e){ console.error(e); alert('Kon niet verbinden met wallet.'); }
     }
 
-    // ------- Mint -------
+    // ------- Mint (via Candy Guard) -------
     async function mint(){
       if(!state.umi) return;
       setBusy(true); log('Mint start…');
       try{
-        const sig = await mintV2(state.umi, {
+        const tx = await mintV2(state.umi, {
           candyMachine: publicKey(CM_ID),
           candyGuard:   publicKey(GUARD_ID),
           mintArgs: { mintLimit: { id: MINT_LIMIT_ID } } // tokenGate heeft geen runtime-arg
         }).sendAndConfirm(state.umi);
 
-        log('✔️ tx: '+sig.signature);
+        log('✔️ tx: '+tx.signature);
         await refreshSupply();
         alert('Mint gelukt! Je NFT verschijnt zo in je wallet.');
       }catch(e){
@@ -183,3 +176,4 @@
   </script>
 </body>
 </html>
+
