@@ -4,205 +4,198 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CBS — Holder Badge Mint</title>
-  <meta name="theme-color" content="#0b1220" />
-  <link rel="icon" href="./logo.png" />
-
-  <!-- Fonts (optioneel) -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <meta name="description" content="Mint je CBS Holder Badge. Toegang tot de besloten Telegram voor holders.">
+  <link rel="icon" href="logo.png" />
 
   <style>
     :root{
-      --bg:#0a0f1a;
-      --card:#0f1828;
-      --card-2:#0c1423;
-      --text:#e9f0ff;
-      --muted:#9ab0d1;
-      --brand:#4cd3ff;
-      --brand-2:#21a1d6;
-      --ring:#1f2b41;
-      --ok:#1db954;
-      --warn:#ffae42;
-      --err:#ff5d6c;
-      --shadow:0 10px 30px rgba(0,0,0,.35);
-      --radius:18px;
+      --bg:#0c1117;         /* basis achtergrond */
+      --panel:#0f1621;      /* panel achtergrond */
+      --muted:#6b7b8f;      /* secundaire tekst */
+      --text:#e9eef6;       /* hoofdtekst */
+      --brand:#21d3c3;      /* accentkleur */
+      --brand-2:#0ea5a5;
+      --ring: rgba(33,211,195,.35);
+      --radius:16px;
     }
     *{box-sizing:border-box}
-    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
-    a{color:var(--brand);text-decoration:none}
-    a:hover{text-decoration:underline}
-    .wrap{max-width:1080px;margin-inline:auto;padding:18px}
-
-    /* Header/Banner */
+    html,body{height:100%}
+    body{
+      margin:0;
+      background: radial-gradient(80% 120% at 50% -10%, #16202e 0%, var(--bg) 50%) fixed;
+      color:var(--text);
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji","Segoe UI Emoji", "Segoe UI Symbol", sans-serif;
+      line-height:1.45;
+    }
+    .container{max-width:1100px;margin:0 auto;padding:24px}
+    header{margin-bottom:16px}
     .hero{
-      position:relative;
+      border-radius:var(--radius);
       overflow:hidden;
-      border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      background:#152238;
-      isolation:isolate;
+      background:linear-gradient(180deg,#111927 0%, #0e1420 100%);
+      box-shadow: 0 10px 40px rgba(0,0,0,.35);
     }
-    .hero__img{
-      width:100%;
-      height:220px;
+    .hero img{
       display:block;
-      object-fit:cover;
-      object-position:center;
+      width:100%;
+      height:auto;          /* geen crop; schaalt proportioneel */
     }
-    @media (min-width:768px){
-      .hero__img{height:280px}
-    }
-    .hero__overlay{
-      position:absolute;inset:0;
-      background:linear-gradient(180deg,rgba(0,0,0,.00) 0%, rgba(0,0,0,.45) 60%, rgba(0,0,0,.75) 100%);
-      pointer-events:none;
-    }
-    .brand{
-      position:absolute;left:16px;bottom:14px;right:16px;
+    .title-row{
       display:flex;align-items:center;gap:12px;
+      margin-top:18px;margin-bottom:8px
     }
-    .brand img{
-      width:56px;height:56px;border-radius:50%;border:2px solid rgba(255,255,255,.15);background:#0d1526
+    .brand-badge{
+      width:52px;height:52px;flex:0 0 52px;
+      border-radius:999px;
+      background:#101826;
+      display:grid;place-items:center;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.06), 0 8px 28px rgba(0,0,0,.35);
     }
-    .brand h1{
-      margin:0;font-size:clamp(20px,3vw,32px);line-height:1.15;
-      text-shadow:0 6px 24px rgba(0,0,0,.35), 0 2px 8px rgba(0,0,0,.25);
-    }
-    .brand .sub{
-      margin:4px 0 0;font-size:14px;color:var(--muted)
-    }
-
-    /* Card */
+    .brand-badge img{width:36px;height:36px;object-fit:contain}
+    h1{font-size:clamp(22px,3.4vw,32px);margin:0}
+    .subtitle{color:var(--muted);font-size:.96rem}
     .card{
-      margin-top:18px;
-      background:linear-gradient(180deg,var(--card) 0%,var(--card-2) 100%);
-      border:1px solid var(--ring);
+      background:linear-gradient(180deg,#0e1522 0%, #0a101a 100%);
+      border:1px solid rgba(255,255,255,.06);
       border-radius:var(--radius);
-      box-shadow:var(--shadow);
-      padding:18px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+      padding:20px;
     }
-    .card h2{
-      margin:0 0 12px;font-size:clamp(18px,2.4vw,22px)
+    .grid{
+      display:grid; gap:18px;
+      grid-template-columns:1.1fr .9fr;
     }
-    .row{display:grid;gap:14px}
-    @media (min-width:900px){
-      .row{grid-template-columns: 1.15fr .85fr;}
-    }
-    .stack{display:flex;flex-wrap:wrap;gap:10px}
-    .btn{
-      appearance:none;border:1px solid var(--ring);
-      background:#0f2a3d;color:var(--text);
-      padding:10px 14px;border-radius:12px;
-      font-weight:600;cursor:pointer;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
-      transition:.18s transform ease, .18s background ease;
-    }
-    .btn:active{transform:translateY(1px)}
-    .btn--primary{background:linear-gradient(180deg,var(--brand) 0%, var(--brand-2) 100%);color:#001017;border-color:transparent}
-    .btn--ghost{background:#101a2b}
-    .btn[disabled]{opacity:.55;cursor:not-allowed}
+    @media (max-width:900px){ .grid{grid-template-columns:1fr} }
 
-    .note{font-size:14px;color:var(--muted)}
-    .kbd{padding:.15em .45em;border:1px solid var(--ring);border-bottom-width:2px;border-radius:8px;background:#0b1322}
-    .panel{
-      background:#0b1322;border:1px solid var(--ring);
-      border-radius:12px;padding:12px;min-height:110px;overflow:auto
+    .btn-row{display:flex;gap:12px;flex-wrap:wrap}
+    button{
+      appearance:none; border:0; cursor:pointer;
+      padding:10px 16px; border-radius:12px;
+      background:#121b28; color:var(--text);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.06);
+      transition:.2s transform ease, .2s box-shadow ease, .2s background ease;
+      font-weight:600;
     }
-    pre{margin:0;white-space:pre-wrap;word-break:break-word}
-    code{word-break:break-all}
-    .kv{display:grid;grid-template-columns:140px 1fr;gap:8px;font-size:14px}
-    .kv strong{color:#cde0ff}
-    .foot{
-      text-align:center;color:var(--muted);
-      font-size:14px;margin:18px 0 6px
+    button:hover{transform:translateY(-1px)}
+    .btn-primary{
+      background:linear-gradient(180deg, var(--brand) 0%, var(--brand-2) 100%);
+      color:#04201f; text-shadow: 0 1px 0 rgba(255,255,255,.35);
+      box-shadow: 0 8px 24px var(--ring);
     }
-    .bullets{margin:0 0 14px;padding:0;list-style:none;color:var(--muted);font-size:14px}
-    .bullets li{margin:4px 0}
+    .btn-primary:hover{box-shadow:0 10px 26px var(--ring)}
+    .btn-ghost{background:#101724}
+    .meta{
+      background:#0a121d;border:1px solid rgba(255,255,255,.06);
+      border-radius:12px;padding:14px 16px;
+      display:grid;gap:10px
+    }
+    .row{display:grid;grid-template-columns:150px 1fr;gap:10px}
+    .k{color:var(--muted)}
+    .mono{font-family: ui-monospace, "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+    textarea{
+      width:100%;min-height:120px;resize:vertical;
+      background:#0a111a;color:var(--text);border:1px solid rgba(255,255,255,.06);
+      border-radius:12px;padding:12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+    }
+    footer{color:var(--muted);text-align:center;margin:28px 0 12px}
+    a{color:#73e1d9;text-decoration:none}
+    a:hover{text-decoration:underline}
   </style>
 </head>
 <body>
+  <main class="container">
+    <!-- Banner -->
+    <div class="hero">
+      <!-- Zorg dat deze bestandsnaam exact in je repo staat -->
+      <img src="Banner-CBS-Coin.webp" alt="CBS Coin banner" />
+    </div>
 
-  <header class="hero wrap">
-    <picture>
-      <!-- Gebruik webp als die er is; valt terug op png -->
-      <source srcset="./banner.webp" type="image/webp">
-      <img class="hero__img" src="./banner.png" alt="CBS Coin banner">
-    </picture>
-    <div class="hero__overlay"></div>
-    <div class="brand">
-      <img src="./logo.png" alt="CBS logo">
-      <div>
+    <header>
+      <div class="title-row">
+        <div class="brand-badge"><img src="logo.png" alt="CBS logo" /></div>
         <h1>CBS — Community Builds Sovereignty</h1>
-        <div class="sub">Holder Badge • Sinds 2025 • Toegang tot besloten Telegram voor <strong>holders</strong></div>
       </div>
-    </div>
-  </header>
+      <div class="subtitle">
+        Holder Badge • Sinds 2025 • Toegang tot besloten Telegram voor <strong>holders</strong>
+      </div>
+    </header>
 
-  <main class="wrap card">
-    <h2>Mint je <span style="color:var(--brand)">CBS Holder Badge</span></h2>
-    <ul class="bullets">
-      <li>Vereist: <strong>&ge; 1 CBS</strong> in je wallet (token-gate).</li>
-      <li>Limiet: <strong>1 per wallet</strong>.</li>
-    </ul>
+    <!-- Mint card -->
+    <section class="card">
+      <h2 style="margin:0 0 12px 0">Mint je <span style="color:var(--brand)">CBS Holder Badge</span></h2>
+      <div class="subtitle" style="margin-bottom:16px">
+        Vereist: ≥ <strong>1 CBS</strong> in je wallet (token-gate). Limiet: <strong>1 per wallet</strong>.
+      </div>
 
-    <div class="stack" style="margin-bottom:12px">
-      <button id="btn-connect" class="btn btn--ghost">Connect Wallet</button>
-      <button id="btn-mint" class="btn btn--primary">Mint</button>
-      <button id="btn-supply" class="btn btn--ghost">Supply</button>
-    </div>
+      <div class="btn-row" style="margin-bottom:14px">
+        <button id="btn-connect" class="btn-ghost">Connect Wallet</button>
+        <button id="btn-mint" class="btn-primary">Mint</button>
+        <button id="btn-supply" class="btn-ghost">Supply</button>
+      </div>
 
-    <div class="row">
-      <section>
-        <div class="panel"><pre id="log">idle</pre></div>
-      </section>
-
-      <aside>
-        <div class="kv">
-          <strong>Candy&nbsp;Machine:</strong> <code id="cm">—</code>
-          <strong>Candy&nbsp;Guard:</strong>   <code id="cg">—</code>
-          <strong>Network:</strong>            <span>Mainnet-Beta</span>
-          <strong>View&nbsp;CM:</strong>       <span>
-            <a href="https://solana.fm/address/CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd?cluster=mainnet-alpha" target="_blank" rel="noreferrer">SolanaFM</a>
-            &nbsp;•&nbsp;
-            <a href="https://solscan.io/account/CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd" target="_blank" rel="noreferrer">Solscan</a>
-          </span>
+      <div class="grid" style="margin-top:6px">
+        <!-- Log -->
+        <div>
+          <textarea id="log" readonly>idle</textarea>
+          <div class="subtitle" style="margin-top:10px">
+            Tip: als je iets “vreemds” ziet, doe een harde refresh
+            <span class="mono">Ctrl + F5</span> (of <span class="mono">Cmd + Shift + R</span>).
+          </div>
         </div>
-      </aside>
-    </div>
 
-    <p class="note" style="margin-top:12px">
-      Tip: als je iets “vreemds” ziet, doe een harde refresh
-      <span class="kbd">Ctrl</span>+<span class="kbd">F5</span> (of <span class="kbd">Cmd</span>+<span class="kbd">Shift</span>+<span class="kbd">R</span>).
-    </p>
+        <!-- Info -->
+        <div class="meta">
+          <div class="row">
+            <div class="k">Candy Machine:</div>
+            <div class="mono" id="cm">—</div>
+          </div>
+          <div class="row">
+            <div class="k">Candy Guard:</div>
+            <div class="mono" id="guard">—</div>
+          </div>
+          <div class="row">
+            <div class="k">Network:</div>
+            <div class="mono" id="network">—</div>
+          </div>
+          <div class="row">
+            <div class="k">View CM:</div>
+            <div>
+              <a href="https://solana.fm/address/CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd?cluster=mainnet-alpha" target="_blank" rel="noopener">SolanaFM</a>
+              •
+              <a href="https://solscan.io/account/CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd" target="_blank" rel="noopener">Solscan</a>
+            </div>
+          </div>
+          <div class="row">
+            <div class="k">Supply:</div>
+            <div class="mono" id="supply">—</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      © CBS Coin • <a href="index.html">Home</a> • cbs.coin12@gmail.com
+    </footer>
   </main>
 
-  <footer class="wrap foot">
-    © CBS Coin • <a href="./index.html">Home</a> • cbs.coin12@gmail.com
-  </footer>
+  <!-- JOUW bundel – automatisch init, niet zelf aanroepen -->
+  <script defer src="mint.bundle.js?v=6"></script>
 
-  <!-- Je gebundelde app. Verhoog ?v=23 als je cache wil busten -->
-  <script src="./mint.bundle.js?v=23" defer></script>
+  <!-- Vriendelijke fallback als bundel ontbreekt/wordt geblokkeerd -->
   <script>
-    // Koppel de knoppen zodra de bundle er is
     document.addEventListener('DOMContentLoaded', () => {
-      const bind = () => {
-        if (!window.MintApp) return false;
-        try{
-          if (MintApp.init) MintApp.init();
-          const c = document.getElementById('btn-connect');
-          const m = document.getElementById('btn-mint');
-          const s = document.getElementById('btn-supply');
-          if (c) c.onclick = () => MintApp.connect().catch(()=>{});
-          if (m) m.onclick = () => MintApp.mint().catch(()=>{});
-          if (s) s.onclick = () => MintApp.supply().catch(()=>{});
-          return true;
-        }catch(e){ console.error(e); return false; }
-      };
-      // Probeer meteen, en nog een paar keer als de bundle later klaar is
-      if (!bind()) {
-        let tries = 0;
-        const t = setInterval(() => { if (bind() || ++tries>12) clearInterval(t); }, 250);
-      }
+      setTimeout(() => {
+        if (!window.MintApp || typeof window.MintApp.init !== 'function') {
+          const log = document.getElementById('log');
+          if (log) {
+            log.value += (log.value ? '\n' : '') +
+              '⚠️ mint.bundle.js niet gevonden of geblokkeerd. Controleer filename & upload.';
+          }
+        }
+      }, 900);
     });
   </script>
 </body>
 </html>
+
