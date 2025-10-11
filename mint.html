@@ -2,210 +2,207 @@
 <html lang="nl">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CBS — Holder Badge Mint</title>
-  <meta name="description" content="Mint je CBS Holder Badge (toegangspas voor de besloten Telegram voor holders)." />
-  <link rel="icon" href="logo.png" />
+  <meta name="theme-color" content="#0b1220" />
+  <link rel="icon" href="./logo.png" />
+
+  <!-- Fonts (optioneel) -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
 
   <style>
     :root{
-      --bg:#0b1220; --panel:#0e1628; --panel-2:#0a1223;
-      --text:#e8f0ff; --muted:#9fb3d9; --brand:#1fe1e9; --accent:#22c55e;
-      --danger:#ef4444; --border:#1e2a44; --chip:#132036;
+      --bg:#0a0f1a;
+      --card:#0f1828;
+      --card-2:#0c1423;
+      --text:#e9f0ff;
+      --muted:#9ab0d1;
+      --brand:#4cd3ff;
+      --brand-2:#21a1d6;
+      --ring:#1f2b41;
+      --ok:#1db954;
+      --warn:#ffae42;
+      --err:#ff5d6c;
+      --shadow:0 10px 30px rgba(0,0,0,.35);
+      --radius:18px;
     }
     *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0; background:linear-gradient(180deg,#091222, #0b1220 40%, #0b1220);
-      color:var(--text); font: 16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, sans-serif;
-    }
-    .wrap{max-width:1100px; margin-inline:auto; padding:16px}
-    /* Banner */
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
+    a{color:var(--brand);text-decoration:none}
+    a:hover{text-decoration:underline}
+    .wrap{max-width:1080px;margin-inline:auto;padding:18px}
+
+    /* Header/Banner */
     .hero{
-      background: #111 url('Banner-CBS-Coin.webp') center/cover no-repeat;
-      border:1px solid var(--border); border-radius:18px; overflow:hidden;
-      min-height:160px; display:flex; align-items:flex-end; position:relative;
+      position:relative;
+      overflow:hidden;
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      background:#152238;
+      isolation:isolate;
     }
-    .hero::after{
-      content:""; position:absolute; inset:0;
-      background:linear-gradient(180deg, rgba(0,0,0,.0) 40%, rgba(0,0,0,.55));
+    .hero__img{
+      width:100%;
+      height:220px;
+      display:block;
+      object-fit:cover;
+      object-position:center;
+    }
+    @media (min-width:768px){
+      .hero__img{height:280px}
+    }
+    .hero__overlay{
+      position:absolute;inset:0;
+      background:linear-gradient(180deg,rgba(0,0,0,.00) 0%, rgba(0,0,0,.45) 60%, rgba(0,0,0,.75) 100%);
       pointer-events:none;
     }
-    .hero-inner{
-      position:relative; z-index:2; display:flex; align-items:center; gap:14px;
-      padding:18px;
+    .brand{
+      position:absolute;left:16px;bottom:14px;right:16px;
+      display:flex;align-items:center;gap:12px;
     }
-    .logo{
-      width:56px; height:56px; flex:none; border-radius:50%; border:2px solid #0009;
-      background:#0006;
-      display:grid; place-items:center; overflow:hidden;
+    .brand img{
+      width:56px;height:56px;border-radius:50%;border:2px solid rgba(255,255,255,.15);background:#0d1526
     }
-    .logo img{width:100%; height:100%; object-fit:cover}
-    h1{
-      margin:0; font-weight:800; letter-spacing:.2px; text-shadow:0 2px 14px #0008;
+    .brand h1{
+      margin:0;font-size:clamp(20px,3vw,32px);line-height:1.15;
+      text-shadow:0 6px 24px rgba(0,0,0,.35), 0 2px 8px rgba(0,0,0,.25);
     }
-    .sub{
-      margin:2px 0 0; color:#d9e6ff; opacity:.9; font-size:.94rem
+    .brand .sub{
+      margin:4px 0 0;font-size:14px;color:var(--muted)
     }
+
     /* Card */
     .card{
-      margin-top:16px; background:linear-gradient(180deg,var(--panel),var(--panel-2));
-      border:1px solid var(--border); border-radius:16px; padding:18px;
-      box-shadow:0 10px 24px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.02);
+      margin-top:18px;
+      background:linear-gradient(180deg,var(--card) 0%,var(--card-2) 100%);
+      border:1px solid var(--ring);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+      padding:18px;
     }
-    .row{display:flex; gap:16px; flex-wrap:wrap}
-    .grow{flex:1 1 380px}
-    .pill{
-      display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border-radius:10px;
-      background:var(--chip); color:var(--muted); border:1px solid var(--border);
-      font-weight:600; min-width:120px; justify-content:center;
+    .card h2{
+      margin:0 0 12px;font-size:clamp(18px,2.4vw,22px)
     }
+    .row{display:grid;gap:14px}
+    @media (min-width:900px){
+      .row{grid-template-columns: 1.15fr .85fr;}
+    }
+    .stack{display:flex;flex-wrap:wrap;gap:10px}
     .btn{
-      appearance:none; border:1px solid var(--border);
-      padding:10px 14px; border-radius:12px; background:#0f1b34;
-      color:var(--text); font-weight:800; letter-spacing:.25px; cursor:pointer;
-      transition:transform .05s ease, box-shadow .15s ease, background .2s ease;
-      box-shadow:0 6px 16px rgba(0,0,0,.3);
+      appearance:none;border:1px solid var(--ring);
+      background:#0f2a3d;color:var(--text);
+      padding:10px 14px;border-radius:12px;
+      font-weight:600;cursor:pointer;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+      transition:.18s transform ease, .18s background ease;
     }
-    .btn:hover{transform:translateY(-1px)}
-    .btn:active{transform:translateY(0)}
-    .btn.brand{background:linear-gradient(180deg,#133a56,#0f2e45); border-color:#1c3c5f}
-    .btn.accent{background:linear-gradient(180deg,#165b3a,#11472e); border-color:#1c5a3f}
-    .btn:disabled{opacity:.6; cursor:not-allowed; filter:grayscale(.2)}
-    .stack{display:flex; gap:10px; flex-wrap:wrap}
+    .btn:active{transform:translateY(1px)}
+    .btn--primary{background:linear-gradient(180deg,var(--brand) 0%, var(--brand-2) 100%);color:#001017;border-color:transparent}
+    .btn--ghost{background:#101a2b}
+    .btn[disabled]{opacity:.55;cursor:not-allowed}
 
-    pre{
-      margin:0; padding:12px; background:#091427; border:1px solid var(--border);
-      color:#cfe3ff; border-radius:12px; min-height:90px; overflow:auto; font-size:.92rem;
-      box-shadow: inset 0 0 0 1px rgba(255,255,255,.02);
+    .note{font-size:14px;color:var(--muted)}
+    .kbd{padding:.15em .45em;border:1px solid var(--ring);border-bottom-width:2px;border-radius:8px;background:#0b1322}
+    .panel{
+      background:#0b1322;border:1px solid var(--ring);
+      border-radius:12px;padding:12px;min-height:110px;overflow:auto
     }
-    .kv{display:grid; grid-template-columns:max-content 1fr; gap:8px 16px; font-size:.95rem}
-    .kv .k{color:#9fb3d9}
-    .kv code{user-select:all}
-    a{color:var(--brand); text-decoration:none}
-    a:hover{text-decoration:underline}
-    footer{opacity:.8; text-align:center; margin:24px 0}
+    pre{margin:0;white-space:pre-wrap;word-break:break-word}
+    code{word-break:break-all}
+    .kv{display:grid;grid-template-columns:140px 1fr;gap:8px;font-size:14px}
+    .kv strong{color:#cde0ff}
+    .foot{
+      text-align:center;color:var(--muted);
+      font-size:14px;margin:18px 0 6px
+    }
+    .bullets{margin:0 0 14px;padding:0;list-style:none;color:var(--muted);font-size:14px}
+    .bullets li{margin:4px 0}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <!-- HERO -->
-    <header class="hero">
-      <div class="hero-inner">
-        <div class="logo">
-          <img src="logo.png" alt="CBS logo" />
-        </div>
-        <div>
-          <h1>CBS — Community Builds Sovereignty</h1>
-          <div class="sub">Holder Badge • Sinds 2025 • Toegang tot besloten Telegram voor <strong>holders</strong></div>
-        </div>
+
+  <header class="hero wrap">
+    <picture>
+      <!-- Gebruik webp als die er is; valt terug op png -->
+      <source srcset="./banner.webp" type="image/webp">
+      <img class="hero__img" src="./banner.png" alt="CBS Coin banner">
+    </picture>
+    <div class="hero__overlay"></div>
+    <div class="brand">
+      <img src="./logo.png" alt="CBS logo">
+      <div>
+        <h1>CBS — Community Builds Sovereignty</h1>
+        <div class="sub">Holder Badge • Sinds 2025 • Toegang tot besloten Telegram voor <strong>holders</strong></div>
       </div>
-    </header>
+    </div>
+  </header>
 
-    <!-- MINT CARD -->
-    <section class="card">
-      <h2 style="margin:0 0 6px;">Mint je <span style="color:var(--brand)">CBS Holder Badge</span></h2>
-      <p style="margin:0 0 14px; color:var(--muted)">
-        Vereist: <strong>&ge; 1 CBS</strong> in je wallet (token-gate). Limiet: <strong>1 per wallet</strong>.
-      </p>
+  <main class="wrap card">
+    <h2>Mint je <span style="color:var(--brand)">CBS Holder Badge</span></h2>
+    <ul class="bullets">
+      <li>Vereist: <strong>&ge; 1 CBS</strong> in je wallet (token-gate).</li>
+      <li>Limiet: <strong>1 per wallet</strong>.</li>
+    </ul>
 
-      <div class="stack" style="margin:10px 0 14px;">
-        <button id="btnConnect" class="btn brand">Connect Wallet</button>
-        <button id="btnMint" class="btn accent">Mint</button>
-        <button id="btnSupply" class="pill" title="Ververs supply">Supply: <span id="supply">—</span></button>
-      </div>
+    <div class="stack" style="margin-bottom:12px">
+      <button id="btn-connect" class="btn btn--ghost">Connect Wallet</button>
+      <button id="btn-mint" class="btn btn--primary">Mint</button>
+      <button id="btn-supply" class="btn btn--ghost">Supply</button>
+    </div>
 
-      <div class="row">
-        <div class="grow">
-          <pre id="log">idle</pre>
+    <div class="row">
+      <section>
+        <div class="panel"><pre id="log">idle</pre></div>
+      </section>
+
+      <aside>
+        <div class="kv">
+          <strong>Candy&nbsp;Machine:</strong> <code id="cm">—</code>
+          <strong>Candy&nbsp;Guard:</strong>   <code id="cg">—</code>
+          <strong>Network:</strong>            <span>Mainnet-Beta</span>
+          <strong>View&nbsp;CM:</strong>       <span>
+            <a href="https://solana.fm/address/CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd?cluster=mainnet-alpha" target="_blank" rel="noreferrer">SolanaFM</a>
+            &nbsp;•&nbsp;
+            <a href="https://solscan.io/account/CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd" target="_blank" rel="noreferrer">Solscan</a>
+          </span>
         </div>
+      </aside>
+    </div>
 
-        <div class="grow" style="min-width:320px">
-          <div class="kv">
-            <div class="k">Candy Machine:</div>
-            <div><code id="cm">CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd</code></div>
+    <p class="note" style="margin-top:12px">
+      Tip: als je iets “vreemds” ziet, doe een harde refresh
+      <span class="kbd">Ctrl</span>+<span class="kbd">F5</span> (of <span class="kbd">Cmd</span>+<span class="kbd">Shift</span>+<span class="kbd">R</span>).
+    </p>
+  </main>
 
-            <div class="k">Candy Guard:</div>
-            <div><code id="guard">9m94QDkzsEoJLdfHMpyQUCgdS6fXSP1AeoEzf4RLmcUv</code></div>
+  <footer class="wrap foot">
+    © CBS Coin • <a href="./index.html">Home</a> • cbs.coin12@gmail.com
+  </footer>
 
-            <div class="k">Network:</div>
-            <div>Mainnet-Beta</div>
-
-            <div class="k">View CM:</div>
-            <div>
-              <a id="solanafm" target="_blank" rel="noreferrer">SolanaFM</a>
-              •
-              <a id="solscan" target="_blank" rel="noreferrer">Solscan</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <footer>
-      © CBS Coin • <a href="./">Home</a> • cbs.coin12@gmail.com
-    </footer>
-  </div>
-
-  <!-- Alleen je eigen bundel, geen CDN’s -->
-  <script src="mint.bundle.js"></script>
+  <!-- Je gebundelde app. Verhoog ?v=23 als je cache wil busten -->
+  <script src="./mint.bundle.js?v=23" defer></script>
   <script>
-    // Kleine helper om in de UI te loggen.
-    function log(msg){
-      const el = document.getElementById('log');
-      const t = typeof msg === 'string' ? msg : (msg?.message || JSON.stringify(msg));
-      el.textContent = (el.textContent ? el.textContent + "\n" : "") + t;
-      el.scrollTop = el.scrollHeight;
-    }
-
-    // Knop-actions die verschillende functienamen in je bundel accepteren.
-    async function callConnect(){
-      try{
-        if(!window.MintApp) throw new Error('MintApp niet gevonden (mint.bundle.js).');
-        if(MintApp.connect)        await MintApp.connect();
-        else if(MintApp.connectWallet) await MintApp.connectWallet();
-        else throw new Error('Connect-functie niet gevonden in MintApp.');
-        log('✅ Wallet connected.');
-      }catch(e){ log('❌ Connect error: ' + e.message); }
-    }
-    async function callMint(){
-      try{
-        if(!window.MintApp) throw new Error('MintApp niet gevonden (mint.bundle.js).');
-        if(MintApp.mintOne)      await MintApp.mintOne();
-        else if(MintApp.mint)    await MintApp.mint();
-        else if(MintApp.start)   await MintApp.start();
-        else throw new Error('Mint-functie niet gevonden in MintApp.');
-        log('✅ Mint verstuurd. Check je wallet voor de transactie.');
-      }catch(e){ log('❌ Mint error: ' + e.message); }
-    }
-    async function refreshSupply(){
-      try{
-        if(!window.MintApp) throw new Error('MintApp niet gevonden (mint.bundle.js).');
-        if(MintApp.refreshSupply){
-          const s = await MintApp.refreshSupply();
-          if (s && s.total != null){
-            document.getElementById('supply').textContent = `${s.minted ?? 0}/${s.total}`;
-          }
-        }else{
-          // fallback: laat MintApp intern de UI updaten
-          await (MintApp.getSupply?.() ?? Promise.resolve());
-        }
-      }catch(e){ log('⚠️ Supply: ' + e.message); }
-    }
-
-    // Linkjes en buttons koppelen
-    (function init(){
-      const cm = document.getElementById('cm').textContent.trim();
-      document.getElementById('solanafm').href = `https://www.solana.fm/address/${cm}?cluster=mainnet-alpha`;
-      document.getElementById('solscan').href   = `https://solscan.io/account/${cm}`;
-      document.getElementById('btnConnect').addEventListener('click', callConnect);
-      document.getElementById('btnMint').addEventListener('click', callMint);
-      document.getElementById('btnSupply').addEventListener('click', refreshSupply);
-
-      // Probeer automatisch supply te tonen bij start
-      setTimeout(refreshSupply, 200);
-    })();
+    // Koppel de knoppen zodra de bundle er is
+    document.addEventListener('DOMContentLoaded', () => {
+      const bind = () => {
+        if (!window.MintApp) return false;
+        try{
+          if (MintApp.init) MintApp.init();
+          const c = document.getElementById('btn-connect');
+          const m = document.getElementById('btn-mint');
+          const s = document.getElementById('btn-supply');
+          if (c) c.onclick = () => MintApp.connect().catch(()=>{});
+          if (m) m.onclick = () => MintApp.mint().catch(()=>{});
+          if (s) s.onclick = () => MintApp.supply().catch(()=>{});
+          return true;
+        }catch(e){ console.error(e); return false; }
+      };
+      // Probeer meteen, en nog een paar keer als de bundle later klaar is
+      if (!bind()) {
+        let tries = 0;
+        const t = setInterval(() => { if (bind() || ++tries>12) clearInterval(t); }, 250);
+      }
+    });
   </script>
 </body>
 </html>
-
