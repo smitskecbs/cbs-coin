@@ -18,7 +18,6 @@
   body{margin:0;background:linear-gradient(180deg,var(--bg),#061120);color:var(--ink);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
   .wrap{max-width:1100px;margin:22px auto;padding:0 14px}
 
-  /* Topbar */
   .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;
     padding:10px 14px;background:#0a1830;border-radius:14px;box-shadow:var(--shadow)}
   .brand{display:flex;align-items:center;gap:12px}
@@ -28,7 +27,6 @@
   .iconlink{display:inline-flex;align-items:center;gap:8px;color:var(--acc2);text-decoration:none;font-weight:600}
   .icon{width:18px;height:18px;display:inline-block}
 
-  /* Hero */
   .hero{border-radius:18px;background:linear-gradient(180deg,#081429,#0b1f3d);box-shadow:var(--shadow);overflow:hidden;margin-top:14px}
   .hero img{width:100%;display:block;object-fit:cover;min-height:140px}
   header{padding:20px 18px}
@@ -36,7 +34,6 @@
   .chip{padding:6px 10px;border-radius:999px;background:#142a52;color:var(--acc2);font-size:12px}
   .sub{color:var(--muted);font-size:14px}
 
-  /* Main */
   .panel{background:linear-gradient(180deg,var(--card),var(--card2));border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
   .grid{display:grid;gap:16px;grid-template-columns:1.1fr .9fr}
   @media (max-width:900px){.grid{grid-template-columns:1fr}}
@@ -64,7 +61,6 @@
 </head>
 <body>
   <div class="wrap">
-    <!-- Topbar -->
     <div class="topbar">
       <div class="brand">
         <img src="logo.png" alt="CBS logo">
@@ -76,17 +72,14 @@
           Home
         </a>
         <a class="iconlink" href="https://t.me/CBS_Coin" target="_blank" rel="noreferrer" title="Telegram">
-          <!-- Telegram -->
           <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M9.78 15.83 9.6 19.1c.34 0 .49-.15.67-.33l1.61-1.56 3.34 2.45c.61.34 1.06.16 1.22-.56l2.21-10.39c.2-.89-.34-1.24-.93-1.02L4.3 10.1c-.86.33-.84.81-.15 1.03l4.11 1.28 9.55-6.02c.45-.29.86-.13.52.16l-8.55 7.28z"/></svg>
         </a>
         <a class="iconlink" href="https://x.com/cbs_coin" target="_blank" rel="noreferrer" title="X">
-          <!-- X -->
           <svg class="icon" viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h4.7l5.2 7.2 5.9-7.2H21l-7.4 9 7.9 9H16.8l-5.5-7.5L5 21H3l8-9L3 3z"/></svg>
         </a>
       </div>
     </div>
 
-    <!-- Hero -->
     <div class="hero">
       <img src="Banner-CBS-Coin.webp" alt="CBS Coin banner">
       <header class="row" style="justify-content:space-between">
@@ -98,13 +91,11 @@
       </header>
     </div>
 
-    <!-- Mint -->
     <div class="panel stack" style="margin-top:16px">
       <h2 style="margin:0 0 6px">Mint your <span style="color:var(--acc)">CBS Holder Badge</span></h2>
       <div class="sub">Requirement: <b>≥ 1 CBS</b> in your wallet (token gate). Limit: <b>1 per wallet.</b></div>
 
       <div class="grid">
-        <!-- Left -->
         <div class="stack">
           <div class="row">
             <button id="btnConnect" class="muted">Connect Wallet</button>
@@ -115,7 +106,6 @@
           <div class="tip">Tip: if something looks off, hard refresh (Ctrl + F5).</div>
         </div>
 
-        <!-- Right -->
         <div class="panel" style="background:#0a1a34">
           <div class="kv" id="statusBox">
             <b>Status</b><span id="statusText">Disconnected</span>
@@ -144,7 +134,7 @@
   <!-- web3.js (token gate) -->
   <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
 
-  <!-- Umi + CMv3 (met eenvoudige Phantom-bridge) -->
+  <!-- Umi + CMv3, zonder wallet-adapter plugin -->
   <script type="module">
     /******** CONFIG ********/
     const HELIUS_RPC    = "https://mainnet.helius-rpc.com/?api-key=a9a11d45-2d40-4da0-a3b6-557b855f1e5c";
@@ -154,7 +144,6 @@
 
     const $ = s => document.querySelector(s);
     const log = (m) => { const el=$("#log"); el.value = (el.value?el.value+"\n":"")+m; el.scrollTop = el.scrollHeight; };
-
     $("#cmid").textContent   = CANDY_MACHINE;
     $("#cguard").textContent = CANDY_GUARD;
     $("#solanafm").href = `https://solana.fm/address/${CANDY_MACHINE}?cluster=mainnet-alpha`;
@@ -164,7 +153,8 @@
     const web3 = window.solanaWeb3;
     const connection = new web3.Connection(HELIUS_RPC, "confirmed");
     let walletPubkey = null;
-    const setStatus = (t) => $("#statusText").textContent = t;
+
+    function setStatus(t){ $("#statusText").textContent = t; }
 
     async function checkCBS() {
       if (!walletPubkey) return;
@@ -181,10 +171,8 @@
       } catch(e){ log(`Balance check failed: ${e.message||e}`); }
     }
 
-    /******** Umi + CMv3 ********/
-    import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults";
-    import { publicKey, generateSigner } from "https://esm.sh/@metaplex-foundation/umi";
-    import { walletAdapterIdentity, createSignerFromWalletAdapter } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters";
+    /******** Umi kern + CMv3 ********/
+    import { createUmi, publicKey as umiPublicKey, generateSigner, signerIdentity } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata";
     import { mplCandyMachine, fetchCandyMachine, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine";
     import { setComputeUnitLimit, setComputeUnitPrice } from "https://esm.sh/@metaplex-foundation/mpl-toolbox";
@@ -193,53 +181,50 @@
       .use(mplTokenMetadata())
       .use(mplCandyMachine());
 
-    // Eenvoudige Phantom-bridge op basis van window.solana:
-    function makeSimpleAdapter() {
-      if (!window.solana) throw new Error("Please install Phantom Wallet");
-      return {
-        get publicKey() {
-          const pk = window.solana.publicKey;
-          if (!pk) return null;
-          // Altijd een echte web3.PublicKey teruggeven:
-          return (typeof pk.toBase58 === "function") ? pk : new web3.PublicKey(pk);
-        },
-        async connect() { return window.solana.connect(); },
-        async disconnect(){ try{ await window.solana.disconnect(); }catch{} },
-        async signTransaction(tx){ return window.solana.signTransaction(tx); },
-        async signAllTransactions(txs){ return window.solana.signAllTransactions(txs); },
-        async signMessage(msg){ return window.solana.signMessage(msg, "utf8"); },
-      };
-    }
-
-    let adapter = null;
+    // Helper: zorg dat we altijd een base58 string krijgen
+    const toBase58 = (pk) => {
+      try {
+        if (!pk) return "";
+        if (typeof pk === "string") return pk;
+        if (typeof pk.toBase58 === "function") return pk.toBase58();
+        // Uint8Array → web3.PublicKey → base58
+        return new web3.PublicKey(pk).toBase58();
+      } catch { return ""; }
+    };
 
     async function connectWallet(){
-      if (!adapter) adapter = makeSimpleAdapter();
-      await adapter.connect();
-      const pk = adapter.publicKey;
-      if (!pk) throw new Error("Wallet not connected");
-      walletPubkey = new web3.PublicKey(pk.toBase58());
-      setStatus(`Connected: ${walletPubkey.toBase58().slice(0,4)}…${walletPubkey.toBase58().slice(-4)}`);
-      log(`Connected: ${walletPubkey.toBase58()}`);
+      if (!window.solana) { alert("Please install Phantom Wallet."); window.open("https://phantom.app/", "_blank"); return; }
+      const r = await window.solana.connect();
+      const base58 = toBase58(r.publicKey || window.solana.publicKey);
+      if (!base58) { alert("Wallet connect failed."); return; }
+      walletPubkey = new web3.PublicKey(base58);
+      setStatus(`Connected: ${base58.slice(0,4)}…${base58.slice(-4)}`);
+      log(`Connected: ${base58}`);
       await checkCBS();
       await updateSupply();
     }
 
-    function umiWithWallet(){
-      if (!adapter?.publicKey) throw new Error("Wallet not connected");
-      // Geef Umi een signer via de wallet-adapter identity plugin
-      const signer = createSignerFromWalletAdapter({
-        publicKey: { toBase58: () => adapter.publicKey.toBase58() },
-        signTransaction: adapter.signTransaction,
-        signAllTransactions: adapter.signAllTransactions,
-        signMessage: adapter.signMessage,
-      });
-      return umiBase.use(walletAdapterIdentity(signer));
+    function umiWithSigner(){
+      // Maak een pure Umi-signer die Phantom gebruikt om te tekenen.
+      const base58 = walletPubkey.toBase58();
+      const signer = {
+        publicKey: umiPublicKey(base58),                 // Umi PublicKey
+        async signTransaction(tx) {
+          // In bundle-defaults is tx een web3.Transaction; teken met Phantom
+          const signed = await window.solana.signTransaction(tx);
+          return signed;
+        },
+        async signAllTransactions(txs){
+          const signed = await window.solana.signAllTransactions(txs);
+          return signed;
+        },
+      };
+      return umiBase.use(signerIdentity(signer));
     }
 
     async function updateSupply(){
       try{
-        const cm = await fetchCandyMachine(umiBase, publicKey(CANDY_MACHINE));
+        const cm = await fetchCandyMachine(umiBase, umiPublicKey(CANDY_MACHINE));
         const minted = Number(cm.itemsRedeemed ?? 0);
         const avail  = Number(cm.itemsAvailable ?? 0);
         const remain = Math.max(avail - minted, 0);
@@ -250,7 +235,7 @@
 
     async function doMint(){
       try{
-        if(!adapter?.publicKey){ await connectWallet(); }
+        if(!walletPubkey){ await connectWallet(); if(!walletPubkey) return; }
         await checkCBS();
         if(document.getElementById("btnMint").disabled){
           alert("You need at least 1 CBS to mint."); return;
@@ -259,17 +244,17 @@
         document.getElementById("btnMint").disabled = true;
         log("Preparing mint…");
 
-        const u = umiWithWallet();
-        const cmPk = publicKey(CANDY_MACHINE);
-        await fetchCandyMachine(u, cmPk);                    // warm-up
+        const u = umiWithSigner();
+        const cmPk = umiPublicKey(CANDY_MACHINE);
+        await fetchCandyMachine(u, cmPk);                 // warm-up
         const nftMint = generateSigner(u);
 
         setComputeUnitLimit(u, { units: 900_000 });
-        setComputeUnitPrice(u, { microLamports: 10_000 });   // kleine priority fee
+        setComputeUnitPrice(u, { microLamports: 10_000 }); // kleine priority fee
 
         const txb = await mintV2(u, {
           candyMachine: cmPk,
-          candyGuard: publicKey(CANDY_GUARD),
+          candyGuard: umiPublicKey(CANDY_GUARD),
           nftMint,
         });
 
@@ -287,12 +272,12 @@
       }
     }
 
-    // Buttons
+    // UI events
     document.getElementById("btnConnect").addEventListener("click", connectWallet);
     document.getElementById("btnCheck").addEventListener("click", checkCBS);
     document.getElementById("btnMint").addEventListener("click", doMint);
 
-    // Initial counters
+    // First render
     await updateSupply();
   </script>
 </body>
