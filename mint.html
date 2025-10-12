@@ -124,7 +124,7 @@
   <!-- web3.js (token gate) -->
   <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
 
-  <!-- Modules -->
+  <!-- Umi + Candy Machine -->
   <script type="module">
     /******** CONFIG ********/
     const HELIUS_RPC    = "https://mainnet.helius-rpc.com/?api-key=a9a11d45-2d40-4da0-a3b6-557b855f1e5c";
@@ -161,11 +161,10 @@
       } catch(e){ log(`Balance check failed: ${e.message||e}`); }
     }
 
-    /******** Umi + Phantom WalletAdapter ********/
+    /******** Umi (bundle defaults) + Wallet-Standard bridge ********/
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults";
     import { publicKey, generateSigner } from "https://esm.sh/@metaplex-foundation/umi";
-    import { walletAdapterIdentity, createSignerFromWalletAdapter } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters";
-    import { PhantomWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-phantom";
+    import { walletAdapterIdentity, createSignerFromWalletAdapter, createWalletAdapterFromWallet } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata";
     import { mplCandyMachine, fetchCandyMachine, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine";
     import { setComputeUnitLimit, setComputeUnitPrice } from "https://esm.sh/@metaplex-foundation/mpl-toolbox";
@@ -174,42 +173,41 @@
       .use(mplTokenMetadata())
       .use(mplCandyMachine());
 
-    let phantom; // WalletAdapter instance
+    let adapter = null; // WalletAdapter (gemaakt van window.solana)
 
-    async function connectWalletAdapter(){
-      if (!phantom) phantom = new PhantomWalletAdapter();
-      if (!phantom.connected) await phantom.connect();     // will use window.solana provider
-      const pk = phantom.publicKey;                         // this is a real PublicKey with toBase58()
-      walletPubkey = new web3.PublicKey(pk.toBase58());
-      setStatus(`Connected: ${walletPubkey.toBase58().slice(0,4)}…${walletPubkey.toBase58().slice(-4)}`);
-      log(`Connected: ${walletPubkey.toBase58()}`);
+    async function connectWallet(){
+      if (!window.solana) { alert("Please install Phantom Wallet."); window.open("https://phantom.app/", "_blank"); return; }
+      await window.solana.connect(); // standaard popup
+      // Wrap de Wallet-Standard provider in een echte WalletAdapter:
+      if (!adapter) adapter = createWalletAdapterFromWallet(window.solana);
+      if (!adapter.connected) await adapter.connect();
+      const pk58 = adapter.publicKey.toBase58(); // ✅ echte PublicKey
+      walletPubkey = new web3.PublicKey(pk58);
+      setStatus(`Connected: ${pk58.slice(0,4)}…${pk58.slice(-4)}`);
+      log(`Connected: ${pk58}`);
       await checkCBS();
-      await updateSupplyBox();
+      await updateSupply();
     }
 
-    function umiWithWallet() {
-      if (!phantom || !phantom.connected) throw new Error("Wallet not connected");
-      return umiBase.use(walletAdapterIdentity(createSignerFromWalletAdapter(phantom)));
+    function umiWithWallet(){
+      if (!adapter?.connected) throw new Error("Wallet not connected");
+      return umiBase.use(walletAdapterIdentity(createSignerFromWalletAdapter(adapter)));
     }
 
-    async function updateSupplyBox() {
-      try {
-        const cmPk = publicKey(CANDY_MACHINE);
-        const cm = await fetchCandyMachine(umiBase, cmPk);
-        const minted    = Number(cm.itemsRedeemed ?? 0);
-        const available = Number(cm.itemsAvailable ?? 0);
-        const remaining = Math.max(available - minted, 0);
-        $("#minted").textContent    = `${minted} / ${available}`;
-        $("#remaining").textContent = `${remaining}`;
-        if (walletPubkey) setStatus(`Connected: ${walletPubkey.toBase58().slice(0,4)}…${walletPubkey.toBase58().slice(-4)}`);
-      } catch (e) {
-        log(`Supply read failed: ${e.message||e}`);
-      }
+    async function updateSupply(){
+      try{
+        const cm = await fetchCandyMachine(umiBase, publicKey(CANDY_MACHINE));
+        const minted = Number(cm.itemsRedeemed ?? 0);
+        const avail  = Number(cm.itemsAvailable ?? 0);
+        const remain = Math.max(avail - minted, 0);
+        $("#minted").textContent = `${minted} / ${avail}`;
+        $("#remaining").textContent = `${remain}`;
+      }catch(e){ log(`Supply read failed: ${e.message||e}`); }
     }
 
     async function doMint(){
       try{
-        if(!phantom?.connected){ await connectWalletAdapter(); }
+        if(!adapter?.connected){ await connectWallet(); }
         await checkCBS();
         if(document.getElementById("btnMint").disabled){
           alert("You need at least 1 CBS to mint."); return;
@@ -220,12 +218,11 @@
 
         const u = umiWithWallet();
         const cmPk = publicKey(CANDY_MACHINE);
-        await fetchCandyMachine(u, cmPk); // warm-up
+        await fetchCandyMachine(u, cmPk);
         const nftMint = generateSigner(u);
 
-        // Reliability on busy slots
         setComputeUnitLimit(u, { units: 900_000 });
-        setComputeUnitPrice(u, { microLamports: 10_000 }); // 0.00001 SOL priority
+        setComputeUnitPrice(u, { microLamports: 10_000 });
 
         const txb = await mintV2(u, {
           candyMachine: cmPk,
@@ -237,7 +234,7 @@
         log(`✅ Minted! Tx:\n${signature}`);
         log(`View: https://solscan.io/tx/${signature}`);
         alert("Mint successful! Check your wallet/NFTs.");
-        await updateSupplyBox();
+        await updateSupply();
       }catch(e){
         console.error(e);
         log(`❌ Mint failed: ${e.message||e}`);
@@ -248,12 +245,13 @@
     }
 
     // Buttons
-    document.getElementById("btnConnect").addEventListener("click", connectWalletAdapter);
+    document.getElementById("btnConnect").addEventListener("click", connectWallet);
     document.getElementById("btnCheck").addEventListener("click", checkCBS);
     document.getElementById("btnMint").addEventListener("click", doMint);
 
-    // Initial counters
-    await updateSupplyBox();
+    // First paint
+    await updateSupply();
   </script>
 </body>
 </html>
+
