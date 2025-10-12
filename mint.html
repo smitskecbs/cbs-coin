@@ -8,15 +8,19 @@
   <style>
     :root{
       --bg:#0a0a0a; --card:#0f1115; --ink:#e6e9ef; --muted:#cbd5e1; --line:#1f2430;
-      --accent:#a78bfa; --green:#22c55e; --gold:#f1c40f;
-      --r:18px;
+      --accent:#a78bfa; --green:#22c55e; --gold:#f1c40f; --r:18px;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,Segoe UI,Inter,Roboto,Arial,sans-serif}
     .wrap{max-width:1100px;margin:0 auto;padding:16px}
     .hero{position:relative;background:#000;border:1px solid var(--line);border-radius:16px;overflow:hidden}
-    .hero img{width:100%;height:auto;display:block;object-fit:cover;max-height:360px}
+    .hero img.banner{width:100%;height:auto;display:block;object-fit:cover;max-height:360px}
+    .hero img.logo{
+      position:absolute; left:14px; bottom:14px; width:86px; height:86px; object-fit:cover;
+      border-radius:50%; background:#000; border:1px solid rgba(255,255,255,.14);
+      filter: drop-shadow(0 0 10px rgba(241,196,15,.45)) drop-shadow(0 0 18px rgba(167,139,250,.25));
+    }
     h1{font-size:clamp(24px,3vw,36px);margin:18px 0 8px}
     p{color:var(--muted);margin:0 0 8px}
     .row{display:flex;gap:18px;flex-wrap:wrap}
@@ -25,27 +29,26 @@
     .card.side{flex:1 1 360px}
     .btn{appearance:none;border:1px solid #2a3242;background:#12151b;color:#fff;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer}
     .btn[disabled]{opacity:.55;cursor:not-allowed}
-    .btn.primary{background:#1a2333}
     .cluster{display:flex;gap:10px;flex-wrap:wrap}
     textarea{width:100%;height:220px;background:#0b1020;color:#dbe3ff;border:1px solid #223;outline:none;border-radius:12px;padding:10px;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
     .kv{display:grid;grid-template-columns:180px 1fr;gap:6px 12px}
     .kv div{padding:4px 0;border-bottom:1px dashed #222}
     .links a{color:#bcd1ff;text-decoration:none}
     .links a:hover{text-decoration:underline}
-    /* Gold Telegram icon (no text) */
+    /* gold Telegram icon (no text) */
     .tg{display:inline-grid;place-items:center;width:46px;height:46px;border-radius:50%;
         background: radial-gradient(circle at 30% 30%,#ffe27a,#d4a814 70%); border:1px solid rgba(255,255,255,.15);
         box-shadow:0 0 12px rgba(241,196,15,.35), 0 0 20px rgba(167,139,250,.18); transition:transform .1s}
     .tg:hover{transform:translateY(-2px)}
     .tg svg{width:24px;height:24px;display:block;filter:drop-shadow(0 0 4px rgba(0,0,0,.35))}
-    .pill{display:inline-grid;place-items:center;width:40px;height:40px;border-radius:12px;background:#141824;border:1px solid #222}
     .tip{color:#9aa0a6;font-size:12px;margin-top:8px}
   </style>
 </head>
 <body>
   <main class="wrap">
     <section class="hero">
-      <img src="Banner-CBS-Coin.jpg" alt="CBS banner" onerror="this.remove()">
+      <img class="banner" src="Banner-CBS-Coin.jpg" alt="CBS banner" onerror="this.remove()">
+      <img class="logo"   src="logo.png"          alt="CBS logo"   onerror="this.remove()">
     </section>
 
     <h1>Mint your CBS Holder Badge</h1>
@@ -92,13 +95,13 @@
 
   <!-- MINT LOGIC -->
   <script type="module">
-    // ---- Config (your real values) ----
+    // ------- Your config -------
     const HELIUS_RPC = "https://mainnet.helius-rpc.com/?api-key=a9a11d45-2d40-4da0-a3b6-557b855f1e5c";
     const CBS_MINT   = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
     const CMID       = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd";
     const CGID       = "9m94QDkzsEoJLdfHMpyQUCgdS6fXSP1AeoEzf4RLmcUv";
 
-    // ---- Small helpers ----
+    // ------- Small helpers -------
     const $ = (s) => document.querySelector(s);
     const log = (m) => { const el = $("#log"); el.value += (el.value ? "\n" : "") + m; el.scrollTop = el.scrollHeight; };
     const setStatus = (t) => $("#statusText").textContent = t;
@@ -108,21 +111,68 @@
     $("#solanafm").href = "https://solana.fm/address/" + CMID;
     $("#solscan").href  = "https://solscan.io/account/" + CMID;
 
-    // ---- Imports we need ----
-    import { Connection, PublicKey } from "https://esm.sh/@solana/web3.js@1.98.4?target=es2022";
-    async function loadUmi(){
-      const [bundle, core, aA, aB, tm, cm] = await Promise.all([
-        import("https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1"),
-        import("https://esm.sh/@metaplex-foundation/umi@1.4.1"),
-        import("https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1?exports=walletAdapterIdentity,walletAdapterIdentityPlugin,createWalletAdapterFromWallet,createWalletAdapter").catch(()=>null),
-        import("https://esm.sh/@metaplex-foundation/umi-web3js-adapters@1.4.1?exports=createSignerFromWallet,createSignerFromWalletAdapter").catch(()=>null),
-        import("https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.1.0"),
-        import("https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0")
-      ]);
-      return { bundle, core, aA: aA?.default || aA || {}, aB: aB?.default || aB || {}, tm, cm };
+    // ------- Resilient importer (multi-CDN) -------
+    async function tryImport(urls) {
+      for (const u of urls) {
+        try { return await import(u); }
+        catch (e) { console.warn("import failed:", u, e?.message||e); }
+      }
+      return null;
     }
 
-    // ---- Wallet buttons ----
+    // Packages + fallbacks
+    const web3Urls = [
+      "https://esm.sh/@solana/web3.js@1.98.4?target=es2022",
+      "https://cdn.jsdelivr.net/npm/@solana/web3.js@1.98.4/+esm"
+    ];
+    const umiBundleUrls = [
+      "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1",
+      "https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-bundle-defaults@1.4.1/+esm"
+    ];
+    const umiCoreUrls = [
+      "https://esm.sh/@metaplex-foundation/umi@1.4.1",
+      "https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi@1.4.1/+esm"
+    ];
+    const waSignerUrls = [
+      // wallet-adapter identity (preferred)
+      "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1?exports=walletAdapterIdentity,walletAdapterIdentityPlugin,createWalletAdapterFromWallet,createWalletAdapter",
+      "https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1/+esm"
+    ];
+    const w3jsAdaptersUrls = [
+      // web3.js helpers for creating signer from window.solana
+      "https://esm.sh/@metaplex-foundation/umi-web3js-adapters@1.4.1?exports=createSignerFromWallet,createSignerFromWalletAdapter",
+      "https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-web3js-adapters@1.4.1/+esm"
+    ];
+    const tokenMetaUrls = [
+      "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.1.0",
+      "https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-token-metadata@3.1.0/+esm"
+    ];
+    const candyUrls = [
+      "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0",
+      "https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-candy-machine@6.1.0/+esm"
+    ];
+
+    // Import base libs
+    const web3      = await tryImport(web3Urls);
+    const bundle    = await tryImport(umiBundleUrls);
+    const core      = await tryImport(umiCoreUrls);
+    const waSigner  = await tryImport(waSignerUrls);     // may be null if CDN hiccups
+    const w3Adapters= await tryImport(w3jsAdaptersUrls); // may be null if CDN hiccups
+    const tm        = await tryImport(tokenMetaUrls);
+    const cm        = await tryImport(candyUrls);
+
+    if (!web3 || !bundle || !core || !tm || !cm) {
+      alert("Mint failed: Could not load modules (all CDNs failed).");
+      throw new Error("module load failure");
+    }
+
+    const { Connection, PublicKey } = web3;
+    const { createUmi } = bundle;
+    const { publicKey: pk, generateSigner, signerIdentity } = core;
+    const { mplTokenMetadata } = tm;
+    const { mplCandyMachine, fetchCandyMachine, mintV2 } = cm;
+
+    // ------- UI buttons -------
     const btnConnect = $("#btnConnect");
     const btnMint    = $("#btnMint");
     const btnCheck   = $("#btnCheck");
@@ -131,9 +181,9 @@
       try{
         if(!window.solana){ alert("Install Phantom (https://phantom.app)"); return; }
         const r = await window.solana.connect();
-        const pk = r?.publicKey?.toBase58?.() || "";
-        setStatus(pk ? `Connected: ${pk.slice(0,4)}…${pk.slice(-4)}` : "Connected");
-        log(`Connected: ${pk}`);
+        const pkStr = r?.publicKey?.toBase58?.() || "";
+        setStatus(pkStr ? `Connected: ${pkStr.slice(0,4)}…${pkStr.slice(-4)}` : "Connected");
+        log(`Connected: ${pkStr}`);
         await doCheck();
       }catch(e){ console.error(e); log("Connect failed: "+(e.message||e)); }
     });
@@ -155,8 +205,37 @@
       }catch(e){ console.error(e); log("Balance check failed: "+(e.message||e)); }
     }
 
-    // ---- Mint ----
     btnMint.addEventListener("click", doMint);
+
+    async function attachIdentity(umi){
+      // 1) Best: walletAdapterIdentity (umi-signer-wallet-adapters)
+      if (waSigner?.walletAdapterIdentity || waSigner?.walletAdapterIdentityPlugin) {
+        try{
+          const makeWA = waSigner.createWalletAdapterFromWallet || waSigner.createWalletAdapter || null;
+          if (makeWA) {
+            const wa = makeWA(window.solana);
+            const plug = waSigner.walletAdapterIdentity || waSigner.walletAdapterIdentityPlugin;
+            umi.use(plug(wa));
+            return true;
+          }
+        }catch(e){ console.warn("walletAdapterIdentity failed", e); }
+      }
+      // 2) Fallback: createSignerFromWallet (umi-web3js-adapters)
+      if (w3Adapters?.createSignerFromWallet) {
+        try{
+          umi.use(signerIdentity(w3Adapters.createSignerFromWallet(window.solana)));
+          return true;
+        }catch(e){ console.warn("createSignerFromWallet failed", e); }
+      }
+      // 3) Fallback: createSignerFromWalletAdapter (if Phantom exposes adapter)
+      if (w3Adapters?.createSignerFromWalletAdapter && window?.phantom?.solana?.adapter) {
+        try{
+          umi.use(signerIdentity(w3Adapters.createSignerFromWalletAdapter(window.phantom.solana.adapter)));
+          return true;
+        }catch(e){ console.warn("createSignerFromWalletAdapter failed", e); }
+      }
+      return false;
+    }
 
     async function doMint(){
       try{
@@ -164,45 +243,18 @@
         btnMint.disabled = true;
         log("Preparing mint… (loading modules)");
 
-        const { bundle, core, aA, aB, tm, cm } = await loadUmi();
-        const { createUmi } = bundle;
-        const { publicKey: pk, generateSigner, signerIdentity } = core;
-        const { mplTokenMetadata } = tm;
-        const { mplCandyMachine, fetchCandyMachine, mintV2 } = cm;
-
         const umi = createUmi(HELIUS_RPC)
           .use(mplTokenMetadata())
           .use(mplCandyMachine());
 
-        // Attach identity (try multiple adapters)
-        let attached = false;
-
-        if(!attached && (aA.walletAdapterIdentity || aA.walletAdapterIdentityPlugin)){
-          const makeWA = aA.createWalletAdapterFromWallet || aA.createWalletAdapter || null;
-          if(makeWA){
-            const wa = makeWA(window.solana);
-            const plug = aA.walletAdapterIdentity || aA.walletAdapterIdentityPlugin;
-            umi.use(plug(wa));
-            attached = true;
-          }
-        }
-        if(!attached && aB.createSignerFromWallet){
-          umi.use(signerIdentity(aB.createSignerFromWallet(window.solana)));
-          attached = true;
-        }
-        if(!attached && aB.createSignerFromWalletAdapter && window?.phantom?.solana?.adapter){
-          umi.use(signerIdentity(aB.createSignerFromWalletAdapter(window.phantom.solana.adapter)));
-          attached = true;
-        }
-
-        if(!attached){
+        const ok = await attachIdentity(umi);
+        if(!ok){
           log("❌ Mint failed: wallet adapter not available.");
           alert("Mint failed: wallet adapter not available.");
           return;
         }
 
-        await fetchCandyMachine(umi, pk(CMID)); // warm-up
-
+        await fetchCandyMachine(umi, pk(CMID));   // warm-up
         const nftMint = generateSigner(umi);
         const txb = await mintV2(umi, {
           candyMachine: pk(CMID),
@@ -224,4 +276,3 @@
   </script>
 </body>
 </html>
-
