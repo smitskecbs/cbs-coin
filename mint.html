@@ -6,50 +6,32 @@
 <title>CBS — Holder Badge Mint</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#070d19; --bg2:#0b1830;
-    --card:#0d1e3a; --card2:#0b1933;
-    --ink:#eaf2ff; --muted:#bcd1ff;
-    --acc:#36e1b6; --acc2:#8fe7ff;
-    --shadow:0 18px 48px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.05);
-    --radius:16px;
-  }
+  :root{--bg:#070d19;--bg2:#0b1830;--card:#0d1e3a;--card2:#0b1933;--ink:#eaf2ff;--muted:#bcd1ff;--acc:#36e1b6;--acc2:#8fe7ff;--shadow:0 18px 48px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.05);--radius:16px}
   *{box-sizing:border-box}
   body{margin:0;background:linear-gradient(180deg,var(--bg),#061120);color:var(--ink);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
   .wrap{max-width:1100px;margin:22px auto;padding:0 14px}
-
-  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;
-    padding:10px 14px;background:#0a1830;border-radius:14px;box-shadow:var(--shadow)}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;background:#0a1830;border-radius:14px;box-shadow:var(--shadow)}
   .brand{display:flex;align-items:center;gap:12px}
   .brand img{width:40px;height:40px;object-fit:contain;border-radius:10px;box-shadow:0 0 0 1px rgba(255,255,255,.08)}
   .brand h2{margin:0;font-size:18px;letter-spacing:.3px}
   .links{display:flex;align-items:center;gap:14px}
   .iconlink{display:inline-flex;align-items:center;gap:8px;color:var(--acc2);text-decoration:none;font-weight:600}
   .icon{width:18px;height:18px;display:inline-block}
-
   .hero{border-radius:18px;background:linear-gradient(180deg,#081429,#0b1f3d);box-shadow:var(--shadow);overflow:hidden;margin-top:14px}
   .hero img{width:100%;display:block;object-fit:cover;min-height:140px}
   header{padding:20px 18px}
   h1{margin:0;font-size:34px;letter-spacing:.2px}
   .chip{padding:6px 10px;border-radius:999px;background:#142a52;color:var(--acc2);font-size:12px}
   .sub{color:var(--muted);font-size:14px}
-
   .panel{background:linear-gradient(180deg,var(--card),var(--card2));border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
   .grid{display:grid;gap:16px;grid-template-columns:1.1fr .9fr}
   @media (max-width:900px){.grid{grid-template-columns:1fr}}
   .stack{display:grid;gap:14px}
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-
-  button{
-    appearance:none;border:0;border-radius:14px;padding:14px 18px;font-weight:800;
-    background:#173564;color:#dbe9ff;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);
-    transition:.18s transform ease,.18s filter ease
-  }
-  button:hover{filter:brightness(1.05)}
-  button:active{transform:translateY(1px)}
+  button{appearance:none;border:0;border-radius:14px;padding:14px 18px;font-weight:800;background:#173564;color:#dbe9ff;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);transition:.18s transform ease,.18s filter ease}
+  button:hover{filter:brightness(1.05)} button:active{transform:translateY(1px)}
   .primary{background:linear-gradient(180deg,#1ee0b7,#13b58f);color:#012019}
   .muted{background:#142d57;color:#b8cffb}
-
   .kv{display:grid;grid-template-columns:150px 1fr;gap:8px 12px;font-size:14px}
   .kv b{color:#c9e7ff}
   .log{width:100%;height:180px;background:#08162c;border:0;color:#aee7ff;border-radius:12px;padding:10px;
@@ -131,10 +113,9 @@
     </footer>
   </div>
 
-  <!-- web3.js (token gate) -->
+  <!-- web3.js voor token-gate -->
   <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
 
-  <!-- Umi + CMv3 met een custom Phantom-signer (geen adapter plugins) -->
   <script type="module">
     /******** CONFIG ********/
     const HELIUS_RPC    = "https://mainnet.helius-rpc.com/?api-key=a9a11d45-2d40-4da0-a3b6-557b855f1e5c";
@@ -144,16 +125,16 @@
 
     const $ = s => document.querySelector(s);
     const log = (m) => { const el=$("#log"); el.value = (el.value?el.value+"\n":"")+m; el.scrollTop = el.scrollHeight; };
+
     $("#cmid").textContent   = CANDY_MACHINE;
     $("#cguard").textContent = CANDY_GUARD;
     $("#solanafm").href = `https://solana.fm/address/${CANDY_MACHINE}?cluster=mainnet-alpha`;
     $("#solscan").href  = `https://solscan.io/account/${CANDY_MACHINE}`;
 
-    /******** web3.js: token gate ********/
+    /******** token-gate via web3.js ********/
     const web3 = window.solanaWeb3;
     const connection = new web3.Connection(HELIUS_RPC, "confirmed");
     let walletPubkey = null;
-    const setStatus = (t) => $("#statusText").textContent = t;
 
     async function checkCBS() {
       if (!walletPubkey) return;
@@ -170,53 +151,25 @@
       } catch(e){ log(`Balance check failed: ${e.message||e}`); }
     }
 
-    /******** UMI IMPORTS (correcte pakketten) ********/
-    import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults";
-    import {
-      publicKey as umiPublicKey,
-      generateSigner,
-      signerIdentity
-    } from "https://esm.sh/@metaplex-foundation/umi";
-    import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata";
-    import { mplCandyMachine, fetchCandyMachine, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine";
-    import { setComputeUnitLimit, setComputeUnitPrice } from "https://esm.sh/@metaplex-foundation/mpl-toolbox";
+    function setStatus(t){ $("#statusText").textContent = t; }
+
+    /******** Umi + CMv3 ********/
+    import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@0.10.6";
+    import { publicKey as umiPublicKey, generateSigner, signerIdentity } from "https://esm.sh/@metaplex-foundation/umi@0.10.6";
+    import { createSignerFromWallet } from "https://esm.sh/@metaplex-foundation/umi-web3js-adapters@0.10.6";
+    import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.1.0";
+    import { mplCandyMachine, fetchCandyMachine, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.0.1";
+    import { setComputeUnitLimit, setComputeUnitPrice } from "https://esm.sh/@metaplex-foundation/mpl-toolbox@0.10.6";
 
     const umiBase = createUmi(HELIUS_RPC)
       .use(mplTokenMetadata())
       .use(mplCandyMachine());
 
-    // Helper die ALTIJD een base58 teruggeeft (maakt niet uit wat Phantom levert)
-    const toBase58 = (pk) => {
-      try {
-        if (!pk) return "";
-        if (typeof pk === "string") return pk;
-        if (typeof pk.toBase58 === "function") return pk.toBase58();
-        return new web3.PublicKey(pk).toBase58();
-      } catch { return ""; }
-    };
-
-    async function connectWallet(){
-      if (!window.solana) { alert("Please install Phantom Wallet."); window.open("https://phantom.app/", "_blank"); return; }
-      const r = await window.solana.connect();
-      const base58 = toBase58(r.publicKey || window.solana.publicKey);
-      if (!base58) { alert("Wallet connect failed."); return; }
-      walletPubkey = new web3.PublicKey(base58);
-      setStatus(`Connected: ${base58.slice(0,4)}…${base58.slice(-4)}`);
-      log(`Connected: ${base58}`);
-      await checkCBS();
-      await updateSupply();
-    }
-
-    // Custom Umi-signer die rechtstreeks Phantom gebruikt
-    function umiWithSigner(){
-      const base58 = walletPubkey?.toBase58?.() || "";
-      if (!base58) throw new Error("Wallet not connected");
-      const signer = {
-        publicKey: umiPublicKey(base58),
-        async signTransaction(tx){ return window.solana.signTransaction(tx); },
-        async signAllTransactions(txs){ return window.solana.signAllTransactions(txs); },
-      };
-      return umiBase.use(signerIdentity(signer));
+    function umiWithPhantom(){
+      if (!window.solana) throw new Error("Please install Phantom Wallet");
+      // Maak van window.solana een geldige Umi Signer (EXACTE vorm die Umi verwacht)
+      const walletSigner = createSignerFromWallet(window.solana);
+      return umiBase.use(signerIdentity(walletSigner));
     }
 
     async function updateSupply(){
@@ -224,30 +177,39 @@
         const cm = await fetchCandyMachine(umiBase, umiPublicKey(CANDY_MACHINE));
         const minted = Number(cm.itemsRedeemed ?? 0);
         const avail  = Number(cm.itemsAvailable ?? 0);
-        const remain = Math.max(avail - minted, 0);
         $("#minted").textContent = `${minted} / ${avail}`;
-        $("#remaining").textContent = `${remain}`;
+        $("#remaining").textContent = `${Math.max(avail - minted, 0)}`;
       }catch(e){ log(`Supply read failed: ${e.message||e}`); }
+    }
+
+    async function connectWallet(){
+      if (!window.solana) { alert("Please install Phantom Wallet."); window.open("https://phantom.app/", "_blank"); return; }
+      const r = await window.solana.connect();
+      const pk = r?.publicKey || window.solana.publicKey;
+      walletPubkey = (typeof pk?.toBase58 === "function") ? pk : new web3.PublicKey(pk);
+      const b58 = walletPubkey.toBase58();
+      setStatus(`Connected: ${b58.slice(0,4)}…${b58.slice(-4)}`);
+      log(`Connected: ${b58}`);
+      await checkCBS();
+      await updateSupply();
     }
 
     async function doMint(){
       try{
         if(!walletPubkey){ await connectWallet(); if(!walletPubkey) return; }
         await checkCBS();
-        if(document.getElementById("btnMint").disabled){
-          alert("You need at least 1 CBS to mint."); return;
-        }
+        if(document.getElementById("btnMint").disabled){ alert("You need at least 1 CBS to mint."); return; }
 
         document.getElementById("btnMint").disabled = true;
         log("Preparing mint…");
 
-        const u = umiWithSigner();
+        const u = umiWithPhantom();
         const cmPk = umiPublicKey(CANDY_MACHINE);
         await fetchCandyMachine(u, cmPk);                 // warm-up
         const nftMint = generateSigner(u);
 
         setComputeUnitLimit(u, { units: 900_000 });
-        setComputeUnitPrice(u, { microLamports: 10_000 }); // kleine priority fee
+        setComputeUnitPrice(u, { microLamports: 10_000 });
 
         const txb = await mintV2(u, {
           candyMachine: cmPk,
@@ -269,13 +231,14 @@
       }
     }
 
-    // UI events
+    // Buttons
     document.getElementById("btnConnect").addEventListener("click", connectWallet);
     document.getElementById("btnCheck").addEventListener("click", checkCBS);
     document.getElementById("btnMint").addEventListener("click", doMint);
 
-    // First render
+    // Counters on load
     await updateSupply();
   </script>
 </body>
 </html>
+
