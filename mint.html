@@ -107,8 +107,17 @@
 
   <!-- Alleen web3 IIFE voor token-gate -->
   <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
-  <!-- Jouw vaste bundel -->
-  <script src="./mint.bundle.js"></script>
-  <script>window.CBSMint.init();</script>
+
+  <!-- Laad je vaste bundel (staat in dezelfde map) -->
+  <script src="./mint.bundle.js?v=1"></script>
+  <script>
+    if (window.CBSMint && typeof window.CBSMint.init === "function") {
+      window.CBSMint.init();
+    } else {
+      console.error("CBSMint ontbreekt – controleer het pad van mint.bundle.js");
+      const el = document.getElementById("log");
+      if (el) el.value += "\n[!] mint.bundle.js niet gevonden of geen CBSMint.init().";
+    }
+  </script>
 </body>
 </html>
