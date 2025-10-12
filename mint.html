@@ -187,5 +187,128 @@
     });
   })();
   </script>
+<script>
+/* ====== DROP-IN MINT (zonder bundel) ====== */
+(() => {
+  const RPC  = "https://mainnet.helius-rpc.com/?api-key=a9a11d45-2d40-4da0-a3b6-557b855f1e5c";
+  const CMID = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd";
+  const CGID = "9m94QDkzsEoJLdfHMpyQUCgdS6fXSP1AeoEzf4RLmcUv";
+
+  const btnMint = document.getElementById("btnMint");
+  const log = (m)=>{ const el=document.getElementById("log"); el.value+=(el.value? "\n":"")+m; el.scrollTop=el.scrollHeight; };
+
+  // 1) helper om een van meerdere CDN's te proberen
+  async function tryImport(paths){
+    for (const url of paths){
+      try { return await import(url); } catch(e) { /* probeer volgende */ }
+    }
+    throw new Error("Kon modules niet laden (alle CDN's faalden).");
+  }
+
+  // 2) eigen doMint die we aan de knop hangen
+  async function doMintStandalone(){
+    try{
+      if (!window.solana?.publicKey) {
+        alert("Connect wallet first.");
+        return;
+      }
+      btnMint.disabled = true;
+      log("Preparing mint…");
+
+      const [
+        umiBundle,            // createUmi
+        umiCore,              // publicKey, generateSigner, signerIdentity
+        adapters,             // createSignerFromWallet
+        tm,                   // mplTokenMetadata
+        cm,                   // mplCandyMachine, fetchCandyMachine, mintV2
+        toolbox               // setComputeUnitLimit, setComputeUnitPrice
+      ] = await Promise.all([
+        tryImport([
+          "https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-bundle-defaults@0.10.6/dist/index.browser.mjs",
+          "https://unpkg.com/@metaplex-foundation/umi-bundle-defaults@0.10.6/dist/index.browser.mjs",
+          "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@0.10.6",
+          "https://cdn.skypack.dev/@metaplex-foundation/umi-bundle-defaults@0.10.6"
+        ]),
+        tryImport([
+          "https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi@0.10.6/dist/index.mjs",
+          "https://unpkg.com/@metaplex-foundation/umi@0.10.6/dist/index.mjs",
+          "https://esm.sh/@metaplex-foundation/umi@0.10.6",
+          "https://cdn.skypack.dev/@metaplex-foundation/umi@0.10.6"
+        ]),
+        tryImport([
+          "https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-web3js-adapters@0.10.6/dist/index.mjs",
+          "https://unpkg.com/@metaplex-foundation/umi-web3js-adapters@0.10.6/dist/index.mjs",
+          "https://esm.sh/@metaplex-foundation/umi-web3js-adapters@0.10.6",
+          "https://cdn.skypack.dev/@metaplex-foundation/umi-web3js-adapters@0.10.6"
+        ]),
+        tryImport([
+          "https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-token-metadata@3.1.0/dist/index.mjs",
+          "https://unpkg.com/@metaplex-foundation/mpl-token-metadata@3.1.0/dist/index.mjs",
+          "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.1.0",
+          "https://cdn.skypack.dev/@metaplex-foundation/mpl-token-metadata@3.1.0"
+        ]),
+        tryImport([
+          "https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-candy-machine@6.0.1/dist/index.mjs",
+          "https://unpkg.com/@metaplex-foundation/mpl-candy-machine@6.0.1/dist/index.mjs",
+          "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.0.1",
+          "https://cdn.skypack.dev/@metaplex-foundation/mpl-candy-machine@6.0.1"
+        ]),
+        tryImport([
+          "https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-toolbox@0.10.6/dist/index.mjs",
+          "https://unpkg.com/@metaplex-foundation/mpl-toolbox@0.10.6/dist/index.mjs",
+          "https://esm.sh/@metaplex-foundation/mpl-toolbox@0.10.6",
+          "https://cdn.skypack.dev/@metaplex-foundation/mpl-toolbox@0.10.6"
+        ]),
+      ]);
+
+      const { createUmi } = umiBundle;
+      const { publicKey: pk, generateSigner, signerIdentity } = umiCore;
+      const { createSignerFromWallet } = adapters;
+      const { mplTokenMetadata } = tm;
+      const { mplCandyMachine, fetchCandyMachine, mintV2 } = cm;
+      const { setComputeUnitLimit, setComputeUnitPrice } = toolbox;
+
+      const umi = createUmi(RPC)
+        .use(mplTokenMetadata())
+        .use(mplCandyMachine())
+        .use(signerIdentity(createSignerFromWallet(window.solana)));
+
+      // warm-up + cijfers bijwerken
+      await fetchCandyMachine(umi, pk(CMID));
+
+      const nftMint = generateSigner(umi);
+      setComputeUnitLimit(umi, { units: 900_000 });
+      setComputeUnitPrice(umi, { microLamports: 10_000 });
+
+      const txb = await mintV2(umi, {
+        candyMachine: pk(CMID),
+        candyGuard:   pk(CGID),
+        nftMint,
+      });
+
+      const { signature } = await txb.sendAndConfirm(umi, { confirm: { commitment: "confirmed" } });
+      log(`✅ Minted! Tx:\n${signature}`);
+      alert("Mint successful!");
+      try { 
+        document.querySelector("#minted").textContent = "—"; 
+        document.querySelector("#remaining").textContent = "—";
+      } catch(_) {}
+
+    } catch(e){
+      console.error(e);
+      alert("Mint failed: " + (e.message || e));
+      log("❌ Mint failed: " + (e.message||e));
+    } finally {
+      btnMint.disabled = false;
+    }
+  }
+
+  // Koppel onze standalone minter aan de knop (alleen als bundel geen doMint heeft)
+  const bundel = window.CBSMint || window.MintApp;
+  if (!bundel || typeof bundel.doMint !== "function") {
+    document.getElementById("btnMint").addEventListener("click", doMintStandalone);
+  }
+})();
+</script>
 </body>
 </html>
