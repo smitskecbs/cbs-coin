@@ -1,153 +1,227 @@
-<script type="module">
-/* -------------------- Config -------------------- */
-const HELIUS_RPC = "https://mainnet.helius-rpc.com/?api-key=a9a11d45-2d40-4da0-a3b6-557b855f1e5c";
-const CBS_MINT   = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
-const CMID       = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd";
-const CGID       = "9m94QDkzsEoJLdfHMpyQUCgdS6fXSP1AeoEzf4RLmcUv";
-
-/* -------------------- Helpers ------------------- */
-const $ = (s)=>document.querySelector(s);
-const log = (m)=>{ const el=$("#log"); el.value+=(el.value? "\n":"")+m; el.scrollTop=el.scrollHeight; };
-const status = (t)=> $("#statusText")?.textContent=t;
-
-$("#cmid")?.append(CMID);
-$("#cguard")?.append(CGID);
-$("#solanafm")?.setAttribute("href","https://solana.fm/address/"+CMID);
-$("#solscan") ?.setAttribute("href","https://solscan.io/account/"+CMID);
-
-/* --------- Wallet connect + token gate --------- */
-const btnConnect = $("#btnConnect");
-const btnCheck   = $("#btnCheck");
-const btnMint    = $("#btnMint");
-
-btnConnect?.addEventListener("click", async () => {
-  try{
-    if (!window.solana){ alert("Install Phantom wallet."); window.open("https://phantom.app/","_blank"); return; }
-    const r  = await window.solana.connect();
-    const pk = r?.publicKey?.toBase58?.() || r?.publicKey || "";
-    status(pk ? `Connected: ${pk.slice(0,4)}…${pk.slice(-4)}` : "Connected");
-    log(`Connected: ${pk}`);
-    await doCheck();
-  }catch(e){ console.error(e); log("Connect failed: "+(e.message||e)); }
-});
-
-btnCheck?.addEventListener("click", doCheck);
-
-async function doCheck(){
-  try{
-    if (!window.solana?.publicKey){ log("Wallet not connected."); return; }
-    const owner = typeof window.solana.publicKey.toBase58==="function"
-      ? window.solana.publicKey
-      : new solanaWeb3.PublicKey(window.solana.publicKey);
-
-    const conn  = new solanaWeb3.Connection(HELIUS_RPC,"confirmed");
-    const res   = await conn.getParsedTokenAccountsByOwner(
-      owner, { mint: new solanaWeb3.PublicKey(CBS_MINT) }
-    );
-    const bal = (res.value||[])
-      .map(a=>a.account.data.parsed.info.tokenAmount.uiAmount||0)
-      .reduce((a,b)=>a+b,0);
-    $("#cbs")?.replaceChildren(String(bal));
-    if (bal>=1){ btnMint.disabled=false; log("✅ Token gate OK: you hold ≥ 1 CBS."); }
-    else { btnMint.disabled=true; log("⛔ Token gate: need ≥ 1 CBS to mint."); }
-  }catch(e){ console.error(e); log("Balance check failed: "+(e.message||e)); }
-}
-
-/* -------------- Umi loader (robust) -------------- */
-async function loadUmiModules(){
-  // Ask CDN to expose exactly the symbols we need.
-  const [bundle, core, adaptersA, adaptersB, tm, cm] = await Promise.all([
-    import("https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1"),
-    import("https://esm.sh/@metaplex-foundation/umi@1.4.1"),
-    import("https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1?exports=walletAdapterIdentity,walletAdapterIdentityPlugin,createWalletAdapterFromWallet,createWalletAdapter").catch(()=>null),
-    import("https://esm.sh/@metaplex-foundation/umi-web3js-adapters@1.4.1?exports=createSignerFromWallet,createSignerFromWalletAdapter").catch(()=>null),
-    import("https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.1.0"),
-    import("https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0"),
-  ]);
-  // Log what we got (for debugging on-page)
-  const keys = o => o ? Object.keys(o).join(",") : "(null)";
-  log("modules: " + [
-    "bundle["+keys(bundle)+"]",
-    "core["+keys(core)+"]",
-    "aA["+keys(adaptersA?.default||adaptersA)+"]",
-    "aB["+keys(adaptersB?.default||adaptersB)+"]",
-    "tm["+keys(tm)+"]",
-    "cm["+keys(cm)+"]"
-  ].join(" | "));
-  return { bundle, core, adaptersA, adaptersB, tm, cm };
-}
-
-/* -------------------- Mint ---------------------- */
-btnMint?.addEventListener("click", doMint);
-
-async function doMint(){
-  try{
-    if (!window.solana?.publicKey){ alert("Connect your wallet first."); return; }
-    btnMint.disabled = true;
-    log("Preparing mint… (loading modules)");
-
-    const { bundle, core, adaptersA, adaptersB, tm, cm } = await loadUmiModules();
-    const { createUmi } = bundle;
-    const { publicKey: pk, generateSigner, signerIdentity } = core;
-    const { mplTokenMetadata } = tm;
-    const { mplCandyMachine, fetchCandyMachine, mintV2 } = cm;
-
-    const umi = createUmi(HELIUS_RPC)
-      .use(mplTokenMetadata())
-      .use(mplCandyMachine());
-
-    // --- attach identity (try 4 paths, default-aware) ---
-    const aA = adaptersA?.default || adaptersA || {};
-    const aB = adaptersB?.default || adaptersB || {};
-
-    let attached = false;
-
-    // 1) signer-wallet-adapters: walletAdapterIdentity(with adapter)
-    if (!attached && (aA.walletAdapterIdentity || aA.walletAdapterIdentityPlugin)) {
-      const makeWA = aA.createWalletAdapterFromWallet || aA.createWalletAdapter || null;
-      if (makeWA){
-        const wa = makeWA(window.solana);
-        const plug = aA.walletAdapterIdentity || aA.walletAdapterIdentityPlugin;
-        umi.use(plug(wa));
-        attached = true;
-      }
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CBS — Holder Badge Mint</title>
+  <meta name="color-scheme" content="dark light" />
+  <style>
+    :root{
+      --bg:#0a0a0a; --card:#0f1115; --ink:#e6e9ef; --muted:#cbd5e1; --line:#1f2430;
+      --accent:#a78bfa; --green:#22c55e; --gold:#f1c40f;
+      --r:18px;
     }
-    // 2) web3js-adapters: createSignerFromWallet (accepts window.solana)
-    if (!attached && aB.createSignerFromWallet){
-      umi.use(signerIdentity(aB.createSignerFromWallet(window.solana)));
-      attached = true;
-    }
-    // 3) web3js-adapters: createSignerFromWalletAdapter (if you ever add @solana/wallet-adapter)
-    if (!attached && aB.createSignerFromWalletAdapter && window?.phantom?.solana?.adapter){
-      umi.use(signerIdentity(aB.createSignerFromWalletAdapter(window.phantom.solana.adapter)));
-      attached = true;
-    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,Segoe UI,Inter,Roboto,Arial,sans-serif}
+    .wrap{max-width:1100px;margin:0 auto;padding:16px}
+    .hero{position:relative;background:#000;border:1px solid var(--line);border-radius:16px;overflow:hidden}
+    .hero img{width:100%;height:auto;display:block;object-fit:cover;max-height:360px}
+    h1{font-size:clamp(24px,3vw,36px);margin:18px 0 8px}
+    p{color:var(--muted);margin:0 0 8px}
+    .row{display:flex;gap:18px;flex-wrap:wrap}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+    .card.grow{flex:1 1 480px}
+    .card.side{flex:1 1 360px}
+    .btn{appearance:none;border:1px solid #2a3242;background:#12151b;color:#fff;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer}
+    .btn[disabled]{opacity:.55;cursor:not-allowed}
+    .btn.primary{background:#1a2333}
+    .cluster{display:flex;gap:10px;flex-wrap:wrap}
+    textarea{width:100%;height:220px;background:#0b1020;color:#dbe3ff;border:1px solid #223;outline:none;border-radius:12px;padding:10px;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+    .kv{display:grid;grid-template-columns:180px 1fr;gap:6px 12px}
+    .kv div{padding:4px 0;border-bottom:1px dashed #222}
+    .links a{color:#bcd1ff;text-decoration:none}
+    .links a:hover{text-decoration:underline}
+    /* Gold Telegram icon (no text) */
+    .tg{display:inline-grid;place-items:center;width:46px;height:46px;border-radius:50%;
+        background: radial-gradient(circle at 30% 30%,#ffe27a,#d4a814 70%); border:1px solid rgba(255,255,255,.15);
+        box-shadow:0 0 12px rgba(241,196,15,.35), 0 0 20px rgba(167,139,250,.18); transition:transform .1s}
+    .tg:hover{transform:translateY(-2px)}
+    .tg svg{width:24px;height:24px;display:block;filter:drop-shadow(0 0 4px rgba(0,0,0,.35))}
+    .pill{display:inline-grid;place-items:center;width:40px;height:40px;border-radius:12px;background:#141824;border:1px solid #222}
+    .tip{color:#9aa0a6;font-size:12px;margin-top:8px}
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <section class="hero">
+      <img src="Banner-CBS-Coin.jpg" alt="CBS banner" onerror="this.remove()">
+    </section>
 
-    if (!attached){
-      log("❌ Mint failed: wallet adapter not available (no compatible export).");
-      alert("Mint failed: wallet adapter not available.");
-      return;
+    <h1>Mint your CBS Holder Badge</h1>
+    <p>Requirement: <strong>&ge; 1 CBS</strong> in your wallet (token gate). Limit: <strong>1 per wallet</strong>.</p>
+
+    <div class="cluster" style="margin:10px 0 18px">
+      <a class="tg" href="https://t.me/CBS_Coins" target="_blank" rel="noopener" aria-label="Private Telegram for holders">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path fill="#1b1f2a" d="M0 0h24v24H0z" opacity="0"/>
+          <path fill="#111" d="M9.031 13.875l-.375 3.094c.562 0 .812-.25 1.125-.562l2.688-2.594 5.594 4.09c.109.57 1.758.266 2.039-.953l3.691-17.32c.328-1.523-.55-2.125-1.547-1.75L2.25 8.3C.805 8.91.812 9.73 2.047 10.11l5.925 1.86L18.297 4.75c.555-.34 1.07-.156.65.19l-9.916 8.935z"/>
+        </svg>
+      </a>
+    </div>
+
+    <div class="row">
+      <section class="card grow">
+        <div class="cluster" style="margin-bottom:12px">
+          <button class="btn" id="btnConnect">Connect Wallet</button>
+          <button class="btn" id="btnMint" disabled>Mint</button>
+          <button class="btn" id="btnCheck">Check balance</button>
+        </div>
+        <textarea id="log" readonly>idle</textarea>
+        <div class="tip">Tip: if something looks off, hard refresh (Ctrl+F5).</div>
+      </section>
+
+      <aside class="card side">
+        <div class="kv">
+          <div>Status</div> <div id="statusText">Disconnected</div>
+          <div>Your CBS</div> <div id="cbs">—</div>
+          <div>Candy Machine</div> <div id="cmid">—</div>
+          <div>Candy Guard</div> <div id="cguard">—</div>
+          <div>Minted</div> <div>—</div>
+          <div>Remaining</div> <div>—</div>
+          <div>Network</div> <div>Mainnet-Beta</div>
+          <div>View CM</div>
+          <div class="links">
+            <a id="solanafm" href="#" target="_blank" rel="noopener">SolanaFM</a> •
+            <a id="solscan" href="#" target="_blank" rel="noopener">Solscan</a>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <!-- MINT LOGIC -->
+  <script type="module">
+    // ---- Config (your real values) ----
+    const HELIUS_RPC = "https://mainnet.helius-rpc.com/?api-key=a9a11d45-2d40-4da0-a3b6-557b855f1e5c";
+    const CBS_MINT   = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
+    const CMID       = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd";
+    const CGID       = "9m94QDkzsEoJLdfHMpyQUCgdS6fXSP1AeoEzf4RLmcUv";
+
+    // ---- Small helpers ----
+    const $ = (s) => document.querySelector(s);
+    const log = (m) => { const el = $("#log"); el.value += (el.value ? "\n" : "") + m; el.scrollTop = el.scrollHeight; };
+    const setStatus = (t) => $("#statusText").textContent = t;
+
+    $("#cmid").textContent   = CMID;
+    $("#cguard").textContent = CGID;
+    $("#solanafm").href = "https://solana.fm/address/" + CMID;
+    $("#solscan").href  = "https://solscan.io/account/" + CMID;
+
+    // ---- Imports we need ----
+    import { Connection, PublicKey } from "https://esm.sh/@solana/web3.js@1.98.4?target=es2022";
+    async function loadUmi(){
+      const [bundle, core, aA, aB, tm, cm] = await Promise.all([
+        import("https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1"),
+        import("https://esm.sh/@metaplex-foundation/umi@1.4.1"),
+        import("https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1?exports=walletAdapterIdentity,walletAdapterIdentityPlugin,createWalletAdapterFromWallet,createWalletAdapter").catch(()=>null),
+        import("https://esm.sh/@metaplex-foundation/umi-web3js-adapters@1.4.1?exports=createSignerFromWallet,createSignerFromWalletAdapter").catch(()=>null),
+        import("https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.1.0"),
+        import("https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0")
+      ]);
+      return { bundle, core, aA: aA?.default || aA || {}, aB: aB?.default || aB || {}, tm, cm };
     }
 
-    // warm-up
-    await fetchCandyMachine(umi, pk(CMID));
+    // ---- Wallet buttons ----
+    const btnConnect = $("#btnConnect");
+    const btnMint    = $("#btnMint");
+    const btnCheck   = $("#btnCheck");
 
-    const nftMint = generateSigner(umi);
-    const txb = await mintV2(umi, {
-      candyMachine: pk(CMID),
-      candyGuard:   pk(CGID),
-      nftMint,
+    btnConnect.addEventListener("click", async ()=>{
+      try{
+        if(!window.solana){ alert("Install Phantom (https://phantom.app)"); return; }
+        const r = await window.solana.connect();
+        const pk = r?.publicKey?.toBase58?.() || "";
+        setStatus(pk ? `Connected: ${pk.slice(0,4)}…${pk.slice(-4)}` : "Connected");
+        log(`Connected: ${pk}`);
+        await doCheck();
+      }catch(e){ console.error(e); log("Connect failed: "+(e.message||e)); }
     });
 
-    const { signature } = await txb.sendAndConfirm(umi, { confirm: { commitment: "confirmed" } });
-    log("✅ Minted! Tx:\n"+signature);
-    alert("Mint successful!");
-  }catch(e){
-    console.error(e);
-    alert("Mint failed: " + (e?.message || e));
-    log("❌ Mint failed: " + (e?.message || e));
-  }finally{
-    btnMint.disabled = false;
-  }
-}
-</script>
+    btnCheck.addEventListener("click", doCheck);
+
+    async function doCheck(){
+      try{
+        if(!window.solana?.publicKey){ log("Wallet not connected."); return; }
+        const owner = typeof window.solana.publicKey.toBase58==="function"
+          ? window.solana.publicKey
+          : new PublicKey(window.solana.publicKey);
+        const conn = new Connection(HELIUS_RPC,"confirmed");
+        const res = await conn.getParsedTokenAccountsByOwner(owner, { mint: new PublicKey(CBS_MINT) });
+        const cbs = (res.value||[]).map(a=>a.account.data.parsed.info.tokenAmount.uiAmount||0).reduce((a,b)=>a+b,0);
+        $("#cbs").textContent = String(cbs);
+        if(cbs>=1){ btnMint.disabled=false; log("✅ Token gate OK: you hold ≥ 1 CBS."); }
+        else { btnMint.disabled=true; log("⛔ Token gate: need ≥ 1 CBS to mint."); }
+      }catch(e){ console.error(e); log("Balance check failed: "+(e.message||e)); }
+    }
+
+    // ---- Mint ----
+    btnMint.addEventListener("click", doMint);
+
+    async function doMint(){
+      try{
+        if(!window.solana?.publicKey){ alert("Connect your wallet first."); return; }
+        btnMint.disabled = true;
+        log("Preparing mint… (loading modules)");
+
+        const { bundle, core, aA, aB, tm, cm } = await loadUmi();
+        const { createUmi } = bundle;
+        const { publicKey: pk, generateSigner, signerIdentity } = core;
+        const { mplTokenMetadata } = tm;
+        const { mplCandyMachine, fetchCandyMachine, mintV2 } = cm;
+
+        const umi = createUmi(HELIUS_RPC)
+          .use(mplTokenMetadata())
+          .use(mplCandyMachine());
+
+        // Attach identity (try multiple adapters)
+        let attached = false;
+
+        if(!attached && (aA.walletAdapterIdentity || aA.walletAdapterIdentityPlugin)){
+          const makeWA = aA.createWalletAdapterFromWallet || aA.createWalletAdapter || null;
+          if(makeWA){
+            const wa = makeWA(window.solana);
+            const plug = aA.walletAdapterIdentity || aA.walletAdapterIdentityPlugin;
+            umi.use(plug(wa));
+            attached = true;
+          }
+        }
+        if(!attached && aB.createSignerFromWallet){
+          umi.use(signerIdentity(aB.createSignerFromWallet(window.solana)));
+          attached = true;
+        }
+        if(!attached && aB.createSignerFromWalletAdapter && window?.phantom?.solana?.adapter){
+          umi.use(signerIdentity(aB.createSignerFromWalletAdapter(window.phantom.solana.adapter)));
+          attached = true;
+        }
+
+        if(!attached){
+          log("❌ Mint failed: wallet adapter not available.");
+          alert("Mint failed: wallet adapter not available.");
+          return;
+        }
+
+        await fetchCandyMachine(umi, pk(CMID)); // warm-up
+
+        const nftMint = generateSigner(umi);
+        const txb = await mintV2(umi, {
+          candyMachine: pk(CMID),
+          candyGuard:   pk(CGID),
+          nftMint,
+        });
+
+        const { signature } = await txb.sendAndConfirm(umi, { confirm: { commitment: "confirmed" } });
+        log("✅ Minted! Tx:\n"+signature);
+        alert("Mint successful!");
+      }catch(e){
+        console.error(e);
+        alert("Mint failed: "+(e?.message||e));
+        log("❌ Mint failed: "+(e?.message||e));
+      }finally{
+        btnMint.disabled = false;
+      }
+    }
+  </script>
+</body>
+</html>
+
