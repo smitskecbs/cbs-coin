@@ -8,10 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 <style>
-  :root{
-    --bg:#000;--fg:#e5e7eb;--muted:#cbd5e1;--panel:#0b0b0b;--bd:#1f2937;
-    --green:#22c55e;--blue:#60a5fa;--gold:#eab308;--pill:#111827;--radius:16px
-  }
+  :root{--bg:#000;--fg:#e5e7eb;--muted:#cbd5e1;--panel:#0b0b0b;--bd:#1f2937;--radius:16px;--gold:#eab308}
   *{box-sizing:border-box} body{margin:0;background:#000;color:var(--fg);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
   .wrap{max-width:1100px;margin:0 auto;padding:18px 14px 42px}
   .hero{background:#0a0a0a;border:1px solid var(--bd);border-radius:18px;overflow:hidden}
@@ -76,17 +73,17 @@
     </div>
   </div>
 
-  <!-- web3.js (IIFE) for token-gate + Phantom connect -->
+  <!-- web3.js IIFE for Phantom + balance check -->
   <script src="https://unpkg.com/@solana/web3.js@1.98.4/lib/index.iife.min.js"></script>
 
   <script type="module">
-  // ====== CONFIG ======
-  const RPC      = "https://mainnet.helius-rpc.com/?api-key=a9a11d45-2d40-4da0-a3b6-557b855f1e5c"; // Helius
+  // ==== CONFIG ====
+  const RPC      = "https://mainnet.helius-rpc.com/?api-key=a9a11d45-2d40-4da0-a3b6-557b855f1e5c";
   const CBS_MINT = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
   const CMID     = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd";
   const CGID     = "9m94QDkzsEoJLdfHMpyQUCgdS6fXSP1AeoEzf4RLmcUv";
 
-  // Links
+  // links
   document.querySelector('#cmid').textContent   = CMID;
   document.querySelector('#cguard').textContent = CGID;
   document.querySelector('#solanafm').href = `https://solana.fm/address/${CMID}?cluster=mainnet-solana`;
@@ -101,7 +98,7 @@
   const btnCheck   = $("#btnCheck");
   const btnMint    = $("#btnMint");
 
-  // ====== CONNECT (Phantom) ======
+  // CONNECT
   btnConnect.addEventListener("click", async () => {
     try{
       if (!window.solana) { window.open("https://phantom.app/","_blank"); alert("Please install Phantom."); return; }
@@ -113,7 +110,7 @@
     }catch(e){ console.error(e); log("Connect failed: "+(e.message||e)); }
   });
 
-  // ====== CHECK CBS BALANCE ======
+  // CHECK CBS BALANCE
   async function checkCBS(){
     try{
       if (!window.solana?.publicKey){ log("Wallet not connected."); return; }
@@ -130,88 +127,97 @@
   }
   btnCheck.addEventListener("click", checkCBS);
 
-  // ====== Robust ESM loader (fixed CORS on unpkg with ?module) ======
-  async function tryImport(list){
-    for (const url of list){
-      try { return await import(url); } catch(_){ /* try next */ }
-    }
-    throw new Error("Could not load modules (all CDNs failed).");
+  // ===== Robust ESM loader =====
+  async function tryImport(urls){
+    for (const u of urls){ try { return await import(u); } catch(_){ } }
+    throw new Error("all-failed");
+  }
+  async function softImport(urls){
+    try { return await tryImport(urls); } catch { return null; }
   }
 
   async function loadUmi(){
+    // versions that bestaan op CDN’s
     const V = {
-      umiBundle: "1.4.1",
-      umi:       "1.4.1",
-      signer:    "1.4.1",  // @metaplex-foundation/umi-signer-wallet-adapters
-      tm:        "3.0.1",
-      cm:        "6.1.0",
-      toolbox:   "1.0.0"
+      umiBundle:"1.4.1",
+      umi:"1.4.1",
+      signer:"1.4.1",
+      tm_primary:"3.1.0",   // primary
+      tm_fallback:"3.0.1",  // fallback
+      cm:"6.1.0",
+      tb_primary:"1.0.0",
+      tb_fallback:"0.10.6"
     };
 
-    const [ bdl, umi, signer, tm, cm, tb ] = await Promise.all([
-      // umi-bundle-defaults
-      tryImport([
-        `https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-bundle-defaults@${V.umiBundle}/dist/index.browser.mjs`,
-        `https://unpkg.com/@metaplex-foundation/umi-bundle-defaults@${V.umiBundle}/dist/index.browser.mjs?module`,
-        `https://esm.sh/@metaplex-foundation/umi-bundle-defaults@${V.umiBundle}?bundle`
-      ]),
-      // umi core
-      tryImport([
-        `https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi@${V.umi}/dist/esm/index.js`,
-        `https://unpkg.com/@metaplex-foundation/umi@${V.umi}/dist/esm/index.js?module`,
-        `https://esm.sh/@metaplex-foundation/umi@${V.umi}?bundle`
-      ]),
-      // wallet adapters
-      tryImport([
-        `https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-signer-wallet-adapters@${V.signer}/dist/esm/index.js`,
-        `https://unpkg.com/@metaplex-foundation/umi-signer-wallet-adapters@${V.signer}/dist/esm/index.js?module`,
-        `https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@${V.signer}?bundle`
-      ]),
-      // token-metadata
-      tryImport([
-        `https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-token-metadata@${V.tm}/dist/esm/index.js`,
-        `https://unpkg.com/@metaplex-foundation/mpl-token-metadata@${V.tm}/dist/esm/index.js?module`,
-        `https://esm.sh/@metaplex-foundation/mpl-token-metadata@${V.tm}?bundle`
-      ]),
-      // candy-machine
-      tryImport([
-        `https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-candy-machine@${V.cm}/dist/esm/index.js`,
-        `https://unpkg.com/@metaplex-foundation/mpl-candy-machine@${V.cm}/dist/esm/index.js?module`,
-        `https://esm.sh/@metaplex-foundation/mpl-candy-machine@${V.cm}?bundle`
-      ]),
-      // toolbox (try 1.0.0, then 0.10.6)
-      (async () => {
-        try {
-          return await tryImport([
-            `https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-toolbox@${V.toolbox}/dist/esm/index.js`,
-            `https://unpkg.com/@metaplex-foundation/mpl-toolbox@${V.toolbox}/dist/esm/index.js?module`,
-            `https://esm.sh/@metaplex-foundation/mpl-toolbox@${V.toolbox}?bundle`
-          ]);
-        } catch {
-          return await tryImport([
-            `https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-toolbox@0.10.6/dist/index.mjs`,
-            `https://unpkg.com/@metaplex-foundation/mpl-toolbox@0.10.6/dist/index.mjs?module`,
-            `https://esm.sh/@metaplex-foundation/mpl-toolbox@0.10.6?bundle`
-          ]);
-        }
-      })()
+    const umiBundle = await tryImport([
+      `https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-bundle-defaults@${V.umiBundle}/dist/index.browser.mjs`,
+      `https://unpkg.com/@metaplex-foundation/umi-bundle-defaults@${V.umiBundle}/dist/index.browser.mjs?module`,
+      `https://esm.sh/@metaplex-foundation/umi-bundle-defaults@${V.umiBundle}?bundle`
+    ]);
+
+    const umiCore = await tryImport([
+      `https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi@${V.umi}/dist/esm/index.js`,
+      `https://unpkg.com/@metaplex-foundation/umi@${V.umi}/dist/esm/index.js?module`,
+      `https://esm.sh/@metaplex-foundation/umi@${V.umi}?bundle`
+    ]);
+
+    const adapters = await tryImport([
+      `https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-signer-wallet-adapters@${V.signer}/dist/esm/index.js`,
+      `https://unpkg.com/@metaplex-foundation/umi-signer-wallet-adapters@${V.signer}/dist/esm/index.js?module`,
+      `https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@${V.signer}?bundle`
+    ]);
+
+    // token-metadata (probeer 3.1.0 → 3.0.1) en beide padvormen
+    let tm = await softImport([
+      `https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-token-metadata@${V.tm_primary}/dist/esm/index.js`,
+      `https://unpkg.com/@metaplex-foundation/mpl-token-metadata@${V.tm_primary}/dist/esm/index.js?module`,
+      `https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-token-metadata@${V.tm_primary}/dist/index.mjs`,
+      `https://unpkg.com/@metaplex-foundation/mpl-token-metadata@${V.tm_primary}/dist/index.mjs?module`,
+      `https://esm.sh/@metaplex-foundation/mpl-token-metadata@${V.tm_primary}?bundle`
+    ]);
+    if (!tm) {
+      tm = await tryImport([
+        `https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-token-metadata@${V.tm_fallback}/dist/esm/index.js`,
+        `https://unpkg.com/@metaplex-foundation/mpl-token-metadata@${V.tm_fallback}/dist/esm/index.js?module`,
+        `https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-token-metadata@${V.tm_fallback}/dist/index.mjs`,
+        `https://unpkg.com/@metaplex-foundation/mpl-token-metadata@${V.tm_fallback}/dist/index.mjs?module`,
+        `https://esm.sh/@metaplex-foundation/mpl-token-metadata@${V.tm_fallback}?bundle`
+      ]);
+    }
+
+    const cm = await tryImport([
+      `https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-candy-machine@${V.cm}/dist/esm/index.js`,
+      `https://unpkg.com/@metaplex-foundation/mpl-candy-machine@${V.cm}/dist/esm/index.js?module`,
+      `https://esm.sh/@metaplex-foundation/mpl-candy-machine@${V.cm}?bundle`
+    ]);
+
+    // toolbox is optioneel (soft)
+    const tb = await softImport([
+      `https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-toolbox@${V.tb_primary}/dist/esm/index.js`,
+      `https://unpkg.com/@metaplex-foundation/mpl-toolbox@${V.tb_primary}/dist/esm/index.js?module`,
+      `https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-toolbox@${V.tb_primary}/dist/index.mjs`,
+      `https://unpkg.com/@metaplex-foundation/mpl-toolbox@${V.tb_primary}/dist/index.mjs?module`,
+      `https://esm.sh/@metaplex-foundation/mpl-toolbox@${V.tb_primary}?bundle`,
+      `https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-toolbox@${V.tb_fallback}/dist/index.mjs`,
+      `https://unpkg.com/@metaplex-foundation/mpl-toolbox@${V.tb_fallback}/dist/index.mjs?module`,
+      `https://esm.sh/@metaplex-foundation/mpl-toolbox@${V.tb_fallback}?bundle`
     ]);
 
     return {
-      createUmi: bdl.createUmi,
-      publicKey: umi.publicKey,
-      generateSigner: umi.generateSigner,
-      walletAdapterIdentity: signer.walletAdapterIdentity,
+      createUmi: umiBundle.createUmi,
+      publicKey: umiCore.publicKey,
+      generateSigner: umiCore.generateSigner,
+      walletAdapterIdentity: adapters.walletAdapterIdentity,
       mplTokenMetadata: tm.mplTokenMetadata,
       mplCandyMachine: cm.mplCandyMachine,
       fetchCandyMachine: cm.fetchCandyMachine,
       mintV2: cm.mintV2,
-      setComputeUnitLimit: tb.setComputeUnitLimit,
-      setComputeUnitPrice: tb.setComputeUnitPrice
+      setComputeUnitLimit: tb?.setComputeUnitLimit ?? (()=>{}),
+      setComputeUnitPrice: tb?.setComputeUnitPrice ?? (()=>{})
     };
   }
 
-  // ====== MINT ======
+  // MINT
   btnMint.addEventListener("click", async () => {
     try{
       if (!window.solana?.publicKey){ alert("Connect your wallet first."); return; }
@@ -229,7 +235,7 @@
         .use(mplCandyMachine())
         .use(walletAdapterIdentity(window.solana));
 
-      await fetchCandyMachine(umi, pk(CMID));
+      await fetchCandyMachine(umi, pk(CMID));          // warm-up
 
       const nftMint = generateSigner(umi);
       try { setComputeUnitLimit(umi,{units:900_000}); } catch(_) {}
@@ -248,14 +254,11 @@
       console.error(e);
       alert("Mint failed: "+(e.message||e));
       log("❌ Mint failed: "+(e.message||e));
-    }finally{
-      btnMint.disabled = false;
-    }
+    }finally{ btnMint.disabled = false; }
   });
 
-  // Auto-enable mint if already connected + has tokens
+  // auto-connect (trusted)
   (async () => { if (window.solana?.isPhantom) { try { await window.solana.connect({ onlyIfTrusted:true }); setStatus("Connected"); await checkCBS(); } catch(_){} }})();
   </script>
 </body>
 </html>
-
