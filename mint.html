@@ -124,7 +124,7 @@
   <!-- web3.js (token gate) -->
   <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
 
-  <!-- Umi + Candy Machine -->
+  <!-- Umi + Candy Machine + Phantom adapter -->
   <script type="module">
     /******** CONFIG ********/
     const HELIUS_RPC    = "https://mainnet.helius-rpc.com/?api-key=a9a11d45-2d40-4da0-a3b6-557b855f1e5c";
@@ -134,16 +134,16 @@
 
     const $ = s => document.querySelector(s);
     const log = (m) => { const el=$("#log"); el.value = (el.value?el.value+"\n":"")+m; el.scrollTop = el.scrollHeight; };
+
     $("#cmid").textContent   = CANDY_MACHINE;
     $("#cguard").textContent = CANDY_GUARD;
     $("#solanafm").href = `https://solana.fm/address/${CANDY_MACHINE}?cluster=mainnet-alpha`;
     $("#solscan").href  = `https://solscan.io/account/${CANDY_MACHINE}`;
 
-    /******** Wallet + balance (web3.js) ********/
+    /******** web3.js: balance gate ********/
     const web3 = window.solanaWeb3;
     const connection = new web3.Connection(HELIUS_RPC, "confirmed");
     let walletPubkey = null;
-
     function setStatus(t){ $("#statusText").textContent = t; }
 
     async function checkCBS() {
@@ -161,10 +161,11 @@
       } catch(e){ log(`Balance check failed: ${e.message||e}`); }
     }
 
-    /******** Umi (bundle defaults) + Wallet-Standard bridge ********/
+    /******** Umi + Phantom wallet adapter ********/
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults";
     import { publicKey, generateSigner } from "https://esm.sh/@metaplex-foundation/umi";
-    import { walletAdapterIdentity, createSignerFromWalletAdapter, createWalletAdapterFromWallet } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters";
+    import { walletAdapterIdentity, createSignerFromWalletAdapter } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters";
+    import { PhantomWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-phantom";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata";
     import { mplCandyMachine, fetchCandyMachine, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine";
     import { setComputeUnitLimit, setComputeUnitPrice } from "https://esm.sh/@metaplex-foundation/mpl-toolbox";
@@ -173,25 +174,21 @@
       .use(mplTokenMetadata())
       .use(mplCandyMachine());
 
-    let adapter = null; // WalletAdapter (gemaakt van window.solana)
+    const phantom = new PhantomWalletAdapter();
 
-    async function connectWallet(){
-      if (!window.solana) { alert("Please install Phantom Wallet."); window.open("https://phantom.app/", "_blank"); return; }
-      await window.solana.connect(); // standaard popup
-      // Wrap de Wallet-Standard provider in een echte WalletAdapter:
-      if (!adapter) adapter = createWalletAdapterFromWallet(window.solana);
-      if (!adapter.connected) await adapter.connect();
-      const pk58 = adapter.publicKey.toBase58(); // ✅ echte PublicKey
-      walletPubkey = new web3.PublicKey(pk58);
-      setStatus(`Connected: ${pk58.slice(0,4)}…${pk58.slice(-4)}`);
-      log(`Connected: ${pk58}`);
+    async function connectWalletAdapter(){
+      if (!phantom.connected) await phantom.connect();     // opens Phantom
+      const pk = phantom.publicKey;                        // web3.PublicKey (has toBase58)
+      walletPubkey = new web3.PublicKey(pk.toBase58());
+      setStatus(`Connected: ${walletPubkey.toBase58().slice(0,4)}…${walletPubkey.toBase58().slice(-4)}`);
+      log(`Connected: ${walletPubkey.toBase58()}`);
       await checkCBS();
       await updateSupply();
     }
 
-    function umiWithWallet(){
-      if (!adapter?.connected) throw new Error("Wallet not connected");
-      return umiBase.use(walletAdapterIdentity(createSignerFromWalletAdapter(adapter)));
+    function umiWithWallet() {
+      if (!phantom.connected) throw new Error("Wallet not connected");
+      return umiBase.use(walletAdapterIdentity(createSignerFromWalletAdapter(phantom)));
     }
 
     async function updateSupply(){
@@ -207,22 +204,20 @@
 
     async function doMint(){
       try{
-        if(!adapter?.connected){ await connectWallet(); }
+        if(!phantom.connected){ await connectWalletAdapter(); }
         await checkCBS();
-        if(document.getElementById("btnMint").disabled){
-          alert("You need at least 1 CBS to mint."); return;
-        }
+        if($("#btnMint").disabled){ alert("You need at least 1 CBS to mint."); return; }
 
-        document.getElementById("btnMint").disabled = true;
+        $("#btnMint").disabled = true;
         log("Preparing mint…");
 
         const u = umiWithWallet();
         const cmPk = publicKey(CANDY_MACHINE);
-        await fetchCandyMachine(u, cmPk);
+        await fetchCandyMachine(u, cmPk); // warm-up
         const nftMint = generateSigner(u);
 
         setComputeUnitLimit(u, { units: 900_000 });
-        setComputeUnitPrice(u, { microLamports: 10_000 });
+        setComputeUnitPrice(u, { microLamports: 10_000 }); // small priority fee
 
         const txb = await mintV2(u, {
           candyMachine: cmPk,
@@ -240,16 +235,16 @@
         log(`❌ Mint failed: ${e.message||e}`);
         alert(`Mint failed:\n${e.message||e}`);
       }finally{
-        document.getElementById("btnMint").disabled = false;
+        $("#btnMint").disabled = false;
       }
     }
 
     // Buttons
-    document.getElementById("btnConnect").addEventListener("click", connectWallet);
+    document.getElementById("btnConnect").addEventListener("click", connectWalletAdapter);
     document.getElementById("btnCheck").addEventListener("click", checkCBS);
     document.getElementById("btnMint").addEventListener("click", doMint);
 
-    // First paint
+    // Initial counters
     await updateSupply();
   </script>
 </body>
