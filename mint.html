@@ -136,6 +136,8 @@
     const connection = new web3.Connection(HELIUS_RPC, "confirmed");
     let walletPubkey = null;
 
+    function setStatus(t){ $("#statusText").textContent = t; }
+
     async function checkCBS() {
       if (!walletPubkey) return;
       try {
@@ -151,15 +153,13 @@
       } catch(e){ log(`Balance check failed: ${e.message||e}`); }
     }
 
-    function setStatus(t){ $("#statusText").textContent = t; }
-
-    /******** Umi + CMv3 ********/
-    import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@0.10.6";
-    import { publicKey as umiPublicKey, generateSigner, signerIdentity } from "https://esm.sh/@metaplex-foundation/umi@0.10.6";
-    import { createSignerFromWallet } from "https://esm.sh/@metaplex-foundation/umi-web3js-adapters@0.10.6";
-    import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.1.0";
-    import { mplCandyMachine, fetchCandyMachine, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.0.1";
-    import { setComputeUnitLimit, setComputeUnitPrice } from "https://esm.sh/@metaplex-foundation/mpl-toolbox@0.10.6";
+    /******** Umi + CMv3 — jsDelivr (geen esm.sh) ********/
+    import { createUmi } from "https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-bundle-defaults@0.10.6/dist/index.browser.mjs";
+    import { publicKey as umiPublicKey, generateSigner, signerIdentity } from "https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi@0.10.6/dist/index.mjs";
+    import { createSignerFromWallet } from "https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-web3js-adapters@0.10.6/dist/index.mjs";
+    import { mplTokenMetadata } from "https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-token-metadata@3.1.0/dist/index.mjs";
+    import { mplCandyMachine, fetchCandyMachine, mintV2 } from "https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-candy-machine@6.0.1/dist/index.mjs";
+    import { setComputeUnitLimit, setComputeUnitPrice } from "https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-toolbox@0.10.6/dist/index.mjs";
 
     const umiBase = createUmi(HELIUS_RPC)
       .use(mplTokenMetadata())
@@ -167,8 +167,7 @@
 
     function umiWithPhantom(){
       if (!window.solana) throw new Error("Please install Phantom Wallet");
-      // Maak van window.solana een geldige Umi Signer (EXACTE vorm die Umi verwacht)
-      const walletSigner = createSignerFromWallet(window.solana);
+      const walletSigner = createSignerFromWallet(window.solana); // officiële adapter → correcte PublicKey
       return umiBase.use(signerIdentity(walletSigner));
     }
 
@@ -241,4 +240,3 @@
   </script>
 </body>
 </html>
-
