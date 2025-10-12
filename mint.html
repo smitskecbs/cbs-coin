@@ -6,7 +6,7 @@
 <title>CBS — Holder Badge Mint</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 
-<!-- Routeer absolute imports die in de vendor-bundles kunnen voorkomen -->
+<!-- Import map so vendor bundles can resolve their internal /node and scoped imports -->
 <script type="importmap">
 {
   "imports": {
@@ -129,10 +129,10 @@
     </footer>
   </div>
 
-  <!-- web3.js voor Phantom + token balance -->
+  <!-- web3.js for Phantom + token balance -->
   <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
 
-  <!-- ===== App-logic (connect / balance / status) ===== -->
+  <!-- App logic: connect + balance -->
   <script>
   (function(){
     const RPC      = "https://mainnet.helius-rpc.com/?api-key=a9a11d45-2d40-4da0-a3b6-557b855f1e5c";
@@ -180,11 +180,11 @@
   })();
   </script>
 
-  <!-- ===== Mint-module: lokale vendor-bundles (met walletAdapterIdentity) ===== -->
+  <!-- Mint module: use local vendor bundles; auto-detect the correct wallet adapter export -->
   <script type="module">
   import { createUmi } from "./vendor/umi-bundle-defaults.bundle.mjs";
-  import { publicKey as pk, generateSigner } from "./vendor/umi.bundle.mjs";
-  import { walletAdapterIdentity } from "./vendor/umi-web3js-adapters.bundle.mjs";
+  import { publicKey as pk, generateSigner, signerIdentity } from "./vendor/umi.bundle.mjs";
+  import * as adapters from "./vendor/umi-web3js-adapters.bundle.mjs";
   import { mplTokenMetadata } from "./vendor/mpl-token-metadata.bundle.mjs";
   import { mplCandyMachine, fetchCandyMachine, mintV2 } from "./vendor/mpl-candy-machine.bundle.mjs";
   import { setComputeUnitLimit, setComputeUnitPrice } from "./vendor/mpl-toolbox.bundle.mjs";
@@ -194,6 +194,21 @@
   const CGID = "9m94QDkzsEoJLdfHMpyQUCgdS6fXSP1AeoEzf4RLmcUv";
 
   const log=(m)=>{ const el=document.getElementById("log"); el.value+=(el.value? "\n":"")+m; el.scrollTop=el.scrollHeight; };
+
+  function getIdentityPlugin(){
+    // Try the names your bundle might export:
+    if (typeof adapters.walletAdapterIdentity === "function") {
+      return adapters.walletAdapterIdentity(window.solana);
+    }
+    if (typeof adapters.createSignerFromWallet === "function") {
+      // older export name -> wrap with signerIdentity from umi core
+      return signerIdentity(adapters.createSignerFromWallet(window.solana));
+    }
+    if (typeof adapters.createSignerFromWalletAdapter === "function") {
+      return signerIdentity(adapters.createSignerFromWalletAdapter(window.solana));
+    }
+    throw new Error("No compatible wallet adapter export found in umi-web3js-adapters.bundle.mjs");
+  }
 
   async function refreshCounts(umi){
     try{
@@ -217,7 +232,7 @@
       const umi = createUmi(RPC)
         .use(mplTokenMetadata())
         .use(mplCandyMachine())
-        .use(walletAdapterIdentity(window.solana)); // <— FIX: geen createSignerFromWallet
+        .use(getIdentityPlugin()); // << auto-detected identity
 
       await refreshCounts(umi); // warm-up & UI
 
@@ -245,3 +260,4 @@
   </script>
 </body>
 </html>
+
