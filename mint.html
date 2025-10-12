@@ -5,25 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>CBS — Holder Badge Mint</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-
-<!-- Importmap zodat vendor/* interne imports kan resolven -->
-<script type="importmap">
-{
-  "imports": {
-    "/node/": "https://esm.sh/node/",
-    "/@metaplex-foundation/": "https://esm.sh/@metaplex-foundation/",
-    "/@solana/": "https://esm.sh/@solana/"
-  }
-}
-</script>
-
 <style>
-  :root{
-    --bg:#070d19;--bg2:#0b1830;--card:#0d1e3a;--card2:#0b1933;
-    --ink:#eaf2ff;--muted:#bcd1ff;--acc:#36e1b6;--acc2:#8fe7ff;
-    --shadow:0 18px 48px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.05);
-    --radius:16px
-  }
+  :root{--bg:#070d19;--bg2:#0b1830;--card:#0d1e3a;--card2:#0b1933;--ink:#eaf2ff;--muted:#bcd1ff;--acc:#36e1b6;--acc2:#8fe7ff;--shadow:0 18px 48px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.05);--radius:16px}
   *{box-sizing:border-box}
   body{margin:0;background:linear-gradient(180deg,var(--bg),#061120);color:var(--ink);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
   .wrap{max-width:1100px;margin:22px auto;padding:0 14px}
@@ -51,9 +34,7 @@
   .muted{background:#142d57;color:#b8cffb}
   .kv{display:grid;grid-template-columns:150px 1fr;gap:8px 12px;font-size:14px}
   .kv b{color:#c9e7ff}
-  .log{width:100%;height:180px;background:#08162c;border:0;color:#aee7ff;border-radius:12px;padding:10px;
-       font-family:ui-monospace,Menlo,Consolas,monospace;
-       box-shadow:inset 0 0 0 1px rgba(255,255,255,.08), 0 8px 24px rgba(0,0,0,.25)}
+  .log{width:100%;height:180px;background:#08162c;border:0;color:#aee7ff;border-radius:12px;padding:10px;font-family:ui-monospace,Menlo,Consolas,monospace;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08), 0 8px 24px rgba(0,0,0,.25)}
   a{color:#9de9ff;text-decoration:none}
   .tip{font-size:12px;color:#a7c5ff}
 </style>
@@ -180,12 +161,11 @@
   })();
   </script>
 
-  <!-- MINT: lokale vendor-bundles + robuuste adapter-fallback -->
+  <!-- MINT: gebruikt ALLEEN lokale vendor/* en detecteert de juiste wallet-identity automatisch -->
   <script type="module">
   import { createUmi } from "./vendor/umi-bundle-defaults.bundle.mjs";
   import { publicKey as pk, generateSigner, signerIdentity } from "./vendor/umi.bundle.mjs";
-  import * as web3Adapters   from "./vendor/umi-web3js-adapters.bundle.mjs";
-  import * as signerAdapters from "./vendor/umi-signer-wallet-adapters.bundle.mjs";
+  import * as web3Adapters from "./vendor/umi-web3js-adapters.bundle.mjs";
   import { mplTokenMetadata } from "./vendor/mpl-token-metadata.bundle.mjs";
   import { mplCandyMachine, fetchCandyMachine, mintV2 } from "./vendor/mpl-candy-machine.bundle.mjs";
   import { setComputeUnitLimit, setComputeUnitPrice } from "./vendor/mpl-toolbox.bundle.mjs";
@@ -196,20 +176,39 @@
 
   const log=(m)=>{ const el=document.getElementById("log"); el.value+=(el.value? "\n":"")+m; el.scrollTop=el.scrollHeight; };
 
+  // Probeert alle bekende namen én valt terug op “iets dat op wallet identity/signer lijkt”
   function getIdentityPlugin() {
-    if (typeof signerAdapters.walletAdapterIdentity === "function") {
-      return signerAdapters.walletAdapterIdentity(window.solana);
+    const cands = [];
+
+    // Bekende namen (verschillen per versie)
+    if (typeof web3Adapters.walletAdapterIdentity === "function")
+      cands.push({type:"identity", fn:web3Adapters.walletAdapterIdentity});
+    if (typeof web3Adapters.createSignerFromWalletAdapter === "function")
+      cands.push({type:"signer",   fn:web3Adapters.createSignerFromWalletAdapter});
+    if (typeof web3Adapters.createSignerFromWallet === "function")
+      cands.push({type:"signer",   fn:web3Adapters.createSignerFromWallet});
+
+    // Heuristische fallback: pak functies met ‘wallet’ + (‘identity’ of ‘signer’) in de naam
+    for (const [name, fn] of Object.entries(web3Adapters)) {
+      if (typeof fn !== "function") continue;
+      const n = name.toLowerCase();
+      if (n.includes("wallet") && n.includes("identity")) cands.push({type:"identity", fn});
+      if (n.includes("signer") && n.includes("wallet"))   cands.push({type:"signer", fn});
     }
-    if (typeof web3Adapters.walletAdapterIdentity === "function") {
-      return web3Adapters.walletAdapterIdentity(window.solana);
+
+    // Probeer in volgorde
+    for (const c of cands) {
+      try {
+        if (c.type === "identity") {
+          const plugin = c.fn(window.solana);
+          if (plugin && (plugin.install || plugin.name)) return plugin;
+        } else {
+          const signer = c.fn(window.solana);
+          if (signer && signer.publicKey) return signerIdentity(signer);
+        }
+      } catch(_) {}
     }
-    if (typeof web3Adapters.createSignerFromWalletAdapter === "function") {
-      return signerIdentity(web3Adapters.createSignerFromWalletAdapter(window.solana));
-    }
-    if (typeof web3Adapters.createSignerFromWallet === "function") {
-      return signerIdentity(web3Adapters.createSignerFromWallet(window.solana));
-    }
-    throw new Error("No compatible wallet adapter export found in umi adapters bundle.");
+    throw new Error("No compatible wallet adapter export found in umi-web3js-adapters bundle.");
   }
 
   async function refreshCounts(umi){
@@ -217,10 +216,8 @@
       const cm = await fetchCandyMachine(umi, pk(CMID));
       const avail    = Number(cm?.data?.itemsAvailable ?? cm?.itemsAvailable ?? 0);
       const redeemed = Number(cm?.itemsRedeemed ?? cm?.data?.itemsRedeemed ?? 0);
-      const minted   = redeemed;
-      const remaining= avail ? Math.max(0, avail - redeemed) : "—";
-      document.getElementById("minted").textContent    = String(minted);
-      document.getElementById("remaining").textContent = String(remaining);
+      document.getElementById("minted").textContent    = String(redeemed);
+      document.getElementById("remaining").textContent = avail ? Math.max(0, avail - redeemed) : "—";
     }catch(_){}
   }
 
@@ -262,4 +259,3 @@
   </script>
 </body>
 </html>
-
