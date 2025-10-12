@@ -39,7 +39,9 @@
   .muted{background:#142d57;color:#b8cffb}
   .kv{display:grid;grid-template-columns:150px 1fr;gap:8px 12px;font-size:14px}
   .kv b{color:#c9e7ff}
-  .log{width:100%;height:180px;background:#08162c;border:0;color:#aee7ff;border-radius:12px;padding:10px;font-family:ui-monospace,Menlo,Consolas,monospace;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08), 0 8px 24px rgba(0,0,0,.25)}
+  .log{width:100%;height:180px;background:#08162c;border:0;color:#aee7ff;border-radius:12px;padding:10px;
+       font-family:ui-monospace,Menlo,Consolas,monospace;
+       box-shadow:inset 0 0 0 1px rgba(255,255,255,.08), 0 8px 24px rgba(0,0,0,.25)}
   a{color:#9de9ff;text-decoration:none}
   .tip{font-size:12px;color:#a7c5ff}
 </style>
@@ -116,21 +118,10 @@
     </footer>
   </div>
 
-  <!-- Alleen web3 IIFE voor token-gate -->
+  <!-- web3.js voor token-gate (Phantom + balanscheck) -->
   <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
 
-  <!-- Laad de bundel die je al in de repo hebt (cache-bust met v=2) -->
-  <script src="./mint.bundle.js?v=2"></script>
-  <script>
-    // Fallback: jouw bundel expose't MintApp; als je ooit rebuildt met --global-name=CBSMint werkt het ook.
-    const app = window.CBSMint || window.MintApp;
-    if (app && typeof app.init === "function") {
-      app.init();
-    } else {
-      console.error("Mint bundle loaded, maar geen globale 'MintApp' of 'CBSMint' gevonden.");
-      const el = document.getElementById("log");
-      if (el) el.value += "\n[!] Bundel geladen, maar geen globale init(). Controleer de bundelnaam in mint.bundle.js.";
-    }
-  </script>
+  <!-- JOUW bundel (met shim onderaan, die init zelf aanroept) -->
+  <script src="./mint.bundle.js?v=3"></script>
 </body>
 </html>
