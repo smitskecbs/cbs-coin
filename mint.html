@@ -11,40 +11,52 @@
   :root{--bg:#000;--fg:#e5e7eb;--muted:#cbd5e1;--panel:#0b0b0b;--bd:#1f2937;--radius:16px;--gold:#eab308}
   *{box-sizing:border-box} body{margin:0;background:#000;color:var(--fg);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
   .wrap{max-width:1100px;margin:0 auto;padding:18px 14px 42px}
-  .hero{background:#0a0a0a;border:1px solid var(--bd);border-radius:18px;overflow:hidden}
-  .hero img{width:100%;height:220px;object-fit:cover;display:block}
+
+  .hero{position:relative;background:#0a0a0a;border:1px solid var(--bd);border-radius:18px;overflow:hidden}
+  .hero img.banner{width:100%;height:220px;object-fit:cover;display:block}
+  .hero img.logo{position:absolute;left:18px;bottom:18px;width:92px;height:92px;border-radius:50%;object-fit:cover;background:#000;
+    box-shadow:0 0 12px rgba(234,179,8,.4), inset 0 0 20px rgba(234,179,8,.18)}
   h1{margin:18px 0 6px;font-size:32px}
   .sub{color:var(--muted);margin-bottom:14px}
+
   .panel{background:var(--panel);border:1px solid var(--bd);border-radius:var(--radius);padding:16px}
-  .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:16px} @media (max-width:900px){.grid{grid-template-columns:1fr}}
+  .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:16px}
+  @media (max-width:900px){.grid{grid-template-columns:1fr}}
+
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
   .btn{appearance:none;border:1px solid #233044;background:#111827;color:#dbeafe;border-radius:14px;padding:12px 16px;font-weight:800;cursor:pointer}
   .btn:hover{filter:brightness(1.06)} .btn:disabled{opacity:.5;cursor:not-allowed}
   .btn.primary{background:linear-gradient(180deg,#22e0b7,#15b893);color:#05241d}
+
   .kv{display:grid;grid-template-columns:160px 1fr;gap:8px 12px}
   .kv b{color:#cfe3ff}
   textarea{width:100%;height:200px;background:#06090f;color:#aee7ff;border:1px solid #1e293b;border-radius:12px;padding:10px;
            font-family:ui-monospace,Menlo,Consolas,monospace}
-  .tg{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:
-      radial-gradient(120% 120% at 20% 20%, rgba(234,179,8,.45), transparent 60%), #0a0a0a;
+  .tip{color:#93a3c7;font-size:12px}
+
+  /* gold Telegram icon (no text) */
+  .tg{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;margin:6px 0;
+      background:radial-gradient(120% 120% at 20% 20%, rgba(234,179,8,.45), transparent 60%), #0a0a0a;
       border:1px solid rgba(250,204,21,.55);box-shadow:0 0 18px rgba(234,179,8,.35), inset 0 0 16px rgba(234,179,8,.2)}
   .tg svg{width:22px;height:22px;color:#fde68a}
-  .tip{color:#93a3c7;font-size:12px}
 </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="hero"><img src="Banner-CBS-Coin.webp" alt="CBS banner" onerror="this.src='Banner-CBS-Coin.jpg'"></div>
+    <div class="hero">
+      <img class="banner" src="Banner-CBS-Coin.webp" alt="CBS banner" onerror="this.src='Banner-CBS-Coin.jpg'">
+      <img class="logo" src="logo.png" alt="CBS logo" onerror="this.style.display='none'">
+    </div>
 
     <h1>Mint your CBS Holder Badge</h1>
     <div class="sub">Requirement: <b>≥ 1 CBS</b> in your wallet (token gate). Limit: <b>1 per wallet</b>.</div>
 
-    <div class="row" style="margin:10px 0 18px">
-      <!-- gold Telegram icon only -->
-      <a class="tg" href="https://t.me/CBS_Coins" target="_blank" rel="noreferrer" title="Private Telegram (holders)">
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M9.78 15.83 9.6 19.1c.34 0 .49-.15.67-.33l1.61-1.56 3.34 2.45c.61.34 1.06.16 1.22-.56l2.21-10.39c.2-.89-.34-1.24-.93-1.02L4.3 10.1c-.86.33-.84.81-.15 1.03l4.11 1.28 9.55-6.02c.45-.29.86-.13.52.16l-8.55 7.28z"/></svg>
-      </a>
-    </div>
+    <!-- gold Telegram icon (link only) -->
+    <a class="tg" href="https://t.me/CBS_Coins" target="_blank" rel="noreferrer" title="Private Telegram (holders)">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M9.78 15.83 9.6 19.1c.34 0 .49-.15.67-.33l1.61-1.56 3.34 2.45c.61.34 1.06.16 1.22-.56l2.21-10.39c.2-.89-.34-1.24-.93-1.02L4.3 10.1c-.86.33-.84.81-.15 1.03l4.11 1.28 9.55-6.02c.45-.29.86-.13.52.16l-8.55 7.28z"/>
+      </svg>
+    </a>
 
     <div class="grid">
       <div class="panel">
@@ -127,81 +139,23 @@
   }
   btnCheck.addEventListener("click", checkCBS);
 
-  // ===== Robust ESM loader =====
-  async function tryImport(urls){
-    for (const u of urls){ try { return await import(u); } catch(_){ } }
-    throw new Error("all-failed");
-  }
-  async function softImport(urls){
-    try { return await tryImport(urls); } catch { return null; }
-  }
+  // ===== Single-host ESM imports (pin versions, share umi via deps) =====
+  const UMI_VER   = "1.4.1";
+  const TM_VER    = "3.1.0";
+  const CM_VER    = "6.1.0";
+  const TB_VER    = "1.0.0"; // optional
 
+  async function importFromESM(pkgVersion) {
+    return await import(`https://esm.sh/${pkgVersion}?deps=@metaplex-foundation/umi@${UMI_VER}`);
+  }
   async function loadUmi(){
-    // versions that bestaan op CDN’s
-    const V = {
-      umiBundle:"1.4.1",
-      umi:"1.4.1",
-      signer:"1.4.1",
-      tm_primary:"3.1.0",   // primary
-      tm_fallback:"3.0.1",  // fallback
-      cm:"6.1.0",
-      tb_primary:"1.0.0",
-      tb_fallback:"0.10.6"
-    };
-
-    const umiBundle = await tryImport([
-      `https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-bundle-defaults@${V.umiBundle}/dist/index.browser.mjs`,
-      `https://unpkg.com/@metaplex-foundation/umi-bundle-defaults@${V.umiBundle}/dist/index.browser.mjs?module`,
-      `https://esm.sh/@metaplex-foundation/umi-bundle-defaults@${V.umiBundle}?bundle`
-    ]);
-
-    const umiCore = await tryImport([
-      `https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi@${V.umi}/dist/esm/index.js`,
-      `https://unpkg.com/@metaplex-foundation/umi@${V.umi}/dist/esm/index.js?module`,
-      `https://esm.sh/@metaplex-foundation/umi@${V.umi}?bundle`
-    ]);
-
-    const adapters = await tryImport([
-      `https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-signer-wallet-adapters@${V.signer}/dist/esm/index.js`,
-      `https://unpkg.com/@metaplex-foundation/umi-signer-wallet-adapters@${V.signer}/dist/esm/index.js?module`,
-      `https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@${V.signer}?bundle`
-    ]);
-
-    // token-metadata (probeer 3.1.0 → 3.0.1) en beide padvormen
-    let tm = await softImport([
-      `https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-token-metadata@${V.tm_primary}/dist/esm/index.js`,
-      `https://unpkg.com/@metaplex-foundation/mpl-token-metadata@${V.tm_primary}/dist/esm/index.js?module`,
-      `https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-token-metadata@${V.tm_primary}/dist/index.mjs`,
-      `https://unpkg.com/@metaplex-foundation/mpl-token-metadata@${V.tm_primary}/dist/index.mjs?module`,
-      `https://esm.sh/@metaplex-foundation/mpl-token-metadata@${V.tm_primary}?bundle`
-    ]);
-    if (!tm) {
-      tm = await tryImport([
-        `https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-token-metadata@${V.tm_fallback}/dist/esm/index.js`,
-        `https://unpkg.com/@metaplex-foundation/mpl-token-metadata@${V.tm_fallback}/dist/esm/index.js?module`,
-        `https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-token-metadata@${V.tm_fallback}/dist/index.mjs`,
-        `https://unpkg.com/@metaplex-foundation/mpl-token-metadata@${V.tm_fallback}/dist/index.mjs?module`,
-        `https://esm.sh/@metaplex-foundation/mpl-token-metadata@${V.tm_fallback}?bundle`
-      ]);
-    }
-
-    const cm = await tryImport([
-      `https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-candy-machine@${V.cm}/dist/esm/index.js`,
-      `https://unpkg.com/@metaplex-foundation/mpl-candy-machine@${V.cm}/dist/esm/index.js?module`,
-      `https://esm.sh/@metaplex-foundation/mpl-candy-machine@${V.cm}?bundle`
-    ]);
-
-    // toolbox is optioneel (soft)
-    const tb = await softImport([
-      `https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-toolbox@${V.tb_primary}/dist/esm/index.js`,
-      `https://unpkg.com/@metaplex-foundation/mpl-toolbox@${V.tb_primary}/dist/esm/index.js?module`,
-      `https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-toolbox@${V.tb_primary}/dist/index.mjs`,
-      `https://unpkg.com/@metaplex-foundation/mpl-toolbox@${V.tb_primary}/dist/index.mjs?module`,
-      `https://esm.sh/@metaplex-foundation/mpl-toolbox@${V.tb_primary}?bundle`,
-      `https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-toolbox@${V.tb_fallback}/dist/index.mjs`,
-      `https://unpkg.com/@metaplex-foundation/mpl-toolbox@${V.tb_fallback}/dist/index.mjs?module`,
-      `https://esm.sh/@metaplex-foundation/mpl-toolbox@${V.tb_fallback}?bundle`
-    ]);
+    const umiBundle = await import(`https://esm.sh/@metaplex-foundation/umi-bundle-defaults@${UMI_VER}?bundle`);
+    const umiCore   = await import(`https://esm.sh/@metaplex-foundation/umi@${UMI_VER}`);
+    const adapters  = await importFromESM(`@metaplex-foundation/umi-signer-wallet-adapters@${UMI_VER}`);
+    const tm        = await importFromESM(`@metaplex-foundation/mpl-token-metadata@${TM_VER}`);
+    const cm        = await importFromESM(`@metaplex-foundation/mpl-candy-machine@${CM_VER}`);
+    let tb = null;
+    try { tb = await importFromESM(`@metaplex-foundation/mpl-toolbox@${TB_VER}`); } catch(_) {}
 
     return {
       createUmi: umiBundle.createUmi,
