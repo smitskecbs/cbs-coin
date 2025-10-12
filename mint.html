@@ -28,8 +28,8 @@
   .kv b{color:#cfe3ff}
   textarea{width:100%;height:200px;background:#06090f;color:#aee7ff;border:1px solid #1e293b;border-radius:12px;padding:10px;
            font-family:ui-monospace,Menlo,Consolas,monospace}
-  .pill{display:inline-flex;align-items:center;gap:8px;background:var(--pill);border:1px solid var(--bd);padding:10px 14px;border-radius:999px}
-  .tg{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(120% 120% at 20% 20%, rgba(234,179,8,.45), rgba(0,0,0,0) 60%), #0a0a0a;
+  .tg{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:
+      radial-gradient(120% 120% at 20% 20%, rgba(234,179,8,.45), transparent 60%), #0a0a0a;
       border:1px solid rgba(250,204,21,.55);box-shadow:0 0 18px rgba(234,179,8,.35), inset 0 0 16px rgba(234,179,8,.2)}
   .tg svg{width:22px;height:22px;color:#fde68a}
   .tip{color:#93a3c7;font-size:12px}
@@ -81,7 +81,7 @@
 
   <script type="module">
   // ====== CONFIG ======
-  const RPC      = "https://mainnet.helius-rpc.com/?api-key=a9a11d45-2d40-4da0-a3b6-557b855f1e5c"; // <- jouw Helius key
+  const RPC      = "https://mainnet.helius-rpc.com/?api-key=a9a11d45-2d40-4da0-a3b6-557b855f1e5c"; // Helius
   const CBS_MINT = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
   const CMID     = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd";
   const CGID     = "9m94QDkzsEoJLdfHMpyQUCgdS6fXSP1AeoEzf4RLmcUv";
@@ -130,7 +130,7 @@
   }
   btnCheck.addEventListener("click", checkCBS);
 
-  // ====== Umi loaders (robust, pinned versions with CDN fallbacks) ======
+  // ====== Robust ESM loader (fixed CORS on unpkg with ?module) ======
   async function tryImport(list){
     for (const url of list){
       try { return await import(url); } catch(_){ /* try next */ }
@@ -139,54 +139,58 @@
   }
 
   async function loadUmi(){
-    // Versions that exist & match Umi v1
     const V = {
       umiBundle: "1.4.1",
       umi:       "1.4.1",
-      signer:    "1.4.1",           // @metaplex-foundation/umi-signer-wallet-adapters
-      tm:        "3.0.1",           // mpl-token-metadata
-      cm:        "6.1.0",           // mpl-candy-machine
-      toolbox:   "1.0.0"            // mpl-toolbox (fallbacks include 0.10.6)
+      signer:    "1.4.1",  // @metaplex-foundation/umi-signer-wallet-adapters
+      tm:        "3.0.1",
+      cm:        "6.1.0",
+      toolbox:   "1.0.0"
     };
 
     const [ bdl, umi, signer, tm, cm, tb ] = await Promise.all([
+      // umi-bundle-defaults
       tryImport([
         `https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-bundle-defaults@${V.umiBundle}/dist/index.browser.mjs`,
-        `https://unpkg.com/@metaplex-foundation/umi-bundle-defaults@${V.umiBundle}/dist/index.browser.mjs`,
+        `https://unpkg.com/@metaplex-foundation/umi-bundle-defaults@${V.umiBundle}/dist/index.browser.mjs?module`,
         `https://esm.sh/@metaplex-foundation/umi-bundle-defaults@${V.umiBundle}?bundle`
       ]),
+      // umi core
       tryImport([
         `https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi@${V.umi}/dist/esm/index.js`,
-        `https://unpkg.com/@metaplex-foundation/umi@${V.umi}/dist/esm/index.js`,
+        `https://unpkg.com/@metaplex-foundation/umi@${V.umi}/dist/esm/index.js?module`,
         `https://esm.sh/@metaplex-foundation/umi@${V.umi}?bundle`
       ]),
+      // wallet adapters
       tryImport([
         `https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-signer-wallet-adapters@${V.signer}/dist/esm/index.js`,
-        `https://unpkg.com/@metaplex-foundation/umi-signer-wallet-adapters@${V.signer}/dist/esm/index.js`,
+        `https://unpkg.com/@metaplex-foundation/umi-signer-wallet-adapters@${V.signer}/dist/esm/index.js?module`,
         `https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@${V.signer}?bundle`
       ]),
+      // token-metadata
       tryImport([
         `https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-token-metadata@${V.tm}/dist/esm/index.js`,
-        `https://unpkg.com/@metaplex-foundation/mpl-token-metadata@${V.tm}/dist/esm/index.js`,
+        `https://unpkg.com/@metaplex-foundation/mpl-token-metadata@${V.tm}/dist/esm/index.js?module`,
         `https://esm.sh/@metaplex-foundation/mpl-token-metadata@${V.tm}?bundle`
       ]),
+      // candy-machine
       tryImport([
         `https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-candy-machine@${V.cm}/dist/esm/index.js`,
-        `https://unpkg.com/@metaplex-foundation/mpl-candy-machine@${V.cm}/dist/esm/index.js`,
+        `https://unpkg.com/@metaplex-foundation/mpl-candy-machine@${V.cm}/dist/esm/index.js?module`,
         `https://esm.sh/@metaplex-foundation/mpl-candy-machine@${V.cm}?bundle`
       ]),
-      // toolbox 1.0.0 first; if not there, fall back to 0.10.6
+      // toolbox (try 1.0.0, then 0.10.6)
       (async () => {
         try {
           return await tryImport([
             `https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-toolbox@${V.toolbox}/dist/esm/index.js`,
-            `https://unpkg.com/@metaplex-foundation/mpl-toolbox@${V.toolbox}/dist/esm/index.js`,
+            `https://unpkg.com/@metaplex-foundation/mpl-toolbox@${V.toolbox}/dist/esm/index.js?module`,
             `https://esm.sh/@metaplex-foundation/mpl-toolbox@${V.toolbox}?bundle`
           ]);
         } catch {
           return await tryImport([
             `https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-toolbox@0.10.6/dist/index.mjs`,
-            `https://unpkg.com/@metaplex-foundation/mpl-toolbox@0.10.6/dist/index.mjs`,
+            `https://unpkg.com/@metaplex-foundation/mpl-toolbox@0.10.6/dist/index.mjs?module`,
             `https://esm.sh/@metaplex-foundation/mpl-toolbox@0.10.6?bundle`
           ]);
         }
@@ -223,14 +227,10 @@
       const umi = createUmi(RPC)
         .use(mplTokenMetadata())
         .use(mplCandyMachine())
-        .use(walletAdapterIdentity(window.solana)); // Phantom adapter
+        .use(walletAdapterIdentity(window.solana));
 
-      // show CM / Guard in UI (also verifies existence)
       await fetchCandyMachine(umi, pk(CMID));
-      $("#cmid").textContent   = CMID;
-      $("#cguard").textContent = CGID;
 
-      // Build tx
       const nftMint = generateSigner(umi);
       try { setComputeUnitLimit(umi,{units:900_000}); } catch(_) {}
       try { setComputeUnitPrice(umi,{microLamports:10_000}); } catch(_) {}
