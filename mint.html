@@ -6,7 +6,7 @@
 <title>CBS — Holder Badge Mint</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 
-<!-- Import map: routeer root-imports uit je lokale vendor-bundles naar esm.sh -->
+<!-- Routeer absolute imports die in de vendor-bundles kunnen voorkomen -->
 <script type="importmap">
 {
   "imports": {
@@ -180,11 +180,11 @@
   })();
   </script>
 
-  <!-- ===== Mint-module: lokale vendor-bundles (met importmap fix) ===== -->
+  <!-- ===== Mint-module: lokale vendor-bundles (met walletAdapterIdentity) ===== -->
   <script type="module">
   import { createUmi } from "./vendor/umi-bundle-defaults.bundle.mjs";
-  import { publicKey as pk, generateSigner, signerIdentity } from "./vendor/umi.bundle.mjs";
-  import { createSignerFromWallet } from "./vendor/umi-web3js-adapters.bundle.mjs";
+  import { publicKey as pk, generateSigner } from "./vendor/umi.bundle.mjs";
+  import { walletAdapterIdentity } from "./vendor/umi-web3js-adapters.bundle.mjs";
   import { mplTokenMetadata } from "./vendor/mpl-token-metadata.bundle.mjs";
   import { mplCandyMachine, fetchCandyMachine, mintV2 } from "./vendor/mpl-candy-machine.bundle.mjs";
   import { setComputeUnitLimit, setComputeUnitPrice } from "./vendor/mpl-toolbox.bundle.mjs";
@@ -217,9 +217,9 @@
       const umi = createUmi(RPC)
         .use(mplTokenMetadata())
         .use(mplCandyMachine())
-        .use(signerIdentity(createSignerFromWallet(window.solana)));
+        .use(walletAdapterIdentity(window.solana)); // <— FIX: geen createSignerFromWallet
 
-      await refreshCounts(umi);                       // warm-up & UI
+      await refreshCounts(umi); // warm-up & UI
 
       const nftMint = generateSigner(umi);
       setComputeUnitLimit(umi, { units: 900_000 });
@@ -231,7 +231,7 @@
       log(`✅ Minted! Tx:\n${signature}`);
       alert("Mint successful!\n" + signature);
 
-      await refreshCounts(umi);                       // update na mint
+      await refreshCounts(umi);
     }catch(e){
       console.error(e);
       alert("Mint failed: " + (e.message||e));
