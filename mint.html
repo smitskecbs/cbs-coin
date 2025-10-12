@@ -8,7 +8,7 @@
   <style>
     :root{
       --bg:#0a0a0a; --card:#0f1115; --ink:#e6e9ef; --muted:#cbd5e1; --line:#1f2430;
-      --accent:#a78bfa; --green:#22c55e; --gold:#f1c40f; --r:18px;
+      --r:18px;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -30,12 +30,11 @@
     .btn{appearance:none;border:1px solid #2a3242;background:#12151b;color:#fff;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer}
     .btn[disabled]{opacity:.55;cursor:not-allowed}
     .cluster{display:flex;gap:10px;flex-wrap:wrap}
-    textarea{width:100%;height:220px;background:#0b1020;color:#dbe3ff;border:1px solid #223;outline:none;border-radius:12px;padding:10px;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+    textarea{width:100%;height:220px;background:#0b1020;color:#dbe3ff;border:1px solid #223;outline:none;border-radius:12px;padding:10px;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace}
     .kv{display:grid;grid-template-columns:180px 1fr;gap:6px 12px}
     .kv div{padding:4px 0;border-bottom:1px dashed #222}
     .links a{color:#bcd1ff;text-decoration:none}
     .links a:hover{text-decoration:underline}
-    /* gold Telegram icon (no text) */
     .tg{display:inline-grid;place-items:center;width:46px;height:46px;border-radius:50%;
         background: radial-gradient(circle at 30% 30%,#ffe27a,#d4a814 70%); border:1px solid rgba(255,255,255,.15);
         box-shadow:0 0 12px rgba(241,196,15,.35), 0 0 20px rgba(167,139,250,.18); transition:transform .1s}
@@ -54,21 +53,18 @@
     <h1>Mint your CBS Holder Badge</h1>
     <p>Requirement: <strong>&ge; 1 CBS</strong> in your wallet (token gate). Limit: <strong>1 per wallet</strong>.</p>
 
-    <div class="cluster" style="margin:10px 0 18px">
-      <a class="tg" href="https://t.me/CBS_Coins" target="_blank" rel="noopener" aria-label="Private Telegram for holders">
-        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <path fill="#1b1f2a" d="M0 0h24v24H0z" opacity="0"/>
-          <path fill="#111" d="M9.031 13.875l-.375 3.094c.562 0 .812-.25 1.125-.562l2.688-2.594 5.594 4.09c.109.57 1.758.266 2.039-.953l3.691-17.32c.328-1.523-.55-2.125-1.547-1.75L2.25 8.3C.805 8.91.812 9.73 2.047 10.11l5.925 1.86L18.297 4.75c.555-.34 1.07-.156.65.19l-9.916 8.935z"/>
-        </svg>
-      </a>
-    </div>
-
     <div class="row">
       <section class="card grow">
         <div class="cluster" style="margin-bottom:12px">
           <button class="btn" id="btnConnect">Connect Wallet</button>
           <button class="btn" id="btnMint" disabled>Mint</button>
           <button class="btn" id="btnCheck">Check balance</button>
+          <a class="tg" href="https://t.me/CBS_Coins" target="_blank" rel="noopener" aria-label="Private Telegram for holders">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path fill="#1b1f2a" d="M0 0h24v24H0z" opacity="0"/>
+              <path fill="#111" d="M9.031 13.875l-.375 3.094c.562 0 .812-.25 1.125-.562l2.688-2.594 5.594 4.09c.109.57 1.758.266 2.039-.953l3.691-17.32c.328-1.523-.55-2.125-1.547-1.75L2.25 8.3C.805 8.91.812 9.73 2.047 10.11l5.925 1.86L18.297 4.75c.555-.34 1.07-.156.65.19l-9.916 8.935z"/>
+            </svg>
+          </a>
         </div>
         <textarea id="log" readonly>idle</textarea>
         <div class="tip">Tip: if something looks off, hard refresh (Ctrl+F5).</div>
@@ -101,68 +97,93 @@
     const CMID       = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd";
     const CGID       = "9m94QDkzsEoJLdfHMpyQUCgdS6fXSP1AeoEzf4RLmcUv";
 
-    // ------- Small helpers -------
-    const $ = (s) => document.querySelector(s);
-    const log = (m) => { const el = $("#log"); el.value += (el.value ? "\n" : "") + m; el.scrollTop = el.scrollHeight; };
-    const setStatus = (t) => $("#statusText").textContent = t;
-
+    // ------- small helpers -------
+    const $ = (s)=>document.querySelector(s);
+    const log = (m)=>{ const el=$("#log"); el.value += (el.value? "\n":"")+m; el.scrollTop=el.scrollHeight; }
+    const setStatus = (t)=> $("#statusText").textContent = t;
     $("#cmid").textContent   = CMID;
     $("#cguard").textContent = CGID;
-    $("#solanafm").href = "https://solana.fm/address/" + CMID;
-    $("#solscan").href  = "https://solscan.io/account/" + CMID;
+    $("#solanafm").href = "https://solana.fm/address/"+CMID;
+    $("#solscan").href  = "https://solscan.io/account/"+CMID;
 
-    // ------- Resilient importer (multi-CDN) -------
-    async function tryImport(urls) {
-      for (const u of urls) {
-        try { return await import(u); }
-        catch (e) { console.warn("import failed:", u, e?.message||e); }
+    // ------- resilient importer (5 CDNs + local /vendor) -------
+    const CDN = {
+      esm:   (pkg,v,extra="") => `https://esm.sh/${pkg}@${v}${extra}`,
+      jsd:   (pkg,v)          => `https://cdn.jsdelivr.net/npm/${pkg}@${v}/+esm`,
+      unpkg: (pkg,v)          => `https://unpkg.com/${pkg}@${v}?module`,
+      sky:   (pkg,v)          => `https://cdn.skypack.dev/${pkg}@${v}`,
+      loc:   (file)           => new URL(file, import.meta.url).href,
+    };
+    async function tryImport(urls){
+      for(const u of urls){
+        try{ return await import(u); }
+        catch(e){ console.warn("import failed:", u, e?.message||e); }
       }
       return null;
     }
 
-    // Packages + fallbacks
+    // package URL sets
     const web3Urls = [
-      "https://esm.sh/@solana/web3.js@1.98.4?target=es2022",
-      "https://cdn.jsdelivr.net/npm/@solana/web3.js@1.98.4/+esm"
+      CDN.esm("@solana/web3.js","1.98.4","?target=es2022"),
+      CDN.jsd("@solana/web3.js","1.98.4"),
+      CDN.unpkg("@solana/web3.js","1.98.4"),
+      CDN.sky("@solana/web3.js","1.98.4"),
+      CDN.loc("./vendor/umi.bundle.mjs") // harmless: brings web3 via umi bundle defaults when local
     ];
     const umiBundleUrls = [
-      "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1",
-      "https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-bundle-defaults@1.4.1/+esm"
+      CDN.esm("@metaplex-foundation/umi-bundle-defaults","1.4.1"),
+      CDN.jsd("@metaplex-foundation/umi-bundle-defaults","1.4.1"),
+      CDN.unpkg("@metaplex-foundation/umi-bundle-defaults","1.4.1"),
+      CDN.sky("@metaplex-foundation/umi-bundle-defaults","1.4.1"),
+      CDN.loc("./vendor/umi-bundle-defaults.bundle.mjs"),
     ];
     const umiCoreUrls = [
-      "https://esm.sh/@metaplex-foundation/umi@1.4.1",
-      "https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi@1.4.1/+esm"
+      CDN.esm("@metaplex-foundation/umi","1.4.1"),
+      CDN.jsd("@metaplex-foundation/umi","1.4.1"),
+      CDN.unpkg("@metaplex-foundation/umi","1.4.1"),
+      CDN.sky("@metaplex-foundation/umi","1.4.1"),
+      CDN.loc("./vendor/umi.bundle.mjs"),
     ];
     const waSignerUrls = [
-      // wallet-adapter identity (preferred)
-      "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1?exports=walletAdapterIdentity,walletAdapterIdentityPlugin,createWalletAdapterFromWallet,createWalletAdapter",
-      "https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1/+esm"
+      CDN.esm("@metaplex-foundation/umi-signer-wallet-adapters","1.4.1","?exports=walletAdapterIdentity,walletAdapterIdentityPlugin,createWalletAdapterFromWallet,createWalletAdapter"),
+      CDN.jsd("@metaplex-foundation/umi-signer-wallet-adapters","1.4.1"),
+      CDN.unpkg("@metaplex-foundation/umi-signer-wallet-adapters","1.4.1"),
+      CDN.sky("@metaplex-foundation/umi-signer-wallet-adapters","1.4.1"),
+      CDN.loc("./vendor/umi-signer-wallet-adapters.bundle.mjs"),
     ];
-    const w3jsAdaptersUrls = [
-      // web3.js helpers for creating signer from window.solana
-      "https://esm.sh/@metaplex-foundation/umi-web3js-adapters@1.4.1?exports=createSignerFromWallet,createSignerFromWalletAdapter",
-      "https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-web3js-adapters@1.4.1/+esm"
+    const w3AdaptersUrls = [
+      CDN.esm("@metaplex-foundation/umi-web3js-adapters","1.4.1","?exports=createSignerFromWallet,createSignerFromWalletAdapter"),
+      CDN.jsd("@metaplex-foundation/umi-web3js-adapters","1.4.1"),
+      CDN.unpkg("@metaplex-foundation/umi-web3js-adapters","1.4.1"),
+      CDN.sky("@metaplex-foundation/umi-web3js-adapters","1.4.1"),
+      CDN.loc("./vendor/umi-web3js-adapters.bundle.mjs"),
     ];
     const tokenMetaUrls = [
-      "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.1.0",
-      "https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-token-metadata@3.1.0/+esm"
+      CDN.esm("@metaplex-foundation/mpl-token-metadata","3.1.0"),
+      CDN.jsd("@metaplex-foundation/mpl-token-metadata","3.1.0"),
+      CDN.unpkg("@metaplex-foundation/mpl-token-metadata","3.1.0"),
+      CDN.sky("@metaplex-foundation/mpl-token-metadata","3.1.0"),
+      CDN.loc("./vendor/mpl-token-metadata.bundle.mjs"),
     ];
     const candyUrls = [
-      "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0",
-      "https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-candy-machine@6.1.0/+esm"
+      CDN.esm("@metaplex-foundation/mpl-candy-machine","6.1.0"),
+      CDN.jsd("@metaplex-foundation/mpl-candy-machine","6.1.0"),
+      CDN.unpkg("@metaplex-foundation/mpl-candy-machine","6.1.0"),
+      CDN.sky("@metaplex-foundation/mpl-candy-machine","6.1.0"),
+      CDN.loc("./vendor/mpl-candy-machine.bundle.mjs"),
     ];
 
-    // Import base libs
+    // import libs (with fallbacks)
     const web3      = await tryImport(web3Urls);
     const bundle    = await tryImport(umiBundleUrls);
     const core      = await tryImport(umiCoreUrls);
-    const waSigner  = await tryImport(waSignerUrls);     // may be null if CDN hiccups
-    const w3Adapters= await tryImport(w3jsAdaptersUrls); // may be null if CDN hiccups
+    const waSigner  = await tryImport(waSignerUrls);
+    const w3Adapters= await tryImport(w3AdaptersUrls);
     const tm        = await tryImport(tokenMetaUrls);
     const cm        = await tryImport(candyUrls);
 
-    if (!web3 || !bundle || !core || !tm || !cm) {
-      alert("Mint failed: Could not load modules (all CDNs failed).");
+    if(!web3 || !bundle || !core || !tm || !cm){
+      alert("Mint failed: Could not load modules (all CDNs + /vendor failed).");
       throw new Error("module load failure");
     }
 
@@ -197,8 +218,8 @@
           ? window.solana.publicKey
           : new PublicKey(window.solana.publicKey);
         const conn = new Connection(HELIUS_RPC,"confirmed");
-        const res = await conn.getParsedTokenAccountsByOwner(owner, { mint: new PublicKey(CBS_MINT) });
-        const cbs = (res.value||[]).map(a=>a.account.data.parsed.info.tokenAmount.uiAmount||0).reduce((a,b)=>a+b,0);
+        const res  = await conn.getParsedTokenAccountsByOwner(owner, { mint: new PublicKey(CBS_MINT) });
+        const cbs  = (res.value||[]).map(a=>a.account.data.parsed.info.tokenAmount.uiAmount||0).reduce((a,b)=>a+b,0);
         $("#cbs").textContent = String(cbs);
         if(cbs>=1){ btnMint.disabled=false; log("✅ Token gate OK: you hold ≥ 1 CBS."); }
         else { btnMint.disabled=true; log("⛔ Token gate: need ≥ 1 CBS to mint."); }
