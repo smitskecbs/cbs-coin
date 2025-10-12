@@ -291,4 +291,20 @@ assert/build/internal/util/comparisons.js:
    * @license  MIT
    *)
 */
-//# sourceMappingURL=mint.bundle.js.map
+//# sourceMappingURL=mint.bundle.js.map /* ==== CBS expose shim (voeg dit ONDERAAN toe) ==== */
+try {
+  // Zorg dat de bundel ZICHTBAAR is als globale variabele
+  if (!window.MintApp) {
+    // pak lokale variabelen uit de bundel als ze bestaan
+    // (sommige builds heten 'MintApp', andere 'CBSMint')
+    // @ts-ignore
+    window.MintApp = (typeof MintApp !== "undefined" ? MintApp : undefined)
+                  || (typeof CBSMint !== "undefined" ? CBSMint : undefined);
+  }
+  // Auto-start als er een init() is
+  if (window.MintApp && typeof window.MintApp.init === "function") {
+    window.MintApp.init();
+  }
+} catch (_) {}
+/* ==== einde shim ==== */
+
