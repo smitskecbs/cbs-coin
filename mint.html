@@ -121,7 +121,71 @@
   <!-- web3.js voor token-gate (Phantom + balanscheck) -->
   <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
 
-  <!-- JOUW bundel (met shim onderaan, die init zelf aanroept) -->
-  <script src="./mint.bundle.js?v=3"></script>
+  <!-- JOUW bundel (laat staan in dezelfde map); v=4 = cache-buster -->
+  <script src="./mint.bundle.js?v=4"></script>
+
+  <!-- === Inline fallback zodat Connect/Balance ALTIJD werken; Mint gebruikt bundel als beschikbaar === -->
+  <script>
+  (function(){
+    const HELIUS_RPC = "https://mainnet.helius-rpc.com/?api-key=a9a11d45-2d40-4da0-a3b6-557b855f1e5c";
+    const CBS_MINT   = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
+
+    const $ = (s)=>document.querySelector(s);
+    const log = (m)=>{ const el=$("#log"); el.value+=(el.value? "\n":"")+m; el.scrollTop=el.scrollHeight; };
+    const status = (t)=> $("#statusText").textContent=t;
+
+    // probeer bundel te starten als die wél een globale heeft
+    try { const app = window.CBSMint || window.MintApp; if (app?.init) app.init(); } catch(e){}
+
+    const btnConnect = $("#btnConnect");
+    const btnCheck   = $("#btnCheck");
+    const btnMint    = $("#btnMint");
+
+    // CONNECT
+    btnConnect.addEventListener("click", async () => {
+      try {
+        if (!window.solana) { alert("Please install Phantom."); window.open("https://phantom.app/","_blank"); return; }
+        const r  = await window.solana.connect();
+        const pk = r?.publicKey?.toBase58?.() || r?.publicKey || "";
+        status(pk ? `Connected: ${pk.slice(0,4)}…${pk.slice(-4)}` : "Connected");
+        log(`Connected: ${pk}`);
+        await doCheck();
+      } catch (e) {
+        console.error(e); log("Connect failed: " + (e.message||e));
+      }
+    });
+
+    // CHECK BALANCE (CBS)
+    async function doCheck(){
+      try{
+        if (!window.solana?.publicKey) { log("Wallet not connected."); return; }
+        const owner = typeof window.solana.publicKey.toBase58==="function"
+          ? window.solana.publicKey
+          : new solanaWeb3.PublicKey(window.solana.publicKey);
+        const conn  = new solanaWeb3.Connection(HELIUS_RPC,"confirmed");
+        const res   = await conn.getParsedTokenAccountsByOwner(
+          owner, { mint: new solanaWeb3.PublicKey(CBS_MINT) }
+        );
+        const bal = (res.value||[])
+          .map(a=>a.account.data.parsed.info.tokenAmount.uiAmount||0)
+          .reduce((a,b)=>a+b,0);
+        $("#cbs").textContent = String(bal);
+        if (bal>=1){ btnMint.disabled=false; log("✅ Token gate OK: you hold ≥ 1 CBS."); }
+        else { btnMint.disabled=true; log("⛔ Token gate: need ≥ 1 CBS to mint."); }
+      }catch(e){ console.error(e); log("Balance check failed: "+(e.message||e)); }
+    }
+    btnCheck.addEventListener("click", doCheck);
+
+    // MINT
+    btnMint.addEventListener("click", async () => {
+      const app = window.CBSMint || window.MintApp;
+      if (app && typeof app.doMint === "function") {
+        try { await app.doMint(); } catch(e){ console.error(e); log("Mint failed: "+(e.message||e)); }
+        return;
+      }
+      alert("Mint module (bundel) is niet actief. Wallet & CBS-check werken. Als je bundel een globale doMint() expose't, zal de Mint-knop hier automatisch minten.");
+    });
+  })();
+  </script>
 </body>
 </html>
