@@ -17,27 +17,23 @@
   *{box-sizing:border-box}
   body{margin:0;background:linear-gradient(180deg,var(--bg),#061120);color:var(--ink);font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif}
   .wrap{max-width:1100px;margin:22px auto;padding:0 14px}
-
   .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;
     padding:10px 14px;background:#0a1830;border-radius:14px;box-shadow:var(--shadow)}
   .brand{display:flex;align-items:center;gap:12px}
   .brand img{width:40px;height:40px;object-fit:contain;border-radius:10px;box-shadow:0 0 0 1px rgba(255,255,255,.08)}
   .brand h2{margin:0;font-size:18px;letter-spacing:.3px}
   .toplinks a{color:var(--acc2);text-decoration:none;margin-left:14px;font-weight:600}
-
   .hero{border-radius:18px;background:linear-gradient(180deg,#081429,#0b1f3d);box-shadow:var(--shadow);overflow:hidden;margin-top:14px}
   .hero img{width:100%;display:block;object-fit:cover;min-height:140px}
   header{padding:20px 18px}
   h1{margin:0;font-size:34px;letter-spacing:.2px}
-  .chip{padding:6px 10px;border-radius:999px;background:#142a52;color:var(--acc2);font-size:12px}
-  .sub{color:var(--muted);font-size:14px}
-
+  .chip{padding:6px 10px;border-radius:999px;background:#142a52;color:#8fe7ff;font-size:12px}
+  .sub{color:#bcd1ff;font-size:14px}
   .panel{background:linear-gradient(180deg,var(--card),var(--card2));border-radius:var(--radius);box-shadow:var(--shadow);padding:18px}
   .grid{display:grid;gap:16px;grid-template-columns:1.1fr .9fr}
   @media (max-width:900px){.grid{grid-template-columns:1fr}}
   .stack{display:grid;gap:14px}
   .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-
   button{
     appearance:none;border:0;border-radius:14px;padding:14px 18px;font-weight:800;
     background:#173564;color:#dbe9ff;cursor:pointer;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);
@@ -47,7 +43,6 @@
   button:active{transform:translateY(1px)}
   .primary{background:linear-gradient(180deg,#1ee0b7,#13b58f);color:#012019}
   .muted{background:#142d57;color:#b8cffb}
-
   .kv{display:grid;grid-template-columns:150px 1fr;gap:8px 12px;font-size:14px}
   .kv b{color:#c9e7ff}
   .log{width:100%;height:180px;background:#08162c;border:0;color:#aee7ff;border-radius:12px;padding:10px;
@@ -82,7 +77,7 @@
     </div>
 
     <div class="panel stack" style="margin-top:16px">
-      <h2 style="margin:0 0 6px">Mint your <span style="color:var(--acc)">CBS Holder Badge</span></h2>
+      <h2 style="margin:0 0 6px">Mint your <span style="color:#36e1b6">CBS Holder Badge</span></h2>
       <div class="sub">Requirement: <b>≥ 1 CBS</b> in your wallet (token gate). Limit: <b>1 per wallet.</b></div>
 
       <div class="grid">
@@ -134,7 +129,6 @@
 
     const $ = s => document.querySelector(s);
     const log = (m) => { const el=$("#log"); el.value = (el.value?el.value+"\n":"")+m; el.scrollTop = el.scrollHeight; };
-
     $("#cmid").textContent   = CANDY_MACHINE;
     $("#cguard").textContent = CANDY_GUARD;
     $("#solanafm").href = `https://solana.fm/address/${CANDY_MACHINE}?cluster=mainnet-alpha`;
@@ -144,7 +138,7 @@
     const web3 = window.solanaWeb3;
     const connection = new web3.Connection(HELIUS_RPC, "confirmed");
     let walletPubkey = null;
-    function setStatus(t){ $("#statusText").textContent = t; }
+    const setStatus = (t) => $("#statusText").textContent = t;
 
     async function checkCBS() {
       if (!walletPubkey) return;
@@ -176,19 +170,33 @@
 
     const phantom = new PhantomWalletAdapter();
 
+    // 👉 BELANGRIJK: wrap de publicKey zodat er ALTIJD een .toBase58() bestaat.
+    const wrappedAdapter = {
+      ...phantom,
+      get publicKey() {
+        const pk = phantom.publicKey;                     // kan null zijn vóór connect
+        if (!pk) return { toBase58: () => "" };
+        const base58 = typeof pk.toBase58 === "function" ? pk.toBase58() : new web3.PublicKey(pk).toBase58();
+        // Geef een object terug waarop de bridge .toBase58() kan aanroepen:
+        return { toBase58: () => base58 };
+      },
+    };
+
     async function connectWalletAdapter(){
-      if (!phantom.connected) await phantom.connect();     // opens Phantom
-      const pk = phantom.publicKey;                        // web3.PublicKey (has toBase58)
-      walletPubkey = new web3.PublicKey(pk.toBase58());
-      setStatus(`Connected: ${walletPubkey.toBase58().slice(0,4)}…${walletPubkey.toBase58().slice(-4)}`);
-      log(`Connected: ${walletPubkey.toBase58()}`);
+      if (!phantom.connected) await phantom.connect();    // open Phantom
+      const pk58 = wrappedAdapter.publicKey.toBase58();   // gegarandeerd aanwezig
+      if (!pk58) throw new Error("Wallet not connected");
+      walletPubkey = new web3.PublicKey(pk58);
+      setStatus(`Connected: ${pk58.slice(0,4)}…${pk58.slice(-4)}`);
+      log(`Connected: ${pk58}`);
       await checkCBS();
       await updateSupply();
     }
 
     function umiWithWallet() {
       if (!phantom.connected) throw new Error("Wallet not connected");
-      return umiBase.use(walletAdapterIdentity(createSignerFromWalletAdapter(phantom)));
+      // Gebruik de WRAPPED adapter zodat umi nooit een object zonder .toBase58() ziet.
+      return umiBase.use(walletAdapterIdentity(createSignerFromWalletAdapter(wrappedAdapter)));
     }
 
     async function updateSupply(){
@@ -213,11 +221,11 @@
 
         const u = umiWithWallet();
         const cmPk = publicKey(CANDY_MACHINE);
-        await fetchCandyMachine(u, cmPk); // warm-up
+        await fetchCandyMachine(u, cmPk);                 // warm-up
         const nftMint = generateSigner(u);
 
         setComputeUnitLimit(u, { units: 900_000 });
-        setComputeUnitPrice(u, { microLamports: 10_000 }); // small priority fee
+        setComputeUnitPrice(u, { microLamports: 10_000 }); // kleine priority fee
 
         const txb = await mintV2(u, {
           candyMachine: cmPk,
@@ -249,4 +257,3 @@
   </script>
 </body>
 </html>
-
