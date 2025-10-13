@@ -121,10 +121,10 @@
     </div>
   </div>
 
-  <!-- Wallet adapters via UMD (stabiel) -->
-  <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-phantom@0.9.27/lib/umd/index.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-solflare@0.6.34/lib/umd/index.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-backpack@0.1.15/lib/umd/index.min.js"></script>
+  <!-- Wallet adapters via UNPKG (ipv jsDelivr) -->
+  <script src="https://unpkg.com/@solana/wallet-adapter-phantom@0.9.27/lib/umd/index.min.js"></script>
+  <script src="https://unpkg.com/@solana/wallet-adapter-solflare@0.6.34/lib/umd/index.min.js"></script>
+  <script src="https://unpkg.com/@solana/wallet-adapter-backpack@0.1.15/lib/umd/index.min.js"></script>
 
   <!-- App -->
   <script type="module">
@@ -201,22 +201,44 @@
       return list;
     }
 
+    // --- Mini-Adapter fallback (wrapt window.solana) ---
+    class MinimalInjectedAdapter {
+      constructor(providerName){
+        this._name = providerName || "injected";
+        this._provider = window.solana || window?.phantom?.solana;
+        this.publicKey = null;
+        this.connected = false;
+      }
+      get name(){ return this._name; }
+      get ready(){ return "Installed"; }
+      async connect(){
+        if (!this._provider) throw new Error("No injected provider (window.solana)");
+        const res = await this._provider.connect();
+        this.publicKey = this._provider.publicKey || res?.publicKey;
+        this.connected = true;
+        return res;
+      }
+      async disconnect(){ try{ await this._provider.disconnect(); }catch(_){} this.connected=false; }
+      async signTransaction(tx){ if(!this._provider?.signTransaction) throw new Error("signTransaction not supported"); return this._provider.signTransaction(tx); }
+      async signAllTransactions(txs){ if(!this._provider?.signAllTransactions) throw new Error("signAllTransactions not supported"); return this._provider.signAllTransactions(txs); }
+      async signMessage(msg){ if(!this._provider?.signMessage) throw new Error("signMessage not supported"); return this._provider.signMessage(msg); }
+    }
+
     async function getAdapter(kind){
       if (kind === "phantom") {
-        if (!PhantomNS?.PhantomWalletAdapter) throw new Error("Phantom UMD not loaded");
-        return new PhantomNS.PhantomWalletAdapter();
+        if (PhantomNS?.PhantomWalletAdapter) return new PhantomNS.PhantomWalletAdapter();
+        debug("Phantom UMD missing → using MinimalInjectedAdapter"); return new MinimalInjectedAdapter("phantom-min");
       }
       if (kind === "solflare") {
-        if (!SolflareNS?.SolflareWalletAdapter) throw new Error("Solflare UMD not loaded");
-        return new SolflareNS.SolflareWalletAdapter();
+        if (SolflareNS?.SolflareWalletAdapter) return new SolflareNS.SolflareWalletAdapter();
+        debug("Solflare UMD missing → using MinimalInjectedAdapter"); return new MinimalInjectedAdapter("solflare-min");
       }
       if (kind === "backpack") {
-        if (!BackpackNS?.BackpackWalletAdapter) throw new Error("Backpack UMD not loaded");
-        return new BackpackNS.BackpackWalletAdapter();
+        if (BackpackNS?.BackpackWalletAdapter) return new BackpackNS.BackpackWalletAdapter();
+        debug("Backpack UMD missing → using MinimalInjectedAdapter"); return new MinimalInjectedAdapter("backpack-min");
       }
-      // Generic = probeer Phantom API compat
-      if (!PhantomNS?.PhantomWalletAdapter) throw new Error("Generic provider missing");
-      return new PhantomNS.PhantomWalletAdapter();
+      // Generic = probeer injected provider
+      return new MinimalInjectedAdapter("generic-min");
     }
 
     async function pickAdapter(pickerValue){
@@ -251,8 +273,6 @@
     }
 
     /* ===== Wallet connect + AutoConnect ===== */
-    const LS_LAST = "cbs_last_wallet";
-
     function updateMintBadgeState(canMint=false){
       const b = $("mintBadge");
       if (SOLD_OUT || !connected || !canMint){ b.classList.add("disabled"); }
@@ -267,9 +287,9 @@
         await wallet.connect();
         umi.use(walletAdapterIdentity(wallet));
         connected = true;
-        const pkb58 = wallet.publicKey.toBase58();
+        const pkb58 = wallet.publicKey.toBase58 ? wallet.publicKey.toBase58() : wallet.publicKey?.toString?.() || String(wallet.publicKey);
         setTxt("who", "Connected: "+pkb58.slice(0,6)+"…"+pkb58.slice(-6));
-        localStorage.setItem(LS_LAST, kind);
+        localStorage.setItem(LS_LAST_WALLET, kind);
         await updateHolderState();
       }catch(e){
         debug("Connect error: "+(e?.message||e));
@@ -280,7 +300,7 @@
     }
 
     async function tryAutoConnect(){
-      const last = localStorage.getItem(LS_LAST);
+      const last = localStorage.getItem(LS_LAST_WALLET);
       if (!last) return;
       try {
         debug("AutoConnect: "+last);
@@ -309,7 +329,8 @@
     async function updateHolderState(){
       if (!connected || !wallet?.publicKey) return;
       try{
-        const [cbs, sol] = await Promise.all([ getCbsBalance(wallet.publicKey), getSolBalance(wallet.publicKey) ]);
+        const owner = wallet.publicKey; // PublicKey
+        const [cbs, sol] = await Promise.all([ getCbsBalance(owner), getSolBalance(owner) ]);
         setTxt("cbsBal", fmt(cbs));
         const hasCBS = cbs >= CBS_THRESHOLD;
         const hasSOL = sol >= MIN_SOL_RENT;
@@ -362,7 +383,8 @@
         $("mintMsg").className="note";
         setTxt("mintMsg","Sending mint…");
 
-        const [cbs, sol] = await Promise.all([ getCbsBalance(wallet.publicKey), getSolBalance(wallet.publicKey) ]);
+        const owner = wallet.publicKey;
+        const [cbs, sol] = await Promise.all([ getCbsBalance(owner), getSolBalance(owner) ]);
         if (cbs < CBS_THRESHOLD){ $("mintMsg").className="note warn"; setTxt("mintMsg","Guard: wallet needs ≥ 1 CBS."); return; }
         if (sol < MIN_SOL_RENT){ $("mintMsg").className="note warn"; setTxt("mintMsg",`Not enough SOL for rent (~${MIN_SOL_RENT} SOL).`); return; }
 
@@ -417,10 +439,9 @@
 
     (async () => {
       await refresh();
-      await tryAutoConnect(); // auto-connect zoals in je React-provider
+      detectInstalled();
+      await tryAutoConnect(); // auto-connect
     })();
   </script>
 </body>
 </html>
-
-
