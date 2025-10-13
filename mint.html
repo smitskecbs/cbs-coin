@@ -48,7 +48,7 @@
     <h1>CBS – Mint</h1>
     <div style="margin-left:auto" class="row">
       <span id="networkTag" class="tag">mainnet-beta</span>
-      <button id="connectBtn" class="btn btn-primary">Connect Wallet</button>
+      <button id="connectBtn" class="btn btn-primary">Connect Phantom</button>
     </div>
   </header>
 
@@ -66,14 +66,14 @@
           <button id="mintBtn" class="btn btn-primary btn-disabled" disabled>Mint</button>
           <button id="refreshBtn" class="btn btn-ghost">Refresh</button>
         </div>
-        <div class="muted">Powered by Candy Machine v3 + Candy Guard on Solana (RPC via Helius).</div>
+        <div class="muted">Phantom only (for stability) • Candy Machine v3 + Candy Guard • RPC via Helius.</div>
       </section>
 
       <aside class="card">
         <h3 class="title">Activity & Debug</h3>
         <div class="row" style="gap:8px;margin-bottom:10px;flex-wrap:wrap">
           <span class="tag">RPC: Helius</span>
-          <span class="tag">Wallets: Phantom / Backpack / Solflare</span>
+          <span class="tag">Wallet: Phantom</span>
           <span class="tag">Collection set</span>
         </div>
         <div class="muted" style="margin-bottom:8px">
@@ -88,7 +88,10 @@
     <footer>© CBS Coin — Community Builds Sovereignty</footer>
   </div>
 
-  <!-- ========= SCRIPTS (jsDelivr ESM – geen vendor-map) ========= -->
+  <!-- Phantom wallet adapter (UMD global) -->
+  <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-phantom@0.9.27/lib/umd/index.min.js"></script>
+
+  <!-- Our app code (ESM) -->
   <script type="module">
     /***** CONFIG *****/
     const HELIUS_KEY = "0eb350f0-a032-468c-8b03-b8b079e09611";
@@ -100,27 +103,22 @@
     const COLLECTION_MINT  = "Fp4f823DUmtP114ACzNHZQgY2DjjviQgUELWXS7WyDSm";
     const GUARD_GROUP = null; // bv. "public" of "wl", anders null
 
-    /***** IMPORTS (jsDelivr met exacte padjes die bestaan) *****/
+    /***** IMPORTS (ESM builds die bestaan) *****/
     import {
       Connection, PublicKey, LAMPORTS_PER_SOL
     } from "https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.3/lib/index.browser.esm.js";
 
-    import { createUmi, publicKey, generateSigner } from "https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi@0.10.7/dist/index.browser.esm.js";
-    import { createWeb3JsRpc } from "https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-rpc-web3js@0.10.7/dist/index.browser.esm.js";
-    import { walletAdapterIdentity } from "https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-signer-wallet-adapters@0.10.7/dist/index.browser.esm.js";
+    import { createUmi, publicKey, generateSigner } from "https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi@0.10.7/dist/index.js";
+    import { createWeb3JsRpc } from "https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-rpc-web3js@0.10.7/dist/index.js";
+    import { walletAdapterIdentity } from "https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-signer-wallet-adapters@0.10.7/dist/index.js";
 
-    import { mplTokenMetadata } from "https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-token-metadata@2.10.2/dist/index.browser.esm.js";
+    import { mplTokenMetadata } from "https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-token-metadata@2.10.2/dist/index.js";
     import {
       mplCandyMachine,
       fetchCandyMachine,
       fetchCandyGuard,
       mintV2
-    } from "https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-candy-machine@0.9.9/dist/index.browser.esm.js";
-
-    // Wallet adapters (ESM builds)
-    import { PhantomWalletAdapter }  from "https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-phantom@0.9.27/lib/esm/index.js";
-    import { SolflareWalletAdapter } from "https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-solflare@0.6.34/lib/esm/index.js";
-    import { BackpackWalletAdapter } from "https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-backpack@0.1.15/lib/esm/index.js";
+    } from "https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-candy-machine@0.9.9/dist/index.js";
 
     /***** UI helpers *****/
     const $ = (s)=>document.querySelector(s);
@@ -133,27 +131,24 @@
       .use(mplTokenMetadata())
       .use(mplCandyMachine());
 
-    let wallet = null;
+    let wallet = null;           // Phantom adapter instance
     let walletPublicKey = null;
-    const walletAdapterList = [
-      new PhantomWalletAdapter(),
-      new BackpackWalletAdapter(),
-      new SolflareWalletAdapter()
-    ];
 
-    /***** WALLET CONNECT *****/
+    /***** WALLET CONNECT (Phantom) *****/
     async function connectWallet() {
-      wallet = walletAdapterList.find(w => w.readyState === "Installed") || walletAdapterList[0];
-      try {
-        await wallet.connect();
-      } catch (e){
-        // fallback: open Phantom site als niet geïnstalleerd
-        if (wallet && wallet.url) window.open(wallet.url, "_blank");
-        throw e;
+      const PhantomNS = window.solanaWalletAdapterPhantom; // from UMD
+      if (!PhantomNS || !PhantomNS.PhantomWalletAdapter){
+        log("❌ Phantom adapter niet gevonden. Installeer Phantom wallet.");
+        window.open("https://phantom.app/", "_blank");
+        throw new Error("Phantom adapter missing");
       }
+
+      wallet = new PhantomNS.PhantomWalletAdapter();
+      await wallet.connect(); // triggert Phantom popup
       walletPublicKey = wallet.publicKey?.toBase58() || null;
       if(!walletPublicKey) throw new Error("No public key from wallet.");
 
+      // Koppel aan Umi
       umi.use(walletAdapterIdentity(wallet));
       $("#walletShort").textContent = short(walletPublicKey);
 
@@ -184,10 +179,7 @@
       return "Guard price";
     }
 
-    /***** STATE LOAD *****
-     - fetch CM itemsAvailable/itemsMinted
-     - fetch Guard voor prijs
-    ***********************************************/
+    /***** STATE LOAD *****/
     async function refreshState() {
       $("#remaining").textContent = "—";
       $("#mintPrice").textContent = "Loading…";
@@ -254,4 +246,6 @@
   </script>
 </body>
 </html>
+
+
 
