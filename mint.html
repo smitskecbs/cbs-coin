@@ -44,7 +44,7 @@
     .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
     .mono{font-family:ui-monospace,Menlo,Monaco,Consolas,"Courier New",monospace}
 
-    .badge{display:inline-flex;align-items:center;padding:10px 12px;border-radius:12px;background:linear-gradient(90deg,#7ab7ff,#7dffe9,#ffde59,#ff7ab6);color:#00141a;font-weight:900;border:1px solid rgba(255,255,255,.25);cursor:pointer;user-select:none;transition:opacity .2s,transform .04s}
+    .badge{display:inline-flex;align-items:center;padding:10px 12px;border-radius:12px;background:linear-gradient(90deg,#7ab7ff,#7dffe9,#ffde59,#7ab7ff);color:#00141a;font-weight:900;border:1px solid rgba(255,255,255,.25);cursor:pointer;user-select:none;transition:opacity .2s,transform .04s}
     .badge:active{transform:translateY(1px)}
     .badge.disabled{opacity:.55;cursor:not-allowed}
 
@@ -121,13 +121,14 @@
     </div>
   </div>
 
-  <!-- Wallet adapters via UMD -->
+  <!-- Wallet adapters via UMD (stabiel) -->
   <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-phantom@0.9.27/lib/umd/index.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-solflare@0.6.34/lib/umd/index.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-backpack@0.1.15/lib/umd/index.min.js"></script>
 
+  <!-- App -->
   <script type="module">
-    // ===== Imports (Metaplex stack) =====
+    /* ===== Imports (Metaplex stack) ===== */
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
     import { publicKey, generateSigner, transactionBuilder, some, none, publicKey as pk } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
@@ -136,7 +137,7 @@
     import { setComputeUnitLimit } from "https://esm.sh/@metaplex-foundation/mpl-toolbox@0.9.1";
     import { Connection, PublicKey, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.95.3";
 
-    // ===== Config =====
+    /* ===== Config (jouw gegevens) ===== */
     const HELIUS_KEY      = "0eb350f0-a032-468c-8b03-b8b079e09611";
     const RPC_URL         = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
 
@@ -148,80 +149,85 @@
 
     const CBS_THRESHOLD   = 1;
     const MIN_SOL_RENT    = 0.02;
-    const GUARD_GROUP     = null;
+    let   GUARD_GROUP     = null;        // geen groups → null
 
     const LS_LAST_WALLET  = "cbs_last_wallet";
 
-    // ===== Helpers =====
+    /* ===== Helpers / UI ===== */
     const $ = (id)=>document.getElementById(id);
     const setTxt = (el,v)=>{ if(typeof el==='string') el=$(el); if(!el) return; el.textContent=v; };
     const fmt = (n)=>Number(n ?? 0).toLocaleString("en-US");
 
-    // Prefill UI
     $("cbsField").value = CBS_MINT;
     $("cbsSol").href   = "https://solscan.io/token/"+CBS_MINT;
     $("cmField").value = CANDY_MACHINE;
     $("cmSol").href    = "https://solscan.io/account/"+CANDY_MACHINE;
 
-    // ===== Chain =====
+    /* ===== Chain ===== */
     const connection = new Connection(RPC_URL, "confirmed");
     const umi = createUmi(RPC_URL).use(mplCandyMachine()).use(mplTokenMetadata());
     let wallet=null, connected=false, cm, SOLD_OUT=false;
 
-    // ===== Wallet adapters (UMD globals) =====
+    /* ===== Detect + Debug ===== */
     const PhantomNS  = window.solanaWalletAdapterPhantom;
     const SolflareNS = window.solanaWalletAdapterSolflare;
     const BackpackNS = window.solanaWalletAdapterBackpack;
 
-    function detectInstalled(){
+    function debug(line) {
+      const id = "mintDebug";
+      let el = document.getElementById(id);
+      if (!el) {
+        const p = document.createElement("p");
+        p.id = id; p.className = "note mono";
+        p.style.whiteSpace = "pre-wrap";
+        const target = document.querySelectorAll(".card")[0];
+        target.appendChild(p);
+        el = p;
+      }
+      el.textContent += (el.textContent ? "\n" : "") + line;
+      console.log("[CBS]", line);
+    }
+
+    function detectInstalled() {
       const list = [];
       try {
         if (window?.phantom?.solana?.isPhantom) list.push("phantom");
-        if (window?.solflare?.isSolflare) list.push("solflare");
-        if (window?.backpack?.isBackpack) list.push("backpack");
-        if (window?.solana && !list.length) list.push("generic");
+        if (window?.solflare?.isSolflare)       list.push("solflare");
+        if (window?.backpack?.isBackpack)       list.push("backpack");
+        if (window?.solana && !list.length)     list.push("generic");
       } catch(_) {}
+      debug("Providers: "+(list.join(", ")||"(none)"));
+      debug("UMD loaded: ph="+!!PhantomNS?.PhantomWalletAdapter+", sf="+!!SolflareNS?.SolflareWalletAdapter+", bp="+!!BackpackNS?.BackpackWalletAdapter);
       return list;
     }
 
     async function getAdapter(kind){
-      switch(kind){
-        case "phantom":
-          if (!PhantomNS?.PhantomWalletAdapter) throw new Error("Phantom adapter not found");
-          return new PhantomNS.PhantomWalletAdapter();
-        case "solflare":
-          if (!SolflareNS?.SolflareWalletAdapter) throw new Error("Solflare adapter not found");
-          return new SolflareNS.SolflareWalletAdapter();
-        case "backpack":
-          if (!BackpackNS?.BackpackWalletAdapter) throw new Error("Backpack adapter not found");
-          return new BackpackNS.BackpackWalletAdapter();
-        case "generic":
-          if (!PhantomNS?.PhantomWalletAdapter) throw new Error("Generic provider not available");
-          return new PhantomNS.PhantomWalletAdapter();
-        default:
-          const order = ["phantom","solflare","backpack","generic"];
-          const installed = detectInstalled();
-          const pick = order.find(x => installed.includes(x)) || "phantom";
-          return getAdapter(pick);
+      if (kind === "phantom") {
+        if (!PhantomNS?.PhantomWalletAdapter) throw new Error("Phantom UMD not loaded");
+        return new PhantomNS.PhantomWalletAdapter();
       }
+      if (kind === "solflare") {
+        if (!SolflareNS?.SolflareWalletAdapter) throw new Error("Solflare UMD not loaded");
+        return new SolflareNS.SolflareWalletAdapter();
+      }
+      if (kind === "backpack") {
+        if (!BackpackNS?.BackpackWalletAdapter) throw new Error("Backpack UMD not loaded");
+        return new BackpackNS.BackpackWalletAdapter();
+      }
+      // Generic = probeer Phantom API compat
+      if (!PhantomNS?.PhantomWalletAdapter) throw new Error("Generic provider missing");
+      return new PhantomNS.PhantomWalletAdapter();
     }
 
-    // ===== Balances =====
-    async function getCbsBalance(ownerPk){
-      const res = await connection.getParsedTokenAccountsByOwner(ownerPk, { mint: new PublicKey(CBS_MINT) });
-      let total = 0;
-      for (const acc of (res.value||[])){
-        const ui = acc.account?.data?.parsed?.info?.tokenAmount?.uiAmount;
-        total += Number(ui||0);
-      }
-      return total;
-    }
-    async function getSolBalance(ownerPk){
-      const lamports = await connection.getBalance(ownerPk, "confirmed");
-      return lamports / LAMPORTS_PER_SOL;
+    async function pickAdapter(pickerValue){
+      if (pickerValue && pickerValue !== "auto") return { kind: pickerValue, inst: await getAdapter(pickerValue) };
+      const order = ["phantom","solflare","backpack","generic"];
+      const have = detectInstalled();
+      const chosen = order.find(k => have.includes(k)) || "phantom";
+      return { kind: chosen, inst: await getAdapter(chosen) };
     }
 
-    // ===== UI state =====
+    /* ===== Stats ===== */
     function setSoldUI(minted, available){
       setTxt("minted", fmt(minted));
       setTxt("available", fmt(available));
@@ -230,12 +236,6 @@
       SOLD_OUT = (available>0 && minted >= available);
       updateMintBadgeState();
       if (SOLD_OUT) { setTxt("mintMsg","Sold out"); $("mintMsg").className="note warn"; }
-    }
-
-    function updateMintBadgeState(canMint=false){
-      const b = $("mintBadge");
-      if (SOLD_OUT || !connected || !canMint){ b.classList.add("disabled"); }
-      else { b.classList.remove("disabled"); }
     }
 
     async function refresh(){
@@ -250,45 +250,67 @@
       }
     }
 
-    // ===== Wallet connect + AutoConnect =====
+    /* ===== Wallet connect + AutoConnect ===== */
+    const LS_LAST = "cbs_last_wallet";
+
+    function updateMintBadgeState(canMint=false){
+      const b = $("mintBadge");
+      if (SOLD_OUT || !connected || !canMint){ b.classList.add("disabled"); }
+      else { b.classList.remove("disabled"); }
+    }
+
     async function connectWallet(kindOverride){
       try{
-        const picked = kindOverride || $("walletPicker").value;
-        wallet = await getAdapter(picked);
+        const { kind, inst } = await pickAdapter(kindOverride || $("walletPicker").value);
+        debug("Connecting via: "+kind);
+        wallet = inst;
         await wallet.connect();
         umi.use(walletAdapterIdentity(wallet));
         connected = true;
         const pkb58 = wallet.publicKey.toBase58();
         setTxt("who", "Connected: "+pkb58.slice(0,6)+"…"+pkb58.slice(-6));
-        localStorage.setItem(LS_LAST_WALLET, picked); // onthoud keuze
+        localStorage.setItem(LS_LAST, kind);
         await updateHolderState();
       }catch(e){
-        console.error(e);
+        debug("Connect error: "+(e?.message||e));
         setTxt("who","—");
-        if (/not found|adapter/i.test(e?.message||"")) {
-          window.open("https://phantom.app/download","_blank");
-        }
+        $("holderMsg").className="note err";
+        setTxt("holderMsg","Wallet connect failed. See debug below.");
       }
     }
 
     async function tryAutoConnect(){
-      const last = localStorage.getItem(LS_LAST_WALLET);
+      const last = localStorage.getItem(LS_LAST);
       if (!last) return;
       try {
+        debug("AutoConnect: "+last);
         await connectWallet(last);
         $("walletPicker").value = last;
-      } catch(_) {}
+      } catch(e){
+        debug("AutoConnect failed: "+(e?.message||e));
+      }
+    }
+
+    /* ===== Balances ===== */
+    async function getCbsBalance(ownerPk){
+      const res = await connection.getParsedTokenAccountsByOwner(ownerPk, { mint: new PublicKey(CBS_MINT) });
+      let total = 0;
+      for (const acc of (res.value||[])){
+        const ui = acc.account?.data?.parsed?.info?.tokenAmount?.uiAmount;
+        total += Number(ui||0);
+      }
+      return total;
+    }
+    async function getSolBalance(ownerPk){
+      const lamports = await connection.getBalance(ownerPk, "confirmed");
+      return lamports / LAMPORTS_PER_SOL;
     }
 
     async function updateHolderState(){
       if (!connected || !wallet?.publicKey) return;
       try{
-        const [cbs, sol] = await Promise.all([
-          getCbsBalance(wallet.publicKey),
-          getSolBalance(wallet.publicKey),
-        ]);
+        const [cbs, sol] = await Promise.all([ getCbsBalance(wallet.publicKey), getSolBalance(wallet.publicKey) ]);
         setTxt("cbsBal", fmt(cbs));
-
         const hasCBS = cbs >= CBS_THRESHOLD;
         const hasSOL = sol >= MIN_SOL_RENT;
 
@@ -321,7 +343,7 @@
       $("mintMsg").appendChild(a);
     }
 
-    // ===== Guard: auto-mintArgs =====
+    /* ===== Guard: auto-mintArgs ===== */
     async function detectMintArgs(){
       try{
         const guard = await fetchCandyGuard(umi, pk(CANDY_GUARD));
@@ -329,22 +351,18 @@
         const tk = guard.guards?.tokenGate;
         const tkSome = tk && tk.__option === "Some";
         if (tkSome) mintArgs.tokenGate = some({ mint: pk(CBS_MINT) });
-        if (Object.keys(mintArgs).length === 0) return none();
-        return mintArgs;
+        return Object.keys(mintArgs).length ? mintArgs : none();
       } catch { return none(); }
     }
 
-    // ===== Mint =====
+    /* ===== Mint ===== */
     async function doMint(){
       try{
         if(!connected || SOLD_OUT) return;
         $("mintMsg").className="note";
         setTxt("mintMsg","Sending mint…");
 
-        const [cbs, sol] = await Promise.all([
-          getCbsBalance(wallet.publicKey),
-          getSolBalance(wallet.publicKey),
-        ]);
+        const [cbs, sol] = await Promise.all([ getCbsBalance(wallet.publicKey), getSolBalance(wallet.publicKey) ]);
         if (cbs < CBS_THRESHOLD){ $("mintMsg").className="note warn"; setTxt("mintMsg","Guard: wallet needs ≥ 1 CBS."); return; }
         if (sol < MIN_SOL_RENT){ $("mintMsg").className="note warn"; setTxt("mintMsg",`Not enough SOL for rent (~${MIN_SOL_RENT} SOL).`); return; }
 
@@ -359,7 +377,7 @@
           .add(mintV2(umi, {
             candyMachine: publicKey(CANDY_MACHINE),
             candyGuard: publicKey(CANDY_GUARD),
-            group: null,   // zet hier bijv. "public" als je groups gebruikt
+            group: GUARD_GROUP, // null (geen groups)
             nftMint,
             mintArgs
           }));
@@ -392,17 +410,17 @@
       }
     }
 
-    // ===== Wire up =====
+    /* ===== Events & Init ===== */
     $("btnConnect").addEventListener("click", ()=>connectWallet());
     $("btnRefresh").addEventListener("click", async ()=>{ await refresh(); if(connected) await updateHolderState(); });
     $("mintBadge").addEventListener("click", ()=>{ if(!$("mintBadge").classList.contains("disabled")) doMint(); });
 
-    // Init
     (async () => {
       await refresh();
-      // AutoConnect zoals in je React-provider (autoConnect=true)
-      await tryAutoConnect();
+      await tryAutoConnect(); // auto-connect zoals in je React-provider
     })();
   </script>
 </body>
 </html>
+
+
