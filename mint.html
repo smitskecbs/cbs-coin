@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,6 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>CBS — Holders Mint</title>
 
+  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/>
 
   <style>
@@ -21,50 +21,103 @@
         radial-gradient(900px 700px at 110% -10%,rgba(125,255,233,.15),transparent 60%),
         radial-gradient(900px 700px at -10% 110%,rgba(122,183,255,.14),transparent 60%),
         var(--bg);
-      color:var(--ink); font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;
-      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; overflow-x:hidden;
+      color:var(--ink);
+      font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;
+      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
+      overflow-x:hidden;
     }
     .wrap{max-width:1100px;margin:0 auto;padding:16px 14px 48px}
-    .hero{display:grid;grid-template-columns:100px 1fr;gap:14px;align-items:center;
+
+    /* Banner */
+    .banner{
+      position:relative; overflow:hidden; border-radius:18px;
+      border:1px solid rgba(255,255,255,.08); box-shadow:var(--ring);
+      margin-bottom:14px; background:#0c1016;
+    }
+    .banner img{
+      width:100%; height:auto; display:block; object-fit:cover;
+      /* Desktop hoogte */
+      max-height:260px;
+    }
+    @media (max-width: 640px){
+      .banner img{ max-height:160px; object-position:center; }
+    }
+
+    .hero{
+      display:grid; grid-template-columns:100px 1fr; gap:14px; align-items:center;
       background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));
-      border-radius:18px;box-shadow:var(--ring);border:1px solid rgba(255,255,255,.08);padding:14px}
+      border-radius:18px; box-shadow:var(--ring); border:1px solid rgba(255,255,255,.08);
+      padding:14px;
+    }
     .logoBox{width:100px;height:100px;border-radius:14px;overflow:hidden;background:#0c1016;display:grid;place-items:center}
     .logo{width:100%;height:100%;object-fit:contain}
-    .title{margin:0;font:46px/1 "Bangers",system-ui;letter-spacing:.4px;
+    .title{
+      margin:0; font:46px/1 "Bangers", system-ui; letter-spacing:.4px;
       background:linear-gradient(90deg,#7ab7ff,#7dffe9,#ffde59,#ff7ab6,#7ab7ff);
-      background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rainbow 8s linear infinite;
-      text-shadow:0 3px 0 rgba(0,0,0,.25)}
-    .sub{margin:6px 0 0;color:var(--muted);font-weight:600}
+      background-size:300% 100%; -webkit-background-clip:text; background-clip:text; color:transparent;
+      animation: rainbow 8s linear infinite;
+      text-shadow:0 3px 0 rgba(0,0,0,.25);
+    }
+    .sub{margin:6px 0 0; color:var(--muted); font-weight:600}
     @keyframes rainbow{0%{background-position:0% 0}100%{background-position:300% 0}}
 
-    .grid{display:grid;gap:14px;grid-template-columns:1fr}
+    .grid{display:grid; gap:14px; grid-template-columns:1fr}
     @media (min-width: 940px){ .grid{grid-template-columns:1fr 1fr} }
-    .card{background:linear-gradient(180deg,var(--card),rgba(21,26,35,.7));
-      border:1px solid rgba(255,255,255,.08);border-radius:18px;box-shadow:var(--ring);padding:14px}
+    .card{
+      background:linear-gradient(180deg,var(--card),rgba(21,26,35,.7));
+      border:1px solid rgba(255,255,255,.08); border-radius:18px; box-shadow:var(--ring); padding:14px;
+    }
     .span2{grid-column:1/-1}
-    .h3{margin:2px 0 10px;font:30px/1 "Bangers",system-ui;letter-spacing:.3px}
+
+    .h3{margin:2px 0 10px; font:30px/1 "Bangers",system-ui; letter-spacing:.3px}
     .p{margin:0;color:var(--muted)}
     .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-    .mono{font-family:ui-monospace,Menlo,Consolas,monospace}
-    .pill{display:inline-flex;align-items:center;gap:8px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);color:var(--ink);font-weight:700}
-    .badge{display:inline-flex;align-items:center;padding:8px 10px;border-radius:10px;background:linear-gradient(90deg,#7ab7ff,#7dffe9,#ffde59,#ff7ab6);color:#00141a;font-weight:900;border:1px solid rgba(255,255,255,.25)}
-    input.read{width:100%;min-width:260px;padding:11px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--ink);font-weight:700}
+    .mono{font-family:ui-monospace,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace}
 
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-width:150px;padding:12px 18px;border-radius:14px;cursor:pointer;
-      background:linear-gradient(180deg,#7dffe9,#47f0d3);color:#03221e;font-weight:900;border:1px solid rgba(255,255,255,.18);
-      box-shadow:0 16px 35px rgba(2,240,210,.15), inset 0 -6px 0 rgba(0,0,0,.18);text-decoration:none}
-    .btn.secondary{background:linear-gradient(180deg,#ffffff,#e8fbff);color:#05212a}
-    .btn:disabled{opacity:.55;cursor:not-allowed}
+    .pill{
+      display:inline-flex; align-items:center; gap:8px; padding:10px 12px; border-radius:12px;
+      background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14); color:var(--ink); font-weight:700;
+    }
+    .badge{
+      display:inline-flex; align-items:center; padding:8px 10px; border-radius:10px;
+      background:linear-gradient(90deg,#7ab7ff,#7dffe9,#ffde59,#ff7ab6);
+      color:#00141a; font-weight:900; border:1px solid rgba(255,255,255,.25);
+    }
+    input.read{
+      width:100%; min-width:260px; padding:11px 12px; border-radius:12px;
+      border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.05); color:var(--ink); font-weight:700;
+    }
 
-    .meter{height:10px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);overflow:hidden}
-    .meter>i{display:block;height:100%;background:linear-gradient(90deg,#1fe39f,#7dffe9);width:0%}
+    .btn{
+      display:inline-flex; align-items:center; justify-content:center; gap:10px;
+      min-width:150px; padding:12px 18px; border-radius:14px; cursor:pointer;
+      background:linear-gradient(180deg,#7dffe9,#47f0d3); color:#03221e; font-weight:900;
+      border:1px solid rgba(255,255,255,.18); box-shadow:0 16px 35px rgba(2,240,210,.15), inset 0 -6px 0 rgba(0,0,0,.18);
+      text-decoration:none;
+    }
+    .btn.secondary{background:linear-gradient(180deg,#ffffff,#e8fbff); color:#05212a}
+    .btn:disabled{opacity:.55; cursor:not-allowed}
 
-    .note{margin:8px 0 0;color:var(--muted)}
+    .meter{height:10px;border-radius:8px;background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.18); overflow:hidden}
+    .meter > i{display:block;height:100%; background:linear-gradient(90deg,#1fe39f,#7dffe9); width:0%}
+
+    .note{margin:8px 0 0; color:var(--muted)}
     .ok{color:var(--ok)} .warn{color:var(--warn)} .err{color:var(--err)}
+
+    .walletSelect{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+    .walletSelect select{
+      background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.14);
+      color:var(--ink); padding:10px 12px; border-radius:12px; font-weight:700;
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
+    <!-- Banner -->
+    <div class="banner">
+      <img src="Banner-CBS-Coin.webp" alt="CBS Banner" loading="eager" decoding="async">
+    </div>
+
     <!-- HERO -->
     <section class="hero">
       <div class="logoBox">
@@ -80,8 +133,15 @@
       <!-- WALLET -->
       <section class="card">
         <h2 class="h3">Wallet</h2>
-        <div class="row">
-          <button id="btnConnect" class="btn">Connect Phantom</button>
+        <div class="row walletSelect">
+          <select id="walletPicker" aria-label="Choose wallet">
+            <option value="auto">Auto</option>
+            <option value="phantom">Phantom</option>
+            <option value="solflare">Solflare</option>
+            <option value="backpack">Backpack</option>
+            <option value="generic">Generic (window.solana)</option>
+          </select>
+          <button id="btnConnect" class="btn">Connect</button>
           <span id="who" class="note mono">—</span>
         </div>
 
@@ -128,17 +188,20 @@
   <script type="module">
     // ===== Imports (zelfde stack als boyzz) =====
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
-    import { publicKey, generateSigner, transactionBuilder, some } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
+    import { publicKey, generateSigner, transactionBuilder, some, none, publicKey as pk } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
-    import { mplCandyMachine, fetchCandyMachine, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
+    import { mplCandyMachine, fetchCandyMachine, fetchCandyGuard, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.2.0";
     import { setComputeUnitLimit } from "https://esm.sh/@metaplex-foundation/mpl-toolbox@0.9.1";
     import { PhantomWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-phantom@0.9.25";
+    import { SolflareWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-solflare@0.6.34";
+    import { BackpackWalletAdapter } from "https://esm.sh/@solana/wallet-adapter-backpack@0.1.15";
     import { Connection, PublicKey, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.95.3";
 
     // ===== Config (jouw gegevens) =====
     const HELIUS_KEY      = "0eb350f0-a032-468c-8b03-b8b079e09611";
     const RPC_URL         = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
+
     const AUTHORITY_WALLET= "3hCAFVgERpezg2viff2DtFvdundfvykUM1VVKqjPehvp";
     const CANDY_MACHINE   = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd";
     const CANDY_GUARD     = "9m94QDkzsEoJLdfHMpyQUCgdS6fXSP1AeoEzf4RLmcUv";
@@ -147,6 +210,7 @@
 
     const CBS_THRESHOLD   = 1;     // ≥ 1 CBS nodig
     const MIN_SOL_RENT    = 0.02;  // ~rent marge
+    const GUARD_GROUP     = null;  // zet bv. "public" als je groups gebruikt
 
     // ===== Helpers =====
     const $ = (id)=>document.getElementById(id);
@@ -162,7 +226,39 @@
     // ===== Chain clients =====
     const connection = new Connection(RPC_URL, "confirmed");
     const umi = createUmi(RPC_URL).use(mplCandyMachine()).use(mplTokenMetadata());
-    let wallet, connected=false, cm, SOLD_OUT=false;
+
+    // ===== Wallet adapters =====
+    let wallet = null, connected=false, cm, SOLD_OUT=false;
+
+    function detectInstalled(){
+      const list = [];
+      try {
+        if (window?.phantom?.solana?.isPhantom) list.push("phantom");
+        if (window?.solflare?.isSolflare) list.push("solflare");
+        if (window?.backpack?.isBackpack) list.push("backpack");
+        // generic window.solana (soms Jupiter of andere providers)
+        if (window?.solana && !list.length) list.push("generic");
+      } catch(_) {}
+      return list;
+    }
+
+    async function getAdapter(kind){
+      switch(kind){
+        case "phantom":  return new PhantomWalletAdapter();
+        case "solflare": return new SolflareWalletAdapter();
+        case "backpack": return new BackpackWalletAdapter();
+        case "generic":
+          // Generic provider – probeer PhantomAdapter met bestaande provider
+          // (veel wallets imiteren Phantom API)
+          return new PhantomWalletAdapter();
+        default:
+          // Auto: kies eerste geïnstalleerde
+          const order = ["phantom","solflare","backpack","generic"];
+          const installed = detectInstalled();
+          const pick = order.find(x => installed.includes(x)) || "phantom";
+          return getAdapter(pick);
+      }
+    }
 
     // ===== Balances =====
     async function getCbsBalance(ownerPk){
@@ -202,20 +298,23 @@
       }
     }
 
-    // ===== Wallet connect (Phantom) =====
+    // ===== Wallet connect =====
     async function connectWallet(){
       try{
-        if (!window?.solana?.isPhantom) { window.open("https://phantom.app/download","_blank"); return; }
-        wallet = new PhantomWalletAdapter();
+        const picked = $("walletPicker").value;
+        wallet = await getAdapter(picked);
         await wallet.connect();
         umi.use(walletAdapterIdentity(wallet));
         connected = true;
-        const pk = wallet.publicKey.toBase58();
-        setTxt("who", "Connected: "+pk.slice(0,6)+"…"+pk.slice(-6));
+        const pkb58 = wallet.publicKey.toBase58();
+        setTxt("who", "Connected: "+pkb58.slice(0,6)+"…"+pkb58.slice(-6));
         await updateHolderState();
       }catch(e){
         console.error(e);
         setTxt("who","—");
+        if (/install|not found/i.test(e?.message||"")) {
+          window.open("https://phantom.app/download","_blank");
+        }
       }
     }
 
@@ -260,6 +359,23 @@
       $("mintMsg").appendChild(a);
     }
 
+    // ===== Guard: auto-mintArgs =====
+    async function detectMintArgs(){
+      try{
+        const guard = await fetchCandyGuard(umi, pk(CANDY_GUARD));
+        let mintArgs = {};
+        const tk = guard.guards?.tokenGate;
+        const tkSome = tk && tk.__option === "Some";
+        if (tkSome) {
+          mintArgs.tokenGate = some({ mint: pk(CBS_MINT) });
+        }
+        if (Object.keys(mintArgs).length === 0) return none();
+        return mintArgs;
+      } catch(e) {
+        return none();
+      }
+    }
+
     // ===== Mint =====
     async function doMint(){
       try{
@@ -288,32 +404,33 @@
         const before = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
 
         const nftMint = generateSigner(umi);
+        const mintArgs = await detectMintArgs();
+
         const tx = transactionBuilder()
           .add(setComputeUnitLimit(umi, { units: 600_000 }))
           .add(mintV2(umi, {
             candyMachine: publicKey(CANDY_MACHINE),
             candyGuard: publicKey(CANDY_GUARD),
+            group: GUARD_GROUP,       // null of bv. "public"
             nftMint,
-            collectionMint: publicKey(COLLECTION_MINT),
-            collectionUpdateAuthority: publicKey(AUTHORITY_WALLET),
-            mintArgs: { tokenGate: some({ mint: publicKey(CBS_MINT) }) }
+            mintArgs
           }));
 
         let sig;
         try{
-          const res = await tx.sendAndConfirm(umi);
+          const res = await tx.sendAndConfirm(umi, { confirm: { commitment: "confirmed" }});
           sig = Array.isArray(res) ? res[0] : (typeof res==='string' ? res : res?.signature);
         }catch(err){
-          const msg = (err?.cause?.message || err?.message || "").toLowerCase();
+          const raw = (err?.cause?.logs?.[0] || err?.cause?.message || err?.message || "").toString();
           $("mintMsg").className="note err";
-          if (msg.includes("insufficient lamports") || msg.includes("insufficient funds")) {
-            setTxt("mintMsg","Not enough SOL for accounts (try +0.02–0.03 SOL).");
-          } else if (msg.includes("last instruction")) {
-            setTxt("mintMsg","BotTax ‘lastInstruction’ blocked. Set lastInstruction=false on guard.");
-          } else if (msg.includes("token gate")) {
-            setTxt("mintMsg","Guard: wallet needs ≥ 1 CBS.");
+          if (raw.toLowerCase().includes("insufficient")) {
+            setTxt("mintMsg","Not enough SOL for accounts/fees.");
+          } else if (raw.toLowerCase().includes("last")) {
+            setTxt("mintMsg","BotTax lastInstruction blocked. Set lastInstruction=false in guard.");
+          } else if (raw.toLowerCase().includes("token") || raw.toLowerCase().includes("guard")) {
+            setTxt("mintMsg","Guard condition not met (likely token gate).");
           } else {
-            setTxt("mintMsg","Mint failed (simulation).");
+            setTxt("mintMsg","Mint failed (simulation). "+raw.slice(0,140));
           }
           showTxLink(sig);
           $("btnMint").disabled = false;
