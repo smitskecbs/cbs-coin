@@ -24,7 +24,6 @@
     }
     .wrap{max-width:1100px;margin:0 auto;padding:16px 14px 48px}
 
-    /* Banner */
     .banner{position:relative;overflow:hidden;border-radius:18px;border:1px solid rgba(255,255,255,.08);box-shadow:var(--ring);margin-bottom:14px;background:#0c1016}
     .banner img{width:100%;height:auto;display:block;object-fit:cover;max-height:260px}
     @media (max-width:640px){ .banner img{max-height:160px;object-position:center} }
@@ -81,10 +80,7 @@
         <h2 class="h3">Wallet</h2>
         <div class="row walletSelect">
           <select id="walletPicker" aria-label="Choose wallet">
-            <option value="auto">Auto</option>
             <option value="phantom">Phantom</option>
-            <option value="solflare">Solflare</option>
-            <option value="backpack">Backpack</option>
             <option value="generic">Generic (window.solana)</option>
           </select>
           <button id="btnConnect" class="btn">Connect</button>
@@ -121,12 +117,6 @@
     </div>
   </div>
 
-  <!-- Wallet adapters via UNPKG (ipv jsDelivr) -->
-  <script src="https://unpkg.com/@solana/wallet-adapter-phantom@0.9.27/lib/umd/index.min.js"></script>
-  <script src="https://unpkg.com/@solana/wallet-adapter-solflare@0.6.34/lib/umd/index.min.js"></script>
-  <script src="https://unpkg.com/@solana/wallet-adapter-backpack@0.1.15/lib/umd/index.min.js"></script>
-
-  <!-- App -->
   <script type="module">
     /* ===== Imports (Metaplex stack) ===== */
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
@@ -137,19 +127,17 @@
     import { setComputeUnitLimit } from "https://esm.sh/@metaplex-foundation/mpl-toolbox@0.9.1";
     import { Connection, PublicKey, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.95.3";
 
-    /* ===== Config (jouw gegevens) ===== */
+    /* ===== Config ===== */
     const HELIUS_KEY      = "0eb350f0-a032-468c-8b03-b8b079e09611";
     const RPC_URL         = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
 
-    const AUTHORITY_WALLET= "3hCAFVgERpezg2viff2DtFvdundfvykUM1VVKqjPehvp";
     const CANDY_MACHINE   = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd";
     const CANDY_GUARD     = "9m94QDkzsEoJLdfHMpyQUCgdS6fXSP1AeoEzf4RLmcUv";
-    const COLLECTION_MINT = "Fp4f823DUmtP114ACzNHZQgY2DjjviQgUELWXS7WyDSm";
     const CBS_MINT        = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
 
     const CBS_THRESHOLD   = 1;
     const MIN_SOL_RENT    = 0.02;
-    let   GUARD_GROUP     = null;        // geen groups → null
+    const GUARD_GROUP     = null;  // geen groups
 
     const LS_LAST_WALLET  = "cbs_last_wallet";
 
@@ -168,10 +156,28 @@
     const umi = createUmi(RPC_URL).use(mplCandyMachine()).use(mplTokenMetadata());
     let wallet=null, connected=false, cm, SOLD_OUT=false;
 
-    /* ===== Detect + Debug ===== */
-    const PhantomNS  = window.solanaWalletAdapterPhantom;
-    const SolflareNS = window.solanaWalletAdapterSolflare;
-    const BackpackNS = window.solanaWalletAdapterBackpack;
+    /* ===== Phantom/Injected provider minimal adapter ===== */
+    class InjectedWalletAdapter {
+      constructor(provider) { this.provider = provider; this.publicKey = null; }
+      async connect(){
+        if (!this.provider) throw new Error("No injected provider (window.phantom?.solana / window.solana)");
+        const res = await this.provider.connect();
+        this.publicKey = this.provider.publicKey || res?.publicKey;
+        if (!this.publicKey) throw new Error("No publicKey after connect");
+      }
+      async disconnect(){ try{ await this.provider.disconnect(); }catch(_){} }
+      // UMI walletAdapterIdentity verwacht signTransaction/signAllTransactions
+      async signTransaction(tx){ return this.provider.signTransaction(tx); }
+      async signAllTransactions(txs){ return this.provider.signAllTransactions(txs); }
+      async signMessage(msg){ return this.provider.signMessage(msg); }
+    }
+
+    function getInjected(kind){
+      // Phantom standaard
+      if (kind === "phantom") return window?.phantom?.solana || window?.solana;
+      // Generic fallback (sommige wallets emuleren Phantom API via window.solana)
+      return window?.solana || window?.phantom?.solana;
+    }
 
     function debug(line) {
       const id = "mintDebug";
@@ -188,68 +194,7 @@
       console.log("[CBS]", line);
     }
 
-    function detectInstalled() {
-      const list = [];
-      try {
-        if (window?.phantom?.solana?.isPhantom) list.push("phantom");
-        if (window?.solflare?.isSolflare)       list.push("solflare");
-        if (window?.backpack?.isBackpack)       list.push("backpack");
-        if (window?.solana && !list.length)     list.push("generic");
-      } catch(_) {}
-      debug("Providers: "+(list.join(", ")||"(none)"));
-      debug("UMD loaded: ph="+!!PhantomNS?.PhantomWalletAdapter+", sf="+!!SolflareNS?.SolflareWalletAdapter+", bp="+!!BackpackNS?.BackpackWalletAdapter);
-      return list;
-    }
-
-    // --- Mini-Adapter fallback (wrapt window.solana) ---
-    class MinimalInjectedAdapter {
-      constructor(providerName){
-        this._name = providerName || "injected";
-        this._provider = window.solana || window?.phantom?.solana;
-        this.publicKey = null;
-        this.connected = false;
-      }
-      get name(){ return this._name; }
-      get ready(){ return "Installed"; }
-      async connect(){
-        if (!this._provider) throw new Error("No injected provider (window.solana)");
-        const res = await this._provider.connect();
-        this.publicKey = this._provider.publicKey || res?.publicKey;
-        this.connected = true;
-        return res;
-      }
-      async disconnect(){ try{ await this._provider.disconnect(); }catch(_){} this.connected=false; }
-      async signTransaction(tx){ if(!this._provider?.signTransaction) throw new Error("signTransaction not supported"); return this._provider.signTransaction(tx); }
-      async signAllTransactions(txs){ if(!this._provider?.signAllTransactions) throw new Error("signAllTransactions not supported"); return this._provider.signAllTransactions(txs); }
-      async signMessage(msg){ if(!this._provider?.signMessage) throw new Error("signMessage not supported"); return this._provider.signMessage(msg); }
-    }
-
-    async function getAdapter(kind){
-      if (kind === "phantom") {
-        if (PhantomNS?.PhantomWalletAdapter) return new PhantomNS.PhantomWalletAdapter();
-        debug("Phantom UMD missing → using MinimalInjectedAdapter"); return new MinimalInjectedAdapter("phantom-min");
-      }
-      if (kind === "solflare") {
-        if (SolflareNS?.SolflareWalletAdapter) return new SolflareNS.SolflareWalletAdapter();
-        debug("Solflare UMD missing → using MinimalInjectedAdapter"); return new MinimalInjectedAdapter("solflare-min");
-      }
-      if (kind === "backpack") {
-        if (BackpackNS?.BackpackWalletAdapter) return new BackpackNS.BackpackWalletAdapter();
-        debug("Backpack UMD missing → using MinimalInjectedAdapter"); return new MinimalInjectedAdapter("backpack-min");
-      }
-      // Generic = probeer injected provider
-      return new MinimalInjectedAdapter("generic-min");
-    }
-
-    async function pickAdapter(pickerValue){
-      if (pickerValue && pickerValue !== "auto") return { kind: pickerValue, inst: await getAdapter(pickerValue) };
-      const order = ["phantom","solflare","backpack","generic"];
-      const have = detectInstalled();
-      const chosen = order.find(k => have.includes(k)) || "phantom";
-      return { kind: chosen, inst: await getAdapter(chosen) };
-    }
-
-    /* ===== Stats ===== */
+    /* ===== UI/Stats ===== */
     function setSoldUI(minted, available){
       setTxt("minted", fmt(minted));
       setTxt("available", fmt(available));
@@ -272,20 +217,33 @@
       }
     }
 
-    /* ===== Wallet connect + AutoConnect ===== */
     function updateMintBadgeState(canMint=false){
       const b = $("mintBadge");
       if (SOLD_OUT || !connected || !canMint){ b.classList.add("disabled"); }
       else { b.classList.remove("disabled"); }
     }
 
-    async function connectWallet(kindOverride){
+    /* ===== Wallet connect ===== */
+    async function connectWallet(){
       try{
-        const { kind, inst } = await pickAdapter(kindOverride || $("walletPicker").value);
-        debug("Connecting via: "+kind);
-        wallet = inst;
+        const kind = $("walletPicker").value; // phantom/generic
+        const provider = getInjected(kind);
+        if (!provider) {
+          $("holderMsg").className="note err";
+          setTxt("holderMsg","No wallet provider found. Install Phantom.");
+          window.open("https://phantom.app/download", "_blank");
+          return;
+        }
+        wallet = new InjectedWalletAdapter(provider);
         await wallet.connect();
-        umi.use(walletAdapterIdentity(wallet));
+
+        umi.use(walletAdapterIdentity({
+          publicKey: wallet.publicKey,
+          signTransaction: (tx)=>wallet.signTransaction(tx),
+          signAllTransactions: (txs)=>wallet.signAllTransactions(txs),
+          signMessage: (m)=>wallet.signMessage(m),
+        }));
+
         connected = true;
         const pkb58 = wallet.publicKey.toBase58 ? wallet.publicKey.toBase58() : wallet.publicKey?.toString?.() || String(wallet.publicKey);
         setTxt("who", "Connected: "+pkb58.slice(0,6)+"…"+pkb58.slice(-6));
@@ -295,16 +253,18 @@
         debug("Connect error: "+(e?.message||e));
         setTxt("who","—");
         $("holderMsg").className="note err";
-        setTxt("holderMsg","Wallet connect failed. See debug below.");
+        setTxt("holderMsg","Wallet connect failed.");
       }
     }
 
     async function tryAutoConnect(){
       const last = localStorage.getItem(LS_LAST_WALLET);
       if (!last) return;
+      const prov = getInjected(last);
+      if (!prov) return;
       try {
         debug("AutoConnect: "+last);
-        await connectWallet(last);
+        await connectWallet();
         $("walletPicker").value = last;
       } catch(e){
         debug("AutoConnect failed: "+(e?.message||e));
@@ -329,7 +289,7 @@
     async function updateHolderState(){
       if (!connected || !wallet?.publicKey) return;
       try{
-        const owner = wallet.publicKey; // PublicKey
+        const owner = wallet.publicKey;
         const [cbs, sol] = await Promise.all([ getCbsBalance(owner), getSolBalance(owner) ]);
         setTxt("cbsBal", fmt(cbs));
         const hasCBS = cbs >= CBS_THRESHOLD;
@@ -399,7 +359,7 @@
           .add(mintV2(umi, {
             candyMachine: publicKey(CANDY_MACHINE),
             candyGuard: publicKey(CANDY_GUARD),
-            group: GUARD_GROUP, // null (geen groups)
+            group: GUARD_GROUP,
             nftMint,
             mintArgs
           }));
@@ -439,8 +399,8 @@
 
     (async () => {
       await refresh();
-      detectInstalled();
-      await tryAutoConnect(); // auto-connect
+      // auto-connect als Phantom al geautoriseerd is
+      await tryAutoConnect();
     })();
   </script>
 </body>
