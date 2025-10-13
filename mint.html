@@ -66,7 +66,7 @@
           <button id="mintBtn" class="btn btn-primary btn-disabled" disabled>Mint</button>
           <button id="refreshBtn" class="btn btn-ghost">Refresh</button>
         </div>
-        <div class="muted">Phantom only (for stability) • Candy Machine v3 + Candy Guard • RPC via Helius.</div>
+        <div class="muted">Phantom only (stable) • Candy Machine v3 + Candy Guard • RPC via Helius.</div>
       </section>
 
       <aside class="card">
@@ -88,10 +88,10 @@
     <footer>© CBS Coin — Community Builds Sovereignty</footer>
   </div>
 
-  <!-- Phantom wallet adapter (UMD global) -->
-  <script src="https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-phantom@0.9.27/lib/umd/index.min.js"></script>
+  <!-- Phantom adapter (UMD global) -->
+  <script src="https://unpkg.com/@solana/wallet-adapter-phantom@0.9.27/lib/umd/index.min.js"></script>
 
-  <!-- Our app code (ESM) -->
+  <!-- App code -->
   <script type="module">
     /***** CONFIG *****/
     const HELIUS_KEY = "0eb350f0-a032-468c-8b03-b8b079e09611";
@@ -103,22 +103,18 @@
     const COLLECTION_MINT  = "Fp4f823DUmtP114ACzNHZQgY2DjjviQgUELWXS7WyDSm";
     const GUARD_GROUP = null; // bv. "public" of "wl", anders null
 
-    /***** IMPORTS (ESM builds die bestaan) *****/
+    /***** IMPORTS – UNPKG ?module (browser ESM) *****/
     import {
       Connection, PublicKey, LAMPORTS_PER_SOL
-    } from "https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.3/lib/index.browser.esm.js";
+    } from "https://unpkg.com/@solana/web3.js@1.95.3/lib/index.browser.esm.js";
 
-    import { createUmi, publicKey, generateSigner } from "https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi@0.10.7/dist/index.js";
-    import { createWeb3JsRpc } from "https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-rpc-web3js@0.10.7/dist/index.js";
-    import { walletAdapterIdentity } from "https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-signer-wallet-adapters@0.10.7/dist/index.js";
+    import { createUmi, publicKey, generateSigner } from "https://unpkg.com/@metaplex-foundation/umi@0.10.7?module";
+    import { createWeb3JsRpc } from "https://unpkg.com/@metaplex-foundation/umi-rpc-web3js@0.10.7?module";
+    import { walletAdapterIdentity } from "https://unpkg.com/@metaplex-foundation/umi-signer-wallet-adapters@0.10.7?module";
 
-    import { mplTokenMetadata } from "https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-token-metadata@2.10.2/dist/index.js";
-    import {
-      mplCandyMachine,
-      fetchCandyMachine,
-      fetchCandyGuard,
-      mintV2
-    } from "https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-candy-machine@0.9.9/dist/index.js";
+    import { mplTokenMetadata } from "https://unpkg.com/@metaplex-foundation/mpl-token-metadata@2.10.2?module";
+    import { mplCandyMachine, fetchCandyMachine, fetchCandyGuard, mintV2 }
+      from "https://unpkg.com/@metaplex-foundation/mpl-candy-machine@0.9.9?module";
 
     /***** UI helpers *****/
     const $ = (s)=>document.querySelector(s);
@@ -131,24 +127,22 @@
       .use(mplTokenMetadata())
       .use(mplCandyMachine());
 
-    let wallet = null;           // Phantom adapter instance
+    let wallet = null;
     let walletPublicKey = null;
 
     /***** WALLET CONNECT (Phantom) *****/
     async function connectWallet() {
-      const PhantomNS = window.solanaWalletAdapterPhantom; // from UMD
+      const PhantomNS = window.solanaWalletAdapterPhantom;
       if (!PhantomNS || !PhantomNS.PhantomWalletAdapter){
         log("❌ Phantom adapter niet gevonden. Installeer Phantom wallet.");
         window.open("https://phantom.app/", "_blank");
         throw new Error("Phantom adapter missing");
       }
-
       wallet = new PhantomNS.PhantomWalletAdapter();
-      await wallet.connect(); // triggert Phantom popup
+      await wallet.connect(); // Phantom popup
       walletPublicKey = wallet.publicKey?.toBase58() || null;
       if(!walletPublicKey) throw new Error("No public key from wallet.");
 
-      // Koppel aan Umi
       umi.use(walletAdapterIdentity(wallet));
       $("#walletShort").textContent = short(walletPublicKey);
 
@@ -246,6 +240,3 @@
   </script>
 </body>
 </html>
-
-
-
