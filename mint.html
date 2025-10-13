@@ -5,9 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>CBS – Mint</title>
 
-  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Bangers&display=swap" rel="stylesheet"/>
-
   <style>
     :root{
       --bg1:#070b14; --bg2:#0c1220; --card:#0d1526; --card2:#0a1120;
@@ -56,28 +54,21 @@
 
   <div class="wrap">
     <div class="grid">
-      <!-- LEFT -->
       <section class="card mint-hero">
         <h2 class="title">Mint your CBS NFT</h2>
-
         <div class="row" style="flex-wrap:wrap;gap:12px">
           <div class="stat"><span class="k">Wallet</span><span id="walletShort" class="v mono">—</span></div>
           <div class="stat"><span class="k">SOL Balance</span><span id="solBal" class="v">—</span></div>
           <div class="stat"><span class="k">Price</span><span id="mintPrice" class="v">Loading…</span></div>
           <div class="stat"><span class="k">Remaining</span><span id="remaining" class="v">—</span></div>
         </div>
-
         <div class="row">
           <button id="mintBtn" class="btn btn-primary btn-disabled" disabled>Mint</button>
           <button id="refreshBtn" class="btn btn-ghost">Refresh</button>
         </div>
-
-        <div class="muted">
-          Powered by Candy Machine v3 + Candy Guard on Solana (RPC via Helius).
-        </div>
+        <div class="muted">Powered by Candy Machine v3 + Candy Guard on Solana (RPC via Helius).</div>
       </section>
 
-      <!-- RIGHT -->
       <aside class="card">
         <h3 class="title">Activity & Debug</h3>
         <div class="row" style="gap:8px;margin-bottom:10px;flex-wrap:wrap">
@@ -94,66 +85,55 @@
         <div id="log" class="log">Logs appear here…</div>
       </aside>
     </div>
-
     <footer>© CBS Coin — Community Builds Sovereignty</footer>
   </div>
 
-  <!-- =====================  SCRIPT  ===================== -->
+  <!-- ========= SCRIPTS (jsDelivr ESM – geen vendor-map) ========= -->
   <script type="module">
     /***** CONFIG *****/
-    // Helius RPC key (van jou)
     const HELIUS_KEY = "0eb350f0-a032-468c-8b03-b8b079e09611";
     const RPC_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
 
-    // On-chain setup (jouw waarden)
     const AUTHORITY_WALLET = "3hCAFVgERpezg2viff2DtFvdundfvykUM1VVKqjPehvp";
     const CANDY_MACHINE_ID = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd";
     const CANDY_GUARD_ID   = "9m94QDkzsEoJLdfHMpyQUCgdS6fXSP1AeoEzf4RLmcUv";
     const COLLECTION_MINT  = "Fp4f823DUmtP114ACzNHZQgY2DjjviQgUELWXS7WyDSm";
+    const GUARD_GROUP = null; // bv. "public" of "wl", anders null
 
-    // Als je een named guard group gebruikt, zet hem hier (bijv. "public", "wl"); anders null
-    const GUARD_GROUP = null;
-
-    /***** IMPORTS: pure CDN ESM *****/
+    /***** IMPORTS (jsDelivr met exacte padjes die bestaan) *****/
     import {
       Connection, PublicKey, LAMPORTS_PER_SOL
-    } from "https://esm.sh/@solana/web3.js@1.95.3";
+    } from "https://cdn.jsdelivr.net/npm/@solana/web3.js@1.95.3/lib/index.browser.esm.js";
 
-    import {
-      createUmi, publicKey, generateSigner
-    } from "https://esm.sh/@metaplex-foundation/umi@0.10.7";
+    import { createUmi, publicKey, generateSigner } from "https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi@0.10.7/dist/index.browser.esm.js";
+    import { createWeb3JsRpc } from "https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-rpc-web3js@0.10.7/dist/index.browser.esm.js";
+    import { walletAdapterIdentity } from "https://cdn.jsdelivr.net/npm/@metaplex-foundation/umi-signer-wallet-adapters@0.10.7/dist/index.browser.esm.js";
 
+    import { mplTokenMetadata } from "https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-token-metadata@2.10.2/dist/index.browser.esm.js";
     import {
       mplCandyMachine,
       fetchCandyMachine,
       fetchCandyGuard,
       mintV2
-    } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@0.9.9";
+    } from "https://cdn.jsdelivr.net/npm/@metaplex-foundation/mpl-candy-machine@0.9.9/dist/index.browser.esm.js";
 
-    import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@2.10.2";
-    import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@0.10.7";
-    import { createWeb3JsRpc } from "https://esm.sh/@metaplex-foundation/umi-rpc-web3js@0.10.7";
+    // Wallet adapters (ESM builds)
+    import { PhantomWalletAdapter }  from "https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-phantom@0.9.27/lib/esm/index.js";
+    import { SolflareWalletAdapter } from "https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-solflare@0.6.34/lib/esm/index.js";
+    import { BackpackWalletAdapter } from "https://cdn.jsdelivr.net/npm/@solana/wallet-adapter-backpack@0.1.15/lib/esm/index.js";
 
-    // Wallet adapters
-    import { PhantomWalletAdapter }   from "https://esm.sh/@solana/wallet-adapter-phantom@0.9.27";
-    import { BackpackWalletAdapter }  from "https://esm.sh/@solana/wallet-adapter-backpack@0.1.15";
-    import { SolflareWalletAdapter }  from "https://esm.sh/@solana/wallet-adapter-solflare@0.6.34";
-
-    /***** UI HELPERS *****/
+    /***** UI helpers *****/
     const $ = (s)=>document.querySelector(s);
     const log = (m)=>{ const el=$("#log"); el.textContent += `\n${m}`; el.scrollTop=el.scrollHeight; };
     const short = (pk)=> pk? pk.slice(0,4)+"…"+pk.slice(-4) : "—";
 
-    /***** STATE *****
-     - connection: web3.js connection (voor balance)
-     - umi: Umi client met CandyMachine + TokenMetadata
-    *************************************/
-    let connection = new Connection(RPC_URL, "confirmed");
+    /***** STATE *****/
+    const connection = new Connection(RPC_URL, "confirmed");
     const umi = createUmi(createWeb3JsRpc(RPC_URL))
       .use(mplTokenMetadata())
       .use(mplCandyMachine());
 
-    let wallet = null;           // huidig gekozen wallet adapter
+    let wallet = null;
     let walletPublicKey = null;
     const walletAdapterList = [
       new PhantomWalletAdapter(),
@@ -163,18 +143,14 @@
 
     /***** WALLET CONNECT *****/
     async function connectWallet() {
-      // Kies de eerste beschikbare wallet (Phantom > Backpack > Solflare)
       wallet = walletAdapterList.find(w => w.readyState === "Installed") || walletAdapterList[0];
-
       try {
         await wallet.connect();
       } catch (e){
-        if (wallet instanceof PhantomWalletAdapter) {
-          window.open("https://phantom.app/", "_blank");
-        }
+        // fallback: open Phantom site als niet geïnstalleerd
+        if (wallet && wallet.url) window.open(wallet.url, "_blank");
         throw e;
       }
-
       walletPublicKey = wallet.publicKey?.toBase58() || null;
       if(!walletPublicKey) throw new Error("No public key from wallet.");
 
@@ -189,16 +165,14 @@
       $("#mintBtn").classList.remove("btn-disabled");
     }
 
-    /***** FETCH PRICE FROM GUARD (if present) *****/
+    /***** PRICE FROM GUARD *****/
     async function getGuardPriceText(guard) {
       try {
         const g = guard.guards;
-        // primary: default solPayment
         if (g.solPayment && g.solPayment.__option === "Some") {
           const lamports = Number(g.solPayment.value.amount.basisPoints);
           return (lamports / LAMPORTS_PER_SOL) + " SOL";
         }
-        // named group
         if (GUARD_GROUP && guard.groups) {
           const grp = guard.groups.find(gr => gr.label === GUARD_GROUP);
           if (grp && grp.guards.solPayment && grp.guards.solPayment.__option === "Some") {
@@ -206,20 +180,20 @@
             return (lamports / LAMPORTS_PER_SOL) + " SOL";
           }
         }
-      } catch(e){
-        // ignore, return generic
-      }
+      } catch(_) {}
       return "Guard price";
     }
 
-    /***** CANDY MACHINE STATE *****/
+    /***** STATE LOAD *****
+     - fetch CM itemsAvailable/itemsMinted
+     - fetch Guard voor prijs
+    ***********************************************/
     async function refreshState() {
       $("#remaining").textContent = "—";
       $("#mintPrice").textContent = "Loading…";
       try {
         const cmPk = publicKey(CANDY_MACHINE_ID);
         const cm = await fetchCandyMachine(umi, cmPk);
-
         const available = Number(cm.data.itemsAvailable);
         const minted   = Number(cm.itemsMinted);
         const rem = Math.max(available - minted, 0);
@@ -251,13 +225,11 @@
         log("⛏️ Building mint transaction…");
 
         const nftMint = generateSigner(umi);
-
         const tx = await mintV2(umi, {
           candyMachine: publicKey(CANDY_MACHINE_ID),
           candyGuard: publicKey(CANDY_GUARD_ID),
-          group: GUARD_GROUP,  // bv. "public" of null
+          group: GUARD_GROUP,
           nftMint,
-          // Tip: als je collection PDA/authority required is, Candy Guard handelt dit af
         });
 
         const sig = await tx.sendAndConfirm(umi, { confirm: { commitment: "confirmed" }});
@@ -277,7 +249,7 @@
     $("#refreshBtn").addEventListener("click", refreshState);
     $("#mintBtn").addEventListener("click", doMint);
 
-    // Auto-load CM state
+    // initial load
     refreshState();
   </script>
 </body>
