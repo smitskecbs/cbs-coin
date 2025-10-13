@@ -7,11 +7,9 @@
   <meta name="color-scheme" content="dark light" />
   <style>
     :root{
-      --bg:#0a0a0a; --card:#0f1115; --ink:#e6e9ef; --muted:#cbd5e1; --line:#1f2430;
-      --r:18px;
+      --bg:#0a0a0a; --card:#0f1115; --ink:#e6e9ef; --muted:#cbd5e1; --line:#1f2430; --r:18px;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
+    *{box-sizing:border-box} html,body{height:100%}
     body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,Segoe UI,Inter,Roboto,Arial,sans-serif}
     .wrap{max-width:1100px;margin:0 auto;padding:16px}
     .hero{position:relative;background:#000;border:1px solid var(--line);border-radius:16px;overflow:hidden}
@@ -25,16 +23,14 @@
     p{color:var(--muted);margin:0 0 8px}
     .row{display:flex;gap:18px;flex-wrap:wrap}
     .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:16px}
-    .card.grow{flex:1 1 480px}
-    .card.side{flex:1 1 360px}
+    .card.grow{flex:1 1 480px} .card.side{flex:1 1 360px}
     .btn{appearance:none;border:1px solid #2a3242;background:#12151b;color:#fff;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer}
     .btn[disabled]{opacity:.55;cursor:not-allowed}
     .cluster{display:flex;gap:10px;flex-wrap:wrap}
-    textarea{width:100%;height:220px;background:#0b1020;color:#dbe3ff;border:1px solid #223;outline:none;border-radius:12px;padding:10px;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Courier New", monospace}
+    textarea{width:100%;height:220px;background:#0b1020;color:#dbe3ff;border:1px solid #223;outline:none;border-radius:12px;padding:10px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
     .kv{display:grid;grid-template-columns:180px 1fr;gap:6px 12px}
     .kv div{padding:4px 0;border-bottom:1px dashed #222}
-    .links a{color:#bcd1ff;text-decoration:none}
-    .links a:hover{text-decoration:underline}
+    .links a{color:#bcd1ff;text-decoration:none} .links a:hover{text-decoration:underline}
     .tg{display:inline-grid;place-items:center;width:46px;height:46px;border-radius:50%;
         background: radial-gradient(circle at 30% 30%,#ffe27a,#d4a814 70%); border:1px solid rgba(255,255,255,.15);
         box-shadow:0 0 12px rgba(241,196,15,.35), 0 0 20px rgba(167,139,250,.18); transition:transform .1s}
@@ -67,7 +63,7 @@
           </a>
         </div>
         <textarea id="log" readonly>idle</textarea>
-        <div class="tip">Tip: if something looks off, hard refresh (Ctrl+F5).</div>
+        <div class="tip">Tip: if something looks off, hard refresh (Ctrl+F5). Make sure Phantom is installed and trusted for this site.</div>
       </section>
 
       <aside class="card side">
@@ -89,7 +85,7 @@
     </div>
   </main>
 
-  <!-- MINT LOGIC -->
+  <!-- SINGLE-FILE MINT (CDN-ONLY) -->
   <script type="module">
     // ------- Your config -------
     const HELIUS_RPC = "https://mainnet.helius-rpc.com/?api-key=a9a11d45-2d40-4da0-a3b6-557b855f1e5c";
@@ -97,7 +93,7 @@
     const CMID       = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd";
     const CGID       = "9m94QDkzsEoJLdfHMpyQUCgdS6fXSP1AeoEzf4RLmcUv";
 
-    // ------- small helpers -------
+    // ------- tiny helpers -------
     const $ = (s)=>document.querySelector(s);
     const log = (m)=>{ const el=$("#log"); el.value += (el.value? "\n":"")+m; el.scrollTop=el.scrollHeight; }
     const setStatus = (t)=> $("#statusText").textContent = t;
@@ -106,13 +102,12 @@
     $("#solanafm").href = "https://solana.fm/address/"+CMID;
     $("#solscan").href  = "https://solscan.io/account/"+CMID;
 
-    // ------- resilient importer (5 CDNs + local /vendor) -------
+    // ------- resilient importer (4 CDNs) -------
     const CDN = {
       esm:   (pkg,v,extra="") => `https://esm.sh/${pkg}@${v}${extra}`,
       jsd:   (pkg,v)          => `https://cdn.jsdelivr.net/npm/${pkg}@${v}/+esm`,
       unpkg: (pkg,v)          => `https://unpkg.com/${pkg}@${v}?module`,
       sky:   (pkg,v)          => `https://cdn.skypack.dev/${pkg}@${v}`,
-      loc:   (file)           => new URL(file, import.meta.url).href,
     };
     async function tryImport(urls){
       for(const u of urls){
@@ -122,58 +117,51 @@
       return null;
     }
 
-    // package URL sets
+    // package URL sets (no local vendor)
     const web3Urls = [
       CDN.esm("@solana/web3.js","1.98.4","?target=es2022"),
       CDN.jsd("@solana/web3.js","1.98.4"),
       CDN.unpkg("@solana/web3.js","1.98.4"),
       CDN.sky("@solana/web3.js","1.98.4"),
-      CDN.loc("./vendor/umi.bundle.mjs") // harmless: brings web3 via umi bundle defaults when local
     ];
     const umiBundleUrls = [
       CDN.esm("@metaplex-foundation/umi-bundle-defaults","1.4.1"),
       CDN.jsd("@metaplex-foundation/umi-bundle-defaults","1.4.1"),
       CDN.unpkg("@metaplex-foundation/umi-bundle-defaults","1.4.1"),
       CDN.sky("@metaplex-foundation/umi-bundle-defaults","1.4.1"),
-      CDN.loc("./vendor/umi-bundle-defaults.bundle.mjs"),
     ];
     const umiCoreUrls = [
       CDN.esm("@metaplex-foundation/umi","1.4.1"),
       CDN.jsd("@metaplex-foundation/umi","1.4.1"),
       CDN.unpkg("@metaplex-foundation/umi","1.4.1"),
       CDN.sky("@metaplex-foundation/umi","1.4.1"),
-      CDN.loc("./vendor/umi.bundle.mjs"),
     ];
     const waSignerUrls = [
       CDN.esm("@metaplex-foundation/umi-signer-wallet-adapters","1.4.1","?exports=walletAdapterIdentity,walletAdapterIdentityPlugin,createWalletAdapterFromWallet,createWalletAdapter"),
       CDN.jsd("@metaplex-foundation/umi-signer-wallet-adapters","1.4.1"),
       CDN.unpkg("@metaplex-foundation/umi-signer-wallet-adapters","1.4.1"),
       CDN.sky("@metaplex-foundation/umi-signer-wallet-adapters","1.4.1"),
-      CDN.loc("./vendor/umi-signer-wallet-adapters.bundle.mjs"),
     ];
     const w3AdaptersUrls = [
       CDN.esm("@metaplex-foundation/umi-web3js-adapters","1.4.1","?exports=createSignerFromWallet,createSignerFromWalletAdapter"),
       CDN.jsd("@metaplex-foundation/umi-web3js-adapters","1.4.1"),
       CDN.unpkg("@metaplex-foundation/umi-web3js-adapters","1.4.1"),
       CDN.sky("@metaplex-foundation/umi-web3js-adapters","1.4.1"),
-      CDN.loc("./vendor/umi-web3js-adapters.bundle.mjs"),
     ];
     const tokenMetaUrls = [
       CDN.esm("@metaplex-foundation/mpl-token-metadata","3.1.0"),
       CDN.jsd("@metaplex-foundation/mpl-token-metadata","3.1.0"),
       CDN.unpkg("@metaplex-foundation/mpl-token-metadata","3.1.0"),
       CDN.sky("@metaplex-foundation/mpl-token-metadata","3.1.0"),
-      CDN.loc("./vendor/mpl-token-metadata.bundle.mjs"),
     ];
     const candyUrls = [
       CDN.esm("@metaplex-foundation/mpl-candy-machine","6.1.0"),
       CDN.jsd("@metaplex-foundation/mpl-candy-machine","6.1.0"),
       CDN.unpkg("@metaplex-foundation/mpl-candy-machine","6.1.0"),
       CDN.sky("@metaplex-foundation/mpl-candy-machine","6.1.0"),
-      CDN.loc("./vendor/mpl-candy-machine.bundle.mjs"),
     ];
 
-    // import libs (with fallbacks)
+    // import libs
     const web3      = await tryImport(web3Urls);
     const bundle    = await tryImport(umiBundleUrls);
     const core      = await tryImport(umiCoreUrls);
@@ -183,7 +171,7 @@
     const cm        = await tryImport(candyUrls);
 
     if(!web3 || !bundle || !core || !tm || !cm){
-      alert("Mint failed: Could not load modules (all CDNs + /vendor failed).");
+      alert("Mint failed: Could not load modules (all CDNs failed).");
       throw new Error("module load failure");
     }
 
@@ -193,7 +181,7 @@
     const { mplTokenMetadata } = tm;
     const { mplCandyMachine, fetchCandyMachine, mintV2 } = cm;
 
-    // ------- UI buttons -------
+    // UI
     const btnConnect = $("#btnConnect");
     const btnMint    = $("#btnMint");
     const btnCheck   = $("#btnCheck");
@@ -229,7 +217,7 @@
     btnMint.addEventListener("click", doMint);
 
     async function attachIdentity(umi){
-      // 1) Best: walletAdapterIdentity (umi-signer-wallet-adapters)
+      // Prefer umi-signer-wallet-adapters
       if (waSigner?.walletAdapterIdentity || waSigner?.walletAdapterIdentityPlugin) {
         try{
           const makeWA = waSigner.createWalletAdapterFromWallet || waSigner.createWalletAdapter || null;
@@ -241,14 +229,13 @@
           }
         }catch(e){ console.warn("walletAdapterIdentity failed", e); }
       }
-      // 2) Fallback: createSignerFromWallet (umi-web3js-adapters)
+      // Fallback to umi-web3js-adapters
       if (w3Adapters?.createSignerFromWallet) {
         try{
           umi.use(signerIdentity(w3Adapters.createSignerFromWallet(window.solana)));
           return true;
         }catch(e){ console.warn("createSignerFromWallet failed", e); }
       }
-      // 3) Fallback: createSignerFromWalletAdapter (if Phantom exposes adapter)
       if (w3Adapters?.createSignerFromWalletAdapter && window?.phantom?.solana?.adapter) {
         try{
           umi.use(signerIdentity(w3Adapters.createSignerFromWalletAdapter(window.phantom.solana.adapter)));
