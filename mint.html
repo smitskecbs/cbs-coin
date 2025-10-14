@@ -24,6 +24,7 @@
     }
     .wrap{max-width:1100px;margin:0 auto;padding:16px 14px 48px}
 
+    /* Banner */
     .banner{position:relative;overflow:hidden;border-radius:18px;border:1px solid rgba(255,255,255,.08);box-shadow:var(--ring);margin-bottom:14px;background:#0c1016}
     .banner img{width:100%;height:auto;display:block;object-fit:cover;max-height:260px}
     @media (max-width:640px){ .banner img{max-height:160px;object-position:center} }
@@ -31,7 +32,7 @@
     .hero{display:grid;grid-template-columns:100px 1fr;gap:14px;align-items:center;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));border-radius:18px;box-shadow:var(--ring);border:1px solid rgba(255,255,255,.08);padding:14px}
     .logoBox{width:100px;height:100px;border-radius:14px;overflow:hidden;background:#0c1016;display:grid;place-items:center}
     .logo{width:100%;height:100%;object-fit:contain}
-    .title{margin:0;font:46px/1 "Bangers",system-ui;letter-spacing:.4px;background:linear-gradient(90deg,#7ab7ff,#7dffe9,#ffde59,#ff7ab6,#7ab7ff);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rainbow 8s linear infinite;text-shadow:0 3px 0 rgba(0,0,0,.25)}
+    .title{margin:0;font:46px/1 "Bangers",system-ui;letter-spacing:.4px;background:linear-gradient(90deg,#7ab7ff,#7dffe9,#ffde59,#7ab7ff);background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rainbow 8s linear infinite;text-shadow:0 3px 0 rgba(0,0,0,.25)}
     .sub{margin:6px 0 0;color:var(--muted);font-weight:600}
     @keyframes rainbow{0%{background-position:0% 0}100%{background-position:300% 0}}
 
@@ -87,11 +88,14 @@
           <span id="who" class="note mono">—</span>
         </div>
 
-        <div class="row" style="margin-top:10px;">
+        <div class="row" style="margin-top:10px; align-items: center;">
           <!-- MINT-KNOP -->
           <span id="mintBadge" class="badge disabled" title="Connect & meet CBS requirement to mint">CBS token mint</span>
-          <input id="cbsField" class="read mono" readonly>
+          <input id="cbsField" class="read mono" readonly style="flex:1; min-width:220px">
         </div>
+
+        <!-- ✅ statusregel die de code gebruikt -->
+        <p id="mintMsg" class="note" style="margin-top:6px;"></p>
 
         <p class="note" style="margin-top:8px;">Your CBS balance: <b id="cbsBal">—</b> CBS</p>
         <p id="holderMsg" class="note warn">You need at least 1 CBS to mint.</p>
@@ -145,6 +149,10 @@
     const $ = (id)=>document.getElementById(id);
     const setTxt = (el,v)=>{ if(typeof el==='string') el=$(el); if(!el) return; el.textContent=v; };
     const fmt = (n)=>Number(n ?? 0).toLocaleString("en-US");
+    const setNote = (cls, txt) => {
+      const el = $("mintMsg"); if (!el) { console.log("[mintMsg]", cls, txt); return; }
+      el.className = "note " + (cls||""); el.textContent = txt||"";
+    };
 
     $("cbsField").value = CBS_MINT;
     $("cbsSol").href   = "https://solscan.io/token/"+CBS_MINT;
@@ -156,7 +164,7 @@
     const umi = createUmi(RPC_URL).use(mplCandyMachine()).use(mplTokenMetadata());
     let wallet=null, connected=false, cm, SOLD_OUT=false;
 
-    /* ===== Phantom/Injected provider minimal adapter ===== */
+    /* ===== Injected provider (Phantom compatible) ===== */
     class InjectedWalletAdapter {
       constructor(provider) { this.provider = provider; this.publicKey = null; }
       async connect(){
@@ -166,32 +174,13 @@
         if (!this.publicKey) throw new Error("No publicKey after connect");
       }
       async disconnect(){ try{ await this.provider.disconnect(); }catch(_){} }
-      // UMI walletAdapterIdentity verwacht signTransaction/signAllTransactions
       async signTransaction(tx){ return this.provider.signTransaction(tx); }
       async signAllTransactions(txs){ return this.provider.signAllTransactions(txs); }
       async signMessage(msg){ return this.provider.signMessage(msg); }
     }
-
     function getInjected(kind){
-      // Phantom standaard
       if (kind === "phantom") return window?.phantom?.solana || window?.solana;
-      // Generic fallback (sommige wallets emuleren Phantom API via window.solana)
       return window?.solana || window?.phantom?.solana;
-    }
-
-    function debug(line) {
-      const id = "mintDebug";
-      let el = document.getElementById(id);
-      if (!el) {
-        const p = document.createElement("p");
-        p.id = id; p.className = "note mono";
-        p.style.whiteSpace = "pre-wrap";
-        const target = document.querySelectorAll(".card")[0];
-        target.appendChild(p);
-        el = p;
-      }
-      el.textContent += (el.textContent ? "\n" : "") + line;
-      console.log("[CBS]", line);
     }
 
     /* ===== UI/Stats ===== */
@@ -202,7 +191,7 @@
       $("meterFill").style.width = pct.toFixed(2)+"%";
       SOLD_OUT = (available>0 && minted >= available);
       updateMintBadgeState();
-      if (SOLD_OUT) { setTxt("mintMsg","Sold out"); $("mintMsg").className="note warn"; }
+      if (SOLD_OUT) setNote("warn","Sold out");
     }
 
     async function refresh(){
@@ -213,12 +202,13 @@
         setSoldUI(minted, avail);
       }catch(e){
         console.error(e);
-        setTxt("mintMsg","Failed to load drop data."); $("mintMsg").className="note err";
+        setNote("err","Failed to load drop data.");
       }
     }
 
     function updateMintBadgeState(canMint=false){
       const b = $("mintBadge");
+      if (!b) return;
       if (SOLD_OUT || !connected || !canMint){ b.classList.add("disabled"); }
       else { b.classList.remove("disabled"); }
     }
@@ -250,7 +240,7 @@
         localStorage.setItem(LS_LAST_WALLET, kind);
         await updateHolderState();
       }catch(e){
-        debug("Connect error: "+(e?.message||e));
+        console.error(e);
         setTxt("who","—");
         $("holderMsg").className="note err";
         setTxt("holderMsg","Wallet connect failed.");
@@ -262,13 +252,7 @@
       if (!last) return;
       const prov = getInjected(last);
       if (!prov) return;
-      try {
-        debug("AutoConnect: "+last);
-        await connectWallet();
-        $("walletPicker").value = last;
-      } catch(e){
-        debug("AutoConnect failed: "+(e?.message||e));
-      }
+      try { await connectWallet(); $("walletPicker").value = last; } catch(_) {}
     }
 
     /* ===== Balances ===== */
@@ -321,7 +305,7 @@
       a.href = "https://solscan.io/tx/"+signature;
       a.target="_blank"; a.rel="noreferrer";
       a.textContent = label; a.style.marginLeft="8px";
-      $("mintMsg").appendChild(a);
+      const el = $("mintMsg"); if (el) el.appendChild(a); else console.log("tx:", signature);
     }
 
     /* ===== Guard: auto-mintArgs ===== */
@@ -340,13 +324,12 @@
     async function doMint(){
       try{
         if(!connected || SOLD_OUT) return;
-        $("mintMsg").className="note";
-        setTxt("mintMsg","Sending mint…");
+        setNote("", "Sending mint…");
 
         const owner = wallet.publicKey;
         const [cbs, sol] = await Promise.all([ getCbsBalance(owner), getSolBalance(owner) ]);
-        if (cbs < CBS_THRESHOLD){ $("mintMsg").className="note warn"; setTxt("mintMsg","Guard: wallet needs ≥ 1 CBS."); return; }
-        if (sol < MIN_SOL_RENT){ $("mintMsg").className="note warn"; setTxt("mintMsg",`Not enough SOL for rent (~${MIN_SOL_RENT} SOL).`); return; }
+        if (cbs < CBS_THRESHOLD){ setNote("warn","Guard: wallet needs ≥ 1 CBS."); return; }
+        if (sol < MIN_SOL_RENT){ setNote("warn",`Not enough SOL for rent (~${MIN_SOL_RENT} SOL).`); return; }
 
         await refresh();
         const before = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
@@ -370,25 +353,23 @@
           sig = Array.isArray(res) ? res[0] : (typeof res==='string' ? res : res?.signature);
         }catch(err){
           const raw = (err?.cause?.logs?.[0] || err?.cause?.message || err?.message || "").toString();
-          $("mintMsg").className="note err";
-          if (raw.toLowerCase().includes("insufficient")) setTxt("mintMsg","Not enough SOL for accounts/fees.");
-          else if (raw.toLowerCase().includes("last")) setTxt("mintMsg","BotTax lastInstruction blocked (set to false).");
-          else if (raw.toLowerCase().includes("token") || raw.toLowerCase().includes("guard")) setTxt("mintMsg","Guard condition not met (likely token gate).");
-          else setTxt("mintMsg","Mint failed (simulation). "+raw.slice(0,140));
+          if (raw.toLowerCase().includes("insufficient")) setNote("err","Not enough SOL for accounts/fees.");
+          else if (raw.toLowerCase().includes("last")) setNote("err","BotTax lastInstruction blocked (set to false).");
+          else if (raw.toLowerCase().includes("token") || raw.toLowerCase().includes("guard")) setNote("err","Guard condition not met (likely token gate).");
+          else setNote("err","Mint failed (simulation). "+raw.slice(0,140));
           showTxLink(sig); return;
         }
 
         await refresh();
         const after = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
-        if (after <= before) { $("mintMsg").className="note err"; setTxt("mintMsg","Mint not confirmed (guard/conditions)."); showTxLink(sig); return; }
+        if (after <= before) { setNote("err","Mint not confirmed (guard/conditions)."); showTxLink(sig); return; }
 
-        $("mintMsg").className="note ok";
-        setTxt("mintMsg","Mint confirmed ✅ "); showTxLink(sig,"View on Solscan");
+        setNote("ok","Mint confirmed ✅ ");
+        showTxLink(sig,"View on Solscan");
         await updateHolderState();
       }catch(e){
         console.error(e);
-        $("mintMsg").className="note err";
-        setTxt("mintMsg","Mint failed: "+(e?.message||"Unexpected error"));
+        setNote("err","Mint failed: "+(e?.message||"Unexpected error"));
       }
     }
 
@@ -399,9 +380,9 @@
 
     (async () => {
       await refresh();
-      // auto-connect als Phantom al geautoriseerd is
       await tryAutoConnect();
     })();
   </script>
 </body>
 </html>
+
