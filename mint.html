@@ -117,7 +117,7 @@
         </div>
 
         <div class="meter" style="margin:10px 0 8px;"><i id="meterFill"></i></div>
-        <p class="note">Minted: <b id="minted">0</b> / <b id="available">0</b></p>
+        <p class="note">Minted: <b id="minted">1</b> / <b id="available">1,000</b></p>
 
         <div class="row" style="margin-top:8px;">
           <button id="btnRefresh" class="btn">Refresh</button>
@@ -158,18 +158,18 @@
     import { Connection, PublicKey, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.95.3";
 
     /* ===== Config ===== */
-    const HELIUS_KEY      = "0eb350f0-a032-468c-8b03-b8b079e09611";
-    const RPC_URL         = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
+    const HELIUS_KEY        = "0eb350f0-a032-468c-8b03-b8b079e09611";
+    const RPC_URL           = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
 
     // sanitize + consistent keys
-    const CANDY_MACHINE   = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd".trim();
-    const CANDY_GUARD     = "9m94QDkzsEoJLdfHMpyQUCgdS6fXSP1AeoEzf4RLmcUv".trim(); // guard is actief
-    const GUARD_GROUP_NAME = ""; // groups: none
+    const CANDY_MACHINE_ID  = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd".trim();
+    const CANDY_GUARD_ID    = "9m94QDkzsEoJLdfHMpyQUCgdS6fXSP1AeoEzf4RLmcUv".trim(); // guard actief
+    const GUARD_GROUP_NAME  = ""; // groups: none
+    const CBS_MINT_ID       = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk".trim();
 
-    const CBS_MINT        = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk".trim();
-    const CBS_THRESHOLD   = 1;
-    const MIN_SOL_RENT    = 0.02;
-    const LS_LAST_WALLET  = "cbs_last_wallet";
+    const CBS_THRESHOLD     = 1;
+    const MIN_SOL_RENT      = 0.02;
+    const LS_LAST_WALLET    = "cbs_last_wallet";
 
     /* ===== Helpers / UI ===== */
     const $ = (id)=>document.getElementById(id);
@@ -177,10 +177,10 @@
     const fmt = (n)=>Number(n ?? 0).toLocaleString("en-US");
     const setNote = (cls, txt) => { const el = $("mintMsg"); if (!el) return; el.className = "note " + (cls||""); el.textContent = txt||""; };
 
-    $("cbsField").value = CBS_MINT;
-    $("cbsSol").href   = "https://solscan.io/token/"+CBS_MINT;
-    $("cmField").value = CANDY_MACHINE;
-    $("cmSol").href    = "https://solscan.io/account/"+CANDY_MACHINE;
+    $("cbsField").value = CBS_MINT_ID;
+    $("cbsSol").href   = "https://solscan.io/token/"+CBS_MINT_ID;
+    $("cmField").value = CANDY_MACHINE_ID;
+    $("cmSol").href    = "https://solscan.io/account/"+CANDY_MACHINE_ID;
 
     /* ===== Chain ===== */
     const connection = new Connection(RPC_URL, "confirmed");
@@ -215,7 +215,7 @@
     }
     async function refresh(){
       try{
-        cm = await fetchCandyMachine(umi, umiPk(CANDY_MACHINE));
+        cm = await fetchCandyMachine(umi, umiPk(CANDY_MACHINE_ID));
         const minted = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
         const avail  = Number(cm.itemsAvailable ?? cm.data?.itemsAvailable ?? 0);
         setSoldUI(minted, avail);
@@ -267,7 +267,7 @@
     }
 
     async function getCbsBalance(ownerPk){
-      const res = await connection.getParsedTokenAccountsByOwner(ownerPk, { mint: new PublicKey(CBS_MINT) });
+      const res = await connection.getParsedTokenAccountsByOwner(ownerPk, { mint: new PublicKey(CBS_MINT_ID) });
       let total = 0; for (const acc of (res.value||[])){ const ui = acc.account?.data?.parsed?.info?.tokenAmount?.uiAmount; total += Number(ui||0); }
       return total;
     }
@@ -293,14 +293,14 @@
 
     /* ===== Guard → mintArgs (tokenGate + mintLimit id:1) ===== */
     async function getMintArgs(){
-      if (!CANDY_GUARD) return {};
+      if (!CANDY_GUARD_ID) return {};
       try{
-        const guard = await fetchCandyGuard(umi, umiPk(CANDY_GUARD.trim()));
+        const guard = await fetchCandyGuard(umi, umiPk(CANDY_GUARD_ID));
         const args = {};
 
         const tg = guard.guards?.tokenGate;
         if (tg && tg.__option === "Some") {
-          args.tokenGate = some({ mint: umiPk(CBS_MINT.trim()) });
+          args.tokenGate = some({ mint: umiPk(CBS_MINT_ID) });
         }
 
         const ml = guard.guards?.mintLimit;
@@ -314,6 +314,11 @@
     }
 
     /* ===== Mint ===== */
+    function assertPk(label, v){
+      try { const pk = umiPk(String(v)); return pk; }
+      catch { throw new Error(`Bad PublicKey for ${label}: ${v}`); }
+    }
+
     async function doMint(){
       try{
         if(!connected || SOLD_OUT) return;
@@ -329,13 +334,23 @@
         const nftMint = generateSigner(umi);
         const mintArgs = await getMintArgs();
 
+        // Hard-cast & validate alle keys 1x
+        const cmPk   = assertPk("candyMachine", CANDY_MACHINE_ID);
+        const cgPk   = CANDY_GUARD_ID ? assertPk("candyGuard", CANDY_GUARD_ID) : null;
+
         const params = {
-          candyMachine: umiPk(CANDY_MACHINE.trim()),
+          candyMachine: cmPk,
           nftMint,
-          ...(CANDY_GUARD ? { candyGuard: umiPk(CANDY_GUARD.trim()) } : {}),
+          ...(cgPk ? { candyGuard: cgPk } : {}),
           ...(GUARD_GROUP_NAME ? { group: some(GUARD_GROUP_NAME) } : {}),
           ...(Object.keys(mintArgs).length ? { mintArgs } : {})
         };
+
+        console.log("mint params:", {
+          candyMachine: cmPk.toString(),
+          candyGuard: cgPk ? cgPk.toString() : null,
+          mintArgs
+        });
 
         const txb = transactionBuilder()
           .add(setComputeUnitLimit(umi, { units: 600_000 }))
@@ -347,7 +362,7 @@
           sig = Array.isArray(res) ? res[0] : (typeof res==='string' ? res : res?.signature);
         }catch(err){
           const raw = (err?.cause?.logs?.[0] || err?.cause?.message || err?.message || "").toString();
-          if (raw.toLowerCase().includes("publickey")) setNote("err","Mint config error: check CM/Guard IDs.");
+          if (raw.toLowerCase().includes("publickey")) setNote("err","Mint config error: check CM/Guard IDs (see console).");
           else if (raw.toLowerCase().includes("insufficient")) setNote("err","Not enough SOL for accounts/fees.");
           else if (raw.toLowerCase().includes("guard")) setNote("err","Guard condition not met (token/mintLimit).");
           else setNote("err","Mint failed. "+raw.slice(0,140));
@@ -376,4 +391,3 @@
   </script>
 </body>
 </html>
-
