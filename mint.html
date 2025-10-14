@@ -11,7 +11,6 @@
     :root{
       --bg:#0e0f12; --panel:#0f1218; --card:#151a23; --ink:#e9fbff; --muted:#a9c9d0;
       --ok:#1fe39f; --warn:#ffb167; --err:#ff6b6b;
-      /* Gold theme */
       --gold1:#FFE08A; --gold2:#FFC24A; --gold3:#F39C12; --gold-glow:rgba(243,156,18,.45);
       --ring:0 12px 30px rgba(0,0,0,.25), inset 0 0 0 1px rgba(255,255,255,.06);
     }
@@ -25,19 +24,15 @@
       -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; overflow-x:hidden;
     }
     .wrap{max-width:1100px;margin:0 auto;padding:16px 14px 48px}
-
-    /* Banner */
     .banner{position:relative;overflow:hidden;border-radius:18px;border:1px solid rgba(255,255,255,.08);box-shadow:var(--ring);margin-bottom:14px;background:#0c1016}
     .banner img{width:100%;height:auto;display:block;object-fit:cover;max-height:260px}
     @media (max-width:640px){ .banner img{max-height:160px;object-position:center} }
-
     .hero{display:grid;grid-template-columns:100px 1fr;gap:14px;align-items:center;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));border-radius:18px;box-shadow:var(--ring);border:1px solid rgba(255,255,255,.08);padding:14px}
     .logoBox{width:100px;height:100px;border-radius:14px;overflow:hidden;background:#0c1016;display:grid;place-items:center}
     .logo{width:100%;height:100%;object-fit:contain}
     .title{margin:0;font:46px/1 "Bangers",system-ui;letter-spacing:.4px;background:linear-gradient(90deg,var(--gold2),#fff,var(--gold1),var(--gold3),var(--gold2));background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rainbow 8s linear infinite;text-shadow:0 3px 0 rgba(0,0,0,.25)}
     .sub{margin:6px 0 0;color:var(--muted);font-weight:600}
     @keyframes rainbow{0%{background-position:0% 0}100%{background-position:300% 0}}
-
     .grid{display:grid;gap:14px;grid-template-columns:1fr}
     @media (min-width:940px){ .grid{grid-template-columns:1fr 1fr} }
     .card{background:linear-gradient(180deg,var(--card),rgba(21,26,35,.7));border:1px solid rgba(255,255,255,.08);border-radius:18px;box-shadow:var(--ring);padding:14px}
@@ -45,8 +40,6 @@
     .h3{margin:2px 0 10px;font:30px/1 "Bangers",system-ui;letter-spacing:.3px}
     .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
     .mono{font-family:ui-monospace,Menlo,Monaco,Consolas,"Courier New",monospace}
-
-    /* Gold buttons & pills */
     .btn, .badge{
       display:inline-flex; align-items:center; justify-content:center; gap:10px;
       padding:12px 18px; border-radius:14px; cursor:pointer; user-select:none;
@@ -59,18 +52,13 @@
     .btn:active,.badge:active{ transform:translateY(1px) }
     .btn.disabled,.badge.disabled{ opacity:.55; cursor:not-allowed; filter:saturate(.5) }
     .badge{padding:10px 14px;border-radius:12px}
-
     input.read{width:100%;min-width:260px;padding:11px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--ink);font-weight:700}
-
     .meter{height:10px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);overflow:hidden}
     .meter>i{display:block;height:100%;background:linear-gradient(90deg,#1fe39f,#7dffe9);width:0%}
-
     .note{margin:8px 0 0;color:var(--muted)}
     .ok{color:var(--ok)} .warn{color:var(--warn)} .err{color:var(--err)}
-
     .walletSelect{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
     .walletSelect select{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);color:var(--ink);padding:10px 12px;border-radius:12px;font-weight:700}
-
     .tgIcon{width:22px;height:22px;display:inline-block}
   </style>
 </head>
@@ -87,7 +75,6 @@
     </section>
 
     <div class="grid" style="margin-top:14px;">
-      <!-- WALLET -->
       <section class="card">
         <h2 class="h3">Wallet</h2>
         <div class="row walletSelect">
@@ -100,20 +87,16 @@
         </div>
 
         <div class="row" style="margin-top:10px; align-items: center;">
-          <!-- MINT-KNOP -->
           <span id="mintBadge" class="badge disabled" title="Connect & meet CBS requirement to mint">CBS token mint</span>
           <input id="cbsField" class="read mono" readonly style="flex:1; min-width:220px">
         </div>
 
-        <!-- statusregel -->
         <p id="mintMsg" class="note" style="margin-top:6px;"></p>
-
         <p class="note" style="margin-top:8px;">Your CBS balance: <b id="cbsBal">—</b> CBS</p>
         <p id="holderMsg" class="note warn">You need at least 1 CBS to mint.</p>
         <p class="note"><a id="cbsSol" class="mono" target="_blank" rel="noreferrer">View CBS on Solscan</a></p>
       </section>
 
-      <!-- DROP -->
       <section class="card">
         <h2 class="h3">Drop Status</h2>
         <div class="row">
@@ -130,17 +113,14 @@
         </div>
       </section>
 
-      <!-- TELEGRAM (Holders only) -->
       <section class="card span2">
         <h2 class="h3">Community</h2>
         <div class="row" style="gap:12px;">
           <a id="tgButton" class="btn disabled" title="Only for holders" target="_blank" rel="noreferrer" aria-disabled="true">
             <svg class="tgIcon" viewBox="0 0 24 24" aria-hidden="true">
-              <defs>
-                <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stop-color="var(--gold1)"/><stop offset="60%" stop-color="var(--gold2)"/><stop offset="100%" stop-color="var(--gold3)"/>
-                </linearGradient>
-              </defs>
+              <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="var(--gold1)"/><stop offset="60%" stop-color="var(--gold2)"/><stop offset="100%" stop-color="var(--gold3)"/>
+              </linearGradient></defs>
               <circle cx="12" cy="12" r="11" fill="url(#g)" />
               <path d="M17.9 7.3c.2-.9-.6-1.2-1.2-1l-12 4.6c-.8.3-.8.8-.1 1l3.1 1c.3.1.6 0 .8-.2l6.1-3.8c.3-.2.6 0 .4.2l-4.9 4.6c-.2.2-.2.5 0 .7l3.6 2.7c.3.2.7.1.8-.2l2.3-9.6z" fill="#1B2330"/>
             </svg>
@@ -153,8 +133,7 @@
 
   <script type="module">
     /* ===== Imports ===== */
-    import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
-    import { publicKey, generateSigner, transactionBuilder, some, none, publicKey as pk } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
+    import { createUmi, publicKey as umiPk, some, none } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
     import { signerIdentity } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
     import { createSignerFromWalletAdapter } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
     import { mplCandyMachine, fetchCandyMachine, fetchCandyGuard, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
@@ -166,13 +145,15 @@
     const HELIUS_KEY      = "0eb350f0-a032-468c-8b03-b8b079e09611";
     const RPC_URL         = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
 
+    // <<< vul deze twee juist in >>>
     const CANDY_MACHINE   = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd";
-    const CANDY_GUARD     = "9m94QDkzsEoJLdfHMpyQUCgdS6fXSP1AeoEzf4RLmcUv";
+    const CANDY_GUARD     = "9m94QDkzsEoJLdfHMpyQUCgdS6fXSP1AeoEzf4RLmcUv"; // laat leeg "" als er géén guard is
     const CBS_MINT        = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
 
     const CBS_THRESHOLD   = 1;
     const MIN_SOL_RENT    = 0.02;
-    const GUARD_GROUP     = none();  // geen groups
+    const GUARD_GROUP_NAME = ""; // bv. "default" als je groups gebruikt, anders leeg laten
+
     const LS_LAST_WALLET  = "cbs_last_wallet";
 
     /* ===== Helpers / UI ===== */
@@ -219,7 +200,7 @@
     }
     async function refresh(){
       try{
-        cm = await fetchCandyMachine(umi, publicKey(CANDY_MACHINE));
+        cm = await fetchCandyMachine(umi, umiPk(CANDY_MACHINE));
         const minted = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? cm.itemsMinted ?? 0);
         const avail  = Number(cm.itemsAvailable ?? cm.data?.itemsAvailable ?? cm.itemsLoaded ?? 0);
         setSoldUI(minted, avail);
@@ -249,7 +230,6 @@
         wallet = new InjectedWalletAdapter(provider);
         await wallet.connect();
 
-        // >>> Stabiele identity: maak Umi-signer uit injected adapter
         const wa = {
           publicKey: wallet.publicKey,
           signTransaction: (tx) => wallet.signTransaction(tx),
@@ -269,11 +249,6 @@
         setTxt("who","—");
         $("holderMsg").className="note err"; setTxt("holderMsg","Wallet connect failed.");
       }
-    }
-    async function tryAutoConnect(){
-      const last = localStorage.getItem(LS_LAST_WALLET); if (!last) return;
-      const prov = getInjected(last); if (!prov) return;
-      try { await connectWallet(); $("walletPicker").value = last; } catch(_) {}
     }
 
     async function getCbsBalance(ownerPk){
@@ -301,55 +276,63 @@
       const el = $("mintMsg"); if (el) el.appendChild(a); else console.log("tx:", signature);
     }
 
+    /* Read guard → build mintArgs only if needed */
     async function getMintArgs(){
+      if (!CANDY_GUARD) return {};
       try{
-        const guard = await fetchCandyGuard(umi, pk(CANDY_GUARD));
+        const guard = await fetchCandyGuard(umi, umiPk(CANDY_GUARD));
         const tk = guard.guards?.tokenGate;
-        const tkSome = tk && tk.__option === "Some";
-        const args = {};
-        if (tkSome) args.tokenGate = some({ mint: pk(CBS_MINT) });
-        return args;
+        if (tk && tk.__option === "Some") {
+          return { tokenGate: some({ mint: umiPk(CBS_MINT) }) };
+        }
+        return {};
       } catch { return {}; }
     }
+
+    function someIfStr(s){ return s ? some(s) : undefined; }
 
     async function doMint(){
       try{
         if(!connected || SOLD_OUT) return;
         setNote("", "Sending mint…");
+
         const owner = wallet.publicKey;
         const [cbs, sol] = await Promise.all([ getCbsBalance(owner), getSolBalance(owner) ]);
         if (cbs < CBS_THRESHOLD){ setNote("warn","Guard: wallet needs ≥ 1 CBS."); return; }
         if (sol < MIN_SOL_RENT){ setNote("warn",`Not enough SOL for rent (~${MIN_SOL_RENT} SOL).`); return; }
 
         await refresh(); const before = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
-        const nftMint = generateSigner(umi);
+
+        const nftMint = (await import("https://esm.sh/@metaplex-foundation/umi@1.4.1")).generateSigner(umi);
         const mintArgs = await getMintArgs();
 
-        const tx = transactionBuilder()
+        const params = {
+          candyMachine: umiPk(CANDY_MACHINE),
+          nftMint,
+          ...(CANDY_GUARD ? { candyGuard: umiPk(CANDY_GUARD) } : {}),
+          ...(GUARD_GROUP_NAME ? { group: someIfStr(GUARD_GROUP_NAME) } : {}),
+          ...(Object.keys(mintArgs).length ? { mintArgs } : {})
+        };
+
+        const txb = (await import("https://esm.sh/@metaplex-foundation/umi@1.4.1")).transactionBuilder()
           .add(setComputeUnitLimit(umi, { units: 600_000 }))
-          .add(mintV2(umi, {
-            candyMachine: publicKey(CANDY_MACHINE),
-            candyGuard:   publicKey(CANDY_GUARD),
-            group:        GUARD_GROUP,  // none()
-            nftMint,
-            mintArgs
-          }));
+          .add(mintV2(umi, params));
 
         let sig;
         try{
-          const res = await tx.sendAndConfirm(umi, { confirm: { commitment: "confirmed" }});
+          const res = await txb.sendAndConfirm(umi, { confirm: { commitment: "confirmed" }});
           sig = Array.isArray(res) ? res[0] : (typeof res==='string' ? res : res?.signature);
         }catch(err){
           const raw = (err?.cause?.logs?.[0] || err?.cause?.message || err?.message || "").toString();
-          if (raw.toLowerCase().includes("insufficient")) setNote("err","Not enough SOL for accounts/fees.");
-          else if (raw.toLowerCase().includes("last")) setNote("err","BotTax lastInstruction blocked (set to false).");
-          else if (raw.toLowerCase().includes("token") || raw.toLowerCase().includes("guard")) setNote("err","Guard condition not met (likely token gate).");
-          else setNote("err","Mint failed (simulation). "+raw.slice(0,140));
+          if (raw.toLowerCase().includes("publickey")) setNote("err","Mint config error: check Candy Machine / Guard IDs.");
+          else if (raw.toLowerCase().includes("insufficient")) setNote("err","Not enough SOL for accounts/fees.");
+          else if (raw.toLowerCase().includes("guard")) setNote("err","Guard condition not met (token gate?).");
+          else setNote("err","Mint failed. "+raw.slice(0,140));
           showTxLink(sig); return;
         }
 
         await refresh(); const after = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
-        if (after <= before) { setNote("err","Mint not confirmed (guard/conditions)."); showTxLink(sig); return; }
+        if (after <= before) { setNote("warn","Mint submitted, waiting for final confirmation…"); showTxLink(sig,"View on Solscan"); return; }
 
         setNote("ok","Mint confirmed ✅ "); showTxLink(sig,"View on Solscan");
         await updateHolderState();
@@ -363,7 +346,7 @@
     (async () => {
       await refresh();
       const last = localStorage.getItem(LS_LAST_WALLET);
-      if (last) { try { await connectWallet(); $("walletPicker").value = last; } catch(_){} }
+      if (last) { try { $("walletPicker").value = last; await connectWallet(); } catch(_){} }
     })();
   </script>
 </body>
