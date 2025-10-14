@@ -161,11 +161,12 @@
     const HELIUS_KEY      = "0eb350f0-a032-468c-8b03-b8b079e09611";
     const RPC_URL         = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
 
-    const CANDY_MACHINE   = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd";
-    const CANDY_GUARD     = "9m94QDkzsEoJLdfHMpyQUCgdS6fXSP1AeoEzf4RLmcUv"; // guard is actief
-    const GUARD_GROUP_NAME = ""; // groups: none volgens sugar guard show
+    // sanitize + consistent keys
+    const CANDY_MACHINE   = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd".trim();
+    const CANDY_GUARD     = "9m94QDkzsEoJLdfHMpyQUCgdS6fXSP1AeoEzf4RLmcUv".trim(); // guard is actief
+    const GUARD_GROUP_NAME = ""; // groups: none
 
-    const CBS_MINT        = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
+    const CBS_MINT        = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk".trim();
     const CBS_THRESHOLD   = 1;
     const MIN_SOL_RENT    = 0.02;
     const LS_LAST_WALLET  = "cbs_last_wallet";
@@ -294,16 +295,14 @@
     async function getMintArgs(){
       if (!CANDY_GUARD) return {};
       try{
-        const guard = await fetchCandyGuard(umi, umiPk(CANDY_GUARD));
+        const guard = await fetchCandyGuard(umi, umiPk(CANDY_GUARD.trim()));
         const args = {};
 
-        // tokenGate requirement (Some)
         const tg = guard.guards?.tokenGate;
         if (tg && tg.__option === "Some") {
-          args.tokenGate = some({ mint: umiPk(CBS_MINT) });
+          args.tokenGate = some({ mint: umiPk(CBS_MINT.trim()) });
         }
 
-        // mintLimit requirement (id must be provided) -> your guard shows id: 1
         const ml = guard.guards?.mintLimit;
         if (ml && ml.__option === "Some") {
           const id = Number(ml.value?.id ?? 1);
@@ -331,9 +330,9 @@
         const mintArgs = await getMintArgs();
 
         const params = {
-          candyMachine: umiPk(CANDY_MACHINE),
+          candyMachine: umiPk(CANDY_MACHINE.trim()),
           nftMint,
-          ...(CANDY_GUARD ? { candyGuard: umiPk(CANDY_GUARD) } : {}),
+          ...(CANDY_GUARD ? { candyGuard: umiPk(CANDY_GUARD.trim()) } : {}),
           ...(GUARD_GROUP_NAME ? { group: some(GUARD_GROUP_NAME) } : {}),
           ...(Object.keys(mintArgs).length ? { mintArgs } : {})
         };
@@ -348,7 +347,7 @@
           sig = Array.isArray(res) ? res[0] : (typeof res==='string' ? res : res?.signature);
         }catch(err){
           const raw = (err?.cause?.logs?.[0] || err?.cause?.message || err?.message || "").toString();
-          if (raw.toLowerCase().includes("publickey")) setNote("err","Mint config error: check Candy Machine / Guard IDs.");
+          if (raw.toLowerCase().includes("publickey")) setNote("err","Mint config error: check CM/Guard IDs.");
           else if (raw.toLowerCase().includes("insufficient")) setNote("err","Not enough SOL for accounts/fees.");
           else if (raw.toLowerCase().includes("guard")) setNote("err","Guard condition not met (token/mintLimit).");
           else setNote("err","Mint failed. "+raw.slice(0,140));
