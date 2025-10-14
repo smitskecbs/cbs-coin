@@ -144,7 +144,6 @@
             </svg>
             Join Telegram — holders only
           </a>
-          <span class="note">Toegang alleen voor holders (≥ 1 CBS).</span>
         </div>
       </section>
     </div>
@@ -170,7 +169,7 @@
 
     const CBS_THRESHOLD   = 1;
     const MIN_SOL_RENT    = 0.02;
-    const GUARD_GROUP     = null;  // geen groups
+    const GUARD_GROUP     = none();  // Option<string>: geen groups
 
     const LS_LAST_WALLET  = "cbs_last_wallet";
 
@@ -240,7 +239,7 @@
       if (!b) return;
       if (SOLD_OUT || !connected || !canMint){ b.classList.add("disabled"); }
       else { b.classList.remove("disabled"); }
-      // Telegram knop activeren/deactiveren
+      // Telegram knop
       const tg = $("tgButton");
       if (tg){
         if (canMint){
@@ -271,8 +270,11 @@
         wallet = new InjectedWalletAdapter(provider);
         await wallet.connect();
 
+        // >>> Belangrijk: Umi PublicKey gebruiken
+        const umiPk = publicKey(wallet.publicKey.toBase58());
+
         umi.use(walletAdapterIdentity({
-          publicKey: wallet.publicKey,
+          publicKey: umiPk,
           signTransaction: (tx)=>wallet.signTransaction(tx),
           signAllTransactions: (txs)=>wallet.signAllTransactions(txs),
           signMessage: (m)=>wallet.signMessage(m),
@@ -353,15 +355,17 @@
     }
 
     /* ===== Guard: auto-mintArgs ===== */
-    async function detectMintArgs(){
+    async function getMintArgs(){
       try{
         const guard = await fetchCandyGuard(umi, pk(CANDY_GUARD));
-        let mintArgs = {};
         const tk = guard.guards?.tokenGate;
         const tkSome = tk && tk.__option === "Some";
-        if (tkSome) mintArgs.tokenGate = some({ mint: pk(CBS_MINT) });
-        return Object.keys(mintArgs).length ? mintArgs : none();
-      } catch { return none(); }
+        const args = {};
+        if (tkSome) args.tokenGate = some({ mint: pk(CBS_MINT) });
+        return args; // belangrijk: GEEN none(), maar {} (kan lege zijn)
+      } catch {
+        return {};
+      }
     }
 
     /* ===== Mint ===== */
@@ -379,14 +383,14 @@
         const before = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
 
         const nftMint = generateSigner(umi);
-        const mintArgs = await detectMintArgs();
+        const mintArgs = await getMintArgs();
 
         const tx = transactionBuilder()
           .add(setComputeUnitLimit(umi, { units: 600_000 }))
           .add(mintV2(umi, {
             candyMachine: publicKey(CANDY_MACHINE),
-            candyGuard: publicKey(CANDY_GUARD),
-            group: GUARD_GROUP,
+            candyGuard:   publicKey(CANDY_GUARD),
+            group:        GUARD_GROUP,   // none()
             nftMint,
             mintArgs
           }));
