@@ -147,7 +147,7 @@
   </div>
 
   <script type="module">
-    /* ===== Imports (browser-safe) ===== */
+    /* ===== Imports ===== */
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
     import { publicKey as umiPk, generateSigner, transactionBuilder, some } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
@@ -160,17 +160,16 @@
     const HELIUS_KEY   = "0eb350f0-a032-468c-8b03-b8b079e09611";
     const RPC_URL      = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
 
-    // sanitize (trim) ID's
     const CANDY_MACHINE_ID = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd".trim();
-    const CANDY_GUARD_ID   = "9m94QDkzsEoJLdfHMpyQUCgdS6fXSP1AeoEzf4RLmcUv".trim(); // guard actief
+    const CANDY_GUARD_ID   = "9m94QDkzsEoJLdfHMpyQUCgdS6fXSP1AeoEzf4RLmcUv".trim();
     const CBS_MINT_ID      = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk".trim();
-    const GUARD_GROUP_NAME = ""; // jouw guard heeft geen groups
+    const GUARD_GROUP_NAME = "";
 
     const CBS_THRESHOLD = 1;
     const MIN_SOL_RENT  = 0.02;
     const LS_LAST_WALLET = "cbs_last_wallet";
 
-    /* ===== Helpers / UI ===== */
+    /* ===== UI helpers ===== */
     const $ = (id)=>document.getElementById(id);
     const setTxt = (el,v)=>{ if(typeof el==='string') el=$(el); if(!el) return; el.textContent=v; };
     const fmt = (n)=>Number(n ?? 0).toLocaleString("en-US");
@@ -186,7 +185,7 @@
     const umi = createUmi(RPC_URL).use(mplCandyMachine()).use(mplTokenMetadata());
     let connected=false, cm, SOLD_OUT=false;
 
-    /* ===== UI/Stats ===== */
+    /* ===== Stats ===== */
     function setSoldUI(minted, available){
       setTxt("minted", fmt(minted)); setTxt("available", fmt(available));
       const pct = (available>0) ? Math.min(100, Math.max(0,(minted/available)*100)) : 0;
@@ -228,14 +227,12 @@
           window.open("https://phantom.app/download", "_blank"); return;
         }
 
-        // Phantom connect
         const res = await provider.connect();
         const pkb58 = (provider.publicKey || res?.publicKey)?.toBase58?.() || (provider.publicKey || res?.publicKey)?.toString?.() || "unknown";
         setTxt("who", "Connected: "+pkb58.slice(0,6)+"…"+pkb58.slice(-6));
         localStorage.setItem(LS_LAST_WALLET, kind);
 
-        // Laat Umi de identity bepalen via de adapter (correcte PublicKey-types)
-        umi.use(walletAdapterIdentity(provider));
+        umi.use(walletAdapterIdentity(provider)); // juiste identity voor Umi
         connected = true;
 
         await updateHolderState();
@@ -280,26 +277,25 @@
 
         const tg = guard.guards?.tokenGate;
         if (tg && tg.__option === "Some") {
-          args.tokenGate = some({ mint: umiPk(CBS_MINT_ID) });
+          args.tokenGate = some({ mint: umiPk(CBS_MINT_ID) }); // <-- echte Option
         }
 
         const ml = guard.guards?.mintLimit;
         if (ml && ml.__option === "Some") {
           const id = Number(ml.value?.id ?? 1);
-          args.mintLimit = some({ id });
+          args.mintLimit = some({ id }); // <-- echte Option
         }
 
         return args;
       } catch { return {}; }
     }
 
-    /* ===== Mint (DIAG-versie) ===== */
+    /* ===== Mint ===== */
     async function doMint(){
       try{
         if(!connected || SOLD_OUT) return;
         setNote("", "Sending mint…");
 
-        // balances check
         const owner = new PublicKey(umi.identity.publicKey);
         const [cbs, sol] = await Promise.all([ getCbsBalance(owner), getSolBalance(owner) ]);
         if (cbs < CBS_THRESHOLD){ setNote("warn","Guard: wallet needs ≥ 1 CBS."); return; }
@@ -308,34 +304,17 @@
         await refresh(); const before = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
 
         const nftMint = generateSigner(umi);
-
-        // --- Force cast + log elk keyveld
-        let cmPk, cgPk, tgPk;
-        try { cmPk = umiPk(String(CANDY_MACHINE_ID).trim()); } catch(e){ console.error("BAD cm:", CANDY_MACHINE_ID, e); throw new Error("cmPk invalid"); }
-        try { cgPk = CANDY_GUARD_ID ? umiPk(String(CANDY_GUARD_ID).trim()) : null; } catch(e){ console.error("BAD guard:", CANDY_GUARD_ID, e); throw new Error("guardPk invalid"); }
-        try { tgPk = umiPk(String(CBS_MINT_ID).trim()); } catch(e){ console.error("BAD tokenGate mint:", CBS_MINT_ID, e); throw new Error("tokenGate.mint invalid"); }
-
-        // Guard-args: tokenGate + mintLimit id:1
-        const mintArgs = {
-          tokenGate: { __option: "Some", value: { mint: tgPk } },
-          mintLimit: { __option: "Some", value: { id: 1 } }
-        };
+        const mintArgs = await getMintArgs();
 
         const params = {
-          candyMachine: cmPk,
+          candyMachine: umiPk(CANDY_MACHINE_ID),
           nftMint,
-          ...(cgPk ? { candyGuard: cgPk } : {}),
-          ...(GUARD_GROUP_NAME ? { group: { __option: "Some", value: GUARD_GROUP_NAME } } : {}),
-          mintArgs
+          ...(CANDY_GUARD_ID ? { candyGuard: umiPk(CANDY_GUARD_ID) } : {}),
+          ...(GUARD_GROUP_NAME ? { group: some(GUARD_GROUP_NAME) } : {}),
+          ...(Object.keys(mintArgs).length ? { mintArgs } : {})
         };
 
-        console.log("mint params (diagnose):", {
-          cm: cmPk?.toString?.(),
-          guard: cgPk?.toString?.() || null,
-          tokenGateMint: tgPk?.toString?.(),
-          group: GUARD_GROUP_NAME || null,
-          mintArgs
-        });
+        console.log("cm:", String(CANDY_MACHINE_ID), "guard:", String(CANDY_GUARD_ID||"none"), "tgMint:", String(CBS_MINT_ID));
 
         const txb = transactionBuilder()
           .add(setComputeUnitLimit(umi, { units: 600_000 }))
@@ -347,7 +326,7 @@
           sig = Array.isArray(res) ? res[0] : (typeof res==='string' ? res : res?.signature);
         }catch(err){
           const raw = (err?.cause?.logs?.[0] || err?.cause?.message || err?.message || "").toString();
-          if (raw.toLowerCase().includes("publickey")) setNote("err","Mint config error: PublicKey (zie console).");
+          if (raw.toLowerCase().includes("publickey")) setNote("err","Mint config error: PublicKey (guard/ids).");
           else if (raw.toLowerCase().includes("insufficient")) setNote("err","Not enough SOL for accounts/fees.");
           else if (raw.toLowerCase().includes("guard")) setNote("err","Guard condition not met (token/mintLimit).");
           else setNote("err","Mint failed. "+raw.slice(0,140));
@@ -379,3 +358,4 @@
   </script>
 </body>
 </html>
+
