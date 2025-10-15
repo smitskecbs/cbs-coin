@@ -24,18 +24,15 @@
       -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; overflow-x:hidden;
     }
     .wrap{max-width:1100px;margin:0 auto;padding:16px 14px 48px}
-
     .banner{position:relative;overflow:hidden;border-radius:18px;border:1px solid rgba(255,255,255,.08);box-shadow:var(--ring);margin-bottom:14px;background:#0c1016}
     .banner img{width:100%;height:auto;display:block;object-fit:cover;max-height:260px}
     @media (max-width:640px){ .banner img{max-height:160px;object-position:center} }
-
     .hero{display:grid;grid-template-columns:100px 1fr;gap:14px;align-items:center;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));border-radius:18px;box-shadow:var(--ring);border:1px solid rgba(255,255,255,.08);padding:14px}
     .logoBox{width:100px;height:100px;border-radius:14px;overflow:hidden;background:#0c1016;display:grid;place-items:center}
     .logo{width:100%;height:100%;object-fit:contain}
     .title{margin:0;font:46px/1 "Bangers",system-ui;letter-spacing:.4px;background:linear-gradient(90deg,var(--gold2),#fff,var(--gold1),var(--gold3),var(--gold2));background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rainbow 8s linear infinite;text-shadow:0 3px 0 rgba(0,0,0,.25)}
     .sub{margin:6px 0 0;color:var(--muted);font-weight:600}
     @keyframes rainbow{0%{background-position:0% 0}100%{background-position:300% 0}}
-
     .grid{display:grid;gap:14px;grid-template-columns:1fr}
     @media (min-width:940px){ .grid{grid-template-columns:1fr 1fr} }
     .card{background:linear-gradient(180deg,var(--card),rgba(21,26,35,.7));border:1px solid rgba(255,255,255,.08);border-radius:18px;box-shadow:var(--ring);padding:14px}
@@ -43,7 +40,6 @@
     .h3{margin:2px 0 10px;font:30px/1 "Bangers",system-ui;letter-spacing:.3px}
     .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
     .mono{font-family:ui-monospace,Menlo,Monaco,Consolas,"Courier New",monospace}
-
     .btn, .badge{
       display:inline-flex; align-items:center; justify-content:center; gap:10px;
       padding:12px 18px; border-radius:14px; cursor:pointer; user-select:none;
@@ -56,18 +52,13 @@
     .btn:active,.badge:active{ transform:translateY(1px) }
     .btn.disabled,.badge.disabled{ opacity:.55; cursor:not-allowed; filter:saturate(.5) }
     .badge{padding:10px 14px;border-radius:12px}
-
     input.read{width:100%;min-width:260px;padding:11px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--ink);font-weight:700}
-
     .meter{height:10px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);overflow:hidden}
     .meter>i{display:block;height:100%;background:linear-gradient(90deg,#1fe39f,#7dffe9);width:0%}
-
     .note{margin:8px 0 0;color:var(--muted)}
     .ok{color:var(--ok)} .warn{color:var(--warn)} .err{color:var(--err)}
-
     .walletSelect{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
     .walletSelect select{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);color:var(--ink);padding:10px 12px;border-radius:12px;font-weight:700}
-
     .tgIcon{width:22px;height:22px;display:inline-block}
   </style>
 </head>
@@ -147,11 +138,10 @@
   </div>
 
   <script type="module">
-    /* === Eén runtime voor alles === */
+    /* === Eén Umi-runtime voor alles === */
     import {
       createUmi,
       publicKey as umiPk,
-      transactionBuilder,
       walletAdapterIdentity,
     } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1?bundle";
 
@@ -159,7 +149,7 @@
       mplCandyMachine, fetchCandyMachine, fetchCandyGuard, mintV2
     } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.2.0";
-    import { setComputeUnitLimit } from "https://esm.sh/@metaplex-foundation/mpl-toolbox@0.9.1";
+    // setComputeUnitLimit weglaten om extra builder te vermijden
 
     /* Alleen voor saldo’s */
     import { Connection, PublicKey, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.95.3";
@@ -183,7 +173,7 @@
     const fmt = (n)=>Number(n ?? 0).toLocaleString("en-US");
     const setNote = (cls, txt) => { const el = $("mintMsg"); if (!el) return; el.className = "note " + (cls||""); el.textContent = txt||""; };
 
-    // Umi Option helper (vervanger voor 'some' import)
+    // Option helper (vervanger voor 'some' import)
     const Some = (value) => ({ __option: "Some", value });
 
     $("cbsField").value = CBS_MINT_ID;
@@ -321,13 +311,10 @@
           ...(Object.keys(mintArgs).length ? { mintArgs } : {})
         };
 
-        const txb = transactionBuilder()
-          .add(setComputeUnitLimit(umi, { units: 600_000 }))
-          .add(mintV2(umi, params));
-
+        // Sla extra builder over; gebruik direct de builder van mintV2
         let sig;
         try{
-          const res = await txb.sendAndConfirm(umi, { confirm: { commitment: "confirmed" }});
+          const res = await mintV2(umi, params).sendAndConfirm(umi, { confirm: { commitment: "confirmed" }});
           sig = Array.isArray(res) ? res[0] : (typeof res==='string' ? res : res?.signature);
         }catch(err){
           const raw = (err?.cause?.logs?.[0] || err?.cause?.message || err?.message || "").toString();
