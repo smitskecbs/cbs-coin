@@ -147,23 +147,17 @@
   </div>
 
   <script type="module">
-    /* === Eén Umi-runtime voor alles === */
-    import {
-      createUmi,
-      walletAdapterIdentity,
-    } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1?bundle";
-
-    /* publicKey komt uit de Umi core (niet uit de bundle) */
-    import {
-      publicKey as umiPk,
-    } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
+    /* === Correcte imports === */
+    import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
+    import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
+    import { publicKey as umiPk, some } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
 
     import {
       mplCandyMachine, fetchCandyMachine, fetchCandyGuard, mintV2
     } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.2.0";
 
-    /* Alleen voor saldo’s */
+    // Alleen voor balances:
     import { Connection, PublicKey, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.95.3";
 
     /* ===== Config ===== */
@@ -184,9 +178,6 @@
     const setTxt = (el,v)=>{ if(typeof el==='string') el=$(el); if(!el) return; el.textContent=v; };
     const fmt = (n)=>Number(n ?? 0).toLocaleString("en-US");
     const setNote = (cls, txt) => { const el = $("mintMsg"); if (!el) return; el.className = "note " + (cls||""); el.textContent = txt||""; };
-
-    // Option helper (vervanger voor 'some'-import)
-    const Some = (value) => ({ __option: "Some", value });
 
     $("cbsField").value = CBS_MINT_ID;
     $("cbsSol").href   = "https://solscan.io/token/"+CBS_MINT_ID;
@@ -222,8 +213,17 @@
       else { b.classList.remove("disabled"); }
       const tg = $("tgButton");
       if (tg){
-        if (canMint){ tg.classList.remove("disabled"); tg.removeAttribute("aria-disabled"); tg.removeAttribute("title"); tg.href="https://t.me/CBS_Coins"; }
-        else { tg.classList.add("disabled"); tg.setAttribute("aria-disabled","true"); tg.setAttribute("title","Only for holders"); tg.removeAttribute("href"); }
+        if (canMint){
+          tg.classList.remove("disabled");
+          tg.removeAttribute("aria-disabled");
+          tg.removeAttribute("title");
+          tg.href="https://t.me/CBS_Coins"; // holders link
+        } else {
+          tg.classList.add("disabled");
+          tg.setAttribute("aria-disabled","true");
+          tg.setAttribute("title","Only for holders");
+          tg.removeAttribute("href");
+        }
       }
     }
 
@@ -288,11 +288,11 @@
         const guard = await fetchCandyGuard(umi, umiPk(CANDY_GUARD_ID));
         const args = {};
         if (guard.guards?.tokenGate?.__option === "Some") {
-          args.tokenGate = Some({ mint: umiPk(CBS_MINT_ID) });
+          args.tokenGate = some({ mint: umiPk(CBS_MINT_ID) });
         }
         if (guard.guards?.mintLimit?.__option === "Some") {
           const id = Number(guard.guards.mintLimit.value?.id ?? 1);
-          args.mintLimit = Some({ id });
+          args.mintLimit = some({ id });
         }
         return args;
       } catch { return {}; }
@@ -311,7 +311,6 @@
 
         await refresh(); const before = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
 
-        // signer voor de NFT-mint — uit dezelfde runtime
         const nftMint = umi.eddsa.generateKeypair();
 
         const mintArgs = await getMintArgs();
@@ -319,7 +318,7 @@
           candyMachine: umiPk(CANDY_MACHINE_ID),
           nftMint,
           ...(CANDY_GUARD_ID ? { candyGuard: umiPk(CANDY_GUARD_ID) } : {}),
-          ...(GUARD_GROUP_NAME ? { group: Some(GUARD_GROUP_NAME) } : {}),
+          ...(GUARD_GROUP_NAME ? { group: some(GUARD_GROUP_NAME) } : {}),
           ...(Object.keys(mintArgs).length ? { mintArgs } : {})
         };
 
