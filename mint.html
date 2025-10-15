@@ -147,9 +147,8 @@
   </div>
 
   <script type="module">
-    /* ===== Imports ===== */
-    import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
-    import { publicKey as umiPk, generateSigner, transactionBuilder, some } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
+    /* ===== Imports (alles uit dezelfde Umi-module) ===== */
+    import { createUmi, publicKey as umiPk, generateSigner, transactionBuilder, some } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
     import { mplCandyMachine, fetchCandyMachine, fetchCandyGuard, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.2.0";
@@ -163,13 +162,13 @@
     const CANDY_MACHINE_ID = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd".trim();
     const CANDY_GUARD_ID   = "9m94QDkzsEoJLdfHMpyQUCgdS6fXSP1AeoEzf4RLmcUv".trim();
     const CBS_MINT_ID      = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk".trim();
-    const GUARD_GROUP_NAME = "";
+    const GUARD_GROUP_NAME = ""; // geen groups
 
     const CBS_THRESHOLD = 1;
     const MIN_SOL_RENT  = 0.02;
     const LS_LAST_WALLET = "cbs_last_wallet";
 
-    /* ===== UI helpers ===== */
+    /* ===== Helpers / UI ===== */
     const $ = (id)=>document.getElementById(id);
     const setTxt = (el,v)=>{ if(typeof el==='string') el=$(el); if(!el) return; el.textContent=v; };
     const fmt = (n)=>Number(n ?? 0).toLocaleString("en-US");
@@ -185,7 +184,7 @@
     const umi = createUmi(RPC_URL).use(mplCandyMachine()).use(mplTokenMetadata());
     let connected=false, cm, SOLD_OUT=false;
 
-    /* ===== Stats ===== */
+    /* ===== UI/Stats ===== */
     function setSoldUI(minted, available){
       setTxt("minted", fmt(minted)); setTxt("available", fmt(available));
       const pct = (available>0) ? Math.min(100, Math.max(0,(minted/available)*100)) : 0;
@@ -232,7 +231,7 @@
         setTxt("who", "Connected: "+pkb58.slice(0,6)+"…"+pkb58.slice(-6));
         localStorage.setItem(LS_LAST_WALLET, kind);
 
-        umi.use(walletAdapterIdentity(provider)); // juiste identity voor Umi
+        umi.use(walletAdapterIdentity(provider)); // identity uit dezelfde umi-module
         connected = true;
 
         await updateHolderState();
@@ -259,7 +258,7 @@
         const hasCBS = cbs >= CBS_THRESHOLD, hasSOL = sol >= MIN_SOL_RENT;
         if (hasCBS && hasSOL){ $("holderMsg").className="note ok"; setTxt("holderMsg","CBS OK, you can mint ✅"); updateMintBadgeState(true); }
         else { $("holderMsg").className="note warn"; setTxt("holderMsg", `${hasCBS?"":"Need ≥ 1 CBS. "}${hasSOL?"":`Need ~${MIN_SOL_RENT} SOL for rent.`}`.trim()); updateMintBadgeState(false); }
-      }catch(e){ console.error(e); $("holderMsg").className="note err"; setTxt("holderMsg","Could not read wallet balances."); updateMintBadgeState(false); }
+      }catch(e){ console.error(e); $("holderMsg").className="note err"; setNote("err","Could not read wallet balances."); updateMintBadgeState(false); }
     }
 
     function showTxLink(signature,label="View tx"){
@@ -277,13 +276,13 @@
 
         const tg = guard.guards?.tokenGate;
         if (tg && tg.__option === "Some") {
-          args.tokenGate = some({ mint: umiPk(CBS_MINT_ID) }); // <-- echte Option
+          args.tokenGate = some({ mint: umiPk(CBS_MINT_ID) });
         }
 
         const ml = guard.guards?.mintLimit;
         if (ml && ml.__option === "Some") {
           const id = Number(ml.value?.id ?? 1);
-          args.mintLimit = some({ id }); // <-- echte Option
+          args.mintLimit = some({ id });
         }
 
         return args;
@@ -303,7 +302,7 @@
 
         await refresh(); const before = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
 
-        const nftMint = generateSigner(umi);
+        const nftMint = generateSigner(umi);               // signer uit dezelfde Umi-module
         const mintArgs = await getMintArgs();
 
         const params = {
@@ -313,8 +312,6 @@
           ...(GUARD_GROUP_NAME ? { group: some(GUARD_GROUP_NAME) } : {}),
           ...(Object.keys(mintArgs).length ? { mintArgs } : {})
         };
-
-        console.log("cm:", String(CANDY_MACHINE_ID), "guard:", String(CANDY_GUARD_ID||"none"), "tgMint:", String(CBS_MINT_ID));
 
         const txb = transactionBuilder()
           .add(setComputeUnitLimit(umi, { units: 600_000 }))
@@ -326,7 +323,7 @@
           sig = Array.isArray(res) ? res[0] : (typeof res==='string' ? res : res?.signature);
         }catch(err){
           const raw = (err?.cause?.logs?.[0] || err?.cause?.message || err?.message || "").toString();
-          if (raw.toLowerCase().includes("publickey")) setNote("err","Mint config error: PublicKey (guard/ids).");
+          if (raw.toLowerCase().includes("publickey")) setNote("err","Mint config error (PublicKey mismatch).");
           else if (raw.toLowerCase().includes("insufficient")) setNote("err","Not enough SOL for accounts/fees.");
           else if (raw.toLowerCase().includes("guard")) setNote("err","Guard condition not met (token/mintLimit).");
           else setNote("err","Mint failed. "+raw.slice(0,140));
@@ -339,8 +336,8 @@
         setNote("ok","Mint confirmed ✅ "); showTxLink(sig,"View on Solscan");
         await updateHolderState();
       }catch(e){
-        console.error("FATAL before send:", e);
-        setNote("err","Mint failed early: "+(e?.message||"Unexpected error"));
+        console.error("FATAL:", e);
+        setNote("err","Mint failed: "+(e?.message||"Unexpected error"));
       }
     }
 
