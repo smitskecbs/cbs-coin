@@ -147,14 +147,13 @@
   </div>
 
   <script type="module">
-    /* === Alles uit dezelfde bundle, zodat types 1:1 matchen === */
+    /* === Eén runtime voor alles === */
     import {
       createUmi,
       publicKey as umiPk,
       transactionBuilder,
       some,
       walletAdapterIdentity,
-      createSignerFromKeypair,
     } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1?bundle";
 
     import {
@@ -163,7 +162,7 @@
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.2.0";
     import { setComputeUnitLimit } from "https://esm.sh/@metaplex-foundation/mpl-toolbox@0.9.1";
 
-    /* Alleen voor saldo’s (staat los van Umi-runtime) */
+    /* Alleen voor saldo’s */
     import { Connection, PublicKey, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.95.3";
 
     /* ===== Config ===== */
@@ -173,7 +172,7 @@
     const CANDY_MACHINE_ID = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd".trim();
     const CANDY_GUARD_ID   = "9m94QDkzsEoJLdfHMpyQUCgdS6fXSP1AeoEzf4RLmcUv".trim();
     const CBS_MINT_ID      = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk".trim();
-    const GUARD_GROUP_NAME = "";
+    const GUARD_GROUP_NAME = ""; // geen groups
 
     const CBS_THRESHOLD = 1;
     const MIN_SOL_RENT  = 0.02;
@@ -242,7 +241,7 @@
         setTxt("who", "Connected: "+pkb58.slice(0,6)+"…"+pkb58.slice(-6));
         localStorage.setItem(LS_LAST_WALLET, kind);
 
-        umi.use(walletAdapterIdentity(provider));
+        umi.use(walletAdapterIdentity(provider)); // identity met dezelfde runtime
         connected = true;
 
         await updateHolderState();
@@ -308,9 +307,9 @@
 
         await refresh(); const before = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
 
-        /* Vervanger voor generateSigner: */
+        /* signer voor de NFT-mint — 100% uit dezelfde runtime */
         const kp = umi.eddsa.generateKeypair();
-        const nftMint = createSignerFromKeypair(umi, kp);
+        const nftMint = { publicKey: umiPk(kp.publicKey), secretKey: kp.secretKey };
 
         const mintArgs = await getMintArgs();
         const params = {
