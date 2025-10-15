@@ -51,7 +51,6 @@
       color:#3a2500; font-weight:900; text-decoration:none;
       border:1px solid rgba(255,255,255,.22);
       box-shadow:0 0 0 2px rgba(0,0,0,.10) inset, 0 20px 40px var(--gold-glow), 0 0 16px var(--gold-glow);
-      transition:transform .05s ease, filter .15s ease, opacity .2s ease;
     }
     .btn:active,.badge:active{ transform:translateY(1px) }
     .btn.disabled,.badge.disabled{ opacity:.55; cursor:not-allowed; filter:saturate(.5) }
@@ -147,7 +146,7 @@
   </div>
 
   <script type="module">
-    /* === Correcte imports === */
+    /* === Imports === */
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
     import { publicKey as umiPk, some } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
@@ -157,7 +156,6 @@
     } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.2.0";
 
-    // Alleen voor balances:
     import { Connection, PublicKey, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.95.3";
 
     /* ===== Config ===== */
@@ -165,7 +163,7 @@
     const RPC_URL      = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
 
     const CANDY_MACHINE_ID = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd".trim();
-    const CANDY_GUARD_ID   = "9m94QDkzsEoJLdfHMpyQUCgdS6fXSP1AeoEzf4RLmcUv".trim();
+    let   CANDY_GUARD_ID   = ""; // dynamisch gevuld vanuit de CM
     const CBS_MINT_ID      = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk".trim();
     const GUARD_GROUP_NAME = ""; // geen groups
 
@@ -198,9 +196,17 @@
       updateMintBadgeState();
       if (SOLD_OUT) setNote("warn","Sold out");
     }
+
     async function refresh(){
       try{
         cm = await fetchCandyMachine(umi, umiPk(CANDY_MACHINE_ID));
+        // >>> Dynamisch: pak de guard die ECHT aan de CM hangt (mintAuthority)
+        const guardPk = (cm.mintAuthority && cm.mintAuthority.toString)
+          ? cm.mintAuthority.toString()
+          : String(cm.mintAuthority || "");
+        CANDY_GUARD_ID = guardPk || "";
+        console.log("[CM] mintAuthority (Candy Guard) =", CANDY_GUARD_ID);
+
         const minted = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
         const avail  = Number(cm.itemsAvailable ?? cm.data?.itemsAvailable ?? 0);
         setSoldUI(minted, avail);
@@ -217,7 +223,7 @@
           tg.classList.remove("disabled");
           tg.removeAttribute("aria-disabled");
           tg.removeAttribute("title");
-          tg.href="https://t.me/CBS_Coins"; // holders link
+          tg.href="https://t.me/CBS_Coins";
         } else {
           tg.classList.add("disabled");
           tg.setAttribute("aria-disabled","true");
@@ -352,11 +358,10 @@
     $("mintBadge").addEventListener("click", ()=>{ if(!$("mintBadge").classList.contains("disabled")) doMint(); });
 
     (async () => {
-      await refresh();
+      await refresh(); // zet CANDY_GUARD_ID correct
       const last = localStorage.getItem(LS_LAST_WALLET);
       if (last) { try { $("walletPicker").value = last; await connectWallet(); } catch(_){} }
     })();
   </script>
 </body>
 </html>
-
