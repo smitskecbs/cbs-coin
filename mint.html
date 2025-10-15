@@ -152,7 +152,6 @@
       createUmi,
       publicKey as umiPk,
       transactionBuilder,
-      some,
       walletAdapterIdentity,
     } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1?bundle";
 
@@ -183,6 +182,9 @@
     const setTxt = (el,v)=>{ if(typeof el==='string') el=$(el); if(!el) return; el.textContent=v; };
     const fmt = (n)=>Number(n ?? 0).toLocaleString("en-US");
     const setNote = (cls, txt) => { const el = $("mintMsg"); if (!el) return; el.className = "note " + (cls||""); el.textContent = txt||""; };
+
+    // Umi Option helper (vervanger voor 'some' import)
+    const Some = (value) => ({ __option: "Some", value });
 
     $("cbsField").value = CBS_MINT_ID;
     $("cbsSol").href   = "https://solscan.io/token/"+CBS_MINT_ID;
@@ -241,7 +243,7 @@
         setTxt("who", "Connected: "+pkb58.slice(0,6)+"…"+pkb58.slice(-6));
         localStorage.setItem(LS_LAST_WALLET, kind);
 
-        umi.use(walletAdapterIdentity(provider)); // identity met dezelfde runtime
+        umi.use(walletAdapterIdentity(provider));
         connected = true;
 
         await updateHolderState();
@@ -277,18 +279,18 @@
       const el = $("mintMsg"); if (el) el.appendChild(a); else console.log("tx:", signature);
     }
 
-    /* ===== Guard → mintArgs (tokenGate + mintLimit id:1) ===== */
+    /* ===== Guard → mintArgs ===== */
     async function getMintArgs(){
       if (!CANDY_GUARD_ID) return {};
       try{
         const guard = await fetchCandyGuard(umi, umiPk(CANDY_GUARD_ID));
         const args = {};
         if (guard.guards?.tokenGate?.__option === "Some") {
-          args.tokenGate = some({ mint: umiPk(CBS_MINT_ID) });
+          args.tokenGate = Some({ mint: umiPk(CBS_MINT_ID) });
         }
         if (guard.guards?.mintLimit?.__option === "Some") {
           const id = Number(guard.guards.mintLimit.value?.id ?? 1);
-          args.mintLimit = some({ id });
+          args.mintLimit = Some({ id });
         }
         return args;
       } catch { return {}; }
@@ -307,16 +309,15 @@
 
         await refresh(); const before = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
 
-        /* signer voor de NFT-mint — 100% uit dezelfde runtime */
-        const kp = umi.eddsa.generateKeypair();
-        const nftMint = { publicKey: umiPk(kp.publicKey), secretKey: kp.secretKey };
+        // signer voor de NFT-mint — uit dezelfde runtime
+        const nftMint = umi.eddsa.generateKeypair();
 
         const mintArgs = await getMintArgs();
         const params = {
           candyMachine: umiPk(CANDY_MACHINE_ID),
           nftMint,
           ...(CANDY_GUARD_ID ? { candyGuard: umiPk(CANDY_GUARD_ID) } : {}),
-          ...(GUARD_GROUP_NAME ? { group: some(GUARD_GROUP_NAME) } : {}),
+          ...(GUARD_GROUP_NAME ? { group: Some(GUARD_GROUP_NAME) } : {}),
           ...(Object.keys(mintArgs).length ? { mintArgs } : {})
         };
 
