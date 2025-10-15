@@ -147,8 +147,9 @@
   </div>
 
   <script type="module">
-    /* ===== Imports (alles uit dezelfde Umi-module) ===== */
-    import { createUmi, publicKey as umiPk, generateSigner, transactionBuilder, some } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
+    /* ===== Imports ===== */
+    import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
+    import { publicKey as umiPk, generateSigner, transactionBuilder, some } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
     import { mplCandyMachine, fetchCandyMachine, fetchCandyGuard, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.2.0";
@@ -162,7 +163,7 @@
     const CANDY_MACHINE_ID = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd".trim();
     const CANDY_GUARD_ID   = "9m94QDkzsEoJLdfHMpyQUCgdS6fXSP1AeoEzf4RLmcUv".trim();
     const CBS_MINT_ID      = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk".trim();
-    const GUARD_GROUP_NAME = ""; // geen groups
+    const GUARD_GROUP_NAME = "";
 
     const CBS_THRESHOLD = 1;
     const MIN_SOL_RENT  = 0.02;
@@ -231,7 +232,7 @@
         setTxt("who", "Connected: "+pkb58.slice(0,6)+"…"+pkb58.slice(-6));
         localStorage.setItem(LS_LAST_WALLET, kind);
 
-        umi.use(walletAdapterIdentity(provider)); // identity uit dezelfde umi-module
+        umi.use(walletAdapterIdentity(provider)); // identity + payer
         connected = true;
 
         await updateHolderState();
@@ -258,7 +259,7 @@
         const hasCBS = cbs >= CBS_THRESHOLD, hasSOL = sol >= MIN_SOL_RENT;
         if (hasCBS && hasSOL){ $("holderMsg").className="note ok"; setTxt("holderMsg","CBS OK, you can mint ✅"); updateMintBadgeState(true); }
         else { $("holderMsg").className="note warn"; setTxt("holderMsg", `${hasCBS?"":"Need ≥ 1 CBS. "}${hasSOL?"":`Need ~${MIN_SOL_RENT} SOL for rent.`}`.trim()); updateMintBadgeState(false); }
-      }catch(e){ console.error(e); $("holderMsg").className="note err"; setNote("err","Could not read wallet balances."); updateMintBadgeState(false); }
+      }catch(e){ console.error(e); $("holderMsg").className="note err"; setTxt("holderMsg","Could not read wallet balances."); updateMintBadgeState(false); }
     }
 
     function showTxLink(signature,label="View tx"){
@@ -302,7 +303,7 @@
 
         await refresh(); const before = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
 
-        const nftMint = generateSigner(umi);               // signer uit dezelfde Umi-module
+        const nftMint = generateSigner(umi);
         const mintArgs = await getMintArgs();
 
         const params = {
