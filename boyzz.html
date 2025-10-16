@@ -137,7 +137,7 @@
                 </linearGradient>
               </defs>
               <circle cx="12" cy="12" r="11" fill="url(#g)" />
-              <path d="M17.9 7.3c.2-.9-.6-1.2-1.2-1l-12 4.6c-.8.3-.8.8-.1 1l3.1 1c.3.1.6 0 .8-.2l6.1-3.8c.3-.2.6 0 .4.2l-4.9 4.6c-.2.2-.2.5 0 .7l3.6 2.7c.3.2.7.1.8-.2l2.3-9.6z" fill="#1B2330"/>
+              <path d="M17.9 7.3c.2-.9-.6-1.2-1.2-1l-12 4.6c-.8.3-.8.8-.1 1l3.1 1c.3.1.6 0 .8-.2l6.1-3.8c.3-.2.6 0 .4.2l-4.9 4.6c-.2.2-.2.5 0 .7l3.6 2.7c.3 .2.7 .1 .8 -.2l2.3 -9.6z" fill="#1B2330"/>
             </svg>
             Join Telegram — holders only
           </a>
@@ -147,16 +147,14 @@
   </div>
 
   <script type="module">
-    /* === Imports (ALLEMAAL uit dezelfde bundle) === */
+    /* === Imports (alles uit dezelfde bundle) === */
     import {
       createUmi,
       publicKey as umiPk,
       generateSigner,
     } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
-    import {
-      mplCandyMachine, fetchCandyMachine, mintV2
-    } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
+    import { mplCandyMachine, fetchCandyMachine, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.2.0";
     import { Connection, PublicKey, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.95.3";
 
@@ -176,8 +174,6 @@
     const setTxt = (el,v)=>{ if(typeof el==='string') el=$(el); if(!el) return; el.textContent=v; };
     const fmt = (n)=>Number(n ?? 0).toLocaleString("en-US");
     const setNote = (cls, txt) => { const el = $("mintMsg"); if (!el) return; el.className = "note " + (cls||""); el.textContent = txt||""; };
-    // Option helper (zoals in boyzz)
-    const some = (v) => ({ __option: "Some", value: v });
 
     $("cbsField").value = CBS_MINT_ID;
     $("cbsSol").href   = "https://solscan.io/token/"+CBS_MINT_ID;
@@ -189,10 +185,8 @@
     const umi = createUmi(RPC_URL).use(mplCandyMachine()).use(mplTokenMetadata());
     let connected=false, SOLD_OUT=false;
 
-    // Deze drie halen we dynamisch uit de CM en bewaren als Umi PublicKey objecten
-    let CANDY_GUARD_PK = null;      // cm.mintAuthority
-    let CM_COLLECTION_PK = null;    // cm.collectionMint
-    let CM_AUTHORITY_PK  = null;    // cm.authority
+    // Dynamisch uit de CM (Umi PublicKey objecten)
+    let CANDY_GUARD_PK = null;
 
     /* ===== UI/Stats ===== */
     function setSoldUI(minted, available){
@@ -206,12 +200,8 @@
     async function refresh(){
       try{
         const cm = await fetchCandyMachine(umi, umiPk(CANDY_MACHINE_ID));
-        // Bewaar direct als PublicKey objecten (géén toString!)
-        CANDY_GUARD_PK  = cm.mintAuthority;
-        CM_COLLECTION_PK = cm.collectionMint;
-        CM_AUTHORITY_PK  = cm.authority;
+        CANDY_GUARD_PK = cm.mintAuthority; // PublicKey object uit dezelfde Umi
         console.log("[CM] Guard =", CANDY_GUARD_PK?.toString?.());
-
         const minted = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
         const avail  = Number(cm.itemsAvailable ?? cm.data?.itemsAvailable ?? 0);
         setSoldUI(minted, avail);
@@ -275,31 +265,30 @@
     /* ===== Mint ===== */
     async function doMint(){
       try{
-        setNote("", ""); // clear
+        setNote("", "");
         if(!connected){ setNote("warn","Connect wallet first."); return; }
         if(SOLD_OUT){ setNote("warn","Sold out."); return; }
-        setNote("", "Sending mint…");
 
+        // laatste checks
         const owner = new PublicKey(umi.identity.publicKey);
         const [cbs, sol] = await Promise.all([ getCbsBalance(owner), getSolBalance(owner) ]);
         if (cbs < CBS_THRESHOLD){ setNote("warn","Guard: wallet needs ≥ 1 CBS."); return; }
         if (sol < MIN_SOL_RENT){ setNote("warn",`Not enough SOL for rent (~${MIN_SOL_RENT} SOL).`); return; }
 
+        setNote("", "Sending mint…");
         await refresh();
 
-        // signer voor de NFT-mint
-        const nftMint = generateSigner(umi);
+        const nftMint = generateSigner(umi); // juiste Umi signer
 
-        // Params spiegelen de “boyzz”-flow, maar alles uit dezelfde Umi
+        // *** MINIMALE, ROBUUSTE AANROEP ***
         const params = {
-          candyMachine: umiPk(CANDY_MACHINE_ID),
+          candyMachine: umiPk(CANDY_MACHINE_ID),  // cast string -> PublicKey via dezelfde bundle
           nftMint,
-          ...(CANDY_GUARD_PK   ? { candyGuard: CANDY_GUARD_PK }   : {}),
-          ...(CM_COLLECTION_PK ? { collectionMint: CM_COLLECTION_PK } : {}),
-          ...(CM_AUTHORITY_PK  ? { collectionUpdateAuthority: CM_AUTHORITY_PK } : {}),
-          // optioneel, guard handhaaft on-chain; meeleveren kan geen kwaad
-          mintArgs: { tokenGate: some({ mint: umiPk(CBS_MINT_ID) }) },
+          ...(CANDY_GUARD_PK ? { candyGuard: CANDY_GUARD_PK } : {}), // guard als object rechtstreeks
+          // geen mintArgs, geen collection velden
         };
+
+        console.log("cm", CANDY_MACHINE_ID, "guard", CANDY_GUARD_PK?.toString?.(), "nftMint", nftMint.publicKey?.toString?.());
 
         let sig;
         try{
@@ -324,7 +313,6 @@
     /* ===== Events & boot ===== */
     $("btnConnect").addEventListener("click", connectWallet);
     $("btnRefresh").addEventListener("click", async ()=>{ await refresh(); if(connected) await updateHolderState(); });
-    // Altijd klikbaar; checks zitten in doMint()
     $("mintBadge").addEventListener("click", doMint);
 
     (async () => {
