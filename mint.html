@@ -150,7 +150,7 @@
     /* === Imports === */
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
-    import { publicKey as umiPk, some } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
+    import { publicKey as umiPk } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
 
     import {
       mplCandyMachine, fetchCandyMachine, fetchCandyGuard, mintV2
@@ -164,9 +164,8 @@
     const RPC_URL      = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
 
     const CANDY_MACHINE_ID = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd".trim();
-    let   CANDY_GUARD_ID   = ""; // dynamisch via CM
-    const CBS_MINT_ID      = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk".trim(); // alleen voor balance UI
-    const GUARD_GROUP_NAME = ""; // geen groups
+    let   CANDY_GUARD_ID   = ""; // filled dynamically from CM
+    const CBS_MINT_ID      = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk".trim();
 
     const CBS_THRESHOLD = 1;
     const MIN_SOL_RENT  = 0.02;
@@ -201,11 +200,12 @@
     async function refresh(){
       try{
         cm = await fetchCandyMachine(umi, umiPk(CANDY_MACHINE_ID));
-        // Dynamisch: guard die aan de CM hangt (mintAuthority)
-        const guardPk = (cm.mintAuthority && cm.mintAuthority.toString)
+
+        // Grab the real guard attached to this CM
+        const cg = (cm.mintAuthority && cm.mintAuthority.toString)
           ? cm.mintAuthority.toString()
           : String(cm.mintAuthority || "");
-        CANDY_GUARD_ID = guardPk || "";
+        CANDY_GUARD_ID = cg || "";
         console.log("[CM] mintAuthority (Candy Guard) =", CANDY_GUARD_ID);
 
         const minted = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
@@ -288,21 +288,6 @@
       const el = $("mintMsg"); if (el) el.appendChild(a); else console.log("tx:", signature);
     }
 
-    /* ===== Guard → mintArgs ===== */
-    async function getMintArgs(){
-      if (!CANDY_GUARD_ID) return {};
-      try{
-        const guard = await fetchCandyGuard(umi, umiPk(CANDY_GUARD_ID));
-        const args = {};
-        // GEEN tokenGate runtime arg doorgeven — guard kent de mint on-chain.
-        if (guard.guards?.mintLimit?.__option === "Some") {
-          const id = Number(guard.guards.mintLimit.value?.id ?? 1);
-          args.mintLimit = some({ id });
-        }
-        return args;
-      } catch { return {}; }
-    }
-
     /* ===== Mint ===== */
     async function doMint(){
       try{
@@ -318,12 +303,12 @@
 
         const nftMint = umi.eddsa.generateKeypair();
 
-        const mintArgs = await getMintArgs();
+        // *** Minimal, source-of-truth params ***
         const params = {
           candyMachine: umiPk(CANDY_MACHINE_ID),
           nftMint,
-          ...(GUARD_GROUP_NAME ? { group: some(GUARD_GROUP_NAME) } : {}),
-          ...(Object.keys(mintArgs).length ? { mintArgs } : {})
+          ...(CANDY_GUARD_ID ? { candyGuard: umiPk(CANDY_GUARD_ID) } : {})
+          // no mintArgs, no group — guard enforces its own on-chain config
         };
 
         let sig;
@@ -331,12 +316,11 @@
           const res = await mintV2(umi, params).sendAndConfirm(umi, { confirm: { commitment: "confirmed" }});
           sig = Array.isArray(res) ? res[0] : (typeof res==='string' ? res : res?.signature);
         }catch(err){
+          console.error("mintV2 error:", err);
           const raw = (err?.cause?.logs?.[0] || err?.cause?.message || err?.message || "").toString();
-          if (raw.toLowerCase().includes("publickey")) setNote("err","Mint config error (PublicKey mismatch).");
-          else if (raw.toLowerCase().includes("insufficient")) setNote("err","Not enough SOL for accounts/fees.");
-          else if (raw.toLowerCase().includes("guard")) setNote("err","Guard condition not met (mintLimit or time).");
-          else setNote("err","Mint failed. "+raw.slice(0,140));
-          showTxLink(sig); return;
+          setNote("err", raw ? ("Mint failed: " + raw.slice(0,200)) : "Mint failed.");
+          showTxLink(sig);
+          return;
         }
 
         await refresh(); const after = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
@@ -356,7 +340,7 @@
     $("mintBadge").addEventListener("click", ()=>{ if(!$("mintBadge").classList.contains("disabled")) doMint(); });
 
     (async () => {
-      await refresh(); // zet CANDY_GUARD_ID correct
+      await refresh(); // fills CANDY_GUARD_ID from CM
       const last = localStorage.getItem(LS_LAST_WALLET);
       if (last) { try { $("walletPicker").value = last; await connectWallet(); } catch(_){} }
     })();
