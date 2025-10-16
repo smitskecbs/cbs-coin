@@ -137,7 +137,7 @@
                 </linearGradient>
               </defs>
               <circle cx="12" cy="12" r="11" fill="url(#g)" />
-              <path d="M17.9 7.3c.2-.9-.6-1.2-1.2-1l-12 4.6c-.8 .3-.8 .8-.1 1l3.1 1c.3 .1 .6 0 .8 -.2l6.1 -3.8c.3 -.2 .6 0 .4 .2l-4.9 4.6c-.2 .2-.2 .5 0 .7l3.6 2.7c.3 .2 .7 .1 .8 -.2l2.3 -9.6z" fill="#1B2330"/>
+              <path d="M17.9 7.3c.2-.9-.6-1.2-1.2-1l-12 4.6c-.8.3-.8.8-.1 1l3.1 1c.3.1.6 0 .8-.2l6.1-3.8c.3-.2.6 0 .4.2l-4.9 4.6c-.2.2-.2.5 0 .7l3.6 2.7c.3.2.7 .1 .8 -.2l2.3 -9.6z" fill="#1B2330"/>
             </svg>
             Join Telegram — holders only
           </a>
@@ -162,7 +162,7 @@
     const RPC_URL      = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
 
     const CANDY_MACHINE_ID = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd".trim();
-    let   CANDY_GUARD_ID   = ""; // wordt dynamisch gezet
+    let   CANDY_GUARD_PK   = null;  // Umi PublicKey object (from CM)
     const CBS_MINT_ID      = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk".trim();
 
     const CBS_THRESHOLD = 1;
@@ -198,8 +198,10 @@
     async function refresh(){
       try{
         cm = await fetchCandyMachine(umi, umiPk(CANDY_MACHINE_ID));
-        CANDY_GUARD_ID = cm.mintAuthority?.toString?.() ?? String(cm.mintAuthority ?? "");
-        console.log("[CM] Guard =", CANDY_GUARD_ID);
+        // Guard als Umi PublicKey object bewaren (NIET toString)
+        CANDY_GUARD_PK = cm.mintAuthority; 
+        console.log("[CM] Guard =", CANDY_GUARD_PK?.toString?.() ?? "(none)");
+
         const minted = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
         const avail  = Number(cm.itemsAvailable ?? cm.data?.itemsAvailable ?? 0);
         setSoldUI(minted, avail);
@@ -221,8 +223,9 @@
     async function connectWallet(){
       try{
         const kind = $("walletPicker")?.value ?? "phantom";
-        const provider = kind === "phantom" ? (window?.phantom?.solana || window?.solana)
-                                            : (window?.solana || window?.phantom?.solana);
+        const provider = kind === "phantom"
+          ? (window?.phantom?.solana || window?.solana)
+          : (window?.solana || window?.phantom?.solana);
 
         if (!provider){
           $("holderMsg").className="note err"; setTxt("holderMsg","No wallet provider found. Install Phantom.");
@@ -275,7 +278,6 @@
     /* ===== Mint ===== */
     async function doMint(){
       try{
-        // laat altijd klikken; checks hierbinnen
         if(!connected){ setNote("warn","Connect wallet first."); return; }
         if(SOLD_OUT){ setNote("warn","Sold out."); return; }
         setNote("", "Sending mint…");
@@ -287,15 +289,14 @@
 
         await refresh();
 
-        // correct Umi signer voor de NFT mint
+        // Correcte Umi Signer voor de NFT-mint
         const nftMint = generateSigner(umi);
 
         const params = {
-          candyMachine: umiPk(CANDY_MACHINE_ID),
+          candyMachine: umiPk(CANDY_MACHINE_ID),  // string -> PublicKey
           nftMint,
-          // Guard expliciet meegeven (verwacht PublicKey)
-          ...(CANDY_GUARD_ID ? { candyGuard: umiPk(CANDY_GUARD_ID) } : {})
-          // géén mintArgs (tokenGate/mintLimit staan on-chain)
+          ...(CANDY_GUARD_PK ? { candyGuard: CANDY_GUARD_PK } : {}) // Umi PublicKey object rechtstreeks meegeven
+          // géén mintArgs; guards handhaven on-chain
         };
 
         let sig;
@@ -322,11 +323,10 @@
     /* ===== Events & boot ===== */
     $("btnConnect").addEventListener("click", connectWallet);
     $("btnRefresh").addEventListener("click", async ()=>{ await refresh(); if(connected) await updateHolderState(); });
-    // ALTIJD laten klikken; gating gebeurt in doMint()
-    $("mintBadge").addEventListener("click", doMint);
+    $("mintBadge").addEventListener("click", doMint); // altijd klikbaar; checks in doMint()
 
     (async () => {
-      await refresh(); // zet guard + supply
+      await refresh(); // haalt guard + supply op
       const last = localStorage.getItem(LS_LAST_WALLET);
       if (last) { try { $("walletPicker").value = last; await connectWallet(); } catch(_){} }
     })();
