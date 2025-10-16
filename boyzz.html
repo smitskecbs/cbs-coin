@@ -24,7 +24,6 @@
       -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; overflow-x:hidden;
     }
     .wrap{max-width:1100px;margin:0 auto;padding:16px 14px 48px}
-
     .banner{position:relative;overflow:hidden;border-radius:18px;border:1px solid rgba(255,255,255,.08);box-shadow:var(--ring);margin-bottom:14px;background:#0c1016}
     .banner img{width:100%;height:auto;display:block;object-fit:cover;max-height:260px}
     @media (max-width:640px){ .banner img{max-height:160px;object-position:center} }
@@ -137,7 +136,7 @@
                 </linearGradient>
               </defs>
               <circle cx="12" cy="12" r="11" fill="url(#g)" />
-              <path d="M17.9 7.3c.2-.9-.6-1.2-1.2-1l-12 4.6c-.8.3-.8.8-.1 1l3.1 1c.3.1.6 0 .8-.2l6.1-3.8c.3-.2.6 0 .4.2l-4.9 4.6c-.2.2-.2.5 0 .7l3.6 2.7c.3 .2.7 .1 .8 -.2l2.3 -9.6z" fill="#1B2330"/>
+              <path d="M17.9 7.3c.2-.9-.6-1.2-1.2-1l-12 4.6c-.8.3-.8.8-.1 1l3.1 1c.3.1.6 0 .8-.2l6.1-3.8c.3-.2.6 0 .4.2l-4.9 4.6c-.2.2-.2.5 0 .7l3.6 2.7c.3.2.7 .1 .8 -.2l2.3 -9.6z" fill="#1B2330"/>
             </svg>
             Join Telegram — holders only
           </a>
@@ -147,7 +146,7 @@
   </div>
 
   <script type="module">
-    /* === Imports (alles uit dezelfde bundle) === */
+    /* === Imports (allemaal uit dezelfde bundle) === */
     import {
       createUmi,
       publicKey as umiPk,
@@ -185,8 +184,10 @@
     const umi = createUmi(RPC_URL).use(mplCandyMachine()).use(mplTokenMetadata());
     let connected=false, SOLD_OUT=false;
 
-    // Dynamisch uit de CM (Umi PublicKey objecten)
+    // PublicKeys uit de CM (als Umi PublicKey objecten)
     let CANDY_GUARD_PK = null;
+    let CM_COLLECTION_PK = null;
+    let CM_AUTHORITY_PK  = null;
 
     /* ===== UI/Stats ===== */
     function setSoldUI(minted, available){
@@ -200,8 +201,13 @@
     async function refresh(){
       try{
         const cm = await fetchCandyMachine(umi, umiPk(CANDY_MACHINE_ID));
-        CANDY_GUARD_PK = cm.mintAuthority; // PublicKey object uit dezelfde Umi
+        // bewaar als objecten, geen strings
+        CANDY_GUARD_PK   = cm.mintAuthority;
+        CM_COLLECTION_PK = cm.collectionMint;
+        CM_AUTHORITY_PK  = cm.authority;
+
         console.log("[CM] Guard =", CANDY_GUARD_PK?.toString?.());
+
         const minted = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
         const avail  = Number(cm.itemsAvailable ?? cm.data?.itemsAvailable ?? 0);
         setSoldUI(minted, avail);
@@ -280,15 +286,14 @@
 
         const nftMint = generateSigner(umi); // juiste Umi signer
 
-        // *** MINIMALE, ROBUUSTE AANROEP ***
         const params = {
-          candyMachine: umiPk(CANDY_MACHINE_ID),  // cast string -> PublicKey via dezelfde bundle
+          candyMachine: umiPk(CANDY_MACHINE_ID),
           nftMint,
-          ...(CANDY_GUARD_PK ? { candyGuard: CANDY_GUARD_PK } : {}), // guard als object rechtstreeks
-          // geen mintArgs, geen collection velden
+          ...(CANDY_GUARD_PK   ? { candyGuard: CANDY_GUARD_PK }   : {}),
+          ...(CM_COLLECTION_PK ? { collectionMint: CM_COLLECTION_PK } : {}),
+          ...(CM_AUTHORITY_PK  ? { collectionUpdateAuthority: CM_AUTHORITY_PK } : {}),
+          // mintArgs zijn niet nodig; guard valideert on-chain
         };
-
-        console.log("cm", CANDY_MACHINE_ID, "guard", CANDY_GUARD_PK?.toString?.(), "nftMint", nftMint.publicKey?.toString?.());
 
         let sig;
         try{
@@ -316,11 +321,10 @@
     $("mintBadge").addEventListener("click", doMint);
 
     (async () => {
-      await refresh(); // haalt guard + supply op
+      await refresh(); // haalt guard + collection + authority + supply op
       const last = localStorage.getItem(LS_LAST_WALLET);
       if (last) { try { $("walletPicker").value = last; await connectWallet(); } catch(_){} }
     })();
   </script>
 </body>
 </html>
-
