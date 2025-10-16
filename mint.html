@@ -116,7 +116,7 @@
         </div>
 
         <div class="meter" style="margin:10px 0 8px;"><i id="meterFill"></i></div>
-        <p class="note">Minted: <b id="minted">0</b> / <b id="available">0</b></p>
+        <p class="note">Minted: <b id="minted">1</b> / <b id="available">1,000</b></p>
 
         <div class="row" style="margin-top:8px;">
           <button id="btnRefresh" class="btn">Refresh</button>
@@ -163,8 +163,8 @@
     const RPC_URL      = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
 
     const CANDY_MACHINE_ID = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd".trim();
-    let   CANDY_GUARD_ID   = ""; // dynamisch gevuld vanuit de CM
-    const CBS_MINT_ID      = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk".trim();
+    let   CANDY_GUARD_ID   = ""; // dynamisch via CM
+    const CBS_MINT_ID      = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk".trim(); // alleen voor balance UI
     const GUARD_GROUP_NAME = ""; // geen groups
 
     const CBS_THRESHOLD = 1;
@@ -200,7 +200,7 @@
     async function refresh(){
       try{
         cm = await fetchCandyMachine(umi, umiPk(CANDY_MACHINE_ID));
-        // >>> Dynamisch: pak de guard die ECHT aan de CM hangt (mintAuthority)
+        // Dynamisch: pak de guard die echt aan de CM hangt (mintAuthority)
         const guardPk = (cm.mintAuthority && cm.mintAuthority.toString)
           ? cm.mintAuthority.toString()
           : String(cm.mintAuthority || "");
@@ -293,9 +293,7 @@
       try{
         const guard = await fetchCandyGuard(umi, umiPk(CANDY_GUARD_ID));
         const args = {};
-        if (guard.guards?.tokenGate?.__option === "Some") {
-          args.tokenGate = some({ mint: umiPk(CBS_MINT_ID) });
-        }
+        // BELANGRIJK: GEEN tokenGate runtime arg meer doorgeven.
         if (guard.guards?.mintLimit?.__option === "Some") {
           const id = Number(guard.guards.mintLimit.value?.id ?? 1);
           args.mintLimit = some({ id });
@@ -365,4 +363,3 @@
   </script>
 </body>
 </html>
-
