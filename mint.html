@@ -150,10 +150,10 @@
     /* === Imports === */
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
-    import { publicKey as umiPk } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
+    import { publicKey as umiPk, generateSigner } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
 
     import {
-      mplCandyMachine, fetchCandyMachine, fetchCandyGuard, mintV2
+      mplCandyMachine, fetchCandyMachine, mintV2
     } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.2.0";
 
@@ -164,7 +164,7 @@
     const RPC_URL      = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
 
     const CANDY_MACHINE_ID = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd".trim();
-    let   CANDY_GUARD_ID   = ""; // filled dynamically from CM
+    let   CANDY_GUARD_ID   = ""; // via CM (alleen voor logging)
     const CBS_MINT_ID      = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk".trim();
 
     const CBS_THRESHOLD = 1;
@@ -200,8 +200,7 @@
     async function refresh(){
       try{
         cm = await fetchCandyMachine(umi, umiPk(CANDY_MACHINE_ID));
-
-        // Grab the real guard attached to this CM
+        // Log de guard uit de CM (mintAuthority)
         const cg = (cm.mintAuthority && cm.mintAuthority.toString)
           ? cm.mintAuthority.toString()
           : String(cm.mintAuthority || "");
@@ -237,7 +236,7 @@
     /* ===== Wallet connect ===== */
     async function connectWallet(){
       try{
-        const kind = $("walletPicker").value;
+        const kind = $("walletPicker")?.value ?? "phantom";
         const provider = kind === "phantom"
           ? (window?.phantom?.solana || window?.solana)
           : (window?.solana || window?.phantom?.solana);
@@ -301,14 +300,13 @@
 
         await refresh(); const before = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
 
-        const nftMint = umi.eddsa.generateKeypair();
+        // Belangrijk: signer met de officiële helper (correct Umi Signer-type)
+        const nftMint = generateSigner(umi);
 
-        // *** Minimal, source-of-truth params ***
         const params = {
           candyMachine: umiPk(CANDY_MACHINE_ID),
-          nftMint,
-          ...(CANDY_GUARD_ID ? { candyGuard: umiPk(CANDY_GUARD_ID) } : {})
-          // no mintArgs, no group — guard enforces its own on-chain config
+          nftMint
+          // geen candyGuard, geen mintArgs → Umi/guard doet de rest
         };
 
         let sig;
@@ -340,7 +338,7 @@
     $("mintBadge").addEventListener("click", ()=>{ if(!$("mintBadge").classList.contains("disabled")) doMint(); });
 
     (async () => {
-      await refresh(); // fills CANDY_GUARD_ID from CM
+      await refresh();
       const last = localStorage.getItem(LS_LAST_WALLET);
       if (last) { try { $("walletPicker").value = last; await connectWallet(); } catch(_){} }
     })();
