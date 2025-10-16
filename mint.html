@@ -51,6 +51,7 @@
       color:#3a2500; font-weight:900; text-decoration:none;
       border:1px solid rgba(255,255,255,.22);
       box-shadow:0 0 0 2px rgba(0,0,0,.10) inset, 0 20px 40px var(--gold-glow), 0 0 16px var(--gold-glow);
+      transition:transform .05s ease, filter .15s ease, opacity .2s ease;
     }
     .btn:active,.badge:active{ transform:translateY(1px) }
     .btn.disabled,.badge.disabled{ opacity:.55; cursor:not-allowed; filter:saturate(.5) }
@@ -116,7 +117,7 @@
         </div>
 
         <div class="meter" style="margin:10px 0 8px;"><i id="meterFill"></i></div>
-        <p class="note">Minted: <b id="minted">1</b> / <b id="available">1,000</b></p>
+        <p class="note">Minted: <b id="minted">0</b> / <b id="available">0</b></p>
 
         <div class="row" style="margin-top:8px;">
           <button id="btnRefresh" class="btn">Refresh</button>
@@ -200,7 +201,7 @@
     async function refresh(){
       try{
         cm = await fetchCandyMachine(umi, umiPk(CANDY_MACHINE_ID));
-        // Dynamisch: pak de guard die echt aan de CM hangt (mintAuthority)
+        // Dynamisch: guard die aan de CM hangt (mintAuthority)
         const guardPk = (cm.mintAuthority && cm.mintAuthority.toString)
           ? cm.mintAuthority.toString()
           : String(cm.mintAuthority || "");
@@ -293,7 +294,7 @@
       try{
         const guard = await fetchCandyGuard(umi, umiPk(CANDY_GUARD_ID));
         const args = {};
-        // BELANGRIJK: GEEN tokenGate runtime arg meer doorgeven.
+        // GEEN tokenGate runtime arg doorgeven — guard kent de mint on-chain.
         if (guard.guards?.mintLimit?.__option === "Some") {
           const id = Number(guard.guards.mintLimit.value?.id ?? 1);
           args.mintLimit = some({ id });
@@ -321,7 +322,6 @@
         const params = {
           candyMachine: umiPk(CANDY_MACHINE_ID),
           nftMint,
-          ...(CANDY_GUARD_ID ? { candyGuard: umiPk(CANDY_GUARD_ID) } : {}),
           ...(GUARD_GROUP_NAME ? { group: some(GUARD_GROUP_NAME) } : {}),
           ...(Object.keys(mintArgs).length ? { mintArgs } : {})
         };
@@ -334,7 +334,7 @@
           const raw = (err?.cause?.logs?.[0] || err?.cause?.message || err?.message || "").toString();
           if (raw.toLowerCase().includes("publickey")) setNote("err","Mint config error (PublicKey mismatch).");
           else if (raw.toLowerCase().includes("insufficient")) setNote("err","Not enough SOL for accounts/fees.");
-          else if (raw.toLowerCase().includes("guard")) setNote("err","Guard condition not met (token/mintLimit).");
+          else if (raw.toLowerCase().includes("guard")) setNote("err","Guard condition not met (mintLimit or time).");
           else setNote("err","Mint failed. "+raw.slice(0,140));
           showTxLink(sig); return;
         }
