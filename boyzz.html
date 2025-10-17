@@ -149,11 +149,11 @@
   <script type="module">
     /* === Imports === */
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
-    /* BELANGRIJK: deze twee uit de Umi core (niet de bundle) */
-    import { publicKey as umiPk, generateSigner } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
+    /* uit Umi core: */
+    import { publicKey as umiPk, generateSigner, some } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
 
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
-    import { mplCandyMachine, fetchCandyMachine, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
+    import { mplCandyMachine, fetchCandyMachine, fetchCandyGuard, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.2.0";
     import { Connection, PublicKey, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.95.3";
 
@@ -210,6 +210,23 @@
         const avail  = Number(cm.itemsAvailable ?? cm.data?.itemsAvailable ?? 0);
         setSoldUI(minted, avail);
       }catch(e){ console.error(e); setNote("err","Failed to load drop data."); }
+    }
+
+    async function buildMintArgs(){
+      // lees guard en bouw mintArgs alleen als nodig
+      try{
+        if (!CANDY_GUARD_PK) return {};
+        const guard = await fetchCandyGuard(umi, CANDY_GUARD_PK);
+        const args = {};
+        if (guard.guards?.tokenGate?.__option === "Some") {
+          args.tokenGate = some({ mint: umiPk(CBS_MINT_ID) });
+        }
+        if (guard.guards?.mintLimit?.__option === "Some") {
+          const id = Number(guard.guards.mintLimit.value?.id ?? 1);
+          args.mintLimit = some({ id });
+        }
+        return args;
+      } catch { return {}; }
     }
 
     /* ===== Wallet connect ===== */
@@ -283,6 +300,7 @@
         await refresh();
 
         const nftMint = generateSigner(umi); // juiste Umi signer
+        const mintArgs = await buildMintArgs();
 
         const params = {
           candyMachine: umiPk(CANDY_MACHINE_ID),
@@ -290,6 +308,7 @@
           ...(CANDY_GUARD_PK   ? { candyGuard: CANDY_GUARD_PK }   : {}),
           ...(CM_COLLECTION_PK ? { collectionMint: CM_COLLECTION_PK } : {}),
           ...(CM_AUTHORITY_PK  ? { collectionUpdateAuthority: CM_AUTHORITY_PK } : {}),
+          ...(Object.keys(mintArgs).length ? { mintArgs } : {}),
         };
 
         let sig;
@@ -299,7 +318,7 @@
         }catch(err){
           console.error("mintV2 error:", err);
           const raw = (err?.cause?.logs?.[0] || err?.cause?.message || err?.message || "").toString();
-          setNote("err", raw ? ("Mint failed: " + raw.slice(0,200)) : "Mint failed.");
+          setNote("err", raw ? ("Mint failed: " + raw.slice(0,220)) : "Mint failed.");
           showTxLink(sig); return;
         }
 
@@ -325,3 +344,4 @@
   </script>
 </body>
 </html>
+
