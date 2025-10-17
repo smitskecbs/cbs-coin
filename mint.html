@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>CBS — Holders Mint</title>
 
+  <!-- App identity (vermindert Phantom waarschuwingen) -->
+  <link rel="icon" href="logo.png">
+  <meta name="theme-color" content="#0e0f12">
+
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/>
 
   <style>
@@ -125,11 +129,11 @@
         </div>
       </section>
 
-      <!-- TELEGRAM (Holders only) -->
+      <!-- TELEGRAM — actief -->
       <section class="card span2">
         <h2 class="h3">Community</h2>
         <div class="row" style="gap:12px;">
-          <a id="tgButton" class="btn disabled" title="Only for holders" target="_blank" rel="noreferrer" aria-disabled="true">
+          <a id="tgButton" class="btn" href="https://t.me/CBS_Coins" target="_blank" rel="noreferrer" title="Join our Telegram">
             <svg class="tgIcon" viewBox="0 0 24 24" aria-hidden="true">
               <defs>
                 <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
@@ -137,7 +141,7 @@
                 </linearGradient>
               </defs>
               <circle cx="12" cy="12" r="11" fill="url(#g)" />
-              <path d="M17.9 7.3c.2-.9-.6-1.2-1.2-1l-12 4.6c-.8 .3-.8 .8-.1 1l3.1 1c.3 .1.6 0 .8-.2l6.1-3.8c.3-.2.6 0 .4 .2l-4.9 4.6c-.2 .2-.2 .5 0 .7l3.6 2.7c.3 .2.7 .1 .8 -.2l2.3 -9.6z" fill="#1B2330"/>
+              <path d="M17.9 7.3c.2-.9-.6-1.2-1.2-1l-12 4.6c-.8.3-.8.8-.1 1l3.1 1c.3.1.6 0 .8-.2l6.1-3.8c.3-.2.6 0 .4.2l-4.9 4.6c-.2.2-.2.5 0 .7l3.6 2.7c.3.2.7.1.8-.2l2.3-9.6z" fill="#1B2330"/>
             </svg>
             Join Telegram — holders only
           </a>
@@ -149,13 +153,12 @@
   <script type="module">
     /* === Imports === */
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
-    /* uit Umi core: */
     import { publicKey as umiPk, generateSigner, some } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
-
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
     import { mplCandyMachine, fetchCandyMachine, fetchCandyGuard, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.2.0";
     import { Connection, PublicKey, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.95.3";
+    import bs58 from "https://esm.sh/bs58@5.0.0";
 
     /* ===== Config ===== */
     const HELIUS_KEY   = "0eb350f0-a032-468c-8b03-b8b079e09611";
@@ -201,7 +204,6 @@
     async function refresh(){
       try{
         const cm = await fetchCandyMachine(umi, umiPk(CANDY_MACHINE_ID));
-        // bewaar als objecten, geen strings
         CANDY_GUARD_PK   = cm.mintAuthority;
         CM_COLLECTION_PK = cm.collectionMint;
         CM_AUTHORITY_PK  = cm.authority;
@@ -213,7 +215,6 @@
     }
 
     async function buildMintArgs(){
-      // lees guard en bouw mintArgs alleen als nodig
       try{
         if (!CANDY_GUARD_PK) return {};
         const guard = await fetchCandyGuard(umi, CANDY_GUARD_PK);
@@ -278,9 +279,13 @@
     }
 
     function showTxLink(signature,label="View tx"){
-      if (!signature) return;
-      const a = document.createElement("a"); a.href = "https://solscan.io/tx/"+signature; a.target="_blank"; a.rel="noreferrer"; a.textContent = label; a.style.marginLeft="8px";
-      const el = $("mintMsg"); if (el) el.appendChild(a); else console.log("tx:", signature);
+      if (!signature || typeof signature !== "string") return;
+      const a = document.createElement("a");
+      a.href = "https://solscan.io/tx/"+signature;
+      a.target="_blank"; a.rel="noreferrer";
+      a.textContent = label;
+      a.style.marginLeft="8px";
+      $("mintMsg").appendChild(a);
     }
 
     /* ===== Mint ===== */
@@ -290,7 +295,6 @@
         if(!connected){ setNote("warn","Connect wallet first."); return; }
         if(SOLD_OUT){ setNote("warn","Sold out."); return; }
 
-        // laatste checks
         const owner = new PublicKey(umi.identity.publicKey);
         const [cbs, sol] = await Promise.all([ getCbsBalance(owner), getSolBalance(owner) ]);
         if (cbs < CBS_THRESHOLD){ setNote("warn","Guard: wallet needs ≥ 1 CBS."); return; }
@@ -299,7 +303,7 @@
         setNote("", "Sending mint…");
         await refresh();
 
-        const nftMint = generateSigner(umi); // juiste Umi signer
+        const nftMint = generateSigner(umi);
         const mintArgs = await buildMintArgs();
 
         const params = {
@@ -311,18 +315,50 @@
           ...(Object.keys(mintArgs).length ? { mintArgs } : {}),
         };
 
-        let sig;
+        // helper om te normaliseren naar base58 string
+        const normalizeSig = (res)=>{
+          if (!res) return "";
+          if (typeof res === "string") return res;
+          if (Array.isArray(res) && typeof res[0] === "string") return res[0];
+          if (res.signature) return (typeof res.signature === "string") ? res.signature : bs58.encode(res.signature);
+          return "";
+        };
+
+        let sigStr = "";
         try{
-          const res = await mintV2(umi, params).sendAndConfirm(umi, { confirm: { commitment: "confirmed" }});
-          sig = Array.isArray(res) ? res[0] : (typeof res==='string' ? res : res?.signature);
-        }catch(err){
-          console.error("mintV2 error:", err);
-          const raw = (err?.cause?.logs?.[0] || err?.cause?.message || err?.message || "").toString();
-          setNote("err", raw ? ("Mint failed: " + raw.slice(0,220)) : "Mint failed.");
-          showTxLink(sig); return;
+          // eerste poging
+          const res = await mintV2(umi, params).sendAndConfirm(umi, {
+            confirm: { commitment: "confirmed" },
+            send: { maxRetries: 3 }
+          });
+          sigStr = normalizeSig(res);
+        }catch(err1){
+          const m = (err1?.cause?.message || err1?.message || "").toLowerCase();
+          // Blockhash-not-found → nieuwe blockhash ophalen en 1x opnieuw proberen
+          if (m.includes("blockhash not found") || m.includes("blockhashnotfound")) {
+            try {
+              await umi.rpc.getLatestBlockhash(); // refresh
+              const res2 = await mintV2(umi, params).sendAndConfirm(umi, {
+                confirm: { commitment: "confirmed" },
+                send: { maxRetries: 3 }
+              });
+              sigStr = normalizeSig(res2);
+            } catch(err2) {
+              console.error("mint retry error:", err2);
+              const raw = (err2?.cause?.logs?.[0] || err2?.cause?.message || err2?.message || "").toString();
+              setNote("err", raw ? ("Mint failed: " + raw.slice(0,220)) : "Mint failed.");
+              showTxLink(sigStr); return;
+            }
+          } else {
+            console.error("mintV2 error:", err1);
+            const raw = (err1?.cause?.logs?.[0] || err1?.cause?.message || err1?.message || "").toString();
+            setNote("err", raw ? ("Mint failed: " + raw.slice(0,220)) : "Mint failed.");
+            showTxLink(sigStr); return;
+          }
         }
 
-        setNote("ok","Mint confirmed ✅ "); showTxLink(sig,"View on Solscan");
+        setNote("ok","Mint confirmed ✅ ");
+        showTxLink(sigStr,"View on Solscan");
         await updateHolderState();
         await refresh();
       }catch(e){
@@ -336,11 +372,8 @@
     $("btnRefresh").addEventListener("click", async ()=>{ await refresh(); if(connected) await updateHolderState(); });
     $("mintBadge").addEventListener("click", doMint);
 
-    (async () => {
-      await refresh(); // haalt guard + collection + authority + supply op
-      const last = localStorage.getItem(LS_LAST_WALLET);
-      if (last) { try { $("walletPicker").value = last; await connectWallet(); } catch(_){} }
-    })();
+    // Geen auto-reconnect; alleen via knop
+    (async () => { await refresh(); })();
   </script>
 </body>
 </html>
