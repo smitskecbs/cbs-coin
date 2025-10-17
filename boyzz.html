@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>CBS — Holders Mint</title>
 
-  <!-- App identity (helpt bij Phantom prompts) -->
+  <!-- App identity (vermindert Phantom waarschuwingen) -->
   <link rel="icon" href="logo.png">
   <meta name="theme-color" content="#0e0f12">
 
@@ -28,6 +28,7 @@
       -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; overflow-x:hidden;
     }
     .wrap{max-width:1100px;margin:0 auto;padding:16px 14px 48px}
+
     .banner{position:relative;overflow:hidden;border-radius:18px;border:1px solid rgba(255,255,255,.08);box-shadow:var(--ring);margin-bottom:14px;background:#0c1016}
     .banner img{width:100%;height:auto;display:block;object-fit:cover;max-height:260px}
     @media (max-width:640px){ .banner img{max-height:160px;object-position:center} }
@@ -128,7 +129,7 @@
         </div>
       </section>
 
-      <!-- TELEGRAM — nu altijd actief -->
+      <!-- TELEGRAM — actief -->
       <section class="card span2">
         <h2 class="h3">Community</h2>
         <div class="row" style="gap:12px;">
@@ -203,8 +204,6 @@
     async function refresh(){
       try{
         const cm = await fetchCandyMachine(umi, umiPk(CANDY_MACHINE_ID));
-
-        // bewaar als objecten, geen strings
         CANDY_GUARD_PK   = cm.mintAuthority;
         CM_COLLECTION_PK = cm.collectionMint;
         CM_AUTHORITY_PK  = cm.authority;
@@ -316,23 +315,46 @@
           ...(Object.keys(mintArgs).length ? { mintArgs } : {}),
         };
 
+        // helper om te normaliseren naar base58 string
+        const normalizeSig = (res)=>{
+          if (!res) return "";
+          if (typeof res === "string") return res;
+          if (Array.isArray(res) && typeof res[0] === "string") return res[0];
+          if (res.signature) return (typeof res.signature === "string") ? res.signature : bs58.encode(res.signature);
+          return "";
+        };
+
         let sigStr = "";
         try{
-          const res = await mintV2(umi, params).sendAndConfirm(umi, { confirm: { commitment: "confirmed" }});
-          // normaliseer naar base58 string
-          if (typeof res === "string") {
-            sigStr = res;
-          } else if (Array.isArray(res) && typeof res[0] === "string") {
-            sigStr = res[0];
-          } else if (res?.signature) {
-            sigStr = typeof res.signature === "string" ? res.signature : bs58.encode(res.signature);
+          // eerste poging
+          const res = await mintV2(umi, params).sendAndConfirm(umi, {
+            confirm: { commitment: "confirmed" },
+            send: { maxRetries: 3 }
+          });
+          sigStr = normalizeSig(res);
+        }catch(err1){
+          const m = (err1?.cause?.message || err1?.message || "").toLowerCase();
+          // Blockhash-not-found → nieuwe blockhash ophalen en 1x opnieuw proberen
+          if (m.includes("blockhash not found") || m.includes("blockhashnotfound")) {
+            try {
+              await umi.rpc.getLatestBlockhash(); // refresh
+              const res2 = await mintV2(umi, params).sendAndConfirm(umi, {
+                confirm: { commitment: "confirmed" },
+                send: { maxRetries: 3 }
+              });
+              sigStr = normalizeSig(res2);
+            } catch(err2) {
+              console.error("mint retry error:", err2);
+              const raw = (err2?.cause?.logs?.[0] || err2?.cause?.message || err2?.message || "").toString();
+              setNote("err", raw ? ("Mint failed: " + raw.slice(0,220)) : "Mint failed.");
+              showTxLink(sigStr); return;
+            }
+          } else {
+            console.error("mintV2 error:", err1);
+            const raw = (err1?.cause?.logs?.[0] || err1?.cause?.message || err1?.message || "").toString();
+            setNote("err", raw ? ("Mint failed: " + raw.slice(0,220)) : "Mint failed.");
+            showTxLink(sigStr); return;
           }
-        }catch(err){
-          console.error("mintV2 error:", err);
-          const raw = (err?.cause?.logs?.[0] || err?.cause?.message || err?.message || "").toString();
-          setNote("err", raw ? ("Mint failed: " + raw.slice(0,220)) : "Mint failed.");
-          showTxLink(sigStr);
-          return;
         }
 
         setNote("ok","Mint confirmed ✅ ");
@@ -350,11 +372,8 @@
     $("btnRefresh").addEventListener("click", async ()=>{ await refresh(); if(connected) await updateHolderState(); });
     $("mintBadge").addEventListener("click", doMint);
 
-    (async () => {
-      await refresh();
-      const last = localStorage.getItem(LS_LAST_WALLET);
-      if (last) { try { $("walletPicker").value = last; await connectWallet(); } catch(_){} }
-    })();
+    // Geen auto-reconnect; alleen via knop
+    (async () => { await refresh(); })();
   </script>
 </body>
 </html>
