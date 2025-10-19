@@ -133,7 +133,8 @@
       <section class="card span2">
         <h2 class="h3">Community</h2>
         <div class="row" style="gap:12px;">
-          <a id="tgButton" class="btn" href="https://t.me/Cbscoinx" target="_blank" rel="noreferrer" title="DM the dev/founder (@Cbscoinx) — send your wallet address & request access">
+          <a id="tgButton" class="btn disabled" href="https://t.me/Cbscoinx" target="_blank" rel="noreferrer"
+             aria-disabled="true" title="Mint first to unlock DM">
             <svg class="tgIcon" viewBox="0 0 24 24" aria-hidden="true">
               <defs>
                 <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
@@ -170,12 +171,29 @@
     const CBS_THRESHOLD = 1;
     const MIN_SOL_RENT  = 0.02;
     const LS_LAST_WALLET = "cbs_last_wallet";
+    const LS_DM_UNLOCKED = "cbs_dm_unlocked";   /* <-- local flag */
 
     /* ===== Helpers / UI ===== */
     const $ = (id)=>document.getElementById(id);
     const setTxt = (el,v)=>{ if(typeof el==='string') el=$(el); if(!el) return; el.textContent=v; };
     const fmt = (n)=>Number(n ?? 0).toLocaleString("en-US");
     const setNote = (cls, txt) => { const el = $("mintMsg"); if (!el) return; el.className = "note " + (cls||""); el.textContent = txt||""; };
+
+    const setDmEnabled = (flag)=>{
+      const a = $("tgButton");
+      if(!a) return;
+      if(flag){
+        a.classList.remove("disabled");
+        a.removeAttribute("aria-disabled");
+        a.style.pointerEvents = "auto";
+        a.title = "DM the dev/founder (@Cbscoinx) — send your wallet address & request access";
+      }else{
+        a.classList.add("disabled");
+        a.setAttribute("aria-disabled","true");
+        a.style.pointerEvents = "none";
+        a.title = "Mint first to unlock DM";
+      }
+    };
 
     $("cbsField").value = CBS_MINT_ID;
     $("cbsSol").href   = "https://solscan.io/token/"+CBS_MINT_ID;
@@ -191,6 +209,35 @@
     let CANDY_GUARD_PK = null;
     let CM_COLLECTION_PK = null;
     let CM_AUTHORITY_PK  = null;
+
+    /* ===== Holder check via Helius DAS ===== */
+    async function checkHolderNft(ownerStr){
+      try{
+        if (!ownerStr || !CM_COLLECTION_PK) return false;
+        const body = {
+          jsonrpc: "2.0",
+          id: "cbs-das",
+          method: "getAssetsByOwner",
+          params: { ownerAddress: ownerStr, page: 1, limit: 100 }
+        };
+        const res = await fetch(RPC_URL, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        const items = data?.result?.items || [];
+        const collectionPkStr = CM_COLLECTION_PK.toString?.() || String(CM_COLLECTION_PK);
+        const has = items.some(it =>
+          Array.isArray(it?.grouping) &&
+          it.grouping.some(([k,v]) => k === "collection" && v === collectionPkStr)
+        );
+        return has;
+      } catch(e){
+        console.error("DAS check error:", e);
+        return false;
+      }
+    }
 
     /* ===== UI/Stats ===== */
     function setSoldUI(minted, available){
@@ -211,6 +258,18 @@
         const minted = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
         const avail  = Number(cm.itemsAvailable ?? cm.data?.itemsAvailable ?? 0);
         setSoldUI(minted, avail);
+
+        /* Als localStorage zegt 'unlocked', zet alvast aan */
+        if (localStorage.getItem(LS_DM_UNLOCKED) === "1") setDmEnabled(true);
+
+        /* Als al connected, check on-chain of user een NFT uit de collection heeft */
+        if (connected && umi?.identity?.publicKey) {
+          const ownerStr = new PublicKey(umi.identity.publicKey).toBase58();
+          if (await checkHolderNft(ownerStr)) {
+            setDmEnabled(true);
+            localStorage.setItem(LS_DM_UNLOCKED,"1");
+          }
+        }
       }catch(e){ console.error(e); setNote("err","Failed to load drop data."); }
     }
 
@@ -252,6 +311,15 @@
         connected = true;
 
         await updateHolderState();
+
+        /* Na connect: als collection pk bekend → check bezit */
+        if (CM_COLLECTION_PK) {
+          const ownerStr = (provider.publicKey || res?.publicKey)?.toBase58?.() || pkb58;
+          if (await checkHolderNft(ownerStr)) {
+            setDmEnabled(true);
+            localStorage.setItem(LS_DM_UNLOCKED,"1");
+          }
+        }
       }catch(e){
         console.error(e);
         setTxt("who","—");
@@ -315,7 +383,6 @@
           ...(Object.keys(mintArgs).length ? { mintArgs } : {}),
         };
 
-        // helper om te normaliseren naar base58 string
         const normalizeSig = (res)=>{
           if (!res) return "";
           if (typeof res === "string") return res;
@@ -326,7 +393,6 @@
 
         let sigStr = "";
         try{
-          // eerste poging
           const res = await mintV2(umi, params).sendAndConfirm(umi, {
             confirm: { commitment: "confirmed" },
             send: { maxRetries: 3 }
@@ -334,10 +400,9 @@
           sigStr = normalizeSig(res);
         }catch(err1){
           const m = (err1?.cause?.message || err1?.message || "").toLowerCase();
-          // Blockhash-not-found → nieuwe blockhash ophalen en 1x opnieuw proberen
           if (m.includes("blockhash not found") || m.includes("blockhashnotfound")) {
             try {
-              await umi.rpc.getLatestBlockhash(); // refresh
+              await umi.rpc.getLatestBlockhash();
               const res2 = await mintV2(umi, params).sendAndConfirm(umi, {
                 confirm: { commitment: "confirmed" },
                 send: { maxRetries: 3 }
@@ -358,6 +423,8 @@
         }
 
         setNote("ok","Mint confirmed ✅ ");
+        setDmEnabled(true);
+        localStorage.setItem(LS_DM_UNLOCKED,"1");
         showTxLink(sigStr,"View on Solscan");
         await updateHolderState();
         await refresh();
@@ -372,8 +439,12 @@
     $("btnRefresh").addEventListener("click", async ()=>{ await refresh(); if(connected) await updateHolderState(); });
     $("mintBadge").addEventListener("click", doMint);
 
-    // Geen auto-reconnect; alleen via knop
-    (async () => { await refresh(); })();
+    (async () => {
+      /* standaard: knop locked, tenzij eerder lokaal unlocked */
+      setDmEnabled(localStorage.getItem(LS_DM_UNLOCKED) === "1");
+      await refresh();
+    })();
   </script>
 </body>
 </html>
+
