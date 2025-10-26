@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>CBS — Holders Mint</title>
 
-  <!-- App identity (vermindert Phantom waarschuwingen) -->
+  <!-- App identity -->
   <link rel="icon" href="logo.png">
   <meta name="theme-color" content="#0e0f12">
 
@@ -94,6 +94,9 @@
         <div class="row walletSelect">
           <select id="walletPicker" aria-label="Choose wallet">
             <option value="phantom">Phantom</option>
+            <option value="solflare">Solflare</option>
+            <option value="backpack">Backpack</option>
+            <option value="glow">Glow</option>
             <option value="generic">Generic (window.solana)</option>
           </select>
           <button id="btnConnect" class="btn">Connect</button>
@@ -108,7 +111,7 @@
         <p id="mintMsg" class="note" style="margin-top:6px;"></p>
 
         <p class="note" style="margin-top:8px;">Your CBS balance: <b id="cbsBal">—</b> CBS</p>
-        <p id="holderMsg" class="note warn">You need at least 1 CBS to mint.</p>
+        <p id="holderMsg" class="note warn">Connect your wallet — DM unlocks for holders (≥ 1 CBS).</p>
         <p class="note"><a id="cbsSol" class="mono" target="_blank" rel="noreferrer">View CBS on Solscan</a></p>
       </section>
 
@@ -129,11 +132,12 @@
         </div>
       </section>
 
-      <!-- TELEGRAM — actief -->
+      <!-- TELEGRAM — holders-gated by CBS balance -->
       <section class="card span2">
         <h2 class="h3">Community</h2>
         <div class="row" style="gap:12px;">
-          <a id="tgButton" class="btn" href="https://t.me/CBS_Coins" target="_blank" rel="noreferrer" title="Join our Telegram">
+          <a id="tgButton" class="btn disabled" href="https://t.me/Cbscoinx" target="_blank" rel="noreferrer"
+             aria-disabled="true" title="Connect wallet with ≥1 CBS to unlock DM">
             <svg class="tgIcon" viewBox="0 0 24 24" aria-hidden="true">
               <defs>
                 <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
@@ -143,7 +147,7 @@
               <circle cx="12" cy="12" r="11" fill="url(#g)" />
               <path d="M17.9 7.3c.2-.9-.6-1.2-1.2-1l-12 4.6c-.8.3-.8.8-.1 1l3.1 1c.3.1.6 0 .8-.2l6.1-3.8c.3-.2.6 0 .4.2l-4.9 4.6c-.2.2-.2.5 0 .7l3.6 2.7c.3.2.7.1.8-.2l2.3-9.6z" fill="#1B2330"/>
             </svg>
-            Join Telegram — holders only
+            DM the dev/founder (@Cbscoinx) — send your wallet address & request access
           </a>
         </div>
       </section>
@@ -167,8 +171,8 @@
     const CANDY_MACHINE_ID = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd".trim();
     const CBS_MINT_ID      = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk".trim();
 
-    const CBS_THRESHOLD = 1;
-    const MIN_SOL_RENT  = 0.02;
+    const CBS_THRESHOLD = 1;          // DM unlock threshold
+    const MIN_SOL_RENT  = 0.02;       // not required for DM; only for mint UX
     const LS_LAST_WALLET = "cbs_last_wallet";
 
     /* ===== Helpers / UI ===== */
@@ -176,6 +180,22 @@
     const setTxt = (el,v)=>{ if(typeof el==='string') el=$(el); if(!el) return; el.textContent=v; };
     const fmt = (n)=>Number(n ?? 0).toLocaleString("en-US");
     const setNote = (cls, txt) => { const el = $("mintMsg"); if (!el) return; el.className = "note " + (cls||""); el.textContent = txt||""; };
+
+    const setDmEnabled = (flag)=>{
+      const a = $("tgButton");
+      if(!a) return;
+      if(flag){
+        a.classList.remove("disabled");
+        a.removeAttribute("aria-disabled");
+        a.style.pointerEvents = "auto";
+        a.title = "Verified holder — DM unlocked";
+      }else{
+        a.classList.add("disabled");
+        a.setAttribute("aria-disabled","true");
+        a.style.pointerEvents = "none";
+        a.title = "Connect wallet with ≥1 CBS to unlock DM";
+      }
+    };
 
     $("cbsField").value = CBS_MINT_ID;
     $("cbsSol").href   = "https://solscan.io/token/"+CBS_MINT_ID;
@@ -186,11 +206,58 @@
     const connection = new Connection(RPC_URL, "confirmed");
     const umi = createUmi(RPC_URL).use(mplCandyMachine()).use(mplTokenMetadata());
     let connected=false, SOLD_OUT=false;
+    let HAS_COLLECTION_NFT=false;
 
     // PublicKeys uit de CM (Umi PublicKey objecten)
     let CANDY_GUARD_PK = null;
     let CM_COLLECTION_PK = null;
     let CM_AUTHORITY_PK  = null;
+
+    /* ===== Multi-wallet support ===== */
+    function getProvider(kind){
+      const sol = window?.solana;
+      if (kind === "phantom")   return window?.phantom?.solana || (sol?.isPhantom   ? sol : null);
+      if (kind === "solflare")  return window?.solflare        || (sol?.isSolflare  ? sol : null);
+      if (kind === "backpack")  return window?.backpack?.solana|| (sol?.isBackpack  ? sol : null);
+      if (kind === "glow")      return window?.glow?.solana    || (sol?.isGlow      ? sol : null);
+      return sol || window?.phantom?.solana || null; // generic fallback
+    }
+    function getInstallUrl(kind){
+      if (kind === "phantom")  return "https://phantom.app/download";
+      if (kind === "solflare") return "https://solflare.com/download";
+      if (kind === "backpack") return "https://www.backpack.app/download";
+      if (kind === "glow")     return "https://glow.app/";
+      return "https://phantom.app/download";
+    }
+
+    /* ===== Holder check via Helius DAS (collection NFT) ===== */
+    async function checkHolderNft(ownerStr){
+      try{
+        if (!ownerStr || !CM_COLLECTION_PK) return false;
+        const body = {
+          jsonrpc: "2.0",
+          id: "cbs-das",
+          method: "getAssetsByOwner",
+          params: { ownerAddress: ownerStr, page: 1, limit: 100 }
+        };
+        const res = await fetch(RPC_URL, {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(body)
+        });
+        const data = await res.json();
+        const items = data?.result?.items || [];
+        const collectionPkStr = CM_COLLECTION_PK.toString?.() || String(CM_COLLECTION_PK);
+        const has = items.some(it =>
+          Array.isArray(it?.grouping) &&
+          it.grouping.some(([k,v]) => k === "collection" && v === collectionPkStr)
+        );
+        return has;
+      } catch(e){
+        console.error("DAS check error:", e);
+        return false;
+      }
+    }
 
     /* ===== UI/Stats ===== */
     function setSoldUI(minted, available){
@@ -211,6 +278,12 @@
         const minted = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
         const avail  = Number(cm.itemsAvailable ?? cm.data?.itemsAvailable ?? 0);
         setSoldUI(minted, avail);
+
+        if (connected && umi?.identity?.publicKey) {
+          const ownerStr = new PublicKey(umi.identity.publicKey).toBase58();
+          HAS_COLLECTION_NFT = await checkHolderNft(ownerStr);
+          await updateHolderState();
+        }
       }catch(e){ console.error(e); setNote("err","Failed to load drop data."); }
     }
 
@@ -230,21 +303,30 @@
       } catch { return {}; }
     }
 
-    /* ===== Wallet connect ===== */
+    /* ===== Wallet connect (multi-wallet) ===== */
     async function connectWallet(){
       try{
         const kind = $("walletPicker")?.value ?? "phantom";
-        const provider = kind === "phantom"
-          ? (window?.phantom?.solana || window?.solana)
-          : (window?.solana || window?.phantom?.solana);
+        const provider = getProvider(kind);
 
         if (!provider){
-          $("holderMsg").className="note err"; setTxt("holderMsg","No wallet provider found. Install Phantom.");
-          window.open("https://phantom.app/download", "_blank"); return;
+          $("holderMsg").className="note err";
+          setTxt("holderMsg", `No ${kind} provider found. Install the wallet and try again.`);
+          window.open(getInstallUrl(kind), "_blank");
+          return;
         }
 
-        const res = await provider.connect();
-        const pkb58 = (provider.publicKey || res?.publicKey)?.toBase58?.() || (provider.publicKey || res?.publicKey)?.toString?.() || "unknown";
+        const res = await provider.connect?.() ?? {};
+        const pubkey = provider.publicKey || res.publicKey;
+        const pkb58  = pubkey?.toBase58?.() || pubkey?.toString?.() || String(pubkey || "");
+
+        if (!pkb58){
+          setTxt("who","—");
+          $("holderMsg").className="note err"; setTxt("holderMsg","Wallet connect failed.");
+          setDmEnabled(false);
+          return;
+        }
+
         setTxt("who", "Connected: "+pkb58.slice(0,6)+"…"+pkb58.slice(-6));
         localStorage.setItem(LS_LAST_WALLET, kind);
 
@@ -252,13 +334,20 @@
         connected = true;
 
         await updateHolderState();
+
+        if (CM_COLLECTION_PK) {
+          HAS_COLLECTION_NFT = await checkHolderNft(pkb58);
+          await updateHolderState();
+        }
       }catch(e){
         console.error(e);
         setTxt("who","—");
         $("holderMsg").className="note err"; setTxt("holderMsg","Wallet connect failed.");
+        setDmEnabled(false);
       }
     }
 
+    /* ===== Balances ===== */
     async function getCbsBalance(ownerPk){
       const res = await connection.getParsedTokenAccountsByOwner(ownerPk, { mint: new PublicKey(CBS_MINT_ID) });
       let total = 0; for (const acc of (res.value||[])){ const ui = acc.account?.data?.parsed?.info?.tokenAmount?.uiAmount; total += Number(ui||0); }
@@ -266,16 +355,29 @@
     }
     async function getSolBalance(ownerPk){ const lamports = await connection.getBalance(ownerPk, "confirmed"); return lamports / LAMPORTS_PER_SOL; }
 
+    /* ===== Holder state + DM gating ===== */
     async function updateHolderState(){
-      if (!umi?.identity?.publicKey) return;
+      if (!umi?.identity?.publicKey) { setDmEnabled(false); return; }
       try{
         const owner = new PublicKey(umi.identity.publicKey);
         const [cbs, sol] = await Promise.all([ getCbsBalance(owner), getSolBalance(owner) ]);
         setTxt("cbsBal", fmt(cbs));
-        const hasCBS = cbs >= CBS_THRESHOLD, hasSOL = sol >= MIN_SOL_RENT;
-        if (hasCBS && hasSOL){ $("holderMsg").className="note ok"; setTxt("holderMsg","CBS OK, you can mint ✅"); }
-        else { $("holderMsg").className="note warn"; setTxt("holderMsg", `${hasCBS?"":"Need ≥ 1 CBS. "}${hasSOL?"":`Need ~${MIN_SOL_RENT} SOL for rent.`}`.trim()); }
-      }catch(e){ console.error(e); $("holderMsg").className="note err"; setTxt("holderMsg","Could not read wallet balances."); }
+
+        const hasCBS = cbs >= CBS_THRESHOLD;
+        const hasSOL = sol >= MIN_SOL_RENT;
+        const dmUnlock = hasCBS || HAS_COLLECTION_NFT;
+
+        setDmEnabled(dmUnlock);
+
+        if (hasCBS && hasSOL){ $("holderMsg").className="note ok"; setTxt("holderMsg","CBS OK, you can mint ✅ (DM unlocked)"); }
+        else if (hasCBS && !hasSOL){ $("holderMsg").className="note warn"; setTxt("holderMsg","Holder detected — DM unlocked. Add ~0.02 SOL to mint."); }
+        else { $("holderMsg").className="note warn"; setTxt("holderMsg","Need ≥ 1 CBS to unlock DM & mint."); }
+
+      }catch(e){
+        console.error(e);
+        $("holderMsg").className="note err"; setTxt("holderMsg","Could not read wallet balances.");
+        setDmEnabled(false);
+      }
     }
 
     function showTxLink(signature,label="View tx"){
@@ -315,7 +417,6 @@
           ...(Object.keys(mintArgs).length ? { mintArgs } : {}),
         };
 
-        // helper om te normaliseren naar base58 string
         const normalizeSig = (res)=>{
           if (!res) return "";
           if (typeof res === "string") return res;
@@ -326,7 +427,6 @@
 
         let sigStr = "";
         try{
-          // eerste poging
           const res = await mintV2(umi, params).sendAndConfirm(umi, {
             confirm: { commitment: "confirmed" },
             send: { maxRetries: 3 }
@@ -334,10 +434,9 @@
           sigStr = normalizeSig(res);
         }catch(err1){
           const m = (err1?.cause?.message || err1?.message || "").toLowerCase();
-          // Blockhash-not-found → nieuwe blockhash ophalen en 1x opnieuw proberen
           if (m.includes("blockhash not found") || m.includes("blockhashnotfound")) {
             try {
-              await umi.rpc.getLatestBlockhash(); // refresh
+              await umi.rpc.getLatestBlockhash();
               const res2 = await mintV2(umi, params).sendAndConfirm(umi, {
                 confirm: { commitment: "confirmed" },
                 send: { maxRetries: 3 }
@@ -372,8 +471,10 @@
     $("btnRefresh").addEventListener("click", async ()=>{ await refresh(); if(connected) await updateHolderState(); });
     $("mintBadge").addEventListener("click", doMint);
 
-    // Geen auto-reconnect; alleen via knop
-    (async () => { await refresh(); })();
+    (async () => {
+      setDmEnabled(false);
+      await refresh();
+    })();
   </script>
 </body>
 </html>
