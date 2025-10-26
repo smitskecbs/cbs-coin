@@ -93,6 +93,7 @@
         <h2 class="h3">Wallet</h2>
         <div class="row walletSelect">
           <select id="walletPicker" aria-label="Choose wallet">
+            <option value="auto">Auto (Any Wallet)</option>
             <option value="phantom">Phantom</option>
             <option value="solflare">Solflare</option>
             <option value="backpack">Backpack</option>
@@ -132,7 +133,7 @@
         </div>
       </section>
 
-      <!-- TELEGRAM — holders-gated by CBS balance -->
+      <!-- TELEGRAM -->
       <section class="card span2">
         <h2 class="h3">Community</h2>
         <div class="row" style="gap:12px;">
@@ -171,8 +172,8 @@
     const CANDY_MACHINE_ID = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd".trim();
     const CBS_MINT_ID      = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk".trim();
 
-    const CBS_THRESHOLD = 1;          // DM unlock threshold
-    const MIN_SOL_RENT  = 0.02;       // not required for DM; only for mint UX
+    const CBS_THRESHOLD = 1;
+    const MIN_SOL_RENT  = 0.02;
     const LS_LAST_WALLET = "cbs_last_wallet";
 
     /* ===== Helpers / UI ===== */
@@ -208,21 +209,44 @@
     let connected=false, SOLD_OUT=false;
     let HAS_COLLECTION_NFT=false;
 
-    // PublicKeys uit de CM (Umi PublicKey objecten)
     let CANDY_GUARD_PK = null;
     let CM_COLLECTION_PK = null;
     let CM_AUTHORITY_PK  = null;
 
-    /* ===== Multi-wallet support ===== */
-    function getProvider(kind){
-      const sol = window?.solana;
-      if (kind === "phantom")   return window?.phantom?.solana || (sol?.isPhantom   ? sol : null);
-      if (kind === "solflare")  return window?.solflare        || (sol?.isSolflare  ? sol : null);
-      if (kind === "backpack")  return window?.backpack?.solana|| (sol?.isBackpack  ? sol : null);
-      if (kind === "glow")      return window?.glow?.solana    || (sol?.isGlow      ? sol : null);
-      return sol || window?.phantom?.solana || null; // generic fallback
+    /* ===== Multi-wallet detection =====
+       Probe zoveel mogelijk injected providers.
+       - 'auto' kiest de eerste bruikbare.
+       - 'generic' valt terug op window.solana.
+    */
+    function candidates(){
+      const w = window;
+      const arr = [];
+      if (w?.phantom?.solana)   arr.push(w.phantom.solana);
+      if (w?.solflare)          arr.push(w.solflare);
+      if (w?.backpack?.solana)  arr.push(w.backpack.solana);
+      if (w?.glow?.solana)      arr.push(w.glow.solana);
+      if (w?.exodus?.solana)    arr.push(w.exodus.solana);
+      if (w?.braveSolana)       arr.push(w.braveSolana);
+      if (w?.jupiter?.solana)   arr.push(w.jupiter.solana);
+      if (w?.solana)            arr.push(w.solana); // many wallets alias here
+      // De-dup
+      return [...new Set(arr.filter(Boolean))];
     }
-    function getInstallUrl(kind){
+
+    function pickProvider(kind){
+      const list = candidates();
+      if (kind === "auto") {
+        return list.find(p => typeof p.connect === "function" && (p.isConnected || p.publicKey || p.signTransaction));
+      }
+      if (kind === "phantom")   return window?.phantom?.solana || (window?.solana?.isPhantom ? window.solana : null);
+      if (kind === "solflare")  return window?.solflare || (window?.solana?.isSolflare ? window.solana : null);
+      if (kind === "backpack")  return window?.backpack?.solana || (window?.solana?.isBackpack ? window.solana : null);
+      if (kind === "glow")      return window?.glow?.solana || (window?.solana?.isGlow ? window.solana : null);
+      if (kind === "generic")   return window?.solana || window?.phantom?.solana || null;
+      return null;
+    }
+
+    function installUrl(kind){
       if (kind === "phantom")  return "https://phantom.app/download";
       if (kind === "solflare") return "https://solflare.com/download";
       if (kind === "backpack") return "https://www.backpack.app/download";
@@ -230,7 +254,7 @@
       return "https://phantom.app/download";
     }
 
-    /* ===== Holder check via Helius DAS (collection NFT) ===== */
+    /* ===== Holder check via Helius DAS ===== */
     async function checkHolderNft(ownerStr){
       try{
         if (!ownerStr || !CM_COLLECTION_PK) return false;
@@ -248,15 +272,11 @@
         const data = await res.json();
         const items = data?.result?.items || [];
         const collectionPkStr = CM_COLLECTION_PK.toString?.() || String(CM_COLLECTION_PK);
-        const has = items.some(it =>
+        return items.some(it =>
           Array.isArray(it?.grouping) &&
           it.grouping.some(([k,v]) => k === "collection" && v === collectionPkStr)
         );
-        return has;
-      } catch(e){
-        console.error("DAS check error:", e);
-        return false;
-      }
+      } catch { return false; }
     }
 
     /* ===== UI/Stats ===== */
@@ -303,22 +323,26 @@
       } catch { return {}; }
     }
 
-    /* ===== Wallet connect (multi-wallet) ===== */
+    /* ===== Wallet connect ===== */
     async function connectWallet(){
       try{
-        const kind = $("walletPicker")?.value ?? "phantom";
-        const provider = getProvider(kind);
+        const kind = $("walletPicker")?.value ?? "auto";
+        const provider = pickProvider(kind);
 
         if (!provider){
           $("holderMsg").className="note err";
-          setTxt("holderMsg", `No ${kind} provider found. Install the wallet and try again.`);
-          window.open(getInstallUrl(kind), "_blank");
+          setTxt("holderMsg", `No wallet provider found. Install a wallet and try again.`);
+          if (kind !== "auto") window.open(installUrl(kind), "_blank");
           return;
         }
 
-        const res = await provider.connect?.() ?? {};
-        const pubkey = provider.publicKey || res.publicKey;
-        const pkb58  = pubkey?.toBase58?.() || pubkey?.toString?.() || String(pubkey || "");
+        // Sommige wallets vereisen 'onlyIfTrusted' eerst; zo nodig fallback naar normale connect:
+        let res;
+        try { res = await provider.connect?.({ onlyIfTrusted: false }); }
+        catch { res = await provider.connect?.(); }
+
+        const pubkey = provider.publicKey || res?.publicKey;
+        const pkb58  = pubkey?.toBase58?.() || pubkey?.toString?.() || "";
 
         if (!pkb58){
           setTxt("who","—");
@@ -330,6 +354,7 @@
         setTxt("who", "Connected: "+pkb58.slice(0,6)+"…"+pkb58.slice(-6));
         localStorage.setItem(LS_LAST_WALLET, kind);
 
+        // Gebruik provider direct met Umi wallet adapter bridge
         umi.use(walletAdapterIdentity(provider));
         connected = true;
 
@@ -478,4 +503,3 @@
   </script>
 </body>
 </html>
-
