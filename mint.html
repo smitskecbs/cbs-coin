@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
   <title>CBS — Holders Mint</title>
 
-  <!-- App identity (vermindert Phantom waarschuwingen) -->
+  <!-- Identity -->
   <link rel="icon" href="logo.png">
   <meta name="theme-color" content="#0e0f12">
 
@@ -129,7 +129,7 @@
         </div>
       </section>
 
-      <!-- TELEGRAM — holders-gated by CBS balance -->
+      <!-- TELEGRAM -->
       <section class="card span2">
         <h2 class="h3">Community</h2>
         <div class="row" style="gap:12px;">
@@ -152,11 +152,12 @@
   </div>
 
   <script type="module">
-    /* === Imports === */
+    /* === Correct imports (Candy Guard separated!) === */
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
     import { publicKey as umiPk, generateSigner, some } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
-    import { mplCandyMachine, fetchCandyMachine, fetchCandyGuard, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
+    import { mplCandyMachine, fetchCandyMachine } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
+    import { mplCandyGuard, fetchCandyGuard, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-guard@6.1.1";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.2.0";
     import { Connection, PublicKey, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.95.3";
     import bs58 from "https://esm.sh/bs58@5.0.0";
@@ -168,8 +169,8 @@
     const CANDY_MACHINE_ID = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd".trim();
     const CBS_MINT_ID      = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk".trim();
 
-    const CBS_THRESHOLD = 1;          // DM unlock threshold
-    const MIN_SOL_RENT  = 0.02;       // not required for DM; only for mint UX
+    const CBS_THRESHOLD = 1;
+    const MIN_SOL_RENT  = 0.02;
     const LS_LAST_WALLET = "cbs_last_wallet";
 
     /* ===== Helpers / UI ===== */
@@ -201,16 +202,15 @@
 
     /* ===== Chain ===== */
     const connection = new Connection(RPC_URL, "confirmed");
-    const umi = createUmi(RPC_URL).use(mplCandyMachine()).use(mplTokenMetadata());
+    const umi = createUmi(RPC_URL).use(mplCandyMachine()).use(mplCandyGuard()).use(mplTokenMetadata());
     let connected=false, SOLD_OUT=false;
-    let HAS_COLLECTION_NFT=false; // still counts as holder for DM
+    let HAS_COLLECTION_NFT=false;
 
-    // PublicKeys uit de CM (Umi PublicKey objecten)
     let CANDY_GUARD_PK = null;
     let CM_COLLECTION_PK = null;
     let CM_AUTHORITY_PK  = null;
 
-    /* ===== Holder check via Helius DAS (collection NFT) ===== */
+    /* ===== Holder check via DAS (optional) ===== */
     async function checkHolderNft(ownerStr){
       try{
         if (!ownerStr || !CM_COLLECTION_PK) return false;
@@ -228,18 +228,13 @@
         const data = await res.json();
         const items = data?.result?.items || [];
         const collectionPkStr = CM_COLLECTION_PK.toString?.() || String(CM_COLLECTION_PK);
-        const has = items.some(it =>
+        return items.some(it =>
           Array.isArray(it?.grouping) &&
           it.grouping.some(([k,v]) => k === "collection" && v === collectionPkStr)
         );
-        return has;
-      } catch(e){
-        console.error("DAS check error:", e);
-        return false;
-      }
+      } catch{ return false; }
     }
 
-    /* ===== UI/Stats ===== */
     function setSoldUI(minted, available){
       setTxt("minted", fmt(minted)); setTxt("available", fmt(available));
       const pct = (available>0) ? Math.min(100, Math.max(0,(minted/available)*100)) : 0;
@@ -251,7 +246,7 @@
     async function refresh(){
       try{
         const cm = await fetchCandyMachine(umi, umiPk(CANDY_MACHINE_ID));
-        CANDY_GUARD_PK   = cm.mintAuthority;
+        CANDY_GUARD_PK   = cm.mintAuthority;   // <-- Guard PDA for this CM
         CM_COLLECTION_PK = cm.collectionMint;
         CM_AUTHORITY_PK  = cm.authority;
 
@@ -259,16 +254,15 @@
         const avail  = Number(cm.itemsAvailable ?? cm.data?.itemsAvailable ?? 0);
         setSoldUI(minted, avail);
 
-        // If connected, also check collection-NFT (bonus path to unlock DM)
         if (connected && umi?.identity?.publicKey) {
           const ownerStr = new PublicKey(umi.identity.publicKey).toBase58();
           HAS_COLLECTION_NFT = await checkHolderNft(ownerStr);
-          // DM gating will be finalized inside updateHolderState (CBS balance OR collection NFT)
-          await updateHolderState(); // ensures CBS check runs and updates DM
+          await updateHolderState();
         }
       }catch(e){ console.error(e); setNote("err","Failed to load drop data."); }
     }
 
+    // Build correct guard args: ONLY tokenGate (do NOT pass mintLimit)
     async function buildMintArgs(){
       try{
         if (!CANDY_GUARD_PK) return {};
@@ -277,10 +271,7 @@
         if (guard.guards?.tokenGate?.__option === "Some") {
           args.tokenGate = some({ mint: umiPk(CBS_MINT_ID) });
         }
-        if (guard.guards?.mintLimit?.__option === "Some") {
-          const id = Number(guard.guards.mintLimit.value?.id ?? 1);
-          args.mintLimit = some({ id });
-        }
+        // No mintLimit here – if you keep it on-chain, it will still limit.
         return args;
       } catch { return {}; }
     }
@@ -306,13 +297,10 @@
         umi.use(walletAdapterIdentity(provider));
         connected = true;
 
-        // After connect: do CBS balance check (and SOL info purely for mint UX)
         await updateHolderState();
-
-        // Bonus path: if collection mint is known, check if user already holds a collection NFT
         if (CM_COLLECTION_PK) {
           HAS_COLLECTION_NFT = await checkHolderNft(pkb58);
-          await updateHolderState(); // re-evaluate DM lock with NFT status
+          await updateHolderState();
         }
       }catch(e){
         console.error(e);
@@ -330,13 +318,10 @@
     }
     async function getSolBalance(ownerPk){ const lamports = await connection.getBalance(ownerPk, "confirmed"); return lamports / LAMPORTS_PER_SOL; }
 
-    /* ===== Holder state + DM gating (CBS ≥ threshold OR holds collection NFT) ===== */
     async function updateHolderState(){
       if (!umi?.identity?.publicKey) { setDmEnabled(false); return; }
       try{
         const owner = new PublicKey(umi.identity.publicKey);
-
-        // Read balances (SOL is only for mint UX; not required for DM)
         const [cbs, sol] = await Promise.all([ getCbsBalance(owner), getSolBalance(owner) ]);
 
         setTxt("cbsBal", fmt(cbs));
@@ -345,10 +330,8 @@
         const hasSOL = sol >= MIN_SOL_RENT;
         const dmUnlock = hasCBS || HAS_COLLECTION_NFT;
 
-        // DM lock purely based on CBS (or collection NFT). No SOL requirement.
         setDmEnabled(dmUnlock);
 
-        // Holder message focuses on mint readiness (separate from DM logic)
         if (hasCBS && hasSOL){ $("holderMsg").className="note ok"; setTxt("holderMsg","CBS OK, you can mint ✅ (DM unlocked)"); }
         else if (hasCBS && !hasSOL){ $("holderMsg").className="note warn"; setTxt("holderMsg","Holder detected — DM unlocked. Add ~0.02 SOL to mint."); }
         else { $("holderMsg").className="note warn"; setTxt("holderMsg","Need ≥ 1 CBS to unlock DM & mint."); }
@@ -360,7 +343,7 @@
       }
     }
 
-    function showTxLink(signature,label="View tx"){
+    function showTxLink(signature,label="View on Solscan"){
       if (!signature || typeof signature !== "string") return;
       const a = document.createElement("a");
       a.href = "https://solscan.io/tx/"+signature;
@@ -370,7 +353,7 @@
       $("mintMsg").appendChild(a);
     }
 
-    /* ===== Mint ===== */
+    /* ===== Mint (uses Candy Guard correctly) ===== */
     async function doMint(){
       try{
         setNote("", "");
@@ -413,21 +396,14 @@
           });
           sigStr = normalizeSig(res);
         }catch(err1){
-          const m = (err1?.cause?.message || err1?.message || "").toLowerCase();
-          if (m.includes("blockhash not found") || m.includes("blockhashnotfound")) {
-            try {
-              await umi.rpc.getLatestBlockhash();
-              const res2 = await mintV2(umi, params).sendAndConfirm(umi, {
-                confirm: { commitment: "confirmed" },
-                send: { maxRetries: 3 }
-              });
-              sigStr = normalizeSig(res2);
-            } catch(err2) {
-              console.error("mint retry error:", err2);
-              const raw = (err2?.cause?.logs?.[0] || err2?.cause?.message || err2?.message || "").toString();
-              setNote("err", raw ? ("Mint failed: " + raw.slice(0,220)) : "Mint failed.");
-              showTxLink(sigStr); return;
-            }
+          const msg = (err1?.cause?.message || err1?.message || "").toLowerCase();
+          if (msg.includes("blockhash not found") || msg.includes("blockhashnotfound")) {
+            await umi.rpc.getLatestBlockhash();
+            const res2 = await mintV2(umi, params).sendAndConfirm(umi, {
+              confirm: { commitment: "confirmed" },
+              send: { maxRetries: 3 }
+            });
+            sigStr = normalizeSig(res2);
           } else {
             console.error("mintV2 error:", err1);
             const raw = (err1?.cause?.logs?.[0] || err1?.cause?.message || err1?.message || "").toString();
@@ -436,9 +412,8 @@
           }
         }
 
-        setNote("ok","Mint confirmed ✅ ");
-        // DM stays unlocked by CBS; no localStorage tricks
-        showTxLink(sigStr,"View on Solscan");
+        setNote("ok","Mint confirmed ✅");
+        showTxLink(sigStr);
         await updateHolderState();
         await refresh();
       }catch(e){
@@ -453,7 +428,6 @@
     $("mintBadge").addEventListener("click", doMint);
 
     (async () => {
-      // Start with DM locked until we can verify holder status
       setDmEnabled(false);
       await refresh();
     })();
