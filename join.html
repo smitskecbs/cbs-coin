@@ -1,273 +1,225 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CBS Partnerships — Collaboration Request</title>
-  <meta name="description" content="Partnerships & collaboration request form for CBS Coin (no server storage, email + JSON copy).">
-  <meta name="theme-color" content="#0b1227" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>CBS — Collaborations & Partnerships</title>
+  <meta name="description" content="Propose a collaboration or partnership with CBS Coin. No backend required — your message opens in email and a JSON copy is saved to your clipboard.">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
-    :root{ --bg:#070a12; --bg2:#0b1227; --ring:#22c55e; --text:#e5efff; }
-    body{ font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; background: radial-gradient(1200px 700px at 15% -10%, #0e1631 0%, var(--bg) 55%), var(--bg2); color:var(--text); }
-    .glass{ background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03)); backdrop-filter: blur(10px); border:1px solid rgba(255,255,255,.1); }
-    .neon{ box-shadow: 0 0 0 .5px rgba(255,255,255,.2), 0 0 25px rgba(34,197,94,.25), inset 0 0 25px rgba(34,197,94,.08); }
-    .sticker{ transform: rotate(-3deg); border:2px dashed #fff; background:#0f0f0f; padding:.35rem .6rem; display:inline-block; }
-    .chip{ border:1px solid rgba(255,255,255,.18); border-radius:9999px; padding:.2rem .6rem; }
-    a{ color:#9dd7ff; }
-    .meme-title{ font-family: Bangers, Inter, system-ui; letter-spacing:.5px; text-shadow: 0 2px #000, 0 6px rgba(0,0,0,.35); }
+    :root{
+      --bg:#000000; --fg:#e5e7eb; --muted:#cbd5e1; --card:#0a0a0a; --border:#222;
+      --radius:18px; --g:#22c55e; --p:#a78bfa;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--fg);background:var(--bg)}
+    .wrap{max-width:980px;margin:0 auto;padding:18px 16px 40px}
+
+    /* Brand */
+    .brand-card{position:relative;background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:10px;overflow:hidden}
+    .banner{width:100%;height:200px;object-fit:contain;display:block;background:#000}
+    .logo{position:absolute;left:16px;bottom:16px;width:92px;height:92px;border-radius:50%;object-fit:cover;background:#000;
+      filter:drop-shadow(0 0 14px rgba(34,197,94,.55)) drop-shadow(0 0 22px rgba(167,139,250,.45))}
+    .tagline{position:absolute;top:12px;right:12px;font-weight:700;font-size:.9rem;color:#fff;background:rgba(0,0,0,.55);
+      border:1px solid rgba(255,255,255,.12);padding:.35rem .6rem;border-radius:10px;backdrop-filter:blur(4px)}
+    @media (min-width:720px){ .banner{height:280px} .logo{left:20px;bottom:20px;width:120px;height:120px} }
+
+    h1{margin:22px 0 8px;font-size:2.2rem;line-height:1.15;color:#fff;font-weight:800}
+    p{margin:.6rem 0;font-size:1.02rem;line-height:1.75;color:var(--muted);max-width:72ch}
+
+    /* Card + form */
+    .card{background:#0b0b0b;border:1px solid rgba(255,255,255,.10);border-radius:16px;padding:16px}
+    .grid{display:grid;gap:12px}
+    .row{display:grid;grid-template-columns:1fr;gap:12px}
+    @media(min-width:760px){ .row{grid-template-columns:1fr 1fr} }
+    label{display:block;font-size:.9rem;margin:4px 0 6px;color:#fff}
+    input,select,textarea{
+      width:100%;border-radius:12px;background:#0f0f10;border:1px solid rgba(255,255,255,.12);
+      color:#e5e7eb;padding:10px 12px;font-size:.98rem
+    }
+    textarea{min-height:120px;resize:vertical}
+    .hint{font-size:.85rem;color:#cbd5e1;opacity:.85}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+    .btn{
+      appearance:none;border:0;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer
+    }
+    .btn-primary{background:var(--g);color:#0c0c0c}
+    .btn-ghost{background:#ffffff10;color:#fff}
+    .small{font-size:.86rem;color:#cbd5e1}
+    .note{font-size:.9rem;color:#cbd5e1;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.12);border-radius:12px;padding:10px 12px}
+
+    footer{margin:28px 0 10px;color:#9aa0a6;font-size:.82rem;text-align:center}
+    footer a{color:#cbd5e1;opacity:.75;text-decoration:none}
+    footer a:hover{opacity:1;text-decoration:underline}
   </style>
 </head>
-<body class="min-h-screen">
-  <!-- NAV -->
-  <nav class="max-w-5xl mx-auto px-4 pt-6">
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
-      <div class="flex items-center gap-3">
-        <img src="logo.png" alt="CBS" class="h-10 w-10 rounded-full ring-2 ring-[var(--ring)]" onerror="this.style.display='none'"/>
-        <span class="text-xl font-extrabold tracking-tight">CBS Partnerships</span>
-      </div>
-      <div class="flex items-center flex-wrap gap-x-2 gap-y-1 text-[11px] sm:text-xs opacity-70">
-        <span class="chip">No server storage</span>
-        <span class="hidden sm:inline">·</span>
-        <span class="chip">Email + JSON copy</span>
-      </div>
-    </div>
-  </nav>
-
-  <!-- HEADER -->
-  <header class="max-w-5xl mx-auto px-4 pt-6">
-    <div class="glass neon rounded-2xl p-5 md:p-7">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <h1 class="meme-title text-4xl md:text-5xl font-extrabold tracking-tight">Collaboration Request 🤝</h1>
-          <p class="mt-2 text-sm md:text-base opacity-85">
-            Pitch your partnership, listing, AMA, marketing plan, tool integration — whatever helps CBS grow.
-          </p>
-          <div class="mt-3 text-xs opacity-80">
-            <strong>How it works:</strong> Fill the form → your email client opens to <code>contact@cbs-coin.com</code> →
-            JSON is copied to your clipboard (handy for Telegram).
-          </div>
-        </div>
-        <div class="hidden md:block">
-          <div class="sticker rounded-xl">Community Builds <strong>SOVEREIGNTY</strong></div>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <main class="max-w-5xl mx-auto px-4 py-6">
-    <!-- Form -->
-    <section class="glass rounded-2xl p-6 shadow-xl">
-      <h2 class="text-2xl font-extrabold mb-2 meme-title">Tell us about your proposal</h2>
-      <p class="text-sm opacity-80 mb-6">Fields marked * are required. Wallet is optional (for payouts/on-chain proofs).</p>
-
-      <form id="collabForm" class="grid gap-4">
-        <!-- Who -->
-        <div class="grid md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm mb-1">Organization / Project name *</label>
-            <input id="orgInput" type="text" required class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="Your brand or project" />
-          </div>
-          <div>
-            <label class="block text-sm mb-1">Contact person *</label>
-            <input id="nameInput" type="text" required class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="Your name" />
-          </div>
-        </div>
-
-        <div class="grid md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm mb-1">Email *</label>
-            <input id="emailInput" type="email" required class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="you@domain.com" />
-          </div>
-          <div>
-            <label class="block text-sm mb-1">Telegram (optional)</label>
-            <input id="tgInput" type="text" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="@handle" />
-          </div>
-        </div>
-
-        <!-- Type -->
-        <div class="grid md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm mb-1">Proposal type *</label>
-            <select id="typeInput" required class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2">
-              <option value="">Select…</option>
-              <option>Listing (CEX/DEX/Aggregator)</option>
-              <option>Marketing / Influencer campaign</option>
-              <option>AMA / Space / Podcast</option>
-              <option>Tool integration (bots, trackers, wallets)</option>
-              <option>Partnership / Sponsorship</option>
-              <option>Airdrop / Contest / Giveaway</option>
-              <option>Other</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-sm mb-1">Region / Timezone (optional)</label>
-            <input id="tzInput" type="text" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="e.g. EU / CET" />
-          </div>
-        </div>
-
-        <!-- Pitch -->
-        <div>
-          <label class="block text-sm mb-1">One-line summary *</label>
-          <input id="summaryInput" type="text" maxlength="140" required class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="e.g. Joint $5 buy challenge + poster kit" />
-        </div>
-        <div>
-          <label class="block text-sm mb-1">Full proposal (what/why/how) *</label>
-          <textarea id="proposalInput" rows="5" required class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="Objective, plan, channels, responsibilities, success criteria…"></textarea>
-        </div>
-
-        <!-- Deliverables / Timeline / Budget -->
-        <div class="grid md:grid-cols-3 gap-4">
-          <div>
-            <label class="block text-sm mb-1">Deliverables *</label>
-            <textarea id="deliverInput" rows="3" required class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="e.g. 3 posts + 1 space + banner set"></textarea>
-          </div>
-          <div>
-            <label class="block text-sm mb-1">Timeline *</label>
-            <input id="timelineInput" type="text" required class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="e.g. 2 weeks (start next Monday)" />
-          </div>
-          <div>
-            <label class="block text-sm mb-1">Budget (optional)</label>
-            <input id="budgetInput" type="text" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="e.g. $300 in SOL/CBS" />
-          </div>
-        </div>
-
-        <!-- Links -->
-        <div class="grid md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm mb-1">Website / Deck (optional)</label>
-            <input id="link1Input" type="url" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="https://…" />
-          </div>
-          <div>
-            <label class="block text-sm mb-1">Reference / Proof link (optional)</label>
-            <input id="link2Input" type="url" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="Past work, analytics, etc." />
-          </div>
-        </div>
-
-        <!-- Wallet (optional) -->
-        <div class="grid md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm mb-1">Solana wallet (optional)</label>
-            <input id="walletInput" type="text" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="For payouts or on-chain proofs" />
-          </div>
-          <div class="flex items-center gap-2">
-            <input id="kycInput" type="checkbox" class="h-4 w-4">
-            <label for="kycInput" class="text-sm">We can provide KYC/Invoice if needed</label>
-          </div>
-        </div>
-
-        <!-- Actions -->
-        <div class="flex items-center gap-3 mt-2">
-          <button id="sendBtn" type="submit" class="px-4 py-2 rounded-xl bg-[var(--ring)] text-black font-bold">Send</button>
-          <button id="copyBtn" type="button" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20">Copy JSON</button>
-          <span id="saveToast" class="text-xs opacity-70"></span>
-        </div>
-
-        <p class="text-xs opacity-60">
-          This page stores nothing server-side. When you press “Send”, it opens your email client to
-          <code>contact@cbs-coin.com</code> and copies a JSON payload so you can also share via Telegram.
-        </p>
-      </form>
+<body>
+  <main class="wrap">
+    <!-- Brand -->
+    <section class="brand-card">
+      <picture>
+        <source type="image/webp" srcset="Banner-CBS-Coin.webp">
+        <img class="banner" src="Banner-CBS-Coin.jpg" alt="CBS Banner" onerror="this.style.display='none'">
+      </picture>
+      <img class="logo" src="logo.png" alt="CBS Logo" onerror="this.style.display='none'">
+      <div class="tagline">CBS — Community Builds <span style="color:var(--p)">Sovereignty</span></div>
     </section>
+
+    <section>
+      <h1>Collaborations & Partnerships</h1>
+      <p>Pitch your idea, campaign or integration with <strong>CBS Coin</strong>. This form opens your email client to <code>contact@cbs-coin.com</code> and also copies a JSON summary to your clipboard (handy for Telegram). No server storage.</p>
+
+      <div class="card">
+        <form id="collabForm" class="grid">
+          <div class="row">
+            <div>
+              <label for="name">Your name / team</label>
+              <input id="name" placeholder="e.g. Cozy Labs / Alex" required>
+            </div>
+            <div>
+              <label for="contact">Contact</label>
+              <input id="contact" placeholder="Telegram @handle or email" required>
+            </div>
+          </div>
+
+          <div class="row">
+            <div>
+              <label for="project">Project / brand</label>
+              <input id="project" placeholder="e.g. Kedolik — Dev Studio">
+            </div>
+            <div>
+              <label for="category">Category</label>
+              <select id="category">
+                <option>Marketing / Promotion</option>
+                <option>Exchange / Listing</option>
+                <option>Partnership / Co-brand</option>
+                <option>Development / Tooling</option>
+                <option>NFT / Design</option>
+                <option>Community / Event</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label for="proposal">Proposal (short & concrete)</label>
+            <textarea id="proposal" placeholder="What do you want to do with CBS? What’s the goal?"></textarea>
+          </div>
+
+          <div>
+            <label for="value">Value for CBS (impact / deliverables)</label>
+            <textarea id="value" placeholder="e.g. +500 followers, +50 holders in 7 days, weekly AMAs, press kit, integration, etc." required></textarea>
+          </div>
+
+          <div class="row">
+            <div>
+              <label for="budget">Budget (optional)</label>
+              <input id="budget" placeholder="e.g. $0 (rev-share), $150 in CBS, or quote">
+            </div>
+            <div>
+              <label for="timeline">Preferred timeline</label>
+              <input id="timeline" placeholder="e.g. 2 weeks, December campaign, after listing">
+            </div>
+          </div>
+
+          <div>
+            <label for="links">Links</label>
+            <input id="links" placeholder="Website, socials, previous work, deck, etc.">
+          </div>
+
+          <!-- anti-spam honeypot -->
+          <input id="website" name="website" placeholder="(leave empty)" style="display:none">
+
+          <div class="actions">
+            <button type="submit" class="btn btn-primary">Send proposal</button>
+            <button type="button" id="copyBtn" class="btn btn-ghost">Copy JSON</button>
+            <span id="toast" class="small"></span>
+          </div>
+          <div class="small">By submitting, you agree we may contact you about this proposal.</div>
+        </form>
+      </div>
+
+      <div class="note" style="margin-top:12px">
+        <strong>How we review.</strong> We prioritise genuine value for the CBS community: clear goals, measurable outcomes and transparent pricing. Most decisions are discussed in the holders’ group before commitment.
+      </div>
+    </section>
+
+    <footer>
+      © CBS Coin · <a href="index.html">Home</a> · <a href="faq.html">FAQ</a> ·
+      <a href="mailto:contact@cbs-coin.com">contact@cbs-coin.com</a>
+    </footer>
   </main>
 
-  <footer class="max-w-5xl mx-auto px-4 pb-10 mt-8 text-xs opacity-60">
-    CBS Coin — Community Builds Sovereignty
-  </footer>
-
   <script>
-    const SUBMIT_EMAIL = 'contact@cbs-coin.com';
-
-    function shorten(s){ return s ? s.slice(0,4) + '…' + s.slice(-4) : ''; }
+    const EMAIL = 'contact@cbs-coin.com';
 
     function buildPayload(){
-      const get = id => document.getElementById(id).value.trim();
-      return {
-        organization: get('orgInput'),
-        contactPerson: get('nameInput'),
-        email: get('emailInput'),
-        telegram: get('tgInput') || null,
-        type: document.getElementById('typeInput').value,
-        regionTimezone: get('tzInput') || null,
-        summary: get('summaryInput'),
-        proposal: get('proposalInput'),
-        deliverables: get('deliverInput'),
-        timeline: get('timelineInput'),
-        budget: get('budgetInput') || null,
-        links: {
-          websiteOrDeck: get('link1Input') || null,
-          reference: get('link2Input') || null
-        },
-        wallet: get('walletInput') || null,
-        kycOrInvoicePossible: document.getElementById('kycInput').checked,
+      const data = {
+        name:      document.getElementById('name').value.trim(),
+        contact:   document.getElementById('contact').value.trim(),
+        project:   document.getElementById('project').value.trim() || null,
+        category:  document.getElementById('category').value,
+        proposal:  document.getElementById('proposal').value.trim() || null,
+        value:     document.getElementById('value').value.trim(),
+        budget:    document.getElementById('budget').value.trim() || null,
+        timeline:  document.getElementById('timeline').value.trim() || null,
+        links:     document.getElementById('links').value.trim() || null,
         timestamp: new Date().toISOString()
       };
+      return data;
     }
 
     function toMailto(payload){
-      const subject = `CBS Collaboration — ${payload.organization || 'Unknown Org'} — ${payload.type || 'Proposal'}`;
+      const subject = 'CBS Collaboration — ' + (payload.project || payload.name);
       const lines = [
-        `Organization: ${payload.organization}`,
-        `Contact: ${payload.contactPerson}`,
-        `Email: ${payload.email}`,
-        `Telegram: ${payload.telegram || '-'}`,
-        `Type: ${payload.type}`,
-        `Region/Timezone: ${payload.regionTimezone || '-'}`,
-        `Summary: ${payload.summary}`,
-        '',
-        `Proposal:\n${payload.proposal}`,
-        '',
-        `Deliverables: ${payload.deliverables}`,
-        `Timeline: ${payload.timeline}`,
-        `Budget: ${payload.budget || '-'}`,
-        `Website/Deck: ${payload.links.websiteOrDeck || '-'}`,
-        `Reference: ${payload.links.reference || '-'}`,
-        `Wallet: ${payload.wallet || '-'}`,
-        `KYC/Invoice possible: ${payload.kycOrInvoicePossible ? 'Yes' : 'No'}`,
-        `Time: ${payload.timestamp}`
+        'Name/Team: ' + payload.name,
+        'Contact: ' + payload.contact,
+        'Project/Brand: ' + (payload.project || '-'),
+        'Category: ' + payload.category,
+        'Proposal: ' + (payload.proposal || '-'),
+        'Value for CBS: ' + payload.value,
+        'Budget: ' + (payload.budget || '-'),
+        'Timeline: ' + (payload.timeline || '-'),
+        'Links: ' + (payload.links || '-'),
+        'Time: ' + payload.timestamp
       ];
-      const body = encodeURIComponent(lines.join('\n'));
-      return `mailto:${SUBMIT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${body}`;
+      return 'mailto:' + EMAIL + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(lines.join('\n'));
     }
 
     document.getElementById('collabForm').addEventListener('submit', function(e){
       e.preventDefault();
+      const hp = (document.getElementById('website').value || '').trim();
+      if(hp){ return; } // honeypot
+      const p = buildPayload();
 
-      // Basic client-side checks
-      const requiredIds = ['orgInput','nameInput','emailInput','typeInput','summaryInput','proposalInput','deliverInput','timelineInput'];
-      for(const id of requiredIds){
-        const el = document.getElementById(id);
-        if(!el.value.trim()){
-          alert('Please fill all required fields.');
-          el.focus();
-          return;
-        }
+      if(!p.name || !p.contact || !p.value){
+        document.getElementById('toast').textContent = 'Please fill required fields.';
+        setTimeout(()=>document.getElementById('toast').textContent='', 3000);
+        return;
       }
 
-      const payload = buildPayload();
+      // open email
+      window.location.href = toMailto(p);
 
-      // Open email client and copy JSON
-      window.location.href = toMailto(payload);
-      const json = JSON.stringify(payload, null, 2);
+      // copy JSON
+      const json = JSON.stringify(p, null, 2);
       navigator.clipboard.writeText(json).then(()=>{
-        const toast = document.getElementById('saveToast');
-        toast.textContent = 'JSON copied to clipboard';
-        setTimeout(()=> toast.textContent = '', 3000);
+        document.getElementById('toast').textContent = 'JSON copied to clipboard';
+        setTimeout(()=>document.getElementById('toast').textContent='', 3000);
       }).catch(()=>{});
     });
 
     document.getElementById('copyBtn').addEventListener('click', function(){
-      const payload = buildPayload();
-      const json = JSON.stringify(payload, null, 2);
+      const p = buildPayload();
+      const json = JSON.stringify(p, null, 2);
       navigator.clipboard.writeText(json).then(()=>{
-        const toast = document.getElementById('saveToast');
-        toast.textContent = 'JSON copied!';
-        setTimeout(()=> toast.textContent = '', 3000);
+        document.getElementById('toast').textContent = 'JSON copied';
+        setTimeout(()=>document.getElementById('toast').textContent='', 3000);
       }).catch(()=>{
-        const toast = document.getElementById('saveToast');
-        toast.textContent = 'Copy failed (permissions)';
-        setTimeout(()=> toast.textContent = '', 3000);
+        document.getElementById('toast').textContent = 'Copy failed (permissions)';
+        setTimeout(()=>document.getElementById('toast').textContent='', 3000);
       });
     });
   </script>
