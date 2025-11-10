@@ -3,22 +3,20 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>CBS Idea Submission — Holders Only</title>
-  <meta name="description" content="Gated idea submission form for CBS holders (requires ≥ $5 in CBS)">
+  <title>CBS Partnerships — Collaboration Request</title>
+  <meta name="description" content="Partnerships & collaboration request form for CBS Coin (no server storage, email + JSON copy).">
   <meta name="theme-color" content="#0b1227" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/@solana/web3.js@1.95.1/lib/index.iife.min.js" defer></script>
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <style>
     :root{ --bg:#070a12; --bg2:#0b1227; --ring:#22c55e; --text:#e5efff; }
     body{ font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; background: radial-gradient(1200px 700px at 15% -10%, #0e1631 0%, var(--bg) 55%), var(--bg2); color:var(--text); }
     .glass{ background: linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.03)); backdrop-filter: blur(10px); border:1px solid rgba(255,255,255,.1); }
     .neon{ box-shadow: 0 0 0 .5px rgba(255,255,255,.2), 0 0 25px rgba(34,197,94,.25), inset 0 0 25px rgba(34,197,94,.08); }
+    .sticker{ transform: rotate(-3deg); border:2px dashed #fff; background:#0f0f0f; padding:.35rem .6rem; display:inline-block; }
     .chip{ border:1px solid rgba(255,255,255,.18); border-radius:9999px; padding:.2rem .6rem; }
-    .hidden{ display:none; }
     a{ color:#9dd7ff; }
     .meme-title{ font-family: Bangers, Inter, system-ui; letter-spacing:.5px; text-shadow: 0 2px #000, 0 6px rgba(0,0,0,.35); }
-    .sticker{ transform: rotate(-3deg); border:2px dashed #fff; background:#0f0f0f; padding:.35rem .6rem; display:inline-block; }
   </style>
 </head>
 <body class="min-h-screen">
@@ -27,13 +25,12 @@
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4">
       <div class="flex items-center gap-3">
         <img src="logo.png" alt="CBS" class="h-10 w-10 rounded-full ring-2 ring-[var(--ring)]" onerror="this.style.display='none'"/>
-        <span class="text-xl font-extrabold tracking-tight">CBS Holders Gate</span>
+        <span class="text-xl font-extrabold tracking-tight">CBS Partnerships</span>
       </div>
       <div class="flex items-center flex-wrap gap-x-2 gap-y-1 text-[11px] sm:text-xs opacity-70">
-        <span>Mint:</span>
-        <code id="mintLabel" class="opacity-90 max-w-[72vw] sm:max-w-none break-all sm:break-normal"></code>
+        <span class="chip">No server storage</span>
         <span class="hidden sm:inline">·</span>
-        <span>Threshold: <span id="usdMinLabel">$5</span></span>
+        <span class="chip">Email + JSON copy</span>
       </div>
     </div>
   </nav>
@@ -43,13 +40,13 @@
     <div class="glass neon rounded-2xl p-5 md:p-7">
       <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 class="meme-title text-4xl md:text-5xl font-extrabold tracking-tight">Submit Your CBS Idea 💡</h1>
-          <p class="mt-2 text-sm md:text-base opacity-85">Holders-only · You need at least <span class="font-semibold">$5</span> worth of CBS to open the form.</p>
+          <h1 class="meme-title text-4xl md:text-5xl font-extrabold tracking-tight">Collaboration Request 🤝</h1>
+          <p class="mt-2 text-sm md:text-base opacity-85">
+            Pitch your partnership, listing, AMA, marketing plan, tool integration — whatever helps CBS grow.
+          </p>
           <div class="mt-3 text-xs opacity-80">
-            <strong>How to submit:</strong> Connect wallet (or paste address) → Verify ≥ $5 CBS → Fill form → Your email opens & JSON is copied. No server storage.
-          </div>
-          <div class="mt-3 text-xs opacity-75">
-            Tip: use HTTPS. On mobile, open this page in your wallet’s in-app browser (Phantom/Solflare/Backpack/OKX). You can also paste your public address below.
+            <strong>How it works:</strong> Fill the form → your email client opens to <code>contact@cbs-coin.com</code> →
+            JSON is copied to your clipboard (handy for Telegram).
           </div>
         </div>
         <div class="hidden md:block">
@@ -60,75 +57,117 @@
   </header>
 
   <main class="max-w-5xl mx-auto px-4 py-6">
-    <!-- Wallet connect / status -->
-    <section class="glass rounded-2xl p-5 shadow-lg">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div>
-          <div class="text-sm opacity-80">Wallet</div>
-          <div id="statusText" class="text-lg font-semibold">Not connected</div>
-          <div id="walletName" class="text-xs opacity-70"></div>
-          <div id="pubkeyText" class="text-sm opacity-80"></div>
-          <div id="valueText" class="text-xs mt-1 opacity-70"></div>
-        </div>
-        <div class="flex flex-wrap gap-2">
-          <button id="connectBtn" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20">Connect Wallet (Auto)</button>
-          <button id="checkBtn" class="px-4 py-2 rounded-xl bg-[var(--ring)] text-black font-bold disabled:opacity-40" disabled>Verify holdings</button>
-          <button id="openPhantomBtn" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20">Open in Phantom</button>
-          <button id="copyLinkBtn" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20">Copy page link</button>
-        </div>
-      </div>
+    <!-- Form -->
+    <section class="glass rounded-2xl p-6 shadow-xl">
+      <h2 class="text-2xl font-extrabold mb-2 meme-title">Tell us about your proposal</h2>
+      <p class="text-sm opacity-80 mb-6">Fields marked * are required. Wallet is optional (for payouts/on-chain proofs).</p>
 
-      <!-- View-only verify (any wallet) -->
-      <div class="mt-3 flex flex-col sm:flex-row gap-2">
-        <input id="manualAddr" class="w-full sm:w-96 rounded-xl bg-white/5 border border-white/10 px-3 py-2"
-               placeholder="Paste any Solana wallet address (view-only)" />
-        <button id="manualVerifyBtn" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20">
-          Verify without connecting
-        </button>
-      </div>
-
-      <div id="phantomHint" class="mt-3 text-sm hidden">
-        No wallet detected. Install a Solana wallet (Phantom, Solflare, Backpack, OKX) and reload.
-        On mobile, open this page in your wallet’s in-app browser.
-      </div>
-      <div id="gateMsg" class="mt-4 text-sm"></div>
-    </section>
-
-    <!-- Gated form -->
-    <section id="formWrap" class="glass rounded-2xl p-6 shadow-xl mt-6 hidden">
-      <h2 class="text-2xl font-extrabold mb-2 meme-title">Submit your idea</h2>
-      <p class="text-sm opacity-80 mb-6">Only visible to CBS holders. Your wallet address is auto-filled.</p>
-
-      <form id="ideaForm" class="grid gap-4">
+      <form id="collabForm" class="grid gap-4">
+        <!-- Who -->
         <div class="grid md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm mb-1">Wallet address</label>
-            <input id="walletInput" type="text" readonly class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="Connect wallet or paste address" />
+            <label class="block text-sm mb-1">Organization / Project name *</label>
+            <input id="orgInput" type="text" required class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="Your brand or project" />
           </div>
           <div>
-            <label class="block text-sm mb-1">Contact (optional)</label>
-            <input id="contactInput" type="text" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="Telegram @handle or email" />
+            <label class="block text-sm mb-1">Contact person *</label>
+            <input id="nameInput" type="text" required class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="Your name" />
           </div>
         </div>
-        <div>
-          <label class="block text-sm mb-1">Your idea (short & concrete)</label>
-          <input id="ideaInput" type="text" maxlength="140" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="e.g. $5 buy contest + poster kit" required />
-        </div>
-        <div>
-          <label class="block text-sm mb-1">What does it deliver? (impact / expected outcome)</label>
-          <textarea id="valueInput" rows="4" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="e.g. +50 holders in 7 days, +500 followers, higher TG activity" required></textarea>
-        </div>
-        <div>
-          <label class="block text-sm mb-1">Link (optional)</label>
-          <input id="linkInput" type="url" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="https://..." />
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm mb-1">Email *</label>
+            <input id="emailInput" type="email" required class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="you@domain.com" />
+          </div>
+          <div>
+            <label class="block text-sm mb-1">Telegram (optional)</label>
+            <input id="tgInput" type="text" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="@handle" />
+          </div>
         </div>
 
+        <!-- Type -->
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm mb-1">Proposal type *</label>
+            <select id="typeInput" required class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2">
+              <option value="">Select…</option>
+              <option>Listing (CEX/DEX/Aggregator)</option>
+              <option>Marketing / Influencer campaign</option>
+              <option>AMA / Space / Podcast</option>
+              <option>Tool integration (bots, trackers, wallets)</option>
+              <option>Partnership / Sponsorship</option>
+              <option>Airdrop / Contest / Giveaway</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm mb-1">Region / Timezone (optional)</label>
+            <input id="tzInput" type="text" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="e.g. EU / CET" />
+          </div>
+        </div>
+
+        <!-- Pitch -->
+        <div>
+          <label class="block text-sm mb-1">One-line summary *</label>
+          <input id="summaryInput" type="text" maxlength="140" required class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="e.g. Joint $5 buy challenge + poster kit" />
+        </div>
+        <div>
+          <label class="block text-sm mb-1">Full proposal (what/why/how) *</label>
+          <textarea id="proposalInput" rows="5" required class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="Objective, plan, channels, responsibilities, success criteria…"></textarea>
+        </div>
+
+        <!-- Deliverables / Timeline / Budget -->
+        <div class="grid md:grid-cols-3 gap-4">
+          <div>
+            <label class="block text-sm mb-1">Deliverables *</label>
+            <textarea id="deliverInput" rows="3" required class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="e.g. 3 posts + 1 space + banner set"></textarea>
+          </div>
+          <div>
+            <label class="block text-sm mb-1">Timeline *</label>
+            <input id="timelineInput" type="text" required class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="e.g. 2 weeks (start next Monday)" />
+          </div>
+          <div>
+            <label class="block text-sm mb-1">Budget (optional)</label>
+            <input id="budgetInput" type="text" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="e.g. $300 in SOL/CBS" />
+          </div>
+        </div>
+
+        <!-- Links -->
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm mb-1">Website / Deck (optional)</label>
+            <input id="link1Input" type="url" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="https://…" />
+          </div>
+          <div>
+            <label class="block text-sm mb-1">Reference / Proof link (optional)</label>
+            <input id="link2Input" type="url" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="Past work, analytics, etc." />
+          </div>
+        </div>
+
+        <!-- Wallet (optional) -->
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm mb-1">Solana wallet (optional)</label>
+            <input id="walletInput" type="text" class="w-full rounded-xl bg-white/5 border border-white/10 px-3 py-2" placeholder="For payouts or on-chain proofs" />
+          </div>
+          <div class="flex items-center gap-2">
+            <input id="kycInput" type="checkbox" class="h-4 w-4">
+            <label for="kycInput" class="text-sm">We can provide KYC/Invoice if needed</label>
+          </div>
+        </div>
+
+        <!-- Actions -->
         <div class="flex items-center gap-3 mt-2">
-          <button id="submitBtn" type="submit" class="px-4 py-2 rounded-xl bg-[var(--ring)] text-black font-bold">Send</button>
-          <button id="copyBtn" type="button" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20">Copy as JSON</button>
+          <button id="sendBtn" type="submit" class="px-4 py-2 rounded-xl bg-[var(--ring)] text-black font-bold">Send</button>
+          <button id="copyBtn" type="button" class="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20">Copy JSON</button>
           <span id="saveToast" class="text-xs opacity-70"></span>
         </div>
-        <p class="text-xs opacity-60">This page stores nothing server-side. Submission opens your email client (mailto) and also copies JSON to clipboard so you can send it via Telegram.</p>
+
+        <p class="text-xs opacity-60">
+          This page stores nothing server-side. When you press “Send”, it opens your email client to
+          <code>contact@cbs-coin.com</code> and copies a JSON payload so you can also share via Telegram.
+        </p>
       </form>
     </section>
   </main>
@@ -138,284 +177,98 @@
   </footer>
 
   <script>
-    // ======= Config (with Helius) =======
-    const HELIUS_KEY = 'a9a11d45-2d40-4da0-a3b6-557b855f1e5c';
-    const CONFIG = {
-      CBS_MINT: 'B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk',
-      MIN_USD: 5,
-      RPC_URL: `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`,
-      SUBMIT_EMAIL: 'cbs.coin12@gmail.com',
-      CBS_PRICE_USD_FALLBACK: null
-    };
+    const SUBMIT_EMAIL = 'contact@cbs-coin.com';
 
-    document.addEventListener('DOMContentLoaded', function(){
-      // Render mint nicely in nav (short on small screens)
-      const mintLabelEl = document.getElementById('mintLabel');
-      const usdMinLabelEl = document.getElementById('usdMinLabel');
-      mintLabelEl.title = CONFIG.CBS_MINT;
-      function shortMintForNav(s){ return (window.innerWidth < 640) ? (s.slice(0,6) + '…' + s.slice(-6)) : s; }
-      function renderMint(){ mintLabelEl.textContent = shortMintForNav(CONFIG.CBS_MINT); }
-      renderMint();
-      window.addEventListener('resize', renderMint);
-      usdMinLabelEl.textContent = '$' + CONFIG.MIN_USD;
+    function shorten(s){ return s ? s.slice(0,4) + '…' + s.slice(-4) : ''; }
 
-      // Elements
-      const connectBtn      = document.getElementById('connectBtn');
-      const checkBtn        = document.getElementById('checkBtn');
-      const openPhantomBtn  = document.getElementById('openPhantomBtn');
-      const copyLinkBtn     = document.getElementById('copyLinkBtn');
-      const statusText      = document.getElementById('statusText');
-      const walletNameEl    = document.getElementById('walletName');
-      const pubkeyText      = document.getElementById('pubkeyText');
-      const valueText       = document.getElementById('valueText');
-      const phantomHint     = document.getElementById('phantomHint');
-      const gateMsg         = document.getElementById('gateMsg');
-      const formWrap        = document.getElementById('formWrap');
-      const ideaForm        = document.getElementById('ideaForm');
-      const walletInput     = document.getElementById('walletInput');
-      const contactInput    = document.getElementById('contactInput');
-      const ideaInput       = document.getElementById('ideaInput');
-      const valueInput      = document.getElementById('valueInput');
-      const linkInput       = document.getElementById('linkInput');
-      const copyBtn         = document.getElementById('copyBtn');
-      const saveToast       = document.getElementById('saveToast');
-      const manualAddr      = document.getElementById('manualAddr');
-      const manualVerifyBtn = document.getElementById('manualVerifyBtn');
+    function buildPayload(){
+      const get = id => document.getElementById(id).value.trim();
+      return {
+        organization: get('orgInput'),
+        contactPerson: get('nameInput'),
+        email: get('emailInput'),
+        telegram: get('tgInput') || null,
+        type: document.getElementById('typeInput').value,
+        regionTimezone: get('tzInput') || null,
+        summary: get('summaryInput'),
+        proposal: get('proposalInput'),
+        deliverables: get('deliverInput'),
+        timeline: get('timelineInput'),
+        budget: get('budgetInput') || null,
+        links: {
+          websiteOrDeck: get('link1Input') || null,
+          reference: get('link2Input') || null
+        },
+        wallet: get('walletInput') || null,
+        kycOrInvoicePossible: document.getElementById('kycInput').checked,
+        timestamp: new Date().toISOString()
+      };
+    }
 
-      let walletPubkey = null;
+    function toMailto(payload){
+      const subject = `CBS Collaboration — ${payload.organization || 'Unknown Org'} — ${payload.type || 'Proposal'}`;
+      const lines = [
+        `Organization: ${payload.organization}`,
+        `Contact: ${payload.contactPerson}`,
+        `Email: ${payload.email}`,
+        `Telegram: ${payload.telegram || '-'}`,
+        `Type: ${payload.type}`,
+        `Region/Timezone: ${payload.regionTimezone || '-'}`,
+        `Summary: ${payload.summary}`,
+        '',
+        `Proposal:\n${payload.proposal}`,
+        '',
+        `Deliverables: ${payload.deliverables}`,
+        `Timeline: ${payload.timeline}`,
+        `Budget: ${payload.budget || '-'}`,
+        `Website/Deck: ${payload.links.websiteOrDeck || '-'}`,
+        `Reference: ${payload.links.reference || '-'}`,
+        `Wallet: ${payload.wallet || '-'}`,
+        `KYC/Invoice possible: ${payload.kycOrInvoicePossible ? 'Yes' : 'No'}`,
+        `Time: ${payload.timestamp}`
+      ];
+      const body = encodeURIComponent(lines.join('\n'));
+      return `mailto:${SUBMIT_EMAIL}?subject=${encodeURIComponent(subject)}&body=${body}`;
+    }
 
-      function shorten(s){ return s ? s.slice(0,4) + '…' + s.slice(-4) : ''; }
+    document.getElementById('collabForm').addEventListener('submit', function(e){
+      e.preventDefault();
 
-      // Detect multiple providers
-      function getAnyProvider(){
-        const w = window;
-        // Phantom
-        if (w.phantom && w.phantom.solana && w.phantom.solana.isPhantom) return { name:'Phantom', provider:w.phantom.solana };
-        if (w.solana && w.solana.isPhantom) return { name:'Phantom', provider:w.solana };
-        // Solflare
-        if (w.solflare && w.solflare.isSolflare) return { name:'Solflare', provider:w.solflare };
-        // Backpack
-        if (w.backpack && w.backpack.solana && w.backpack.solana.isBackpack) return { name:'Backpack', provider:w.backpack.solana };
-        // OKX
-        if (w.okxwallet && w.okxwallet.solana) return { name:'OKX', provider:w.okxwallet.solana };
-        // Fallback generic
-        if (w.solana) return { name:'Solana Wallet', provider:w.solana };
-        return null;
-      }
-
-      const ua = navigator.userAgent || '';
-      const isMobile = /Android|iPhone|iPad|iPod/i.test(ua);
-
-      // Phantom deeplink (best-effort)
-      function buildPhantomBrowseLink(url){
-        const enc = encodeURIComponent(url);
-        return `https://phantom.app/ul/browse?url=${enc}`;
-      }
-
-      async function getUsdPriceFromJupiter(mint){
-        try{
-          const url = 'https://lite-api.jup.ag/price/v3?ids=' + mint;
-          const res = await fetch(url, { headers: { 'accept':'application/json' } });
-          const json = await res.json();
-          const rec = (json && (json[mint] || (json.data && json.data[mint]))) || null;
-          const price = rec && (rec.usdPrice != null ? rec.usdPrice : rec.price);
-          return (typeof price === 'number') ? price : null;
-        }catch(e){ return null; }
-      }
-
-      async function getUsdPriceViaQuote(mint){
-        try{
-          const conn = new solanaWeb3.Connection(CONFIG.RPC_URL, 'confirmed');
-          const info = await conn.getParsedAccountInfo(new solanaWeb3.PublicKey(mint));
-          const decimals = (info && info.value && info.value.data && info.value.data.parsed && info.value.data.parsed.info && info.value.data.parsed.info.decimals) || 9;
-          const amount = BigInt(10) ** BigInt(decimals);
-          const url = 'https://lite-api.jup.ag/swap/v1/quote?inputMint=' + mint + '&outputMint=EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v&amount=' + amount.toString() + '&slippageBps=50&restrictIntermediateTokens=true';
-          const q = await (await fetch(url, { headers: { 'accept':'application/json' } })).json();
-          const out = (q && (q.outAmount || (q.data && q.data.outAmount) || (q.quoteResponse && q.quoteResponse.outAmount))) || null;
-          if(!out) return null;
-          return Number(out) / 1_000_000; // USDC 6 decimals
-        }catch(e){ return null; }
-      }
-
-      async function getCBSPriceUSD(){
-        let p = await getUsdPriceFromJupiter(CONFIG.CBS_MINT);
-        if(p) return p;
-        p = await getUsdPriceViaQuote(CONFIG.CBS_MINT);
-        if(p) return p;
-        return CONFIG.CBS_PRICE_USD_FALLBACK;
-      }
-
-      async function connectWallet(){
-        const found = getAnyProvider();
-        if(!found){
-          phantomHint.classList.remove('hidden');
-          gateMsg.textContent = 'No wallet provider detected. On mobile, open this page inside your wallet app (Phantom/Solflare/Backpack/OKX) or paste your address below.';
+      // Basic client-side checks
+      const requiredIds = ['orgInput','nameInput','emailInput','typeInput','summaryInput','proposalInput','deliverInput','timelineInput'];
+      for(const id of requiredIds){
+        const el = document.getElementById(id);
+        if(!el.value.trim()){
+          alert('Please fill all required fields.');
+          el.focus();
           return;
         }
-        const provider = found.provider;
-        try{
-          if (provider.on) {
-            provider.on('connect', (pk)=>{
-              try{
-                walletPubkey = (pk && pk.toString && pk.toString()) || (provider.publicKey && provider.publicKey.toString && provider.publicKey.toString()) || null;
-                if(walletPubkey){
-                  statusText.textContent = 'Connected';
-                  walletNameEl.textContent = 'Provider: ' + found.name;
-                  pubkeyText.textContent = shorten(walletPubkey);
-                  checkBtn.disabled = false;
-                  walletInput.value = walletPubkey;
-                  gateMsg.textContent = '';
-                }
-              }catch(_){}
-            });
-          }
-          const resp = await provider.connect({ onlyIfTrusted:false });
-          walletPubkey = (resp && resp.publicKey && resp.publicKey.toString && resp.publicKey.toString()) || (provider.publicKey && provider.publicKey.toString && provider.publicKey.toString()) || null;
-          if(!walletPubkey) throw new Error('No public key from provider');
-          statusText.textContent = 'Connected';
-          walletNameEl.textContent = 'Provider: ' + found.name;
-          pubkeyText.textContent = shorten(walletPubkey);
-          checkBtn.disabled = false;
-          walletInput.value = walletPubkey;
-          gateMsg.textContent = '';
-        }catch(e){
-          statusText.textContent = 'Not connected';
-          walletNameEl.textContent = '';
-          gateMsg.textContent = 'Wallet connection rejected or failed.';
-          console.error(e);
-        }
       }
 
-      async function checkHoldings(){
-        gateMsg.textContent = 'Checking holdings...';
-        valueText.textContent = '';
-        try{
-          if(!walletPubkey){ gateMsg.textContent = 'No wallet connected or pasted.'; return; }
-          const conn = new solanaWeb3.Connection(CONFIG.RPC_URL, 'confirmed');
-          const owner = new solanaWeb3.PublicKey(walletPubkey);
-          const mint  = new solanaWeb3.PublicKey(CONFIG.CBS_MINT);
-          const res = await conn.getParsedTokenAccountsByOwner(owner, { mint: mint });
-          let ui = 0;
-          if(res.value && res.value.length){
-            const t = res.value[0].account.data.parsed.info.tokenAmount;
-            ui = Number(t.uiAmount || 0);
-          }
-          const price = await getCBSPriceUSD();
-          if(!price){ gateMsg.innerHTML = 'Could not fetch CBS price. Please try again later.'; return; }
-          const usdValue = ui * price;
-          valueText.textContent = 'CBS: ' + ui.toLocaleString(undefined,{maximumFractionDigits:2}) + ' · Est. value: $' + usdValue.toFixed(2) + ' (price: $' + price.toFixed(6) + '/CBS)';
-          if(usdValue >= Number(CONFIG.MIN_USD)){
-            gateMsg.innerHTML = 'Access granted · Estimated CBS value: <span class="chip">$' + usdValue.toFixed(2) + '</span>';
-            formWrap.classList.remove('hidden');
-            window.scrollTo({ top: formWrap.offsetTop - 20, behavior: 'smooth' });
-          } else {
-            formWrap.classList.add('hidden');
-            gateMsg.innerHTML = 'Not enough CBS. You have ~$' + usdValue.toFixed(2) + '. Minimum required: $' + CONFIG.MIN_USD + '.';
-          }
-        }catch(e){
-          console.error(e);
-          gateMsg.textContent = 'Error while checking holdings: ' + (e.message||e);
-        }
-      }
+      const payload = buildPayload();
 
-      function buildPayload(){
-        return {
-          wallet: walletInput.value.trim(),
-          contact: contactInput.value.trim() || null,
-          idea: ideaInput.value.trim(),
-          expectedOutcome: valueInput.value.trim(),
-          link: linkInput.value.trim() || null,
-          timestamp: new Date().toISOString()
-        };
-      }
+      // Open email client and copy JSON
+      window.location.href = toMailto(payload);
+      const json = JSON.stringify(payload, null, 2);
+      navigator.clipboard.writeText(json).then(()=>{
+        const toast = document.getElementById('saveToast');
+        toast.textContent = 'JSON copied to clipboard';
+        setTimeout(()=> toast.textContent = '', 3000);
+      }).catch(()=>{});
+    });
 
-      function toMailto(payload){
-        const subject = 'CBS Idea — ' + shorten(payload.wallet);
-        const bodyLines = [
-          'Wallet: ' + payload.wallet,
-          'Contact: ' + (payload.contact || '-'),
-          'Idea: ' + payload.idea,
-          'Outcome: ' + payload.expectedOutcome,
-          'Link: ' + (payload.link || '-'),
-          'Time: ' + payload.timestamp
-        ];
-        const body = encodeURIComponent(bodyLines.join('\n'));
-        return 'mailto:' + CONFIG.SUBMIT_EMAIL + '?subject=' + encodeURIComponent(subject) + '&body=' + body;
-      }
-
-      ideaForm.addEventListener('submit', function(e){
-        e.preventDefault();
-        const p = buildPayload();
-        if(!p.wallet){ alert('No wallet address. Connect or paste your address.'); return; }
-        if(!p.idea || !p.expectedOutcome){ alert('Please fill in your idea and expected outcome.'); return; }
-        const href = toMailto(p);
-        window.location.href = href;
-        const json = JSON.stringify(p, null, 2);
-        navigator.clipboard.writeText(json).then(function(){
-          saveToast.textContent = 'JSON copied to clipboard';
-          setTimeout(function(){ saveToast.textContent = ''; }, 3000);
-        }).catch(function(){});
+    document.getElementById('copyBtn').addEventListener('click', function(){
+      const payload = buildPayload();
+      const json = JSON.stringify(payload, null, 2);
+      navigator.clipboard.writeText(json).then(()=>{
+        const toast = document.getElementById('saveToast');
+        toast.textContent = 'JSON copied!';
+        setTimeout(()=> toast.textContent = '', 3000);
+      }).catch(()=>{
+        const toast = document.getElementById('saveToast');
+        toast.textContent = 'Copy failed (permissions)';
+        setTimeout(()=> toast.textContent = '', 3000);
       });
-
-      copyBtn.addEventListener('click', function(){
-        const p = buildPayload();
-        const json = JSON.stringify(p, null, 2);
-        navigator.clipboard.writeText(json).then(function(){
-          saveToast.textContent = 'JSON copied!';
-          setTimeout(function(){ saveToast.textContent = ''; }, 3000);
-        }).catch(function(){
-          saveToast.textContent = 'Copy failed (browser permission)';
-          setTimeout(function(){ saveToast.textContent = ''; }, 3000);
-        });
-      });
-
-      copyLinkBtn.addEventListener('click', function(){
-        const url = window.location.href;
-        navigator.clipboard.writeText(url).then(function(){
-          gateMsg.textContent = 'Link copied. Open your wallet → Browser icon → Paste URL to connect.';
-          setTimeout(function(){ gateMsg.textContent=''; }, 4000);
-        }).catch(function(){
-          gateMsg.textContent = 'Copy failed. Long-press the address bar to copy the URL.';
-          setTimeout(function(){ gateMsg.textContent=''; }, 4000);
-        });
-      });
-
-      openPhantomBtn.addEventListener('click', function(){
-        const url = window.location.href;
-        const a = document.createElement('a');
-        a.rel = 'noreferrer';
-        a.target = '_self';
-        a.href = buildPhantomBrowseLink(url);
-        document.body.appendChild(a);
-        a.click();
-        setTimeout(()=>{ a.remove(); }, 1000);
-      });
-
-      connectBtn.addEventListener('click', connectWallet);
-      checkBtn.addEventListener('click', checkHoldings);
-
-      // Manual verify (view-only)
-      manualVerifyBtn.addEventListener('click', () => {
-        const addr = (manualAddr.value || '').trim();
-        try {
-          new solanaWeb3.PublicKey(addr); // validate
-          walletPubkey = addr;
-          statusText.textContent = 'View-only (pasted)';
-          walletNameEl.textContent = 'Provider: Manual address';
-          pubkeyText.textContent = shorten(walletPubkey);
-          checkBtn.disabled = false;
-          walletInput.value = walletPubkey;
-          gateMsg.textContent = '';
-          checkHoldings();
-        } catch {
-          gateMsg.textContent = 'Invalid Solana address.';
-        }
-      });
-
-      // Initial hints
-      const providerFound = getAnyProvider();
-      if(!providerFound){ phantomHint.classList.remove('hidden'); }
-      if(!isMobile){ openPhantomBtn.classList.add('hidden'); }
     });
   </script>
 </body>
