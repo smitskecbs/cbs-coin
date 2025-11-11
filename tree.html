@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>CBS Coin — Holders Tree</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Visual tree that grows with CBS Coin holders." />
+  <style>
+    :root{
+      --bg:#0b0d12; --ink:#f7f9fc; --muted:#9aa3b2; --accent:#65d36e; --line:#1a2230; --card:#111623;
+      --ok:#22c55e; --warn:#f59e0b; --err:#ef4444;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; background:radial-gradient(1000px 600px at 70% -20%, #1a2230 0%, #0b0d12 55%) no-repeat, var(--bg);
+      color:var(--ink); font:16px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Inter, "Helvetica Neue", Arial, sans-serif;
+      display:flex; align-items:center; justify-content:center; padding:24px;
+    }
+    .shell{
+      width:min(950px, 100%);
+      background:linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      border:1px solid #202637; border-radius:18px; padding:24px;
+      box-shadow:0 10px 35px rgba(0,0,0,0.35);
+    }
+    header{
+      display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px;
+    }
+    .title{
+      display:flex; align-items:center; gap:12px;
+    }
+    .badge{
+      font-weight:700; font-size:12px; letter-spacing:.08em; text-transform:uppercase;
+      color:#0b0d12; background:var(--accent); border-radius:999px; padding:6px 10px;
+    }
+    .meta{color:var(--muted); font-size:14px}
+    .grid{
+      display:grid; grid-template-columns: 1.2fr .8fr; gap:24px;
+    }
+    @media (max-width:900px){ .grid{grid-template-columns:1fr; } }
+
+    /* Card */
+    .card{
+      background:rgba(255,255,255,0.02); border:1px solid var(--line); border-radius:14px; padding:16px;
+    }
+
+    /* Progress */
+    .progress{
+      height:10px; background:#121826; border:1px solid #1e2636; border-radius:999px; overflow:hidden;
+    }
+    .bar{height:100%; width:0%; background:linear-gradient(90deg, #30d158, #7be97f); transition:width .8s ease}
+    .kpi{
+      display:flex; gap:12px; align-items:baseline; flex-wrap:wrap;
+    }
+    .kpi .big{font-size:40px; font-weight:800; letter-spacing:-.02em}
+    .kpi .label{color:var(--muted)}
+    .row{display:flex; align-items:center; justify-content:space-between; gap:12px; margin:8px 0}
+    .pill{padding:6px 10px; border:1px solid var(--line); border-radius:999px; color:var(--muted); font-size:13px}
+    .ok{color:var(--ok)} .warn{color:var(--warn)} .err{color:var(--err)}
+
+    /* Tree canvas */
+    .stage{
+      height:430px; display:grid; place-items:center;
+      background:
+        radial-gradient(600px 200px at 50% 100%, rgba(101,211,110,0.08), rgba(0,0,0,0) 60%),
+        linear-gradient(0deg, #0d1420 0%, #0b0d12 30%);
+      border:1px solid var(--line); border-radius:14px; position:relative; overflow:hidden;
+    }
+    .ground{
+      position:absolute; left:0; right:0; bottom:0; height:90px;
+      background:linear-gradient(180deg, rgba(44, 63, 42, 0.9), #162015 70%);
+      border-top:1px solid rgba(101,211,110,0.2);
+    }
+    /* captions */
+    .caption{color:var(--muted); font-size:13px; margin-top:10px}
+    .hint{color:var(--muted); font-size:12px; margin-top:6px}
+
+    /* Loader */
+    .loader {
+      width: 56px; aspect-ratio: 1;
+      border-radius: 50%;
+      border: 6px solid #293145;
+      border-top-color: var(--accent);
+      animation:spin 1s linear infinite;
+      margin:20px auto;
+    }
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    /* CTA row */
+    .actions{display:flex; gap:12px; flex-wrap:wrap; margin-top:10px}
+    .btn{
+      display:inline-flex; align-items:center; gap:8px;
+      padding:10px 14px; border-radius:10px; border:1px solid var(--line);
+      background:#111727; color:var(--ink); text-decoration:none; font-weight:600;
+    }
+    .btn:hover{border-color:#2a3450}
+    .sub{color:var(--muted); font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="title">
+        <div class="badge">CBS Coin</div>
+        <div>
+          <div style="font-weight:800; font-size:20px; letter-spacing:-.02em">Holders Growth — The CBS Tree</div>
+          <div class="meta">Live count from <span style="font-weight:600">/api/holders</span>. Goal: 1,000,000 holders.</div>
+        </div>
+      </div>
+      <div class="actions">
+        <a class="btn" href="/" aria-label="Home">⬅ Home</a>
+        <a class="btn" href="/api/holders" target="_blank" rel="noopener">🛰 View JSON</a>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- Tree / Viz -->
+      <section class="card">
+        <div class="stage">
+          <!-- SVG draws a tree based on holder count -->
+          <svg id="tree" viewBox="0 0 400 360" width="100%" height="100%" aria-label="CBS Holders Tree">
+            <!-- shadow -->
+            <ellipse cx="200" cy="315" rx="70" ry="12" fill="rgba(0,0,0,.35)"></ellipse>
+            <!-- trunk -->
+            <rect id="trunk" x="190" y="210" width="20" height="105" rx="8" fill="#7a4f27"></rect>
+            <!-- canopy (grows) -->
+            <circle id="canopy" cx="200" cy="185" r="30" fill="#58d06b"></circle>
+            <!-- leaves sparkle (opacity animates with size) -->
+            <g id="leaves">
+              <circle cx="155" cy="170" r="6" fill="#7be97f" opacity="0.0"></circle>
+              <circle cx="245" cy="160" r="5" fill="#7be97f" opacity="0.0"></circle>
+              <circle cx="220" cy="140" r="4" fill="#7be97f" opacity="0.0"></circle>
+              <circle cx="180" cy="135" r="4" fill="#7be97f" opacity="0.0"></circle>
+            </g>
+            <!-- seed icon (visible at very tiny counts) -->
+            <circle id="seed" cx="200" cy="300" r="6" fill="#a7743f" stroke="#5a3a1c" stroke-width="2" opacity="0"></circle>
+            <!-- sprout -->
+            <path id="sprout" d="M200 290 c0 -20 0 -20 0 -40 m0 0 c8 -8 18 -10 25 -2 c-7 0 -14 5 -25 14"
+                  stroke="#58d06b" stroke-width="3" fill="none" opacity="0"></path>
+          </svg>
+          <div class="ground"></div>
+        </div>
+        <div class="caption" id="stageLabel">Stage: —</div>
+        <div class="hint sub">The canopy size and stage scale automatically with the live holder count.</div>
+      </section>
+
+      <!-- Metrics / Progress -->
+      <aside class="card">
+        <div class="kpi">
+          <div class="big" id="holders">—</div>
+          <div class="label">holders</div>
+        </div>
+
+        <div class="row">
+          <div class="pill">Goal: <strong>1,000,000</strong></div>
+          <div class="pill">Progress: <span id="pct">0%</span></div>
+        </div>
+
+        <div class="progress" aria-label="progress to goal">
+          <div class="bar" id="bar"></div>
+        </div>
+
+        <div class="row">
+          <div class="sub">Next milestone</div>
+          <div class="sub" id="milestone">—</div>
+        </div>
+
+        <div id="status" class="sub" style="margin-top:10px"></div>
+        <div id="loader" class="loader" aria-label="Loading" style="display:none"></div>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    // Config
+    const GOAL = 1_000_000;
+    const MILESTONES = [10, 100, 1_000, 10_000, 100_000, 1_000_000];
+
+    const el = {
+      holders: document.getElementById('holders'),
+      pct: document.getElementById('pct'),
+      bar: document.getElementById('bar'),
+      milestone: document.getElementById('milestone'),
+      status: document.getElementById('status'),
+      loader: document.getElementById('loader'),
+      stageLabel: document.getElementById('stageLabel'),
+      canopy: document.getElementById('canopy'),
+      trunk: document.getElementById('trunk'),
+      seed: document.getElementById('seed'),
+      sprout: document.getElementById('sprout'),
+      leaves: document.getElementById('leaves').children
+    };
+
+    function format(n){
+      try{
+        return new Intl.NumberFormat('en-US', {maximumFractionDigits:0}).format(n);
+      }catch{ return String(n); }
+    }
+
+    function nextMilestone(n){
+      for (const m of MILESTONES) if (n < m) return m;
+      return GOAL;
+    }
+
+    function stageFromCount(n){
+      if (n < 1)   return 'seed';
+      if (n < 10)  return 'sprout';
+      if (n < 100) return 'tiny sapling';
+      if (n < 1_000) return 'sapling';
+      if (n < 10_000) return 'young tree';
+      if (n < 100_000) return 'maturing';
+      if (n < 1_000_000) return 'big tree';
+      return 'giant';
+    }
+
+    function drawTree(n){
+      // pct 0..1
+      const p = Math.max(0, Math.min(1, n / GOAL));
+
+      // Canopy radius: 16..120, non-linear growth for nicer look
+      const r = 16 + Math.round(110 * Math.sqrt(p));
+      el.canopy.setAttribute('r', r);
+
+      // Move canopy a bit up as it grows, and thicken trunk a little
+      const cy = 220 - Math.round(60 * Math.sqrt(p));
+      el.canopy.setAttribute('cy', cy);
+
+      const trunkHeight = 105 + Math.round(30 * Math.sqrt(p));
+      el.trunk.setAttribute('y', 315 - trunkHeight);
+      el.trunk.setAttribute('height', trunkHeight);
+
+      // Seed/sprout visibility
+      el.seed.setAttribute('opacity', n < 1 ? 1 : 0);
+      el.sprout.setAttribute('opacity', n >= 1 && n < 10 ? 1 : 0);
+
+      // Leaves sparkle with growth
+      const leafOpacity = Math.min(1, p * 2);
+      for (const c of el.leaves) c.setAttribute('opacity', leafOpacity);
+
+      el.stageLabel.textContent = "Stage: " + stageFromCount(n);
+    }
+
+    function animateNumber(elm, to, ms=800){
+      const from = 0;
+      const start = performance.now();
+      function tick(t){
+        const k = Math.min(1, (t - start)/ms);
+        const val = Math.round(from + (to - from) * (1 - Math.pow(1-k, 3)));
+        elm.textContent = format(val);
+        if (k < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    async function load(){
+      el.loader.style.display = 'block';
+      el.status.textContent = 'Fetching holders…';
+      try{
+        const res = await fetch('/api/holders', {cache:'no-store'});
+        if(!res.ok){
+          const txt = await res.text().catch(()=> '');
+          throw new Error('API ' + res.status + ': ' + txt.slice(0,120));
+        }
+        const data = await res.json();
+        const total = Number(data?.totalHolders ?? 0);
+
+        // Update UI
+        animateNumber(el.holders, total);
+        const pct = Math.max(0, Math.min(100, (total/GOAL)*100));
+        el.pct.textContent = pct.toFixed(2) + '%';
+        el.bar.style.width = pct + '%';
+        const nm = nextMilestone(total);
+        el.milestone.textContent = total >= GOAL ? 'Goal reached!' : `${format(total)} → ${format(nm)} (${format(nm-total)} to go)`;
+
+        drawTree(total);
+        el.status.innerHTML = `<span class="ok">Live</span> — mint: <code style="color:#9dd8a6">${data?.mint || '—'}</code>`;
+      }catch(err){
+        console.error(err);
+        el.status.innerHTML = `<span class="err">Error</span> — ${String(err.message || err).slice(0,140)}`;
+        // fallback: still draw tiny tree
+        drawTree(0);
+        el.holders.textContent = '—';
+      }finally{
+        el.loader.style.display = 'none';
+      }
+    }
+
+    // Auto-refresh every 60s (change if you want)
+    load();
+    setInterval(load, 60_000);
+  </script>
+</body>
+</html>
