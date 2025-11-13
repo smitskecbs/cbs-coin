@@ -4,11 +4,11 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CBS Coin — Holder Count (Live)</title>
-  <meta name="description" content="Live CBS Coin holder count, fetched from Birdeye. Unique wallets holding CBS." />
+  <meta name="description" content="Live CBS Coin holder count and milestones. See how early you are." />
   <meta name="theme-color" content="#0b1227" />
 
-  <!-- Font + Tailwind -->
-  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+  <!-- Fonts & Tailwind -->
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Orbitron:wght@400;700&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -19,7 +19,8 @@
               bg: '#070a12',
               bg2: '#0b1227',
               ring: '#24e6b5',
-              text: '#e5efff'
+              text: '#e5efff',
+              accent: '#a855f7'
             }
           },
           boxShadow: {
@@ -46,9 +47,10 @@
       min-height:100vh;
     }
     .glass{
-      background: radial-gradient(circle at 0% 0%, rgba(36,230,181,.10), transparent 40%),
-                  radial-gradient(circle at 100% 100%, rgba(56,189,248,.12), transparent 45%),
-                  linear-gradient(180deg, rgba(15,23,42,.95), rgba(15,23,42,.92));
+      background:
+        radial-gradient(circle at 0% 0%, rgba(36,230,181,.10), transparent 40%),
+        radial-gradient(circle at 100% 100%, rgba(168,85,247,.12), transparent 45%),
+        linear-gradient(180deg, rgba(15,23,42,.96), rgba(15,23,42,.92));
       border:1px solid rgba(148,163,184,.35);
       backdrop-filter: blur(16px);
     }
@@ -57,29 +59,24 @@
       letter-spacing:.06em;
       text-shadow: 0 3px 0 #000, 0 7px 18px rgba(0,0,0,.65);
     }
-    @media (max-width:640px){
-      .meme-title{
-        font-size:2.4rem;
-      }
+    .digital{
+      font-family: "Orbitron", system-ui, sans-serif;
+      letter-spacing:.06em;
     }
     .stat-label{
       font-size:.7rem;
       letter-spacing:.06em;
       text-transform:uppercase;
     }
-    .digital{
-      font-family: "Orbitron", system-ui, sans-serif;
-      letter-spacing:.06em;
-    }
   </style>
 </head>
 <body class="text-[var(--text)]">
 
-  <!-- NAV (simpel) -->
+  <!-- NAV -->
   <nav class="max-w-6xl mx-auto px-4 py-4">
     <div class="flex items-center justify-between gap-4">
       <a href="index.html" class="flex items-center gap-3">
-        <img src="logo.png" alt="CBS" class="h-10 w-10 rounded-xl ring-2 ring-[var(--ring)] shadow-cbs-glow" />
+        <img src="logo.png" class="h-10 w-10 rounded-xl ring-2 ring-[var(--ring)] shadow-cbs-glow" alt="CBS" />
         <span class="font-extrabold tracking-tight">CBS Coin</span>
       </a>
     </div>
@@ -91,63 +88,67 @@
       <div class="grid md:grid-cols-[3fr,2fr] gap-8 items-center">
         <div>
           <h1 class="meme-title text-4xl md:text-5xl text-white">HOLDER COUNT (LIVE)</h1>
-          <p class="mt-4 text-sm md:text-base opacity-80">
+          <p class="mt-3 text-sm md:text-base opacity-85">
             Mint / CA:
             <code class="bg-black/40 px-2 py-1 rounded-lg text-[0.7rem] align-middle break-all">
               B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk
             </code>
           </p>
-          <p class="mt-2 text-xs md:text-sm opacity-70">
-            Live unique wallets holding CBS, fetched from Birdeye’s public API. Updates
-            automatically every 60 seconds.
+          <p class="mt-2 text-xs md:text-sm opacity-75 max-w-lg">
+            This is the **Early Adopters Board** for CBS. Every wallet here is part of the first wave of holders.
+            Once we leave this phase, these numbers will never be this low again.
           </p>
           <p id="err" class="mt-2 text-xs text-red-300 hidden"></p>
         </div>
         <div class="hidden md:flex justify-end">
-          <!-- hero image optioneel; 404 hier is niet erg -->
-          <img
-            src="assets/hero-cbs.png"
-            alt="CBS"
-            class="max-h-40 rounded-2xl ring-1 ring-white/10"
-            onerror="this.style.display='none'"
-          />
+          <img src="assets/hero-cbs.png"
+               alt="CBS"
+               class="max-h-40 rounded-2xl ring-1 ring-white/10"
+               onerror="this.style.display='none'">
         </div>
       </div>
     </div>
   </header>
 
-  <!-- HOLDER CARD -->
-  <main class="max-w-6xl mx-auto px-4 py-8">
-    <section class="grid lg:grid-cols-[2fr,3fr] gap-6">
-      <!-- teller -->
+  <!-- MAIN CONTENT -->
+  <main class="max-w-6xl mx-auto px-4 py-8 space-y-6">
+
+    <!-- Holder + FOMO kaart -->
+    <section class="grid lg:grid-cols-[2.1fr,2.4fr] gap-6">
+      <!-- Teller -->
       <div class="glass rounded-3xl p-6 md:p-7 flex flex-col justify-between">
-        <div>
-          <div class="text-lg font-extrabold tracking-wide mb-1">CBS HOLDERS</div>
-          <p class="text-xs md:text-sm opacity-75 max-w-sm">
-            Live count of unique wallets currently holding a non-zero amount of CBS.
-          </p>
+        <div class="flex items-center justify-between gap-4">
+          <div>
+            <div class="text-xs font-semibold tracking-[.2em] uppercase text-emerald-300">
+              Live on-chain
+            </div>
+            <h2 class="meme-title text-2xl md:text-3xl mt-1">CBS HOLDERS</h2>
+          </div>
+          <button
+            id="btnRefresh"
+            class="px-3 py-1.5 rounded-full bg-emerald-400 text-black text-[0.75rem] font-semibold hover:bg-emerald-300 transition-colors"
+          >
+            Refresh now
+          </button>
         </div>
 
-        <div class="mt-6 bg-black/40 border border-emerald-400/40 rounded-2xl px-4 py-5 flex items-center justify-between gap-4">
+        <div class="mt-6 bg-black/40 border border-emerald-400/40 rounded-2xl px-5 py-6 flex items-center justify-between gap-6">
           <div>
             <div class="stat-label text-emerald-300">Unique holders</div>
-            <div id="holders" class="digital text-3xl md:text-4xl font-extrabold mt-1">
+            <div id="holders" class="digital text-4xl md:text-5xl font-extrabold mt-1">
               --
             </div>
-            <div id="holdersNote" class="mt-1 text-[0.65rem] opacity-70">
-              Live data unavailable from Birdeye.
+            <div id="holdersNote" class="mt-1 text-[0.7rem] opacity-70">
+              Live data unavailable.
             </div>
           </div>
           <div class="flex flex-col items-center gap-2">
-            <div class="h-10 w-10 rounded-full bg-emerald-400/20 border border-emerald-300/60 grid place-items-center">
-              <div class="h-6 w-6 rounded-full bg-emerald-300 shadow-[0_0_18px_rgba(16,185,129,.9)] animate-pulse"></div>
+            <div class="h-11 w-11 rounded-full bg-emerald-400/20 border border-emerald-300/60 grid place-items-center">
+              <div class="h-7 w-7 rounded-full bg-emerald-300 shadow-[0_0_22px_rgba(16,185,129,.9)] animate-pulse"></div>
             </div>
-            <button
-              id="btnRefresh"
-              class="text-[0.7rem] px-3 py-1.5 rounded-full bg-emerald-400 text-black font-semibold hover:bg-emerald-300 transition-colors"
-            >
-              Refresh now
-            </button>
+            <span class="text-[0.7rem] uppercase tracking-[.18em] text-emerald-200">
+              still early
+            </span>
           </div>
         </div>
 
@@ -156,31 +157,65 @@
         </p>
       </div>
 
-      <!-- uitleg -->
-      <div class="glass rounded-3xl p-6 md:p-7 text-sm md:text-[0.9rem] leading-relaxed">
-        <h2 class="meme-title text-2xl md:text-3xl mb-3">How this number works</h2>
-        <p class="opacity-85">
-          The holder count is fetched from the
-          <strong>Birdeye</strong> token API for the CBS mint address.
-          It represents the number of unique wallets that currently hold
-          a non-zero CBS balance.
-        </p>
-        <p class="mt-2 opacity-75">
-          Different explorers sometimes show slightly different numbers,
-          depending on how they filter dust wallets, frozen accounts, or
-          outdated program accounts. This page simply mirrors Birdeye’s view.
-        </p>
-        <p class="mt-2 opacity-75">
-          If the API is temporarily rate-limited or offline, the last
-          successful value will stay visible and you can try again with
-          the <span class="font-semibold">Refresh now</span> button.
-        </p>
-        <p class="mt-3 text-[0.7rem] opacity-60">
-          NOTE: If you see “Live data unavailable”, press F12 → Console
-          and send a screenshot of the Birdeye JSON response in Telegram,
-          so we can further fine-tune the parsing.
-        </p>
+      <!-- Milestones + FOMO -->
+      <div class="glass rounded-3xl p-6 md:p-7 flex flex-col justify-between">
+        <div>
+          <div class="text-xs font-semibold tracking-[.2em] uppercase text-cbs-accent">
+            Early adopter zone
+          </div>
+          <h2 class="meme-title text-2xl md:text-3xl mt-1">Next Milestone</h2>
+          <p class="mt-2 text-sm opacity-80" id="milestoneLabel">
+            Waiting for live data…
+          </p>
+        </div>
+
+        <!-- Progress bar -->
+        <div class="mt-4">
+          <div class="flex items-center justify-between text-xs mb-1">
+            <span class="opacity-70">Progress to next holder milestone</span>
+            <span id="milestoneValue" class="font-semibold text-emerald-300">-- / --</span>
+          </div>
+          <div class="w-full h-3 rounded-full bg-slate-900/60 overflow-hidden border border-slate-700/80">
+            <div id="progressFill"
+                 class="h-full bg-gradient-to-r from-emerald-400 via-cyan-400 to-cbs-accent transition-all duration-700 ease-out"
+                 style="width:0%">
+            </div>
+          </div>
+          <p id="fomoLine" class="mt-2 text-[0.75rem] opacity-80">
+            As soon as data loads, this line turns into FOMO.
+          </p>
+        </div>
+
+        <div class="mt-5 grid sm:grid-cols-3 gap-2 text-[0.7rem] opacity-80">
+          <div class="rounded-xl bg-white/5 border border-white/10 px-3 py-2">
+            <div class="font-semibold text-emerald-300 text-xs mb-1">Sub-100</div>
+            <p>Ultra early phase. Every new holder has visible impact.</p>
+          </div>
+          <div class="rounded-xl bg-white/5 border border-white/10 px-3 py-2">
+            <div class="font-semibold text-cbs-accent text-xs mb-1">100 – 500</div>
+            <p>Price discovery & attention phase. More eyes, more volume.</p>
+          </div>
+          <div class="rounded-xl bg-white/5 border border-white/10 px-3 py-2">
+            <div class="font-semibold text-sky-300 text-xs mb-1">500+</div>
+            <p>Early crowd formed. Being this early won’t be possible anymore.</p>
+          </div>
+        </div>
       </div>
+    </section>
+
+    <!-- Kleine uitleg -->
+    <section class="glass rounded-3xl p-6 md:p-7 text-sm md:text-[0.9rem] leading-relaxed">
+      <h2 class="meme-title text-2xl md:text-3xl mb-2">How the count is calculated</h2>
+      <p class="opacity-85">
+        The holder count is fetched via a CBS proxy that queries the
+        <strong>Helius</strong> RPC for all token accounts of the CBS mint and
+        then counts how many unique wallets actually hold a non-zero amount of CBS.
+      </p>
+      <p class="mt-2 opacity-75">
+        Different explorers may show slightly different numbers depending on dust
+        filters, frozen accounts or how often they update. This page is meant as a
+        transparent, on-chain view for the CBS community.
+      </p>
     </section>
   </main>
 
@@ -196,88 +231,113 @@
     </div>
   </footer>
 
+  <!-- SCRIPT -->
   <script>
-    // ===== CONFIG =====
-    const MINT = 'B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk';
+    const PROXY_URL = "https://cbs-coin.vercel.app/api/holders";
 
-    // JOUW BIRDEYE KEY (let op: publiek in front-end)
-    const BIRDEYE_KEY = 'efbead31f6db4087a18841c3bf32d0c6';
+    const holdersEl   = document.getElementById("holders");
+    const noteEl      = document.getElementById("holdersNote");
+    const updatedEl   = document.getElementById("updated");
+    const errEl       = document.getElementById("err");
+    const btnRefresh  = document.getElementById("btnRefresh");
 
-    // Docs: /defi/token_overview – real-time overview (price, mcap, holders, etc.)
-    const BIRDEYE_URL = `https://public-api.birdeye.so/defi/token_overview?address=${MINT}`;
+    const milestoneLabelEl = document.getElementById("milestoneLabel");
+    const milestoneValueEl = document.getElementById("milestoneValue");
+    const progressFillEl   = document.getElementById("progressFill");
+    const fomoLineEl       = document.getElementById("fomoLine");
 
-    const holdersEl = document.getElementById('holders');
-    const noteEl    = document.getElementById('holdersNote');
-    const updatedEl = document.getElementById('updated');
-    const errEl     = document.getElementById('err');
+    const MILESTONES = [50, 100, 250, 500, 1000, 2500];
 
     function fmt(num){
-      if(typeof num !== 'number' || !isFinite(num)) return '--';
+      if(typeof num !== "number" || !isFinite(num)) return "--";
       return num.toLocaleString(undefined,{ maximumFractionDigits:0 });
     }
 
     function setError(msg){
-      console.error('[CBS holders] ', msg);
+      console.error("[CBS holders] ", msg);
       if(errEl){
-        errEl.textContent = String(msg || 'Unknown error');
-        errEl.classList.remove('hidden');
+        errEl.textContent = String(msg || "Unknown error");
+        errEl.classList.remove("hidden");
+      }
+    }
+
+    function updateMilestones(count){
+      const holders = Number(count || 0);
+      let next = MILESTONES.find(m => m > holders);
+      if(!next) next = holders; // als we boven alle milestones zitten
+
+      const pct = next > 0 ? Math.min(holders / next * 100, 100) : 0;
+
+      milestoneValueEl.textContent = `${fmt(holders)} / ${fmt(next)}`;
+      progressFillEl.style.width = pct + "%";
+
+      if(holders < 50){
+        milestoneLabelEl.textContent =
+          "You’re in the true deep-early zone. Less than 50 wallets hold CBS.";
+        fomoLineEl.textContent =
+          "Every single holder added now is visible on this bar. Later, you’ll just be part of the crowd.";
+      } else if(holders < 100){
+        milestoneLabelEl.textContent =
+          "Closing in on the first big psychological level: 100 holders.";
+        fomoLineEl.textContent =
+          "When we cross 100, people will say they were here ‘from the start’. You actually are.";
+      } else if(holders < 250){
+        milestoneLabelEl.textContent =
+          "CBS is leaving the tiny-crew phase and moving into early crowd territory.";
+        fomoLineEl.textContent =
+          "Past 250 holders, new people will scroll this page and realise they missed the sub-100 club.";
+      } else if(holders < 500){
+        milestoneLabelEl.textContent =
+          "Momentum phase. More eyes, more volume, more noise.";
+        fomoLineEl.textContent =
+          "The further this bar moves, the harder it becomes to call yourself an early holder.";
+      } else {
+        milestoneLabelEl.textContent =
+          "CBS is forming a real base of holders. Early community is locking in.";
+        fomoLineEl.textContent =
+          "If you’re reading this while numbers are still in the low hundreds, you’re already ahead of most people.";
       }
     }
 
     async function fetchHolders(){
-      errEl && errEl.classList.add('hidden');
-      noteEl.textContent = 'Contacting Birdeye…';
+      if(noteEl) noteEl.textContent = "Contacting CBS proxy (Helius)…";
+      if(errEl)  errEl.classList.add("hidden");
 
       try{
-        const res = await fetch(BIRDEYE_URL, {
-          method: 'GET',
-          headers: {
-            'accept': 'application/json',
-            'X-API-KEY': BIRDEYE_KEY,
-            'x-chain': 'solana'    // belangrijk voor sommige endpoints
-          }
+        const res = await fetch(PROXY_URL, {
+          method: "GET",
+          headers: { "accept": "application/json" }
         });
 
-        if(!res.ok){
-          setError(`Birdeye HTTP ${res.status} — ${res.statusText}`);
-          noteEl.textContent = 'Live data unavailable from Birdeye.';
+        const json = await res.json();
+        console.log("[CBS holders] proxy response:", json);
+
+        if(!res.ok || json.error){
+          setError(json.message || `HTTP ${res.status}`);
+          holdersEl.textContent = "--";
+          noteEl.textContent = "Live data unavailable (proxy/Helius).";
           return;
         }
 
-        const json = await res.json();
-        console.log('[CBS holders] Birdeye response:', json);
+        const holders = Number(json.holders || 0);
+        holdersEl.textContent = fmt(holders);
+        noteEl.textContent = "Live holder count from Helius via CBS proxy.";
+        updatedEl.textContent = "Last update: " + new Date().toLocaleString();
 
-        // Probeer meerdere mogelijke paden voor "holders"
-        const data = json?.data || json;
-        const holders =
-          data?.holders ??
-          data?.holder ??
-          data?.unique_holders ??
-          data?.uniqueHolders ??
-          data?.token?.holders ??
-          null;
-
-        if(typeof holders === 'number' && isFinite(holders)){
-          holdersEl.textContent = fmt(holders);
-          noteEl.textContent = 'Live from Birdeye (unique wallets).';
-          updatedEl.textContent = 'Last update: ' + new Date().toLocaleString();
-        }else{
-          holdersEl.textContent = '--';
-          noteEl.textContent = 'Live data unavailable from Birdeye.';
-          setError('Holder field not found in Birdeye response. Check console JSON.');
-        }
+        updateMilestones(holders);
       }catch(e){
-        holdersEl.textContent = '--';
-        noteEl.textContent = 'Live data unavailable from Birdeye.';
+        holdersEl.textContent = "--";
+        noteEl.textContent = "Live data unavailable (network error).";
         setError(e?.message || e);
       }
     }
 
-    document.getElementById('btnRefresh').addEventListener('click', fetchHolders);
+    btnRefresh.addEventListener("click", fetchHolders);
 
-    // Eerste load + interval
+    // eerste load + elke 60 seconden
     fetchHolders();
     setInterval(fetchHolders, 60000);
   </script>
 </body>
 </html>
+
