@@ -139,62 +139,70 @@
     </div>
   </footer>
 
-  <!-- SCRIPT: Birdeye holders fetch -->
   <script>
-    const MINT = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
+  const MINT = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
 
-    // 🔐 vervang dit door je echte Birdeye API key
-    const BIRDEYE_API_KEY = "efbead31f6db4087a18841c3bf32d0c6";
+  // Birdeye API key (read-only public usage)
+  const BIRDEYE_API_KEY = "efbead31f6db4087a18841c3bf32d0c6";
 
-     async function loadHolders() {
-      const countEl  = document.getElementById("holders-count");
-      const statusEl = document.getElementById("holders-status");
+  async function loadHolders() {
+    const countEl  = document.getElementById("holders-count");
+    const statusEl = document.getElementById("holders-status");
 
-      if (!countEl || !statusEl) return;
+    if (!countEl || !statusEl) return;
 
-      try {
-        statusEl.textContent = "Loading live data…";
+    try {
+      statusEl.textContent = "Loading live data…";
 
-        const res = await fetch(
-          "https://public-api.birdeye.so/public/token/statistics?address=" + MINT,
-          {
-            headers: {
-              "accept": "application/json",
-              "x-api-key": BIRDEYE_API_KEY
-            }
-          }
-        );
+      // Nieuw endpoint + chain=solana
+      const url = "https://public-api.birdeye.so/defi/v3/token/market-data"
+        + "?address=" + encodeURIComponent(MINT)
+        + "&chain=solana";
 
-        if (!res.ok) {
-          throw new Error("HTTP " + res.status);
+      const res = await fetch(url, {
+        headers: {
+          "accept": "application/json",
+          "x-api-key": BIRDEYE_API_KEY
         }
+      });
 
-        const json = await res.json();
-        const holders = json?.data?.holders ?? null;
+      if (!res.ok) {
+        throw new Error("HTTP " + res.status);
+      }
 
-        if (holders == null) {
-          countEl.textContent = "--";
-          statusEl.textContent = "Live data unavailable from Birdeye.";
-          return;
-        }
+      const json = await res.json();
+      // Probeer meerdere mogelijke velden; Birdeye wijzigt dit soms
+      const data = json?.data || json;
+      const holders =
+        data?.holders ??
+        data?.holder ??
+        data?.holder_count ??
+        null;
 
-        countEl.textContent = Number(holders).toLocaleString("en-US");
-        statusEl.textContent = "Live data from Birdeye.";
-      } catch (err) {
-        console.error(err);
-        statusEl.textContent = "Error loading holders (see console).";
-        // Laat laatste waarde staan als er al iets stond
-        if (countEl.textContent.trim() === "--") {
-          countEl.textContent = "--";
-        }
+      if (holders == null) {
+        countEl.textContent = "--";
+        statusEl.textContent = "Live data unavailable from Birdeye.";
+        return;
+      }
+
+      countEl.textContent = Number(holders).toLocaleString("en-US");
+      statusEl.textContent = "Live data from Birdeye.";
+    } catch (err) {
+      console.error(err);
+      statusEl.textContent = "Error loading holders (see console).";
+      if (countEl.textContent.trim() === "") {
+        countEl.textContent = "--";
       }
     }
+  }
 
-    document.addEventListener("DOMContentLoaded", () => {
-      loadHolders();
-      // Elke 60 seconden verversen
-      setInterval(loadHolders, 60000);
-    });
-  </script>
+  document.addEventListener("DOMContentLoaded", () => {
+    loadHolders();
+    // Elke 60 seconden verversen
+    setInterval(loadHolders, 60000);
+  });
+</script>
+<!-- SCRIPT: Birdeye holders fetch -->
+  
 </body>
 </html>
