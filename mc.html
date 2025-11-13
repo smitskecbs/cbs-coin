@@ -4,13 +4,13 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>CBS Coin — Market Cap (Live)</title>
-  <meta name="description" content="Live market cap tracker for CBS Coin (CBS). Watch the tree grow as the market cap grows."/>
+  <meta name="description" content="Live market cap tracker for CBS Coin (CBS). Market cap + holders, with a visual that grows as CBS grows."/>
   <meta name="theme-color" content="#030712"/>
 
   <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 
-  <!-- Tailwind (zoals op holders/tokenomics) -->
+  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -66,60 +66,7 @@
       background:radial-gradient(circle at 0 0,rgba(34,197,94,.35),transparent 55%);
     }
 
-    /* Tree met echte foto */
-    .tree-wrap{
-      position:relative;
-      width:200px;
-      height:260px;
-      margin:0 auto;
-      display:flex;
-      align-items:flex-end;
-      justify-content:center;
-    }
-    .tree-ground{
-      position:absolute;
-      bottom:-4px;
-      width:140%;
-      height:50px;
-      border-radius:999px;
-      background:
-        radial-gradient(circle at 50% 0,rgba(34,197,94,.8),rgba(6,95,70,1));
-      box-shadow:0 -4px 18px rgba(15,23,42,.9);
-    }
-    .tree-photo{
-      position:relative;
-      max-height:220px;
-      max-width:180px;
-      object-fit:contain;
-      border-radius:1.25rem;
-      box-shadow:
-        0 0 0 1px rgba(15,23,42,.9),
-        0 15px 40px rgba(5,150,105,.75);
-      transform-origin:bottom center;
-      transform:scale(0.4);
-      transition:transform 1.1s cubic-bezier(.16,1,.3,1), box-shadow .5s ease;
-    }
-
-    .spark{
-      position:absolute;
-      width:6px;
-      height:6px;
-      border-radius:999px;
-      background:rgba(190,242,100,.9);
-      box-shadow:0 0 18px rgba(190,242,100,1);
-      opacity:0;
-      animation:spark 3s linear infinite;
-    }
-    .spark:nth-child(1){ top:35px; left:20px; animation-delay:.0s}
-    .spark:nth-child(2){ top:10px; right:25px; animation-delay:.8s}
-    .spark:nth-child(3){ top:80px; right:5px; animation-delay:1.6s}
-    @keyframes spark{
-      0%{ transform:translateY(0) scale(.8); opacity:0}
-      10%{ opacity:1}
-      60%{ opacity:1}
-      100%{ transform:translateY(-24px) scale(1.1); opacity:0}
-    }
-
+    /* Progress bar */
     .progress-bar{
       position:relative;
       width:100%;
@@ -136,6 +83,91 @@
       background:linear-gradient(90deg,#22c55e,#a855f7,#fbbf24);
       box-shadow:0 0 18px rgba(34,197,94,.9);
       transition:width 1.1s cubic-bezier(.16,1,.3,1);
+    }
+
+    /* Visual: glowende CBS coin */
+    .orb-wrap{
+      position:relative;
+      width:230px;
+      height:230px;
+      margin:0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    .orb-base{
+      position:absolute;
+      inset:20%;
+      border-radius:999px;
+      background:radial-gradient(circle at 50% 30%,rgba(34,197,94,.85),rgba(15,23,42,1));
+      filter:blur(18px);
+      opacity:.9;
+    }
+    .orb{
+      position:relative;
+      width:180px;
+      height:180px;
+      border-radius:999px;
+      padding:10px;
+      background:
+        conic-gradient(from 210deg,rgba(34,197,94,.25),rgba(56,189,248,.4),rgba(168,85,247,.4),rgba(34,197,94,.6));
+      box-shadow:
+        0 0 0 1px rgba(15,23,42,.9),
+        0 0 40px rgba(34,197,94,.7),
+        0 0 80px rgba(56,189,248,.35);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      transform-origin:center;
+      transform:scale(.7);
+      transition:transform 1.1s cubic-bezier(.16,1,.3,1), box-shadow .7s ease;
+    }
+    .orb-inner{
+      width:100%;
+      height:100%;
+      border-radius:inherit;
+      background:#020617;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+    }
+    .orb-inner img{
+      width:85%;
+      height:85%;
+      object-fit:contain;
+    }
+    .orb-ring{
+      position:absolute;
+      inset:6px;
+      border-radius:999px;
+      border:2px dashed rgba(148,163,184,.7);
+      animation:spinRing 14s linear infinite;
+      pointer-events:none;
+    }
+    @keyframes spinRing{
+      to{ transform:rotate(360deg); }
+    }
+
+    .orb-pip{
+      position:absolute;
+      width:7px;
+      height:7px;
+      border-radius:999px;
+      background:rgba(190,242,100,.95);
+      box-shadow:0 0 18px rgba(190,242,100,1);
+      opacity:0;
+      animation:orbSpark 3.2s linear infinite;
+    }
+    .orb-pip:nth-child(1){ top:20px; left:35px; animation-delay:.1s}
+    .orb-pip:nth-child(2){ top:16px; right:40px; animation-delay:.9s}
+    .orb-pip:nth-child(3){ bottom:26px; right:18px; animation-delay:1.7s}
+    .orb-pip:nth-child(4){ bottom:18px; left:28px; animation-delay:2.4s}
+    @keyframes orbSpark{
+      0%{ transform:translateY(0) scale(.8); opacity:0}
+      10%{ opacity:1}
+      60%{ opacity:1}
+      100%{ transform:translateY(-22px) scale(1.05); opacity:0}
     }
   </style>
 </head>
@@ -160,60 +192,61 @@
     <!-- Main card -->
     <main class="glass px-5 py-7 md:px-9 md:py-9">
       <div class="grid lg:grid-cols-[1.5fr,1fr] gap-8 items-center">
-        <!-- Left: tekst + cijfers -->
+        <!-- Left: MC + holders + balk -->
         <section>
           <p class="text-[11px] tracking-[0.3em] uppercase text-emerald-300/80 mb-2">Live on-chain</p>
           <h1 class="meme-title text-4xl md:text-5xl text-white">Market Cap: CBS</h1>
+
           <p class="mt-3 text-sm md:text-base text-slate-300/90 max-w-xl">
-            The tree on the right grows with the CBS market cap.  
-            The closer we get to a <strong>$1,000,000</strong> cap, the bigger and brighter it becomes.
+            This page tracks the <strong>real</strong> CBS market cap and holder count.  
+            No hype, no screenshots — just on-chain data that anyone can verify.
           </p>
 
-          <div class="mt-6 grid sm:grid-cols-3 gap-4 text-sm">
-            <div class="rounded-2xl bg-slate-900/70 border border-emerald-400/30 px-4 py-3">
+          <div class="mt-6 grid sm:grid-cols-2 gap-4 text-sm">
+            <div class="rounded-2xl bg-slate-900/70 border border-emerald-400/40 px-4 py-3">
               <div class="text-xs uppercase tracking-wide text-emerald-300/80">Current Market Cap</div>
               <div id="mcValue" class="mt-2 text-2xl font-extrabold text-emerald-300 truncate">$—</div>
-              <div id="mcHint" class="mt-1 text-[11px] text-slate-400">Live from DexScreener / Jupiter price × on-chain supply.</div>
+              <div class="mt-1 text-[11px] text-slate-400">
+                Based on live price × on-chain supply.
+              </div>
             </div>
-            <div class="rounded-2xl bg-slate-900/70 border border-slate-600/60 px-4 py-3">
-              <div class="text-xs uppercase tracking-wide text-slate-300/80">CBS Price (USD)</div>
-              <div id="priceValue" class="mt-2 text-lg font-semibold text-slate-100 truncate">$—</div>
-              <div id="srcValue" class="mt-1 text-[11px] text-slate-400">Source: —</div>
-            </div>
-            <div class="rounded-2xl bg-slate-900/70 border border-slate-600/60 px-4 py-3">
-              <div class="text-xs uppercase tracking-wide text-slate-300/80">Current Supply</div>
-              <div id="supplyValue" class="mt-2 text-lg font-semibold text-slate-100 truncate">— CBS</div>
-              <div class="mt-1 text-[11px] text-slate-400">Burns & mints already included.</div>
+
+            <div class="rounded-2xl bg-slate-900/70 border border-slate-600/70 px-4 py-3">
+              <div class="text-xs uppercase tracking-wide text-slate-300/80">Current Holders</div>
+              <div id="holdersValue" class="mt-2 text-2xl font-extrabold text-slate-100 truncate">—</div>
+              <div class="mt-1 text-[11px] text-slate-400">
+                Wallets holding a non-zero CBS balance (early degen scoreboard).
+              </div>
             </div>
           </div>
 
           <div class="mt-6">
             <div class="flex items-center justify-between mb-1 text-[11px] text-slate-400 uppercase tracking-[0.15em]">
-              <span>Tree growth to $1M</span>
+              <span>Progress to $1M market cap</span>
               <span id="goalPct">0%</span>
             </div>
             <div class="progress-bar">
               <div id="progressFill" class="progress-fill"></div>
             </div>
             <p class="mt-2 text-[11px] text-slate-500">
-              Goal set at <span class="font-semibold text-slate-200">$1,000,000</span> market cap for this visual.  
-              Early degens see the smallest tree.
+              Goal for this bar is <span class="font-semibold text-slate-200">$1,000,000</span>.  
+              The earlier you join, the smaller this bar is — and the smaller the group of wallets who were here.
             </p>
           </div>
 
           <div class="mt-6 grid sm:grid-cols-2 gap-4 text-[13px]">
             <div class="rounded-2xl bg-slate-900/80 border border-slate-700 px-4 py-3">
-              <div class="font-semibold text-slate-100 mb-1">Why does this matter?</div>
+              <div class="font-semibold text-slate-100 mb-1">Why only cap + holders?</div>
               <p class="text-slate-300/90">
-                Every new dollar in the market cap is a vote of confidence in <strong>Community Builds Sovereignty</strong>.
-                This page makes that growth visible and permanent.
+                Price can swing. Supply can change with burns.  
+                But <strong>market cap + unique holders</strong> show if CBS is actually growing or not.
               </p>
             </div>
             <div class="rounded-2xl bg-slate-900/80 border border-emerald-500/40 px-4 py-3">
-              <div class="font-semibold text-emerald-300 mb-1">Want to push the tree?</div>
+              <div class="font-semibold text-emerald-300 mb-1">Want to move the bar?</div>
               <p class="text-slate-300/90">
-                You can buy CBS on Raydium and join the early holders.  
-                Every buy nudges the tree higher and locks your wallet into CBS history.
+                Buy CBS on Raydium, hold it, and watch this page update.  
+                Every new holder and every new dollar in cap is permanently visible here.
               </p>
               <div class="mt-3 flex flex-wrap gap-2">
                 <a href="buy.html" class="px-3 py-1.5 rounded-xl bg-emerald-400 text-black font-semibold text-xs hover:bg-emerald-300">Open buy page</a>
@@ -228,25 +261,24 @@
           </div>
         </section>
 
-        <!-- Right: echte boom -->
+        <!-- Right: glowende coin die groeit met MC -->
         <aside class="relative">
-          <div class="tree-wrap">
-            <div class="tree-ground"></div>
-            <img
-              id="treePhoto"
-              src="assets/tree-real.png"
-              alt="CBS Market Tree"
-              class="tree-photo"
-              onerror="this.style.opacity=0.12; this.style.boxShadow='0 0 0 1px rgba(15,23,42,.9)';"
-            />
-            <div class="spark"></div>
-            <div class="spark"></div>
-            <div class="spark"></div>
+          <div class="orb-wrap">
+            <div class="orb-base"></div>
+            <div id="orb" class="orb">
+              <div class="orb-inner">
+                <img src="logo.png" alt="CBS Coin" onerror="this.style.opacity=0.15">
+              </div>
+              <div class="orb-ring"></div>
+              <div class="orb-pip"></div>
+              <div class="orb-pip"></div>
+              <div class="orb-pip"></div>
+              <div class="orb-pip"></div>
+            </div>
           </div>
-
-          <div class="mt-4 text-center text-xs text-slate-400">
-            This is the <span class="font-semibold text-emerald-300">CBS Market Tree</span>.  
-            When the market cap grows, it literally grows with it.
+          <div class="mt-4 text-center text-xs text-slate-400 max-w-xs mx-auto">
+            This is the <span class="font-semibold text-emerald-300">CBS Market Orb</span>.  
+            As the market cap grows, the coin literally expands and the glow intensifies.
           </div>
         </aside>
       </div>
@@ -264,26 +296,25 @@
 
   <script>
     const MINT = 'B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk';
-    const MAX_TARGET_MC = 1_000_000; // doel voor de visual
+    const MAX_TARGET_MC = 1_000_000; // doel voor de balk / orb
     const HELIUS_KEY = 'a9a11d45-2d40-4da0-a3b6-557b855f1e5c';
     const RPC_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
+    const HOLDERS_API = 'https://cbs-coin.vercel.app/api/holders';
 
     const $ = id => document.getElementById(id);
 
-    // 1) Probeer DexScreener eerst, dan Jupiter als fallback
+    // ---- Price: DexScreener -> Jupiter fallback (alleen voor MC, niet tonen) ----
     async function getPriceUSD(mint) {
-      // DexScreener
+      // DexScreener eerst
       try {
         const res = await fetch('https://api.dexscreener.com/latest/dex/tokens/' + mint, {
-          headers: {'accept': 'application/json'}
+          headers: { 'accept': 'application/json' }
         });
         if (res.ok) {
           const j = await res.json();
           const pair = j?.pairs?.[0];
           const p = Number(pair?.priceUsd);
-          if (Number.isFinite(p)) {
-            return { price: p, src: 'DexScreener' };
-          }
+          if (Number.isFinite(p)) return { price: p, src: 'DexScreener' };
         }
       } catch (e) {
         console.warn('[MC] DexScreener price failed', e);
@@ -316,20 +347,35 @@
       return supply;
     }
 
+    async function getHolders() {
+      try {
+        const res = await fetch(HOLDERS_API, { headers: { 'accept':'application/json' }});
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const j = await res.json();
+        if (j && j.error === false && typeof j.holders === 'number') {
+          return j.holders;
+        }
+        throw new Error('Unexpected holders payload');
+      } catch (e) {
+        console.warn('[MC] holders API failed', e);
+        return null;
+      }
+    }
+
     function fmt(num, fd = 2) {
       if (typeof num !== 'number' || !isFinite(num)) return '—';
       return num.toLocaleString(undefined, { maximumFractionDigits: fd });
     }
 
     function updateVisuals(marketCap) {
-      const tree = $('treePhoto');
+      const orb = $('orb');
       const fill = $('progressFill');
       const pctEl = $('goalPct');
 
-      if (!tree) return;
+      if (!orb) return;
 
       if (!marketCap || marketCap <= 0) {
-        tree.style.transform = 'scale(0.4)';
+        orb.style.transform = 'scale(0.7)';
         fill.style.width = '0%';
         pctEl.textContent = '0%';
         return;
@@ -339,8 +385,8 @@
       if (!isFinite(ratio) || ratio < 0) ratio = 0;
       if (ratio > 1) ratio = 1;
 
-      const scale = 0.4 + ratio * 0.9;  // 0.4 → 1.3
-      tree.style.transform = `scale(${scale.toFixed(2)})`;
+      const scale = 0.7 + ratio * 0.6; // 0.7 → 1.3
+      orb.style.transform = `scale(${scale.toFixed(2)})`;
 
       const pct = (ratio * 100).toFixed(1);
       fill.style.width = pct + '%';
@@ -349,20 +395,20 @@
 
     async function refreshMC() {
       try {
-        const [priceData, supply] = await Promise.all([
+        const [priceData, supply, holders] = await Promise.all([
           getPriceUSD(MINT),
-          getCurrentSupply()
+          getCurrentSupply(),
+          getHolders()
         ]);
 
-        const price = priceData.price;
-        const src = priceData.src;
-        const mc = price * supply;
+        const mc = priceData.price * supply;
 
-        $('priceValue').textContent = '$' + fmt(price, 8);
-        $('srcValue').textContent = 'Source: ' + src;
-        $('supplyValue').textContent = fmt(supply, 2) + ' CBS';
         $('mcValue').textContent = '$' + fmt(mc, 0);
-        $('mcHint').textContent = 'Updates automatically from DexScreener & Solana RPC.';
+        if (holders !== null) {
+          $('holdersValue').textContent = fmt(holders, 0);
+        } else {
+          $('holdersValue').textContent = '—';
+        }
 
         const now = new Date();
         $('lastUpdated').textContent = 'Last update: ' + now.toLocaleTimeString();
@@ -371,7 +417,8 @@
       } catch (err) {
         console.error('[MC] Error', err);
         $('mcValue').textContent = '$—';
-        $('mcHint').textContent = 'Failed to load live data. Try refreshing the page.';
+        $('goalPct').textContent = '0%';
+        $('progressFill').style.width = '0%';
       }
     }
 
@@ -381,4 +428,3 @@
   </script>
 </body>
 </html>
-
