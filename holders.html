@@ -143,6 +143,10 @@
             One day this number will look stupidly small — but only the people here now will be able to say:
             “I was part of the Genesis phase.”
           </p>
+          <p class="mt-2 text-[0.7rem] md:text-xs opacity-80">
+            To appear on this board your wallet just needs to hold <span class="font-semibold text-emerald-300">&gt; 0 CBS</span> on Solana.
+            That’s it. No form, no whitelist, only an on-chain balance.
+          </p>
           <p class="mt-3 text-[0.7rem] md:text-xs opacity-80">
             Mint / CA:
             <code>B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code>
@@ -221,13 +225,57 @@
 
     <!-- CHAPTER TIMELINE -->
     <section class="grid lg:grid-cols-4 gap-4">
-      <!-- Cards worden in JS gevuld, maar we maken de container hier -->
       <div id="chapterCards" class="lg:col-span-4 grid sm:grid-cols-2 lg:grid-cols-4 gap-4"></div>
+    </section>
+
+    <!-- WHY HOLD CBS? -->
+    <section class="glass rounded-3xl p-6 md:p-7">
+      <div class="flex flex-col md:flex-row md:items-start md:justify-between gap-6">
+        <div class="max-w-xl">
+          <h2 class="meme-title text-2xl md:text-3xl text-white">What changes when you hold CBS?</h2>
+          <p class="mt-2 text-sm opacity-85">
+            CBS is not a promise of profit. It’s a signal. Holding any amount of CBS says:
+            “I’m part of this experiment and I care enough to show up on-chain.”
+          </p>
+          <p class="mt-2 text-xs opacity-70">
+            None of this is financial advice. Never buy more than you’re comfortable losing.
+            The point here is <span class="font-semibold text-emerald-300">skin in the game</span>, not gambling your future.
+          </p>
+        </div>
+
+        <div class="grid sm:grid-cols-2 gap-4 w-full md:w-[46%]">
+          <div class="rounded-2xl bg-black/60 border border-emerald-400/70 p-4 shadow-cbs-glow">
+            <div class="text-xl mb-1">📜</div>
+            <div class="font-semibold text-sm mb-1">On-chain receipt</div>
+            <p class="text-[0.8rem] opacity-80">
+              Your wallet becomes part of the <span class="font-semibold text-emerald-300">Genesis holder snapshot</span>.
+              No one can rewrite that history later — it’s forever in the CBS holder map.
+            </p>
+          </div>
+          <div class="rounded-2xl bg-black/60 border border-purple-400/70 p-4">
+            <div class="text-xl mb-1">🧩</div>
+            <div class="font-semibold text-sm mb-1">Access to the real experiment</div>
+            <p class="text-[0.8rem] opacity-80">
+              CBS holders are the pool the community pulls from for
+              <span class="font-semibold">AccessPass mints, contests, early tests</span>
+              and new tools we ship. It doesn’t guarantee anything, but it puts you in the room.
+            </p>
+          </div>
+          <div class="rounded-2xl bg-black/60 border border-sky-400/70 p-4 sm:col-span-2">
+            <div class="text-xl mb-1">🗳️</div>
+            <div class="font-semibold text-sm mb-1">Voice in future direction</div>
+            <p class="text-[0.8rem] opacity-80">
+              CBS is building around <span class="font-semibold">polls, DAO voting and transparent team wallets</span>.
+              When decisions move on-chain, the people actually holding CBS are the ones with the clearest say.
+            </p>
+          </div>
+        </div>
+      </div>
     </section>
 
     <!-- BOTTOM TEXT -->
     <section class="glass rounded-3xl p-6 md:p-7 text-sm leading-relaxed">
-      <h2 class="meme-title text-2xl md:text-3xl mb-3 text-white">Why this page matters</h2>
+      <h2 class="meme-title text-2xl md:text-3xl mb-3 text-white">Why this board matters</h2>
       <p class="opacity-85">
         This isn’t a random “stats” screen. It’s a scoreboard of how many people decided to actually show up
         before CBS is comfortable, safe and obvious.
@@ -371,20 +419,17 @@
       const n = Number(count || 0);
       if (!isFinite(n) || n <= 0) return { chapter: null, nextTarget: 50 };
 
-      // bepaal huidige chapter + volgende target
       if (n < 50)  return { chapter: CHAPTERS[0], nextTarget: 50 };
       if (n < 100) return { chapter: CHAPTERS[1], nextTarget: 100 };
       if (n < 250) return { chapter: CHAPTERS[2], nextTarget: 250 };
       if (n < 1000) return { chapter: CHAPTERS[3], nextTarget: 1000 };
 
-      // boven 1k: we gebruiken laatste chapter en target = n
       return { chapter: CHAPTERS[3], nextTarget: n };
     }
 
     function updateTextForCount(count){
       const n = Number(count || 0);
 
-      // rank hint: als je nu join
       if (n > 0){
         rankHintEl.textContent = fmt(n + 1);
       } else {
@@ -402,7 +447,6 @@
         return;
       }
 
-      // top label
       if (n < 50){
         phaseLabelEl.textContent = "Genesis: sub-50 phase";
       } else if (n < 100){
@@ -415,11 +459,9 @@
         phaseLabelEl.textContent = "Post-Genesis";
       }
 
-      // chapter text
       chapterTitleEl.textContent = chapter.title;
       chapterLineEl.textContent  = chapter.line;
 
-      // progress bar
       const pct = nextTarget > 0 ? Math.min(n / nextTarget * 100, 100) : 0;
       chapterProgBarEl.style.width = pct + "%";
       chapterProgValEl.textContent = `${fmt(n)} / ${fmt(nextTarget)}`;
@@ -458,7 +500,6 @@
 
     document.getElementById("btnRefresh").addEventListener("click", fetchHolders);
 
-    // initial + 60s interval
     fetchHolders();
     setInterval(fetchHolders, 60000);
   </script>
