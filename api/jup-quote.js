@@ -1,54 +1,76 @@
-// /api/jup-quote.js
-// Proxy naar Jupiter Quote API met CORS open voor GitHub Pages
-
 export default async function handler(req, res) {
-  // CORS headers zodat smitskecbs.github.io mag callen
+  // Zorg dat GitHub Pages dit endpoint mag aanroepen
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "GET,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") {
-    res.status(200).end();
-    return;
-  }
-
-  if (req.method !== "GET") {
-    res.status(405).json({ error: true, message: "Method not allowed" });
-    return;
+    return res.status(200).end();
   }
 
   try {
-    const { inputMint, outputMint, amount, slippageBps } = req.query;
+    const { amount } = req.query;
 
-    if (!inputMint || !outputMint || !amount) {
-      res.status(400).json({
+    if (!amount) {
+      return res.status(400).json({
         error: true,
-        message: "Missing inputMint, outputMint or amount",
+        message: "Missing 'amount' query param (lamports)",
       });
-      return;
     }
 
-    const url = new URL("https://quote-api.jup.ag/v6/quote");
-    url.searchParams.set("inputMint", inputMint);
-    url.searchParams.set("outputMint", outputMint);
-    url.searchParams.set("amount", amount);        // integer als string
-    url.searchParams.set("slippageBps", slippageBps || "100"); // 1% slippage
+    // SOL en CBS mints
+    const SOL_MINT =
+      "So11111111111111111111111111111111111111112";
+    const CBS_MINT =
+      "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
 
-    const jupRes = await fetch(url.toString());
-    const data = await jupRes.json();
+    const url =
+      `https://quote-api.jup.ag/v6/quote` +
+      `?inputMint=${SOL_MINT}` +
+      `&outputMint=${CBS_MINT}` +
+      `&amount=${amount}` +
+      `&slippageBps=50` +
+      `&swapMode=ExactIn`;
 
-    if (!jupRes.ok) {
-      res.status(jupRes.status).json({
+    const jRes = await fetch(url, {
+      headers: { accept: "application/json" },
+    });
+
+    if (!jRes.ok) {
+      const text = await jRes.text();
+      return res.status(jRes.status).json({
         error: true,
-        message: data.error || "Quote API error",
-        data,
+        message: "Jupiter error",
+        details: text,
       });
-      return;
     }
 
-    res.status(200).json({ error: false, data });
-  } catch (err) {
-    console.error("[jup-quote] error", err);
-    res.status(500).json({ error: true, message: err.message || "Server error" });
+    const data = await jRes.json();
+    const route = data?.data?.[0];
+
+    if (!route) {
+      return res.status(200).json({
+        error: true,
+        message: "No route found",
+      });
+    }
+
+    // We geven alleen terug wat we nodig hebben op de site
+    return res.status(200).json({
+      error: false,
+      data: {
+        inAmount: route.inAmount,
+        outAmount: route.outAmount,
+        inputMint: route.inputMint,
+        outputMint: route.outputMint,
+        priceImpactPct: route.priceImpactPct,
+      },
+    });
+  } catch (e) {
+    console.error("Jup quote error:", e);
+    return res.status(500).json({
+      error: true,
+      message: e?.message || "fetch failed",
+    });
   }
 }
