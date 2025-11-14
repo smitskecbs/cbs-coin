@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>CBS Coin — Market Cap & Buy Streak (Live)</title>
-  <meta name="description" content="Live market cap, holders and buy streak for CBS Coin (CBS). Community Builds Sovereignty.">
+  <title>CBS Coin — Market Cap & 1H Buy Streak (Live)</title>
+  <meta name="description" content="Live market cap, holders and 1-hour buy streak for CBS Coin (CBS). Community Builds Sovereignty.">
 
   <!-- Fonts & Tailwind -->
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
@@ -29,7 +29,7 @@
     }
   </script>
 
-  <!-- Solana & helpers -->
+  <!-- Solana -->
   <script src="https://unpkg.com/@solana/web3.js@1.95.1/lib/index.iife.min.js"></script>
 
   <style>
@@ -58,9 +58,6 @@
       border-radius:18px;
       border:1px solid rgba(255,255,255,.12);
     }
-    .glow-ring{
-      box-shadow:0 0 0 1px rgba(36,230,181,.4),0 0 24px rgba(36,230,181,.4);
-    }
     .progress-track{
       border-radius:999px;
       background:radial-gradient(circle at 0% 50%,rgba(36,230,181,.45),transparent 55%),
@@ -73,14 +70,8 @@
       box-shadow:0 0 22px rgba(36,230,181,.6);
       transition:width .7s ease-out;
     }
-    .streak-pulse{
-      animation:streakPulse 0.9s ease-out;
-    }
-    @keyframes streakPulse{
-      0%{transform:scale(1); text-shadow:0 0 0 rgba(36,230,181,0);}
-      40%{transform:scale(1.07); text-shadow:0 0 20px rgba(36,230,181,.8);}
-      100%{transform:scale(1); text-shadow:0 0 0 rgba(36,230,181,0);}
-    }
+
+    /* animaties */
     .mc-pulse{
       animation:mcPulse 0.8s ease-out;
     }
@@ -88,6 +79,24 @@
       0%{transform:scale(1); text-shadow:0 0 0 rgba(125,249,255,0);}
       40%{transform:scale(1.05); text-shadow:0 0 20px rgba(125,249,255,.9);}
       100%{transform:scale(1); text-shadow:0 0 0 rgba(125,249,255,0);}
+    }
+
+    .streak-pulse{
+      animation:streakPulse 0.9s ease-out;
+    }
+    @keyframes streakPulse{
+      0%{transform:scale(1); text-shadow:0 0 0 rgba(36,230,181,0);}
+      40%{transform:scale(1.08); text-shadow:0 0 22px rgba(36,230,181,.9);}
+      100%{transform:scale(1); text-shadow:0 0 0 rgba(36,230,181,0);}
+    }
+
+    .record-pulse{
+      animation:recordPulse 1s ease-out;
+    }
+    @keyframes recordPulse{
+      0%{transform:scale(1); box-shadow:0 0 0 0 rgba(251,191,36,0.0);}
+      40%{transform:scale(1.05); box-shadow:0 0 24px 0 rgba(251,191,36,.9);}
+      100%{transform:scale(1); box-shadow:0 0 0 0 rgba(251,191,36,0);}
     }
   </style>
 </head>
@@ -116,10 +125,10 @@
       <div class="flex flex-col lg:flex-row gap-6 lg:gap-10 items-start">
         <div class="flex-1">
           <p class="text-[11px] tracking-[0.25em] uppercase text-emerald-300 mb-2">Live On-chain</p>
-          <h1 class="meme-title text-4xl sm:text-5xl md:text-6xl text-white">Market Cap: CBS</h1>
+          <h1 class="meme-title text-4xl sm:text-5xl md:text-6xl text-white">Market Cap Console</h1>
           <p class="mt-3 text-sm md:text-[15px] text-slate-200/90 max-w-xl">
-            This page is the <strong>Market Cap Console</strong> for CBS.
-            Every dollar here is backed by liquidity and holders, not hype slides.
+            This page tracks the <strong>real scoreboard</strong> of CBS: market cap, holders
+            and the <strong>1-hour buy streak</strong>. Every step is backed by real wallets, not promises.
           </p>
           <p class="mt-1 text-xs text-slate-400">
             Mint / CA:
@@ -129,7 +138,7 @@
           </p>
         </div>
 
-        <!-- MAIN MC + HOLDERS -->
+        <!-- MC + HOLDERS -->
         <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
           <div class="stat-card px-4 py-3 flex flex-col justify-between">
             <div class="text-[11px] uppercase tracking-[0.16em] text-slate-400 mb-1">
@@ -158,7 +167,7 @@
       </div>
     </section>
 
-    <!-- PROGRESS + BUY STREAK -->
+    <!-- PROGRESS + STREAK -->
     <section class="mt-6 grid lg:grid-cols-[2fr,1.4fr] gap-5">
       <!-- Progress -->
       <div class="glass p-5">
@@ -168,8 +177,8 @@
               Road to $1,000,000 MC
             </div>
             <div class="text-sm text-slate-200">
-              The closer we move to a <span class="font-semibold text-emerald-300">$1M cap</span>,
-              the brighter this bar becomes.
+              Every holder, burn and LP addition pushes this bar a bit closer to
+              the <span class="font-semibold text-emerald-300">$1M milestone</span>.
             </div>
           </div>
           <div class="text-right">
@@ -192,9 +201,9 @@
               Why does this matter?
             </div>
             <p>
-              Market cap is the most honest scoreboard.
-              Every holder, every LP burn and every buy is recorded on-chain
-              and reflected here.
+              Market cap is where memes meet math. If CBS keeps building, this bar
+              becomes a timeline of what the community actually did — not what
+              was promised.
             </p>
           </div>
           <div class="bg-black/15 rounded-xl border border-white/5 px-3 py-3">
@@ -202,8 +211,8 @@
               Want to move the bar?
             </div>
             <p class="mb-2">
-              You can buy CBS on Raydium and become part of the early curve.
-              Small buys now move this bar more than they ever will later.
+              Early buys move this bar the most. Later, when the market cap is bigger,
+              the same size buy barely nudges it. Early holders shape this graph.
             </p>
             <div class="flex flex-wrap gap-2 mt-1">
               <a href="buy.html"
@@ -219,47 +228,68 @@
         </div>
       </div>
 
-      <!-- BUY STREAK CARD -->
+      <!-- 1H BUY STREAK -->
       <div class="glass p-5 flex flex-col justify-between">
         <div>
-          <div class="flex items-center justify-between">
+          <div class="flex items-start justify-between gap-3">
             <div>
               <div class="text-[11px] tracking-[0.2em] uppercase text-amber-300 mb-1">
-                Buy Streak (Dexscreener m5)
+                Buy Streak — Last 1 Hour
               </div>
               <div class="text-sm text-slate-200">
-                How many buys in the last 5 minutes without a sell.
+                How many net buys CBS had in the last 60 minutes, compared to sells.
               </div>
             </div>
-            <div class="text-right">
-              <div class="text-[11px] text-slate-400">High score (24h)</div>
-              <div id="streakHigh" class="text-sm font-semibold text-slate-100">—</div>
+            <div class="text-right text-xs">
+              <div class="text-[11px] text-slate-400 mb-1">Record streak (this browser)</div>
+              <div id="recordValue" class="inline-flex items-center gap-1 px-2 py-1 rounded-full bg-amber-500/15 border border-amber-300/50 text-amber-200 font-semibold">
+                <span>—</span>
+              </div>
+              <div id="recordHint" class="mt-1 text-[10px] text-slate-500">
+                New highs light up this badge.
+              </div>
             </div>
           </div>
 
           <div class="mt-4 flex items-center gap-4">
             <div class="relative">
-              <div class="h-16 w-16 rounded-2xl bg-emerald-400/15 border border-emerald-300/40 flex items-center justify-center glow-ring">
+              <div class="h-16 w-16 rounded-2xl bg-emerald-400/15 border border-emerald-300/40 flex items-center justify-center shadow-cbs-neon">
                 <span id="streakValue" class="text-4xl font-extrabold text-emerald-300">0</span>
               </div>
             </div>
             <div class="text-xs text-slate-300">
               <div id="streakStatus" class="font-semibold text-emerald-200">
-                Waiting for fresh data…
+                Waiting for fresh Dexscreener data…
               </div>
               <p class="mt-1">
-                If <span class="font-semibold text-emerald-300">sells stay at 0</span> and buys keep coming in,
-                this number will climb.  
-                When a sell hits, the streak resets to zero.
+                We look at the last <strong>1 hour</strong> of trades.
+                If buys outnumber sells, the number rises.
+                If sells take over, the streak snaps back to zero.
               </p>
+            </div>
+          </div>
+
+          <div class="mt-3 grid grid-cols-2 gap-3 text-[11px] text-slate-300">
+            <div class="bg-black/25 rounded-xl border border-white/10 px-3 py-2">
+              <div class="text-slate-400">1H Summary</div>
+              <div id="streakSummary" class="mt-1 text-[11px] text-slate-100">
+                —
+              </div>
+            </div>
+            <div class="bg-black/25 rounded-xl border border-white/10 px-3 py-2">
+              <div class="text-slate-400">24H Activity</div>
+              <div id="activitySummary" class="mt-1 text-[11px] text-slate-100">
+                —
+              </div>
             </div>
           </div>
         </div>
 
         <div class="mt-4 text-[11px] text-slate-400 border-t border-white/10 pt-3">
           <span class="font-semibold text-slate-100">How to play the streak?</span><br>
-          Stack CBS, hold, and let buys stack on top of each other.
-          Nobody wants to be the one that breaks a clean green streak.
+          Slow, honest projects like CBS don’t need bots.  
+          A few real buys inside an hour already create a clean green streak —
+          and nobody wants to be the wallet that breaks it.
         </div>
       </div>
     </section>
@@ -277,16 +307,18 @@
 
   <script>
     // ===== Config =====
-    const MINT         = 'B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk';
-    const MAX_TARGET   = 1_000_000; // $1M goal for bar
-    const HELIUS_KEY   = 'a9a11d45-2d40-4da0-a3b6-557b855f1e5c';
-    const RPC_URL      = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
-    const HOLDERS_API  = 'https://cbs-coin.vercel.app/api/holders';
+    const MINT          = 'B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk';
+    const MAX_TARGET    = 1_000_000; // $1M goal
+    const HELIUS_KEY    = 'a9a11d45-2d40-4da0-a3b6-557b855f1e5c';
+    const RPC_URL       = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
+    const HOLDERS_API   = 'https://cbs-coin.vercel.app/api/holders';
     const DEX_TOKEN_API = 'https://api.dexscreener.com/latest/dex/tokens/' + MINT;
 
-    let lastMc = 0;
-    let lastStreak = 0;
-    let streakHigh24h = 0;
+    const RECORD_KEY    = 'cbs_mc_record_streak_v1';
+
+    let lastMc      = 0;
+    let lastStreak  = 0;
+    let recordStreak = 0;
 
     const fmt = (n, fd=0) =>
       (typeof n === 'number' && isFinite(n))
@@ -296,6 +328,25 @@
     function setText(id, txt){
       const el = document.getElementById(id);
       if(el) el.textContent = txt;
+    }
+
+    function loadRecord(){
+      try{
+        const raw = localStorage.getItem(RECORD_KEY);
+        const v = raw ? Number(raw) : 0;
+        if(isFinite(v) && v >= 0) recordStreak = v;
+      }catch(_){}
+      const label = recordStreak > 0 ? String(recordStreak) : '—';
+      setText('recordValue', label);
+      if(recordStreak > 0){
+        setText('recordHint', 'Highest 1H streak seen on this browser so far.');
+      }
+    }
+
+    function saveRecord(){
+      try{
+        localStorage.setItem(RECORD_KEY, String(recordStreak));
+      }catch(_){}
     }
 
     async function getPriceFromJupiter(){
@@ -344,46 +395,67 @@
           return j.holders;
         }
       }catch(e){
-        console.error(e);
+        console.error('[Holders]', e);
       }
       return null;
     }
 
-    async function getBuyStreak(){
+    // 1H streak op basis van Dexscreener data
+    async function getBuyStreak1H(){
       try{
         const res = await fetch(DEX_TOKEN_API);
         if(!res.ok) throw new Error('Dex error');
         const j = await res.json();
         const pair = j?.pairs?.[0];
-        const tx = pair?.txns?.m5;
+        const tx1h = pair?.txns?.h1;
         const tx24 = pair?.txns?.h24;
-        if(!tx) throw new Error('No m5 txns');
 
-        const buys  = Number(tx.buys  ?? 0);
-        const sells = Number(tx.sells ?? 0);
-        const buys24 = Number(tx24?.buys ?? 0);
+        if(!tx1h){
+          throw new Error('No h1 txns');
+        }
+
+        const buys1  = Number(tx1h.buys  ?? 0);
+        const sells1 = Number(tx1h.sells ?? 0);
+        const buys24  = Number(tx24?.buys  ?? 0);
         const sells24 = Number(tx24?.sells ?? 0);
 
         let streak = 0;
         let status = '';
+        let summary1h = '';
+        let summary24 = '';
 
-        if(sells === 0){
-          streak = buys;
-          status = buys > 0
-            ? `Pure green in the last 5 minutes — ${buys} buys, 0 sells.`
-            : 'No trades in the last 5 minutes. First buy starts a fresh streak.';
-        }else{
+        const net1 = buys1 - sells1;
+        const net24 = buys24 - sells24;
+
+        if(buys1 === 0 && sells1 === 0){
           streak = 0;
-          status = `A sell hit in the last 5 minutes (${buys} buys / ${sells} sells). Streak reset.`;
+          status = 'No trades in the last hour. The next buy starts a fresh green hour.';
+        } else if(sells1 === 0 && buys1 > 0){
+          // pure groene hour: alle trades waren buys
+          streak = buys1;
+          status = `Full green hour — ${buys1} buys, 0 sells.`;
+        } else if(net1 > 0){
+          // meer buys dan sells → net green streak
+          streak = net1;
+          status = `Net green hour — ${buys1} buys, ${sells1} sells. Streak = net buys (${net1}).`;
+        } else {
+          // meer of gelijke sells → streak gebroken
+          streak = 0;
+          status = `Red hour — ${buys1} buys, ${sells1} sells. Streak is reset to 0.`;
         }
 
-        // rough "high" using 24h buys minus sells, just for flex
-        streakHigh24h = Math.max(streakHigh24h, Math.max(0, buys24 - sells24));
+        summary1h = `${buys1} buys / ${sells1} sells (net ${net1 >= 0 ? '+' : ''}${net1})`;
+        summary24 = `${buys24} buys / ${sells24} sells (net ${net24 >= 0 ? '+' : ''}${net24})`;
 
-        return { streak, status, high: streakHigh24h };
+        return { streak, status, summary1h, summary24 };
       }catch(e){
-        console.error(e);
-        return { streak:0, status:'Unable to load streak data (Dexscreener).', high:streakHigh24h || 0 };
+        console.error('[Streak 1H]', e);
+        return {
+          streak:0,
+          status:'Unable to load streak data (Dexscreener).',
+          summary1h:'—',
+          summary24:'—'
+        };
       }
     }
 
@@ -393,7 +465,7 @@
           getPriceUSD(),
           getCurrentSupply(),
           getHolders(),
-          getBuyStreak()
+          getBuyStreak1H()
         ]);
 
         // Market cap
@@ -402,7 +474,7 @@
         if(mc){
           const pretty = '$' + fmt(mc);
           mcEl.textContent = pretty;
-          setText('mcNote', 'Includes live liquidity and current supply.');
+          setText('mcNote', 'Based on live price × current on-chain supply.');
           if(mc > lastMc){
             mcEl.classList.remove('mc-pulse');
             void mcEl.offsetWidth;
@@ -419,8 +491,6 @@
         const bar = document.getElementById('mcProgress');
         bar.style.width = pct.toFixed(2) + '%';
         setText('mcProgressLabel', `${pct.toFixed(2)}% of $1,000,000 goal`);
-
-        // Last update
         setText('mcLastUpdate', 'Last update: ' + new Date().toLocaleTimeString());
 
         // Holders
@@ -430,19 +500,33 @@
           setText('holderValue', '—');
         }
 
-        // Streak
-        const { streak, status, high } = streakInfo;
+        // Streak 1H
+        const { streak, status, summary1h, summary24 } = streakInfo;
         const streakEl = document.getElementById('streakValue');
         streakEl.textContent = String(streak);
         setText('streakStatus', status);
-        setText('streakHigh', high ? `${high} (buys - sells)` : '—');
+        setText('streakSummary', summary1h);
+        setText('activitySummary', summary24);
 
+        // huidige streak animatie
         if(streak > lastStreak){
           streakEl.classList.remove('streak-pulse');
           void streakEl.offsetWidth;
           streakEl.classList.add('streak-pulse');
         }
         lastStreak = streak;
+
+        // record streak (per browser)
+        if(streak > recordStreak){
+          recordStreak = streak;
+          saveRecord();
+          setText('recordValue', String(recordStreak));
+          const badge = document.getElementById('recordValue');
+          badge.classList.remove('record-pulse');
+          void badge.offsetWidth;
+          badge.classList.add('record-pulse');
+          setText('recordHint', 'New local record — highest 1H streak seen on this device.');
+        }
 
       }catch(e){
         console.error('[MC page] error', e);
@@ -452,9 +536,11 @@
     }
 
     (async function init(){
+      loadRecord();
       await refresh();
-      setInterval(refresh, 60_000);  // every 60s
+      setInterval(refresh, 60_000); // elke minuut refresh
     })();
   </script>
 </body>
 </html>
+
