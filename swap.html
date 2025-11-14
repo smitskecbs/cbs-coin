@@ -36,7 +36,7 @@
     }
     .wrap{max-width:980px;margin:0 auto;padding:18px 16px 40px}
 
-    /* BRAND CARD (zelfde vibe als index) */
+    /* BRAND CARD */
     .brand-card{
       position:relative;
       background:var(--card);
@@ -178,7 +178,7 @@
     }
   </style>
 
-  <!-- Jupiter Terminal script (embedded swap) -->
+  <!-- Jupiter Terminal script -->
   <script src="https://terminal.jup.ag/main-v2.js"></script>
 </head>
 <body>
@@ -258,16 +258,18 @@
   </main>
 
   <script>
-    // Init Jupiter Terminal in "embedded" mode inside our container
+    // IMPORTANT: geen custom endpoint meer, dan gebruikt Jupiter zelf een goede RPC
     window.Jupiter.init({
       displayMode: "embedded",
       integratedTargetId: "jupiter-terminal",
-      endpoint: "https://api.mainnet-beta.solana.com",
       formProps: {
-        fixedInputMint: "So11111111111111111111111111111111111111112", // SOL
+        fixedInputMint: "So11111111111111111111111111111111111111112",  // SOL
         fixedOutputMint: "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk", // CBS
         initialInputMint: "So11111111111111111111111111111111111111112",
         initialOutputMint: "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"
+      },
+      onSuccess: ({ txid }) => {
+        console.log("Swap success:", txid);
       }
     });
   </script>
