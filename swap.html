@@ -433,170 +433,111 @@
     </footer>
   </main>
 
-  <script>
-    // === CONFIG ===
-    const CBS_MINT = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
-    const SOL_MINT = "So11111111111111111111111111111111111111112";
-    const CBS_DECIMALS = 9; // CBS heeft 9 decimals (passen indien anders)
-    const API_BASE = "https://cbs-coin.vercel.app/api";
+ <script>
+  // PAS HIER AAN ALS CBS ANDERE DECIMALS HEEFT
+  const SOL_DECIMALS = 9;
+  const CBS_DECIMALS = 6; // als CBS 9 decimals heeft → 9 maken
 
-    const solInput  = document.getElementById("solAmount");
-    const cbsInput  = document.getElementById("cbsAmount");
-    const statusEl  = document.getElementById("status");
-    const swapBtn   = document.getElementById("swapBtn");
-    const connectBtn = document.getElementById("connectBtn");
-    const connectDot = document.getElementById("connectDot");
-    const connectLabel = document.getElementById("connectLabel");
-    const walletInfo = document.getElementById("walletInfo");
-    const estText   = document.getElementById("estText");
+  const inputEl = document.getElementById("swap-input");
+  const estEl = document.getElementById("swap-estimate");
+  const errorEl = document.getElementById("swap-error");
+  const streakEl = document.getElementById("swap-streak");
+  const recordEl = document.getElementById("swap-record");
 
-    let walletPubkey = null;
-    let lastQuote = null;
-    let isFetchingQuote = false;
-    let isSwapping = false;
+  // Dummy streak (later kunnen we dit koppelen aan je buy-streak API)
+  let currentStreak = 0;
+  let allTimeRecord = 0;
 
-    function shortPk(pk){
-      return pk ? pk.slice(0,4) + "..." + pk.slice(-4) : "";
+  function updateStreakUI() {
+    if (streakEl) {
+      streakEl.textContent = currentStreak.toString();
+    }
+    if (recordEl) {
+      recordEl.textContent = allTimeRecord.toString();
+    }
+  }
+
+  updateStreakUI();
+
+  function setError(msg) {
+    if (errorEl) {
+      errorEl.textContent = msg || "";
+    } else {
+      console.warn("Swap error:", msg);
+    }
+  }
+
+  function setEstimate(text) {
+    if (estEl) {
+      estEl.textContent = text;
+    }
+  }
+
+  async function fetchQuote() {
+    setError("");
+    setEstimate("— CBS");
+
+    const raw = (inputEl?.value || "").trim();
+    if (!raw) return;
+
+    const amountSol = Number(raw.replace(",", "."));
+    if (!Number.isFinite(amountSol) || amountSol <= 0) {
+      setError("Invalid SOL amount");
+      return;
     }
 
-    function setStatus(msg, type){
-      statusEl.textContent = msg;
-      statusEl.classList.remove("bad","good");
-      if(type === "error") statusEl.classList.add("bad");
-      if(type === "ok") statusEl.classList.add("good");
-    }
+    try {
+      const lamports = Math.round(
+        amountSol * Math.pow(10, SOL_DECIMALS)
+      );
 
-    function setConnected(pk){
-      walletPubkey = pk;
-      connectDot.classList.add("live");
-      connectLabel.textContent = shortPk(pk);
-      walletInfo.textContent = "Wallet: " + shortPk(pk);
-    }
+      const url =
+        "https://cbs-coin.vercel.app/api/jup-quote?amount=" +
+        encodeURIComponent(lamports.toString());
 
-    async function connectWallet(){
-      try{
-        if(!window.solana){
-          alert("Phantom (of andere Solana wallet) niet gevonden in de browser.");
-          return;
-        }
-        const resp = await window.solana.connect();
-        setConnected(resp.publicKey.toString());
-        setStatus("Wallet connected. Enter SOL amount to fetch a quote.", "ok");
-        maybeFetchQuote();
-      }catch(err){
-        console.error(err);
-        setStatus("Wallet connect cancelled or failed.", "error");
+      const res = await fetch(url);
+      const json = await res.json();
+
+      if (!res.ok || json.error) {
+        console.error("Quote error:", json);
+        setError(json.message || "Quote error");
+        return;
       }
+
+      const outRaw = Number(json.data.outAmount || 0);
+      const outCBS = outRaw / Math.pow(10, CBS_DECIMALS);
+
+      if (!Number.isFinite(outCBS) || outCBS <= 0) {
+        setError("No route found");
+        return;
+      }
+
+      setEstimate(
+        "≈ " +
+          outCBS.toLocaleString(undefined, {
+            maximumFractionDigits: 0,
+          }) +
+          " CBS"
+      );
+    } catch (e) {
+      console.error(e);
+      setError("Network error");
     }
+  }
 
-    connectBtn.addEventListener("click", connectWallet);
-
-    solInput.addEventListener("input", () => {
-      lastQuote = null;
-      estText.textContent = "–";
-      cbsInput.value = "";
-      swapBtn.disabled = true;
-      maybeFetchQuote();
+  // Quote verversen als je typt / focust
+  if (inputEl) {
+    inputEl.addEventListener("input", () => {
+      // kleine debounce
+      if (window.__swapTimer) clearTimeout(window.__swapTimer);
+      window.__swapTimer = setTimeout(fetchQuote, 400);
     });
+    inputEl.addEventListener("blur", fetchQuote);
+  }
 
-    async function maybeFetchQuote(){
-      if(isFetchingQuote) return;
-      const v = parseFloat(solInput.value);
-      if(!walletPubkey){
-        setStatus("Connect your wallet first.", "error");
-        return;
-      }
-      if(!v || v <= 0){
-        setStatus("Enter a SOL amount to get a quote.", null);
-        return;
-      }
+  // Button “SWAP SOL → CBS” gebruikt gewoon de Jupiter widget in je iframe /
+  // connect-knop – dit script is alleen voor de schatting + streak tekst.
+</script>
 
-      isFetchingQuote = true;
-      setStatus("Fetching quote from Jupiter...", null);
-
-      try{
-        const lamports = Math.round(v * 1e9);
-        const url = `${API_BASE}/jup-quote?inputMint=${SOL_MINT}&outputMint=${CBS_MINT}&amount=${lamports}`;
-        const res = await fetch(url);
-        const json = await res.json();
-
-        if(json.error){
-          console.error(json);
-          setStatus("Quote error: " + (json.message || "unknown"), "error");
-          isFetchingQuote = false;
-          return;
-        }
-
-        lastQuote = json.data; // volledige quoteResponse
-        const out = Number(lastQuote.outAmount) / Math.pow(10, CBS_DECIMALS);
-        estText.textContent = out.toLocaleString(undefined,{maximumFractionDigits:2});
-        cbsInput.value = estText.textContent;
-        swapBtn.disabled = false;
-        setStatus("Quote ready. Review and press Swap SOL → CBS.", "ok");
-      }catch(err){
-        console.error(err);
-        setStatus("Failed to fetch quote. Try again.", "error");
-      }finally{
-        isFetchingQuote = false;
-      }
-    }
-
-    function decodeTx(base64){
-      const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-      return solanaWeb3.VersionedTransaction.deserialize(bytes);
-    }
-
-    async function doSwap(){
-      if(!walletPubkey || !lastQuote){
-        setStatus("Wallet or quote missing.", "error");
-        return;
-      }
-      if(isSwapping) return;
-      isSwapping = true;
-      swapBtn.disabled = true;
-      setStatus("Requesting swap transaction from Jupiter...", null);
-
-      try{
-        const res = await fetch(`${API_BASE}/jup-swap`, {
-          method: "POST",
-          headers: {"Content-Type":"application/json"},
-          body: JSON.stringify({
-            quoteResponse: lastQuote,
-            userPublicKey: walletPubkey
-          })
-        });
-
-        const json = await res.json();
-        if(json.error){
-          console.error(json);
-          setStatus("Swap API error: " + (json.message || "unknown"), "error");
-          isSwapping = false;
-          swapBtn.disabled = false;
-          return;
-        }
-
-        const { swapTransaction } = json.data;
-        const tx = decodeTx(swapTransaction);
-
-        setStatus("Signing & sending transaction in your wallet...", null);
-        const resp = await window.solana.signAndSendTransaction(tx);
-        const sig = resp.signature || resp; // afhankelijk van wallet
-
-        setStatus("Swap sent! Tx: " + sig.slice(0,12) + "...", "ok");
-        solInput.value = "";
-        cbsInput.value = "";
-        estText.textContent = "–";
-        lastQuote = null;
-      }catch(err){
-        console.error(err);
-        setStatus("Swap failed or rejected in wallet.", "error");
-      }finally{
-        isSwapping = false;
-        swapBtn.disabled = false;
-      }
-    }
-
-    swapBtn.addEventListener("click", doSwap);
-  </script>
 </body>
 </html>
