@@ -4,23 +4,27 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>CBS Coin — Swap on-site</title>
-  <meta name="description" content="Swap SOL to CBS directly on the CBS Coin site using an embedded Jupiter terminal.">
+  <meta name="description" content="Swap SOL to CBS Coin directly on the official CBS page via Jupiter.">
 
-  <!-- Fonts -->
+  <!-- Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 
+  <!-- Jupiter Terminal -->
+  <script src="https://terminal.jup.ag/main-v3.js" data-preload defer></script>
+
   <style>
     :root{
-      --bg:#000000;
+      --bg:#020617;
+      --bg2:#020617;
       --fg:#e5e7eb;
-      --muted:#cbd5e1;
-      --card:#0a0a0a;
-      --border:#222;
+      --muted:#9ca3af;
+      --accent:#22c55e;
+      --accent2:#a855f7;
+      --card:#020617;
+      --border:#1f2933;
       --radius:18px;
-      --g:#22c55e; /* green */
-      --p:#a78bfa; /* purple */
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -29,249 +33,220 @@
       font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
       color:var(--fg);
       background:
-        radial-gradient(circle at 0 0,#111827 0,#000 50%),
+        radial-gradient(900px 600px at 0% 0%, rgba(34,197,94,.15), transparent 60%),
+        radial-gradient(900px 600px at 100% 100%, rgba(168,85,247,.18), transparent 60%),
         #000;
       -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
     }
-    .wrap{max-width:980px;margin:0 auto;padding:18px 16px 40px}
+    .wrap{max-width:1100px;margin:0 auto;padding:18px 16px 40px}
 
-    /* BRAND CARD */
-    .brand-card{
-      position:relative;
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      padding:10px;
-      overflow:hidden;
+    /* NAV */
+    .nav{
+      display:flex;align-items:center;justify-content:space-between;
+      margin-bottom:18px;
     }
-    .banner{
-      width:100%; height:200px; object-fit:contain; display:block; background:#000;
+    .nav-left{display:flex;align-items:center;gap:10px;}
+    .nav-logo{
+      width:40px;height:40px;border-radius:999px;object-fit:cover;
+      border:2px solid rgba(248,250,252,.7);
+      box-shadow:0 0 12px rgba(34,197,94,.7);
     }
-    .logo{
-      position:absolute; left:16px; bottom:16px;
-      width:92px; height:92px; border-radius:50%; object-fit:cover; background:#000;
-      filter: drop-shadow(0 0 14px rgba(34,197,94,.55)) drop-shadow(0 0 22px rgba(167,139,250,.45));
+    .nav-title{font-weight:800;font-size:1.05rem;letter-spacing:.04em;text-transform:uppercase;}
+    .nav-links{display:flex;gap:10px;flex-wrap:wrap;font-size:.82rem;}
+    .nav-links a{
+      text-decoration:none;color:var(--fg);opacity:.78;
+      padding:6px 10px;border-radius:999px;border:1px solid rgba(148,163,184,.35);
+      background:rgba(15,23,42,.8);
     }
-    .tagline{
-      position:absolute; top:12px; right:12px;
-      font-weight:700; font-size:.9rem; color:#fff;
-      background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.12);
-      padding:.35rem .6rem; border-radius:10px; backdrop-filter:blur(4px);
-    }
-    .tagline .emph{ color:var(--p); }
-    @media (min-width:720px){
-      .banner{ height:280px; }
-      .logo{ left:20px; bottom:20px; width:120px; height:120px; }
-    }
+    .nav-links a:hover{opacity:1;border-color:var(--accent);}
 
-    h1{
-      margin:24px 0 8px; font-size:2.4rem; line-height:1.15;
-      letter-spacing:.3px; color:#fff; font-weight:800;
-    }
-    p{
-      margin:.5rem 0; font-size:1.02rem; line-height:1.7; color:var(--muted);
-      max-width:70ch;
-    }
-
-    .swap-shell{
-      margin-top:18px;
-      padding:18px 16px;
-      background:radial-gradient(circle at 10% 0, rgba(34,197,94,.12), transparent 55%),
-                 radial-gradient(circle at 90% 100%, rgba(167,139,250,.18), transparent 60%),
+    /* HERO */
+    .hero-card{
+      background:radial-gradient(circle at 0 0, rgba(34,197,94,.1), transparent 55%),
+                 radial-gradient(circle at 100% 100%, rgba(168,85,247,.12), transparent 60%),
                  #020617;
-      border-radius:20px;
-      border:1px solid rgba(148,163,184,.35);
-      box-shadow:0 18px 50px rgba(15,23,42,.85);
+      border-radius:var(--radius);
+      border:1px solid var(--border);
+      padding:20px 18px 18px;
+      box-shadow:0 0 40px rgba(15,23,42,.9);
+      margin-bottom:20px;
     }
-
-    .swap-grid{
-      display:grid;
-      grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);
-      gap:18px;
-      margin-top:10px;
-    }
-    @media (max-width:768px){
-      .swap-grid{
-        grid-template-columns:1fr;
-      }
-    }
-
-    .text-box{
-      font-size:.95rem;
-      color:#cbd5e1;
-      padding:10px 4px 4px;
-    }
-    .text-box ul{
-      margin:0.3rem 0 0 1.1rem;
-      padding:0;
-      line-height:1.6;
-    }
-
-    .badge-row{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-      margin-bottom:10px;
-      font-size:.78rem;
-      text-transform:uppercase;
-      letter-spacing:.18em;
-    }
+    .pill-row{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;font-size:.7rem;text-transform:uppercase;}
     .pill{
-      padding:4px 9px;
-      border-radius:999px;
-      border:1px solid rgba(148,163,184,.5);
+      padding:4px 9px;border-radius:999px;
+      border:1px solid rgba(148,163,184,.4);
       background:rgba(15,23,42,.9);
-      color:#e5e7eb;
-      display:flex;
-      align-items:center;
-      gap:6px;
+      letter-spacing:.08em;
     }
-    .pill-dot{
-      width:8px; height:8px; border-radius:999px; background:#22c55e;
-      box-shadow:0 0 10px rgba(34,197,94,.9);
+    .pill.green{border-color:rgba(34,197,94,.7);color:#bbf7d0;}
+    h1{
+      margin:0 0 6px;
+      font-size:2.2rem;
+      letter-spacing:.05em;
+      text-transform:uppercase;
     }
+    h1 span{color:#4ade80;text-shadow:0 0 12px rgba(74,222,128,.55);}
+    .hero-sub{font-size:.95rem;color:var(--muted);max-width:60ch;}
 
-    .warning{
-      margin-top:10px;
-      padding:10px 12px;
-      border-radius:12px;
-      background:rgba(15,23,42,.95);
-      border:1px dashed rgba(248,250,252,.22);
-      font-size:.85rem;
-      color:#e5e7eb;
+    /* INFO CARDS */
+    .grid{
+      display:grid;
+      grid-template-columns:1.3fr 1fr;
+      gap:14px;
+      margin-top:16px;
+      margin-bottom:8px;
     }
-    .warning code{
+    @media (max-width:800px){
+      .grid{grid-template-columns:1fr;}
+    }
+    .card{
+      background:var(--card);
+      border-radius:var(--radius);
+      border:1px solid var(--border);
+      padding:14px 14px 12px;
+    }
+    .card h2{margin:0 0 6px;font-size:.95rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;}
+    .card p{margin:4px 0;font-size:.88rem;color:var(--muted);}
+    code{
+      padding:2px 4px;border-radius:6px;
+      background:#020617;border:1px solid rgba(148,163,184,.45);
+      font-size:.8rem;
+    }
+    .warning{color:#fecaca;font-size:.82rem;margin-top:6px;}
+    .link{color:#a5b4fc;text-decoration:none;border-bottom:1px dotted rgba(165,180,252,.6);}
+    .link:hover{color:#c7d2fe;}
+
+    /* JUPITER WRAP */
+    .jup-wrap{
+      margin-top:26px;
       background:#020617;
-      padding:2px 6px;
-      border-radius:6px;
-      font-size:.78rem;
-      word-break:break-all;
-      display:inline-block;
-      margin-top:4px;
+      border-radius:var(--radius);
+      border:1px solid var(--border);
+      padding:16px 10px 18px;
+      box-shadow:0 0 24px rgba(15,23,42,.9);
     }
-
-    /* Jupiter widget container */
+    .jup-head{
+      display:flex;justify-content:space-between;align-items:center;
+      gap:10px;margin-bottom:10px;font-size:.86rem;
+    }
+    .jup-title{font-weight:700;}
+    .jup-status{font-size:.75rem;color:var(--muted);}
     #jupiter-terminal{
       width:100%;
-      min-height:500px;
-      border-radius:18px;
-      overflow:hidden;
-      border:1px solid rgba(148,163,184,.5);
-      background:#020617;
+      max-width:720px;
+      margin:0 auto;
+      min-height:520px;
     }
 
     footer{
       margin:26px 0 10px;
-      color:#9aa0a6;
-      font-size:.82rem;
+      font-size:.75rem;
+      color:#9ca3af;
       text-align:center;
     }
-    footer a{
-      color:#cbd5e1;
-      opacity:.75;
-      text-decoration:none;
-    }
-    footer a:hover{
-      opacity:1;
-      text-decoration:underline;
-    }
+    footer a{color:#cbd5e1;text-decoration:none;opacity:.8;}
+    footer a:hover{opacity:1;text-decoration:underline;}
   </style>
-
-  <!-- Jupiter Terminal script -->
-  <script src="https://terminal.jup.ag/main-v2.js"></script>
 </head>
 <body>
   <main class="wrap">
+    <!-- NAV -->
+    <header class="nav">
+      <div class="nav-left">
+        <img src="logo.png" alt="CBS" class="nav-logo" onerror="this.style.display='none'">
+        <div>
+          <div class="nav-title">CBS COIN</div>
+          <div style="font-size:.75rem;color:#9ca3af;">Community Builds Sovereignty</div>
+        </div>
+      </div>
+      <nav class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="holders.html">Holders board</a>
+        <a href="mc.html">Market cap / streak</a>
+      </nav>
+    </header>
 
-    <!-- Brand card -->
-    <section class="brand-card">
-      <picture>
-        <source type="image/webp" srcset="Banner-CBS-Coin.webp">
-        <img class="banner" src="Banner-CBS-Coin.jpg" alt="CBS Banner" onerror="this.style.display='none'">
-      </picture>
-
-      <img class="logo" src="logo.png" alt="CBS Logo" onerror="this.style.display='none'">
-      <div class="tagline">CBS — Community Builds <span class="emph">Sovereignty</span></div>
-    </section>
-
-    <section>
-      <h1>Swap on-site: SOL → CBS</h1>
-      <p>
-        Swap directly on the CBS site. Connect your wallet, choose your amount of <strong>SOL</strong>,
-        and receive <strong>CBS Coin</strong> in the same address — all powered by Jupiter under the hood,
-        but without leaving this page.
+    <!-- HERO -->
+    <section class="hero-card">
+      <div class="pill-row">
+        <div class="pill">Live on-chain</div>
+        <div class="pill green">Swap SOL → CBS</div>
+        <div class="pill">Powered by Jupiter</div>
+      </div>
+      <h1>Swap <span>CBS</span> on-site</h1>
+      <p class="hero-sub">
+        Connect your wallet and swap directly on the official CBS page.
+        The widget below uses Jupiter under the hood and routes your swap through the best path on Solana.
       </p>
 
-      <div class="swap-shell">
-        <div class="badge-row">
-          <div class="pill"><span class="pill-dot"></span> EMBEDDED SWAP</div>
-          <div class="pill">NON-CUSTODIAL</div>
-          <div class="pill">POWERED BY JUPITER ROUTES</div>
+      <div class="grid">
+        <div class="card">
+          <h2>Always verify the mint</h2>
+          <p>
+            Real CBS Coin mint / CA:<br>
+            <code>B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code>
+          </p>
+          <p class="warning">
+            If any swap route shows a different mint, it is <strong>not</strong> CBS — cancel the trade.
+          </p>
+          <p style="margin-top:8px;font-size:.82rem;">
+            Want to track market cap or buy streaks? Check the
+            <a href="mc.html" class="link">MC / Buy Streak page</a>.
+          </p>
         </div>
 
-        <div class="swap-grid">
-          <!-- Swap widget -->
-          <div id="jupiter-terminal"></div>
-
-          <!-- Text & safety -->
-          <div class="text-box">
-            <h2 style="margin:0 0 6px;font-size:1.1rem;color:#fff;">How it works</h2>
-            <ul>
-              <li>Connect your Solana wallet (Phantom, Solflare, etc.).</li>
-              <li>Input the amount of SOL you want to swap.</li>
-              <li>Confirm the transaction in your wallet and receive CBS.</li>
-            </ul>
-
-            <p style="margin-top:10px;">
-              CBS is a fair-launch community token. Every legitimate buy helps:
-            </p>
-            <ul>
-              <li>grow the CBS holder base,</li>
-              <li>strengthen liquidity & price stability,</li>
-              <li>show that people actually believe in <strong>Community Builds Sovereignty</strong>.</li>
-            </ul>
-
-            <div class="warning">
-              <strong>Always verify the mint address:</strong>
-              <br/>
-              Real CBS Coin mint:
-              <code>B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code>
-              <br/><br/>
-              If a swap route shows a different mint, it’s not CBS — cancel the trade.
-            </div>
-
-            <p style="margin-top:10px;font-size:.86rem;color:#9ca3af;">
-              Want to track market cap & buy streaks?  
-              Check: <a href="mc.html" style="color:#e5e7eb;text-decoration:underline;">mc.html</a> (Market Cap / Buy Streak page).
-            </p>
-          </div>
+        <div class="card">
+          <h2>How this works</h2>
+          <p>
+            • Swaps are executed via Jupiter on Solana mainnet.<br>
+            • Default route is <strong>SOL → CBS</strong>, but you can change tokens in the widget.<br>
+            • CBS never touches your keys — everything happens through your own wallet (Phantom etc.).
+          </p>
         </div>
       </div>
     </section>
 
+    <!-- JUPITER TERMINAL -->
+    <section class="jup-wrap">
+      <div class="jup-head">
+        <div class="jup-title">Jupiter swap terminal</div>
+        <div class="jup-status">If the widget doesn’t load, refresh the page or reconnect your wallet.</div>
+      </div>
+      <div id="jupiter-terminal"></div>
+    </section>
+
     <footer>
-      © CBS Coin · <a href="index.html">Home</a> ·
-      <a href="holders.html">Holders board</a> ·
+      © CBS Coin — <a href="https://cbs-coin.com" target="_blank" rel="noopener">cbs-coin.com</a> ·
       <a href="mailto:contact@cbs-coin.com">contact@cbs-coin.com</a>
     </footer>
   </main>
 
   <script>
-    // IMPORTANT: geen custom endpoint meer, dan gebruikt Jupiter zelf een goede RPC
-    window.Jupiter.init({
-      displayMode: "embedded",
-      integratedTargetId: "jupiter-terminal",
-      formProps: {
-        fixedInputMint: "So11111111111111111111111111111111111111112",  // SOL
-        fixedOutputMint: "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk", // CBS
-        initialInputMint: "So11111111111111111111111111111111111111112",
-        initialOutputMint: "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"
-      },
-      onSuccess: ({ txid }) => {
-        console.log("Swap success:", txid);
+    // === Jupiter terminal config ===
+    const CBS_MINT = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
+    const HELIUS_KEY = "a9a11d45-2d40-4da0-a3b6-557b855f1e5c"; // zelfde als op tokenomics
+    const RPC_ENDPOINT = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
+
+    document.addEventListener("DOMContentLoaded", () => {
+      if (!window.Jupiter) {
+        console.error("Jupiter terminal script not loaded");
+        return;
       }
+
+      window.Jupiter.init({
+        displayMode: "integrated",
+        integratedTargetId: "jupiter-terminal",
+        endpoint: RPC_ENDPOINT,        // voorkomt de 403 op api.mainnet-beta.solana.com
+        strictTokenList: false,
+        formProps: {
+          // SOL → CBS standaard
+          initialInputMint: "So11111111111111111111111111111111111111112",
+          initialOutputMint: CBS_MINT,
+          swapMode: "ExactIn"
+        }
+      });
     });
   </script>
 </body>
 </html>
+
