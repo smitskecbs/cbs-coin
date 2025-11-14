@@ -3,14 +3,11 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>CBS Coin — Market Cap (Live)</title>
-  <meta name="description" content="Live market cap tracker for CBS Coin (CBS). Market cap + holders, with a visual that grows as CBS grows."/>
-  <meta name="theme-color" content="#030712"/>
+  <title>CBS Coin — Market Cap & Buy Streak (Live)</title>
+  <meta name="description" content="Live market cap, holders and buy streak for CBS Coin (CBS). Community Builds Sovereignty.">
 
-  <!-- Fonts -->
+  <!-- Fonts & Tailwind -->
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-
-  <!-- Tailwind -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -18,328 +15,319 @@
         extend: {
           colors: {
             cbs: {
-              bg: '#020617',
-              card: '#020617',
-              glow: '#22c55e',
-              text: '#e5e7eb'
+              bg:  '#050814',
+              bg2: '#080f23',
+              neon:'#24e6b5',
+              text:'#e5efff'
             }
+          },
+          boxShadow: {
+            'cbs-neon': '0 0 0 1px rgba(36,230,181,.3), 0 0 25px rgba(36,230,181,.3)'
           }
         }
       }
     }
   </script>
 
-  <!-- Solana web3 voor supply -->
+  <!-- Solana & helpers -->
   <script src="https://unpkg.com/@solana/web3.js@1.95.1/lib/index.iife.min.js"></script>
 
   <style>
     body{
-      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
       background:
-        radial-gradient(1200px 700px at 10% -10%, #111827 0%, #020617 55%),
-        radial-gradient(900px 600px at 90% 110%, #0f172a 0%, #020617 60%),
-        #020617;
-      color:#e5e7eb;
+        radial-gradient(1200px 700px at 10% -10%, #18254d 0%, #050814 55%),
+        radial-gradient(900px 600px at 110% 120%, #1a2c5b 0%, #050814 60%),
+        #050814;
+      color:#e5efff;
       min-height:100vh;
     }
-    .glass{
-      background:linear-gradient(145deg,rgba(15,23,42,.98),rgba(15,23,42,.94));
-      border-radius:1.5rem;
-      border:1px solid rgba(148,163,184,.4);
-      box-shadow:
-        0 0 0 1px rgba(15,23,42,1),
-        0 18px 60px rgba(15,23,42,.9),
-        0 0 40px rgba(34,197,94,.18);
-    }
     .meme-title{
-      font-family:Bangers,system-ui;
-      letter-spacing:1px;
-      text-shadow:0 2px 0 #000,0 5px 18px rgba(0,0,0,.65);
+      font-family:Bangers,Inter,system-ui;
+      letter-spacing:.08em;
+      text-shadow:0 2px #000,0 6px rgba(0,0,0,.35);
     }
-    .badge{
+    .glass{
+      background:linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,.02));
+      border-radius:22px;
+      border:1px solid rgba(255,255,255,.12);
+      backdrop-filter:blur(18px);
+    }
+    .stat-card{
+      background:linear-gradient(135deg,rgba(5,8,20,.9),rgba(12,18,40,.9));
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.12);
+    }
+    .glow-ring{
+      box-shadow:0 0 0 1px rgba(36,230,181,.4),0 0 24px rgba(36,230,181,.4);
+    }
+    .progress-track{
       border-radius:999px;
-      border:1px solid rgba(148,163,184,.5);
-      padding:0.15rem 0.8rem;
-      font-size:0.7rem;
-      text-transform:uppercase;
-      letter-spacing:.1em;
-      background:radial-gradient(circle at 0 0,rgba(34,197,94,.35),transparent 55%);
+      background:radial-gradient(circle at 0% 50%,rgba(36,230,181,.45),transparent 55%),
+                 linear-gradient(90deg,rgba(255,255,255,.08),rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.12);
     }
-
-    /* Progress bar */
     .progress-bar{
-      position:relative;
-      width:100%;
-      height:10px;
       border-radius:999px;
-      background:rgba(15,23,42,1);
-      overflow:hidden;
-      box-shadow:0 0 0 1px rgba(30,64,175,.7),0 4px 18px rgba(15,23,42,1);
+      background:linear-gradient(90deg,#24e6b5,#7df9ff);
+      box-shadow:0 0 22px rgba(36,230,181,.6);
+      transition:width .7s ease-out;
     }
-    .progress-fill{
-      height:100%;
-      width:0%;
-      border-radius:999px;
-      background:linear-gradient(90deg,#22c55e,#a855f7,#fbbf24);
-      box-shadow:0 0 18px rgba(34,197,94,.9);
-      transition:width 1.1s cubic-bezier(.16,1,.3,1);
+    .streak-pulse{
+      animation:streakPulse 0.9s ease-out;
     }
-
-    /* Visual: glowende CBS coin */
-    .orb-wrap{
-      position:relative;
-      width:230px;
-      height:230px;
-      margin:0 auto;
-      display:flex;
-      align-items:center;
-      justify-content:center;
+    @keyframes streakPulse{
+      0%{transform:scale(1); text-shadow:0 0 0 rgba(36,230,181,0);}
+      40%{transform:scale(1.07); text-shadow:0 0 20px rgba(36,230,181,.8);}
+      100%{transform:scale(1); text-shadow:0 0 0 rgba(36,230,181,0);}
     }
-    .orb-base{
-      position:absolute;
-      inset:20%;
-      border-radius:999px;
-      background:radial-gradient(circle at 50% 30%,rgba(34,197,94,.85),rgba(15,23,42,1));
-      filter:blur(18px);
-      opacity:.9;
+    .mc-pulse{
+      animation:mcPulse 0.8s ease-out;
     }
-    .orb{
-      position:relative;
-      width:180px;
-      height:180px;
-      border-radius:999px;
-      padding:10px;
-      background:
-        conic-gradient(from 210deg,rgba(34,197,94,.25),rgba(56,189,248,.4),rgba(168,85,247,.4),rgba(34,197,94,.6));
-      box-shadow:
-        0 0 0 1px rgba(15,23,42,.9),
-        0 0 40px rgba(34,197,94,.7),
-        0 0 80px rgba(56,189,248,.35);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      transform-origin:center;
-      transform:scale(.7);
-      transition:transform 1.1s cubic-bezier(.16,1,.3,1), box-shadow .7s ease;
-    }
-    .orb-inner{
-      width:100%;
-      height:100%;
-      border-radius:inherit;
-      background:#020617;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      overflow:hidden;
-    }
-    .orb-inner img{
-      width:85%;
-      height:85%;
-      object-fit:contain;
-    }
-    .orb-ring{
-      position:absolute;
-      inset:6px;
-      border-radius:999px;
-      border:2px dashed rgba(148,163,184,.7);
-      animation:spinRing 14s linear infinite;
-      pointer-events:none;
-    }
-    @keyframes spinRing{
-      to{ transform:rotate(360deg); }
-    }
-
-    .orb-pip{
-      position:absolute;
-      width:7px;
-      height:7px;
-      border-radius:999px;
-      background:rgba(190,242,100,.95);
-      box-shadow:0 0 18px rgba(190,242,100,1);
-      opacity:0;
-      animation:orbSpark 3.2s linear infinite;
-    }
-    .orb-pip:nth-child(1){ top:20px; left:35px; animation-delay:.1s}
-    .orb-pip:nth-child(2){ top:16px; right:40px; animation-delay:.9s}
-    .orb-pip:nth-child(3){ bottom:26px; right:18px; animation-delay:1.7s}
-    .orb-pip:nth-child(4){ bottom:18px; left:28px; animation-delay:2.4s}
-    @keyframes orbSpark{
-      0%{ transform:translateY(0) scale(.8); opacity:0}
-      10%{ opacity:1}
-      60%{ opacity:1}
-      100%{ transform:translateY(-22px) scale(1.05); opacity:0}
+    @keyframes mcPulse{
+      0%{transform:scale(1); text-shadow:0 0 0 rgba(125,249,255,0);}
+      40%{transform:scale(1.05); text-shadow:0 0 20px rgba(125,249,255,.9);}
+      100%{transform:scale(1); text-shadow:0 0 0 rgba(125,249,255,0);}
     }
   </style>
 </head>
 <body>
-  <div class="max-w-5xl mx-auto px-4 py-6">
-    <!-- Top nav -->
+  <main class="max-w-6xl mx-auto px-4 py-5 md:py-8">
+    <!-- NAV -->
     <nav class="flex items-center justify-between mb-6">
       <a href="index.html" class="flex items-center gap-3">
-        <img src="logo.png" alt="CBS" class="h-9 w-9 rounded-xl ring-2 ring-emerald-400/80 bg-black object-contain"/>
+        <img src="logo.png" class="h-10 w-10 rounded-2xl ring-2 ring-cbs-neon shadow-cbs-neon" alt="CBS">
         <div class="leading-tight">
-          <div class="text-xs uppercase tracking-[0.2em] text-emerald-400/80">CBS COIN</div>
-          <div class="text-sm font-semibold text-slate-100">Community Builds Sovereignty</div>
+          <div class="text-sm font-semibold tracking-wide uppercase text-slate-300">CBS COIN</div>
+          <div class="text-xs text-slate-400">Community Builds Sovereignty</div>
         </div>
       </a>
-      <div class="flex gap-2 text-[11px]">
-        <span class="badge bg-black/40">No presale</span>
-        <span class="badge bg-black/40">No VC</span>
-        <a href="holders.html" class="badge bg-emerald-500/10 border-emerald-400/60 text-emerald-300 hover:bg-emerald-500/15">Holders board</a>
+      <div class="hidden sm:flex gap-2 text-[11px] font-semibold uppercase tracking-widest">
+        <div class="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-400/40 text-emerald-300">No presale</div>
+        <div class="px-3 py-1 rounded-full bg-pink-500/10 border border-pink-400/40 text-pink-300">No VC</div>
+        <a href="holders.html" class="px-3 py-1 rounded-full bg-sky-500/10 border border-sky-400/50 text-sky-200 hover:bg-sky-500/20">
+          Holders board
+        </a>
       </div>
     </nav>
 
-    <!-- Main card -->
-    <main class="glass px-5 py-7 md:px-9 md:py-9">
-      <div class="grid lg:grid-cols-[1.5fr,1fr] gap-8 items-center">
-        <!-- Left: MC + holders + balk -->
-        <section>
-          <p class="text-[11px] tracking-[0.3em] uppercase text-emerald-300/80 mb-2">Live on-chain</p>
-          <h1 class="meme-title text-4xl md:text-5xl text-white">Market Cap: CBS</h1>
-
-          <p class="mt-3 text-sm md:text-base text-slate-300/90 max-w-xl">
-            This page tracks the <strong>real</strong> CBS market cap and holder count.  
-            No hype, no screenshots — just on-chain data that anyone can verify.
+    <!-- HERO -->
+    <section class="glass p-5 md:p-8">
+      <div class="flex flex-col lg:flex-row gap-6 lg:gap-10 items-start">
+        <div class="flex-1">
+          <p class="text-[11px] tracking-[0.25em] uppercase text-emerald-300 mb-2">Live On-chain</p>
+          <h1 class="meme-title text-4xl sm:text-5xl md:text-6xl text-white">Market Cap: CBS</h1>
+          <p class="mt-3 text-sm md:text-[15px] text-slate-200/90 max-w-xl">
+            This page is the <strong>Market Cap Console</strong> for CBS.
+            Every dollar here is backed by liquidity and holders, not hype slides.
           </p>
+          <p class="mt-1 text-xs text-slate-400">
+            Mint / CA:
+            <code class="px-2 py-[1px] rounded bg-white/5 border border-white/10 text-[11px] break-all">
+              B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk
+            </code>
+          </p>
+        </div>
 
-          <div class="mt-6 grid sm:grid-cols-2 gap-4 text-sm">
-            <div class="rounded-2xl bg-slate-900/70 border border-emerald-400/40 px-4 py-3">
-              <div class="text-xs uppercase tracking-wide text-emerald-300/80">Current Market Cap</div>
-              <div id="mcValue" class="mt-2 text-2xl font-extrabold text-emerald-300 truncate">$—</div>
-              <div class="mt-1 text-[11px] text-slate-400">
-                Based on live price × on-chain supply.
-              </div>
+        <!-- MAIN MC + HOLDERS -->
+        <div class="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-3 w-full">
+          <div class="stat-card px-4 py-3 flex flex-col justify-between">
+            <div class="text-[11px] uppercase tracking-[0.16em] text-slate-400 mb-1">
+              Current Market Cap
             </div>
-
-            <div class="rounded-2xl bg-slate-900/70 border border-slate-600/70 px-4 py-3">
-              <div class="text-xs uppercase tracking-wide text-slate-300/80">Current Holders</div>
-              <div id="holdersValue" class="mt-2 text-2xl font-extrabold text-slate-100 truncate">—</div>
-              <div class="mt-1 text-[11px] text-slate-400">
-                Wallets holding a non-zero CBS balance (early degen scoreboard).
-              </div>
+            <div id="mcValue" class="text-2xl sm:text-3xl font-extrabold text-emerald-300">
+              $—
+            </div>
+            <div id="mcNote" class="text-[11px] text-slate-400 mt-1">
+              Live data loading…
             </div>
           </div>
 
-          <div class="mt-6">
-            <div class="flex items-center justify-between mb-1 text-[11px] text-slate-400 uppercase tracking-[0.15em]">
-              <span>Progress to $1M market cap</span>
-              <span id="goalPct">0%</span>
+          <div class="stat-card px-4 py-3 flex flex-col justify-between">
+            <div class="text-[11px] uppercase tracking-[0.16em] text-slate-400 mb-1">
+              CBS Holders
             </div>
-            <div class="progress-bar">
-              <div id="progressFill" class="progress-fill"></div>
+            <div id="holderValue" class="text-2xl sm:text-3xl font-extrabold text-sky-200">
+              —
             </div>
-            <p class="mt-2 text-[11px] text-slate-500">
-              Goal for this bar is <span class="font-semibold text-slate-200">$1,000,000</span>.  
-              The earlier you join, the smaller this bar is — and the smaller the group of wallets who were here.
+            <div class="text-[11px] text-slate-400 mt-1">
+              Unique wallets holding CBS (Birdeye / on-chain).
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROGRESS + BUY STREAK -->
+    <section class="mt-6 grid lg:grid-cols-[2fr,1.4fr] gap-5">
+      <!-- Progress -->
+      <div class="glass p-5">
+        <div class="flex items-center justify-between gap-3 mb-4">
+          <div>
+            <div class="text-[11px] tracking-[0.2em] uppercase text-slate-400 mb-1">
+              Road to $1,000,000 MC
+            </div>
+            <div class="text-sm text-slate-200">
+              The closer we move to a <span class="font-semibold text-emerald-300">$1M cap</span>,
+              the brighter this bar becomes.
+            </div>
+          </div>
+          <div class="text-right">
+            <div class="text-[11px] text-slate-400">Target</div>
+            <div class="text-sm font-semibold">$1,000,000</div>
+          </div>
+        </div>
+
+        <div class="progress-track w-full h-4 md:h-5 overflow-hidden">
+          <div id="mcProgress" class="progress-bar h-full w-[0%]"></div>
+        </div>
+        <div class="mt-2 flex justify-between text-[11px] text-slate-400">
+          <span id="mcProgressLabel">0% of goal reached</span>
+          <span id="mcLastUpdate">Last update: —</span>
+        </div>
+
+        <div class="mt-4 grid md:grid-cols-2 gap-3 text-xs text-slate-300">
+          <div class="bg-black/20 rounded-xl border border-white/5 px-3 py-3">
+            <div class="font-semibold text-emerald-300 mb-1 text-[11px] uppercase tracking-[0.18em]">
+              Why does this matter?
+            </div>
+            <p>
+              Market cap is the most honest scoreboard.
+              Every holder, every LP burn and every buy is recorded on-chain
+              and reflected here.
             </p>
           </div>
-
-          <div class="mt-6 grid sm:grid-cols-2 gap-4 text-[13px]">
-            <div class="rounded-2xl bg-slate-900/80 border border-slate-700 px-4 py-3">
-              <div class="font-semibold text-slate-100 mb-1">Why only cap + holders?</div>
-              <p class="text-slate-300/90">
-                Price can swing. Supply can change with burns.  
-                But <strong>market cap + unique holders</strong> show if CBS is actually growing or not.
-              </p>
+          <div class="bg-black/15 rounded-xl border border-white/5 px-3 py-3">
+            <div class="font-semibold text-sky-300 mb-1 text-[11px] uppercase tracking-[0.18em]">
+              Want to move the bar?
             </div>
-            <div class="rounded-2xl bg-slate-900/80 border border-emerald-500/40 px-4 py-3">
-              <div class="font-semibold text-emerald-300 mb-1">Want to move the bar?</div>
-              <p class="text-slate-300/90">
-                Buy CBS on Raydium, hold it, and watch this page update.  
-                Every new holder and every new dollar in cap is permanently visible here.
-              </p>
-              <div class="mt-3 flex flex-wrap gap-2">
-                <a href="buy.html" class="px-3 py-1.5 rounded-xl bg-emerald-400 text-black font-semibold text-xs hover:bg-emerald-300">Open buy page</a>
-                <a href="holders.html" class="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-100 font-semibold text-xs hover:bg-slate-700">View holders board</a>
-              </div>
+            <p class="mb-2">
+              You can buy CBS on Raydium and become part of the early curve.
+              Small buys now move this bar more than they ever will later.
+            </p>
+            <div class="flex flex-wrap gap-2 mt-1">
+              <a href="buy.html"
+                 class="px-3 py-1.5 rounded-full bg-emerald-400 text-black text-[11px] font-semibold uppercase tracking-[0.16em]">
+                Open buy page
+              </a>
+              <a href="holders.html"
+                 class="px-3 py-1.5 rounded-full bg-slate-900 text-slate-100 text-[11px] font-semibold uppercase tracking-[0.16em] border border-white/15">
+                View holders board
+              </a>
             </div>
           </div>
-
-          <div class="mt-6 flex items-center justify-between text-[11px] text-slate-500">
-            <span>Mint / CA: <code class="px-1.5 py-0.5 rounded bg-slate-900 border border-slate-700 text-[10px] break-all">B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code></span>
-            <span id="lastUpdated">Last update: —</span>
-          </div>
-        </section>
-
-        <!-- Right: glowende coin die groeit met MC -->
-        <aside class="relative">
-          <div class="orb-wrap">
-            <div class="orb-base"></div>
-            <div id="orb" class="orb">
-              <div class="orb-inner">
-                <img src="logo.png" alt="CBS Coin" onerror="this.style.opacity=0.15">
-              </div>
-              <div class="orb-ring"></div>
-              <div class="orb-pip"></div>
-              <div class="orb-pip"></div>
-              <div class="orb-pip"></div>
-              <div class="orb-pip"></div>
-            </div>
-          </div>
-          <div class="mt-4 text-center text-xs text-slate-400 max-w-xs mx-auto">
-            This is the <span class="font-semibold text-emerald-300">CBS Market Orb</span>.  
-            As the market cap grows, the coin literally expands and the glow intensifies.
-          </div>
-        </aside>
+        </div>
       </div>
-    </main>
 
-    <footer class="mt-4 text-[11px] text-slate-500 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-      <span>CBS Coin — Community Builds Sovereignty</span>
-      <span class="flex gap-3">
-        <a href="https://x.com/CBS_Coin" target="_blank" rel="noreferrer" class="hover:text-slate-300">X/Twitter</a>
-        <a href="https://t.me/CBS_Coin" target="_blank" rel="noreferrer" class="hover:text-slate-300">Telegram</a>
-        <a href="mailto:contact@cbs-coin.com" class="hover:text-slate-300">contact@cbs-coin.com</a>
-      </span>
+      <!-- BUY STREAK CARD -->
+      <div class="glass p-5 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-[11px] tracking-[0.2em] uppercase text-amber-300 mb-1">
+                Buy Streak (Dexscreener m5)
+              </div>
+              <div class="text-sm text-slate-200">
+                How many buys in the last 5 minutes without a sell.
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-[11px] text-slate-400">High score (24h)</div>
+              <div id="streakHigh" class="text-sm font-semibold text-slate-100">—</div>
+            </div>
+          </div>
+
+          <div class="mt-4 flex items-center gap-4">
+            <div class="relative">
+              <div class="h-16 w-16 rounded-2xl bg-emerald-400/15 border border-emerald-300/40 flex items-center justify-center glow-ring">
+                <span id="streakValue" class="text-4xl font-extrabold text-emerald-300">0</span>
+              </div>
+            </div>
+            <div class="text-xs text-slate-300">
+              <div id="streakStatus" class="font-semibold text-emerald-200">
+                Waiting for fresh data…
+              </div>
+              <p class="mt-1">
+                If <span class="font-semibold text-emerald-300">sells stay at 0</span> and buys keep coming in,
+                this number will climb.  
+                When a sell hits, the streak resets to zero.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 text-[11px] text-slate-400 border-t border-white/10 pt-3">
+          <span class="font-semibold text-slate-100">How to play the streak?</span><br>
+          Stack CBS, hold, and let buys stack on top of each other.
+          Nobody wants to be the one that breaks a clean green streak.
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="mt-6 mb-4 text-[11px] text-slate-500 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+      <div>© CBS Coin — Community Builds Sovereignty</div>
+      <div class="flex flex-wrap gap-3">
+        <a href="https://x.com/CBS_Coin" target="_blank" rel="noreferrer">X/Twitter</a>
+        <a href="https://t.me/CBS_Coin" target="_blank" rel="noreferrer">Telegram</a>
+        <a href="mailto:contact@cbs-coin.com">contact@cbs-coin.com</a>
+      </div>
     </footer>
-  </div>
+  </main>
 
   <script>
-    const MINT = 'B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk';
-    const MAX_TARGET_MC = 1_000_000; // doel voor de balk / orb
-    const HELIUS_KEY = 'a9a11d45-2d40-4da0-a3b6-557b855f1e5c';
-    const RPC_URL = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
-    const HOLDERS_API = 'https://cbs-coin.vercel.app/api/holders';
+    // ===== Config =====
+    const MINT         = 'B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk';
+    const MAX_TARGET   = 1_000_000; // $1M goal for bar
+    const HELIUS_KEY   = 'a9a11d45-2d40-4da0-a3b6-557b855f1e5c';
+    const RPC_URL      = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
+    const HOLDERS_API  = 'https://cbs-coin.vercel.app/api/holders';
+    const DEX_TOKEN_API = 'https://api.dexscreener.com/latest/dex/tokens/' + MINT;
 
-    const $ = id => document.getElementById(id);
+    let lastMc = 0;
+    let lastStreak = 0;
+    let streakHigh24h = 0;
 
-    // ---- Price: DexScreener -> Jupiter fallback (alleen voor MC, niet tonen) ----
-    async function getPriceUSD(mint) {
-      // DexScreener eerst
-      try {
-        const res = await fetch('https://api.dexscreener.com/latest/dex/tokens/' + mint, {
-          headers: { 'accept': 'application/json' }
-        });
-        if (res.ok) {
-          const j = await res.json();
-          const pair = j?.pairs?.[0];
-          const p = Number(pair?.priceUsd);
-          if (Number.isFinite(p)) return { price: p, src: 'DexScreener' };
-        }
-      } catch (e) {
-        console.warn('[MC] DexScreener price failed', e);
-      }
+    const fmt = (n, fd=0) =>
+      (typeof n === 'number' && isFinite(n))
+        ? n.toLocaleString(undefined,{maximumFractionDigits:fd})
+        : '—';
 
-      // Jupiter fallback
-      try {
-        const url = 'https://price.jup.ag/v6/price?ids=' + mint;
-        const res = await fetch(url, { headers:{'accept':'application/json'} });
-        if (res.ok) {
-          const json = await res.json();
-          const rec = json?.data?.[mint];
-          const price = rec?.price ?? rec?.usdPrice;
-          if (typeof price === 'number' && isFinite(price)) {
-            return { price, src:'Jupiter' };
-          }
-        }
-      } catch (e) {
-        console.warn('[MC] Jupiter price failed', e);
-      }
-
-      throw new Error('Failed to fetch price from DexScreener/Jupiter');
+    function setText(id, txt){
+      const el = document.getElementById(id);
+      if(el) el.textContent = txt;
     }
 
-    async function getCurrentSupply() {
+    async function getPriceFromJupiter(){
+      const url = 'https://price.jup.ag/v6/price?ids=' + MINT;
+      const res = await fetch(url, { headers:{'accept':'application/json'} });
+      if(!res.ok) throw new Error('Jupiter error');
+      const j = await res.json();
+      const rec = j?.data?.[MINT];
+      const p = rec?.price ?? rec?.usdPrice;
+      if(typeof p === 'number' && isFinite(p)) return p;
+      throw new Error('Invalid Jupiter price');
+    }
+
+    async function getPriceFallbackDex(){
+      const res = await fetch(DEX_TOKEN_API);
+      if(!res.ok) throw new Error('Dex error');
+      const j = await res.json();
+      const pair = j?.pairs?.[0];
+      const p = Number(pair?.priceUsd);
+      if(isFinite(p) && p > 0) return p;
+      throw new Error('No dex price');
+    }
+
+    async function getPriceUSD(){
+      try{
+        return await getPriceFromJupiter();
+      }catch(_){
+        return await getPriceFallbackDex();
+      }
+    }
+
+    async function getCurrentSupply(){
       const conn = new solanaWeb3.Connection(RPC_URL, 'confirmed');
       const mintPk = new solanaWeb3.PublicKey(MINT);
       const { value } = await conn.getTokenSupply(mintPk);
@@ -347,84 +335,126 @@
       return supply;
     }
 
-    async function getHolders() {
-      try {
-        const res = await fetch(HOLDERS_API, { headers: { 'accept':'application/json' }});
-        if (!res.ok) throw new Error('HTTP ' + res.status);
+    async function getHolders(){
+      try{
+        const res = await fetch(HOLDERS_API);
+        if(!res.ok) throw new Error('Holders API');
         const j = await res.json();
-        if (j && j.error === false && typeof j.holders === 'number') {
+        if(j && !j.error && typeof j.holders === 'number'){
           return j.holders;
         }
-        throw new Error('Unexpected holders payload');
-      } catch (e) {
-        console.warn('[MC] holders API failed', e);
-        return null;
+      }catch(e){
+        console.error(e);
       }
+      return null;
     }
 
-    function fmt(num, fd = 2) {
-      if (typeof num !== 'number' || !isFinite(num)) return '—';
-      return num.toLocaleString(undefined, { maximumFractionDigits: fd });
-    }
+    async function getBuyStreak(){
+      try{
+        const res = await fetch(DEX_TOKEN_API);
+        if(!res.ok) throw new Error('Dex error');
+        const j = await res.json();
+        const pair = j?.pairs?.[0];
+        const tx = pair?.txns?.m5;
+        const tx24 = pair?.txns?.h24;
+        if(!tx) throw new Error('No m5 txns');
 
-    function updateVisuals(marketCap) {
-      const orb = $('orb');
-      const fill = $('progressFill');
-      const pctEl = $('goalPct');
+        const buys  = Number(tx.buys  ?? 0);
+        const sells = Number(tx.sells ?? 0);
+        const buys24 = Number(tx24?.buys ?? 0);
+        const sells24 = Number(tx24?.sells ?? 0);
 
-      if (!orb) return;
+        let streak = 0;
+        let status = '';
 
-      if (!marketCap || marketCap <= 0) {
-        orb.style.transform = 'scale(0.7)';
-        fill.style.width = '0%';
-        pctEl.textContent = '0%';
-        return;
-      }
-
-      let ratio = marketCap / MAX_TARGET_MC;
-      if (!isFinite(ratio) || ratio < 0) ratio = 0;
-      if (ratio > 1) ratio = 1;
-
-      const scale = 0.7 + ratio * 0.6; // 0.7 → 1.3
-      orb.style.transform = `scale(${scale.toFixed(2)})`;
-
-      const pct = (ratio * 100).toFixed(1);
-      fill.style.width = pct + '%';
-      pctEl.textContent = pct + '%';
-    }
-
-    async function refreshMC() {
-      try {
-        const [priceData, supply, holders] = await Promise.all([
-          getPriceUSD(MINT),
-          getCurrentSupply(),
-          getHolders()
-        ]);
-
-        const mc = priceData.price * supply;
-
-        $('mcValue').textContent = '$' + fmt(mc, 0);
-        if (holders !== null) {
-          $('holdersValue').textContent = fmt(holders, 0);
-        } else {
-          $('holdersValue').textContent = '—';
+        if(sells === 0){
+          streak = buys;
+          status = buys > 0
+            ? `Pure green in the last 5 minutes — ${buys} buys, 0 sells.`
+            : 'No trades in the last 5 minutes. First buy starts a fresh streak.';
+        }else{
+          streak = 0;
+          status = `A sell hit in the last 5 minutes (${buys} buys / ${sells} sells). Streak reset.`;
         }
 
-        const now = new Date();
-        $('lastUpdated').textContent = 'Last update: ' + now.toLocaleTimeString();
+        // rough "high" using 24h buys minus sells, just for flex
+        streakHigh24h = Math.max(streakHigh24h, Math.max(0, buys24 - sells24));
 
-        updateVisuals(mc);
-      } catch (err) {
-        console.error('[MC] Error', err);
-        $('mcValue').textContent = '$—';
-        $('goalPct').textContent = '0%';
-        $('progressFill').style.width = '0%';
+        return { streak, status, high: streakHigh24h };
+      }catch(e){
+        console.error(e);
+        return { streak:0, status:'Unable to load streak data (Dexscreener).', high:streakHigh24h || 0 };
       }
     }
 
-    // eerste load + auto refresh
-    refreshMC();
-    setInterval(refreshMC, 60000);
+    async function refresh(){
+      try{
+        const [price, supply, holderCount, streakInfo] = await Promise.all([
+          getPriceUSD(),
+          getCurrentSupply(),
+          getHolders(),
+          getBuyStreak()
+        ]);
+
+        // Market cap
+        const mc = price && supply ? price * supply : 0;
+        const mcEl = document.getElementById('mcValue');
+        if(mc){
+          const pretty = '$' + fmt(mc);
+          mcEl.textContent = pretty;
+          setText('mcNote', 'Includes live liquidity and current supply.');
+          if(mc > lastMc){
+            mcEl.classList.remove('mc-pulse');
+            void mcEl.offsetWidth;
+            mcEl.classList.add('mc-pulse');
+          }
+        }else{
+          mcEl.textContent = '$—';
+          setText('mcNote', 'Failed to load live data. Try again in a minute.');
+        }
+        lastMc = mc;
+
+        // Progress bar
+        const pct = mc && MAX_TARGET ? Math.min(100, (mc / MAX_TARGET) * 100) : 0;
+        const bar = document.getElementById('mcProgress');
+        bar.style.width = pct.toFixed(2) + '%';
+        setText('mcProgressLabel', `${pct.toFixed(2)}% of $1,000,000 goal`);
+
+        // Last update
+        setText('mcLastUpdate', 'Last update: ' + new Date().toLocaleTimeString());
+
+        // Holders
+        if(typeof holderCount === 'number'){
+          setText('holderValue', fmt(holderCount));
+        }else{
+          setText('holderValue', '—');
+        }
+
+        // Streak
+        const { streak, status, high } = streakInfo;
+        const streakEl = document.getElementById('streakValue');
+        streakEl.textContent = String(streak);
+        setText('streakStatus', status);
+        setText('streakHigh', high ? `${high} (buys - sells)` : '—');
+
+        if(streak > lastStreak){
+          streakEl.classList.remove('streak-pulse');
+          void streakEl.offsetWidth;
+          streakEl.classList.add('streak-pulse');
+        }
+        lastStreak = streak;
+
+      }catch(e){
+        console.error('[MC page] error', e);
+        setText('mcNote', 'Network error while loading live data.');
+        setText('streakStatus', 'Network error while loading streak data.');
+      }
+    }
+
+    (async function init(){
+      await refresh();
+      setInterval(refresh, 60_000);  // every 60s
+    })();
   </script>
 </body>
 </html>
