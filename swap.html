@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>CBS Coin — Swap SOL for CBS</title>
+  <meta name="description" content="Swap your SOL into CBS Coin (CBS) using Jupiter or Raydium.">
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root{
+      --bg:#000000;
+      --fg:#e5e7eb;
+      --muted:#cbd5e1;
+      --card:#0a0a0a;
+      --border:#222;
+      --radius:18px;
+      --g:#22c55e;
+      --p:#a78bfa;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--fg);
+      background:radial-gradient(circle at 0 0,#111827 0,#000 50%);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+    .wrap{max-width:980px;margin:0 auto;padding:18px 16px 40px}
+
+    .brand-card{
+      position:relative;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:10px;
+      overflow:hidden;
+    }
+    .banner{
+      width:100%; height:200px; object-fit:contain; display:block; background:#000;
+    }
+    .logo{
+      position:absolute; left:16px; bottom:16px;
+      width:92px; height:92px; border-radius:50%; object-fit:cover; background:#000;
+      filter: drop-shadow(0 0 14px rgba(34,197,94,.55)) drop-shadow(0 0 22px rgba(167,139,250,.45));
+    }
+    .tagline{
+      position:absolute; top:12px; right:12px;
+      font-weight:700; font-size:.9rem; color:#fff;
+      background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.12);
+      padding:.35rem .6rem; border-radius:10px; backdrop-filter:blur(4px);
+    }
+    .tagline .emph{ color:var(--p); }
+    @media (min-width:720px){
+      .banner{ height:280px; }
+      .logo{ left:20px; bottom:20px; width:120px; height:120px; }
+    }
+
+    h1{
+      margin:24px 0 8px; font-size:2.4rem; line-height:1.15;
+      letter-spacing:.3px; color:#fff; font-weight:800;
+    }
+    h2{
+      margin:18px 0 6px; font-size:1.3rem; color:#fff; font-weight:700;
+    }
+    p{
+      margin:.5rem 0; font-size:1.02rem; line-height:1.7; color:var(--muted);
+      max-width:70ch;
+    }
+
+    .swap-card{
+      margin-top:18px;
+      padding:20px 18px;
+      background:radial-gradient(circle at 10% 0, rgba(34,197,94,.12), transparent 55%),
+                 radial-gradient(circle at 90% 100%, rgba(167,139,250,.18), transparent 60%),
+                 #020617;
+      border-radius:20px;
+      border:1px solid rgba(148,163,184,.3);
+      box-shadow:0 18px 50px rgba(15,23,42,.85);
+    }
+
+    .badge-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-bottom:14px;
+      font-size:.78rem;
+      text-transform:uppercase;
+      letter-spacing:.18em;
+    }
+    .pill{
+      padding:4px 9px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,.4);
+      background:rgba(15,23,42,.8);
+      color:#e5e7eb;
+      display:flex;
+      align-items:center;
+      gap:6px;
+    }
+    .pill-dot{
+      width:8px; height:8px; border-radius:50%; background:#22c55e;
+      box-shadow:0 0 10px rgba(34,197,94,.9);
+    }
+
+    .swap-grid{
+      display:grid;
+      grid-template-columns: minmax(0,2fr) minmax(0,1.6fr);
+      gap:20px;
+      margin-top:14px;
+    }
+    @media (max-width:720px){
+      .swap-grid{ grid-template-columns:1fr; }
+    }
+
+    .swap-box{
+      background:rgba(15,23,42,.95);
+      border-radius:18px;
+      border:1px solid rgba(148,163,184,.35);
+      padding:16px 16px 18px;
+    }
+
+    .field-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius:12px;
+      background:#020617;
+      border:1px solid rgba(30,64,175,.7);
+    }
+    .token-tag{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-size:.9rem;
+      font-weight:600;
+      color:#e5e7eb;
+    }
+    .token-tag span{
+      padding:2px 8px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,.6);
+      font-size:.78rem;
+      text-transform:uppercase;
+      letter-spacing:.16em;
+      color:#9ca3af;
+    }
+    .arrow{
+      font-size:1.4rem;
+      margin:4px 0;
+      text-align:center;
+      opacity:.85;
+    }
+
+    .btn-row{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-top:14px;
+    }
+    .btn-primary,
+    .btn-ghost{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap:8px;
+      padding:10px 16px;
+      border-radius:999px;
+      font-size:.9rem;
+      font-weight:700;
+      text-decoration:none;
+      cursor:pointer;
+      transition:transform .12s ease, box-shadow .12s ease, background .12s ease, border-color .12s ease;
+    }
+    .btn-primary{
+      background:linear-gradient(135deg,#22c55e,#4ade80);
+      color:#022c22;
+      border:none;
+      box-shadow:0 0 18px rgba(34,197,94,.55);
+    }
+    .btn-primary:hover{
+      transform:translateY(-1px);
+      box-shadow:0 0 24px rgba(34,197,94,.75);
+    }
+    .btn-ghost{
+      background:transparent;
+      color:#e5e7eb;
+      border:1px solid rgba(148,163,184,.6);
+    }
+    .btn-ghost:hover{
+      border-color:#e5e7eb;
+      background:rgba(15,23,42,.9);
+    }
+
+    .note{
+      margin-top:10px;
+      font-size:.85rem;
+      color:#9ca3af;
+    }
+
+    .info-card{
+      margin-top:10px;
+      padding:12px 14px;
+      border-radius:14px;
+      background:rgba(15,23,42,.9);
+      border:1px solid rgba(148,163,184,.35);
+      font-size:.9rem;
+      color:#cbd5e1;
+    }
+    .info-card strong{ color:#fff; }
+
+    .streak-box{
+      margin-top:14px;
+      padding:10px 12px;
+      background:rgba(22,101,52,.18);
+      border-radius:14px;
+      border:1px dashed rgba(74,222,128,.55);
+      font-size:.86rem;
+      color:#bbf7d0;
+    }
+
+    footer{
+      margin:26px 0 10px;
+      color:#9aa0a6;
+      font-size:.82rem;
+      text-align:center;
+    }
+    footer a{
+      color:#cbd5e1;
+      opacity:.75;
+      text-decoration:none;
+    }
+    footer a:hover{
+      opacity:1;
+      text-decoration:underline;
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+
+    <!-- Brand card -->
+    <section class="brand-card">
+      <picture>
+        <source type="image/webp" srcset="Banner-CBS-Coin.webp">
+        <img class="banner" src="Banner-CBS-Coin.jpg" alt="CBS Banner" onerror="this.style.display='none'">
+      </picture>
+
+      <img class="logo" src="logo.png" alt="CBS Logo" onerror="this.style.display='none'">
+      <div class="tagline">CBS — Community Builds <span class="emph">Sovereignty</span></div>
+    </section>
+
+    <section>
+      <h1>Swap SOL for CBS</h1>
+      <p>
+        Here you can turn your <strong>SOL</strong> into <strong>CBS Coin</strong>.  
+        We don’t custody your funds — you connect your own wallet, choose the amount,
+        and swap directly on Solana via trusted DEX routes.
+      </p>
+
+      <div class="swap-card">
+        <div class="badge-row">
+          <div class="pill"><span class="pill-dot"></span> LIVE SWAP PORTAL</div>
+          <div class="pill">NON-CUSTODIAL</div>
+          <div class="pill">POWERED BY DEX ROUTES</div>
+        </div>
+
+        <div class="swap-grid">
+          <!-- Left: swap flow -->
+          <div class="swap-box">
+            <h2>1. Choose your route</h2>
+            <p>Use Jupiter (best route finder) or go straight to the main Raydium pool.</p>
+
+            <div class="field-row">
+              <div class="token-tag">
+                <span>SEND</span>
+                SOL
+              </div>
+              <div class="arrow">➜</div>
+              <div class="token-tag">
+                <span>RECEIVE</span>
+                CBS
+              </div>
+            </div>
+
+            <div class="btn-row">
+              <!-- TIP: controleer even of de link goed werkt, anders kun je hem later aanpassen -->
+              <a class="btn-primary"
+                 href="https://jup.ag/swap/SOL-B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"
+                 target="_blank" rel="noopener">
+                Open Jupiter swap
+              </a>
+
+              <a class="btn-ghost"
+                 href="https://raydium.io/swap/?inputCurrency=sol&outputCurrency=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"
+                 target="_blank" rel="noopener">
+                Open Raydium pool
+              </a>
+            </div>
+
+            <div class="note">
+              • Connect your Solana wallet (Phantom, Solflare, etc.)  
+              • Select the amount of SOL you want to swap  
+              • Confirm the transaction in your wallet — CBS arrives in the same address.
+            </div>
+          </div>
+
+          <!-- Right: info / FOMO -->
+          <div>
+            <div class="swap-box">
+              <h2>2. Why swap into CBS?</h2>
+              <p>
+                CBS is a fair-launch community token: no presale, no VC, no insider allocation.
+                Every buy:
+              </p>
+              <ul style="margin:0 0 0 1.1rem;padding:0;font-size:.9rem;color:#cbd5e1;line-height:1.6;">
+                <li>pushes the CBS market cap higher,</li>
+                <li>adds strength to the CBS holder base,</li>
+                <li>signals that you believe in <strong>Community Builds Sovereignty</strong>.</li>
+              </ul>
+
+              <div class="streak-box">
+                <strong>Buy streaks</strong> — multiple buys in one hour help CBS stand out
+                on the charts and on social media. When activity spikes, we highlight it on
+                the <a href="mc.html" style="color:#bbf7d0;text-decoration:underline;">Market Cap / Buy Streak page</a>.
+              </div>
+            </div>
+
+            <div class="info-card">
+              <strong>Safety note.</strong> Always double-check the mint:
+              <br>
+              <code style="font-size:.8rem;background:#020617;padding:3px 6px;border-radius:6px;display:inline-block;margin-top:4px;">
+                B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk
+              </code>
+              <br><br>
+              If a site uses a different mint, it’s not the real CBS Coin.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      © CBS Coin · <a href="index.html">Home</a> ·
+      <a href="holders.html">Holders board</a> ·
+      <a href="mailto:contact@cbs-coin.com">contact@cbs-coin.com</a>
+    </footer>
+  </main>
+</body>
+</html>
