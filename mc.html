@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>CBS Coin — Market Cap & 1H Buy Streak (Live)</title>
-  <meta name="description" content="Live market cap, holders and 1-hour buy streak for CBS Coin (CBS). Community Builds Sovereignty.">
+  <title>CBS Coin — Market Cap, FOMO Console & Army Rank (Live)</title>
+  <meta name="description" content="Live market cap, holders, 1-hour buy streak and CBS Army rank checker for CBS Coin (CBS). Community Builds Sovereignty.">
 
   <!-- Fonts & Tailwind -->
   <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
@@ -98,6 +98,43 @@
       40%{transform:scale(1.05); box-shadow:0 0 24px 0 rgba(251,191,36,.9);}
       100%{transform:scale(1); box-shadow:0 0 0 0 rgba(251,191,36,0);}
     }
+
+    /* Army rank extra glow */
+    .rank-input{
+      background:rgba(5,8,20,.9);
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,.6);
+      padding:8px 12px;
+      font-size:12px;
+      width:100%;
+      color:#e5efff;
+      outline:none;
+    }
+    .rank-input:focus{
+      border-color:#24e6b5;
+      box-shadow:0 0 0 1px rgba(36,230,181,.5);
+    }
+    .rank-badge{
+      border-radius:999px;
+      border:1px solid rgba(252,211,77,.7);
+      background:linear-gradient(135deg,rgba(55,65,81,.9),rgba(15,23,42,.95));
+      padding:6px 10px;
+      font-size:11px;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+    }
+    .rank-badge span.emoji{
+      font-size:14px;
+    }
+    .rank-pulse{
+      animation:rankPulse 0.9s ease-out;
+    }
+    @keyframes rankPulse{
+      0%{transform:scale(1); box-shadow:0 0 0 0 rgba(36,230,181,0);}
+      40%{transform:scale(1.06); box-shadow:0 0 20px 0 rgba(36,230,181,.9);}
+      100%{transform:scale(1); box-shadow:0 0 0 0 rgba(36,230,181,0);}
+    }
   </style>
 </head>
 <body>
@@ -127,8 +164,9 @@
           <p class="text-[11px] tracking-[0.25em] uppercase text-emerald-300 mb-2">Live On-chain</p>
           <h1 class="meme-title text-4xl sm:text-5xl md:text-6xl text-white">Market Cap Console</h1>
           <p class="mt-3 text-sm md:text-[15px] text-slate-200/90 max-w-xl">
-            This page tracks the <strong>real scoreboard</strong> of CBS: market cap, holders
-            and the <strong>1-hour buy streak</strong>. Every step is backed by real wallets, not promises.
+            This page tracks the <strong>real scoreboard</strong> of CBS: market cap, holders,
+            the <strong>1-hour buy streak</strong> and your personal <strong>CBS Army rank</strong>.
+            Every number here is backed by real wallets, not promises.
           </p>
           <p class="mt-1 text-xs text-slate-400">
             Mint / CA:
@@ -294,45 +332,78 @@
       </div>
     </section>
 
-    <!-- FOMO / ARMY RANK SECTION -->
-    <section class="mt-6 glass p-5">
-      <div class="flex flex-col lg:flex-row gap-6 items-start">
+    <!-- CBS ARMY RANK CHECKER (FOMO) -->
+    <section class="mt-6 glass p-5 md:p-6">
+      <div class="flex flex-col lg:flex-row gap-5 lg:gap-8 items-start">
         <div class="flex-1">
-          <p class="text-[11px] tracking-[0.25em] uppercase text-emerald-300 mb-1">
-            CBS Army Status
+          <p class="text-[11px] tracking-[0.24em] uppercase text-fuchsia-300 mb-1">
+            CBS Army — Wallet Rank
           </p>
-          <h2 class="meme-title text-3xl sm:text-4xl text-white">
-            FOMO Radar Console
+          <h2 class="meme-title text-3xl sm:text-4xl text-white mb-2">
+            Check your CBS Army rank
           </h2>
-          <p class="mt-2 text-sm text-slate-200/90 max-w-lg">
-            This block converts pure on-chain data into <strong>meme pressure</strong>.
-            Market cap, holders and the 1H streak decide how “loud” the CBS Army is.
-            No hype screenshots, just numbers forcing people to look twice.
+          <p class="text-sm text-slate-200/90 mb-3 max-w-xl">
+            Enter a wallet address and we’ll check its CBS balance on-chain and assign
+            a <strong>rank</strong>. Rank is just for fun — but in future phases it can
+            unlock access, roles or perks.
           </p>
-
-          <div class="mt-4 text-xs text-slate-300 bg-black/30 border border-white/10 rounded-xl px-3 py-3">
-            <div class="font-semibold text-emerald-300 text-[11px] uppercase tracking-[0.18em] mb-1">
-              Army Rank (Live)
-            </div>
-            <div id="armyRank" class="text-sm">
-              Calculating CBS Army rank…
-            </div>
-          </div>
+          <ul class="text-[11px] text-slate-400 space-y-1 mb-3">
+            <li>🪙 <strong>Balance-based</strong> — more CBS = higher rank.</li>
+            <li>📡 <strong>On-chain</strong> — no screenshots, only real wallets.</li>
+            <li>🧠 <strong>100% transparent</strong> — the rules are public.</li>
+          </ul>
+          <p class="text-[11px] text-slate-500">
+            Tip: You can paste <strong>any</strong> wallet — your own, a friend, or even a whale.
+          </p>
         </div>
 
-        <div class="flex-1">
-          <div class="text-[11px] tracking-[0.2em] uppercase text-sky-300 mb-2">
-            Live Hype Feed
-          </div>
-          <ul id="fomoFeed" class="space-y-2 text-xs text-slate-100">
-            <li class="bg-black/30 border border-white/10 rounded-xl px-3 py-2">
-              Waiting for the next CBS move… first buyer of this hour sets the tone.
-            </li>
-          </ul>
-          <p class="mt-2 text-[10px] text-slate-500">
-            The feed reacts to market cap, holder count and the 1H buy streak.
-            Later we can plug in a real wallet tracker to show newest holders and “just bought” events.
-          </p>
+        <div class="flex-1 w-full">
+          <form id="rankForm" class="space-y-3">
+            <div>
+              <label for="rankWalletInput" class="block text-[11px] uppercase tracking-[0.18em] text-slate-400 mb-1">
+                Wallet address (Solana)
+              </label>
+              <input id="rankWalletInput"
+                     type="text"
+                     autocomplete="off"
+                     spellcheck="false"
+                     placeholder="Paste a Solana address here (starts with e.g. 5z5j... or 76Sj...)"
+                     class="rank-input">
+            </div>
+
+            <div class="flex items-center gap-2">
+              <button type="submit"
+                      class="px-4 py-2 rounded-full bg-emerald-400 text-black text-[11px] font-semibold uppercase tracking-[0.16em] shadow-cbs-neon hover:brightness-110 active:scale-[0.98]">
+                Check rank
+              </button>
+              <button type="button"
+                      id="rankExampleBtn"
+                      class="px-3 py-1.5 rounded-full bg-slate-900 text-slate-200 text-[10px] border border-white/10 hover:bg-slate-800">
+                Use example wallet
+              </button>
+            </div>
+
+            <div class="mt-2 text-xs text-slate-400">
+              <div id="rankStatus">Waiting for input…</div>
+            </div>
+
+            <div class="mt-3 flex flex-wrap items-center gap-3">
+              <div id="rankBadge" class="rank-badge">
+                <span class="emoji">🪖</span>
+                <span id="rankLabel">No rank yet</span>
+              </div>
+              <div class="text-[11px] text-slate-300">
+                Balance: <span id="rankAmount">— CBS</span>
+              </div>
+            </div>
+
+            <div class="mt-2 text-[10px] text-slate-500">
+              <strong>Rank tiers (preview):</strong><br>
+              0 = Watcher · &lt; 1 CBS = Dust Goblin · &lt; 10,000 = Recruit ·
+              &lt; 100,000 = Soldier · &lt; 1,000,000 = Captain · &lt; 5,000,000 = Commander ·
+              ≥ 5,000,000 = Chainbreaker General
+            </div>
+          </form>
         </div>
       </div>
     </section>
@@ -359,8 +430,8 @@
 
     const RECORD_KEY    = 'cbs_mc_record_streak_v1';
 
-    let lastMc      = 0;
-    let lastStreak  = 0;
+    let lastMc       = 0;
+    let lastStreak   = 0;
     let recordStreak = 0;
 
     const fmt = (n, fd=0) =>
@@ -502,49 +573,126 @@
       }
     }
 
-    function updateArmyAndFomo(mc, holderCount, streak){
-      const rankEl = document.getElementById('armyRank');
-      const feedEl = document.getElementById('fomoFeed');
-      if(!rankEl && !feedEl) return;
+    // ===== CBS Army Rank logic =====
 
-      // Army rank op basis van MC + holders
-      let rankText = 'Recruit phase — still very early. Every new wallet matters.';
-      if((holderCount ?? 0) >= 50 || mc >= 10_000){
-        rankText = 'Squad forming — the first CBS Army units are on the field.';
+    function computeRank(balance){
+      if(!balance || balance <= 0){
+        return { label:'Watcher (no CBS yet)', emoji:'👀' };
       }
-      if((holderCount ?? 0) >= 150 || mc >= 50_000){
-        rankText = 'Platoon online — CBS is no longer a secret. People are starting to watch.';
+      if(balance < 1){
+        return { label:'Dust Goblin', emoji:'🧹' };
       }
-      if((holderCount ?? 0) >= 500 || mc >= 250_000){
-        rankText = 'Battalion mode — CBS Army can move charts on its own.';
+      if(balance < 10_000){
+        return { label:'Recruit', emoji:'🪖' };
       }
-      if((holderCount ?? 0) >= 1000 || mc >= 1_000_000){
-        rankText = 'Full invasion mode — CBS has entered true meme war territory.';
+      if(balance < 100_000){
+        return { label:'Soldier', emoji:'⚔️' };
       }
-      if(rankEl){
-        rankEl.textContent = rankText;
+      if(balance < 1_000_000){
+        return { label:'Captain', emoji:'🛡️' };
+      }
+      if(balance < 5_000_000){
+        return { label:'Commander', emoji:'🏹' };
+      }
+      return { label:'Chainbreaker General', emoji:'🦅' };
+    }
+
+    async function getCbsBalance(owner){
+      try{
+        const conn = new solanaWeb3.Connection(RPC_URL, 'confirmed');
+        const ownerPk = new solanaWeb3.PublicKey(owner);
+        const mintPk  = new solanaWeb3.PublicKey(MINT);
+
+        const resp = await conn.getParsedTokenAccountsByOwner(ownerPk, { mint: mintPk });
+        const accounts = resp?.value ?? [];
+        let total = 0;
+        for(const acc of accounts){
+          const info = acc?.account?.data?.parsed?.info;
+          const amount = info?.tokenAmount?.uiAmount;
+          if(typeof amount === 'number'){
+            total += amount;
+          }else if(typeof info?.tokenAmount?.uiAmountString === 'string'){
+            const n = Number(info.tokenAmount.uiAmountString);
+            if(isFinite(n)) total += n;
+          }
+        }
+        return total;
+      }catch(e){
+        console.error('[Rank balance]', e);
+        throw e;
+      }
+    }
+
+    async function handleRankCheck(evt){
+      if(evt) evt.preventDefault();
+      const inputEl = document.getElementById('rankWalletInput');
+      const statusEl = document.getElementById('rankStatus');
+      const amountEl = document.getElementById('rankAmount');
+      const badgeEl  = document.getElementById('rankBadge');
+      const labelEl  = document.getElementById('rankLabel');
+
+      const addr = (inputEl.value || '').trim();
+      if(!addr){
+        statusEl.textContent = 'Please paste a Solana wallet address first.';
+        return;
       }
 
-      if(feedEl){
-        const items = [];
+      try{
+        // Validatie op address
+        new solanaWeb3.PublicKey(addr); // throws als ongeldig
+      }catch(_){
+        statusEl.textContent = 'This does not look like a valid Solana address.';
+        return;
+      }
 
-        if(streak > 0){
-          items.push(`🔥 <strong>${streak} net green buys</strong> in the last hour. Don’t be the wallet that breaks the streak.`);
+      statusEl.textContent = 'Checking on-chain balance…';
+      amountEl.textContent = '— CBS';
+      labelEl.textContent  = 'Checking…';
+
+      try{
+        const bal = await getCbsBalance(addr);
+        const rounded = bal.toLocaleString(undefined, { maximumFractionDigits: 2 });
+        amountEl.textContent = `${rounded} CBS`;
+
+        const rank = computeRank(bal);
+        labelEl.textContent = rank.label;
+
+        // Emoji in badge
+        const emojiSpan = badgeEl.querySelector('.emoji');
+        if(emojiSpan){
+          emojiSpan.textContent = rank.emoji;
+        }
+
+        badgeEl.classList.remove('rank-pulse');
+        void badgeEl.offsetWidth;
+        badgeEl.classList.add('rank-pulse');
+
+        if(bal > 0){
+          statusEl.textContent = 'Rank based on this wallet’s current CBS balance.';
         }else{
-          items.push('😴 No active 1H streak right now. The next buy starts a fresh green hour for CBS.');
+          statusEl.textContent = 'No CBS detected on this wallet. Rank will rise once it holds CBS.';
         }
+      }catch(e){
+        console.error('[Rank check error]', e);
+        statusEl.textContent = 'Error while loading balance. Try again in a few moments.';
+      }
+    }
 
-        if(typeof holderCount === 'number'){
-          items.push(`👥 <strong>${fmt(holderCount)}</strong> wallets currently holding CBS. Every new holder ranks up the Army.`);
-        }
-
-        if(mc && mc > 0){
-          items.push(`💰 Market cap sits around <strong>$${fmt(mc)}</strong>. Early buys move this number way more than late buys.`);
-        }
-
-        feedEl.innerHTML = items.map(t =>
-          `<li class="bg-black/30 border border-white/10 rounded-xl px-3 py-2">${t}</li>`
-        ).join('');
+    function setupRankForm(){
+      const form = document.getElementById('rankForm');
+      if(form){
+        form.addEventListener('submit', handleRankCheck);
+      }
+      const exampleBtn = document.getElementById('rankExampleBtn');
+      if(exampleBtn){
+        exampleBtn.addEventListener('click', () => {
+          const inputEl = document.getElementById('rankWalletInput');
+          if(inputEl){
+            // hier kun je later een echte voorbeeldwallet invullen
+            inputEl.value = '76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg';
+            handleRankCheck();
+          }
+        });
       }
     }
 
@@ -617,9 +765,6 @@
           setText('recordHint', 'New local record — highest 1H streak seen on this device.');
         }
 
-        // FOMO / Army blok updaten
-        updateArmyAndFomo(mc, holderCount, streak);
-
       }catch(e){
         console.error('[MC page] error', e);
         setText('mcNote', 'Network error while loading live data.');
@@ -629,10 +774,10 @@
 
     (async function init(){
       loadRecord();
+      setupRankForm();
       await refresh();
       setInterval(refresh, 60_000); // elke minuut refresh
     })();
   </script>
 </body>
 </html>
-
