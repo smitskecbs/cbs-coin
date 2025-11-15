@@ -24,23 +24,38 @@
 
     body {
       margin: 0;
-      min-height: 100vh;
       font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-      background: radial-gradient(circle at top, #181818 0, #050608 55%, #000 100%);
+      background: #050608; /* zelfde donkere achtergrond als de rest van je site */
       color: #f7f7f7;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
+    }
+
+    .page-wrap {
+      max-width: 1120px;
+      margin: 32px auto 40px;
+      padding: 0 16px;
+    }
+
+    /* Top link terug naar home (kan je weghalen als je eigen navbar hebt) */
+    .top-back {
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+    .top-back a {
+      color: #dddddd;
+      text-decoration: none;
+      opacity: 0.85;
+    }
+    .top-back a:hover {
+      opacity: 1;
+      text-decoration: underline;
     }
 
     .swap-shell {
       width: 100%;
-      max-width: 1100px;
       background: var(--cbs-panel);
-      border-radius: 22px;
+      border-radius: 20px;
       border: 1px solid rgba(212, 175, 55, 0.4);
-      box-shadow: 0 20px 55px rgba(0, 0, 0, 0.85);
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.85);
       padding: 18px 18px 22px;
     }
 
@@ -59,17 +74,21 @@
     }
 
     .swap-logo {
-      width: 38px;
-      height: 38px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
-      background: radial-gradient(circle at 30% 20%, #fff 0, #f8e08f 8%, #d4af37 38%, #8f6f20 100%);
+      overflow: hidden;
+      border: 1px solid rgba(212, 175, 55, 0.9);
       box-shadow: 0 0 14px rgba(212, 175, 55, 0.8);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 800;
-      font-size: 16px;
-      color: #1b1404;
+      background: #000;
+      flex-shrink: 0;
+    }
+
+    .swap-logo img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
     }
 
     .swap-text h1 {
@@ -83,18 +102,6 @@
       margin: 0;
       font-size: 12px;
       color: #bcbcbc;
-    }
-
-    .swap-right a {
-      font-size: 12px;
-      text-decoration: none;
-      color: #dddddd;
-      opacity: 0.85;
-    }
-
-    .swap-right a:hover {
-      opacity: 1;
-      text-decoration: underline;
     }
 
     .swap-banner {
@@ -137,7 +144,7 @@
       inset: 0;
       pointer-events: none;
       background:
-        radial-gradient(circle at top left, rgba(212, 175, 55, 0.16) 0, transparent 55%),
+        radial-gradient(circle at top left, rgba(212, 175, 55, 0.14) 0, transparent 55%),
         radial-gradient(circle at bottom right, rgba(0, 255, 157, 0.08) 0, transparent 60%);
     }
 
@@ -199,6 +206,9 @@
     }
 
     @media (max-width: 768px) {
+      .page-wrap {
+        margin-top: 20px;
+      }
       .swap-shell {
         padding: 14px 12px 18px;
       }
@@ -209,8 +219,11 @@
 
     @media (max-width: 480px) {
       .swap-topbar {
-        flex-direction: column;
-        align-items: flex-start;
+        flex-direction: row;
+        align-items: center;
+      }
+      .swap-text h1 {
+        font-size: 15px;
       }
       iframe {
         height: 580px;
@@ -219,48 +232,54 @@
   </style>
 </head>
 <body>
-  <div class="swap-shell">
-    <header class="swap-topbar">
-      <div class="swap-left">
-        <div class="swap-logo">CBS</div>
-        <div class="swap-text">
-          <h1>CBS Swap • Powered by Raydium</h1>
-          <p>SOL → CBS swap inside our site, using the official Raydium pool.</p>
+  <div class="page-wrap">
+    <!-- Als jij al een globale navbar hebt, kun je dit blokje weghalen -->
+    <div class="top-back">
+      <a href="index.html">← Back to homepage</a>
+    </div>
+
+    <div class="swap-shell">
+      <header class="swap-topbar">
+        <div class="swap-left">
+          <div class="swap-logo">
+            <!-- Gebruik hier je echte logo.png -->
+            <img src="logo.png" alt="CBS Coin logo">
+          </div>
+          <div class="swap-text">
+            <h1>CBS Swap • Raydium</h1>
+            <p>SOL → CBS swap inside our site, using the official Raydium pool.</p>
+          </div>
         </div>
+      </header>
+
+      <div class="swap-banner">
+        <strong>Note:</strong> This swap lives on <strong>Raydium</strong> and loads inside an iframe here.<br />
+        Your wallet connects directly to Raydium – we never touch your keys or funds.<br />
+        CBS mint: <code>B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code>
       </div>
-      <div class="swap-right">
-        <a href="index.html">← Back to homepage</a>
+
+      <div class="iframe-wrapper">
+        <div class="iframe-overlay-top"></div>
+
+        <!-- Raydium swap iframe -->
+        <iframe
+          src="https://raydium.io/swap/?inputMint=sol&outputMint=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"
+          loading="lazy"
+          referrerpolicy="no-referrer-when-downgrade"
+        ></iframe>
       </div>
-    </header>
 
-    <div class="swap-banner">
-      <strong>Note:</strong> This swap lives on <strong>Raydium</strong> and loads inside an iframe here.<br />
-      Your wallet connects directly to Raydium – we never touch your keys or funds.<br />
-      CBS mint: <code>B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code>
-    </div>
-
-    <div class="iframe-wrapper">
-      <!-- lichte glow laag bovenop -->
-      <div class="iframe-overlay-top"></div>
-
-      <!-- Raydium swap iframe -->
-      <iframe
-        src="https://raydium.io/swap/?inputMint=sol&outputMint=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"
-        loading="lazy"
-        referrerpolicy="no-referrer-when-downgrade"
-      ></iframe>
-    </div>
-
-    <div class="swap-footer">
-      <div>
-        If the swap doesn’t load (blank or error), Raydium may block embedding in an iframe.
-      </div>
-      <div class="fallback">
-        <span>Open directly on Raydium:</span>
-        <button onclick="window.open('https://raydium.io/swap/?inputMint=sol&outputMint=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk', '_blank')">
-          <span class="icon">✨</span>
-          <span>Open Raydium Swap</span>
-        </button>
+      <div class="swap-footer">
+        <div>
+          If the swap doesn’t load (blank or error), Raydium may block embedding in an iframe.
+        </div>
+        <div class="fallback">
+          <span>Open directly on Raydium:</span>
+          <button onclick="window.open('https://raydium.io/swap/?inputMint=sol&outputMint=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk', '_blank')">
+            <span class="icon">✨</span>
+            <span>Open Raydium Swap</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
