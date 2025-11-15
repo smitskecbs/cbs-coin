@@ -1,445 +1,268 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>CBS Coin — Swap SOL → CBS</title>
-  <meta name="description" content="Swap SOL into CBS straight from the official CBS site. Secure swap via Jupiter on Solana.">
+  <meta charset="utf-8" />
+  <title>CBS Coin – Swap</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-  <!-- Fonts -->
+  <!-- Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 
   <style>
-    :root{
-      --bg:#020617;
-      --card:#020617;
-      --card-alt:#020617;
-      --border:#1f2937;
-      --accent:#22c55e;
-      --accent-soft:#16a34a;
-      --accent2:#a855f7;
-      --fg:#e5e7eb;
-      --muted:#9ca3af;
-      --danger:#f97373;
-      --radius:18px;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      color:var(--fg);
-      background:radial-gradient(circle at top,#0f172a 0,#020617 55%);
-      -webkit-font-smoothing:antialiased;
-    }
-    .wrap{
-      max-width:1040px;
-      margin:0 auto;
-      padding:18px 16px 40px;
+    :root {
+      --cbs-gold: #d4af37;
+      --cbs-gold-soft: rgba(212, 175, 55, 0.65);
+      --cbs-bg: #050608;
+      --cbs-panel: rgba(7, 7, 7, 0.96);
     }
 
-    header{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      margin-bottom:18px;
-      flex-wrap:wrap;
-    }
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-    .brand-logo{
-      width:40px;height:40px;border-radius:50%;
-      background:#000;
-      overflow:hidden;
-      flex-shrink:0;
-      box-shadow:0 0 18px rgba(34,197,94,.45);
-    }
-    .brand-logo img{width:100%;height:100%;object-fit:cover}
-    .brand-title{
-      display:flex;
-      flex-direction:column;
-    }
-    .brand-title span:first-child{
-      font-size:.78rem;
-      letter-spacing:.16em;
-      text-transform:uppercase;
-      color:var(--muted);
-    }
-    .brand-title span:last-child{
-      font-weight:800;
-      font-size:.9rem;
+    * {
+      box-sizing: border-box;
     }
 
-    .badges{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-    }
-    .pill{
-      padding:4px 10px;
-      border-radius:999px;
-      border:1px solid rgba(148,163,184,.7);
-      font-size:.75rem;
-      text-transform:uppercase;
-      letter-spacing:.12em;
-      color:#e5e7eb;
-      background:rgba(15,23,42,.9);
-    }
-    .pill.green{
-      border-color:rgba(34,197,94,.85);
-      background:radial-gradient(circle at 20% 0,#22c55e33,transparent 60%),rgba(15,23,42,.9);
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at top, #181818 0, #050608 55%, #000 100%);
+      color: #f7f7f7;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
     }
 
-    h1{
-      margin:18px 0 4px;
-      font-size:2.4rem;
-      letter-spacing:.03em;
-      text-transform:uppercase;
-    }
-    h1 span:nth-child(2){color:#22c55e}
-    h1 span:nth-child(3){color:#a855f7}
-    .subtitle{
-      margin:0 0 24px;
-      max-width:640px;
-      font-size:.98rem;
-      line-height:1.7;
-      color:var(--muted);
+    .swap-shell {
+      width: 100%;
+      max-width: 1100px;
+      background: var(--cbs-panel);
+      border-radius: 22px;
+      border: 1px solid rgba(212, 175, 55, 0.4);
+      box-shadow: 0 20px 55px rgba(0, 0, 0, 0.85);
+      padding: 18px 18px 22px;
     }
 
-    .layout{
-      display:grid;
-      grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);
-      gap:20px;
-    }
-    @media (max-width:900px){
-      .layout{grid-template-columns:1fr}
-    }
-
-    .card{
-      background: radial-gradient(circle at top left,rgba(34,197,94,.12),transparent 55%),
-                  radial-gradient(circle at bottom right,rgba(168,85,247,.16),transparent 55%),
-                  #020617;
-      border-radius:var(--radius);
-      border:1px solid var(--border);
-      padding:18px 18px 20px;
-      box-shadow:0 18px 45px rgba(15,23,42,.9);
-      position:relative;
-      overflow:hidden;
-    }
-    .card-header{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin-bottom:14px;
-      flex-wrap:wrap;
-    }
-    .card-title{
-      font-size:.88rem;
-      letter-spacing:.14em;
-      text-transform:uppercase;
-      color:var(--muted);
-    }
-    .powered{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding:3px 9px;
-      border-radius:999px;
-      background:rgba(15,23,42,.9);
-      border:1px solid rgba(148,163,184,.7);
-      font-size:.72rem;
-      text-transform:uppercase;
-      letter-spacing:.14em;
-      color:#e5e7eb;
-    }
-    .powered span.logo-dot{
-      width:8px;height:8px;border-radius:50%;
-      background:conic-gradient(from 0deg,#22c55e,#22c55e,#a855f7,#22c55e);
-      box-shadow:0 0 8px rgba(34,197,94,.85);
+    .swap-topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
     }
 
-    .field-label{
-      font-size:.8rem;
-      text-transform:uppercase;
-      letter-spacing:.12em;
-      color:var(--muted);
-      margin-bottom:4px;
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:6px;
-    }
-    .field-box{
-      position:relative;
-      border-radius:14px;
-      border:1px solid rgba(55,65,81,.9);
-      background:linear-gradient(135deg,#020617,#020617);
-      padding:10px 12px;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-    }
-    .field-box input{
-      border:none;
-      outline:none;
-      background:transparent;
-      color:#e5e7eb;
-      font-size:1.1rem;
-      width:100%;
-    }
-    .field-box input::placeholder{color:#4b5563}
-    .chip{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding:4px 9px;
-      border-radius:999px;
-      background:rgba(15,23,42,.95);
-      border:1px solid rgba(148,163,184,.8);
-      font-size:.78rem;
-      color:#e5e7eb;
-      white-space:nowrap;
-    }
-    .chip-dot{
-      width:8px;height:8px;border-radius:50%;
-      background:radial-gradient(circle,#22c55e,#15803d);
-      box-shadow:0 0 8px rgba(34,197,94,.7);
+    .swap-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
     }
 
-    .helper{
-      margin-top:6px;
-      font-size:.78rem;
-      color:var(--muted);
+    .swap-logo {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 20%, #fff 0, #f8e08f 8%, #d4af37 38%, #8f6f20 100%);
+      box-shadow: 0 0 14px rgba(212, 175, 55, 0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 16px;
+      color: #1b1404;
     }
 
-    .swap-button{
-      margin-top:16px;
-      width:100%;
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      gap:8px;
-      padding:12px 16px;
-      border-radius:999px;
-      border:none;
-      cursor:pointer;
-      text-decoration:none;
-      font-weight:700;
-      font-size:.95rem;
-      text-transform:uppercase;
-      letter-spacing:.16em;
-      color:#f9fafb;
-      background:linear-gradient(135deg,#16a34a,#22c55e);
-      box-shadow:0 18px 45px rgba(34,197,94,.55);
-      transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
-    }
-    .swap-button span.icon{
-      font-size:1.1rem;
-    }
-    .swap-button:hover{
-      transform:translateY(-1px);
-      box-shadow:0 22px 60px rgba(34,197,94,.7);
-      filter:brightness(1.05);
-    }
-    .swap-button:active{
-      transform:translateY(0);
-      box-shadow:0 10px 25px rgba(34,197,94,.55);
+    .swap-text h1 {
+      margin: 0 0 2px;
+      font-size: 17px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
     }
 
-    .note{
-      margin-top:10px;
-      font-size:.75rem;
-      color:var(--muted);
+    .swap-text p {
+      margin: 0;
+      font-size: 12px;
+      color: #bcbcbc;
     }
-    .note strong{color:#e5e7eb}
 
-    /* Right column */
-    .right-title{
-      font-size:.9rem;
-      font-weight:700;
-      letter-spacing:.12em;
-      text-transform:uppercase;
-      color:var(--muted);
-      margin-bottom:4px;
+    .swap-right a {
+      font-size: 12px;
+      text-decoration: none;
+      color: #dddddd;
+      opacity: 0.85;
     }
-    .right-main{
-      font-size:.96rem;
-      line-height:1.7;
-      color:var(--fg);
-      margin-bottom:12px;
-    }
-    .bullet{
-      font-size:.88rem;
-      color:var(--muted);
-      margin:4px 0;
-    }
-    .streak-box{
-      margin-top:14px;
-      padding:10px 12px;
-      border-radius:14px;
-      border:1px dashed rgba(148,163,184,.7);
-      background:rgba(15,23,42,.75);
-      font-size:.84rem;
-      color:var(--muted);
-    }
-    .streak-box strong{color:#e5e7eb}
-    .streak-box a{
-      color:#a5b4fc;
-      text-decoration:none;
-    }
-    .streak-box a:hover{text-decoration:underline;}
 
-    footer{
-      margin-top:22px;
-      font-size:.78rem;
-      color:var(--muted);
-      text-align:center;
+    .swap-right a:hover {
+      opacity: 1;
+      text-decoration: underline;
     }
-    footer a{
-      color:#9ca3af;
-      text-decoration:none;
+
+    .swap-banner {
+      font-size: 12px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      margin-bottom: 14px;
+      color: #c5c5c5;
+      line-height: 1.45;
     }
-    footer a:hover{text-decoration:underline;}
+
+    .swap-banner strong {
+      color: var(--cbs-gold);
+    }
+
+    .swap-banner code {
+      font-family: "JetBrains Mono", Consolas, monospace;
+      font-size: 11px;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 2px 5px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      color: #e4e4e4;
+    }
+
+    .iframe-wrapper {
+      position: relative;
+      width: 100%;
+      border-radius: 18px;
+      overflow: hidden;
+      background: #050608;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .iframe-overlay-top {
+      position: absolute;
+      z-index: 3;
+      inset: 0;
+      pointer-events: none;
+      background:
+        radial-gradient(circle at top left, rgba(212, 175, 55, 0.16) 0, transparent 55%),
+        radial-gradient(circle at bottom right, rgba(0, 255, 157, 0.08) 0, transparent 60%);
+    }
+
+    iframe {
+      width: 100%;
+      height: 720px;
+      border: none;
+      display: block;
+    }
+
+    .swap-footer {
+      margin-top: 10px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+      font-size: 11px;
+      color: #a7a7a7;
+    }
+
+    .fallback {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .fallback button {
+      border-radius: 999px;
+      border: none;
+      padding: 8px 14px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      cursor: pointer;
+      background: linear-gradient(135deg, #d4af37 0%, #ffb347 55%, #ffe28a 100%);
+      color: #1f1602;
+      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.8);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .fallback button span.icon {
+      font-size: 14px;
+      transform: translateY(0.5px);
+    }
+
+    .fallback button:hover {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+    }
+
+    .fallback button:active {
+      transform: translateY(0);
+      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.7);
+    }
+
+    @media (max-width: 768px) {
+      .swap-shell {
+        padding: 14px 12px 18px;
+      }
+      iframe {
+        height: 640px;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .swap-topbar {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      iframe {
+        height: 580px;
+      }
+    }
   </style>
 </head>
 <body>
-  <main class="wrap">
-    <header>
-      <div class="brand">
-        <div class="brand-logo">
-          <img src="logo.png" alt="CBS logo" onerror="this.style.display='none'">
-        </div>
-        <div class="brand-title">
-          <span>cbs coin</span>
-          <span>Community Builds Sovereignty</span>
+  <div class="swap-shell">
+    <header class="swap-topbar">
+      <div class="swap-left">
+        <div class="swap-logo">CBS</div>
+        <div class="swap-text">
+          <h1>CBS Swap • Powered by Raydium</h1>
+          <p>SOL → CBS swap inside our site, using the official Raydium pool.</p>
         </div>
       </div>
-      <div class="badges">
-        <div class="pill">No presale</div>
-        <div class="pill">No VC</div>
-        <div class="pill green">Pure degen</div>
+      <div class="swap-right">
+        <a href="index.html">← Back to homepage</a>
       </div>
     </header>
 
-    <h1>
-      <span>SWAP</span> <span>SOL</span> <span>→ CBS</span>
-    </h1>
-    <p class="subtitle">
-      Swap SOL into <strong>CBS</strong> directly from the official site. The button below opens a secure,
-      pre-filled route on <strong>Jupiter</strong>. CBS never touches your keys — every swap is signed in your own wallet
-      (Phantom, Solflare, Backpack, etc.).
-    </p>
+    <div class="swap-banner">
+      <strong>Note:</strong> This swap lives on <strong>Raydium</strong> and loads inside an iframe here.<br />
+      Your wallet connects directly to Raydium – we never touch your keys or funds.<br />
+      CBS mint: <code>B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code>
+    </div>
 
-    <section class="layout">
-      <!-- LEFT: swap interface (static, with deep link) -->
-      <div class="card">
-        <div class="card-header">
-          <div class="card-title">Live swap terminal</div>
-          <div class="powered">
-            <span class="logo-dot"></span>
-            <span>Powered by Jupiter</span>
-          </div>
-        </div>
+    <div class="iframe-wrapper">
+      <!-- lichte glow laag bovenop -->
+      <div class="iframe-overlay-top"></div>
 
-        <!-- FROM -->
-        <div style="margin-bottom:14px;">
-          <div class="field-label">
-            <span>From</span>
-            <span style="font-size:.75rem;color:var(--muted);">Wallet: SOL</span>
-          </div>
-          <div class="field-box">
-            <input type="text" inputmode="decimal" placeholder="Enter SOL amount (e.g. 0.1)">
-            <div class="chip">
-              <span class="chip-dot"></span>
-              <span>SOL input</span>
-            </div>
-          </div>
-          <div class="helper">Amount is re-entered on Jupiter after you open the swap.</div>
-        </div>
+      <!-- Raydium swap iframe -->
+      <iframe
+        src="https://raydium.io/swap/?inputMint=sol&outputMint=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+      ></iframe>
+    </div>
 
-        <!-- TO -->
-        <div>
-          <div class="field-label">
-            <span>To</span>
-            <span style="font-size:.75rem;color:var(--muted);">Route: Jupiter best path</span>
-          </div>
-          <div class="field-box">
-            <div style="display:flex;align-items:center;gap:8px;">
-              <div style="width:26px;height:26px;border-radius:50%;overflow:hidden;background:#000;box-shadow:0 0 10px rgba(34,197,94,.6);">
-                <img src="logo.png" alt="CBS" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">
-              </div>
-              <div style="display:flex;flex-direction:column;">
-                <span style="font-size:.88rem;font-weight:600;">CBS</span>
-                <span style="font-size:.7rem;color:var(--muted);">Output (estimated on Jupiter)</span>
-              </div>
-            </div>
-          </div>
-          <div class="helper">Exact CBS amount & price impact are shown on Jupiter before you confirm.</div>
-        </div>
-
-        <!-- SWAP BUTTON: simple, robust deep link -->
-        <a
-          class="swap-button"
-          href="https://jup.ag/swap/SOL-CBS?outputMint=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"
-          target="_blank"
-          rel="noopener"
-        >
-          <span class="icon">⚡</span>
-          <span>Open secure SOL → CBS swap</span>
-        </a>
-
-        <p class="note">
-          <strong>Step 1:</strong> Click the green button — Jupiter opens in a new tab or inside your wallet browser.<br>
-          <strong>Step 2:</strong> Connect your wallet on Jupiter, set the SOL amount, and confirm the swap.<br>
-          <strong>Step 3:</strong> Always verify the mint:
-          <code style="font-size:.72rem;background:#020617;border-radius:6px;padding:2px 4px;border:1px solid #1f2937;">
-            B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk
-          </code>.
-          If a route shows a different mint, cancel the trade.
-        </p>
+    <div class="swap-footer">
+      <div>
+        If the swap doesn’t load (blank or error), Raydium may block embedding in an iframe.
       </div>
-
-      <!-- RIGHT: explanation + buy streak teaser -->
-      <div class="card">
-        <div class="right-title">Why this matters</div>
-        <p class="right-main">
-          Every swap into <strong>CBS</strong> is a small push to the ecosystem:
-          more liquidity, more volume, and a stronger signal that people actually
-          believe in <strong>Community Builds Sovereignty</strong>.
-        </p>
-        <p class="bullet">• Community-built — no presale, no VC, no paid shillers.</p>
-        <p class="bullet">• Swaps run through Jupiter’s official router on Solana.</p>
-        <p class="bullet">• CBS never touches your keys — everything is signed in your own wallet.</p>
-
-        <div class="streak-box">
-          <strong>Buy streak (coming soon)</strong><br>
-          This swap page will later hook into the
-          <a href="mc.html">Market Cap / Buy Streak</a> board.
-          When multiple swaps land in the same hour, the streak counter climbs
-          and the record becomes on-chain bragging rights for the early degens.
-        </div>
-
-        <div class="streak-box" style="margin-top:12px;">
-          <strong>Need more details?</strong><br>
-          • <a href="tokenomics.html">Tokenomics</a> — live CBS data &amp; charts.<br>
-          • <a href="holders.html">Holders board</a> — live holder count.<br>
-          • <a href="https://cbs-coin.com" target="_blank" rel="noopener">cbs-coin.com</a> — full website &amp; whitepaper.
-        </div>
+      <div class="fallback">
+        <span>Open directly on Raydium:</span>
+        <button onclick="window.open('https://raydium.io/swap/?inputMint=sol&outputMint=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk', '_blank')">
+          <span class="icon">✨</span>
+          <span>Open Raydium Swap</span>
+        </button>
       </div>
-    </section>
-
-    <footer>
-      © CBS Coin — Community Builds Sovereignty ·
-      <a href="mailto:contact@cbs-coin.com">contact@cbs-coin.com</a>
-    </footer>
-  </main>
+    </div>
+  </div>
 </body>
 </html>
