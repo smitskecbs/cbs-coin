@@ -4,657 +4,442 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>CBS Coin — Swap SOL → CBS</title>
-  <meta name="description" content="Swap SOL for CBS directly from the official CBS Coin site. Community Builds Sovereignty.">
+  <meta name="description" content="Swap SOL into CBS straight from the official CBS site. Secure swap via Jupiter on Solana.">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
 
   <style>
     :root{
       --bg:#020617;
-      --bg-soft:#020617;
       --card:#020617;
-      --card-soft:#020617;
-      --border:#1f2933;
-      --border-soft:#111827;
-      --fg:#e5e7eb;
-      --muted:#9ca3af;
+      --card-alt:#020617;
+      --border:#1f2937;
       --accent:#22c55e;
       --accent-soft:#16a34a;
-      --accent-2:#a78bfa;
+      --accent2:#a855f7;
+      --fg:#e5e7eb;
+      --muted:#9ca3af;
       --danger:#f97373;
-      --radius-xl:22px;
-      --radius-lg:18px;
+      --radius:18px;
     }
-
-    *{box-sizing:border-box;}
-
-    html,body{
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
       margin:0;
-      padding:0;
-      height:100%;
       font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      background:radial-gradient(120% 160% at 0% 0%,#0f172a 0,#020617 45%,#000 100%);
       color:var(--fg);
+      background:radial-gradient(circle at top,#0f172a 0,#020617 55%);
       -webkit-font-smoothing:antialiased;
     }
-
-    body{
-      display:flex;
-      justify-content:center;
-    }
-
-    main.wrap{
-      width:100%;
-      max-width:980px;
+    .wrap{
+      max-width:1040px;
+      margin:0 auto;
       padding:18px 16px 40px;
     }
 
-    /* Header bar */
-    .top-bar{
+    header{
       display:flex;
       align-items:center;
       justify-content:space-between;
       gap:12px;
-      margin-bottom:16px;
+      margin-bottom:18px;
+      flex-wrap:wrap;
     }
-    .brand-left{
+    .brand{
       display:flex;
       align-items:center;
       gap:10px;
     }
     .brand-logo{
-      width:42px;
-      height:42px;
-      border-radius:50%;
-      overflow:hidden;
-      border:1px solid rgba(255,255,255,.18);
-      box-shadow:0 0 16px rgba(34,197,94,.48),0 0 30px rgba(167,139,250,.32);
+      width:40px;height:40px;border-radius:50%;
       background:#000;
+      overflow:hidden;
+      flex-shrink:0;
+      box-shadow:0 0 18px rgba(34,197,94,.45);
     }
-    .brand-logo img{
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      display:block;
-    }
-    .brand-text{
+    .brand-logo img{width:100%;height:100%;object-fit:cover}
+    .brand-title{
       display:flex;
       flex-direction:column;
-      gap:2px;
     }
-    .brand-text span:first-child{
-      font-size:.84rem;
-      letter-spacing:.08em;
+    .brand-title span:first-child{
+      font-size:.78rem;
+      letter-spacing:.16em;
       text-transform:uppercase;
-      color:#9ca3af;
+      color:var(--muted);
     }
-    .brand-text span:last-child{
-      font-size:.8rem;
-      color:#e5e7eb;
+    .brand-title span:last-child{
+      font-weight:800;
+      font-size:.9rem;
     }
 
-    .chip-row{
+    .badges{
       display:flex;
-      gap:6px;
+      gap:8px;
       flex-wrap:wrap;
     }
-    .chip{
-      font-size:.72rem;
-      padding:3px 8px;
+    .pill{
+      padding:4px 10px;
       border-radius:999px;
-      border:1px solid rgba(148,163,184,.35);
-      background:radial-gradient(circle at 0 0,rgba(34,197,94,.28),transparent 55%),#020617;
-      color:#e5e7eb;
-      letter-spacing:.06em;
+      border:1px solid rgba(148,163,184,.7);
+      font-size:.75rem;
       text-transform:uppercase;
-      white-space:nowrap;
+      letter-spacing:.12em;
+      color:#e5e7eb;
+      background:rgba(15,23,42,.9);
     }
-    .chip.pink{
-      background:radial-gradient(circle at 100% 0,rgba(244,114,182,.3),transparent 55%),#020617;
+    .pill.green{
+      border-color:rgba(34,197,94,.85);
+      background:radial-gradient(circle at 20% 0,#22c55e33,transparent 60%),rgba(15,23,42,.9);
     }
 
-    /* Hero */
     h1{
-      margin:12px 0 4px;
+      margin:18px 0 4px;
       font-size:2.4rem;
-      letter-spacing:.05em;
+      letter-spacing:.03em;
       text-transform:uppercase;
-      color:#f9fafb;
     }
-    h1 span.sol{color:#22c55e;}
-    h1 span.cbs{color:#a78bfa;}
-    .hero-sub{
+    h1 span:nth-child(2){color:#22c55e}
+    h1 span:nth-child(3){color:#a855f7}
+    .subtitle{
       margin:0 0 24px;
-      max-width:46rem;
+      max-width:640px;
       font-size:.98rem;
+      line-height:1.7;
       color:var(--muted);
     }
 
-    /* Layout cards */
-    .grid{
+    .layout{
       display:grid;
-      grid-template-columns:minmax(0,1.1fr) minmax(0,0.9fr);
-      gap:18px;
+      grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);
+      gap:20px;
     }
-    @media (max-width:820px){
-      .grid{grid-template-columns:minmax(0,1fr);}
+    @media (max-width:900px){
+      .layout{grid-template-columns:1fr}
     }
 
     .card{
-      background:radial-gradient(circle at 0 0,rgba(34,197,94,.18),transparent 55%),
-                 radial-gradient(circle at 100% 100%,rgba(59,130,246,.16),transparent 55%),
-                 #020617;
-      border-radius:var(--radius-xl);
-      border:1px solid rgba(15,23,42,.95);
-      box-shadow:0 0 40px rgba(15,23,42,.9),0 0 40px rgba(15,23,42,.9);
+      background: radial-gradient(circle at top left,rgba(34,197,94,.12),transparent 55%),
+                  radial-gradient(circle at bottom right,rgba(168,85,247,.16),transparent 55%),
+                  #020617;
+      border-radius:var(--radius);
+      border:1px solid var(--border);
       padding:18px 18px 20px;
+      box-shadow:0 18px 45px rgba(15,23,42,.9);
       position:relative;
       overflow:hidden;
     }
-    .card::before{
-      content:"";
-      position:absolute;
-      inset:-1px;
-      border-radius:inherit;
-      border:1px solid rgba(148,163,184,.18);
-      pointer-events:none;
-      mix-blend-mode:screen;
-    }
-
     .card-header{
       display:flex;
       align-items:center;
       justify-content:space-between;
-      margin-bottom:10px;
-      gap:8px;
+      gap:10px;
+      margin-bottom:14px;
+      flex-wrap:wrap;
     }
     .card-title{
-      font-size:.9rem;
-      letter-spacing:.08em;
+      font-size:.88rem;
+      letter-spacing:.14em;
       text-transform:uppercase;
-      color:#9ca3af;
+      color:var(--muted);
     }
-
-    .badge-live{
+    .powered{
       display:inline-flex;
       align-items:center;
       gap:6px;
       padding:3px 9px;
       border-radius:999px;
-      border:1px solid rgba(34,197,94,.7);
-      background:radial-gradient(circle at 0 0,rgba(74,222,128,.5),transparent 60%),#022c22;
+      background:rgba(15,23,42,.9);
+      border:1px solid rgba(148,163,184,.7);
       font-size:.72rem;
-      color:#bbf7d0;
+      text-transform:uppercase;
+      letter-spacing:.14em;
+      color:#e5e7eb;
     }
-    .badge-dot{
-      width:7px;
-      height:7px;
-      border-radius:999px;
-      background:#bbf7d0;
-      box-shadow:0 0 10px rgba(74,222,128,1);
-      animation:pulseDot 1.2s infinite ease-out;
-    }
-    @keyframes pulseDot{
-      0%{transform:scale(1);opacity:1;}
-      100%{transform:scale(2);opacity:0;}
+    .powered span.logo-dot{
+      width:8px;height:8px;border-radius:50%;
+      background:conic-gradient(from 0deg,#22c55e,#22c55e,#a855f7,#22c55e);
+      box-shadow:0 0 8px rgba(34,197,94,.85);
     }
 
-    /* Form */
-    .field-label-row{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:8px;
-      margin-bottom:4px;
-    }
     .field-label{
       font-size:.8rem;
+      text-transform:uppercase;
+      letter-spacing:.12em;
       color:var(--muted);
+      margin-bottom:4px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:6px;
     }
-    .field-chip{
-      font-size:.74rem;
-      color:#cbd5e1;
-      background:rgba(15,23,42,.9);
-      border-radius:999px;
-      padding:3px 8px;
-      border:1px solid rgba(148,163,184,.4);
-    }
-
-    .input-shell{
+    .field-box{
       position:relative;
       border-radius:14px;
-      border:1px solid rgba(30,64,175,.8);
-      background:radial-gradient(circle at 0 0,rgba(56,189,248,.32),transparent 55%),#020617;
+      border:1px solid rgba(55,65,81,.9);
+      background:linear-gradient(135deg,#020617,#020617);
       padding:10px 12px;
-      margin-bottom:10px;
-    }
-    .input-shell.secondary{
-      border-color:rgba(55,65,81,.9);
-      background:radial-gradient(circle at 100% 100%,rgba(34,197,94,.32),transparent 55%),#020617;
-    }
-    .input-top-row{
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap:8px;
-      margin-bottom:4px;
+      gap:10px;
     }
-    .token-pill{
+    .field-box input{
+      border:none;
+      outline:none;
+      background:transparent;
+      color:#e5e7eb;
+      font-size:1.1rem;
+      width:100%;
+    }
+    .field-box input::placeholder{color:#4b5563}
+    .chip{
       display:inline-flex;
       align-items:center;
       gap:6px;
       padding:4px 9px;
       border-radius:999px;
       background:rgba(15,23,42,.95);
-      border:1px solid rgba(148,163,184,.45);
+      border:1px solid rgba(148,163,184,.8);
       font-size:.78rem;
       color:#e5e7eb;
+      white-space:nowrap;
     }
-    .token-pill span.symbol{
-      font-weight:700;
-      letter-spacing:.05em;
-    }
-    .token-pill span.name{
-      font-size:.7rem;
-      text-transform:uppercase;
-      color:#9ca3af;
+    .chip-dot{
+      width:8px;height:8px;border-radius:50%;
+      background:radial-gradient(circle,#22c55e,#15803d);
+      box-shadow:0 0 8px rgba(34,197,94,.7);
     }
 
-    .token-badge{
-      font-size:.72rem;
-      color:#e5e7eb;
-      padding:3px 7px;
-      border-radius:999px;
-      background:rgba(6,95,70,.85);
-      border:1px solid rgba(45,212,191,.8);
+    .helper{
+      margin-top:6px;
+      font-size:.78rem;
+      color:var(--muted);
     }
 
-    .amount-input{
+    .swap-button{
+      margin-top:16px;
       width:100%;
-      border:none;
-      outline:none;
-      background:transparent;
-      font-size:1.6rem;
-      font-weight:600;
-      color:#e5e7eb;
-      padding:0;
-    }
-    .amount-input::placeholder{
-      color:#4b5563;
-    }
-
-    .est-label{
-      font-size:.78rem;
-      color:#9ca3af;
-      margin-top:2px;
-    }
-
-    .est-value{
-      font-weight:600;
-      color:#e5e7eb;
-    }
-
-    .error-text{
-      font-size:.78rem;
-      color:var(--danger);
-      margin-top:2px;
-      display:none;
-    }
-
-    .swap-btn{
-      width:100%;
-      margin-top:10px;
-      padding:12px 16px;
-      border-radius:999px;
-      border:none;
-      background:linear-gradient(135deg,#22c55e,#16a34a);
-      color:#022c22;
-      font-size:.95rem;
-      font-weight:800;
-      letter-spacing:.09em;
-      text-transform:uppercase;
-      cursor:pointer;
-      display:flex;
+      display:inline-flex;
       align-items:center;
       justify-content:center;
       gap:8px;
-      box-shadow:0 0 24px rgba(34,197,94,.75);
-      transition:transform .15s ease,box-shadow .15s ease,filter .15s ease;
+      padding:12px 16px;
+      border-radius:999px;
+      border:none;
+      cursor:pointer;
+      text-decoration:none;
+      font-weight:700;
+      font-size:.95rem;
+      text-transform:uppercase;
+      letter-spacing:.16em;
+      color:#f9fafb;
+      background:linear-gradient(135deg,#16a34a,#22c55e);
+      box-shadow:0 18px 45px rgba(34,197,94,.55);
+      transition:transform .12s ease, box-shadow .12s ease, filter .12s ease;
     }
-    .swap-btn span.icon{
+    .swap-button span.icon{
       font-size:1.1rem;
     }
-    .swap-btn:hover{
+    .swap-button:hover{
       transform:translateY(-1px);
-      filter:saturate(1.05);
-      box-shadow:0 0 30px rgba(22,163,74,.85);
+      box-shadow:0 22px 60px rgba(34,197,94,.7);
+      filter:brightness(1.05);
     }
-    .swap-btn:disabled{
-      opacity:.5;
-      cursor:not-allowed;
-      box-shadow:none;
+    .swap-button:active{
+      transform:translateY(0);
+      box-shadow:0 10px 25px rgba(34,197,94,.55);
     }
 
-    .mint-box{
+    .note{
       margin-top:10px;
-      padding:8px 10px;
-      border-radius:12px;
-      border:1px dashed rgba(148,163,184,.5);
-      background:rgba(15,23,42,.95);
       font-size:.75rem;
-      color:#9ca3af;
+      color:var(--muted);
     }
-    .mint-code{
-      display:inline-block;
-      margin-top:3px;
-      padding:4px 7px;
-      border-radius:8px;
-      background:rgba(2,6,23,1);
-      border:1px solid rgba(148,163,184,.55);
-      font-family:monospace;
-      font-size:.72rem;
-      color:#e5e7eb;
-    }
+    .note strong{color:#e5e7eb}
 
-    /* Right card text */
-    .pill-row{
-      display:flex;
-      flex-wrap:wrap;
-      gap:6px;
-      margin-bottom:10px;
-    }
-    .pill{
-      padding:3px 8px;
-      border-radius:999px;
-      font-size:.72rem;
+    /* Right column */
+    .right-title{
+      font-size:.9rem;
+      font-weight:700;
+      letter-spacing:.12em;
       text-transform:uppercase;
-      letter-spacing:.06em;
-      background:rgba(15,23,42,.95);
-      border:1px solid rgba(148,163,184,.45);
-      color:#cbd5e1;
+      color:var(--muted);
+      margin-bottom:4px;
     }
-
-    .why-text{
+    .right-main{
+      font-size:.96rem;
+      line-height:1.7;
+      color:var(--fg);
+      margin-bottom:12px;
+    }
+    .bullet{
       font-size:.88rem;
-      color:#cbd5e1;
-      line-height:1.6;
+      color:var(--muted);
+      margin:4px 0;
     }
-    .why-text strong{
-      color:#e5e7eb;
-    }
-
     .streak-box{
       margin-top:14px;
-      padding:10px 11px;
+      padding:10px 12px;
       border-radius:14px;
-      background:rgba(15,23,42,.9);
-      border:1px solid rgba(55,65,81,.95);
-      font-size:.82rem;
-      color:#9ca3af;
+      border:1px dashed rgba(148,163,184,.7);
+      background:rgba(15,23,42,.75);
+      font-size:.84rem;
+      color:var(--muted);
     }
-    .streak-title{
-      font-size:.78rem;
-      text-transform:uppercase;
-      letter-spacing:.08em;
-      color:#e5e7eb;
-      margin-bottom:4px;
+    .streak-box strong{color:#e5e7eb}
+    .streak-box a{
+      color:#a5b4fc;
+      text-decoration:none;
     }
-    .streak-numbers{
-      font-size:.95rem;
-      color:#e5e7eb;
-      margin-bottom:4px;
-    }
+    .streak-box a:hover{text-decoration:underline;}
 
-    /* Footer note */
-    .foot-note{
-      margin-top:18px;
-      font-size:.8rem;
-      color:#6b7280;
-      text-align:left;
+    footer{
+      margin-top:22px;
+      font-size:.78rem;
+      color:var(--muted);
+      text-align:center;
     }
-    .foot-note a{
+    footer a{
       color:#9ca3af;
       text-decoration:none;
-      border-bottom:1px dotted rgba(148,163,184,.7);
     }
-    .foot-note a:hover{
-      color:#e5e7eb;
-      border-bottom-style:solid;
-    }
-
+    footer a:hover{text-decoration:underline;}
   </style>
 </head>
 <body>
-<main class="wrap">
-
-  <header class="top-bar">
-    <div class="brand-left">
-      <div class="brand-logo">
-        <img src="logo.png" alt="CBS logo" onerror="this.style.display='none'">
+  <main class="wrap">
+    <header>
+      <div class="brand">
+        <div class="brand-logo">
+          <img src="logo.png" alt="CBS logo" onerror="this.style.display='none'">
+        </div>
+        <div class="brand-title">
+          <span>cbs coin</span>
+          <span>Community Builds Sovereignty</span>
+        </div>
       </div>
-      <div class="brand-text">
-        <span>CBS COIN</span>
-        <span>Community Builds Sovereignty</span>
+      <div class="badges">
+        <div class="pill">No presale</div>
+        <div class="pill">No VC</div>
+        <div class="pill green">Pure degen</div>
       </div>
-    </div>
+    </header>
 
-    <div class="chip-row">
-      <span class="chip">No presale</span>
-      <span class="chip pink">No VC</span>
-      <span class="chip">Pure degen</span>
-    </div>
-  </header>
-
-  <section>
-    <h1>SWAP <span class="sol">SOL</span> → <span class="cbs">CBS</span></h1>
-    <p class="hero-sub">
-      Swap SOL into CBS straight from the official site. Quotes are fetched from Jupiter,
-      swaps are executed on Jupiter in a secure window. CBS never touches your keys —
-      everything is signed in your own wallet (Phantom, etc.).
+    <h1>
+      <span>SWAP</span> <span>SOL</span> <span>→ CBS</span>
+    </h1>
+    <p class="subtitle">
+      Swap SOL into <strong>CBS</strong> directly from the official site. The button below opens a secure,
+      pre-filled route on <strong>Jupiter</strong>. CBS never touches your keys — every swap is signed in your own wallet
+      (Phantom, Solflare, Backpack, etc.).
     </p>
 
-    <div class="grid">
-      <!-- LEFT: swap form -->
+    <section class="layout">
+      <!-- LEFT: swap interface (static, with deep link) -->
       <div class="card">
         <div class="card-header">
           <div class="card-title">Live swap terminal</div>
-          <div class="badge-live">
-            <span class="badge-dot"></span>
+          <div class="powered">
+            <span class="logo-dot"></span>
             <span>Powered by Jupiter</span>
           </div>
         </div>
 
-        <!-- From -->
-        <div class="field-label-row">
-          <div class="field-label">From</div>
-          <div class="field-chip">Wallet: SOL</div>
-        </div>
-        <div class="input-shell">
-          <div class="input-top-row">
-            <div class="token-pill">
-              <span class="symbol">SOL</span>
-              <span class="name">Input</span>
-            </div>
-            <span class="token-badge">You send</span>
+        <!-- FROM -->
+        <div style="margin-bottom:14px;">
+          <div class="field-label">
+            <span>From</span>
+            <span style="font-size:.75rem;color:var(--muted);">Wallet: SOL</span>
           </div>
-          <input id="solInput" class="amount-input" type="number" min="0" step="0.0001"
-                 placeholder="0.00" autocomplete="off" inputmode="decimal">
-        </div>
-
-        <!-- To -->
-        <div class="field-label-row">
-          <div class="field-label">To</div>
-          <div class="field-chip">Route: Jupiter best path</div>
-        </div>
-        <div class="input-shell secondary">
-          <div class="input-top-row">
-            <div class="token-pill">
-              <span class="symbol">CBS</span>
-              <span class="name">Output (estimated)</span>
+          <div class="field-box">
+            <input type="text" inputmode="decimal" placeholder="Enter SOL amount (e.g. 0.1)">
+            <div class="chip">
+              <span class="chip-dot"></span>
+              <span>SOL input</span>
             </div>
           </div>
-          <div class="est-label">
-            Est. received:&nbsp;
-            <span id="estCbs" class="est-value">– CBS</span>
-          </div>
-          <div id="quoteError" class="error-text">Quote error: fetch failed.</div>
+          <div class="helper">Amount is re-entered on Jupiter after you open the swap.</div>
         </div>
 
-        <button id="openSwapBtn" class="swap-btn" disabled>
+        <!-- TO -->
+        <div>
+          <div class="field-label">
+            <span>To</span>
+            <span style="font-size:.75rem;color:var(--muted);">Route: Jupiter best path</span>
+          </div>
+          <div class="field-box">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:26px;height:26px;border-radius:50%;overflow:hidden;background:#000;box-shadow:0 0 10px rgba(34,197,94,.6);">
+                <img src="logo.png" alt="CBS" style="width:100%;height:100%;object-fit:cover;" onerror="this.style.display='none'">
+              </div>
+              <div style="display:flex;flex-direction:column;">
+                <span style="font-size:.88rem;font-weight:600;">CBS</span>
+                <span style="font-size:.7rem;color:var(--muted);">Output (estimated on Jupiter)</span>
+              </div>
+            </div>
+          </div>
+          <div class="helper">Exact CBS amount & price impact are shown on Jupiter before you confirm.</div>
+        </div>
+
+        <!-- SWAP BUTTON: simple, robust deep link -->
+        <a
+          class="swap-button"
+          href="https://jup.ag/swap/SOL-CBS?outputMint=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"
+          target="_blank"
+          rel="noopener"
+        >
           <span class="icon">⚡</span>
           <span>Open secure SOL → CBS swap</span>
-        </button>
+        </a>
 
-        <div class="mint-box">
-          <div>Always verify the mint address:</div>
-          <div>Real CBS Coin mint / CA:</div>
-          <div class="mint-code">
-            B9z8cEWFmc7LvQtjKsSaLoKqW5MJmGRCWqs1DPKupCfkk
-          </div>
-          <div style="margin-top:4px;">
-            If a swap route shows a different mint, it’s <strong>not</strong> CBS — cancel the trade.
-          </div>
-        </div>
+        <p class="note">
+          <strong>Step 1:</strong> Click the green button — Jupiter opens in a new tab or inside your wallet browser.<br>
+          <strong>Step 2:</strong> Connect your wallet on Jupiter, set the SOL amount, and confirm the swap.<br>
+          <strong>Step 3:</strong> Always verify the mint:
+          <code style="font-size:.72rem;background:#020617;border-radius:6px;padding:2px 4px;border:1px solid #1f2937;">
+            B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk
+          </code>.
+          If a route shows a different mint, cancel the trade.
+        </p>
       </div>
 
-      <!-- RIGHT: explanation / buy streak teaser -->
+      <!-- RIGHT: explanation + buy streak teaser -->
       <div class="card">
-        <div class="card-header">
-          <div class="card-title">Why this matters</div>
-        </div>
-
-        <div class="pill-row">
-          <span class="pill">Community-built</span>
-          <span class="pill">No paid shillers</span>
-          <span class="pill">On-chain proofs</span>
-          <span class="pill">Early phase</span>
-        </div>
-
-        <p class="why-text">
+        <div class="right-title">Why this matters</div>
+        <p class="right-main">
           Every swap into <strong>CBS</strong> is a small push to the ecosystem:
           more liquidity, more volume, and a stronger signal that people actually
           believe in <strong>Community Builds Sovereignty</strong>.
         </p>
-
-        <p class="why-text">
-          This page gives you a clean way to price your swap and jump straight into a
-          pre-filled Jupiter route from <strong>SOL → CBS</strong>. No fake links,
-          no random mints — only the verified CBS contract.
-        </p>
+        <p class="bullet">• Community-built — no presale, no VC, no paid shillers.</p>
+        <p class="bullet">• Swaps run through Jupiter’s official router on Solana.</p>
+        <p class="bullet">• CBS never touches your keys — everything is signed in your own wallet.</p>
 
         <div class="streak-box">
-          <div class="streak-title">Buy streak (coming soon)</div>
-          <div class="streak-numbers">
-            Current streak (last hour): <strong>0 swaps</strong><br>
-            All-time record streak: <strong>0 swaps in one hour</strong>
-          </div>
-          <div>
-            Later, this page will connect to the <strong>Buy Streak</strong> board.
-            When multiple swaps land in the same hour, the streak counter climbs and
-            the record becomes on-chain bragging rights for the early degens.
-          </div>
+          <strong>Buy streak (coming soon)</strong><br>
+          This swap page will later hook into the
+          <a href="mc.html">Market Cap / Buy Streak</a> board.
+          When multiple swaps land in the same hour, the streak counter climbs
+          and the record becomes on-chain bragging rights for the early degens.
+        </div>
+
+        <div class="streak-box" style="margin-top:12px;">
+          <strong>Need more details?</strong><br>
+          • <a href="tokenomics.html">Tokenomics</a> — live CBS data &amp; charts.<br>
+          • <a href="holders.html">Holders board</a> — live holder count.<br>
+          • <a href="https://cbs-coin.com" target="_blank" rel="noopener">cbs-coin.com</a> — full website &amp; whitepaper.
         </div>
       </div>
-    </div>
+    </section>
 
-    <p class="foot-note">
-      Swaps are executed on Jupiter. We never see your keys or seed phrase.
-      For more CBS data, check the
-      <a href="tokenomics.html">Tokenomics</a> and
-      <a href="mc.html">Market Cap / Buy Streak</a> pages.
-    </p>
-  </section>
-</main>
-
-<script>
-  (function(){
-    const solInput   = document.getElementById('solInput');
-    const estCbsEl   = document.getElementById('estCbs');
-    const errorEl    = document.getElementById('quoteError');
-    const openBtn    = document.getElementById('openSwapBtn');
-
-    const CBS_MINT   = 'B9z8cEWFmc7LvQtjKsSaLoKqW5MJmGRCWqs1DPKupCfkk';
-    const SOL_MINT   = 'So11111111111111111111111111111111111111112';
-    const SOL_DEC    = 9;
-    const CBS_DEC    = 6; // als CBS ooit andere decimals blijkt te hebben, hier aanpassen
-
-    let lastAmountLamports = 0;
-
-    function formatNumber(v){
-      if (!isFinite(v)) return '– CBS';
-      if (v >= 1_000_000) return v.toLocaleString(undefined,{maximumFractionDigits:0}) + ' CBS';
-      if (v >= 1_000)     return v.toLocaleString(undefined,{maximumFractionDigits:2}) + ' CBS';
-      return v.toLocaleString(undefined,{maximumFractionDigits:4}) + ' CBS';
-    }
-
-    async function fetchQuote(amountSol){
-      errorEl.style.display = 'none';
-      estCbsEl.textContent = '… CBS';
-
-      try{
-        const amountLamports = Math.floor(amountSol * 10 ** SOL_DEC);
-        lastAmountLamports   = amountLamports;
-
-        const url =
-          'https://quote-api.jup.ag/v6/quote'
-          + '?inputMint='  + SOL_MINT
-          + '&outputMint=' + CBS_MINT
-          + '&amount='     + amountLamports
-          + '&slippageBps=100';
-
-        const res  = await fetch(url);
-        if (!res.ok){
-          throw new Error('HTTP ' + res.status);
-        }
-        const data = await res.json();
-
-        if (!data || !data.outAmount){
-          throw new Error('No outAmount in response');
-        }
-
-        const outTokens = Number(data.outAmount) / (10 ** CBS_DEC);
-        estCbsEl.textContent = formatNumber(outTokens);
-        openBtn.disabled = false;
-      }catch(err){
-        console.error('[CBS swap] Quote error:', err);
-        estCbsEl.textContent = '– CBS';
-        errorEl.style.display = 'block';
-        errorEl.textContent = 'Quote error: fetch failed. (Adblocker of netwerk kan dit blokkeren.)';
-        openBtn.disabled = true;
-      }
-    }
-
-    let quoteTimeout = null;
-    solInput.addEventListener('input', () => {
-      const val = parseFloat(solInput.value);
-      if (!val || val <= 0){
-        estCbsEl.textContent = '– CBS';
-        errorEl.style.display = 'none';
-        openBtn.disabled = true;
-        return;
-      }
-      if (quoteTimeout) clearTimeout(quoteTimeout);
-      quoteTimeout = setTimeout(() => fetchQuote(val), 350);
-    });
-
-    openBtn.addEventListener('click', () => {
-      const val = parseFloat(solInput.value);
-      if (!val || val <= 0 || !lastAmountLamports){
-        return;
-      }
-      // Open Jupiter in een nieuwe tab met SOL → CBS en het ingevulde bedrag
-      const url =
-        'https://jup.ag/swap/SOL-CBS'
-        + '?inputMint='  + SOL_MINT
-        + '&outputMint=' + CBS_MINT
-        + '&amount='     + lastAmountLamports;
-
-      window.open(url, '_blank','noopener');
-    });
-  })();
-</script>
+    <footer>
+      © CBS Coin — Community Builds Sovereignty ·
+      <a href="mailto:contact@cbs-coin.com">contact@cbs-coin.com</a>
+    </footer>
+  </main>
 </body>
 </html>
