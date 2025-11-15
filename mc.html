@@ -294,6 +294,49 @@
       </div>
     </section>
 
+    <!-- FOMO / ARMY RANK SECTION -->
+    <section class="mt-6 glass p-5">
+      <div class="flex flex-col lg:flex-row gap-6 items-start">
+        <div class="flex-1">
+          <p class="text-[11px] tracking-[0.25em] uppercase text-emerald-300 mb-1">
+            CBS Army Status
+          </p>
+          <h2 class="meme-title text-3xl sm:text-4xl text-white">
+            FOMO Radar Console
+          </h2>
+          <p class="mt-2 text-sm text-slate-200/90 max-w-lg">
+            This block converts pure on-chain data into <strong>meme pressure</strong>.
+            Market cap, holders and the 1H streak decide how “loud” the CBS Army is.
+            No hype screenshots, just numbers forcing people to look twice.
+          </p>
+
+          <div class="mt-4 text-xs text-slate-300 bg-black/30 border border-white/10 rounded-xl px-3 py-3">
+            <div class="font-semibold text-emerald-300 text-[11px] uppercase tracking-[0.18em] mb-1">
+              Army Rank (Live)
+            </div>
+            <div id="armyRank" class="text-sm">
+              Calculating CBS Army rank…
+            </div>
+          </div>
+        </div>
+
+        <div class="flex-1">
+          <div class="text-[11px] tracking-[0.2em] uppercase text-sky-300 mb-2">
+            Live Hype Feed
+          </div>
+          <ul id="fomoFeed" class="space-y-2 text-xs text-slate-100">
+            <li class="bg-black/30 border border-white/10 rounded-xl px-3 py-2">
+              Waiting for the next CBS move… first buyer of this hour sets the tone.
+            </li>
+          </ul>
+          <p class="mt-2 text-[10px] text-slate-500">
+            The feed reacts to market cap, holder count and the 1H buy streak.
+            Later we can plug in a real wallet tracker to show newest holders and “just bought” events.
+          </p>
+        </div>
+      </div>
+    </section>
+
     <!-- FOOTER -->
     <footer class="mt-6 mb-4 text-[11px] text-slate-500 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
       <div>© CBS Coin — Community Builds Sovereignty</div>
@@ -459,6 +502,52 @@
       }
     }
 
+    function updateArmyAndFomo(mc, holderCount, streak){
+      const rankEl = document.getElementById('armyRank');
+      const feedEl = document.getElementById('fomoFeed');
+      if(!rankEl && !feedEl) return;
+
+      // Army rank op basis van MC + holders
+      let rankText = 'Recruit phase — still very early. Every new wallet matters.';
+      if((holderCount ?? 0) >= 50 || mc >= 10_000){
+        rankText = 'Squad forming — the first CBS Army units are on the field.';
+      }
+      if((holderCount ?? 0) >= 150 || mc >= 50_000){
+        rankText = 'Platoon online — CBS is no longer a secret. People are starting to watch.';
+      }
+      if((holderCount ?? 0) >= 500 || mc >= 250_000){
+        rankText = 'Battalion mode — CBS Army can move charts on its own.';
+      }
+      if((holderCount ?? 0) >= 1000 || mc >= 1_000_000){
+        rankText = 'Full invasion mode — CBS has entered true meme war territory.';
+      }
+      if(rankEl){
+        rankEl.textContent = rankText;
+      }
+
+      if(feedEl){
+        const items = [];
+
+        if(streak > 0){
+          items.push(`🔥 <strong>${streak} net green buys</strong> in the last hour. Don’t be the wallet that breaks the streak.`);
+        }else{
+          items.push('😴 No active 1H streak right now. The next buy starts a fresh green hour for CBS.');
+        }
+
+        if(typeof holderCount === 'number'){
+          items.push(`👥 <strong>${fmt(holderCount)}</strong> wallets currently holding CBS. Every new holder ranks up the Army.`);
+        }
+
+        if(mc && mc > 0){
+          items.push(`💰 Market cap sits around <strong>$${fmt(mc)}</strong>. Early buys move this number way more than late buys.`);
+        }
+
+        feedEl.innerHTML = items.map(t =>
+          `<li class="bg-black/30 border border-white/10 rounded-xl px-3 py-2">${t}</li>`
+        ).join('');
+      }
+    }
+
     async function refresh(){
       try{
         const [price, supply, holderCount, streakInfo] = await Promise.all([
@@ -527,6 +616,9 @@
           badge.classList.add('record-pulse');
           setText('recordHint', 'New local record — highest 1H streak seen on this device.');
         }
+
+        // FOMO / Army blok updaten
+        updateArmyAndFomo(mc, holderCount, streak);
 
       }catch(e){
         console.error('[MC page] error', e);
