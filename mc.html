@@ -305,7 +305,7 @@
                 CBS ARMY RANK
               </div>
               <h2 class="text-xl md:text-2xl font-extrabold text-white">
-                Check your wallet & earn your badge
+                Connect or paste your wallet & earn your badge
               </h2>
             </div>
             <div class="hidden sm:flex flex-col items-end text-[10px] text-slate-400">
@@ -315,30 +315,29 @@
           </div>
 
           <p class="text-xs text-slate-300 mb-3">
-            Connect your wallet or paste your Solana address below.  
-            We look up your CBS balance on-chain and assign you a
-            <span class="font-semibold text-emerald-300">CBS Army rank</span>.
+            Connect your Solana wallet or paste your address below.  
+            We look up your CBS balance on-chain and assign you a <span class="font-semibold text-emerald-300">CBS Army rank</span>.
           </p>
 
-          <div class="flex flex-col sm:flex-row gap-2 mb-3">
-            <input
-              id="rankWalletInput"
-              type="text"
-              placeholder="Connect wallet or paste your Solana address here"
-              class="flex-1 px-3 py-2 rounded-xl bg-black/40 border border-white/15 text-xs text-slate-100 outline-none focus:border-emerald-400/70"
-            />
+          <div class="flex flex-col sm:flex-row gap-2 mb-2">
             <button
-              type="button"
               id="connectWalletBtn"
-              class="px-4 py-2 rounded-xl bg-slate-800 text-slate-100 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.16em] hover:bg-slate-700 active:bg-slate-900"
-              onclick="connectWalletAndFill()"
+              class="px-4 py-2 rounded-xl bg-slate-900 text-slate-100 text-xs font-semibold uppercase tracking-[0.16em] border border-emerald-400/60 hover:bg-slate-800 active:bg-slate-950"
+              onclick="connectWallet()"
             >
               Connect wallet
             </button>
+
+            <input
+              id="rankWalletInput"
+              type="text"
+              placeholder="Or paste your Solana wallet address here"
+              class="flex-1 px-3 py-2 rounded-xl bg-black/40 border border-white/15 text-xs text-slate-100 outline-none focus:border-emerald-400/70"
+            />
+
             <button
               id="checkRankBtn"
-              type="button"
-              class="px-4 py-2 rounded-xl bg-emerald-400 text-black text-[10px] sm:text-xs font-semibold uppercase tracking-[0.16em] hover:bg-emerald-300 active:bg-emerald-500"
+              class="px-4 py-2 rounded-xl bg-emerald-400 text-black text-xs font-semibold uppercase tracking-[0.16em] hover:bg-emerald-300 active:bg-emerald-500"
               onclick="checkRank()"
             >
               Check rank
@@ -389,7 +388,6 @@
 
           <div class="flex flex-col gap-2">
             <button
-              type="button"
               class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-sky-400 text-black text-xs font-semibold uppercase tracking-[0.16em] hover:bg-sky-300 active:bg-sky-500"
               onclick="shareRank('x')"
             >
@@ -397,7 +395,6 @@
               <span>🐦</span>
             </button>
             <button
-              type="button"
               class="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-slate-100 text-xs font-semibold uppercase tracking-[0.16em] border border-slate-500/60 hover:bg-slate-800 active:bg-slate-950"
               onclick="shareRank('tg')"
             >
@@ -436,8 +433,8 @@
 
     const RECORD_KEY    = 'cbs_mc_record_streak_v1';
 
-    let lastMc       = 0;
-    let lastStreak   = 0;
+    let lastMc      = 0;
+    let lastStreak  = 0;
     let recordStreak = 0;
 
     // rank state
@@ -786,7 +783,6 @@
         return;
       }
 
-      // bewaar wallet
       currentRankWallet = pubkey.toBase58();
 
       const btn = document.getElementById('checkRankBtn');
@@ -810,57 +806,59 @@
       }
     }
 
-    async function connectWalletAndFill(){
+    async function connectWallet(){
       clearRankError();
+
+      const btn = document.getElementById('connectWalletBtn');
       const input = document.getElementById('rankWalletInput');
-      const btn   = document.getElementById('connectWalletBtn');
-      if(!input || !btn) return;
 
-      let provider = null;
-
-      // Phantom / andere wallet die window.solana expose't
-      if(window.solana && window.solana.isPhantom){
-        provider = window.solana;
-      }else if(window.solana){
-        provider = window.solana;
-      }else if(window.xnft && window.xnft.solana){
-        // Backpack / xNFT
-        provider = window.xnft.solana;
-      }
-
-      if(!provider){
-        showRankError('No compatible wallet found in this browser. Please install Phantom or another Solana wallet, or paste your address manually.');
-        return;
+      if(btn){
+        btn.disabled = true;
+        btn.textContent = 'Connecting…';
       }
 
       try{
-        btn.disabled = true;
-        btn.textContent = 'Connecting…';
+        const provider = window.solana;
 
-        const res = await provider.connect();
-        const pubkey = res?.publicKey || provider.publicKey;
-        if(!pubkey){
-          throw new Error('No public key from wallet');
+        if(!provider){
+          showRankError('No Solana wallet detected. Open this page inside Phantom / Solflare / Backpack browser, or paste your address manually.');
+          return;
         }
 
-        const addr = pubkey.toBase58 ? pubkey.toBase58() : String(pubkey);
-        input.value = addr;
-        currentRankWallet = addr;
+        const resp = await provider.connect();
+        const pubkey = resp.publicKey?.toString?.() || resp.publicKey?.toBase58?.();
 
-        // direct rank berekenen na connect
+        if(!pubkey){
+          showRankError('Wallet connected, but could not read public key.');
+          return;
+        }
+
+        currentRankWallet = pubkey;
+        if(input){
+          input.value = pubkey;
+        }
+
+        // Option: automatisch rank checken na connect
         await checkRank();
       }catch(e){
         console.error('[Connect wallet]', e);
-        showRankError('Wallet connection was cancelled or failed. You can still paste your address manually.');
+        // user cancels is not an error we need to shout about
+        if(e && e.code === 4001){
+          showRankError('Wallet connection was cancelled.');
+        }else{
+          showRankError('Unable to connect to your wallet. Make sure it is unlocked and try again.');
+        }
       }finally{
-        btn.disabled = false;
-        btn.textContent = 'Connect wallet';
+        if(btn){
+          btn.disabled = false;
+          btn.textContent = 'Connect wallet';
+        }
       }
     }
 
     function shareRank(platform){
       if(!currentRankLabel || currentRankBalance === null || !currentRankWallet){
-        alert('First connect your wallet or paste your address, then click "Check rank".');
+        alert('First check your rank by connecting your wallet or pasting your address and clicking "Check rank".');
         return;
       }
 
