@@ -260,6 +260,39 @@
       word-break: break-all;
     }
 
+    .cbs-mint-copy-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .cbs-mint-text {
+      font-family: monospace;
+      font-size: 11px;
+      padding: 4px 6px;
+      border-radius: 6px;
+      background: rgba(15,23,42,0.9);
+      border: 1px solid rgba(148,163,184,0.6);
+      color: #e5efff;
+    }
+
+    .cbs-copy-btn {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(224,177,90,0.9);
+      background: linear-gradient(135deg,#e0b15a,#c88c32);
+      color: #050814;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .cbs-copy-btn:active {
+      transform: translateY(1px);
+    }
+
     .cbs-hero-tagline {
       font-size: 12px;
       color: rgba(229,239,255,0.82);
@@ -488,7 +521,7 @@
     }
 
     .cbs-onramp-link {
-      flex: 1 1 180px;
+      flex: 1 1 220px;
       text-align: center;
       text-decoration: none;
       padding: 8px 10px;
@@ -624,9 +657,17 @@
             </ul>
 
             <p class="cbs-hero-contract">
-              Official CBS mint:&nbsp;
-              <code>B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code>
+              Official CBS mint:
             </p>
+            <div class="cbs-mint-copy-row">
+              <span class="cbs-mint-text" id="cbs-mint">
+                B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk
+              </span>
+              <button class="cbs-copy-btn" id="cbs-copy-btn" type="button">
+                Copy mint address
+              </button>
+            </div>
+
             <p class="cbs-hero-tagline">
               Always double-check the contract address before you buy. Protect yourself — and each other. 💚
             </p>
@@ -652,9 +693,9 @@
               <span class="cbs-chip">100M total supply</span>
             </div>
 
-            <!-- banner.png rechts als banner -->
+            <!-- Banner-CBS-Coin.webp rechts als banner -->
             <div class="cbs-hero-banner-wrap">
-              <img src="banner.png" alt="CBS Coin banner" class="cbs-hero-banner">
+              <img src="Banner-CBS-Coin.webp" alt="CBS Coin banner" class="cbs-hero-banner">
             </div>
           </div>
         </div>
@@ -740,18 +781,11 @@
       </p>
 
       <div class="cbs-onramp-buttons">
-        <!-- Example MoonPay link -->
+        <!-- MoonPay link -->
         <a href="https://www.moonpay.com/buy/sol"
            target="_blank" rel="noopener"
            class="cbs-onramp-link">
           Buy SOL via MoonPay
-        </a>
-
-        <!-- Example Transak link -->
-        <a href="https://global.transak.com?cryptoCurrencyCode=SOL&network=solana"
-           target="_blank" rel="noopener"
-           class="cbs-onramp-link">
-          Buy SOL via Transak
         </a>
       </div>
     </section>
@@ -788,7 +822,7 @@
       <div class="cbs-faq-item">
         <h3>Can I lose my funds on this page?</h3>
         <p>
-          This page only links to trusted tools like Raydium, MoonPay and Transak. You always keep control of your
+          This page only links to trusted tools like Raydium and MoonPay. You always keep control of your
           wallet and your private keys. Still, never share your seed phrase with anyone — CBS will never ask for it.
         </p>
       </div>
@@ -818,6 +852,40 @@
   <script>
     // current year in footer
     document.getElementById('cbs-year').textContent = new Date().getFullYear();
+
+    // Copy mint address
+    (function () {
+      var mint = 'B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk';
+      var btn = document.getElementById('cbs-copy-btn');
+      var mintEl = document.getElementById('cbs-mint');
+
+      if (btn && mintEl) {
+        btn.addEventListener('click', function () {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(mint).then(function () {
+              var oldText = btn.textContent;
+              btn.textContent = 'Copied!';
+              setTimeout(function () {
+                btn.textContent = oldText;
+              }, 1500);
+            }).catch(function () {
+              // fallback: select text
+              var range = document.createRange();
+              range.selectNodeContents(mintEl);
+              var sel = window.getSelection();
+              sel.removeAllRanges();
+              sel.addRange(range);
+            });
+          } else {
+            var range = document.createRange();
+            range.selectNodeContents(mintEl);
+            var sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+          }
+        });
+      }
+    })();
   </script>
 </body>
 </html>
