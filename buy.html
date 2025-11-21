@@ -11,15 +11,20 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- ✅ Frontend RPC (geen Ankr / 403 meer) -->
+  <!-- ✅ Frontend RPC -->
   <script>
     window.CBS_RPC_URL = "https://solana-rpc.publicnode.com";
-    // Later mag je hier een Helius Secure Endpoint zetten als je wilt.
   </script>
 
-  <!-- ✅ Backend base (Vercel). koop.js gebruikt dit automatisch -->
+  <!-- ✅ Backend base (Vercel) -->
   <script>
     window.API_BASE = "https://cbs-coin.vercel.app";
+  </script>
+
+  <!-- ✅ Buffer polyfill (FIX voor "Buffer is not defined") -->
+  <script src="https://cdn.jsdelivr.net/npm/buffer@6.0.3/index.min.js"></script>
+  <script>
+    window.Buffer = window.buffer.Buffer;
   </script>
 
   <style>
@@ -105,7 +110,6 @@
 
     main { flex: 1; }
 
-    /* Hero */
     .cbs-hero {
       margin-top: 20px; margin-bottom: 22px; padding: 18px;
       border-radius: 20px;
@@ -124,9 +128,7 @@
       display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2.5fr);
       gap: 18px; align-items: center;
     }
-    @media (max-width: 768px) {
-      .cbs-hero-grid { grid-template-columns: minmax(0, 1fr); }
-    }
+    @media (max-width: 768px) { .cbs-hero-grid { grid-template-columns: 1fr; } }
 
     .cbs-hero-badge {
       display:inline-flex; align-items:center; gap:8px; padding:5px 10px;
@@ -145,9 +147,7 @@
     .cbs-hero-subtitle { font-size:14px; color:var(--cbs-muted); margin-bottom:14px; }
 
     .cbs-hero-steps { list-style:none; padding:0; margin:0 0 14px; font-size:13px; }
-    .cbs-hero-steps li {
-      display:flex; align-items:center; gap:8px; margin-bottom:6px; color:rgba(229,239,255,0.9);
-    }
+    .cbs-hero-steps li { display:flex; align-items:center; gap:8px; margin-bottom:6px; color:rgba(229,239,255,0.9); }
     .cbs-step-number {
       width:18px; height:18px; border-radius:999px; border:1px solid rgba(224,177,90,0.8);
       display:flex; align-items:center; justify-content:center;
@@ -191,7 +191,6 @@
     }
     .cbs-hero-banner { width:100%; height:auto; object-fit:cover; display:block; }
 
-    /* Cards */
     .cbs-section { margin-bottom:22px; }
     .cbs-section h2 { font-size:18px; margin:0 0 6px; }
     .cbs-section p { font-size:13px; margin:0 0 10px; color:rgba(229,239,255,0.9); }
@@ -209,7 +208,6 @@
     .cbs-card small { color:var(--cbs-muted); font-size:11px; }
     .cbs-card ul { margin:8px 0 0; padding-left:18px; font-size:12px; color:rgba(229,239,255,0.9); }
 
-    /* Buttons section */
     .cbs-buy {
       max-width:760px; margin:26px auto 16px; padding:20px 24px; border-radius:20px;
       background:
@@ -239,7 +237,6 @@
     .cbs-buy-btn--phantom { background:linear-gradient(135deg,var(--cbs-purple), #4f46e5); color:#f9fafb; }
     .cbs-buy-btn[disabled]{ opacity:.6; cursor:not-allowed; transform:none; box-shadow:none; filter:none; }
 
-    /* Packs UI */
     .pack-row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:10px; }
     .pack-select {
       flex:1 1 220px; background:#0b1222; color:var(--cbs-text);
@@ -265,7 +262,6 @@
       border:1px solid rgba(148,163,184,0.5); color:var(--cbs-neon);
     }
 
-    /* Onramp */
     .cbs-onramp {
       max-width:760px; margin:0 auto 20px; padding:16px 20px; border-radius:16px;
       background:rgba(8,15,35,0.96); border:1px solid rgba(148,163,184,0.45); font-size:13px;
@@ -280,7 +276,6 @@
     }
     .cbs-onramp-link:hover { filter:brightness(1.07); text-decoration:none; }
 
-    /* FAQ */
     .cbs-faq {
       max-width:760px; margin:10px auto 24px; padding:16px 18px 18px; border-radius:16px;
       border:1px solid rgba(55,65,81,0.8);
@@ -426,20 +421,17 @@
       </section>
     </div>
 
-    <!-- ✅ SWAP BUTTONS (geen embedded terminal errors meer) -->
     <section class="cbs-buy">
       <h2>Swap SOL → CBS (Live Market Price)</h2>
       <p>Use a trusted DEX route with CBS mint pre-filled.</p>
 
       <div class="cbs-buy-buttons">
-        <!-- Raydium -->
         <a class="cbs-buy-btn cbs-buy-btn--raydium"
            href="https://raydium.io/swap/?inputCurrency=sol&outputCurrency=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"
            target="_blank" rel="noopener">
           Swap on Raydium
         </a>
 
-        <!-- Jupiter -->
         <a class="cbs-buy-btn cbs-buy-btn--phantom"
            href="https://jup.ag/swap/SOL-B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"
            target="_blank" rel="noopener">
@@ -452,7 +444,6 @@
       </small>
     </section>
 
-    <!-- ✅ CBS Packs -->
     <section class="cbs-buy" id="cbs-pack">
       <h2>Buy CBS Pack (Live Price)</h2>
       <p>Pick a SOL pack, pay in Phantom, and receive CBS using a live DEX payout.</p>
@@ -490,7 +481,6 @@
       </small>
     </section>
 
-    <!-- ✅ MoonPay SOL -->
     <section class="cbs-onramp">
       <h3>New to Solana? Buy SOL first 👇</h3>
       <p>Buy SOL with card / Apple Pay / Google Pay on MoonPay, then come back to swap to CBS.</p>
@@ -501,7 +491,6 @@
       </div>
     </section>
 
-    <!-- FAQ -->
     <section class="cbs-faq">
       <h2>FAQ — Buying CBS</h2>
       <div class="cbs-faq-item">
@@ -526,13 +515,12 @@
     </div>
   </footer>
 
-  <!-- Solana web3 -->
+  <!-- Solana web3 (na Buffer polyfill) -->
   <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
 
   <script>
     document.getElementById('cbs-year').textContent = new Date().getFullYear();
 
-    // Copy mint
     (function () {
       var mint = 'B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk';
       var btn = document.getElementById('cbs-copy-btn');
@@ -547,8 +535,7 @@
     })();
   </script>
 
-  <!-- ✅ jouw frontend pack script zit in /api/ -->
+  <!-- jouw pack script -->
   <script src="api/koop.js"></script>
 </body>
 </html>
-
