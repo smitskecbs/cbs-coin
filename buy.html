@@ -11,8 +11,15 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- ✅ Jupiter Terminal loader (official) -->
+  <!-- ✅ Jupiter Terminal loader -->
   <script src="https://terminal.jup.ag/main-v3.js"></script>
+
+  <!-- ✅ RPC (fix 403). Zet hier je Helius key als je wil. -->
+  <script>
+    // Temporary safe public RPC; replace later with your Helius key if desired:
+    // window.CBS_RPC_URL = "https://mainnet.helius-rpc.com/?api-key=YOUR_KEY";
+    window.CBS_RPC_URL = "https://rpc.ankr.com/solana";
+  </script>
 
   <style>
     :root {
@@ -286,7 +293,7 @@
     .cbs-footer-links a { font-size: 11px; color: var(--cbs-muted); text-decoration: none; }
     .cbs-footer-links a:hover { text-decoration: underline; }
 
-    /* --- Pack UI extras --- */
+    /* Pack UI extras */
     .pack-row {
       display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:10px;
     }
@@ -342,7 +349,6 @@
 
   <main>
     <div class="cbs-container">
-      <!-- Hero -->
       <section class="cbs-hero">
         <div class="cbs-hero-grid">
           <div>
@@ -398,7 +404,6 @@
         </div>
       </section>
 
-      <!-- Cards -->
       <section class="cbs-section">
         <h2>Choose how you want to get started</h2>
         <p>
@@ -439,24 +444,20 @@
       </section>
     </div>
 
-    <!-- ✅ ON-SITE DEX SWAP (NO PRESALE, LIVE PRICE) -->
+    <!-- ✅ On-site DEX Swap -->
     <section class="cbs-swapbox">
       <h3>Buy CBS on this site (Live DEX Price)</h3>
-      <p>
-        Connect your wallet and swap SOL → CBS here using open-market liquidity.
-      </p>
+      <p>Connect your wallet and swap SOL → CBS here using open-market liquidity routes.</p>
       <div id="jup-terminal"></div>
       <p style="margin-top:10px; font-size:11px; color:var(--cbs-muted);" id="phantom-hint">
         On mobile: open this page inside Phantom browser for smooth swaps.
       </p>
     </section>
 
-    <!-- ✅ CBS PACK BUY (Option B improved) -->
+    <!-- ✅ CBS Pack Buy (frontend in koop.js) -->
     <section class="cbs-buy" id="cbs-pack">
       <h2>Buy CBS Pack (Live Price)</h2>
-      <p>
-        Pick a SOL pack, pay in Phantom, and receive CBS using a live Jupiter DEX quote at payout time.
-      </p>
+      <p>Pick a SOL pack, pay in Phantom, and receive CBS using a live Jupiter DEX quote at payout time.</p>
 
       <div class="pack-row">
         <select id="pack-select" class="pack-select">
@@ -478,14 +479,12 @@
         Not connected.
       </div>
 
-      <!-- mini progress pills -->
       <div class="pack-steps" id="pack-steps">
         <span class="pack-step" data-step="1">1) Connect</span>
         <span class="pack-step" data-step="2">2) Pay SOL</span>
         <span class="pack-step" data-step="3">3) CBS Payout</span>
       </div>
 
-      <!-- Solscan links after success -->
       <div class="pack-links" id="pack-links"></div>
 
       <small style="display:block;margin-top:8px;color:var(--cbs-muted);font-size:11px;">
@@ -493,7 +492,7 @@
       </small>
     </section>
 
-    <!-- Backup Raydium buttons -->
+    <!-- Backup Raydium -->
     <section class="cbs-buy">
       <h2>Swap via Raydium (backup)</h2>
       <p>Prefer Raydium directly? Use the official pool below.</p>
@@ -502,18 +501,18 @@
         <a href="https://raydium.io/swap/?inputCurrency=sol&outputCurrency=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"
            target="_blank" rel="noopener"
            class="cbs-buy-btn cbs-buy-btn--raydium">
-          <span>Swap on Raydium</span>
+          Swap on Raydium
         </a>
 
         <a href="https://raydium.io/swap/?inputCurrency=sol&outputCurrency=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"
            target="_blank" rel="noopener"
            class="cbs-buy-btn cbs-buy-btn--phantom">
-          <span>Open Raydium (best in Phantom)</span>
+          Open Raydium (best in Phantom)
         </a>
       </div>
     </section>
 
-    <!-- MoonPay SOL onramp -->
+    <!-- MoonPay onramp -->
     <section class="cbs-onramp">
       <h3>New to Solana? Buy SOL first 👇</h3>
       <p>Buy SOL with card / Apple Pay / Google Pay on MoonPay, then come back to swap to CBS.</p>
@@ -527,21 +526,13 @@
     <!-- FAQ -->
     <section class="cbs-faq">
       <h2>FAQ — Buying CBS</h2>
-
       <div class="cbs-faq-item">
         <h3>Is this a presale?</h3>
-        <p>
-          No. The swap box uses DEX liquidity and live routing.
-          The pack uses a live Jupiter quote at payout time.
-        </p>
+        <p>No. The swap box uses DEX liquidity and live routing. The pack uses a live Jupiter quote at payout time.</p>
       </div>
-
       <div class="cbs-faq-item">
         <h3>What is the official contract address?</h3>
-        <p>
-          CBS mint:
-          <br/><code>B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code>
-        </p>
+        <p>CBS mint:<br/><code>B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code></p>
       </div>
     </section>
   </main>
@@ -557,11 +548,11 @@
     </div>
   </footer>
 
-  <!-- Phantom + Solana web3 -->
+  <!-- Solana web3 -->
   <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
 
   <script>
-    // footer year
+    // year
     document.getElementById('cbs-year').textContent = new Date().getFullYear();
 
     // Copy mint
@@ -569,21 +560,18 @@
       var mint = 'B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk';
       var btn = document.getElementById('cbs-copy-btn');
       var mintEl = document.getElementById('cbs-mint');
+      if (!btn || !mintEl) return;
 
-      if (btn && mintEl) {
-        btn.addEventListener('click', function () {
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(mint).then(function () {
-              var oldText = btn.textContent;
-              btn.textContent = 'Copied!';
-              setTimeout(function () { btn.textContent = oldText; }, 1500);
-            });
-          }
+      btn.addEventListener('click', function () {
+        navigator.clipboard?.writeText?.(mint).then(function () {
+          var oldText = btn.textContent;
+          btn.textContent = 'Copied!';
+          setTimeout(function () { btn.textContent = oldText; }, 1500);
         });
-      }
+      });
     })();
 
-    // Phantom browser hint
+    // Phantom hint
     (function phantomHint(){
       const hint = document.getElementById("phantom-hint");
       const isPhantom = !!window.solana?.isPhantom;
@@ -599,7 +587,7 @@
       }
     })();
 
-    // Jupiter Terminal init
+    // ✅ Jupiter Terminal init WITH endpoint (fixes your console error)
     (function initJupiter() {
       var CBS_MINT = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
       var WSOL_MINT = "So11111111111111111111111111111111111111112";
@@ -609,9 +597,11 @@
           setTimeout(boot, 250);
           return;
         }
+
         window.Jupiter.init({
           displayMode: "integrated",
           integratedTargetId: "jup-terminal",
+          endpoint: window.CBS_RPC_URL || "https://rpc.ankr.com/solana",
           strictTokenList: false,
           defaultExplorer: "solscan",
           formProps: {
@@ -625,157 +615,9 @@
       }
       boot();
     })();
-
-    // CBS PACK BUY — improved
-    (function packBuy() {
-      const { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } = solanaWeb3;
-
-      // SETTINGS
-      const DEFAULT_RPC = "https://api.mainnet-beta.solana.com";
-      // Later if you want Helius: set window.CBS_RPC_URL in a tiny inline script or replace here.
-      const RPC_URL = window.CBS_RPC_URL || DEFAULT_RPC;
-
-      const CREATOR_WALLET = new PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
-
-      // UI
-      const connectBtn = document.getElementById("connect-wallet-btn");
-      const buyBtn = document.getElementById("buy-pack-btn");
-      const statusEl = document.getElementById("pack-status");
-      const packSelect = document.getElementById("pack-select");
-      const stepsWrap = document.getElementById("pack-steps");
-      const linksWrap = document.getElementById("pack-links");
-
-      let provider = null;
-      let buyerPubkey = null;
-
-      function setStatus(msg, good=false) {
-        statusEl.style.color = good ? "var(--cbs-neon)" : "var(--cbs-muted)";
-        statusEl.textContent = msg;
-      }
-
-      function setStep(n) {
-        const pills = stepsWrap.querySelectorAll(".pack-step");
-        pills.forEach(p => p.classList.remove("pack-step--active"));
-        const active = stepsWrap.querySelector(`.pack-step[data-step="${n}"]`);
-        if (active) active.classList.add("pack-step--active");
-      }
-
-      function updateBuyText() {
-        const sol = Number(packSelect.value);
-        buyBtn.textContent = `Buy Pack (${sol.toFixed(2)} SOL)`;
-      }
-
-      function getProvider() {
-        if ("solana" in window) {
-          const p = window.solana;
-          if (p?.isPhantom) return p;
-        }
-        return null;
-      }
-
-      // on load set button text
-      updateBuyText();
-      packSelect.addEventListener("change", updateBuyText);
-
-      // Connect wallet
-      connectBtn.addEventListener("click", async () => {
-        try {
-          provider = getProvider();
-          if (!provider) {
-            setStatus("Phantom not found. Open this page in Phantom browser or install Phantom.");
-            return;
-          }
-          setStep(1);
-          const resp = await provider.connect();
-          buyerPubkey = resp.publicKey;
-          buyBtn.disabled = false;
-          connectBtn.textContent = "Wallet Connected";
-          setStatus("Connected: " + buyerPubkey.toString(), true);
-          setStep(2);
-        } catch (e) {
-          console.error(e);
-          setStatus("Connect cancelled.");
-        }
-      });
-
-      // Buy pack
-      buyBtn.addEventListener("click", async () => {
-        try {
-          if (!provider || !buyerPubkey) {
-            setStatus("Connect wallet first.");
-            return;
-          }
-
-          linksWrap.style.display = "none";
-          linksWrap.innerHTML = "";
-
-          const PRICE_SOL = Number(packSelect.value);
-          const lamports = Math.round(PRICE_SOL * LAMPORTS_PER_SOL);
-
-          buyBtn.disabled = true;
-          setStep(2);
-          setStatus("Preparing payment...");
-
-          const connection = new Connection(RPC_URL, "confirmed");
-
-          const tx = new Transaction().add(
-            SystemProgram.transfer({
-              fromPubkey: buyerPubkey,
-              toPubkey: CREATOR_WALLET,
-              lamports
-            })
-          );
-
-          tx.feePayer = buyerPubkey;
-          const { blockhash } = await connection.getLatestBlockhash("finalized");
-          tx.recentBlockhash = blockhash;
-
-          setStatus("Confirm payment in your wallet...");
-          const signed = await provider.signTransaction(tx);
-
-          setStatus("Sending payment...");
-          const paymentSig = await connection.sendRawTransaction(signed.serialize());
-          await connection.confirmTransaction(paymentSig, "confirmed");
-
-          setStatus("Payment confirmed. Calculating live CBS payout...");
-          setStep(3);
-
-          // Call backend payout
-          const r = await fetch("/api/koop-cbs", {
-            method: "POST",
-            headers: { "content-type": "application/json" },
-            body: JSON.stringify({
-              buyer: buyerPubkey.toString(),
-              signature: paymentSig
-              // backend uses PRICE_SOL env; if you want variable price there later, we add it.
-            })
-          });
-          const j = await r.json();
-
-          if (!j.ok) throw new Error(j.error || "Payout failed");
-
-          const paymentLink = `https://solscan.io/tx/${paymentSig}`;
-          linksWrap.innerHTML += `<a href="${paymentLink}" target="_blank" rel="noopener">Payment tx ↗</a>`;
-
-          if (j.already) {
-            setStatus("Already paid for this transaction ✅", true);
-          } else {
-            const payoutLink = `https://solscan.io/tx/${j.tx}`;
-            linksWrap.innerHTML += `<a href="${payoutLink}" target="_blank" rel="noopener">Payout tx ↗</a>`;
-            setStatus(`Success ✅ You received ~${Number(j.cbsPaid).toFixed(2)} CBS.`, true);
-          }
-
-          linksWrap.style.display = "flex";
-          setStep(1); // reset glow to connect pill for next buy
-
-        } catch (e) {
-          console.error(e);
-          setStatus("Error: " + (e.message || e));
-        } finally {
-          buyBtn.disabled = false;
-        }
-      });
-    })();
   </script>
+
+  <!-- ✅ Pack buying logic -->
+  <script src="koop.js"></script>
 </body>
 </html>
