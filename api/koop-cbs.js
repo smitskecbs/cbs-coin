@@ -1,4 +1,5 @@
 // koop.js — CBS Pack Buy (Option B frontend)
+// Uses Phantom for payment + calls your Vercel /api/koop-cbs backend
 // Requires: solanaWeb3 loaded in buy.html + DOM elements in buy.html
 
 (function () {
@@ -7,9 +8,14 @@
   // === SETTINGS ===
   const CREATOR_WALLET = new PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
 
-  // RPC fallback list (fixes 403)
+  // ✅ Your backend base (Vercel). You can override from buy.html with window.API_BASE
+  const API_BASE =
+    window.API_BASE ||
+    "https://cbs-coin.vercel.app";  // <--- change to your own domain later if you want
+
+  // ✅ RPC fallback list (fixes 403)
   const RPC_FALLBACKS = [
-    window.CBS_RPC_URL,
+    window.CBS_RPC_URL,                 // your Helius/Ankr if set
     "https://rpc.ankr.com/solana",
     "https://solana-rpc.publicnode.com"
   ].filter(Boolean);
@@ -136,21 +142,21 @@
       setStatus("Payment confirmed. Calculating live CBS payout...");
       setStep(3);
 
-      // NOTE: backend currently uses PRICE_SOL env.
-      // We include priceSol so you can upgrade backend later to accept variable packs.
-      const r = await fetch("/api/koop-cbs", {
+      // ✅ Call YOUR Vercel backend (absolute URL)
+      const r = await fetch(`${API_BASE}/api/koop-cbs`, {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           buyer: buyerPubkey.toString(),
           signature: paymentSig,
-          priceSol: PRICE_SOL
+          priceSol: PRICE_SOL // backend ignores for now; later we make it variable
         })
       });
 
       const j = await r.json();
       if (!j.ok) throw new Error(j.error || "Payout failed");
 
+      // links
       const paymentLink = `https://solscan.io/tx/${paymentSig}`;
       linksWrap.innerHTML += `<a href="${paymentLink}" target="_blank" rel="noopener">Payment tx ↗</a>`;
 
@@ -159,7 +165,7 @@
       } else {
         const payoutLink = `https://solscan.io/tx/${j.tx}`;
         linksWrap.innerHTML += `<a href="${payoutLink}" target="_blank" rel="noopener">Payout tx ↗</a>`;
-        setStatus(`Success ✅ You received ~${Number(j.cbsPaid).toFixed(2)} CBS.`, true);
+        setStatus(`Success ✅ You received CBS.`, true);
       }
 
       linksWrap.style.display = "flex";
@@ -172,4 +178,5 @@
       buyBtn.disabled = false;
     }
   });
+
 })();
