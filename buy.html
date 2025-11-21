@@ -4,21 +4,17 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Buy CBS Coin — Community Builds Sovereignty</title>
-  <meta name="description" content="Buy CBS Coin (CBS) easily on Solana. Swap SOL to CBS on this page or via Raydium.">
+  <meta name="description" content="Buy CBS Coin (CBS) easily on Solana. Buy SOL first, then swap to CBS.">
 
   <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- ✅ Jupiter Terminal loader -->
-  <script src="https://terminal.jup.ag/main-v3.js"></script>
-
-  <!-- ✅ Frontend RPC (FIX: geen Ankr meer, want 403). -->
+  <!-- ✅ Frontend RPC (geen Ankr / 403 meer) -->
   <script>
     window.CBS_RPC_URL = "https://solana-rpc.publicnode.com";
-    // Als je later een Helius Secure Endpoint wilt gebruiken, zet je die hier:
-    // window.CBS_RPC_URL = "https://JOUW-SECURE-ENDPOINT.helius-rpc.com";
+    // Later mag je hier een Helius Secure Endpoint zetten als je wilt.
   </script>
 
   <!-- ✅ Backend base (Vercel). koop.js gebruikt dit automatisch -->
@@ -42,8 +38,7 @@
     * { box-sizing: border-box; }
 
     body {
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
       font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
       background: radial-gradient(circle at top, rgba(36,230,181,0.12), transparent 55%), var(--cbs-bg);
       color: var(--cbs-text);
@@ -67,17 +62,11 @@
       margin-bottom: 18px;
       background: linear-gradient(to right, rgba(224,177,90,0.08), transparent);
     }
-
     .cbs-header-inner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-      padding: 10px 16px;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 10px; padding: 10px 16px;
     }
-
     .cbs-brand { display: flex; align-items: center; gap: 10px; }
-
     .cbs-logo-img {
       width: 36px; height: 36px; border-radius: 999px;
       border: 1px solid rgba(224,177,90,0.8);
@@ -85,27 +74,30 @@
       box-shadow: 0 0 16px rgba(224,177,90,0.35);
       background: #020617;
     }
-
     .cbs-title-group { display: flex; flex-direction: column; }
-    .cbs-title { font-size: 18px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
-    .cbs-subtitle { font-size: 11px; color: var(--cbs-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+    .cbs-title {
+      font-size: 18px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+    }
+    .cbs-subtitle {
+      font-size: 11px; color: var(--cbs-muted);
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
 
     nav { display: flex; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
-
     .cbs-nav-link {
       font-size: 12px; padding: 6px 10px; border-radius: 999px;
       border: 1px solid rgba(148,163,184,0.45);
       color: var(--cbs-text); text-decoration: none;
       background: rgba(15,23,42,0.85);
     }
-
     .cbs-nav-link--primary {
       border-color: rgba(224,177,90,0.8);
       background: linear-gradient(135deg,#e0b15a,#c88c32);
       color: #050814; font-weight: 600;
     }
-
     .cbs-nav-link:hover { filter: brightness(1.08); text-decoration: none; }
+
     @media (max-width: 640px) {
       .cbs-header-inner { flex-direction: column; align-items: flex-start; }
       nav { justify-content: flex-start; }
@@ -113,8 +105,10 @@
 
     main { flex: 1; }
 
+    /* Hero */
     .cbs-hero {
-      margin-top: 20px; margin-bottom: 22px; padding: 18px 18px 20px; border-radius: 20px;
+      margin-top: 20px; margin-bottom: 22px; padding: 18px;
+      border-radius: 20px;
       background:
         radial-gradient(circle at top left, rgba(36,230,181,0.18), transparent 60%),
         linear-gradient(135deg,#050814,#080f23);
@@ -126,190 +120,133 @@
       content: ""; position: absolute; inset: 0; border-radius: inherit;
       border: 1px solid rgba(255,255,255,0.06); pointer-events: none;
     }
-
     .cbs-hero-grid {
       display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2.5fr);
       gap: 18px; align-items: center;
     }
-    @media (max-width: 768px) { .cbs-hero-grid { grid-template-columns: minmax(0, 1fr); } }
+    @media (max-width: 768px) {
+      .cbs-hero-grid { grid-template-columns: minmax(0, 1fr); }
+    }
 
     .cbs-hero-badge {
-      display: inline-flex; align-items: center; gap: 8px; padding: 5px 10px; border-radius: 999px;
-      border: 1px solid rgba(36,230,181,0.7);
+      display:inline-flex; align-items:center; gap:8px; padding:5px 10px;
+      border-radius:999px; border:1px solid rgba(36,230,181,0.7);
       background: radial-gradient(circle at top, rgba(36,230,181,0.15), transparent 65%);
-      font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--cbs-neon);
-      margin-bottom: 8px;
+      font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--cbs-neon);
+      margin-bottom:8px;
     }
     .cbs-pill-dot {
-      width: 8px; height: 8px; border-radius: 999px; background: var(--cbs-neon);
-      box-shadow: 0 0 10px rgba(36,230,181,0.9);
+      width:8px; height:8px; border-radius:999px; background:var(--cbs-neon);
+      box-shadow:0 0 10px rgba(36,230,181,0.9);
     }
 
-    .cbs-hero-title { font-size: 26px; line-height: 1.2; font-weight: 800; margin: 0 0 6px; }
-    @media (min-width: 768px) { .cbs-hero-title { font-size: 30px; } }
-    .cbs-hero-subtitle { font-size: 14px; color: var(--cbs-muted); margin-bottom: 14px; }
+    .cbs-hero-title { font-size:26px; line-height:1.2; font-weight:800; margin:0 0 6px; }
+    @media (min-width:768px){ .cbs-hero-title{ font-size:30px; } }
+    .cbs-hero-subtitle { font-size:14px; color:var(--cbs-muted); margin-bottom:14px; }
 
-    .cbs-hero-steps { list-style: none; padding: 0; margin: 0 0 14px; font-size: 13px; }
+    .cbs-hero-steps { list-style:none; padding:0; margin:0 0 14px; font-size:13px; }
     .cbs-hero-steps li {
-      display: flex; align-items: center; gap: 8px; margin-bottom: 6px; color: rgba(229,239,255,0.9);
+      display:flex; align-items:center; gap:8px; margin-bottom:6px; color:rgba(229,239,255,0.9);
     }
     .cbs-step-number {
-      width: 18px; height: 18px; border-radius: 999px;
-      border: 1px solid rgba(224,177,90,0.8);
-      display: flex; align-items: center; justify-content: center;
-      font-size: 11px; color: var(--cbs-gold); background: rgba(5,8,20,0.95);
+      width:18px; height:18px; border-radius:999px; border:1px solid rgba(224,177,90,0.8);
+      display:flex; align-items:center; justify-content:center;
+      font-size:11px; color:var(--cbs-gold); background:rgba(5,8,20,0.95);
     }
 
-    .cbs-hero-contract { font-size: 11px; color: var(--cbs-muted); margin-top: 4px; word-break: break-all; }
-    .cbs-mint-copy-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 4px; }
+    .cbs-hero-contract { font-size:11px; color:var(--cbs-muted); margin-top:4px; word-break:break-all; }
+    .cbs-mint-copy-row { display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-top:4px; }
     .cbs-mint-text {
-      font-family: monospace; font-size: 11px; padding: 4px 6px; border-radius: 6px;
-      background: rgba(15,23,42,0.9); border: 1px solid rgba(148,163,184,0.6); color: #e5efff;
+      font-family:monospace; font-size:11px; padding:4px 6px; border-radius:6px;
+      background:rgba(15,23,42,0.9); border:1px solid rgba(148,163,184,0.6); color:#e5efff;
     }
     .cbs-copy-btn {
-      font-size: 11px; padding: 4px 8px; border-radius: 999px;
-      border: 1px solid rgba(224,177,90,0.9);
-      background: linear-gradient(135deg,#e0b15a,#c88c32);
-      color: #050814; cursor: pointer; font-weight: 600;
+      font-size:11px; padding:4px 8px; border-radius:999px;
+      border:1px solid rgba(224,177,90,0.9);
+      background:linear-gradient(135deg,#e0b15a,#c88c32); color:#050814; cursor:pointer; font-weight:600;
     }
-    .cbs-copy-btn:active { transform: translateY(1px); }
-
-    .cbs-hero-tagline { font-size: 12px; color: rgba(229,239,255,0.82); margin-top: 8px; }
 
     .cbs-hero-right {
-      border-radius: 18px; border: 1px solid rgba(148,163,184,0.4);
+      border-radius:18px; border:1px solid rgba(148,163,184,0.4);
       background: radial-gradient(circle at top, rgba(15,23,42,0.9), rgba(5,8,20,0.98));
-      padding: 12px 12px 14px; font-size: 12px; display: flex; flex-direction: column; gap: 8px;
+      padding:12px; font-size:12px; display:flex; flex-direction:column; gap:8px;
     }
     .cbs-hero-right h3 {
-      margin: 0 0 4px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--cbs-gold);
+      margin:0 0 4px; font-size:13px; text-transform:uppercase; letter-spacing:0.08em; color:var(--cbs-gold);
     }
-    .cbs-hero-right p { margin: 0; color: rgba(229,239,255,0.9); }
-    .cbs-hero-right small { color: var(--cbs-muted); font-size: 11px; }
+    .cbs-hero-right small { color:var(--cbs-muted); font-size:11px; }
 
-    .cbs-tag-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+    .cbs-tag-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:2px; }
     .cbs-chip {
-      font-size: 11px; padding: 4px 8px; border-radius: 999px;
-      border: 1px solid rgba(148,163,184,0.55); color: rgba(229,239,255,0.9); background: rgba(15,23,42,0.9);
+      font-size:11px; padding:4px 8px; border-radius:999px;
+      border:1px solid rgba(148,163,184,0.55); color:rgba(229,239,255,0.9); background:rgba(15,23,42,0.9);
     }
     .cbs-chip--green {
-      border-color: rgba(34,197,94,0.7); color: #bbf7d0; background: rgba(22,163,74,0.16);
+      border-color: rgba(34,197,94,0.7); color:#bbf7d0; background:rgba(22,163,74,0.16);
     }
 
     .cbs-hero-banner-wrap {
-      border-radius: 14px; overflow: hidden; border: 1px solid rgba(148,163,184,0.55);
+      border-radius:14px; overflow:hidden; border:1px solid rgba(148,163,184,0.55);
       background: radial-gradient(circle at top, rgba(15,23,42,0.9), rgba(5,8,20,0.98));
     }
-    .cbs-hero-banner { display: block; width: 100%; height: auto; object-fit: cover; }
+    .cbs-hero-banner { width:100%; height:auto; object-fit:cover; display:block; }
 
-    .cbs-section { margin-bottom: 22px; }
-    .cbs-section h2 { font-size: 18px; margin: 0 0 6px; }
-    .cbs-section p { font-size: 13px; margin: 0 0 10px; color: rgba(229,239,255,0.9); }
+    /* Cards */
+    .cbs-section { margin-bottom:22px; }
+    .cbs-section h2 { font-size:18px; margin:0 0 6px; }
+    .cbs-section p { font-size:13px; margin:0 0 10px; color:rgba(229,239,255,0.9); }
 
-    .cbs-card-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-    @media (max-width: 900px) { .cbs-card-row { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-    @media (max-width: 640px) { .cbs-card-row { grid-template-columns: minmax(0, 1fr); } }
+    .cbs-card-row { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px; }
+    @media(max-width:900px){ .cbs-card-row{ grid-template-columns:repeat(2, minmax(0,1fr)); } }
+    @media(max-width:640px){ .cbs-card-row{ grid-template-columns:1fr; } }
 
     .cbs-card {
-      border-radius: 14px; border: 1px solid var(--cbs-border);
+      border-radius:14px; border:1px solid var(--cbs-border);
       background: radial-gradient(circle at top, rgba(15,23,42,0.85), rgba(5,8,20,0.96));
-      padding: 12px 13px 13px; font-size: 13px;
+      padding:12px; font-size:13px;
     }
-    .cbs-card h3 { margin: 0 0 4px; font-size: 14px; }
-    .cbs-card small { color: var(--cbs-muted); font-size: 11px; }
-    .cbs-card ul { margin: 8px 0 0; padding-left: 18px; color: rgba(229,239,255,0.9); font-size: 12px; }
+    .cbs-card h3 { margin:0 0 4px; font-size:14px; }
+    .cbs-card small { color:var(--cbs-muted); font-size:11px; }
+    .cbs-card ul { margin:8px 0 0; padding-left:18px; font-size:12px; color:rgba(229,239,255,0.9); }
 
+    /* Buttons section */
     .cbs-buy {
-      max-width: 760px; margin: 26px auto 16px; padding: 20px 24px; border-radius: 20px;
+      max-width:760px; margin:26px auto 16px; padding:20px 24px; border-radius:20px;
       background:
         radial-gradient(circle at top, rgba(36,230,181,0.12), transparent 60%),
-        linear-gradient(135deg, #050814, #080f23);
-      border: 1px solid rgba(36,230,181,0.35);
-      box-shadow: 0 0 30px rgba(0,0,0,0.65);
-      color: #e5efff;
+        linear-gradient(135deg,#050814,#080f23);
+      border:1px solid rgba(36,230,181,0.35);
+      box-shadow:0 0 30px rgba(0,0,0,0.65);
+      color:#e5efff;
     }
-    .cbs-buy h2 { font-size: 18px; margin: 0 0 4px; }
-    .cbs-buy p  { font-size: 13px; margin: 0 0 14px; color: rgba(229,239,255,0.9); }
+    .cbs-buy h2 { font-size:18px; margin:0 0 4px; }
+    .cbs-buy p { font-size:13px; margin:0 0 14px; color:rgba(229,239,255,0.9); }
 
-    .cbs-buy-buttons {
-      display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;
-    }
+    .cbs-buy-buttons { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:10px; }
     .cbs-buy-btn {
-      flex: 1 1 220px; text-align: center; text-decoration: none;
-      padding: 10px 14px; border-radius: 999px; font-weight: 600; font-size: 14px;
-      border: none; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
-      cursor: pointer;
+      flex:1 1 220px; text-align:center; padding:10px 14px; border-radius:999px;
+      font-weight:600; font-size:14px; border:none; cursor:pointer;
+      display:inline-flex; align-items:center; justify-content:center; gap:6px;
+      transition:transform .08s ease, box-shadow .08s ease, filter .08s ease;
+      text-decoration:none;
     }
     .cbs-buy-btn:hover {
-      text-decoration: none; filter: brightness(1.05); transform: translateY(-1px);
-      box-shadow: 0 8px 18px rgba(0,0,0,0.6);
+      filter:brightness(1.05); transform:translateY(-1px);
+      box-shadow:0 8px 18px rgba(0,0,0,0.6);
+      text-decoration:none;
     }
-    .cbs-buy-btn--raydium { background: linear-gradient(135deg,var(--cbs-green), #16a34a); color: #050814; }
-    .cbs-buy-btn--phantom { background: linear-gradient(135deg,var(--cbs-purple), #4f46e5); color: #f9fafb; }
-    .cbs-buy-btn[disabled] {
-      opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; filter: none;
-    }
+    .cbs-buy-btn--raydium { background:linear-gradient(135deg,var(--cbs-green), #16a34a); color:#050814; }
+    .cbs-buy-btn--phantom { background:linear-gradient(135deg,var(--cbs-purple), #4f46e5); color:#f9fafb; }
+    .cbs-buy-btn[disabled]{ opacity:.6; cursor:not-allowed; transform:none; box-shadow:none; filter:none; }
 
-    .cbs-swapbox {
-      max-width: 760px; margin: 0 auto 20px; padding: 16px 20px; border-radius: 16px;
-      background: rgba(8,15,35,0.96); border: 1px solid rgba(148,163,184,0.45); font-size: 13px;
-    }
-    .cbs-swapbox h3 { font-size: 15px; margin: 0 0 6px; }
-    .cbs-swapbox p  { margin: 0 0 10px; color: rgba(229,239,255,0.9); font-size: 12px; }
-    #jup-terminal {
-      width: 100%; min-height: 520px; border-radius: 14px; overflow: hidden;
-      border: 1px solid rgba(148,163,184,0.5); background: rgba(5,8,20,0.9);
-    }
-
-    .cbs-onramp {
-      max-width: 760px; margin: 0 auto 20px; padding: 16px 20px; border-radius: 16px;
-      background: rgba(8,15,35,0.96); border: 1px solid rgba(148,163,184,0.45); font-size: 13px;
-    }
-    .cbs-onramp h3 { font-size: 15px; margin: 0 0 6px; }
-    .cbs-onramp p  { margin: 0 0 10px; color: rgba(229,239,255,0.9); font-size: 12px; }
-    .cbs-onramp-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
-    .cbs-onramp-link {
-      flex: 1 1 220px; text-align: center; text-decoration: none; padding: 8px 10px; border-radius: 999px;
-      background: #111827; border: 1px solid rgba(156,163,175,0.75); color: #f9fafb; font-weight: 600; font-size: 12px; cursor: pointer;
-    }
-    .cbs-onramp-link:hover { text-decoration: none; filter: brightness(1.07); }
-
-    .cbs-faq {
-      max-width: 760px; margin: 10px auto 24px; padding: 16px 18px 18px; border-radius: 16px;
-      border: 1px solid rgba(55,65,81,0.8);
-      background: radial-gradient(circle at top, rgba(15,23,42,0.85), rgba(5,8,20,0.96));
-      font-size: 13px;
-    }
-    .cbs-faq h2 { font-size: 16px; margin: 0 0 8px; }
-    .cbs-faq-item { margin-bottom: 10px; }
-    .cbs-faq-item h3 { margin: 0 0 3px; font-size: 13px; color: var(--cbs-gold); }
-    .cbs-faq-item p  { margin: 0; color: rgba(229,239,255,0.9); font-size: 12px; }
-
-    footer {
-      border-top: 1px solid rgba(31,41,55,0.95); padding: 10px 16px 14px;
-      font-size: 11px; color: var(--cbs-muted);
-      background: radial-gradient(circle at top, rgba(24,24,27,0.7), rgba(5,8,20,0.98));
-    }
-    .cbs-footer-inner {
-      max-width: 1080px; margin: 0 auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;
-    }
-    .cbs-footer-links { display: flex; flex-wrap: wrap; gap: 10px; }
-    .cbs-footer-links a { font-size: 11px; color: var(--cbs-muted); text-decoration: none; }
-    .cbs-footer-links a:hover { text-decoration: underline; }
-
-    /* Pack UI extras */
-    .pack-row {
-      display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:10px;
-    }
+    /* Packs UI */
+    .pack-row { display:flex; flex-wrap:wrap; gap:10px; align-items:center; margin-bottom:10px; }
     .pack-select {
       flex:1 1 220px; background:#0b1222; color:var(--cbs-text);
       padding:10px 12px; border-radius:12px; border:1px solid rgba(148,163,184,0.5);
       font-weight:600; font-size:14px; outline:none;
     }
-    .pack-steps {
-      display:flex; flex-wrap:wrap; gap:6px; margin-top:6px;
-    }
+    .pack-steps { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
     .pack-step {
       font-size:11px; padding:4px 8px; border-radius:999px;
       border:1px solid rgba(148,163,184,0.5); background:rgba(15,23,42,0.9); color:rgba(229,239,255,0.9);
@@ -327,6 +264,46 @@
       padding:6px 10px; border-radius:10px; background:rgba(15,23,42,0.9);
       border:1px solid rgba(148,163,184,0.5); color:var(--cbs-neon);
     }
+
+    /* Onramp */
+    .cbs-onramp {
+      max-width:760px; margin:0 auto 20px; padding:16px 20px; border-radius:16px;
+      background:rgba(8,15,35,0.96); border:1px solid rgba(148,163,184,0.45); font-size:13px;
+    }
+    .cbs-onramp h3 { font-size:15px; margin:0 0 6px; }
+    .cbs-onramp p { margin:0 0 10px; color:rgba(229,239,255,0.9); font-size:12px; }
+    .cbs-onramp-buttons { display:flex; flex-wrap:wrap; gap:8px; }
+    .cbs-onramp-link {
+      flex:1 1 220px; text-align:center; padding:8px 10px; border-radius:999px;
+      background:#111827; border:1px solid rgba(156,163,175,0.75);
+      color:#f9fafb; font-weight:600; font-size:12px; text-decoration:none;
+    }
+    .cbs-onramp-link:hover { filter:brightness(1.07); text-decoration:none; }
+
+    /* FAQ */
+    .cbs-faq {
+      max-width:760px; margin:10px auto 24px; padding:16px 18px 18px; border-radius:16px;
+      border:1px solid rgba(55,65,81,0.8);
+      background: radial-gradient(circle at top, rgba(15,23,42,0.85), rgba(5,8,20,0.96));
+      font-size:13px;
+    }
+    .cbs-faq h2 { font-size:16px; margin:0 0 8px; }
+    .cbs-faq-item { margin-bottom:10px; }
+    .cbs-faq-item h3 { margin:0 0 3px; font-size:13px; color:var(--cbs-gold); }
+    .cbs-faq-item p { margin:0; color:rgba(229,239,255,0.9); font-size:12px; }
+
+    footer {
+      border-top:1px solid rgba(31,41,55,0.95); padding:10px 16px 14px;
+      font-size:11px; color:var(--cbs-muted);
+      background: radial-gradient(circle at top, rgba(24,24,27,0.7), rgba(5,8,20,0.98));
+    }
+    .cbs-footer-inner {
+      max-width:1080px; margin:0 auto; display:flex; flex-wrap:wrap;
+      align-items:center; justify-content:space-between; gap:8px;
+    }
+    .cbs-footer-links { display:flex; flex-wrap:wrap; gap:10px; }
+    .cbs-footer-links a { font-size:11px; color:var(--cbs-muted); text-decoration:none; }
+    .cbs-footer-links a:hover { text-decoration:underline; }
   </style>
 </head>
 
@@ -368,7 +345,7 @@
 
             <ul class="cbs-hero-steps">
               <li><span class="cbs-step-number">1</span><span>Get a <strong>Phantom</strong> wallet and some SOL.</span></li>
-              <li><span class="cbs-step-number">2</span><span>Swap <strong>SOL → CBS</strong> on this page at live market price.</span></li>
+              <li><span class="cbs-step-number">2</span><span>Swap <strong>SOL → CBS</strong> at live market price.</span></li>
               <li><span class="cbs-step-number">3</span><span>Welcome to the <strong>CBS Army</strong>.</span></li>
             </ul>
 
@@ -412,7 +389,7 @@
       <section class="cbs-section">
         <h2>Choose how you want to get started</h2>
         <p>
-          Already have SOL? Use the swap box below. New to Solana? Buy SOL first, then swap to CBS.
+          Already have SOL? Use one of the swap buttons below. New to Solana? Buy SOL first, then swap to CBS.
         </p>
 
         <div class="cbs-card-row">
@@ -420,8 +397,8 @@
             <h3>Option 1 — I already have SOL</h3>
             <small>Fastest and easiest</small>
             <ul>
-              <li>Connect your wallet below</li>
-              <li>Swap SOL → CBS at live market price</li>
+              <li>Swap SOL → CBS on Raydium or Jupiter</li>
+              <li>Live market price</li>
               <li>Done — you’re in the CBS Army</li>
             </ul>
           </article>
@@ -430,9 +407,9 @@
             <h3>Option 2 — I need to buy SOL</h3>
             <small>For new users</small>
             <ul>
-              <li>Buy SOL via MoonPay</li>
+              <li>Buy SOL via MoonPay (Google Pay / Apple Pay)</li>
               <li>Send SOL to Phantom</li>
-              <li>Swap SOL → CBS on this page</li>
+              <li>Swap SOL → CBS</li>
             </ul>
           </article>
 
@@ -449,20 +426,36 @@
       </section>
     </div>
 
-    <!-- ✅ On-site swap (live DEX price) -->
-    <section class="cbs-swapbox">
-      <h3>Buy CBS on this site (Live DEX Price)</h3>
-      <p>Connect your wallet and swap SOL → CBS here using open-market liquidity routes.</p>
-      <div id="jup-terminal"></div>
-      <p style="margin-top:10px; font-size:11px; color:var(--cbs-muted);" id="phantom-hint">
-        On mobile: open this page inside Phantom browser for smooth swaps.
-      </p>
+    <!-- ✅ SWAP BUTTONS (geen embedded terminal errors meer) -->
+    <section class="cbs-buy">
+      <h2>Swap SOL → CBS (Live Market Price)</h2>
+      <p>Use a trusted DEX route with CBS mint pre-filled.</p>
+
+      <div class="cbs-buy-buttons">
+        <!-- Raydium -->
+        <a class="cbs-buy-btn cbs-buy-btn--raydium"
+           href="https://raydium.io/swap/?inputCurrency=sol&outputCurrency=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"
+           target="_blank" rel="noopener">
+          Swap on Raydium
+        </a>
+
+        <!-- Jupiter -->
+        <a class="cbs-buy-btn cbs-buy-btn--phantom"
+           href="https://jup.ag/swap/SOL-B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"
+           target="_blank" rel="noopener">
+          Swap on Jupiter
+        </a>
+      </div>
+
+      <small style="color:var(--cbs-muted);font-size:11px;">
+        Tip: On mobile, open this page inside the Phantom browser for the smoothest flow.
+      </small>
     </section>
 
     <!-- ✅ CBS Packs -->
     <section class="cbs-buy" id="cbs-pack">
       <h2>Buy CBS Pack (Live Price)</h2>
-      <p>Pick a SOL pack, pay in Phantom, and receive CBS using a live Jupiter DEX quote at payout time.</p>
+      <p>Pick a SOL pack, pay in Phantom, and receive CBS using a live DEX payout.</p>
 
       <div class="pack-row">
         <select id="pack-select" class="pack-select">
@@ -497,27 +490,7 @@
       </small>
     </section>
 
-    <!-- Raydium backup -->
-    <section class="cbs-buy">
-      <h2>Swap via Raydium (backup)</h2>
-      <p>Prefer Raydium directly? Use the official pool below.</p>
-
-      <div class="cbs-buy-buttons">
-        <a href="https://raydium.io/swap/?inputCurrency=sol&outputCurrency=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"
-           target="_blank" rel="noopener"
-           class="cbs-buy-btn cbs-buy-btn--raydium">
-          Swap on Raydium
-        </a>
-
-        <a href="https://raydium.io/swap/?inputCurrency=sol&outputCurrency=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"
-           target="_blank" rel="noopener"
-           class="cbs-buy-btn cbs-buy-btn--phantom">
-          Open Raydium (best in Phantom)
-        </a>
-      </div>
-    </section>
-
-    <!-- MoonPay SOL -->
+    <!-- ✅ MoonPay SOL -->
     <section class="cbs-onramp">
       <h3>New to Solana? Buy SOL first 👇</h3>
       <p>Buy SOL with card / Apple Pay / Google Pay on MoonPay, then come back to swap to CBS.</p>
@@ -533,7 +506,7 @@
       <h2>FAQ — Buying CBS</h2>
       <div class="cbs-faq-item">
         <h3>Is this a presale?</h3>
-        <p>No. The swap box uses DEX liquidity and live routing. The pack uses a live Jupiter quote at payout time.</p>
+        <p>No. You buy from open-market liquidity at live price.</p>
       </div>
       <div class="cbs-faq-item">
         <h3>What is the official contract address?</h3>
@@ -564,7 +537,6 @@
       var mint = 'B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk';
       var btn = document.getElementById('cbs-copy-btn');
       if (!btn) return;
-
       btn.addEventListener('click', function () {
         navigator.clipboard?.writeText?.(mint).then(function () {
           var oldText = btn.textContent;
@@ -573,54 +545,10 @@
         });
       });
     })();
-
-    // Phantom hint
-    (function phantomHint(){
-      const hint = document.getElementById("phantom-hint");
-      const isPhantom = !!window.solana?.isPhantom;
-      const ua = navigator.userAgent.toLowerCase();
-      const isMobile = /iphone|ipad|android/.test(ua);
-
-      if (isMobile && !isPhantom) {
-        hint.textContent = "Tip: open this page inside the Phantom browser for the smoothest experience.";
-      }
-      if (isPhantom) {
-        hint.textContent = "You are in Phantom browser ✅";
-        hint.style.color = "var(--cbs-neon)";
-      }
-    })();
-
-    // ✅ Jupiter Terminal init WITH endpoint
-    (function initJupiter() {
-      var CBS_MINT = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
-      var WSOL_MINT = "So11111111111111111111111111111111111111112";
-
-      function boot() {
-        if (!window.Jupiter || !window.Jupiter.init) {
-          setTimeout(boot, 250);
-          return;
-        }
-
-        window.Jupiter.init({
-          displayMode: "integrated",
-          integratedTargetId: "jup-terminal",
-          endpoint: window.CBS_RPC_URL || "https://solana-rpc.publicnode.com",
-          strictTokenList: false,
-          defaultExplorer: "solscan",
-          formProps: {
-            initialInputMint: WSOL_MINT,
-            initialOutputMint: CBS_MINT,
-            fixedOutputMint: true,
-            initialSlippageBps: 150
-          },
-          theme: "dark"
-        });
-      }
-      boot();
-    })();
   </script>
 
-  <!-- Pack buying logic -->
-  <script src="koop.js"></script>
+  <!-- ✅ jouw frontend pack script zit in /api/ -->
+  <script src="api/koop.js"></script>
 </body>
 </html>
+
