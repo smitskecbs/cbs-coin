@@ -1,163 +1,771 @@
-// /api/koop-cbs.js  — na 0.020 SOL → 25.000 CBS sturen (met CORS)
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Buy CBS Coin — Community Builds Sovereignty</title>
+  <meta name="description" content="Buy CBS Coin (CBS) easily on Solana. Swap SOL to CBS via Raydium or directly on this page.">
 
-// ---------- CORS ----------
-const ALLOW_ORIGINS = [
-  "https://smitskecbs.github.io", // jouw GitHub Pages (origin is zonder pad)
-  "https://cbs-coin.vercel.app",  // jouw Vercel frontend
-  "http://localhost:3000",
-  "http://127.0.0.1:5500",
-];
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 
-function corsHeaders(origin = "") {
-  const allow = ALLOW_ORIGINS.includes(origin) ? origin : ALLOW_ORIGINS[0];
-  return {
-    "access-control-allow-origin": allow,
-    "access-control-allow-methods": "POST,OPTIONS",
-    "access-control-allow-headers": "content-type",
-    "access-control-max-age": "86400",
-  };
-}
-function send(res, status, body, origin) {
-  const headers = corsHeaders(origin);
-  Object.entries(headers).forEach(([k, v]) => res.setHeader(k, v));
-  res.status(status).json(body);
-}
-function ok(res, data, origin) { send(res, 200, { ok: true, ...data }, origin); }
-function bad(res, status, msg, origin) { send(res, status, { ok: false, error: msg }, origin); }
+  <!-- ✅ Jupiter Terminal loader (official) -->
+  <script src="https://terminal.jup.ag/main-v3.js"></script>
 
-// ---------- Imports ----------
-import bs58 from "bs58";
-import {
-  Connection, PublicKey, Keypair, SystemProgram,
-  Transaction, TransactionInstruction, LAMPORTS_PER_SOL
-} from "@solana/web3.js";
-import {
-  getMint,
-  getOrCreateAssociatedTokenAccount,
-  createTransferCheckedInstruction,
-} from "@solana/spl-token";
+  <style>
+    :root {
+      --cbs-bg: #050814;
+      --cbs-bg-soft: #080f23;
+      --cbs-text: #e5efff;
+      --cbs-muted: #9ca3af;
+      --cbs-gold: #e0b15a;
+      --cbs-neon: #24e6b5;
+      --cbs-border: rgba(148,163,184,0.45);
+    }
 
-// ---------- ENV ----------
-const RPC_URL          = process.env.HELIUS_RPC_URL;
-const CREATOR_WALLET   = process.env.CREATOR_WALLET;           // 76Sj...LmEg
-const TREASURY_SECRET  = process.env.TREASURY_PRIVATE_KEY_B58; // base58 geheime key
-const CBS_MINT         = process.env.CBS_MINT;                 // B9z8...Cfkk
-const PRICE_SOL        = Number(process.env.PRICE_SOL ?? "0.02");
-const CBS_AMOUNT_HUMAN = Number(process.env.CBS_AMOUNT ?? "25000");
+    * { box-sizing: border-box; }
 
-// ---------- Helpers ----------
-function kpFromBase58(b58) { return Keypair.fromSecretKey(bs58.decode(b58)); }
-function isSystemTransfer(ix){
-  try {
-    const prog = ix?.programId?.toString?.() || ix?.program;
-    return prog === SystemProgram.programId.toString() || prog === "system";
-  } catch { return false; }
-}
-async function findRecentPayout(connection, fromPubkey, toPubkey, mint, uiAmount){
-  try{
-    const sigs = await connection.getSignaturesForAddress(fromPubkey, { limit: 25 });
-    const infos = await connection.getParsedTransactions(sigs.map(s=>s.signature), {
-      maxSupportedTransactionVersion: 0
-    });
-    for (const tx of infos){
-      if (!tx) continue;
-      for (const ix of (tx.transaction.message.instructions || [])){
-        const p = ix?.parsed;
-        if (p?.type !== "transferChecked" && p?.type !== "transfer") continue;
-        const info = p.info || {};
-        if ((info.mint || info.mintAddress) !== mint.toString()) continue;
-        if (info.destinationOwner && info.destinationOwner !== toPubkey.toString()) continue;
-        const ui = Number(info.tokenAmount?.uiAmountString ?? info.tokenAmount?.uiAmount ?? info.amount ?? 0);
-        if (Math.abs(ui - uiAmount) < 0.0001) return true;
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(circle at top, rgba(36,230,181,0.12), transparent 55%), var(--cbs-bg);
+      color: var(--cbs-text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    a { color: var(--cbs-neon); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .cbs-container {
+      width: 100%;
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 16px 16px 40px;
+    }
+
+    header {
+      border-bottom: 1px solid rgba(148,163,184,0.35);
+      margin-bottom: 18px;
+      background: linear-gradient(to right, rgba(224,177,90,0.08), transparent);
+    }
+
+    .cbs-header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 10px 16px;
+    }
+
+    .cbs-brand { display: flex; align-items: center; gap: 10px; }
+
+    .cbs-logo-img {
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      border: 1px solid rgba(224,177,90,0.8);
+      object-fit: cover;
+      box-shadow: 0 0 16px rgba(224,177,90,0.35);
+      background: #020617;
+    }
+
+    .cbs-title-group { display: flex; flex-direction: column; }
+
+    .cbs-title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .cbs-subtitle {
+      font-size: 11px;
+      color: var(--cbs-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    nav {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .cbs-nav-link {
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.45);
+      color: var(--cbs-text);
+      text-decoration: none;
+      background: rgba(15,23,42,0.85);
+    }
+
+    .cbs-nav-link--primary {
+      border-color: rgba(224,177,90,0.8);
+      background: linear-gradient(135deg,#e0b15a,#c88c32);
+      color: #050814;
+      font-weight: 600;
+    }
+
+    .cbs-nav-link:hover {
+      filter: brightness(1.08);
+      text-decoration: none;
+    }
+
+    @media (max-width: 640px) {
+      .cbs-header-inner { flex-direction: column; align-items: flex-start; }
+      nav { justify-content: flex-start; }
+    }
+
+    main { flex: 1; }
+
+    /* Hero */
+    .cbs-hero {
+      margin-top: 20px;
+      margin-bottom: 22px;
+      padding: 18px 18px 20px;
+      border-radius: 20px;
+      background:
+        radial-gradient(circle at top left, rgba(36,230,181,0.18), transparent 60%),
+        linear-gradient(135deg,#050814,#080f23);
+      border: 1px solid rgba(224,177,90,0.55);
+      box-shadow: 0 18px 60px rgba(0,0,0,0.65);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cbs-hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      border: 1px solid rgba(255,255,255,0.06);
+      pointer-events: none;
+    }
+
+    .cbs-hero-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2.5fr);
+      gap: 18px;
+      align-items: center;
+    }
+
+    @media (max-width: 768px) {
+      .cbs-hero-grid { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    .cbs-hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(36,230,181,0.7);
+      background: radial-gradient(circle at top, rgba(36,230,181,0.15), transparent 65%);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--cbs-neon);
+      margin-bottom: 8px;
+    }
+
+    .cbs-pill-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--cbs-neon);
+      box-shadow: 0 0 10px rgba(36,230,181,0.9);
+    }
+
+    .cbs-hero-title {
+      font-size: 26px;
+      line-height: 1.2;
+      font-weight: 800;
+      margin: 0 0 6px;
+    }
+
+    @media (min-width: 768px) {
+      .cbs-hero-title { font-size: 30px; }
+    }
+
+    .cbs-hero-subtitle {
+      font-size: 14px;
+      color: var(--cbs-muted);
+      margin-bottom: 14px;
+    }
+
+    .cbs-hero-steps {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 14px;
+      font-size: 13px;
+    }
+
+    .cbs-hero-steps li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+      color: rgba(229,239,255,0.9);
+    }
+
+    .cbs-step-number {
+      width: 18px;
+      height: 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(224,177,90,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      color: var(--cbs-gold);
+      background: rgba(5,8,20,0.95);
+    }
+
+    .cbs-hero-contract {
+      font-size: 11px;
+      color: var(--cbs-muted);
+      margin-top: 4px;
+      word-break: break-all;
+    }
+
+    .cbs-mint-copy-row {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .cbs-mint-text {
+      font-family: monospace;
+      font-size: 11px;
+      padding: 4px 6px;
+      border-radius: 6px;
+      background: rgba(15,23,42,0.9);
+      border: 1px solid rgba(148,163,184,0.6);
+      color: #e5efff;
+    }
+
+    .cbs-copy-btn {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(224,177,90,0.9);
+      background: linear-gradient(135deg,#e0b15a,#c88c32);
+      color: #050814;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .cbs-copy-btn:active { transform: translateY(1px); }
+
+    .cbs-hero-tagline {
+      font-size: 12px;
+      color: rgba(229,239,255,0.82);
+      margin-top: 8px;
+    }
+
+    .cbs-hero-right {
+      border-radius: 18px;
+      border: 1px solid rgba(148,163,184,0.4);
+      background: radial-gradient(circle at top, rgba(15,23,42,0.9), rgba(5,8,20,0.98));
+      padding: 12px 12px 14px;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .cbs-hero-right h3 {
+      margin: 0 0 4px;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--cbs-gold);
+    }
+    .cbs-hero-right p { margin: 0; color: rgba(229,239,255,0.9); }
+    .cbs-hero-right small { color: var(--cbs-muted); font-size: 11px; }
+
+    .cbs-tag-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 2px;
+    }
+    .cbs-chip {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      border: 1px solid rgba(148,163,184,0.55);
+      color: rgba(229,239,255,0.9);
+      background: rgba(15,23,42,0.9);
+    }
+    .cbs-chip--green {
+      border-color: rgba(34,197,94,0.7);
+      color: #bbf7d0;
+      background: rgba(22,163,74,0.16);
+    }
+
+    .cbs-hero-banner-wrap {
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(148,163,184,0.55);
+      background: radial-gradient(circle at top, rgba(15,23,42,0.9), rgba(5,8,20,0.98));
+    }
+    .cbs-hero-banner {
+      display: block;
+      width: 100%;
+      height: auto;
+      object-fit: cover;
+    }
+
+    /* Sections */
+    .cbs-section { margin-bottom: 22px; }
+    .cbs-section h2 { font-size: 18px; margin: 0 0 6px; }
+    .cbs-section p { font-size: 13px; margin: 0 0 10px; color: rgba(229,239,255,0.9); }
+
+    .cbs-card-row {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    @media (max-width: 900px) {
+      .cbs-card-row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+    @media (max-width: 640px) {
+      .cbs-card-row { grid-template-columns: minmax(0, 1fr); }
+    }
+
+    .cbs-card {
+      border-radius: 14px;
+      border: 1px solid var(--cbs-border);
+      background: radial-gradient(circle at top, rgba(15,23,42,0.85), rgba(5,8,20,0.96));
+      padding: 12px 13px 13px;
+      font-size: 13px;
+    }
+    .cbs-card h3 { margin: 0 0 4px; font-size: 14px; }
+    .cbs-card small { color: var(--cbs-muted); font-size: 11px; }
+    .cbs-card ul {
+      margin: 8px 0 0;
+      padding-left: 18px;
+      color: rgba(229,239,255,0.9);
+      font-size: 12px;
+    }
+
+    /* BUY CBS BLOCK */
+    .cbs-buy {
+      max-width: 760px;
+      margin: 26px auto 16px;
+      padding: 20px 24px;
+      border-radius: 20px;
+      background: radial-gradient(circle at top, rgba(36,230,181,0.12), transparent 60%),
+                  linear-gradient(135deg, #050814, #080f23);
+      border: 1px solid rgba(36,230,181,0.35);
+      box-shadow: 0 0 30px rgba(0,0,0,0.65);
+      color: #e5efff;
+    }
+    .cbs-buy h2 { font-size: 18px; margin: 0 0 4px; }
+    .cbs-buy p { font-size: 13px; margin: 0 0 14px; color: rgba(229,239,255,0.9); }
+
+    .cbs-buy-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .cbs-buy-btn {
+      flex: 1 1 220px;
+      text-align: center;
+      text-decoration: none;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 14px;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+    }
+    .cbs-buy-btn:hover {
+      text-decoration: none;
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.6);
+    }
+    .cbs-buy-btn--raydium { background: linear-gradient(135deg,#22c55e,#16a34a); color: #050814; }
+    .cbs-buy-btn--phantom { background: linear-gradient(135deg,#6366f1,#4f46e5); color: #f9fafb; }
+
+    /* ✅ On-site swap box */
+    .cbs-swapbox {
+      max-width: 760px;
+      margin: 0 auto 20px;
+      padding: 16px 20px;
+      border-radius: 16px;
+      background: rgba(8,15,35,0.96);
+      border: 1px solid rgba(148,163,184,0.45);
+      font-size: 13px;
+    }
+    .cbs-swapbox h3 { font-size: 15px; margin: 0 0 6px; }
+    .cbs-swapbox p { margin: 0 0 10px; color: rgba(229,239,255,0.9); font-size: 12px; }
+
+    /* Jupiter container styling */
+    #jup-terminal {
+      width: 100%;
+      min-height: 520px;
+      border-radius: 14px;
+      overflow: hidden;
+      border: 1px solid rgba(148,163,184,0.5);
+      background: rgba(5,8,20,0.9);
+    }
+
+    .cbs-onramp {
+      max-width: 760px;
+      margin: 0 auto 20px;
+      padding: 16px 20px;
+      border-radius: 16px;
+      background: rgba(8,15,35,0.96);
+      border: 1px solid rgba(148,163,184,0.45);
+      font-size: 13px;
+    }
+    .cbs-onramp h3 { font-size: 15px; margin: 0 0 6px; }
+    .cbs-onramp p { margin: 0 0 10px; color: rgba(229,239,255,0.9); font-size: 12px; }
+    .cbs-onramp-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+    .cbs-onramp-link {
+      flex: 1 1 220px;
+      text-align: center;
+      text-decoration: none;
+      padding: 8px 10px;
+      border-radius: 999px;
+      background: #111827;
+      border: 1px solid rgba(156,163,175,0.75);
+      color: #f9fafb;
+      font-weight: 600;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .cbs-onramp-link:hover { text-decoration: none; filter: brightness(1.07); }
+
+    .cbs-faq {
+      max-width: 760px;
+      margin: 10px auto 24px;
+      padding: 16px 18px 18px;
+      border-radius: 16px;
+      border: 1px solid rgba(55,65,81,0.8);
+      background: radial-gradient(circle at top, rgba(15,23,42,0.85), rgba(5,8,20,0.96));
+      font-size: 13px;
+    }
+    .cbs-faq h2 { font-size: 16px; margin: 0 0 8px; }
+    .cbs-faq-item { margin-bottom: 10px; }
+    .cbs-faq-item h3 { margin: 0 0 3px; font-size: 13px; color: var(--cbs-gold); }
+    .cbs-faq-item p { margin: 0; color: rgba(229,239,255,0.9); font-size: 12px; }
+
+    footer {
+      border-top: 1px solid rgba(31,41,55,0.95);
+      padding: 10px 16px 14px;
+      font-size: 11px;
+      color: var(--cbs-muted);
+      background: radial-gradient(circle at top, rgba(24,24,27,0.7), rgba(5,8,20,0.98));
+    }
+    .cbs-footer-inner {
+      max-width: 1080px;
+      margin: 0 auto;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .cbs-footer-links { display: flex; flex-wrap: wrap; gap: 10px; }
+    .cbs-footer-links a { font-size: 11px; color: var(--cbs-muted); text-decoration: none; }
+    .cbs-footer-links a:hover { text-decoration: underline; }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="cbs-container cbs-header-inner">
+      <div class="cbs-brand">
+        <img src="logo.png" alt="CBS Coin logo" class="cbs-logo-img">
+        <div class="cbs-title-group">
+          <span class="cbs-title">CBS Coin</span>
+          <span class="cbs-subtitle">Community Builds Sovereignty</span>
+        </div>
+      </div>
+
+      <nav>
+        <a href="index.html" class="cbs-nav-link">Home</a>
+        <a href="mc.html" class="cbs-nav-link">MC / FOMO Page</a>
+
+        <!-- ✅ WordPress whitepaper -->
+        <a href="https://cbs-coin.com/whitepaper/" target="_blank" rel="noopener" class="cbs-nav-link">
+          Whitepaper
+        </a>
+
+        <a href="buy.html" class="cbs-nav-link cbs-nav-link--primary">Buy CBS</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <div class="cbs-container">
+      <!-- Hero -->
+      <section class="cbs-hero">
+        <div class="cbs-hero-grid">
+          <div>
+            <div class="cbs-hero-badge">
+              <span class="cbs-pill-dot"></span>
+              BUY CBS — LIVE ON SOLANA
+            </div>
+            <h1 class="cbs-hero-title">Buy CBS in a few simple steps</h1>
+            <p class="cbs-hero-subtitle">
+              No presale. No VC. No promises — just a live community token on Solana.
+            </p>
+
+            <ul class="cbs-hero-steps">
+              <li>
+                <span class="cbs-step-number">1</span>
+                <span>Get a <strong>Phantom</strong> wallet and make sure you have some SOL.</span>
+              </li>
+              <li>
+                <span class="cbs-step-number">2</span>
+                <span>Swap <strong>SOL → CBS</strong> directly on this page (live market price).</span>
+              </li>
+              <li>
+                <span class="cbs-step-number">3</span>
+                <span>Welcome to the <strong>CBS Army</strong> — Community Builds Sovereignty.</span>
+              </li>
+            </ul>
+
+            <p class="cbs-hero-contract">Official CBS mint:</p>
+            <div class="cbs-mint-copy-row">
+              <span class="cbs-mint-text" id="cbs-mint">
+                B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk
+              </span>
+              <button class="cbs-copy-btn" id="cbs-copy-btn" type="button">
+                Copy mint address
+              </button>
+            </div>
+
+            <p class="cbs-hero-tagline">
+              Always double-check the contract address before you buy. Protect yourself — and each other. 💚
+            </p>
+          </div>
+
+          <div class="cbs-hero-right">
+            <div>
+              <h3>Important notes</h3>
+              <p>
+                CBS started with <strong>one phone, one dev and one dream</strong> — no team, no investors, no presale.
+              </p>
+              <small>
+                You always stay in control of your funds and your keys.
+              </small>
+            </div>
+
+            <div class="cbs-tag-chips">
+              <span class="cbs-chip cbs-chip--green">No presale</span>
+              <span class="cbs-chip">No VC</span>
+              <span class="cbs-chip">100M total supply</span>
+            </div>
+
+            <div class="cbs-hero-banner-wrap">
+              <img src="Banner-CBS-Coin.webp" alt="CBS Coin banner" class="cbs-hero-banner">
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Cards -->
+      <section class="cbs-section">
+        <h2>Choose how you want to get started</h2>
+        <p>
+          Already have SOL? Use the swap box below. New to Solana? Buy SOL first, then swap to CBS.
+        </p>
+
+        <div class="cbs-card-row">
+          <article class="cbs-card">
+            <h3>Option 1 — I already have SOL</h3>
+            <small>Fastest and easiest</small>
+            <ul>
+              <li>Connect your wallet below</li>
+              <li>Swap SOL → CBS at live market price</li>
+              <li>Done — you’re in the CBS Army</li>
+            </ul>
+          </article>
+
+          <article class="cbs-card">
+            <h3>Option 2 — I need to buy SOL</h3>
+            <small>For new users</small>
+            <ul>
+              <li>Buy SOL via MoonPay</li>
+              <li>Send SOL to Phantom</li>
+              <li>Swap SOL → CBS on this page</li>
+            </ul>
+          </article>
+
+          <article class="cbs-card">
+            <h3>Option 3 — I want to DYOR</h3>
+            <small>Always recommended</small>
+            <ul>
+              <li>Check contract address</li>
+              <li>Look at liquidity / holders</li>
+              <li>Join Telegram and ask</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+    </div>
+
+    <!-- ✅ NEW: ON-SITE SWAP -->
+    <section class="cbs-swapbox">
+      <h3>Buy CBS on this site (Live DEX price)</h3>
+      <p>
+        Connect your wallet and swap SOL → CBS here.  
+        Price is pulled from open market liquidity (Raydium/other DEX routes), so this is <strong>not a presale</strong>. :contentReference[oaicite:2]{index=2}
+      </p>
+
+      <!-- Jupiter Terminal mounts here -->
+      <div id="jup-terminal"></div>
+
+      <p style="margin-top:10px; font-size:11px; color:var(--cbs-muted);">
+        On mobile: open this page inside Phantom browser for the smoothest swap.
+      </p>
+    </section>
+
+    <!-- Your existing Raydium buttons -->
+    <section class="cbs-buy">
+      <h2>Swap via Raydium (backup)</h2>
+      <p>
+        Prefer Raydium directly? Use the official pool below.
+      </p>
+
+      <div class="cbs-buy-buttons">
+        <a href="https://raydium.io/swap/?inputCurrency=sol&outputCurrency=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"
+           target="_blank" rel="noopener"
+           class="cbs-buy-btn cbs-buy-btn--raydium">
+          <span>Swap on Raydium</span>
+        </a>
+
+        <a href="https://raydium.io/swap/?inputCurrency=sol&outputCurrency=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"
+           target="_blank" rel="noopener"
+           class="cbs-buy-btn cbs-buy-btn--phantom">
+          <span>Open Raydium (best in Phantom)</span>
+        </a>
+      </div>
+    </section>
+
+    <!-- MoonPay onramp -->
+    <section class="cbs-onramp">
+      <h3>New to Solana? Buy SOL first 👇</h3>
+      <p>
+        Buy SOL with card / Apple Pay / Google Pay on MoonPay, then come back to swap to CBS.
+      </p>
+      <div class="cbs-onramp-buttons">
+        <a href="https://www.moonpay.com/buy/sol" target="_blank" rel="noopener" class="cbs-onramp-link">
+          Buy SOL via MoonPay
+        </a>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="cbs-faq">
+      <h2>FAQ — Buying CBS</h2>
+
+      <div class="cbs-faq-item">
+        <h3>Is this a presale?</h3>
+        <p>
+          No. This is a DEX swap at live market price. You buy from liquidity pools, not from the team. :contentReference[oaicite:3]{index=3}
+        </p>
+      </div>
+
+      <div class="cbs-faq-item">
+        <h3>What is the official contract address?</h3>
+        <p>
+          CBS mint:
+          <br/><code>B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code>
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="cbs-footer-inner">
+      <span>© <span id="cbs-year"></span> CBS Coin — Community Builds Sovereignty.</span>
+      <div class="cbs-footer-links">
+        <a href="https://cbs-coin.com" target="_blank" rel="noopener">Official website</a>
+        <a href="https://x.com/CBS_Coin" target="_blank" rel="noopener">X (Twitter)</a>
+        <a href="https://t.me/CBS_Coin" target="_blank" rel="noopener">Telegram</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.getElementById('cbs-year').textContent = new Date().getFullYear();
+
+    // Copy mint address
+    (function () {
+      var mint = 'B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk';
+      var btn = document.getElementById('cbs-copy-btn');
+      var mintEl = document.getElementById('cbs-mint');
+
+      if (btn && mintEl) {
+        btn.addEventListener('click', function () {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(mint).then(function () {
+              var oldText = btn.textContent;
+              btn.textContent = 'Copied!';
+              setTimeout(function () { btn.textContent = oldText; }, 1500);
+            });
+          }
+        });
       }
-    }
-  }catch(_){}
-  return false;
-}
+    })();
 
-// ---------- Handler ----------
-export default async function handler(req, res){
-  const origin = req.headers.origin || "";
+    // ✅ Jupiter Terminal init
+    (function initJupiter() {
+      var CBS_MINT = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
+      var WSOL_MINT = "So11111111111111111111111111111111111111112"; // SOL wrapper mint
 
-  // Preflight
-  if (req.method === "OPTIONS") {
-    res.writeHead(204, corsHeaders(origin));
-    return res.end();
-  }
+      // Wait until script loaded
+      function boot() {
+        if (!window.Jupiter || !window.Jupiter.init) {
+          setTimeout(boot, 250);
+          return;
+        }
 
-  if (req.method !== "POST") return bad(res, 405, "Method not allowed", origin);
+        window.Jupiter.init({
+          displayMode: "integrated",
+          integratedTargetId: "jup-terminal",
 
-  try{
-    const { buyer, signature } = req.body || {};
-    if (!buyer || !signature) return bad(res, 400, "Missing buyer or signature", origin);
+          // You can set your RPC later if you want; Terminal works without custom RPC too.
+          // endpoint: "https://mainnet.helius-rpc.com/?api-key=YOUR_KEY",
 
-    const connection = new Connection(RPC_URL, "confirmed");
-    const buyerPk  = new PublicKey(buyer);
-    const creator  = new PublicKey(CREATOR_WALLET);
-    const mintPk   = new PublicKey(CBS_MINT);
+          strictTokenList: false,
+          defaultExplorer: "solscan",
 
-    // 1) Verifieer betaling (buyer -> creator, >= PRICE_SOL)
-    const parsed = await connection.getParsedTransaction(signature, {
-      maxSupportedTransactionVersion: 0, commitment: "confirmed"
-    });
-    if (!parsed) return bad(res, 400, "Transaction not found", origin);
+          formProps: {
+            initialInputMint: WSOL_MINT,     // SOL
+            initialOutputMint: CBS_MINT,     // CBS
+            fixedOutputMint: true,          // user can't change CBS to another token
+            initialSlippageBps: 150,        // 1.5% default slippage
+          },
 
-    const lamportsExpected = Math.round(PRICE_SOL * LAMPORTS_PER_SOL);
-    let valid = false;
-    for (const ix of (parsed.transaction.message.instructions || [])){
-      if (!isSystemTransfer(ix)) continue;
-      const info = ix?.parsed?.info;
-      if (!info) continue;
-      const from = info.source || info.fromPubkey || info.sourcePubkey;
-      const to   = info.destination || info.toPubkey || info.destinationPubkey;
-      const lam  = Number(info.lamports || info.amount || 0);
-      if (from === buyerPk.toString() && to === creator.toString() && lam >= lamportsExpected){
-        valid = true; break;
+          // Light custom styling to blend with your dark theme
+          theme: "dark"
+        });
       }
-    }
-    if (!valid) return bad(res, 400, "Payment not verified (wrong recipient or amount)", origin);
-
-    // Stale guard (30 min)
-    const now = Math.floor(Date.now()/1000);
-    if (parsed.blockTime && (now - parsed.blockTime) > 1800){
-      return bad(res, 400, "Payment too old", origin);
-    }
-
-    // 2) Dubbele uitbetaling voorkomen
-    const treasury = kpFromBase58(TREASURY_SECRET);
-    const already = await findRecentPayout(connection, treasury.publicKey, buyerPk, mintPk, CBS_AMOUNT_HUMAN);
-    if (already) return ok(res, { already: true }, origin);
-
-    // 3) Uitbetaling 25.000 CBS
-    const mintInfo = await getMint(connection, mintPk);
-    const decimals = mintInfo.decimals ?? 9;
-    const amountBn = BigInt(Math.round(CBS_AMOUNT_HUMAN * (10 ** decimals)));
-
-    const fromAta = await getOrCreateAssociatedTokenAccount(connection, treasury, mintPk, treasury.publicKey);
-    const toAta   = await getOrCreateAssociatedTokenAccount(connection, treasury, mintPk, buyerPk);
-
-    const memoProgramId = new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr");
-    const memoIx = new TransactionInstruction({
-      programId: memoProgramId,
-      keys: [{ pubkey: treasury.publicKey, isSigner: true, isWritable: false }],
-      data: Buffer.from(String(signature), "utf8"),
-    });
-
-    const transferIx = createTransferCheckedInstruction(
-      fromAta.address, mintPk, toAta.address, treasury.publicKey, amountBn, decimals
-    );
-
-    const tx = new Transaction().add(memoIx, transferIx);
-    tx.feePayer = treasury.publicKey;
-    const { blockhash } = await connection.getLatestBlockhash("finalized");
-    tx.recentBlockhash = blockhash;
-
-    const sendSig = await connection.sendTransaction(tx, [treasury], { skipPreflight: false });
-    await connection.confirmTransaction(sendSig, "confirmed");
-
-    return ok(res, { tx: sendSig }, origin);
-  }catch(e){
-    console.error("koop-cbs error:", e);
-    return bad(res, 500, e?.message || "Internal error", origin);
-  }
-}
+      boot();
+    })();
+  </script>
+</body>
+</html>
