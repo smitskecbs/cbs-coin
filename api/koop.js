@@ -1,4 +1,4 @@
-// koop.js — CBS Pack Buy (Option B frontend)
+// api/koop.js — CBS Pack Buy (Option B frontend)
 // Uses Phantom for payment + calls your Vercel /api/koop-cbs backend
 // Requires: solanaWeb3 loaded in buy.html + DOM elements in buy.html
 
@@ -9,13 +9,11 @@
   const CREATOR_WALLET = new PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
 
   // ✅ Your backend base (Vercel). Override via buy.html window.API_BASE if needed
-  const API_BASE =
-    window.API_BASE ||
-    "https://cbs-coin.vercel.app";
+  const API_BASE = window.API_BASE || "https://cbs-coin.vercel.app";
 
-  // ✅ RPC fallback list (FIX: geen Ankr meer)
+  // ✅ RPC fallback list (geen Ankr meer)
   const RPC_FALLBACKS = [
-    window.CBS_RPC_URL,                 // publicnode of helius secure endpoint
+    window.CBS_RPC_URL,
     "https://solana-rpc.publicnode.com",
     "https://api.mainnet-beta.solana.com"
   ].filter(Boolean);
