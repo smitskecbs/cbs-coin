@@ -14,11 +14,14 @@
   <!-- ✅ Jupiter Terminal loader -->
   <script src="https://terminal.jup.ag/main-v3.js"></script>
 
-  <!-- ✅ RPC (fix 403). Zet hier je Helius key als je wil. -->
+  <!-- ✅ Frontend RPC (geen Helius key hier, veilig) -->
   <script>
-    // Temporary safe public RPC; replace later with your Helius key if desired:
-    // window.CBS_RPC_URL = "https://mainnet.helius-rpc.com/?api-key=YOUR_KEY";
     window.CBS_RPC_URL = "https://rpc.ankr.com/solana";
+  </script>
+
+  <!-- ✅ Backend base (Vercel). koop.js gebruikt dit automatisch -->
+  <script>
+    window.API_BASE = "https://cbs-coin.vercel.app";
   </script>
 
   <style>
@@ -444,7 +447,7 @@
       </section>
     </div>
 
-    <!-- ✅ On-site DEX Swap -->
+    <!-- ✅ On-site swap (live DEX price) -->
     <section class="cbs-swapbox">
       <h3>Buy CBS on this site (Live DEX Price)</h3>
       <p>Connect your wallet and swap SOL → CBS here using open-market liquidity routes.</p>
@@ -454,7 +457,7 @@
       </p>
     </section>
 
-    <!-- ✅ CBS Pack Buy (frontend in koop.js) -->
+    <!-- ✅ CBS Packs -->
     <section class="cbs-buy" id="cbs-pack">
       <h2>Buy CBS Pack (Live Price)</h2>
       <p>Pick a SOL pack, pay in Phantom, and receive CBS using a live Jupiter DEX quote at payout time.</p>
@@ -492,7 +495,7 @@
       </small>
     </section>
 
-    <!-- Backup Raydium -->
+    <!-- Raydium backup -->
     <section class="cbs-buy">
       <h2>Swap via Raydium (backup)</h2>
       <p>Prefer Raydium directly? Use the official pool below.</p>
@@ -512,7 +515,7 @@
       </div>
     </section>
 
-    <!-- MoonPay onramp -->
+    <!-- MoonPay SOL -->
     <section class="cbs-onramp">
       <h3>New to Solana? Buy SOL first 👇</h3>
       <p>Buy SOL with card / Apple Pay / Google Pay on MoonPay, then come back to swap to CBS.</p>
@@ -552,15 +555,13 @@
   <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
 
   <script>
-    // year
     document.getElementById('cbs-year').textContent = new Date().getFullYear();
 
     // Copy mint
     (function () {
       var mint = 'B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk';
       var btn = document.getElementById('cbs-copy-btn');
-      var mintEl = document.getElementById('cbs-mint');
-      if (!btn || !mintEl) return;
+      if (!btn) return;
 
       btn.addEventListener('click', function () {
         navigator.clipboard?.writeText?.(mint).then(function () {
@@ -587,7 +588,7 @@
       }
     })();
 
-    // ✅ Jupiter Terminal init WITH endpoint (fixes your console error)
+    // ✅ Jupiter Terminal init WITH endpoint
     (function initJupiter() {
       var CBS_MINT = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk";
       var WSOL_MINT = "So11111111111111111111111111111111111111112";
@@ -617,7 +618,7 @@
     })();
   </script>
 
-  <!-- ✅ Pack buying logic -->
+  <!-- Pack buying logic -->
   <script src="koop.js"></script>
 </body>
 </html>
