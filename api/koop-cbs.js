@@ -8,14 +8,14 @@
   // === SETTINGS ===
   const CREATOR_WALLET = new PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
 
-  // ✅ Your backend base (Vercel). You can override from buy.html with window.API_BASE
+  // ✅ Your backend base (Vercel). Override from buy.html with window.API_BASE if needed
   const API_BASE =
     window.API_BASE ||
-    "https://cbs-coin.vercel.app";  // <--- change to your own domain later if you want
+    "https://cbs-coin.vercel.app";
 
   // ✅ RPC fallback list (fixes 403)
   const RPC_FALLBACKS = [
-    window.CBS_RPC_URL,                 // your Helius/Ankr if set
+    window.CBS_RPC_URL,
     "https://rpc.ankr.com/solana",
     "https://solana-rpc.publicnode.com"
   ].filter(Boolean);
@@ -149,7 +149,7 @@
         body: JSON.stringify({
           buyer: buyerPubkey.toString(),
           signature: paymentSig,
-          priceSol: PRICE_SOL // backend ignores for now; later we make it variable
+          priceSol: PRICE_SOL
         })
       });
 
@@ -165,11 +165,11 @@
       } else {
         const payoutLink = `https://solscan.io/tx/${j.tx}`;
         linksWrap.innerHTML += `<a href="${payoutLink}" target="_blank" rel="noopener">Payout tx ↗</a>`;
-        setStatus(`Success ✅ You received CBS.`, true);
+        setStatus("Success ✅ CBS is sent to your wallet.", true);
       }
 
       linksWrap.style.display = "flex";
-      setStep(1); // reset glow
+      setStep(1);
 
     } catch (e) {
       console.error(e);
