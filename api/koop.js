@@ -1,17 +1,12 @@
-// api/koop.js — CBS Pack Buy (Option B frontend)
+// api/koop.js — CBS Pack Buy frontend
 // Uses Phantom for payment + calls your Vercel /api/koop-cbs backend
-// Requires: solanaWeb3 loaded in buy.html + DOM elements in buy.html
 
 (function () {
   const { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } = solanaWeb3;
 
-  // === SETTINGS ===
   const CREATOR_WALLET = new PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
-
-  // ✅ Your backend base (Vercel). Override via buy.html window.API_BASE if needed
   const API_BASE = window.API_BASE || "https://cbs-coin.vercel.app";
 
-  // ✅ RPC fallback list (geen Ankr meer)
   const RPC_FALLBACKS = [
     window.CBS_RPC_URL,
     "https://solana-rpc.publicnode.com",
@@ -32,7 +27,6 @@
     throw lastErr || new Error("No RPC available");
   }
 
-  // === UI refs ===
   const connectBtn = document.getElementById("connect-wallet-btn");
   const buyBtn = document.getElementById("buy-pack-btn");
   const statusEl = document.getElementById("pack-status");
@@ -76,7 +70,6 @@
   updateBuyText();
   packSelect.addEventListener("change", updateBuyText);
 
-  // 1) Connect wallet
   connectBtn.addEventListener("click", async () => {
     try {
       provider = getProvider();
@@ -99,7 +92,6 @@
     }
   });
 
-  // 2) Buy pack
   buyBtn.addEventListener("click", async () => {
     try {
       if (!provider || !buyerPubkey) {
@@ -140,7 +132,6 @@
       setStatus("Payment confirmed. Calculating live CBS payout...");
       setStep(3);
 
-      // ✅ Call YOUR Vercel backend (absolute URL)
       const r = await fetch(`${API_BASE}/api/koop-cbs`, {
         method: "POST",
         headers: { "content-type": "application/json" },
@@ -154,7 +145,6 @@
       const j = await r.json();
       if (!j.ok) throw new Error(j.error || "Payout failed");
 
-      // links
       const paymentLink = `https://solscan.io/tx/${paymentSig}`;
       linksWrap.innerHTML += `<a href="${paymentLink}" target="_blank" rel="noopener">Payment tx ↗</a>`;
 
