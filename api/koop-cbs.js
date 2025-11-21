@@ -8,16 +8,16 @@
   // === SETTINGS ===
   const CREATOR_WALLET = new PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
 
-  // ✅ Your backend base (Vercel). Override from buy.html with window.API_BASE if needed
+  // ✅ Your backend base (Vercel). Override via buy.html window.API_BASE if needed
   const API_BASE =
     window.API_BASE ||
     "https://cbs-coin.vercel.app";
 
-  // ✅ RPC fallback list (fixes 403)
+  // ✅ RPC fallback list (FIX: geen Ankr meer)
   const RPC_FALLBACKS = [
-    window.CBS_RPC_URL,
-    "https://rpc.ankr.com/solana",
-    "https://solana-rpc.publicnode.com"
+    window.CBS_RPC_URL,                 // publicnode of helius secure endpoint
+    "https://solana-rpc.publicnode.com",
+    "https://api.mainnet-beta.solana.com"
   ].filter(Boolean);
 
   async function getBlockhashWithFallback() {
