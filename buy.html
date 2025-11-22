@@ -21,12 +21,6 @@
     window.API_BASE = "https://cbs-coin.vercel.app";
   </script>
 
-  <!-- ✅ Buffer polyfill via ESM (GEEN require) -->
-  <script type="module">
-    import { Buffer } from "https://esm.sh/buffer@6.0.3";
-    window.Buffer = Buffer;
-  </script>
-
   <style>
     :root {
       --cbs-bg: #050814;
@@ -39,7 +33,6 @@
       --cbs-green: #22c55e;
       --cbs-purple: #6366f1;
     }
-
     * { box-sizing: border-box; }
     body {
       margin: 0; padding: 0;
@@ -50,7 +43,6 @@
       display: flex;
       flex-direction: column;
     }
-
     a { color: var(--cbs-neon); text-decoration: none; }
     a:hover { text-decoration: underline; }
 
@@ -118,10 +110,6 @@
       border: 1px solid rgba(224,177,90,0.55);
       box-shadow: 0 18px 60px rgba(0,0,0,0.65);
       position: relative; overflow: hidden;
-    }
-    .cbs-hero::after {
-      content: ""; position: absolute; inset: 0; border-radius: inherit;
-      border: 1px solid rgba(255,255,255,0.06); pointer-events: none;
     }
     .cbs-hero-grid {
       display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2.5fr);
@@ -286,6 +274,7 @@
 
   <main>
     <div class="cbs-container">
+      <!-- Hero -->
       <section class="cbs-hero">
         <div class="cbs-hero-grid">
           <div>
@@ -322,6 +311,7 @@
         </div>
       </section>
 
+      <!-- Cards -->
       <section class="cbs-section">
         <h2>Choose how you want to get started</h2>
         <p>Already have SOL? Use one of the swap buttons below. New to Solana? Buy SOL first, then swap to CBS.</p>
@@ -333,7 +323,7 @@
             <ul>
               <li>Swap SOL → CBS on Raydium or Jupiter</li>
               <li>Live market price</li>
-              <li>Done — you’re in the CBS Army</li>
+              <li>You always stay in control</li>
             </ul>
           </article>
 
@@ -360,6 +350,7 @@
       </section>
     </div>
 
+    <!-- Swap DEX buttons -->
     <section class="cbs-buy">
       <h2>Swap SOL → CBS (Live Market Price)</h2>
       <div class="cbs-buy-buttons">
@@ -373,9 +364,27 @@
       </div>
     </section>
 
+    <!-- Packs -->
     <section class="cbs-buy" id="cbs-pack">
       <h2>Buy CBS Pack (Live Price)</h2>
-      <p>Pick a SOL pack, pay in Phantom, and receive CBS using a live DEX payout.</p>
+      <p>Pick a SOL pack, pay in Phantom, and receive CBS at live market price.</p>
+
+      <!-- ✅ Verify block -->
+      <div style="
+        margin:10px 0 12px; padding:10px 12px; border-radius:12px;
+        background:rgba(15,23,42,0.9); border:1px solid rgba(148,163,184,0.5);
+        font-size:12px; color:#e5efff;">
+        <div style="font-weight:700;margin-bottom:6px;color:#24e6b5;">
+          Verify your payment 👇
+        </div>
+        <div>Recipient wallet:</div>
+        <div style="font-family:monospace;word-break:break-all;">
+          76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg
+        </div>
+        <div style="margin-top:6px;color:#9ca3af;">
+          You will always confirm the exact amount inside Phantom.
+        </div>
+      </div>
 
       <div class="pack-row">
         <select id="pack-select" class="pack-select">
@@ -404,8 +413,13 @@
       </div>
 
       <div class="pack-links" id="pack-links"></div>
+
+      <small style="display:block;margin-top:8px;color:var(--cbs-muted);font-size:11px;">
+        CBS amount is calculated live at payout time — not fixed.
+      </small>
     </section>
 
+    <!-- SOL Onramp -->
     <section class="cbs-onramp">
       <h3>New to Solana? Buy SOL first 👇</h3>
       <p>Buy SOL with card / Apple Pay / Google Pay on MoonPay, then come back to swap to CBS.</p>
@@ -423,11 +437,19 @@
     </div>
   </footer>
 
-  <!-- ✅ Solana web3 IIFE (na Buffer) -->
-  <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
+  <!-- ✅ LOCAL Buffer -->
+  <script src="libs/buffer.min.js"></script>
+  <script>
+    window.Buffer = window.buffer.Buffer;
+  </script>
+
+  <!-- ✅ LOCAL Solana web3 -->
+  <script src="libs/solana-web3.min.js"></script>
 
   <script>
     document.getElementById('cbs-year').textContent = new Date().getFullYear();
+
+    // Copy mint
     (function () {
       var mint = 'B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk';
       var btn = document.getElementById('cbs-copy-btn');
@@ -442,7 +464,7 @@
     })();
   </script>
 
-  <!-- ✅ jouw pack script -->
+  <!-- ✅ YOUR PACK SCRIPT -->
   <script src="api/koop.js"></script>
 </body>
 </html>
