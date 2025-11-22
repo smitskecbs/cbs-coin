@@ -1,258 +1,209 @@
-// api/koop.js — CBS Pack Buy frontend (multi-wallet)
-// Warning only on confirm: we DO NOT open a wallet popup if balance is insufficient.
-// Works with Phantom, Solflare, Backpack, OKX, Trust, BitKeep, etc.
+// /api/koop-cbs.js — dynamic CBS payout at live market price (NO presale)
+// After buyer pays SOL, backend fetches Jupiter quote SOL->CBS and pays that amount.
 
-(function () {
-  const { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } = solanaWeb3;
+// ---------- CORS ----------
+const ALLOW_ORIGINS = [
+  "https://smitskecbs.github.io",
+  "https://cbs-coin.vercel.app",
+  "https://cbs-coin.com",
+  "http://localhost:3000",
+  "http://127.0.0.1:5500",
+];
 
-  // === CONFIG ===
-  const CREATOR_WALLET = new PublicKey("76SjWWFoJ1NQEWXVWbbqYR8112FAEyWGQT1PS1DeLmEg");
-  const API_BASE = window.API_BASE || "https://cbs-coin.vercel.app";
+function corsHeaders(origin = "") {
+  const allow = ALLOW_ORIGINS.includes(origin) ? origin : ALLOW_ORIGINS[0];
+  return {
+    "access-control-allow-origin": allow,
+    "access-control-allow-methods": "POST,OPTIONS",
+    "access-control-allow-headers": "content-type",
+    "access-control-max-age": "86400",
+  };
+}
+function send(res, status, body, origin) {
+  const headers = corsHeaders(origin);
+  Object.entries(headers).forEach(([k, v]) => res.setHeader(k, v));
+  res.status(status).json(body);
+}
+function ok(res, data, origin) { send(res, 200, { ok: true, ...data }, origin); }
+function bad(res, status, msg, origin) { send(res, status, { ok: false, error: msg }, origin); }
 
-  const RPC_FALLBACKS = [
-    window.CBS_RPC_URL,
-    "https://solana-rpc.publicnode.com",
-    "https://api.mainnet-beta.solana.com"
-  ].filter(Boolean);
+// ---------- Imports ----------
+import bs58 from "bs58";
+import {
+  Connection, PublicKey, Keypair, SystemProgram,
+  Transaction, TransactionInstruction, LAMPORTS_PER_SOL
+} from "@solana/web3.js";
+import {
+  getMint,
+  getOrCreateAssociatedTokenAccount,
+  createTransferCheckedInstruction,
+} from "@solana/spl-token";
 
-  async function getBlockhashWithFallback() {
-    let lastErr = null;
-    for (const url of RPC_FALLBACKS) {
-      try {
-        const c = new Connection(url, "confirmed");
-        const { blockhash } = await c.getLatestBlockhash("finalized");
-        return { c, blockhash, url };
-      } catch (e) {
-        lastErr = e;
+// ---------- ENV ----------
+const HELIUS_API_KEY   = process.env.HELIUS_API_KEY;
+const RPC_URL          = process.env.HELIUS_RPC_URL || `https://mainnet.helius-rpc.com/?api-key=${HELIUS_API_KEY}`;
+const CREATOR_WALLET   = process.env.CREATOR_WALLET;           // 76Sj...LmEg
+const TREASURY_SECRET  = process.env.TREASURY_PRIVATE_KEY_B58; // treasury base58 secret
+const CBS_MINT         = process.env.CBS_MINT;                 // B9z8...Cfkk
+
+// Pack price is sent from frontend (priceSol). We'll verify >= that amount.
+const DEFAULT_PRICE_SOL = Number(process.env.PRICE_SOL ?? "0.02");
+
+// Slippage for quote (bps = 100 = 1%)
+const SLIPPAGE_BPS = Number(process.env.SLIPPAGE_BPS ?? "300");
+
+// Safety buffer so we NEVER overpay vs quote (e.g. 0.5% less)
+const PAYOUT_BUFFER_BPS = Number(process.env.PAYOUT_BUFFER_BPS ?? "50");
+
+// WSOL mint (Jupiter uses WSOL as inputMint)
+const WSOL_MINT = "So11111111111111111111111111111111111111112";
+
+// ---------- Helpers ----------
+function kpFromBase58(b58) { return Keypair.fromSecretKey(bs58.decode(b58)); }
+
+function isSystemTransfer(ix){
+  try {
+    const prog = ix?.programId?.toString?.() || ix?.program;
+    return prog === SystemProgram.programId.toString() || prog === "system";
+  } catch { return false; }
+}
+
+// prevent double payout by scanning treasury->buyer recent transfers
+async function findRecentPayout(connection, fromPubkey, toPubkey, mint){
+  try{
+    const sigs = await connection.getSignaturesForAddress(fromPubkey, { limit: 25 });
+    const infos = await connection.getParsedTransactions(sigs.map(s=>s.signature), {
+      maxSupportedTransactionVersion: 0
+    });
+    for (const tx of infos){
+      if (!tx) continue;
+      for (const ix of (tx.transaction.message.instructions || [])){
+        const p = ix?.parsed;
+        if (p?.type !== "transferChecked" && p?.type !== "transfer") continue;
+        const info = p.info || {};
+        if ((info.mint || info.mintAddress) !== mint.toString()) continue;
+        // if destination matches buyer -> payout already happened
+        if (info.destinationOwner === toPubkey.toString()) return true;
       }
     }
-    throw lastErr || new Error("No RPC available");
-  }
+  }catch(_){}
+  return false;
+}
 
-  async function getBalanceWithFallback(pubkey) {
-    let lastErr = null;
-    for (const url of RPC_FALLBACKS) {
-      try {
-        const c = new Connection(url, "confirmed");
-        const bal = await c.getBalance(pubkey, "confirmed");
-        return { c, bal, url };
-      } catch (e) {
-        lastErr = e;
+async function getJupiterQuoteLamportsToCbsRaw(lamportsIn, cbsMint){
+  const url =
+    `https://api.jup.ag/swap/v1/quote` +
+    `?inputMint=${WSOL_MINT}` +
+    `&outputMint=${cbsMint}` +
+    `&amount=${lamportsIn}` +
+    `&slippageBps=${SLIPPAGE_BPS}`;
+
+  const r = await fetch(url);
+  if (!r.ok) throw new Error("Jupiter quote failed");
+  const j = await r.json();
+  if (!j?.outAmount) throw new Error("No outAmount in quote");
+  return BigInt(j.outAmount); // raw integer (already decimals-adjusted)
+}
+
+// ---------- Handler ----------
+export default async function handler(req, res){
+  const origin = req.headers.origin || "";
+
+  if (req.method === "OPTIONS") {
+    res.writeHead(204, corsHeaders(origin));
+    return res.end();
+  }
+  if (req.method !== "POST") return bad(res, 405, "Method not allowed", origin);
+
+  try{
+    const { buyer, signature, priceSol } = req.body || {};
+    if (!buyer || !signature) return bad(res, 400, "Missing buyer or signature", origin);
+
+    const connection = new Connection(RPC_URL, "confirmed");
+    const buyerPk  = new PublicKey(buyer);
+    const creator  = new PublicKey(CREATOR_WALLET);
+    const mintPk   = new PublicKey(CBS_MINT);
+
+    const expectedPriceSol = Number(priceSol ?? DEFAULT_PRICE_SOL);
+    const lamportsExpected = Math.round(expectedPriceSol * LAMPORTS_PER_SOL);
+
+    // 1) Verify payment (buyer -> creator, >= expected SOL)
+    const parsed = await connection.getParsedTransaction(signature, {
+      maxSupportedTransactionVersion: 0, commitment: "confirmed"
+    });
+    if (!parsed) return bad(res, 400, "Transaction not found", origin);
+
+    let valid = false;
+    let lamportsPaid = 0;
+
+    for (const ix of (parsed.transaction.message.instructions || [])){
+      if (!isSystemTransfer(ix)) continue;
+      const info = ix?.parsed?.info;
+      if (!info) continue;
+      const from = info.source || info.fromPubkey || info.sourcePubkey;
+      const to   = info.destination || info.toPubkey || info.destinationPubkey;
+      const lam  = Number(info.lamports || info.amount || 0);
+      if (from === buyerPk.toString() && to === creator.toString() && lam >= lamportsExpected){
+        valid = true;
+        lamportsPaid = lam;
+        break;
       }
     }
-    throw lastErr || new Error("No RPC available");
-  }
+    if (!valid) return bad(res, 400, "Payment not verified (wrong recipient or amount)", origin);
 
-  // === DOM ===
-  const connectBtn  = document.getElementById("connect-wallet-btn");
-  const buyBtn      = document.getElementById("buy-pack-btn");
-  const statusEl    = document.getElementById("pack-status");
-  const packSelect  = document.getElementById("pack-select");
-  const stepsWrap   = document.getElementById("pack-steps");
-  const linksWrap   = document.getElementById("pack-links");
-
-  if (!connectBtn || !buyBtn || !statusEl || !packSelect || !stepsWrap || !linksWrap) {
-    console.warn("koop.js: Missing DOM elements. Check buy.html ids.");
-    return;
-  }
-
-  let provider = null;
-  let buyerPubkey = null;
-
-  function setStatus(msg, good = false) {
-    statusEl.style.color = good ? "#24e6b5" : "#9ca3af";
-    statusEl.textContent = msg;
-  }
-
-  function setStep(n) {
-    const pills = stepsWrap.querySelectorAll(".pack-step");
-    pills.forEach(p => p.classList.remove("pack-step--active"));
-    const active = stepsWrap.querySelector(`.pack-step[data-step="${n}"]`);
-    if (active) active.classList.add("pack-step--active");
-  }
-
-  function updateBuyText() {
-    const sol = Number(packSelect.value);
-    buyBtn.textContent = `Buy Pack (${sol.toFixed(2)} SOL)`;
-  }
-  updateBuyText();
-  packSelect.addEventListener("change", updateBuyText);
-
-  // === MULTI WALLET DETECTION ===
-  function detectProviders() {
-    const found = [];
-
-    if (window.solana && typeof window.solana.connect === "function") {
-      found.push({ name: labelProvider(window.solana), provider: window.solana });
-    }
-    if (window.solflare && typeof window.solflare.connect === "function") {
-      found.push({ name: "Solflare", provider: window.solflare });
-    }
-    if (window.backpack && typeof window.backpack.connect === "function") {
-      found.push({ name: "Backpack", provider: window.backpack });
-    }
-    if (window.phantom?.solana && typeof window.phantom.solana.connect === "function") {
-      found.push({ name: labelProvider(window.phantom.solana), provider: window.phantom.solana });
+    // stale guard (30 min)
+    const now = Math.floor(Date.now()/1000);
+    if (parsed.blockTime && (now - parsed.blockTime) > 1800){
+      return bad(res, 400, "Payment too old", origin);
     }
 
-    const uniq = [];
-    const seen = new Set();
-    for (const item of found) {
-      if (!seen.has(item.provider)) {
-        seen.add(item.provider);
-        uniq.push(item);
-      }
-    }
-    return uniq;
-  }
+    // 2) Double payout guard
+    const treasury = kpFromBase58(TREASURY_SECRET);
+    const already = await findRecentPayout(connection, treasury.publicKey, buyerPk, mintPk);
+    if (already) return ok(res, { already: true }, origin);
 
-  function labelProvider(p) {
-    if (p?.isPhantom) return "Phantom";
-    if (p?.isSolflare) return "Solflare";
-    if (p?.isBackpack) return "Backpack";
-    if (p?.isOKXWallet) return "OKX Wallet";
-    if (p?.isTrust) return "Trust Wallet";
-    if (p?.isBitKeep) return "BitKeep";
-    if (p?.isCoinbaseWallet) return "Coinbase Wallet";
-    return "Solana Wallet";
-  }
+    // 3) Get LIVE market payout amount from Jupiter quote
+    const quoteOutRaw = await getJupiterQuoteLamportsToCbsRaw(lamportsPaid, mintPk.toString());
 
-  async function pickProvider() {
-    const providers = detectProviders();
-    if (providers.length === 0) return null;
-    if (providers.length === 1) return providers[0].provider;
+    // Apply small safety buffer (e.g. 0.5% less)
+    const bufferFactor = BigInt(10_000 - PAYOUT_BUFFER_BPS);
+    const payoutRaw = (quoteOutRaw * bufferFactor) / BigInt(10_000);
 
-    const list = providers.map((p, i) => `${i + 1}) ${p.name}`).join("\n");
-    const choice = window.prompt(
-      "Multiple wallets detected. Choose one:\n\n" + list + "\n\nType a number:"
+    // 4) Send CBS payout
+    const mintInfo = await getMint(connection, mintPk);
+    const decimals = mintInfo.decimals ?? 9;
+
+    const fromAta = await getOrCreateAssociatedTokenAccount(connection, treasury, mintPk, treasury.publicKey);
+    const toAta   = await getOrCreateAssociatedTokenAccount(connection, treasury, mintPk, buyerPk);
+
+    const memoProgramId = new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr");
+    const memoIx = new TransactionInstruction({
+      programId: memoProgramId,
+      keys: [{ pubkey: treasury.publicKey, isSigner: true, isWritable: false }],
+      data: Buffer.from(String(signature), "utf8"),
+    });
+
+    const transferIx = createTransferCheckedInstruction(
+      fromAta.address, mintPk, toAta.address, treasury.publicKey, payoutRaw, decimals
     );
-    const idx = Number(choice) - 1;
-    if (!Number.isFinite(idx) || idx < 0 || idx >= providers.length) {
-      return providers[0].provider;
-    }
-    return providers[idx].provider;
+
+    const tx = new Transaction().add(memoIx, transferIx);
+    tx.feePayer = treasury.publicKey;
+    const { blockhash } = await connection.getLatestBlockhash("finalized");
+    tx.recentBlockhash = blockhash;
+
+    const sendSig = await connection.sendTransaction(tx, [treasury], { skipPreflight: false });
+    await connection.confirmTransaction(sendSig, "confirmed");
+
+    return ok(res, {
+      tx: sendSig,
+      lamportsPaid,
+      quoteOutRaw: quoteOutRaw.toString(),
+      payoutRaw: payoutRaw.toString()
+    }, origin);
+
+  }catch(e){
+    console.error("koop-cbs error:", e);
+    return bad(res, 500, e?.message || "Internal error", origin);
   }
-
-  // === CONNECT ===
-  connectBtn.addEventListener("click", async () => {
-    try {
-      provider = await pickProvider();
-      if (!provider) {
-        setStatus("No Solana wallet found. Open in Phantom/Solflare/Backpack browser or install a wallet.");
-        return;
-      }
-
-      setStep(1);
-
-      const resp = await provider.connect({ onlyIfTrusted: false });
-      buyerPubkey = resp.publicKey || provider.publicKey;
-      if (!buyerPubkey) throw new Error("Wallet connected but no publicKey returned.");
-
-      buyBtn.disabled = false;
-      connectBtn.textContent = "Wallet Connected";
-      setStatus("Connected: " + buyerPubkey.toString(), true);
-      setStep(2);
-    } catch (e) {
-      console.error(e);
-      setStatus("Connect cancelled or failed.");
-    }
-  });
-
-  // === BUY PACK (with balance pre-check) ===
-  buyBtn.addEventListener("click", async () => {
-    try {
-      if (!provider || !buyerPubkey) {
-        setStatus("Connect wallet first.");
-        return;
-      }
-
-      linksWrap.style.display = "none";
-      linksWrap.innerHTML = "";
-
-      const PRICE_SOL = Number(packSelect.value);
-      const lamportsToSend = Math.round(PRICE_SOL * LAMPORTS_PER_SOL);
-
-      // ---- IMPORTANT PART ----
-      // We check balance ONLY when user clicks Buy.
-      // If insufficient: we stop here -> no Phantom popup -> no Phantom red warning.
-      setStatus("Checking balance...");
-      const { c: balConn, bal } = await getBalanceWithFallback(buyerPubkey);
-
-      // fee cushion (0.00001 SOL)
-      const feeCushion = Math.round(0.00001 * LAMPORTS_PER_SOL);
-      const required = lamportsToSend + feeCushion;
-
-      if (bal < required) {
-        const balSol = bal / LAMPORTS_PER_SOL;
-        const reqSol = required / LAMPORTS_PER_SOL;
-        setStatus(
-          `Not enough SOL. You have ${balSol.toFixed(4)} SOL, need ~${reqSol.toFixed(4)} SOL.`,
-          false
-        );
-        return; // <-- stops before wallet sign. No Phantom warning.
-      }
-      // -------------------------
-
-      buyBtn.disabled = true;
-      setStep(2);
-      setStatus("Preparing payment...");
-
-      const { c: connection, blockhash, url } = await getBlockhashWithFallback();
-
-      const tx = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: buyerPubkey,
-          toPubkey: CREATOR_WALLET,
-          lamports: lamportsToSend
-        })
-      );
-
-      tx.feePayer = buyerPubkey;
-      tx.recentBlockhash = blockhash;
-
-      setStatus("Using RPC: " + url + " — confirm payment in wallet...");
-
-      const signed = await provider.signTransaction(tx);
-
-      setStatus("Sending payment...");
-      const paymentSig = await connection.sendRawTransaction(signed.serialize());
-      await connection.confirmTransaction(paymentSig, "confirmed");
-
-      setStatus("Payment confirmed. CBS payout...");
-      setStep(3);
-
-      const r = await fetch(`${API_BASE}/api/koop-cbs`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          buyer: buyerPubkey.toString(),
-          signature: paymentSig,
-          priceSol: PRICE_SOL
-        })
-      });
-
-      const j = await r.json();
-      if (!j.ok) throw new Error(j.error || "Payout failed");
-
-      const paymentLink = `https://solscan.io/tx/${paymentSig}`;
-      linksWrap.innerHTML += `<a href="${paymentLink}" target="_blank" rel="noopener">Payment tx ↗</a>`;
-
-      if (j.already) {
-        setStatus("Already paid for this transaction ✅", true);
-      } else {
-        const payoutLink = `https://solscan.io/tx/${j.tx}`;
-        linksWrap.innerHTML += `<a href="${payoutLink}" target="_blank" rel="noopener">Payout tx ↗</a>`;
-        setStatus("Success ✅ CBS sent to your wallet.", true);
-      }
-
-      linksWrap.style.display = "flex";
-      setStep(1);
-    } catch (e) {
-      console.error(e);
-      setStatus("Error: " + (e.message || e));
-    } finally {
-      buyBtn.disabled = false;
-    }
-  });
-
-})();
+}
