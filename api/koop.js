@@ -70,6 +70,7 @@
   updateBuyText();
   packSelect.addEventListener("change", updateBuyText);
 
+  // Connect wallet
   connectBtn.addEventListener("click", async () => {
     try {
       provider = getProvider();
@@ -92,6 +93,7 @@
     }
   });
 
+  // Buy pack
   buyBtn.addEventListener("click", async () => {
     try {
       if (!provider || !buyerPubkey) {
@@ -168,4 +170,3 @@
   });
 
 })();
-
