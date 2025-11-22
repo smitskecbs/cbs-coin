@@ -1,6 +1,6 @@
 // api/koop.js — CBS Pack Buy frontend (multi-wallet)
+// Warning only on confirm: we DO NOT open a wallet popup if balance is insufficient.
 // Works with Phantom, Solflare, Backpack, OKX, Trust, BitKeep, etc.
-// Uses injected providers + signs 1 SOL transfer + calls your Vercel payout API.
 
 (function () {
   const { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL } = solanaWeb3;
@@ -29,6 +29,20 @@
     throw lastErr || new Error("No RPC available");
   }
 
+  async function getBalanceWithFallback(pubkey) {
+    let lastErr = null;
+    for (const url of RPC_FALLBACKS) {
+      try {
+        const c = new Connection(url, "confirmed");
+        const bal = await c.getBalance(pubkey, "confirmed");
+        return { c, bal, url };
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    throw lastErr || new Error("No RPC available");
+  }
+
   // === DOM ===
   const connectBtn  = document.getElementById("connect-wallet-btn");
   const buyBtn      = document.getElementById("buy-pack-btn");
@@ -46,7 +60,7 @@
   let buyerPubkey = null;
 
   function setStatus(msg, good = false) {
-    statusEl.style.color = good ? "var(--cbs-neon)" : "var(--cbs-muted)";
+    statusEl.style.color = good ? "#24e6b5" : "#9ca3af";
     statusEl.textContent = msg;
   }
 
@@ -68,27 +82,19 @@
   function detectProviders() {
     const found = [];
 
-    // The "standard" injected provider
     if (window.solana && typeof window.solana.connect === "function") {
       found.push({ name: labelProvider(window.solana), provider: window.solana });
     }
-
-    // Solflare sometimes injects window.solflare
     if (window.solflare && typeof window.solflare.connect === "function") {
       found.push({ name: "Solflare", provider: window.solflare });
     }
-
-    // Backpack injects window.backpack sometimes
     if (window.backpack && typeof window.backpack.connect === "function") {
       found.push({ name: "Backpack", provider: window.backpack });
     }
-
-    // Phantom legacy object (sometimes)
     if (window.phantom?.solana && typeof window.phantom.solana.connect === "function") {
       found.push({ name: labelProvider(window.phantom.solana), provider: window.phantom.solana });
     }
 
-    // Deduplicate by reference
     const uniq = [];
     const seen = new Set();
     for (const item of found) {
@@ -113,24 +119,15 @@
 
   async function pickProvider() {
     const providers = detectProviders();
+    if (providers.length === 0) return null;
+    if (providers.length === 1) return providers[0].provider;
 
-    if (providers.length === 0) {
-      return null;
-    }
-
-    if (providers.length === 1) {
-      return providers[0].provider;
-    }
-
-    // If multiple detected, ask user (no HTML changes needed)
     const list = providers.map((p, i) => `${i + 1}) ${p.name}`).join("\n");
     const choice = window.prompt(
       "Multiple wallets detected. Choose one:\n\n" + list + "\n\nType a number:"
     );
-
     const idx = Number(choice) - 1;
     if (!Number.isFinite(idx) || idx < 0 || idx >= providers.length) {
-      // default to first
       return providers[0].provider;
     }
     return providers[idx].provider;
@@ -140,7 +137,6 @@
   connectBtn.addEventListener("click", async () => {
     try {
       provider = await pickProvider();
-
       if (!provider) {
         setStatus("No Solana wallet found. Open in Phantom/Solflare/Backpack browser or install a wallet.");
         return;
@@ -148,26 +144,21 @@
 
       setStep(1);
 
-      // Wallet Standard / Phantom / Solflare all support connect()
       const resp = await provider.connect({ onlyIfTrusted: false });
       buyerPubkey = resp.publicKey || provider.publicKey;
-
-      if (!buyerPubkey) {
-        throw new Error("Wallet connected but no publicKey returned.");
-      }
+      if (!buyerPubkey) throw new Error("Wallet connected but no publicKey returned.");
 
       buyBtn.disabled = false;
       connectBtn.textContent = "Wallet Connected";
       setStatus("Connected: " + buyerPubkey.toString(), true);
       setStep(2);
-
     } catch (e) {
       console.error(e);
       setStatus("Connect cancelled or failed.");
     }
   });
 
-  // === BUY PACK ===
+  // === BUY PACK (with balance pre-check) ===
   buyBtn.addEventListener("click", async () => {
     try {
       if (!provider || !buyerPubkey) {
@@ -179,7 +170,28 @@
       linksWrap.innerHTML = "";
 
       const PRICE_SOL = Number(packSelect.value);
-      const lamports = Math.round(PRICE_SOL * LAMPORTS_PER_SOL);
+      const lamportsToSend = Math.round(PRICE_SOL * LAMPORTS_PER_SOL);
+
+      // ---- IMPORTANT PART ----
+      // We check balance ONLY when user clicks Buy.
+      // If insufficient: we stop here -> no Phantom popup -> no Phantom red warning.
+      setStatus("Checking balance...");
+      const { c: balConn, bal } = await getBalanceWithFallback(buyerPubkey);
+
+      // fee cushion (0.00001 SOL)
+      const feeCushion = Math.round(0.00001 * LAMPORTS_PER_SOL);
+      const required = lamportsToSend + feeCushion;
+
+      if (bal < required) {
+        const balSol = bal / LAMPORTS_PER_SOL;
+        const reqSol = required / LAMPORTS_PER_SOL;
+        setStatus(
+          `Not enough SOL. You have ${balSol.toFixed(4)} SOL, need ~${reqSol.toFixed(4)} SOL.`,
+          false
+        );
+        return; // <-- stops before wallet sign. No Phantom warning.
+      }
+      // -------------------------
 
       buyBtn.disabled = true;
       setStep(2);
@@ -191,7 +203,7 @@
         SystemProgram.transfer({
           fromPubkey: buyerPubkey,
           toPubkey: CREATOR_WALLET,
-          lamports
+          lamports: lamportsToSend
         })
       );
 
@@ -200,14 +212,13 @@
 
       setStatus("Using RPC: " + url + " — confirm payment in wallet...");
 
-      // signTransaction is supported by all injected wallets
       const signed = await provider.signTransaction(tx);
 
       setStatus("Sending payment...");
       const paymentSig = await connection.sendRawTransaction(signed.serialize());
       await connection.confirmTransaction(paymentSig, "confirmed");
 
-      setStatus("Payment confirmed. Calculating CBS payout...");
+      setStatus("Payment confirmed. CBS payout...");
       setStep(3);
 
       const r = await fetch(`${API_BASE}/api/koop-cbs`, {
@@ -231,12 +242,11 @@
       } else {
         const payoutLink = `https://solscan.io/tx/${j.tx}`;
         linksWrap.innerHTML += `<a href="${payoutLink}" target="_blank" rel="noopener">Payout tx ↗</a>`;
-        setStatus("Success ✅ CBS is sent to your wallet.", true);
+        setStatus("Success ✅ CBS sent to your wallet.", true);
       }
 
       linksWrap.style.display = "flex";
       setStep(1);
-
     } catch (e) {
       console.error(e);
       setStatus("Error: " + (e.message || e));
