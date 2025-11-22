@@ -21,10 +21,10 @@
     window.API_BASE = "https://cbs-coin.vercel.app";
   </script>
 
-  <!-- ✅ Buffer polyfill (FIX voor "Buffer is not defined") -->
-  <script src="https://cdn.jsdelivr.net/npm/buffer@6.0.3/index.min.js"></script>
-  <script>
-    window.Buffer = window.buffer.Buffer;
+  <!-- ✅ Buffer polyfill via ESM (GEEN require) -->
+  <script type="module">
+    import { Buffer } from "https://esm.sh/buffer@6.0.3";
+    window.Buffer = Buffer;
   </script>
 
   <style>
@@ -41,7 +41,6 @@
     }
 
     * { box-sizing: border-box; }
-
     body {
       margin: 0; padding: 0;
       font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
@@ -166,31 +165,6 @@
       background:linear-gradient(135deg,#e0b15a,#c88c32); color:#050814; cursor:pointer; font-weight:600;
     }
 
-    .cbs-hero-right {
-      border-radius:18px; border:1px solid rgba(148,163,184,0.4);
-      background: radial-gradient(circle at top, rgba(15,23,42,0.9), rgba(5,8,20,0.98));
-      padding:12px; font-size:12px; display:flex; flex-direction:column; gap:8px;
-    }
-    .cbs-hero-right h3 {
-      margin:0 0 4px; font-size:13px; text-transform:uppercase; letter-spacing:0.08em; color:var(--cbs-gold);
-    }
-    .cbs-hero-right small { color:var(--cbs-muted); font-size:11px; }
-
-    .cbs-tag-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:2px; }
-    .cbs-chip {
-      font-size:11px; padding:4px 8px; border-radius:999px;
-      border:1px solid rgba(148,163,184,0.55); color:rgba(229,239,255,0.9); background:rgba(15,23,42,0.9);
-    }
-    .cbs-chip--green {
-      border-color: rgba(34,197,94,0.7); color:#bbf7d0; background:rgba(22,163,74,0.16);
-    }
-
-    .cbs-hero-banner-wrap {
-      border-radius:14px; overflow:hidden; border:1px solid rgba(148,163,184,0.55);
-      background: radial-gradient(circle at top, rgba(15,23,42,0.9), rgba(5,8,20,0.98));
-    }
-    .cbs-hero-banner { width:100%; height:auto; object-fit:cover; display:block; }
-
     .cbs-section { margin-bottom:22px; }
     .cbs-section h2 { font-size:18px; margin:0 0 6px; }
     .cbs-section p { font-size:13px; margin:0 0 10px; color:rgba(229,239,255,0.9); }
@@ -219,8 +193,8 @@
     }
     .cbs-buy h2 { font-size:18px; margin:0 0 4px; }
     .cbs-buy p { font-size:13px; margin:0 0 14px; color:rgba(229,239,255,0.9); }
-
     .cbs-buy-buttons { display:flex; flex-wrap:wrap; gap:10px; margin-bottom:10px; }
+
     .cbs-buy-btn {
       flex:1 1 220px; text-align:center; padding:10px 14px; border-radius:999px;
       font-weight:600; font-size:14px; border:none; cursor:pointer;
@@ -276,17 +250,6 @@
     }
     .cbs-onramp-link:hover { filter:brightness(1.07); text-decoration:none; }
 
-    .cbs-faq {
-      max-width:760px; margin:10px auto 24px; padding:16px 18px 18px; border-radius:16px;
-      border:1px solid rgba(55,65,81,0.8);
-      background: radial-gradient(circle at top, rgba(15,23,42,0.85), rgba(5,8,20,0.96));
-      font-size:13px;
-    }
-    .cbs-faq h2 { font-size:16px; margin:0 0 8px; }
-    .cbs-faq-item { margin-bottom:10px; }
-    .cbs-faq-item h3 { margin:0 0 3px; font-size:13px; color:var(--cbs-gold); }
-    .cbs-faq-item p { margin:0; color:rgba(229,239,255,0.9); font-size:12px; }
-
     footer {
       border-top:1px solid rgba(31,41,55,0.95); padding:10px 16px 14px;
       font-size:11px; color:var(--cbs-muted);
@@ -296,9 +259,6 @@
       max-width:1080px; margin:0 auto; display:flex; flex-wrap:wrap;
       align-items:center; justify-content:space-between; gap:8px;
     }
-    .cbs-footer-links { display:flex; flex-wrap:wrap; gap:10px; }
-    .cbs-footer-links a { font-size:11px; color:var(--cbs-muted); text-decoration:none; }
-    .cbs-footer-links a:hover { text-decoration:underline; }
   </style>
 </head>
 
@@ -353,39 +313,18 @@
                 Copy mint address
               </button>
             </div>
-
-            <p class="cbs-hero-tagline">
-              Always double-check the contract address before you buy. 💚
-            </p>
           </div>
 
           <div class="cbs-hero-right">
-            <div>
-              <h3>Important notes</h3>
-              <p>
-                CBS started with <strong>one phone, one dev and one dream</strong> — no team, no investors, no presale.
-              </p>
-              <small>You always stay in control of your funds and your keys.</small>
-            </div>
-
-            <div class="cbs-tag-chips">
-              <span class="cbs-chip cbs-chip--green">No presale</span>
-              <span class="cbs-chip">No VC</span>
-              <span class="cbs-chip">100M total supply</span>
-            </div>
-
-            <div class="cbs-hero-banner-wrap">
-              <img src="Banner-CBS-Coin.webp" alt="CBS Coin banner" class="cbs-hero-banner">
-            </div>
+            <h3>Important notes</h3>
+            <p>CBS started with <strong>one phone, one dev and one dream</strong> — no team, no investors, no presale.</p>
           </div>
         </div>
       </section>
 
       <section class="cbs-section">
         <h2>Choose how you want to get started</h2>
-        <p>
-          Already have SOL? Use one of the swap buttons below. New to Solana? Buy SOL first, then swap to CBS.
-        </p>
+        <p>Already have SOL? Use one of the swap buttons below. New to Solana? Buy SOL first, then swap to CBS.</p>
 
         <div class="cbs-card-row">
           <article class="cbs-card">
@@ -423,25 +362,15 @@
 
     <section class="cbs-buy">
       <h2>Swap SOL → CBS (Live Market Price)</h2>
-      <p>Use a trusted DEX route with CBS mint pre-filled.</p>
-
       <div class="cbs-buy-buttons">
         <a class="cbs-buy-btn cbs-buy-btn--raydium"
            href="https://raydium.io/swap/?inputCurrency=sol&outputCurrency=B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"
-           target="_blank" rel="noopener">
-          Swap on Raydium
-        </a>
+           target="_blank" rel="noopener">Swap on Raydium</a>
 
         <a class="cbs-buy-btn cbs-buy-btn--phantom"
            href="https://jup.ag/swap/SOL-B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk"
-           target="_blank" rel="noopener">
-          Swap on Jupiter
-        </a>
+           target="_blank" rel="noopener">Swap on Jupiter</a>
       </div>
-
-      <small style="color:var(--cbs-muted);font-size:11px;">
-        Tip: On mobile, open this page inside the Phantom browser for the smoothest flow.
-      </small>
     </section>
 
     <section class="cbs-buy" id="cbs-pack">
@@ -475,10 +404,6 @@
       </div>
 
       <div class="pack-links" id="pack-links"></div>
-
-      <small style="display:block;margin-top:8px;color:var(--cbs-muted);font-size:11px;">
-        CBS amount is calculated live at payout time — not fixed.
-      </small>
     </section>
 
     <section class="cbs-onramp">
@@ -490,37 +415,19 @@
         </a>
       </div>
     </section>
-
-    <section class="cbs-faq">
-      <h2>FAQ — Buying CBS</h2>
-      <div class="cbs-faq-item">
-        <h3>Is this a presale?</h3>
-        <p>No. You buy from open-market liquidity at live price.</p>
-      </div>
-      <div class="cbs-faq-item">
-        <h3>What is the official contract address?</h3>
-        <p>CBS mint:<br/><code>B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code></p>
-      </div>
-    </section>
   </main>
 
   <footer>
     <div class="cbs-footer-inner">
       <span>© <span id="cbs-year"></span> CBS Coin — Community Builds Sovereignty.</span>
-      <div class="cbs-footer-links">
-        <a href="https://cbs-coin.com" target="_blank" rel="noopener">Official website</a>
-        <a href="https://x.com/CBS_Coin" target="_blank" rel="noopener">X (Twitter)</a>
-        <a href="https://t.me/CBS_Coin" target="_blank" rel="noopener">Telegram</a>
-      </div>
     </div>
   </footer>
 
-  <!-- Solana web3 (na Buffer polyfill) -->
+  <!-- ✅ Solana web3 IIFE (na Buffer) -->
   <script src="https://unpkg.com/@solana/web3.js@1.95.3/lib/index.iife.min.js"></script>
 
   <script>
     document.getElementById('cbs-year').textContent = new Date().getFullYear();
-
     (function () {
       var mint = 'B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk';
       var btn = document.getElementById('cbs-copy-btn');
@@ -535,7 +442,7 @@
     })();
   </script>
 
-  <!-- jouw pack script -->
+  <!-- ✅ jouw pack script -->
   <script src="api/koop.js"></script>
 </body>
 </html>
