@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>CBS Chatroom — Community Builds Sovereignty</title>
-  <meta name="description" content="Gezellige CBS Coin chatroom in oude Chatpoint / pixelstijl.">
+  <meta name="description" content="Retro CBS Coin chatroom in a pixel-style world. Choose your avatar and move around while you chat.">
   <link rel="icon" href="logo.png">
 
   <!-- Font -->
@@ -33,7 +33,7 @@
     }
     .wrap{max-width:980px;margin:0 auto;padding:18px 16px 40px}
 
-    /* BRAND CARD (zoals index) */
+    /* BRAND CARD (same style as index) */
     .brand-card{
       position:relative;
       background:var(--card);
@@ -107,7 +107,7 @@
       .grid-2{grid-template-columns:1.1fr 1.1fr;}
     }
 
-    /* LOGIN / AVATAR KEUZE */
+    /* LOGIN / AVATAR PICKER */
     .login-panel{
       margin-top:10px;
       background:rgba(0,0,0,.65);
@@ -123,7 +123,9 @@
       padding:6px 8px;border-radius:999px;border:1px solid rgba(148,163,184,.7);
       background:#020617;color:#e5e7eb;font-size:.8rem;min-width:140px;
     }
-    .login-avatars{display:flex;flex-wrap:wrap;gap:6px;align-items:center;max-width:280px;}
+    .login-avatars{
+      display:flex;flex-wrap:wrap;gap:6px;align-items:center;max-width:320px;
+    }
     .login-avatar-btn{
       width:30px;height:30px;border-radius:4px;border:1px solid rgba(148,163,184,.7);
       background:#020617;display:grid;place-items:center;font-size:1rem;cursor:pointer;
@@ -199,7 +201,6 @@
       border-color:var(--accent);color:#bbf7d0;
     }
 
-    /* basis hoofd */
     .avatar-head{
       position:absolute;
       left:50%;
@@ -210,18 +211,6 @@
       border-radius:2px;
       box-shadow:0 0 0 2px #000;
     }
-    .avatar-head::before,
-    .avatar-head::after{
-      content:"";
-      position:absolute;
-      top:7px;
-      width:3px;
-      height:3px;
-      background:#000;
-    }
-    .avatar-head::before{ left:5px; }
-    .avatar-head::after{ right:5px; }
-
     .avatar-mouth{
       position:absolute;
       left:50%;
@@ -232,17 +221,37 @@
       background:#000;
     }
 
-    /* skin tones */
+    /* HAIR */
+    .avatar-hair{
+      position:absolute;
+      left:-2px;
+      top:-5px;
+      width:26px;
+      height:10px;
+      border-radius:3px 3px 1px 1px;
+      box-shadow:0 2px 0 rgba(0,0,0,.7);
+    }
+    .hair-blond{ background:#facc15; }
+    .hair-brown{ background:#92400e; }
+    .hair-black{ background:#020617; }
+    .hair-hood{ background:linear-gradient(180deg,#020617,#0f172a); }
+    .hair-alien{ background:linear-gradient(180deg,#4ade80,#16a34a); }
+
+    /* SKIN TONES */
     .skin-light{ background:#fbbf94; }
-    .skin-brown{ background:#92400e; }
+    .skin-brown{ background:#b45309; }
+    .skin-dark{ background:#4a1f07; }
     .skin-alien{ background:#22c55e; }
+    .skin-anon{ background:#64748b; }
     .skin-animal{ background:#f97316; }
 
-    /* animals: oren */
+    /* animals: ears / special head */
     .avatar.animal-dog .avatar-head::before,
     .avatar.animal-dog .avatar-head::after,
     .avatar.animal-cat .avatar-head::before,
     .avatar.animal-cat .avatar-head::after{
+      content:"";
+      position:absolute;
       width:6px;height:6px;top:-4px;background:#1f2937;
     }
     .avatar.animal-dog .avatar-head::before{ left:1px;border-radius:2px 0 0 2px; }
@@ -275,14 +284,25 @@
       letter-spacing:.04em;
       text-align:center;
     }
-    .body-boy{
+    .body-boy-blue{
       background:linear-gradient(180deg,#38bdf8,#0ea5e9);
     }
-    .body-girl{
+    .body-boy-green{
+      background:linear-gradient(180deg,#22c55e,#16a34a);
+    }
+    .body-girl-pink{
       background:linear-gradient(180deg,#fb7185,#ec4899);
     }
+    .body-girl-purple{
+      background:linear-gradient(180deg,#a855f7,#7c3aed);
+    }
     .body-alien{
-      background:linear-gradient(180deg,#22c55e,#16a34a);
+      background:linear-gradient(180deg,#bef264,#22c55e);
+      color:#052e16;
+    }
+    .body-anon{
+      background:linear-gradient(180deg,#0f172a,#020617);
+      color:#e5e7eb;
     }
     .body-dog{
       background:linear-gradient(180deg,#f97316,#ea580c);
@@ -333,7 +353,7 @@
       box-shadow:0 0 0 2px #facc15,0 0 22px rgba(250,204,21,.8);
     }
 
-    /* CHAT PANEL (algemene chat) */
+    /* CHAT PANEL (room chat) */
     .chat-panel{
       background:rgba(2,6,23,.95);
       border-radius:18px;
@@ -426,14 +446,14 @@
 <body>
 <main class="wrap">
 
-  <!-- Banner + logo (zoals index) -->
+  <!-- Banner + logo (same as index) -->
   <section class="brand-card">
     <picture>
       <source type="image/webp" srcset="Banner-CBS-Coin.webp">
       <img class="banner" src="Banner-CBS-Coin.jpg" alt="CBS Banner" onerror="this.style.display='none'">
     </picture>
     <img class="logo" src="logo.png" alt="CBS Logo" onerror="this.style.display='none'">
-    <div class="tagline">CBS — Community <span class="emph">Chatpoint</span></div>
+    <div class="tagline">CBS — Community <span class="emph">Chatroom</span></div>
   </section>
 
   <!-- Chatroom -->
@@ -442,68 +462,81 @@
       <div>
         <h1>CBS Community Chatroom</h1>
         <p>
-          Voelt als oude Chatpoint / Habbo: kies een avatar, geef een naam en schuif je pixel-poppetje over de vloer
-          terwijl je chat. Alles blijft lokaal in jouw browser.
+          Retro Chatpoint / Habbo-style feeling: pick a pixel avatar, enter a nickname and drag your character
+          around the floor while you chat. Everything runs only in your browser.
         </p>
       </div>
       <div class="pill-row">
-        <span class="pill pill-green">Gezellige chat</span>
-        <span class="pill">Geen shill / scam</span>
+        <span class="pill pill-green">Chill chat</span>
+        <span class="pill">No shill / no scams</span>
       </div>
     </header>
 
-    <!-- Login / nickname + avatar keuze -->
+    <!-- Nickname + avatar selection -->
     <div class="login-panel">
       <div class="login-group">
         <label for="nickInput">Nickname</label>
-        <input id="nickInput" type="text" maxlength="16" placeholder="Bijv. Smitske...">
+        <input id="nickInput" type="text" maxlength="16" placeholder="e.g. Smitske...">
       </div>
+
       <div class="login-group">
-        <label>Kies je avatar</label>
+        <label>Choose your avatar</label>
         <div class="login-avatars">
-          <button type="button" class="login-avatar-btn selected" data-kind="boy-light">🧑🏻</button>
-          <button type="button" class="login-avatar-btn" data-kind="boy-brown">🧑🏾</button>
-          <button type="button" class="login-avatar-btn" data-kind="girl-light">👩🏼</button>
-          <button type="button" class="login-avatar-btn" data-kind="girl-brown">👩🏾</button>
+          <!-- Boys -->
+          <button type="button" class="login-avatar-btn selected" data-kind="boy-blond">👦🏼</button>
+          <button type="button" class="login-avatar-btn" data-kind="boy-brown">👦🏽</button>
+          <button type="button" class="login-avatar-btn" data-kind="boy-dark">👦🏿</button>
+          <!-- Girls -->
+          <button type="button" class="login-avatar-btn" data-kind="girl-blond">👧🏼</button>
+          <button type="button" class="login-avatar-btn" data-kind="girl-brown">👧🏽</button>
+          <button type="button" class="login-avatar-btn" data-kind="girl-dark">👧🏿</button>
+          <!-- Extra / neutral -->
           <button type="button" class="login-avatar-btn" data-kind="alien">👽</button>
+          <button type="button" class="login-avatar-btn" data-kind="anon-hoodie">🕶️</button>
+          <!-- Fun (dog / cat) -->
           <button type="button" class="login-avatar-btn" data-kind="dog">🐶</button>
           <button type="button" class="login-avatar-btn" data-kind="cat">🐱</button>
         </div>
       </div>
-      <button class="login-btn" id="enterBtn">Ga de chat in</button>
+
+      <button class="login-btn" id="enterBtn">Enter chat</button>
+
       <div style="flex:1 1 100%;font-size:.7rem;color:#9ca3af;margin-top:2px;">
-        Let op: dit is een front-end demo. Er is geen echte server — wat je typt blijft alleen in jouw scherm.
+        Note: this is a front-end demo only. There is no real server — everything you type and every avatar
+        stays on your screen only.
       </div>
     </div>
 
     <div class="grid-2">
-      <!-- Kamer met avatar -->
+      <!-- Room with avatar -->
       <div class="room" id="room">
         <div class="room-floor"></div>
-        <div class="room-title">CBS Chatroom · Sleep je avatar</div>
-        <div class="room-status" id="roomStatus">Nog niet ingelogd</div>
+        <div class="room-title">CBS Chatroom · Drag your avatar</div>
+        <div class="room-status" id="roomStatus">Not joined</div>
       </div>
 
-      <!-- Algemene chat -->
+      <!-- Room chat -->
       <aside class="chat-panel">
         <div class="chat-panel-header">
           <span>ROOM CHAT</span>
-          <span id="youLabel" style="font-size:.8rem;color:#e5e7eb;font-weight:600;">Niet ingelogd</span>
+          <span id="youLabel" style="font-size:.8rem;color:#e5e7eb;font-weight:600;">Not joined</span>
         </div>
         <div class="chat-log" id="chatLog">
           <div class="msg system">
             <div class="bubble">
-              Welkom in de CBS Community Chatroom. Kies een naam en avatar, klik op “Ga de chat in” en verplaats je pixelpoppetje over de vloer. Wat je typt verschijnt ook als spreekwolkje.
+              Welcome to the CBS Community Chatroom. Pick a nickname and avatar, click “Enter chat”
+              and drag your pixel character around. Whatever you type also appears in a speech bubble above your avatar.
             </div>
-            <small>Systeem · zojuist</small>
+            <small>System · just now</small>
           </div>
         </div>
         <div class="chat-input-row">
-          <input id="chatInput" type="text" placeholder="Typ een bericht… (Enter om te sturen)" disabled>
-          <button id="sendBtn" disabled>Stuur</button>
+          <input id="chatInput" type="text" placeholder="Type a message… (Enter to send)" disabled>
+          <button id="sendBtn" disabled>Send</button>
         </div>
         <div class="chat-hint">
-          Tip: sleep je avatar naar een hoek, midden in de kamer of tegen andere avatars aan voor het gevoel van een echte drukke chatroom.
+          Tip: drag your avatar into a corner or next to another character to simulate private talks —
+          just like the old chat rooms.
         </div>
       </aside>
     </div>
@@ -511,7 +544,7 @@
 
   <footer>
     © CBS Coin · Community Builds Sovereignty ·
-    <a href="index.html">Terug naar home</a>
+    <a href="index.html">Back to home</a>
   </footer>
 
 </main>
@@ -526,7 +559,7 @@
   const enterBtn  = document.getElementById('enterBtn');
   const youLabel  = document.getElementById('youLabel');
 
-  let selectedKind = 'boy-light';
+  let selectedKind = 'boy-blond';
   let youAvatar = null;
 
   function addMsg(type, text, fromLabel){
@@ -539,7 +572,7 @@
 
     const small = document.createElement('small');
     const ts = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-    const who = fromLabel || (type === 'you' ? 'Jij' : 'Systeem');
+    const who = fromLabel || (type === 'you' ? 'You' : 'System');
     small.textContent = who + ' · ' + ts;
 
     msg.appendChild(bubble);
@@ -566,21 +599,28 @@
     el.style.left = x + '%';
     el.style.top  = y + '%';
 
-    // naam
+    // name label
     const nameEl = document.createElement('div');
     nameEl.className = 'avatar-name';
     nameEl.textContent = name;
 
-    // hoofd
+    // head
     const headEl = document.createElement('div');
     headEl.className = 'avatar-head';
+
+    // mouth
     const mouthEl = document.createElement('div');
     mouthEl.className = 'avatar-mouth';
+
+    // hair (some avatars may skip this)
+    const hairEl = document.createElement('div');
+    hairEl.className = 'avatar-hair';
 
     // body
     const bodyEl = document.createElement('div');
     bodyEl.className = 'avatar-body';
-    // benen
+
+    // legs
     const legsWrap = document.createElement('div');
     legsWrap.className = 'avatar-legs';
     const legL = document.createElement('div');
@@ -594,44 +634,83 @@
     const speechEl = document.createElement('div');
     speechEl.className = 'speech';
 
-    // soort / kleur
-    if(kind === 'boy-light'){
-      headEl.classList.add('skin-light');
-      bodyEl.classList.add('body-boy');
-      bodyEl.textContent = 'YOU';
-    }else if(kind === 'boy-brown'){
-      headEl.classList.add('skin-brown');
-      bodyEl.classList.add('body-boy');
-      bodyEl.textContent = 'YOU';
-    }else if(kind === 'girl-light'){
-      headEl.classList.add('skin-light');
-      bodyEl.classList.add('body-girl');
-      bodyEl.textContent = 'YOU';
-    }else if(kind === 'girl-brown'){
-      headEl.classList.add('skin-brown');
-      bodyEl.classList.add('body-girl');
-      bodyEl.textContent = 'YOU';
-    }else if(kind === 'alien'){
-      headEl.classList.add('skin-alien');
-      bodyEl.classList.add('body-alien');
-      bodyEl.textContent = 'ALIEN';
-    }else if(kind === 'dog'){
-      el.classList.add('animal-dog');
-      headEl.classList.add('skin-animal');
-      bodyEl.classList.add('body-dog');
-      bodyEl.textContent = 'DOG';
-    }else if(kind === 'cat'){
-      el.classList.add('animal-cat');
-      headEl.classList.add('skin-animal');
-      bodyEl.classList.add('body-cat');
-      bodyEl.textContent = 'CAT';
-    }else{
-      headEl.classList.add('skin-light');
-      bodyEl.classList.add('body-boy');
-      bodyEl.textContent = 'YOU';
+    // Map kind -> look
+    switch(kind){
+      case 'boy-blond':
+        headEl.classList.add('skin-light');
+        hairEl.classList.add('hair-blond');
+        bodyEl.classList.add('body-boy-blue');
+        bodyEl.textContent = 'CBS';
+        break;
+      case 'boy-brown':
+        headEl.classList.add('skin-light');
+        hairEl.classList.add('hair-brown');
+        bodyEl.classList.add('body-boy-green');
+        bodyEl.textContent = 'CBS';
+        break;
+      case 'boy-dark':
+        headEl.classList.add('skin-dark');
+        hairEl.classList.add('hair-black');
+        bodyEl.classList.add('body-boy-blue');
+        bodyEl.textContent = 'CBS';
+        break;
+      case 'girl-blond':
+        headEl.classList.add('skin-light');
+        hairEl.classList.add('hair-blond');
+        bodyEl.classList.add('body-girl-pink');
+        bodyEl.textContent = 'CBS';
+        break;
+      case 'girl-brown':
+        headEl.classList.add('skin-brown');
+        hairEl.classList.add('hair-brown');
+        bodyEl.classList.add('body-girl-purple');
+        bodyEl.textContent = 'CBS';
+        break;
+      case 'girl-dark':
+        headEl.classList.add('skin-dark');
+        hairEl.classList.add('hair-black');
+        bodyEl.classList.add('body-girl-pink');
+        bodyEl.textContent = 'CBS';
+        break;
+      case 'alien':
+        headEl.classList.add('skin-alien');
+        hairEl.classList.add('hair-alien');
+        bodyEl.classList.add('body-alien');
+        bodyEl.textContent = 'ALIEN';
+        break;
+      case 'anon-hoodie':
+        headEl.classList.add('skin-anon');
+        hairEl.classList.add('hair-hood');
+        bodyEl.classList.add('body-anon');
+        bodyEl.textContent = '???';
+        break;
+      case 'dog':
+        el.classList.add('animal-dog');
+        headEl.classList.add('skin-animal');
+        bodyEl.classList.add('body-dog');
+        bodyEl.textContent = 'DOG';
+        break;
+      case 'cat':
+        el.classList.add('animal-cat');
+        headEl.classList.add('skin-animal');
+        bodyEl.classList.add('body-cat');
+        bodyEl.textContent = 'CAT';
+        break;
+      default:
+        headEl.classList.add('skin-light');
+        hairEl.classList.add('hair-brown');
+        bodyEl.classList.add('body-boy-blue');
+        bodyEl.textContent = 'CBS';
+        break;
     }
 
     headEl.appendChild(mouthEl);
+
+    // Only humans/alien/anon get hair block; animals use ear styles
+    if(kind !== 'dog' && kind !== 'cat'){
+      headEl.appendChild(hairEl);
+    }
+
     el.appendChild(nameEl);
     el.appendChild(headEl);
     el.appendChild(bodyEl);
@@ -706,12 +785,12 @@
     avatar.el.addEventListener('touchstart', onDown,{passive:false});
   }
 
-  // Avatar selectie
+  // Avatar selection buttons
   document.querySelectorAll('.login-avatar-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       document.querySelectorAll('.login-avatar-btn').forEach(b=>b.classList.remove('selected'));
       btn.classList.add('selected');
-      selectedKind = btn.dataset.kind || 'boy-light';
+      selectedKind = btn.dataset.kind || 'boy-blond';
     });
   });
 
@@ -734,13 +813,13 @@
       });
     }
 
-    roomStatusEl.textContent = 'Ingelogd als ' + nick;
-    youLabel.textContent = 'Jij: ' + nick;
+    roomStatusEl.textContent = 'Joined as ' + nick;
+    youLabel.textContent = 'You: ' + nick;
     chatInput.disabled = false;
     sendBtn.disabled = false;
     chatInput.focus();
 
-    addMsg('system', `Je bent de chat binnengekomen als ${nick}. Sleep je avatar over de vloer en typ een bericht.`, 'Systeem');
+    addMsg('system', `You joined the room as ${nick}. Drag your avatar around the floor and type a message.`, 'System');
   });
 
   function handleSend(){
@@ -748,7 +827,7 @@
     const text = chatInput.value.trim();
     if(!text) return;
     chatInput.value = '';
-    addMsg('you', text, youAvatar.name || 'Jij');
+    addMsg('you', text, youAvatar.name || 'You');
     showSpeech(text);
   }
 
