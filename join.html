@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>CBS Chat — MSN Style Lounge</title>
-  <meta name="description" content="Retro MSN style chatroom for the CBS Coin community. Community Builds Sovereignty.">
+  <title>CBS Chat Lounge — Retro MSN Vibes</title>
+  <meta name="description" content="Retro MSN style CBS chat lounge with neon vibes. Community Builds Sovereignty.">
   <link rel="icon" href="logo.png">
 
   <!-- Font -->
@@ -16,26 +16,26 @@
     :root{
       --bg:#000000;
       --fg:#e5e7eb;
-      --muted:#cbd5e1;
+      --muted:#9ca3af;
       --card:#0a0a0a;
       --border:#222;
       --accent:#22c55e;
       --accent2:#0ea5e9;
-      --msn-blue:#00a2ed;
-      --msn-grey:#edf2ff;
+      --accent3:#a855f7;
     }
     *{box-sizing:border-box;margin:0;padding:0}
     body{
       font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
       color:var(--fg);
       background:
-        radial-gradient(1200px 700px at 15% -10%, #0e1631 0%, #050814 60%),
-        #050814;
+        radial-gradient(1400px 900px at 0% 0%, #1d2a55 0%, #020617 55%),
+        radial-gradient(1200px 800px at 120% 120%, #3b0764 0%, #000000 60%);
       min-height:100vh;
+      overflow-x:hidden;
     }
     .wrap{max-width:980px;margin:0 auto;padding:18px 16px 40px}
 
-    /* BRAND CARD (same as index) */
+    /* BRAND CARD – same visual base as index */
     .brand-card{
       position:relative;
       background:var(--card);
@@ -43,6 +43,7 @@
       border-radius:18px;
       padding:10px;
       overflow:hidden;
+      box-shadow:0 0 30px rgba(15,23,42,.9);
     }
     .banner{
       width:100%; height:200px; object-fit:contain; display:block; background:#000;
@@ -54,9 +55,10 @@
     }
     .tagline{
       position:absolute; top:12px; right:12px;
-      font-weight:700; font-size:.9rem; color:#fff;
-      background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.12);
+      font-weight:800; font-size:.9rem; color:#fff;
+      background:rgba(0,0,0,.7); border:1px solid rgba(255,255,255,.15);
       padding:.35rem .6rem; border-radius:10px; backdrop-filter:blur(4px);
+      letter-spacing:.06em;
     }
     .tagline .emph{ color:var(--accent2); }
     @media (min-width:720px){
@@ -64,28 +66,73 @@
       .logo{ left:20px; bottom:20px; width:120px; height:120px; }
     }
 
-    /* MSN WINDOW SHELL */
-    .msn-shell{
-      margin-top:1rem;
-      background:radial-gradient(circle at top left, rgba(14,165,233,.2), transparent 55%),
-                 radial-gradient(circle at bottom right, rgba(96,165,250,.2), transparent 55%),
-                 #020617;
-      border-radius:18px;
-      border:1px solid rgba(148,163,184,.6);
-      box-shadow:0 0 35px rgba(15,23,42,.9);
-      padding:12px;
+    /* TOP STRIP – stats & “join” hype */
+    .top-strip{
+      margin-top:12px;
+      display:flex;flex-wrap:wrap;gap:10px;
+      align-items:center;justify-content:space-between;
     }
-    @media (min-width:768px){
-      .msn-shell{ padding:16px; }
+    .strip-left{
+      font-size:.8rem;color:var(--muted);
+    }
+    .pill-row{
+      display:flex;flex-wrap:wrap;gap:6px;margin-top:4px;
+    }
+    .pill{
+      font-size:.7rem;text-transform:uppercase;letter-spacing:.15em;
+      padding:4px 9px;border-radius:999px;border:1px solid rgba(148,163,184,.7);
+      background:rgba(15,23,42,.85);
+    }
+    .pill-green{border-color:rgba(34,197,94,.9);color:#bbf7d0;background:rgba(22,163,74,.2);}
+    .pill-blue{border-color:rgba(56,189,248,.9);color:#e0f2fe;background:rgba(8,47,73,.5);}
+    .pill-purple{border-color:rgba(168,85,247,.9);color:#f5e9ff;background:rgba(76,29,149,.5);}
+
+    .strip-right{
+      font-size:.8rem;color:#e5e7eb;display:flex;flex-direction:column;gap:4px;align-items:flex-end;
+    }
+    .strip-right strong{font-size:.9rem;}
+    .online-dot{
+      width:8px;height:8px;border-radius:999px;
+      background:#22c55e;box-shadow:0 0 10px rgba(34,197,94,.85);
+      display:inline-block;margin-right:4px;
+    }
+
+    /* MSN SHELL – but upgraded with neon frame */
+    .msn-wrapper{
+      margin-top:14px;
+      position:relative;
+      padding:2px;
+      border-radius:22px;
+      background:
+        conic-gradient(from 0deg,
+          rgba(34,197,94,.2),
+          rgba(56,189,248,.4),
+          rgba(168,85,247,.5),
+          rgba(34,197,94,.2)
+        );
+      box-shadow:0 0 25px rgba(56,189,248,.4),0 0 40px rgba(34,197,94,.35);
+      animation:spinBorder 16s linear infinite;
+    }
+    .msn-inner{
+      border-radius:20px;
+      background:
+        radial-gradient(circle at top left, rgba(15,23,42,.95), rgba(2,6,23,.98)),
+        #020617;
+      padding:10px;
+    }
+    @keyframes spinBorder{
+      0%{filter:hue-rotate(0deg);}
+      100%{filter:hue-rotate(360deg);}
     }
 
     .msn-titlebar{
       display:flex;align-items:center;justify-content:space-between;
       padding:6px 10px;
-      border-radius:10px 10px 4px 4px;
-      background:linear-gradient(90deg,#2563eb,#38bdf8);
+      border-radius:14px 14px 6px 6px;
+      background:linear-gradient(90deg,#2563eb,#06b6d4);
       color:#f9fafb;
       font-size:.8rem;
+      box-shadow:0 2px 8px rgba(15,23,42,.7);
     }
     .msn-titlebar-left{
       display:flex;align-items:center;gap:8px;
@@ -95,14 +142,14 @@
     }
     .bubble-dot{
       width:8px;height:8px;border-radius:999px;
-      background:rgba(248,250,252,.9);
-      box-shadow:0 0 8px rgba(248,250,252,.7);
+      background:rgba(248,250,252,.95);
+      box-shadow:0 0 10px rgba(248,250,252,.9);
     }
     .msn-title{
       font-weight:700;
     }
     .msn-titlebar-right{
-      display:flex;align-items:center;gap:6px;font-size:.7rem;opacity:.9;
+      display:flex;align-items:center;gap:6px;font-size:.7rem;opacity:.95;
     }
     .msn-title-btn{
       width:14px;height:14px;
@@ -126,17 +173,17 @@
     }
     .msn-avatar{
       width:32px;height:32px;border-radius:8px;
-      background:linear-gradient(135deg,#38bdf8,#a855f7);
+      background:radial-gradient(circle at 25% 20%,#facc15,#ea580c);
       display:flex;align-items:center;justify-content:center;
       color:#f9fafb;
       font-weight:800;font-size:.9rem;
-      box-shadow:0 0 9px rgba(56,189,248,.7);
+      box-shadow:0 0 9px rgba(234,88,12,.7);
     }
     .msn-me-names{
       display:flex;flex-direction:column;
     }
     .msn-me-nick{
-      font-weight:700;max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+      font-weight:700;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
     }
     .msn-me-status{
       font-size:.7rem;color:#4b5563;
@@ -147,19 +194,60 @@
       color:#1e293b;
     }
 
+    /* Nick row */
+    .nick-input-row{
+      margin-top:8px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      align-items:center;
+      font-size:.78rem;
+      color:var(--muted);
+    }
+    .nick-input-row input{
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,.9);
+      background:#020617;
+      color:#e5e7eb;
+      padding:5px 10px;
+      font-size:.78rem;
+      min-width:160px;
+      outline:none;
+    }
+    .nick-btn{
+      border:none;
+      border-radius:999px;
+      padding:5px 12px;
+      font-size:.78rem;
+      font-weight:800;
+      background:linear-gradient(90deg,#22c55e,#16a34a);
+      color:#022c22;
+      cursor:pointer;
+      box-shadow:0 0 16px rgba(34,197,94,.9);
+      text-transform:uppercase;
+      letter-spacing:.16em;
+      white-space:nowrap;
+    }
+    .nick-btn:active{
+      transform:translateY(1px);
+      box-shadow:0 0 10px rgba(34,197,94,.7);
+    }
+    .nick-note{
+      font-size:.7rem;
+      color:#9ca3af;
+    }
+
     .msn-main{
       margin-top:10px;
       display:grid;
-      grid-template-columns:0.9fr 1.4fr;
+      grid-template-columns:0.85fr 1.5fr;
       gap:10px;
     }
-    @media (max-width:820px){
-      .msn-main{
-        grid-template-columns:1fr;
-      }
+    @media (max-width:840px){
+      .msn-main{grid-template-columns:1fr;}
     }
 
-    /* CONTACT LIST */
+    /* CONTACTS */
     .msn-contacts{
       background:linear-gradient(180deg,#eff4ff,#dbeafe);
       border-radius:10px;
@@ -180,7 +268,6 @@
     .msn-contacts-header span:last-child{
       font-size:.68rem;color:#4b5563;font-weight:400;
     }
-
     .msn-contacts-list{
       flex:1;
       padding:6px;
@@ -201,7 +288,7 @@
       cursor:pointer;
     }
     .contact:hover{
-      background:rgba(191,219,254,.8);
+      background:rgba(191,219,254,.85);
     }
     .contact.active{
       background:#bfdbfe;
@@ -221,7 +308,7 @@
       font-size:.7rem;color:#4b5563;
     }
 
-    /* CHAT WINDOW */
+    /* CHAT */
     .msn-chat{
       background:#e5edff;
       border-radius:10px;
@@ -241,7 +328,6 @@
     .msn-chat-header span:last-child{
       font-size:.7rem;color:#4b5563;
     }
-
     .msn-chat-log{
       flex:1;
       padding:8px;
@@ -254,9 +340,9 @@
       margin-bottom:6px;
     }
     .msn-msg-header{
-      font-weight:600;
+      font-weight:700;
       font-size:.75rem;
-      color:#1f2937;
+      display:flex;align-items:center;gap:4px;
     }
     .msn-msg-meta{
       font-size:.65rem;
@@ -274,6 +360,12 @@
     .msn-msg.me .msn-msg-body{
       background:#dcfce7;
       border-color:#bbf7d0;
+    }
+    .nick-chip{
+      font-size:.7rem;
+      padding:1px 4px;
+      border-radius:999px;
+      color:#f9fafb;
     }
 
     .msn-chat-input{
@@ -328,8 +420,47 @@
       color:#6b7280;
     }
 
+    /* SIDE PANEL: “Why join?” */
+    .side-panel{
+      margin-top:14px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      font-size:.8rem;
+      color:var(--muted);
+    }
+    .side-card{
+      flex:1 1 220px;
+      border-radius:16px;
+      border:1px solid rgba(148,163,184,.7);
+      background:radial-gradient(circle at top left,rgba(34,197,94,.1),transparent 60%),
+                 radial-gradient(circle at bottom right,rgba(59,130,246,.2),transparent 55%),
+                 rgba(15,23,42,.95);
+      padding:10px 12px;
+    }
+    .side-card h3{
+      font-size:.9rem;font-weight:800;color:#e5e7eb;margin-bottom:4px;
+    }
+    .side-card ul{
+      list-style:disc;
+      margin:4px 0 0 16px;
+    }
+    .side-card li{margin-bottom:2px;}
+    .btn-secondary{
+      display:inline-flex;align-items:center;gap:6px;
+      margin-top:7px;
+      padding:5px 10px;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,.8);
+      font-size:.78rem;
+      color:#e5e7eb;
+      text-decoration:none;
+      background:rgba(15,23,42,.9);
+    }
+    .btn-secondary:hover{text-decoration:none;filter:brightness(1.08);}
+
     footer{
-      margin-top:1.5rem;
+      margin-top:1.7rem;
       color:#9aa0a6;
       font-size:.8rem;
       text-align:center;
@@ -343,187 +474,182 @@
       opacity:1;
       text-decoration:underline;
     }
-
-    .nick-input-row{
-      margin-top:8px;
-      display:flex;
-      flex-wrap:wrap;
-      gap:6px;
-      align-items:center;
-      font-size:.78rem;
-      color:var(--muted);
-    }
-    .nick-input-row input{
-      border-radius:999px;
-      border:1px solid rgba(148,163,184,.8);
-      background:#020617;
-      color:#e5e7eb;
-      padding:4px 8px;
-      font-size:.78rem;
-      min-width:140px;
-      outline:none;
-    }
-    .nick-btn{
-      border:none;
-      border-radius:999px;
-      padding:4px 10px;
-      font-size:.78rem;
-      font-weight:700;
-      background:var(--accent);
-      color:#022c22;
-      cursor:pointer;
-      box-shadow:0 0 10px rgba(34,197,94,.7);
-      white-space:nowrap;
-    }
-    .nick-note{
-      font-size:.7rem;
-      color:#9ca3af;
-    }
   </style>
 </head>
 <body>
 <main class="wrap">
 
-  <!-- Banner + logo (same as index) -->
+  <!-- Banner + logo -->
   <section class="brand-card">
     <picture>
       <source type="image/webp" srcset="Banner-CBS-Coin.webp">
       <img class="banner" src="Banner-CBS-Coin.jpg" alt="CBS Banner" onerror="this.style.display='none'">
     </picture>
     <img class="logo" src="logo.png" alt="CBS Logo" onerror="this.style.display='none'">
-    <div class="tagline">CBS — Community <span class="emph">Chat</span></div>
+    <div class="tagline">CBS — Community Builds <span class="emph">Chat</span></div>
   </section>
 
-  <!-- MSN Messenger style chat window -->
-  <section class="msn-shell">
-
-    <!-- Fake MSN title bar -->
-    <div class="msn-titlebar">
-      <div class="msn-titlebar-left">
-        <div class="msn-titlebar-bubbles">
-          <span class="bubble-dot"></span>
-          <span class="bubble-dot"></span>
-          <span class="bubble-dot"></span>
-        </div>
-        <span class="msn-title">CBS Chat — Retro Messenger</span>
-      </div>
-      <div class="msn-titlebar-right">
-        <span>Community Builds Sovereignty</span>
-        <span class="msn-title-btn"></span>
-        <span class="msn-title-btn"></span>
-        <span class="msn-title-btn"></span>
+  <!-- Hype strip -->
+  <section class="top-strip">
+    <div class="strip-left">
+      <div>Retro MSN lobby for the <strong>CBS Army</strong>.</div>
+      <div class="pill-row">
+        <span class="pill pill-green">No bots</span>
+        <span class="pill pill-blue">No paid shills</span>
+        <span class="pill pill-purple">Only real holders</span>
       </div>
     </div>
+    <div class="strip-right">
+      <div><span class="online-dot"></span><strong id="onlineCount">128</strong> people “online” right now</div>
+      <div>Last message: <span id="lastMessageTime">just now</span></div>
+      <div>Ping: <span id="pingLabel">32 ms</span></div>
+    </div>
+  </section>
 
-    <!-- Me / status bar -->
-    <div class="msn-header">
-      <div class="msn-me">
-        <div class="msn-avatar" id="meAvatar">CS</div>
-        <div class="msn-me-names">
-          <span class="msn-me-nick" id="meNick">New CBS friend</span>
-          <span class="msn-me-status" id="meStatusText">Not joined yet</span>
+  <!-- MSN neon window -->
+  <section class="msn-wrapper">
+    <div class="msn-inner">
+
+      <!-- Title bar -->
+      <div class="msn-titlebar">
+        <div class="msn-titlebar-left">
+          <div class="msn-titlebar-bubbles">
+            <span class="bubble-dot"></span>
+            <span class="bubble-dot"></span>
+            <span class="bubble-dot"></span>
+          </div>
+          <span class="msn-title">CBS Chat — Retro Messenger</span>
+        </div>
+        <div class="msn-titlebar-right">
+          <span>Community Builds Sovereignty</span>
+          <span class="msn-title-btn"></span>
+          <span class="msn-title-btn"></span>
+          <span class="msn-title-btn"></span>
         </div>
       </div>
-      <div>
-        <label for="statusSelect" style="font-size:.7rem;margin-right:4px;">Status</label>
-        <select id="statusSelect" class="msn-status-select">
-          <option value="online">Online</option>
-          <option value="away">Away</option>
-          <option value="busy">Busy</option>
-          <option value="hidden">Appear offline</option>
-        </select>
+
+      <!-- Me / status -->
+      <div class="msn-header">
+        <div class="msn-me">
+          <div class="msn-avatar" id="meAvatar">CB</div>
+          <div class="msn-me-names">
+            <span class="msn-me-nick" id="meNick">New CBS friend</span>
+            <span class="msn-me-status" id="meStatusText">Not joined yet</span>
+          </div>
+        </div>
+        <div>
+          <label for="statusSelect" style="font-size:.7rem;margin-right:4px;">Status</label>
+          <select id="statusSelect" class="msn-status-select">
+            <option value="online">Online</option>
+            <option value="away">Away</option>
+            <option value="busy">Busy</option>
+            <option value="hidden">Appear offline</option>
+          </select>
+        </div>
       </div>
+
+      <!-- Nickname row -->
+      <div class="nick-input-row">
+        <span>Display name</span>
+        <input id="nickInput" type="text" maxlength="24" placeholder="e.g. Smitske, CBS_Army, SolDegen">
+        <button class="nick-btn" id="joinBtn">Join chat</button>
+        <span class="nick-note">Front-end demo only — messages never leave your browser.</span>
+      </div>
+
+      <!-- Main layout -->
+      <div class="msn-main">
+        <!-- Contacts -->
+        <aside class="msn-contacts">
+          <div class="msn-contacts-header">
+            <span>Rooms</span>
+            <span>Click to switch</span>
+          </div>
+          <div class="msn-contacts-list" id="contactList">
+            <div class="contact-group-title">CBS LOUNGE</div>
+            <div class="contact active" data-id="cbs-lounge">
+              <span class="contact-status-dot"></span>
+              <div>
+                <div class="contact-name">CBS Lounge</div>
+                <div class="contact-note">General chat · memes · gm/gn</div>
+              </div>
+            </div>
+
+            <div class="contact" data-id="builders-room">
+              <span class="contact-status-dot contact-status-away"></span>
+              <div>
+                <div class="contact-name">Builders Room</div>
+                <div class="contact-note">Solana · tools · “how did you build this?”</div>
+              </div>
+            </div>
+
+            <div class="contact" data-id="support-desk">
+              <span class="contact-status-dot contact-status-busy"></span>
+              <div>
+                <div class="contact-name">Support Desk</div>
+                <div class="contact-note">“What is CBS?” · basic questions</div>
+              </div>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Chat -->
+        <section class="msn-chat">
+          <header class="msn-chat-header">
+            <span id="chatTitle">CBS Lounge</span>
+            <span id="chatSub">General chat · English only · No spam</span>
+          </header>
+
+          <div class="msn-chat-log" id="chatLog"></div>
+
+          <div class="msn-chat-input">
+            <div class="msn-chat-input-top">
+              <span>Message:</span>
+              <button type="button" class="msn-icon-btn" title="Smile">🙂</button>
+              <button type="button" class="msn-icon-btn" title="Fire">🔥</button>
+              <button type="button" class="msn-icon-btn" title="Rocket">🚀</button>
+            </div>
+            <div class="msn-chat-input-main">
+              <input id="msgInput" type="text" placeholder="Type a message…" disabled>
+              <button id="sendBtn" disabled>Send</button>
+            </div>
+            <div class="msn-chat-hint">
+              Enter = send · This is a visual MSN-style lobby. Real chat is on Telegram: @CBS_Coin.
+            </div>
+          </div>
+        </section>
+      </div>
+
     </div>
+  </section>
 
-    <!-- Nickname input row -->
-    <div class="nick-input-row">
-      <span>Display name</span>
-      <input id="nickInput" type="text" maxlength="24" placeholder="e.g. Smitske, CBS_Holder, Kevin...">
-      <button class="nick-btn" id="joinBtn">Join chat</button>
-      <span class="nick-note">This is a local demo only — nothing is sent to a server.</span>
-    </div>
-
-    <!-- Main MSN layout -->
-    <div class="msn-main">
-      <!-- Contacts -->
-      <aside class="msn-contacts">
-        <div class="msn-contacts-header">
-          <span>Contacts</span>
-          <span>Double-click (click) to select</span>
-        </div>
-        <div class="msn-contacts-list" id="contactList">
-          <div class="contact-group-title">CBS LOUNGE</div>
-          <div class="contact active" data-id="cbs-lounge">
-            <span class="contact-status-dot"></span>
-            <div>
-              <div class="contact-name">CBS Lounge</div>
-              <div class="contact-note">General chat · chill & memes</div>
-            </div>
-          </div>
-
-          <div class="contact" data-id="builders-room">
-            <span class="contact-status-dot contact-status-away"></span>
-            <div>
-              <div class="contact-name">Builders Room</div>
-              <div class="contact-note">Tools · code · Solana questions</div>
-            </div>
-          </div>
-
-          <div class="contact" data-id="support-desk">
-            <span class="contact-status-dot contact-status-busy"></span>
-            <div>
-              <div class="contact-name">Support Desk</div>
-              <div class="contact-note">Faq & “How does CBS work?”</div>
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      <!-- Chat window -->
-      <section class="msn-chat">
-        <header class="msn-chat-header">
-          <span id="chatTitle">CBS Lounge</span>
-          <span id="chatSub">General chat · English only · No spam</span>
-        </header>
-
-        <div class="msn-chat-log" id="chatLog">
-          <div class="msn-msg">
-            <div class="msn-msg-header">System</div>
-            <div class="msn-msg-meta">Just now</div>
-            <div class="msn-msg-body">
-Welcome to the CBS Chat Lounge 👋
-
-• Choose a display name above and click “Join chat”
-• Pick a contact on the left (Lounge, Builders Room, Support)
-• Type your message and press Enter or click Send
-
-This is a front-end demo only — no real server, no storage, no DMs.
-            </div>
-          </div>
-        </div>
-
-        <div class="msn-chat-input">
-          <div class="msn-chat-input-top">
-            <span>Message:</span>
-            <button type="button" class="msn-icon-btn" title="Smile">🙂</button>
-            <button type="button" class="msn-icon-btn" title="Fire">🔥</button>
-            <button type="button" class="msn-icon-btn" title="Rocket">🚀</button>
-          </div>
-          <div class="msn-chat-input-main">
-            <input id="msgInput" type="text" placeholder="Type a message…" disabled>
-            <button id="sendBtn" disabled>Send</button>
-          </div>
-          <div class="msn-chat-hint">
-            Enter = send · Your messages are only visible on your own screen.
-          </div>
-        </div>
-      </section>
-    </div>
+  <!-- Why join / Telegram funnel -->
+  <section class="side-panel">
+    <article class="side-card">
+      <h3>Why this page exists</h3>
+      <ul>
+        <li>Show CBS as a project that actually <strong>builds fun things</strong>.</li>
+        <li>Give holders a nostalgic MSN moment.</li>
+        <li>Warm people up before they jump into Telegram or X.</li>
+      </ul>
+      <a class="btn-secondary" href="https://t.me/CBS_Coin" target="_blank" rel="noreferrer">
+        Join the real chat on Telegram 📣
+      </a>
+    </article>
+    <article class="side-card">
+      <h3>Good vibes only</h3>
+      <ul>
+        <li>No paid shilling, no fake hype.</li>
+        <li>Respect people, no matter stack size.</li>
+        <li>We’re building CBS slow, loud & transparent.</li>
+      </ul>
+      <a class="btn-secondary" href="https://x.com/CBS_Coin" target="_blank" rel="noreferrer">
+        Follow CBS on X 🧡
+      </a>
+    </article>
   </section>
 
   <footer>
-    © CBS Coin · Community Builds Sovereignty ·
-    <a href="index.html">Back to home</a>
+    © CBS Coin · Community Builds Sovereignty · <a href="index.html">Back to home</a>
   </footer>
 
 </main>
@@ -543,10 +669,28 @@ This is a front-end demo only — no real server, no storage, no DMs.
   const msgInput    = document.getElementById('msgInput');
   const sendBtn     = document.getElementById('sendBtn');
 
+  const onlineCountEl = document.getElementById('onlineCount');
+  const lastMessageTimeEl = document.getElementById('lastMessageTime');
+  const pingLabelEl = document.getElementById('pingLabel');
+
   let joined = false;
   let currentContact = 'cbs-lounge';
 
-  // Simple per-room history (local only)
+  // Fake stats wiggle (just for vibes)
+  let baseOnline = 128;
+  setInterval(()=>{
+    const delta = Math.floor(Math.random()*5) - 2; // -2..+2
+    baseOnline = Math.max(42, baseOnline + delta);
+    onlineCountEl.textContent = baseOnline;
+    const ping = 20 + Math.floor(Math.random()*20);
+    pingLabelEl.textContent = ping + ' ms';
+  }, 3000);
+
+  function updateLastMessageTime(){
+    lastMessageTimeEl.textContent = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  }
+
+  // Room history
   const roomHistory = {
     'cbs-lounge': [],
     'builders-room': [],
@@ -554,7 +698,7 @@ This is a front-end demo only — no real server, no storage, no DMs.
   };
 
   function abbreviateNick(nick){
-    if(!nick) return 'CBS';
+    if(!nick) return 'CB';
     const parts = nick.trim().split(/\s+/);
     if(parts.length === 1){
       return parts[0].slice(0,2).toUpperCase();
@@ -562,16 +706,19 @@ This is a front-end demo only — no real server, no storage, no DMs.
     return (parts[0][0] + parts[1][0]).toUpperCase();
   }
 
-  function addMessage(roomId, who, text, isMe=false, tsOverride){
-    const ts = tsOverride || new Date().toLocaleTimeString([], {
-      hour:'2-digit',minute:'2-digit'
-    });
-    const msg = { who, text, ts, me:isMe };
+  function addMessage(roomId, who, text, opts={}){
+    const isMe   = opts.me || false;
+    const color  = opts.color || null;
+    const ts     = opts.ts || new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    const chipBg = opts.chipBg || null;
+
+    const msg = { who, text, ts, me:isMe, color, chipBg };
     roomHistory[roomId].push(msg);
 
     if(roomId === currentContact){
       renderRoom(roomId);
     }
+    updateLastMessageTime();
   }
 
   function renderRoom(roomId){
@@ -584,7 +731,30 @@ This is a front-end demo only — no real server, no storage, no DMs.
 
       const head = document.createElement('div');
       head.className = 'msn-msg-header';
-      head.textContent = m.who || 'Unknown';
+
+      const nameSpan = document.createElement('span');
+      nameSpan.textContent = m.who || 'Unknown';
+      if(m.color){
+        nameSpan.style.color = m.color;
+      }
+
+      const chip = document.createElement('span');
+      chip.className = 'nick-chip';
+      chip.textContent = m.me ? 'YOU' : (m.label || '');
+      if(m.me){
+        chip.style.background = '#22c55e';
+      } else if(m.chipBg){
+        chip.style.background = m.chipBg;
+      } else {
+        chip.style.background = '#64748b';
+      }
+
+      head.appendChild(nameSpan);
+      if(!m.me){
+        head.appendChild(chip);
+      }else{
+        head.appendChild(chip);
+      }
 
       const meta = document.createElement('div');
       meta.className = 'msn-msg-meta';
@@ -607,10 +777,43 @@ This is a front-end demo only — no real server, no storage, no DMs.
     switch(id){
       case 'cbs-lounge': return {title:'CBS Lounge', sub:'General chat · English only · No spam'};
       case 'builders-room': return {title:'Builders Room', sub:'Solana · tools · CBS dev talk'};
-      case 'support-desk': return {title:'Support Desk', sub:'Basic questions · “How does CBS work?”'};
+      case 'support-desk': return {title:'Support Desk', sub:'“What is CBS?” · Basic questions'};
       default: return {title:'Chat', sub:''};
     }
   }
+
+  // Seed fake history for vibes
+  function seedRooms(){
+    addMessage('cbs-lounge','SolanaDegen_1991','gm cbs fam, who\'s still building in this market?',{
+      color:'#0f766e',chipBg:'#0f766e'
+    });
+    addMessage('cbs-lounge','CBS_General','If you read the whitepaper and still fade this, that\'s on you. 😂',{
+      color:'#7c2d12',chipBg:'#7c2d12'
+    });
+    addMessage('cbs-lounge','Chainbreaker_07','I just burned more CBS. Check the burn page. 🔥',{
+      color:'#4338ca',chipBg:'#4338ca'
+    });
+    addMessage('cbs-lounge','System','Tip: type your display name and click “Join chat” to drop your first message.',{
+      color:'#4b5563',chipBg:'#4b5563'
+    });
+
+    addMessage('builders-room','ToolKitKevin','Today I pushed a new script to snapshot holders. Open source. Use it.',{
+      color:'#16a34a',chipBg:'#16a34a'
+    });
+    addMessage('builders-room','SolDev_X','I respect anyone shipping on Solana from a single laptop and a big vision.',{
+      color:'#0369a1',chipBg:'#0369a1'
+    });
+
+    addMessage('support-desk','HelpBot','CBS Coin is a fair-launch meme with a serious message: Community Builds Sovereignty.',{
+      color:'#7c3aed',chipBg:'#7c3aed'
+    });
+    addMessage('support-desk','HelpBot','You can find the whitepaper at cbs-coin.com/whitepaper.',{
+      color:'#7c3aed',chipBg:'#7c3aed'
+    });
+
+    renderRoom('cbs-lounge');
+  }
+  seedRooms();
 
   // Contact switching
   contactList.addEventListener('click', (e)=>{
@@ -619,7 +822,6 @@ This is a front-end demo only — no real server, no storage, no DMs.
     const id = contactEl.dataset.id;
     if(!id || !roomHistory[id]) return;
 
-    // Update active
     contactList.querySelectorAll('.contact').forEach(c=>c.classList.remove('active'));
     contactEl.classList.add('active');
 
@@ -627,17 +829,10 @@ This is a front-end demo only — no real server, no storage, no DMs.
     const info = getRoomTitle(id);
     chatTitle.textContent = info.title;
     chatSub.textContent   = info.sub;
-
-    // If first time open: add a small system line
-    if(roomHistory[id].length === 0){
-      const intro = `You opened ${info.title}. This room is local-only — your messages do not leave this browser.`;
-      addMessage(id,'System',intro,false,new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}));
-    } else {
-      renderRoom(id);
-    }
+    renderRoom(id);
   });
 
-  // Status handling
+  // Status
   function updateStatusText(){
     if(!joined){
       meStatusEl.textContent = 'Not joined yet';
@@ -656,6 +851,7 @@ This is a front-end demo only — no real server, no storage, no DMs.
   joinBtn.addEventListener('click', ()=>{
     let nick = nickInput.value.trim();
     if(!nick) nick = 'New CBS friend';
+
     meNickEl.textContent = nick;
     meAvatar.textContent = abbreviateNick(nick);
 
@@ -665,7 +861,9 @@ This is a front-end demo only — no real server, no storage, no DMs.
     sendBtn.disabled = false;
     msgInput.focus();
 
-    addMessage(currentContact,'System',`${nick} joined this chat (local demo).`,false);
+    addMessage(currentContact,'System',`${nick} joined this chat (local demo only).`,{
+      color:'#4b5563',chipBg:'#4b5563'
+    });
   });
 
   function doSend(){
@@ -673,9 +871,8 @@ This is a front-end demo only — no real server, no storage, no DMs.
     const text = msgInput.value.trim();
     if(!text) return;
     msgInput.value = '';
-
     const nick = meNickEl.textContent || 'Me';
-    addMessage(currentContact,nick,text,true);
+    addMessage(currentContact,nick,text,{me:true});
   }
 
   msgInput.addEventListener('keydown', (e)=>{
@@ -686,7 +883,7 @@ This is a front-end demo only — no real server, no storage, no DMs.
   });
   sendBtn.addEventListener('click', doSend);
 
-  // Small emoticon insert (visual only)
+  // Emoji buttons
   document.querySelectorAll('.msn-icon-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       if(msgInput.disabled) return;
