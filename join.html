@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>CBS Chatpoint — Collaborations Lounge</title>
-  <meta name="description" content="Old-school chatroom vibe for CBS Coin collaborators.">
+  <title>CBS Chatroom — Community Builds Sovereignty</title>
+  <meta name="description" content="Gezellige CBS Coin chatroom in oude Chatpoint / pixelstijl.">
+  <link rel="icon" href="logo.png">
 
   <!-- Font -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-  <link rel="icon" href="logo.png">
 
   <style>
     :root{
@@ -33,7 +33,7 @@
     }
     .wrap{max-width:980px;margin:0 auto;padding:18px 16px 40px}
 
-    /* BRAND CARD (gelijk aan index) */
+    /* BRAND CARD (zoals index) */
     .brand-card{
       position:relative;
       background:var(--card);
@@ -107,7 +107,7 @@
       .grid-2{grid-template-columns:1.1fr 1.1fr;}
     }
 
-    /* LOGIN / OVERLAY */
+    /* LOGIN / AVATAR KEUZE */
     .login-panel{
       margin-top:10px;
       background:rgba(0,0,0,.65);
@@ -123,7 +123,7 @@
       padding:6px 8px;border-radius:999px;border:1px solid rgba(148,163,184,.7);
       background:#020617;color:#e5e7eb;font-size:.8rem;min-width:140px;
     }
-    .login-avatars{display:flex;gap:6px;align-items:center}
+    .login-avatars{display:flex;flex-wrap:wrap;gap:6px;align-items:center;max-width:280px;}
     .login-avatar-btn{
       width:30px;height:30px;border-radius:4px;border:1px solid rgba(148,163,184,.7);
       background:#020617;display:grid;place-items:center;font-size:1rem;cursor:pointer;
@@ -144,7 +144,7 @@
 
     /* ROOM */
     .room{
-      background:radial-gradient(circle at 20% 0, #020617, #020617 40%, #020617 100%);
+      background:#020617;
       border-radius:18px;
       border:1px solid rgba(30,64,175,.85);
       box-shadow:inset 0 0 0 1px rgba(15,23,42,.95);
@@ -195,13 +195,11 @@
       font-size:.7rem;
       white-space:nowrap;
     }
-    .avatar-npc .avatar-name{
-      background:#020617;
-    }
     .avatar-you .avatar-name{
       border-color:var(--accent);color:#bbf7d0;
     }
 
+    /* basis hoofd */
     .avatar-head{
       position:absolute;
       left:50%;
@@ -209,7 +207,6 @@
       transform:translateX(-50%);
       width:22px;
       height:22px;
-      background:#fbbf94;
       border-radius:2px;
       box-shadow:0 0 0 2px #000;
     }
@@ -222,12 +219,9 @@
       height:3px;
       background:#000;
     }
-    .avatar-head::before{
-      left:5px;
-    }
-    .avatar-head::after{
-      right:5px;
-    }
+    .avatar-head::before{ left:5px; }
+    .avatar-head::after{ right:5px; }
+
     .avatar-mouth{
       position:absolute;
       left:50%;
@@ -236,6 +230,30 @@
       width:8px;
       height:2px;
       background:#000;
+    }
+
+    /* skin tones */
+    .skin-light{ background:#fbbf94; }
+    .skin-brown{ background:#92400e; }
+    .skin-alien{ background:#22c55e; }
+    .skin-animal{ background:#f97316; }
+
+    /* animals: oren */
+    .avatar.animal-dog .avatar-head::before,
+    .avatar.animal-dog .avatar-head::after,
+    .avatar.animal-cat .avatar-head::before,
+    .avatar.animal-cat .avatar-head::after{
+      width:6px;height:6px;top:-4px;background:#1f2937;
+    }
+    .avatar.animal-dog .avatar-head::before{ left:1px;border-radius:2px 0 0 2px; }
+    .avatar.animal-dog .avatar-head::after{ right:1px;border-radius:0 2px 2px 0; }
+
+    .avatar.animal-cat .avatar-head::before{ left:2px;transform:skewX(-10deg); }
+    .avatar.animal-cat .avatar-head::after{ right:2px;transform:skewX(10deg); }
+
+    .avatar.animal-dog .avatar-mouth,
+    .avatar.animal-cat .avatar-mouth{
+      width:10px;height:4px;border-radius:0 0 4px 4px;background:#111827;
     }
 
     .avatar-body{
@@ -255,18 +273,24 @@
       font-weight:700;
       color:#020617;
       letter-spacing:.04em;
+      text-align:center;
     }
-    .avatar-body.male{
-      background:
-        linear-gradient(180deg,#38bdf8,#0ea5e9);
+    .body-boy{
+      background:linear-gradient(180deg,#38bdf8,#0ea5e9);
     }
-    .avatar-body.female{
-      background:
-        linear-gradient(180deg,#fb7185,#ec4899);
+    .body-girl{
+      background:linear-gradient(180deg,#fb7185,#ec4899);
     }
-    .avatar-body.neutral{
-      background:
-        linear-gradient(180deg,#a78bfa,#22c55e);
+    .body-alien{
+      background:linear-gradient(180deg,#22c55e,#16a34a);
+    }
+    .body-dog{
+      background:linear-gradient(180deg,#f97316,#ea580c);
+      color:#111827;
+    }
+    .body-cat{
+      background:linear-gradient(180deg,#9ca3af,#4b5563);
+      color:#020617;
     }
 
     .avatar-legs{
@@ -288,11 +312,6 @@
     .avatar-leg.left{ left:1px; }
     .avatar-leg.right{ right:1px; }
 
-    .avatar-selected .avatar-body{
-      box-shadow:0 0 0 2px #facc15,0 0 22px rgba(250,204,21,.8);
-    }
-
-    /* SPEECH BUBBLE */
     .speech{
       position:absolute;left:50%;top:-4px;transform:translate(-50%,-100%);
       max-width:180px;
@@ -310,7 +329,11 @@
     }
     .speech.visible{opacity:1;}
 
-    /* CHAT PANEL */
+    .avatar-selected .avatar-body{
+      box-shadow:0 0 0 2px #facc15,0 0 22px rgba(250,204,21,.8);
+    }
+
+    /* CHAT PANEL (algemene chat) */
     .chat-panel{
       background:rgba(2,6,23,.95);
       border-radius:18px;
@@ -324,9 +347,6 @@
     .chat-panel-header{
       display:flex;justify-content:space-between;align-items:center;
       font-size:.78rem;text-transform:uppercase;letter-spacing:.14em;color:#9ca3af;
-    }
-    .chat-partner{
-      font-size:.8rem;color:#e5e7eb;font-weight:600;
     }
     .chat-log{
       flex:1;
@@ -349,9 +369,9 @@
       color:#022c22;
       border:1px solid rgba(22,163,74,.9);
     }
-    .msg.them .bubble{
+    .msg.system .bubble{
       background:rgba(15,23,42,1);
-      border:1px solid rgba(148,163,184,.7);
+      border:1px dashed rgba(148,163,184,.7);
       color:#e5e7eb;
     }
     .msg small{
@@ -413,74 +433,77 @@
       <img class="banner" src="Banner-CBS-Coin.jpg" alt="CBS Banner" onerror="this.style.display='none'">
     </picture>
     <img class="logo" src="logo.png" alt="CBS Logo" onerror="this.style.display='none'">
-    <div class="tagline">CBS — Collab <span class="emph">Chatpoint</span></div>
+    <div class="tagline">CBS — Community <span class="emph">Chatpoint</span></div>
   </section>
 
-  <!-- Chatpoint-style room -->
+  <!-- Chatroom -->
   <section class="chat-shell">
     <header class="chat-header-row">
       <div>
-        <h1>CBS Collaborations Lounge</h1>
+        <h1>CBS Community Chatroom</h1>
         <p>
-          Old-school chatroom feeling. Pick a nickname, drop your avatar in the room
-          and drag it next to someone to start “chatting”.
+          Voelt als oude Chatpoint / Habbo: kies een avatar, geef een naam en schuif je pixel-poppetje over de vloer
+          terwijl je chat. Alles blijft lokaal in jouw browser.
         </p>
       </div>
       <div class="pill-row">
-        <span class="pill pill-green">Builders welcome</span>
-        <span class="pill">No paid shilling</span>
+        <span class="pill pill-green">Gezellige chat</span>
+        <span class="pill">Geen shill / scam</span>
       </div>
     </header>
 
-    <!-- Login / nickname -->
-    <div class="login-panel" id="loginPanel">
+    <!-- Login / nickname + avatar keuze -->
+    <div class="login-panel">
       <div class="login-group">
         <label for="nickInput">Nickname</label>
-        <input id="nickInput" type="text" maxlength="16" placeholder="Your name or team…">
+        <input id="nickInput" type="text" maxlength="16" placeholder="Bijv. Smitske...">
       </div>
       <div class="login-group">
-        <label>Avatar</label>
+        <label>Kies je avatar</label>
         <div class="login-avatars">
-          <button type="button" class="login-avatar-btn selected" data-gender="male">🧑</button>
-          <button type="button" class="login-avatar-btn" data-gender="female">👩</button>
-          <button type="button" class="login-avatar-btn" data-gender="neutral">👽</button>
+          <button type="button" class="login-avatar-btn selected" data-kind="boy-light">🧑🏻</button>
+          <button type="button" class="login-avatar-btn" data-kind="boy-brown">🧑🏾</button>
+          <button type="button" class="login-avatar-btn" data-kind="girl-light">👩🏼</button>
+          <button type="button" class="login-avatar-btn" data-kind="girl-brown">👩🏾</button>
+          <button type="button" class="login-avatar-btn" data-kind="alien">👽</button>
+          <button type="button" class="login-avatar-btn" data-kind="dog">🐶</button>
+          <button type="button" class="login-avatar-btn" data-kind="cat">🐱</button>
         </div>
       </div>
-      <button class="login-btn" id="enterBtn">Enter chat</button>
+      <button class="login-btn" id="enterBtn">Ga de chat in</button>
       <div style="flex:1 1 100%;font-size:.7rem;color:#9ca3af;margin-top:2px;">
-        Tip: this is a toy front-end only — no messages leave your browser.
+        Let op: dit is een front-end demo. Er is geen echte server — wat je typt blijft alleen in jouw scherm.
       </div>
     </div>
 
     <div class="grid-2">
-      <!-- Kamer met avatars -->
+      <!-- Kamer met avatar -->
       <div class="room" id="room">
         <div class="room-floor"></div>
-        <div class="room-title">CBS Chatpoint · Drag your avatar</div>
-        <div class="room-status" id="roomStatus">Not logged in</div>
+        <div class="room-title">CBS Chatroom · Sleep je avatar</div>
+        <div class="room-status" id="roomStatus">Nog niet ingelogd</div>
       </div>
 
-      <!-- Chat paneel -->
+      <!-- Algemene chat -->
       <aside class="chat-panel">
         <div class="chat-panel-header">
-          <span>PRIVATE CHAT</span>
-          <span class="chat-partner" id="partnerLabel">No partner selected</span>
+          <span>ROOM CHAT</span>
+          <span id="youLabel" style="font-size:.8rem;color:#e5e7eb;font-weight:600;">Niet ingelogd</span>
         </div>
         <div class="chat-log" id="chatLog">
-          <div class="msg them">
+          <div class="msg system">
             <div class="bubble">
-              Welcome to the CBS Collaborations Lounge. Drag your avatar onto someone in the room to start chatting.
+              Welkom in de CBS Community Chatroom. Kies een naam en avatar, klik op “Ga de chat in” en verplaats je pixelpoppetje over de vloer. Wat je typt verschijnt ook als spreekwolkje.
             </div>
-            <small>System · just now</small>
+            <small>Systeem · zojuist</small>
           </div>
         </div>
         <div class="chat-input-row">
-          <input id="chatInput" type="text" placeholder="Type a message… (press Enter to send)" disabled>
-          <button id="sendBtn" disabled>Send</button>
+          <input id="chatInput" type="text" placeholder="Typ een bericht… (Enter om te sturen)" disabled>
+          <button id="sendBtn" disabled>Stuur</button>
         </div>
         <div class="chat-hint">
-          Drag your avatar close to <strong>Dev</strong>, <strong>Artist</strong> or <strong>Community</strong> and say hi.
-          They’ll reply with a short auto-response.
+          Tip: sleep je avatar naar een hoek, midden in de kamer of tegen andere avatars aan voor het gevoel van een echte drukke chatroom.
         </div>
       </aside>
     </div>
@@ -488,85 +511,76 @@
 
   <footer>
     © CBS Coin · Community Builds Sovereignty ·
-    <a href="index.html">Back to main page</a>
+    <a href="index.html">Terug naar home</a>
   </footer>
 
 </main>
 
 <script>
-  // ===== STATE =====
-  const roomEl       = document.getElementById('room');
+  const roomEl    = document.getElementById('room');
   const roomStatusEl = document.getElementById('roomStatus');
-  const partnerLabel = document.getElementById('partnerLabel');
-  const chatLog      = document.getElementById('chatLog');
-  const chatInput    = document.getElementById('chatInput');
-  const sendBtn      = document.getElementById('sendBtn');
-  const nickInput    = document.getElementById('nickInput');
-  const enterBtn     = document.getElementById('enterBtn');
+  const chatLog   = document.getElementById('chatLog');
+  const chatInput = document.getElementById('chatInput');
+  const sendBtn   = document.getElementById('sendBtn');
+  const nickInput = document.getElementById('nickInput');
+  const enterBtn  = document.getElementById('enterBtn');
+  const youLabel  = document.getElementById('youLabel');
 
-  let selectedGender = 'male';
+  let selectedKind = 'boy-light';
   let youAvatar = null;
-  let currentPartnerId = null;
-  let avatars = []; // {id,name,gender,npc,x,y,el,speechEl,replies?}
 
-  const npcDefinitions = [
-    {
-      id:'dev',
-      name:'Dev',
-      gender:'neutral',
-      x:25,y:65,
-      replies:[
-        "Love real builders. Got a repo link?",
-        "If it helps holders and is transparent, I'm listening.",
-        "Can we keep it open-source or at least verifiable?"
-      ]
-    },
-    {
-      id:'artist',
-      name:'Artist',
-      gender:'female',
-      x:50,y:65,
-      replies:[
-        "Visual identity matters. Got any mockups?",
-        "I like memes that actually mean something.",
-        "We can make CBS look like a movement, not a random coin."
-      ]
-    },
-    {
-      id:'community',
-      name:'Community',
-      gender:'male',
-      x:75,y:65,
-      replies:[
-        "How does this help real holders, not just speculators?",
-        "If it's honest and long-term, people will feel it.",
-        "No fake hype, just consistent actions. What's your plan?"
-      ]
-    }
-  ];
+  function addMsg(type, text, fromLabel){
+    const msg = document.createElement('div');
+    msg.className = 'msg ' + type;
 
-  // ===== AVATAR UI =====
-  function createAvatar({id,name,gender,x,y,npc,replies}) {
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.textContent = text;
+
+    const small = document.createElement('small');
+    const ts = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    const who = fromLabel || (type === 'you' ? 'Jij' : 'Systeem');
+    small.textContent = who + ' · ' + ts;
+
+    msg.appendChild(bubble);
+    msg.appendChild(small);
+    chatLog.appendChild(msg);
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
+  function showSpeech(text){
+    if(!youAvatar) return;
+    const speech = youAvatar.speechEl;
+    speech.textContent = text;
+    speech.classList.add('visible');
+    clearTimeout(speech._timer);
+    speech._timer = setTimeout(()=>{
+      speech.classList.remove('visible');
+    }, 3000);
+  }
+
+  function createAvatar({id,name,kind,x,y}){
     const el = document.createElement('div');
-    el.className = 'avatar' + (npc ? ' avatar-npc' : ' avatar-you');
+    el.className = 'avatar avatar-you';
     el.dataset.id = id;
     el.style.left = x + '%';
     el.style.top  = y + '%';
 
+    // naam
     const nameEl = document.createElement('div');
     nameEl.className = 'avatar-name';
     nameEl.textContent = name;
 
+    // hoofd
     const headEl = document.createElement('div');
     headEl.className = 'avatar-head';
-
     const mouthEl = document.createElement('div');
     mouthEl.className = 'avatar-mouth';
 
+    // body
     const bodyEl = document.createElement('div');
-    bodyEl.className = 'avatar-body ' + gender;
-    bodyEl.textContent = npc ? name[0].toUpperCase() : 'YOU';
-
+    bodyEl.className = 'avatar-body';
+    // benen
     const legsWrap = document.createElement('div');
     legsWrap.className = 'avatar-legs';
     const legL = document.createElement('div');
@@ -576,8 +590,46 @@
     legsWrap.appendChild(legL);
     legsWrap.appendChild(legR);
 
+    // speech bubble
     const speechEl = document.createElement('div');
     speechEl.className = 'speech';
+
+    // soort / kleur
+    if(kind === 'boy-light'){
+      headEl.classList.add('skin-light');
+      bodyEl.classList.add('body-boy');
+      bodyEl.textContent = 'YOU';
+    }else if(kind === 'boy-brown'){
+      headEl.classList.add('skin-brown');
+      bodyEl.classList.add('body-boy');
+      bodyEl.textContent = 'YOU';
+    }else if(kind === 'girl-light'){
+      headEl.classList.add('skin-light');
+      bodyEl.classList.add('body-girl');
+      bodyEl.textContent = 'YOU';
+    }else if(kind === 'girl-brown'){
+      headEl.classList.add('skin-brown');
+      bodyEl.classList.add('body-girl');
+      bodyEl.textContent = 'YOU';
+    }else if(kind === 'alien'){
+      headEl.classList.add('skin-alien');
+      bodyEl.classList.add('body-alien');
+      bodyEl.textContent = 'ALIEN';
+    }else if(kind === 'dog'){
+      el.classList.add('animal-dog');
+      headEl.classList.add('skin-animal');
+      bodyEl.classList.add('body-dog');
+      bodyEl.textContent = 'DOG';
+    }else if(kind === 'cat'){
+      el.classList.add('animal-cat');
+      headEl.classList.add('skin-animal');
+      bodyEl.classList.add('body-cat');
+      bodyEl.textContent = 'CAT';
+    }else{
+      headEl.classList.add('skin-light');
+      bodyEl.classList.add('body-boy');
+      bodyEl.textContent = 'YOU';
+    }
 
     headEl.appendChild(mouthEl);
     el.appendChild(nameEl);
@@ -588,25 +640,11 @@
 
     roomEl.appendChild(el);
 
-    const avatar = {id,name,gender,x,y,npc,el,speechEl,replies};
-    avatars.push(avatar);
-
-    if(!npc){
-      enableDrag(avatar);
-    }else{
-      el.style.cursor = 'pointer';
-      el.addEventListener('click', ()=>setPartner(avatar.id,true));
-    }
-
+    const avatar = {id,name,kind,x,y,el,speechEl};
+    enableDrag(avatar);
     return avatar;
   }
 
-  function genderFromSelection(g){
-    if(g === 'male' || g === 'female' || g === 'neutral') return g;
-    return 'neutral';
-  }
-
-  // ===== DRAGGING =====
   function enableDrag(avatar){
     let dragging = false;
     let offsetX = 0;
@@ -653,7 +691,7 @@
       avatar.el.style.top  = y + '%';
     }
 
-    function onUp(e){
+    function onUp(){
       if(!dragging) return;
       dragging = false;
       avatar.el.style.cursor = 'grab';
@@ -662,121 +700,22 @@
       document.removeEventListener('mouseup', onUp);
       document.removeEventListener('touchmove', onMove);
       document.removeEventListener('touchend', onUp);
-
-      // Check of we dicht bij een NPC staan
-      checkProximity(avatar);
     }
 
     avatar.el.addEventListener('mousedown', onDown);
     avatar.el.addEventListener('touchstart', onDown,{passive:false});
   }
 
-  function distance(a,b){
-    const dx = a.x - b.x;
-    const dy = a.y - b.y;
-    return Math.sqrt(dx*dx+dy*dy);
-  }
-
-  function checkProximity(you){
-    let closest = null;
-    let best = Infinity;
-    avatars.forEach(av=>{
-      if(av.npc){
-        const d = distance(you,av);
-        if(d < best){
-          best = d; closest = av;
-        }
-      }
-    });
-    if(closest && best < 18){
-      setPartner(closest.id,true);
-    }
-  }
-
-  // ===== PARTNER + CHAT =====
-  function setPartner(id, fromClick){
-    currentPartnerId = id;
-    avatars.forEach(av=>{
-      av.el.classList.remove('avatar-selected');
-    });
-    const partner = avatars.find(a=>a.id===id);
-    if(partner){
-      partner.el.classList.add('avatar-selected');
-      partnerLabel.textContent = 'Chatting with ' + partner.name;
-      roomStatusEl.textContent = 'Talking to ' + partner.name;
-      chatInput.disabled = false;
-      sendBtn.disabled = false;
-      chatInput.focus();
-      if(fromClick){
-        addMsg('them', `You walked up to ${partner.name}. Say hi and share your idea.`, 'System');
-      }
-    }
-  }
-
-  function addMsg(who,text,fromName){
-    const msg = document.createElement('div');
-    msg.className = 'msg ' + (who === 'you' ? 'you' : 'them');
-
-    const bubble = document.createElement('div');
-    bubble.className = 'bubble';
-    bubble.textContent = text;
-
-    const small = document.createElement('small');
-    const ts = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-    small.textContent = (fromName || (who==='you' ? 'You' : 'Them')) + ' · ' + ts;
-
-    msg.appendChild(bubble);
-    msg.appendChild(small);
-    chatLog.appendChild(msg);
-    chatLog.scrollTop = chatLog.scrollHeight;
-  }
-
-  function showSpeech(text){
-    if(!youAvatar) return;
-    const speech = youAvatar.speechEl;
-    speech.textContent = text;
-    speech.classList.add('visible');
-    clearTimeout(speech._timer);
-    speech._timer = setTimeout(()=>{
-      speech.classList.remove('visible');
-    },3000);
-  }
-
-  function npcReply(partner){
-    if(!partner || !partner.replies) return;
-    const arr = partner.replies;
-    const reply = arr[Math.floor(Math.random()*arr.length)];
-    setTimeout(()=>{
-      addMsg('them', reply, partner.name);
-    }, 700 + Math.random()*800);
-  }
-
-  function handleSend(){
-    const text = chatInput.value.trim();
-    if(!text) return;
-    if(!currentPartnerId){
-      addMsg('system','Move your avatar next to someone in the room before sending.','System');
-      return;
-    }
-    chatInput.value = '';
-    addMsg('you', text, youAvatar ? youAvatar.name : 'You');
-    showSpeech(text);
-
-    const partner = avatars.find(n => n.id === currentPartnerId);
-    if(partner && partner.replies){
-      npcReply(partner);
-    }
-  }
-
-  // ===== LOGIN / INIT =====
+  // Avatar selectie
   document.querySelectorAll('.login-avatar-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       document.querySelectorAll('.login-avatar-btn').forEach(b=>b.classList.remove('selected'));
       btn.classList.add('selected');
-      selectedGender = btn.dataset.gender || 'neutral';
+      selectedKind = btn.dataset.kind || 'boy-light';
     });
   });
 
+  // Enter chat
   enterBtn.addEventListener('click', ()=>{
     let nick = nickInput.value.trim();
     if(!nick) nick = 'Anon';
@@ -787,31 +726,31 @@
       const nameEl = youAvatar.el.querySelector('.avatar-name');
       if(nameEl) nameEl.textContent = nick;
     }else{
-      // maak NPC's
-      npcDefinitions.forEach(def=>{
-        createAvatar({
-          id:def.id,
-          name:def.name,
-          gender:def.gender,
-          x:def.x,y:def.y,
-          npc:true,
-          replies:def.replies
-        });
-      });
-
-      // user avatar
       youAvatar = createAvatar({
         id:'you',
         name:nick,
-        gender:genderFromSelection(selectedGender),
-        x:50,y:45,
-        npc:false
+        kind:selectedKind,
+        x:50,y:45
       });
     }
 
-    roomStatusEl.textContent = 'Online as ' + nick;
-    addMsg('system', `You entered the room as ${nick}. Drag your avatar onto someone to start a chat.`, 'System');
+    roomStatusEl.textContent = 'Ingelogd als ' + nick;
+    youLabel.textContent = 'Jij: ' + nick;
+    chatInput.disabled = false;
+    sendBtn.disabled = false;
+    chatInput.focus();
+
+    addMsg('system', `Je bent de chat binnengekomen als ${nick}. Sleep je avatar over de vloer en typ een bericht.`, 'Systeem');
   });
+
+  function handleSend(){
+    if(!youAvatar) return;
+    const text = chatInput.value.trim();
+    if(!text) return;
+    chatInput.value = '';
+    addMsg('you', text, youAvatar.name || 'Jij');
+    showSpeech(text);
+  }
 
   chatInput.addEventListener('keydown', e=>{
     if(e.key === 'Enter'){
@@ -820,7 +759,6 @@
     }
   });
   sendBtn.addEventListener('click', handleSend);
-
 </script>
 </body>
 </html>
