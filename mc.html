@@ -41,7 +41,74 @@
         #050814;
       color:#e5efff;
       min-height:100vh;
+      margin:0;
     }
+
+    /* ===== layout zoals index (wrap + brand card) ===== */
+    :root{
+      --card:#0a0a0a;
+      --border:#222;
+    }
+
+    .wrap{
+      max-width:980px;
+      margin:0 auto;
+      padding:18px 16px 40px;
+    }
+
+    .brand-card{
+      position:relative;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:10px;
+      overflow:hidden;
+    }
+
+    .banner{
+      width:100%;
+      height:200px;
+      object-fit:contain;
+      display:block;
+      background:#000;
+    }
+
+    @media (min-width:720px){
+      .banner{height:280px;}
+    }
+
+    .logo{
+      position:absolute;
+      left:16px;
+      bottom:16px;
+      width:92px;
+      height:92px;
+      border-radius:50%;
+      object-fit:cover;
+      background:#000;
+      filter:
+        drop-shadow(0 0 14px rgba(34,197,94,.55))
+        drop-shadow(0 0 22px rgba(167,139,250,.45));
+    }
+
+    .tagline{
+      position:absolute;
+      top:12px;
+      right:12px;
+      font-weight:700;
+      font-size:.9rem;
+      color:#fff;
+      background:rgba(0,0,0,.55);
+      border:1px solid rgba(255,255,255,.12);
+      padding:.35rem .6rem;
+      border-radius:10px;
+      backdrop-filter:blur(4px);
+    }
+
+    .tagline .emph{ color:#a78bfa; }
+
+    /* ===== console-styling ===== */
+
     .meme-title{
       font-family:Bangers,Inter,system-ui;
       letter-spacing:.08em;
@@ -98,30 +165,40 @@
       40%{transform:scale(1.05); box-shadow:0 0 24px 0 rgba(251,191,36,.9);}
       100%{transform:scale(1); box-shadow:0 0 0 0 rgba(251,191,36,0);}
     }
+
+    footer{
+      margin:28px 0 10px;
+      color:#9aa0a6;
+      font-size:.82rem;
+      text-align:center;
+    }
+    footer a{
+      color:#cbd5e1;
+      opacity:.75;
+      text-decoration:none;
+    }
+    footer a:hover{
+      opacity:1;
+      text-decoration:underline;
+    }
   </style>
 </head>
 <body>
-  <main class="max-w-6xl mx-auto px-4 py-5 md:py-8">
-    <!-- NAV -->
-    <nav class="flex items-center justify-between mb-6">
-      <a href="index.html" class="flex items-center gap-3">
-        <img src="logo.png" class="h-10 w-10 rounded-2xl ring-2 ring-cbs-neon shadow-cbs-neon" alt="CBS">
-        <div class="leading-tight">
-          <div class="text-sm font-semibold tracking-wide uppercase text-slate-300">CBS COIN</div>
-          <div class="text-xs text-slate-400">Community Builds Sovereignty</div>
-        </div>
-      </a>
-      <div class="hidden sm:flex gap-2 text-[11px] font-semibold uppercase tracking-widest">
-        <div class="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-400/40 text-emerald-300">No presale</div>
-        <div class="px-3 py-1 rounded-full bg-pink-500/10 border border-pink-400/40 text-pink-300">No VC</div>
-        <a href="holders.html" class="px-3 py-1 rounded-full bg-sky-500/10 border border-sky-400/50 text-sky-200 hover:bg-sky-500/20">
-          Holders board
-        </a>
-      </div>
-    </nav>
+  <main class="wrap">
+    <!-- Brand card zoals index -->
+    <section class="brand-card">
+      <picture>
+        <source type="image/webp" srcset="Banner-CBS-Coin.webp">
+        <img class="banner" src="Banner-CBS-Coin.jpg" alt="CBS Banner" onerror="this.style.display='none'">
+      </picture>
+
+      <!-- Main logo -->
+      <img class="logo" src="logo.png" alt="CBS Logo" onerror="this.style.display='none'">
+      <div class="tagline">CBS — Market Cap <span class="emph">& Streak</span></div>
+    </section>
 
     <!-- HERO -->
-    <section class="glass p-5 md:p-8">
+    <section class="glass p-5 md:p-8 mt-4">
       <div class="flex flex-col lg:flex-row gap-6 lg:gap-10 items-start">
         <div class="flex-1">
           <p class="text-[11px] tracking-[0.25em] uppercase text-emerald-300 mb-2">Live On-chain</p>
@@ -411,13 +488,10 @@
     </section>
 
     <!-- FOOTER -->
-    <footer class="mt-6 mb-4 text-[11px] text-slate-500 flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-      <div>© CBS Coin — Community Builds Sovereignty</div>
-      <div class="flex flex-wrap gap-3">
-        <a href="https://x.com/CBS_Coin" target="_blank" rel="noreferrer">X/Twitter</a>
-        <a href="https://t.me/CBS_Coin" target="_blank" rel="noreferrer">Telegram</a>
-        <a href="mailto:contact@cbs-coin.com">contact@cbs-coin.com</a>
-      </div>
+    <footer>
+      © CBS Coin ·
+      <a href="faq.html">FAQ</a> ·
+      <a href="mailto:contact@cbs-coin.com">contact@cbs-coin.com</a>
     </footer>
   </main>
 
@@ -842,7 +916,6 @@
           input.value = pubkey;
         }
 
-        // Option: automatisch rank checken na connect
         await checkRank();
       }catch(e){
         console.error('[Connect wallet]', e);
