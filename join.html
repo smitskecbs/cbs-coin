@@ -3,40 +3,37 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>CBS Collaborations — Community Builds Sovereignty</title>
-  <meta name="description" content="Submit a collaboration or partnership proposal for CBS Coin.">
-  <link rel="icon" href="logo.png">
+  <title>CBS Chatpoint — Collaborations Lounge</title>
+  <meta name="description" content="Old-school chatroom vibe for CBS Coin collaborators.">
 
-  <!-- Fonts & Tailwind -->
+  <!-- Font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="icon" href="logo.png">
 
   <style>
     :root{
-      --bg:#05070e;
+      --bg:#000000;
       --fg:#e5e7eb;
+      --muted:#cbd5e1;
       --card:#0a0a0a;
       --border:#222;
       --accent:#22c55e;
       --accent2:#a78bfa;
     }
+    *{box-sizing:border-box;margin:0;padding:0}
     body{
-      margin:0;
-      background:
-        radial-gradient(1200px 700px at 15% -10%, #0e1631 0%, var(--bg) 60%),
-        var(--bg);
-      color:var(--fg);
       font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--fg);
+      background:
+        radial-gradient(1200px 700px at 15% -10%, #0e1631 0%, #050814 60%),
+        #050814;
       min-height:100vh;
     }
+    .wrap{max-width:980px;margin:0 auto;padding:18px 16px 40px}
 
-    .wrap{
-      max-width:980px;
-      margin:0 auto;
-      padding:18px 16px 40px;
-    }
-
-    /* Brand card zoals index */
+    /* BRAND CARD (gelijk aan index) */
     .brand-card{
       position:relative;
       background:var(--card);
@@ -47,9 +44,6 @@
     }
     .banner{
       width:100%; height:200px; object-fit:contain; display:block; background:#000;
-    }
-    @media (min-width:720px){
-      .banner{ height:280px; }
     }
     .logo{
       position:absolute; left:16px; bottom:16px;
@@ -63,8 +57,12 @@
       padding:.35rem .6rem; border-radius:10px; backdrop-filter:blur(4px);
     }
     .tagline .emph{ color:var(--accent2); }
+    @media (min-width:720px){
+      .banner{ height:280px; }
+      .logo{ left:20px; bottom:20px; width:120px; height:120px; }
+    }
 
-    /* Chatpoint shell */
+    /* MAIN LAYOUT */
     .chat-shell{
       margin-top:1rem;
       background:radial-gradient(circle at 0 0, rgba(34,197,94,.22), transparent 55%),
@@ -73,126 +71,244 @@
       border-radius:20px;
       border:1px solid rgba(148,163,184,.5);
       box-shadow:0 0 35px rgba(15,23,42,.9);
-      padding:18px 16px;
+      padding:16px;
     }
     @media (min-width:768px){
-      .chat-shell{ padding:22px 20px; }
+      .chat-shell{ padding:20px; }
+    }
+    .chat-header-row{
+      display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
+      gap:10px;margin-bottom:14px;
+    }
+    .chat-header-row h1{
+      font-size:1.4rem;font-weight:800;color:#fff;letter-spacing:.02em;
+    }
+    .chat-header-row p{
+      font-size:.85rem;color:var(--muted);margin-top:2px;
+    }
+    .pill-row{display:flex;flex-wrap:wrap;gap:6px;font-size:.7rem}
+    .pill{
+      text-transform:uppercase;letter-spacing:.16em;
+      border-radius:999px;padding:.25rem .6rem;
+      border:1px solid rgba(148,163,184,.8);
+      background:rgba(15,23,42,.9);color:#cbd5e1;
+      white-space:nowrap;
+    }
+    .pill-green{
+      border-color:rgba(34,197,94,.9);
+      background:rgba(6,95,70,.85);color:#bbf7d0;
     }
 
-    .chat-window{
-      background:radial-gradient(circle at 10% 0, rgba(15,23,42,.9), rgba(15,23,42,.96));
+    .grid-2{
+      display:grid;gap:14px;
+      grid-template-columns:1.1fr;
+    }
+    @media (min-width:860px){
+      .grid-2{grid-template-columns:1.1fr 1.1fr;}
+    }
+
+    /* LOGIN / OVERLAY */
+    .login-panel{
+      margin-top:10px;
+      background:rgba(0,0,0,.65);
+      border-radius:14px;
+      border:1px solid rgba(148,163,184,.6);
+      padding:10px 12px;
+      display:flex;flex-wrap:wrap;gap:10px;align-items:center;
+      font-size:.85rem;
+    }
+    .login-panel label{font-size:.75rem;opacity:.8;margin-bottom:3px;display:block}
+    .login-group{display:flex;flex-direction:column;min-width:0}
+    .login-group input[type="text"]{
+      padding:6px 8px;border-radius:999px;border:1px solid rgba(148,163,184,.7);
+      background:#020617;color:#e5e7eb;font-size:.8rem;min-width:140px;
+    }
+    .login-avatars{display:flex;gap:6px;align-items:center}
+    .login-avatar-btn{
+      width:30px;height:30px;border-radius:999px;border:1px solid rgba(148,163,184,.7);
+      background:#020617;display:grid;place-items:center;font-size:1rem;cursor:pointer;
+      opacity:.65;transition:.1s;
+    }
+    .login-avatar-btn.selected{
+      border-color:var(--accent);box-shadow:0 0 12px rgba(34,197,94,.8);opacity:1;
+    }
+    .login-btn{
+      border:none;cursor:pointer;font-size:.8rem;font-weight:700;
+      padding:6px 12px;border-radius:999px;
+      background:var(--accent);color:#022c22;
+      box-shadow:0 0 14px rgba(34,197,94,.6);
+      white-space:nowrap;
+    }
+    .login-btn:disabled{opacity:.4;box-shadow:none;cursor:not-allowed;}
+
+    /* ROOM */
+    .room{
+      background:radial-gradient(circle at 20% 0, #020617, #020617 40%, #020617 100%);
       border-radius:18px;
-      border:1px solid rgba(148,163,184,.5);
-      box-shadow:inset 0 0 0 1px rgba(15,23,42,.9);
-      padding:12px;
-      font-size:.9rem;
-      display:flex;
-      flex-direction:column;
-      gap:.5rem;
+      border:1px solid rgba(30,64,175,.85);
+      box-shadow:inset 0 0 0 1px rgba(15,23,42,.95);
+      padding:10px;
+      position:relative;
+      overflow:hidden;
       min-height:260px;
       max-height:420px;
     }
-
-    .chat-header{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      margin-bottom:.4rem;
-      font-size:.78rem;
-      text-transform:uppercase;
-      letter-spacing:.16em;
-      color:#9ca3af;
+    .room-floor{
+      position:absolute;
+      inset:40% 4% 6%;
+      background:radial-gradient(circle at 50% 0,rgba(248,250,252,.08),transparent 45%),
+                 linear-gradient(180deg,#020617,#020617);
+      border-radius:18px;
+      border:1px solid rgba(148,163,184,.35);
+      box-shadow:0 -6px 14px rgba(0,0,0,.8) inset;
+    }
+    .room-title{
+      position:absolute;left:10px;top:8px;
+      font-size:.7rem;text-transform:uppercase;letter-spacing:.16em;color:#9ca3af;
+    }
+    .room-status{
+      position:absolute;right:10px;top:8px;
+      font-size:.7rem;color:#9ca3af;
     }
 
-    .chat-user{
-      display:flex; align-items:center; gap:.5rem;
+    /* AVATARS */
+    .avatar{
+      position:absolute;
+      width:54px;height:72px;
+      transform:translate(-50%,-50%);
+      cursor:grab;
     }
-    .chat-avatar{
-      width:30px; height:30px; border-radius:999px; display:grid; place-items:center;
-      background:radial-gradient(circle at 30% 0, #22c55e, #065f46);
-      color:#022c22; font-weight:800; font-size:.9rem;
-      box-shadow:0 0 12px rgba(34,197,94,.7);
+    .avatar-body{
+      position:absolute;left:50%;bottom:0;transform:translateX(-50%);
+      width:42px;height:46px;border-radius:12px 12px 10px 10px;
+      display:flex;align-items:center;justify-content:center;
+      color:#020617;font-weight:700;font-size:.8rem;
+      box-shadow:0 10px 16px rgba(0,0,0,.75);
     }
-    .chat-avatar-guest{
-      background:radial-gradient(circle at 30% 0, #a78bfa, #312e81);
-      color:#e0e7ff; box-shadow:0 0 12px rgba(129,140,248,.7);
+    .avatar-body.male{
+      background:linear-gradient(135deg,#38bdf8,#0ea5e9);
+    }
+    .avatar-body.female{
+      background:linear-gradient(135deg,#fb7185,#ec4899);
+    }
+    .avatar-body.neutral{
+      background:linear-gradient(135deg,#a78bfa,#22c55e);
+    }
+    .avatar-head{
+      position:absolute;left:50%;bottom:40px;transform:translateX(-50%);
+      width:34px;height:34px;border-radius:50%;
+      background:radial-gradient(circle at 30% 30%,#fee2e2,#fecaca);
+      border:2px solid #020617;
+    }
+    .avatar-name{
+      position:absolute;left:50%;top:-4px;transform:translate(-50%,-100%);
+      background:rgba(0,0,0,.7);
+      border-radius:999px;border:1px solid rgba(148,163,184,.8);
+      padding:2px 6px;font-size:.7rem;white-space:nowrap;
+    }
+    .avatar-npc .avatar-name{
+      background:rgba(15,23,42,.9);
+    }
+    .avatar-you .avatar-name{
+      border-color:var(--accent);color:#bbf7d0;
+    }
+    .avatar-selected .avatar-body{
+      box-shadow:0 0 0 2px #facc15,0 0 22px rgba(250,204,21,.8);
     }
 
-    .chat-bubble{
-      position:relative;
-      padding:.55rem .75rem;
-      border-radius:14px;
-      max-width:92%;
-      line-height:1.4;
+    /* SPEECH BUBBLE */
+    .speech{
+      position:absolute;left:50%;top:-10px;transform:translate(-50%,-100%);
+      max-width:180px;
+      background:#f9fafb;color:#020617;
+      padding:4px 8px;border-radius:10px;
+      font-size:.75rem;
+      box-shadow:0 6px 12px rgba(0,0,0,.65);
+      opacity:0;pointer-events:none;
+      transition:opacity .2s;
+      white-space:normal;
     }
-    .from-cbs{
-      background:linear-gradient(135deg,#0f172a,#020617);
-      border:1px solid rgba(148,163,184,.8);
-      align-self:flex-start;
+    .speech::after{
+      content:"";position:absolute;left:50%;bottom:-6px;transform:translateX(-50%) rotate(45deg);
+      width:10px;height:10px;background:#f9fafb;
     }
-    .from-you{
+    .speech.visible{opacity:1;}
+
+    /* CHAT PANEL */
+    .chat-panel{
+      background:rgba(2,6,23,.95);
+      border-radius:18px;
+      border:1px solid rgba(148,163,184,.6);
+      box-shadow:inset 0 0 0 1px rgba(15,23,42,1);
+      padding:10px;
+      display:flex;flex-direction:column;gap:6px;
+      min-height:260px;
+      max-height:420px;
+    }
+    .chat-panel-header{
+      display:flex;justify-content:space-between;align-items:center;
+      font-size:.78rem;text-transform:uppercase;letter-spacing:.14em;color:#9ca3af;
+    }
+    .chat-partner{
+      font-size:.8rem;color:#e5e7eb;font-weight:600;
+    }
+    .chat-log{
+      flex:1;
+      margin-top:4px;
+      padding:6px;
+      border-radius:10px;
+      background:rgba(15,23,42,.95);
+      overflow-y:auto;
+      font-size:.8rem;
+    }
+    .msg{
+      margin-bottom:6px;display:flex;flex-direction:column;max-width:90%;
+    }
+    .msg.you{align-items:flex-end;}
+    .msg .bubble{
+      padding:6px 8px;border-radius:10px;
+    }
+    .msg.you .bubble{
       background:linear-gradient(135deg,#22c55e,#16a34a);
       color:#022c22;
-      align-self:flex-end;
+      border:1px solid rgba(22,163,74,.9);
     }
-    .from-you::after{
-      content:"";
-      position:absolute;
-      right:6px; bottom:-5px;
-      width:10px; height:10px;
-      background:linear-gradient(135deg,#22c55e,#16a34a);
-      transform:rotate(45deg);
+    .msg.them .bubble{
+      background:rgba(15,23,42,1);
+      border:1px solid rgba(148,163,184,.7);
+      color:#e5e7eb;
     }
-    .from-cbs::after{
-      content:"";
-      position:absolute;
-      left:6px; bottom:-5px;
-      width:10px; height:10px;
-      background:linear-gradient(135deg,#0f172a,#020617);
-      transform:rotate(45deg);
+    .msg small{
+      font-size:.65rem;color:#9ca3af;margin-top:1px;
     }
 
-    .chat-meta{
-      font-size:.7rem;
-      color:#9ca3af;
-      margin-top:.2rem;
+    .chat-input-row{
+      margin-top:4px;
+      display:flex;gap:6px;align-items:center;
     }
-
-    /* Form styling */
-    label{ font-size:.8rem; opacity:.9; margin-bottom:.25rem; display:block; }
-    input, textarea, select{
-      width:100%;
-      background:rgba(15,23,42,.85);
-      border:1px solid rgba(148,163,184,.6);
-      border-radius:.9rem;
-      padding:.55rem .75rem;
-      color:var(--fg);
-      font-size:.9rem;
+    .chat-input-row input{
+      flex:1;
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,.7);
+      background:#020617;
+      color:#e5e7eb;
+      padding:6px 10px;
+      font-size:.8rem;
       outline:none;
     }
-    input:focus, textarea:focus, select:focus{
-      border-color:var(--accent);
-      box-shadow:0 0 0 1px rgba(34,197,94,.6);
+    .chat-input-row button{
+      border:none;border-radius:999px;
+      padding:6px 12px;
+      font-size:.8rem;font-weight:700;
+      background:var(--accent);color:#022c22;
+      box-shadow:0 0 12px rgba(34,197,94,.7);
+      cursor:pointer;white-space:nowrap;
     }
-    textarea{ resize:vertical; min-height:90px; }
+    .chat-input-row button:disabled{opacity:.4;box-shadow:none;cursor:not-allowed;}
 
-    .btn{
-      display:inline-flex; align-items:center; justify-content:center;
-      border-radius:.9rem; padding:.55rem 1.15rem; font-weight:600; transition:.15s;
-      font-size:.85rem;
+    .chat-hint{
+      font-size:.7rem;color:#9ca3af;margin-top:2px;
     }
-    .btn-primary{
-      background:var(--accent); color:#022c22;
-      box-shadow:0 0 16px rgba(34,197,94,.55);
-    }
-    .btn-primary:hover{ filter:brightness(1.05); transform:translateY(-1px); }
-    .btn-ghost{
-      background:rgba(15,23,42,.9); color:var(--fg);
-      border:1px solid rgba(148,163,184,.6);
-    }
-    .btn-ghost:hover{ background:rgba(15,23,42,1); }
-
-    .small{ font-size:.75rem; opacity:.75; }
 
     footer{
       margin-top:1.5rem;
@@ -209,306 +325,412 @@
       opacity:1;
       text-decoration:underline;
     }
-
-    .pill{
-      font-size:.7rem;
-      text-transform:uppercase;
-      letter-spacing:.18em;
-      border-radius:999px;
-      padding:.25rem .65rem;
-      border:1px solid rgba(148,163,184,.8);
-      background:rgba(15,23,42,.9);
-      color:#cbd5e1;
-    }
-    .pill-green{
-      border-color:rgba(34,197,94,.9);
-      color:#bbf7d0;
-      background:rgba(6,95,70,.85);
-    }
   </style>
 </head>
 <body>
-  <main class="wrap">
-    <!-- Brand card (banner + logo) -->
-    <section class="brand-card">
-      <picture>
-        <source type="image/webp" srcset="Banner-CBS-Coin.webp">
-        <img class="banner" src="Banner-CBS-Coin.jpg" alt="CBS Banner" onerror="this.style.display='none'">
-      </picture>
-      <img class="logo" src="logo.png" alt="CBS Logo" onerror="this.style.display='none'">
-      <div class="tagline">CBS — Collab <span class="emph">Chatpoint</span></div>
-    </section>
+<main class="wrap">
 
-    <!-- Chatpoint style collab page -->
-    <section class="chat-shell mt-4">
-      <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 class="text-xl md:text-2xl font-extrabold tracking-tight">
-            Join the CBS experiment
-          </h1>
-          <p class="text-xs md:text-sm text-slate-300 mt-1">
-            Think of this page as an old-school chatroom: you drop your collab idea,
-            CBS reads it and replies directly via mail or DM.
-          </p>
-        </div>
-        <div class="flex flex-wrap gap-2 text-[0.7rem]">
-          <span class="pill pill-green">Open for serious builders</span>
-          <span class="pill">No paid shilling · No hype only</span>
+  <!-- Banner + logo (zoals index) -->
+  <section class="brand-card">
+    <picture>
+      <source type="image/webp" srcset="Banner-CBS-Coin.webp">
+      <img class="banner" src="Banner-CBS-Coin.jpg" alt="CBS Banner" onerror="this.style.display='none'">
+    </picture>
+    <img class="logo" src="logo.png" alt="CBS Logo" onerror="this.style.display='none'">
+    <div class="tagline">CBS — Collab <span class="emph">Chatpoint</span></div>
+  </section>
+
+  <!-- Chatpoint-style room -->
+  <section class="chat-shell">
+    <header class="chat-header-row">
+      <div>
+        <h1>CBS Collaborations Lounge</h1>
+        <p>
+          Old-school chatroom feeling. Pick a nickname, drop your avatar in the room
+          and drag it next to someone to start “chatting”.
+        </p>
+      </div>
+      <div class="pill-row">
+        <span class="pill pill-green">Builders welcome</span>
+        <span class="pill">No paid shilling</span>
+      </div>
+    </header>
+
+    <!-- Login / nickname -->
+    <div class="login-panel" id="loginPanel">
+      <div class="login-group">
+        <label for="nickInput">Nickname</label>
+        <input id="nickInput" type="text" maxlength="16" placeholder="Your name or team…">
+      </div>
+      <div class="login-group">
+        <label>Avatar</label>
+        <div class="login-avatars">
+          <button type="button" class="login-avatar-btn selected" data-gender="male">👦</button>
+          <button type="button" class="login-avatar-btn" data-gender="female">👧</button>
+          <button type="button" class="login-avatar-btn" data-gender="neutral">🧑</button>
         </div>
       </div>
-
-      <div class="grid md:grid-cols-[1.1fr,1.1fr] gap-5">
-        <!-- LEFT: Fake chat window -->
-        <div class="chat-window">
-          <div class="chat-header">
-            <div class="flex items-center gap-2">
-              <span class="w-2 h-2 rounded-full bg-emerald-400 shadow-sm"></span>
-              <span>CBS COLLAB ROOM</span>
-            </div>
-            <span>Online · 1 dev · 1 community</span>
-          </div>
-
-          <div class="chat-user">
-            <div class="chat-avatar">CBS</div>
-            <div class="text-xs text-slate-300">
-              <div class="font-semibold">CBS Bot</div>
-              <div class="text-[0.7rem] text-slate-400">Community Builds Sovereignty</div>
-            </div>
-          </div>
-          <div class="chat-bubble from-cbs mt-1">
-            Hey builder 👋  
-            Drop your idea on the right: who you are, what you want to do,
-            and how it actually helps CBS holders.
-            <div class="chat-meta">Seen · just now</div>
-          </div>
-
-          <div class="chat-user mt-3">
-            <div class="chat-avatar chat-avatar-guest">YOU</div>
-            <div class="text-xs text-slate-300">
-              <div class="font-semibold" id="previewNameLabel">Your team</div>
-              <div class="text-[0.7rem] text-slate-400" id="previewCategoryLabel">Collab idea loading…</div>
-            </div>
-          </div>
-          <div class="chat-bubble from-you mt-1" id="previewBubble">
-            I’d like to explore a collaboration with CBS Coin.  
-            I’ll fill in the details on the right.
-            <div class="chat-meta">Typing…</div>
-          </div>
-
-          <div class="mt-3 text-[0.7rem] text-slate-400 border-t border-slate-800 pt-2">
-            <strong>Note:</strong> there is no “pay to play”.  
-            We prefer authentic, long-term ideas over short-term shill campaigns.
-          </div>
-        </div>
-
-        <!-- RIGHT: Form as chat compose -->
-        <div class="bg-[#020617]/70 border border-slate-700 rounded-2xl p-4 flex flex-col gap-3">
-          <div class="flex items-center justify-between">
-            <div>
-              <div class="text-[0.7rem] uppercase tracking-[0.18em] text-slate-400">
-                Compose your collab
-              </div>
-              <div class="text-sm text-slate-200">
-                All submissions go directly to <span class="text-emerald-300">contact@cbs-coin.com</span>.
-              </div>
-            </div>
-          </div>
-
-          <form id="collabForm" class="mt-2 flex flex-col gap-3">
-            <div class="grid md:grid-cols-2 gap-3">
-              <div>
-                <label for="name">Your name / team *</label>
-                <input id="name" autocomplete="off" required>
-              </div>
-              <div>
-                <label for="contact">Contact (email / X / TG) *</label>
-                <input id="contact" autocomplete="off" required>
-              </div>
-            </div>
-
-            <div class="grid md:grid-cols-2 gap-3">
-              <div>
-                <label for="project">Project / brand</label>
-                <input id="project" autocomplete="off">
-              </div>
-              <div>
-                <label for="category">Category</label>
-                <select id="category">
-                  <option>Marketing / Promotion</option>
-                  <option>Exchange / Listing</option>
-                  <option>Partnership / Co-brand</option>
-                  <option>Development / Tooling</option>
-                  <option>NFT / Design</option>
-                  <option>Community / Event</option>
-                  <option>Other</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label for="proposal">Your proposal *</label>
-              <textarea id="proposal" placeholder="What do you want to do together? Format, channels, responsibilities…"
-                        required></textarea>
-            </div>
-
-            <div>
-              <label for="value">Why this helps CBS holders *</label>
-              <textarea id="value" placeholder="How does this bring real value to holders, liquidity or reputation?"
-                        required></textarea>
-            </div>
-
-            <div class="grid md:grid-cols-2 gap-3">
-              <div>
-                <label for="budget">Budget (if any)</label>
-                <input id="budget" placeholder="Example: No budget / 500 USDC / rev share only">
-              </div>
-              <div>
-                <label for="timeline">Preferred timeline</label>
-                <input id="timeline" placeholder="Example: Q1 2026 / asap / flexible">
-              </div>
-            </div>
-
-            <div>
-              <label for="links">Links (deck, website, socials)</label>
-              <input id="links" placeholder="https://…">
-            </div>
-
-            <!-- anti-spam honeypot -->
-            <input id="website" name="website" style="display:none">
-
-            <div class="flex items-center gap-3 mt-2 flex-wrap">
-              <button type="submit" class="btn btn-primary">
-                Send proposal via email
-              </button>
-              <button type="button" id="copyBtn" class="btn btn-ghost">
-                Copy JSON only
-              </button>
-              <span id="toast" class="small"></span>
-            </div>
-            <p class="small mt-1">
-              No server storage · the form opens your email client with all fields pre-filled.
-              JSON is copied so you can also DM it on X or Telegram.
-            </p>
-          </form>
-        </div>
+      <button class="login-btn" id="enterBtn">Enter chat</button>
+      <div style="flex:1 1 100%;font-size:.7rem;color:#9ca3af;margin-top:2px;">
+        Tip: this is a toy front-end only — no messages leave your browser.
       </div>
-    </section>
+    </div>
 
-    <footer class="mt-4">
-      © CBS Coin — Community Builds Sovereignty ·
-      <a href="https://cbs-coin.com" target="_blank" rel="noopener">cbs-coin.com</a>
-    </footer>
-  </main>
+    <div class="grid-2">
+      <!-- Kamer met avatars -->
+      <div class="room" id="room">
+        <div class="room-floor"></div>
+        <div class="room-title">CBS Chatpoint · Drag your avatar</div>
+        <div class="room-status" id="roomStatus">Not logged in</div>
+        <!-- Avatars worden door JS gevuld -->
+      </div>
 
-  <script>
-    const form   = document.getElementById('collabForm');
-    const toast  = document.getElementById('toast');
-    const copyBtn = document.getElementById('copyBtn');
+      <!-- Chat paneel -->
+      <aside class="chat-panel">
+        <div class="chat-panel-header">
+          <span>PRIVATE CHAT</span>
+          <span class="chat-partner" id="partnerLabel">No partner selected</span>
+        </div>
+        <div class="chat-log" id="chatLog">
+          <div class="msg them">
+            <div class="bubble">
+              Welcome to the CBS Collaborations Lounge. Drag your avatar onto someone in the room to start chatting.
+            </div>
+            <small>System · just now</small>
+          </div>
+        </div>
+        <div class="chat-input-row">
+          <input id="chatInput" type="text" placeholder="Type a message… (press Enter to send)" disabled>
+          <button id="sendBtn" disabled>Send</button>
+        </div>
+        <div class="chat-hint">
+          Drag your avatar close to <strong>Dev</strong>, <strong>Artist</strong> or <strong>Community</strong> and say hi.
+          They’ll reply with a short auto-response.
+        </div>
+      </aside>
+    </div>
+  </section>
 
-    const previewNameLabel     = document.getElementById('previewNameLabel');
-    const previewCategoryLabel = document.getElementById('previewCategoryLabel');
-    const previewBubble        = document.getElementById('previewBubble');
+  <footer>
+    © CBS Coin · Community Builds Sovereignty ·
+    <a href="index.html">Back to main page</a>
+  </footer>
 
-    function buildPayload(){
-      return {
-        name: document.getElementById('name').value.trim(),
-        contact: document.getElementById('contact').value.trim(),
-        project: document.getElementById('project').value.trim(),
-        category: document.getElementById('category').value,
-        proposal: document.getElementById('proposal').value.trim(),
-        value: document.getElementById('value').value.trim(),
-        budget: document.getElementById('budget').value.trim(),
-        timeline: document.getElementById('timeline').value.trim(),
-        links: document.getElementById('links').value.trim(),
-        timestamp: new Date().toISOString()
-      };
+</main>
+
+<script>
+  // ===== STATE =====
+  const roomEl       = document.getElementById('room');
+  const roomStatusEl = document.getElementById('roomStatus');
+  const partnerLabel = document.getElementById('partnerLabel');
+  const chatLog      = document.getElementById('chatLog');
+  const chatInput    = document.getElementById('chatInput');
+  const sendBtn      = document.getElementById('sendBtn');
+  const nickInput    = document.getElementById('nickInput');
+  const enterBtn     = document.getElementById('enterBtn');
+
+  let selectedGender = 'male';
+  let youAvatar = null;
+  let currentPartnerId = null;
+  let avatars = []; // {id, name, gender, npc, x, y, el, speechEl}
+
+  const npcDefinitions = [
+    {
+      id:'dev',
+      name:'Dev',
+      gender:'neutral',
+      x:25,y:65,
+      replies:[
+        "Love real builders. Got a repo link?",
+        "If it helps holders and is transparent, I'm listening.",
+        "Can we keep it open-source or at least verifiable?"
+      ]
+    },
+    {
+      id:'artist',
+      name:'Artist',
+      gender:'female',
+      x:50,y:65,
+      replies:[
+        "Visual identity matters. Got any mockups?",
+        "I like memes that actually mean something.",
+        "We can make CBS look like a movement, not a random coin."
+      ]
+    },
+    {
+      id:'community',
+      name:'Community',
+      gender:'male',
+      x:75,y:65,
+      replies:[
+        "How does this help real holders, not just speculators?",
+        "If it's honest and long-term, people will feel it.",
+        "No fake hype, just consistent actions. What's your plan?"
+      ]
+    }
+  ];
+
+  // ===== AVATAR UI =====
+  function createAvatar({id,name,gender,x,y,npc}) {
+    const el = document.createElement('div');
+    el.className = 'avatar' + (npc ? ' avatar-npc' : ' avatar-you');
+    el.dataset.id = id;
+    el.style.left = x + '%';
+    el.style.top  = y + '%';
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'avatar-name';
+    nameEl.textContent = name;
+
+    const headEl = document.createElement('div');
+    headEl.className = 'avatar-head';
+
+    const bodyEl = document.createElement('div');
+    bodyEl.className = 'avatar-body ' + gender;
+    bodyEl.textContent = npc ? name[0].toUpperCase() : 'YOU';
+
+    const speechEl = document.createElement('div');
+    speechEl.className = 'speech';
+
+    el.appendChild(nameEl);
+    el.appendChild(headEl);
+    el.appendChild(bodyEl);
+    el.appendChild(speechEl);
+
+    roomEl.appendChild(el);
+
+    const avatar = {id,name,gender,x,y,npc,el,speechEl};
+    avatars.push(avatar);
+
+    if(!npc){
+      enableDrag(avatar);
+    }else{
+      el.style.cursor = 'pointer';
+      el.addEventListener('click', ()=>setPartner(avatar.id,true));
     }
 
-    function toMailto(p){
-      const subject = encodeURIComponent('CBS Collaboration — ' + (p.project || p.name));
-      const body = encodeURIComponent(
-`Name/Team: ${p.name}
-Contact: ${p.contact}
-Project: ${p.project}
-Category: ${p.category}
+    return avatar;
+  }
 
-Proposal:
-${p.proposal}
+  function genderFromSelection(g){
+    if(g === 'male' || g === 'female' || g === 'neutral') return g;
+    return 'neutral';
+  }
 
-Value for CBS:
-${p.value}
+  // ===== DRAGGING =====
+  function enableDrag(avatar){
+    let dragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
 
-Budget: ${p.budget}
-Timeline: ${p.timeline}
-Links: ${p.links}
-
-Time: ${p.timestamp}`
-      );
-      return `mailto:contact@cbs-coin.com?subject=${subject}&body=${body}`;
-    }
-
-    form.addEventListener('submit', e=>{
+    function onDown(e){
       e.preventDefault();
-      const p = buildPayload();
-      if(!p.name || !p.contact || !p.proposal || !p.value){
-        alert('Please fill in all required fields (name, contact, proposal, value for CBS).');
-        return;
-      }
-      // open email client
-      window.location.href = toMailto(p);
+      dragging = true;
+      avatar.el.style.cursor = 'grabbing';
 
-      // copy JSON payload
-      const json = JSON.stringify(p, null, 2);
-      if(navigator.clipboard?.writeText){
-        navigator.clipboard.writeText(json).then(()=>{
-          toast.textContent = 'JSON copied to clipboard';
-          setTimeout(()=>toast.textContent='',3000);
-        }).catch(()=>{
-          toast.textContent = '';
-        });
-      }
-    });
+      const rect = roomEl.getBoundingClientRect();
+      const ptX = e.touches ? e.touches[0].clientX : e.clientX;
+      const ptY = e.touches ? e.touches[0].clientY : e.clientY;
 
-    copyBtn.addEventListener('click', ()=>{
-      const p = buildPayload();
-      const json = JSON.stringify(p, null, 2);
-      if(navigator.clipboard?.writeText){
-        navigator.clipboard.writeText(json).then(()=>{
-          toast.textContent = 'JSON copied!';
-          setTimeout(()=>toast.textContent='',3000);
-        });
-      }else{
-        toast.textContent = '';
-      }
-    });
+      const currentLeft = rect.left + (avatar.x/100)*rect.width;
+      const currentTop  = rect.top  + (avatar.y/100)*rect.height;
 
-    // Kleine live preview in de chat-bubbles
-    function updatePreview(){
-      const p = buildPayload();
-      previewNameLabel.textContent = p.name || 'Your team';
-      previewCategoryLabel.textContent = p.category || 'Collab idea loading…';
+      offsetX = ptX - currentLeft;
+      offsetY = ptY - currentTop;
 
-      if(p.proposal || p.value){
-        previewBubble.innerHTML =
-          (p.proposal ? p.proposal : '') +
-          (p.value ? `<br><br><strong>Why this helps CBS:</strong> ${p.value}` : '') +
-          `<div class="chat-meta">Draft · not sent yet</div>`;
-      }else{
-        previewBubble.innerHTML =
-          'I’d like to explore a collaboration with CBS Coin.  ' +
-          'I’ll fill in the details on the right.' +
-          '<div class="chat-meta">Typing…</div>';
-      }
+      document.addEventListener('mousemove', onMove);
+      document.addEventListener('mouseup', onUp);
+      document.addEventListener('touchmove', onMove,{passive:false});
+      document.addEventListener('touchend', onUp);
     }
 
-    ['name','project','category','proposal','value'].forEach(id=>{
-      const el = document.getElementById(id);
-      if(el){
-        el.addEventListener('input', updatePreview);
+    function onMove(e){
+      if(!dragging) return;
+      e.preventDefault();
+
+      const rect = roomEl.getBoundingClientRect();
+      const ptX = e.touches ? e.touches[0].clientX : e.clientX;
+      const ptY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      let x = ((ptX - offsetX) - rect.left) / rect.width * 100;
+      let y = ((ptY - offsetY) - rect.top) / rect.height * 100;
+
+      x = Math.max(10,Math.min(90,x));
+      y = Math.max(35,Math.min(90,y));
+
+      avatar.x = x;
+      avatar.y = y;
+      avatar.el.style.left = x + '%';
+      avatar.el.style.top  = y + '%';
+    }
+
+    function onUp(e){
+      if(!dragging) return;
+      dragging = false;
+      avatar.el.style.cursor = 'grab';
+
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onUp);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onUp);
+
+      // Check of we dicht bij een NPC staan
+      checkProximity(avatar);
+    }
+
+    avatar.el.addEventListener('mousedown', onDown);
+    avatar.el.addEventListener('touchstart', onDown,{passive:false});
+  }
+
+  function distance(a,b){
+    const dx = a.x - b.x;
+    const dy = a.y - b.y;
+    return Math.sqrt(dx*dx+dy*dy);
+  }
+
+  function checkProximity(you){
+    let closest = null;
+    let best = Infinity;
+    avatars.forEach(av=>{
+      if(av.npc){
+        const d = distance(you,av);
+        if(d < best){
+          best = d; closest = av;
+        }
       }
     });
+    if(closest && best < 18){
+      setPartner(closest.id,true);
+    }
+  }
 
-    updatePreview();
-  </script>
+  // ===== PARTNER + CHAT =====
+  function setPartner(id, fromClick){
+    currentPartnerId = id;
+    avatars.forEach(av=>{
+      av.el.classList.remove('avatar-selected');
+    });
+    const partner = avatars.find(a=>a.id===id);
+    if(partner){
+      partner.el.classList.add('avatar-selected');
+      partnerLabel.textContent = 'Chatting with ' + partner.name;
+      roomStatusEl.textContent = 'Talking to ' + partner.name;
+      chatInput.disabled = false;
+      sendBtn.disabled = false;
+      chatInput.focus();
+      if(fromClick){
+        addMsg('them', `You walked up to ${partner.name}. Say hi and share your idea.`, 'System');
+      }
+    }
+  }
+
+  function addMsg(who,text,fromName){
+    const msg = document.createElement('div');
+    msg.className = 'msg ' + (who === 'you' ? 'you' : 'them');
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.textContent = text;
+
+    const small = document.createElement('small');
+    const ts = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    small.textContent = (fromName || (who==='you' ? 'You' : 'Them')) + ' · ' + ts;
+
+    msg.appendChild(bubble);
+    msg.appendChild(small);
+    chatLog.appendChild(msg);
+    chatLog.scrollTop = chatLog.scrollHeight;
+  }
+
+  function showSpeech(text){
+    if(!youAvatar) return;
+    const speech = youAvatar.speechEl;
+    speech.textContent = text;
+    speech.classList.add('visible');
+    clearTimeout(speech._timer);
+    speech._timer = setTimeout(()=>{
+      speech.classList.remove('visible');
+    },3000);
+  }
+
+  function npcReply(partner){
+    if(!partner || !partner.replies) return;
+    const arr = partner.replies;
+    const reply = arr[Math.floor(Math.random()*arr.length)];
+    setTimeout(()=>{
+      addMsg('them', reply, partner.name);
+    }, 700 + Math.random()*800);
+  }
+
+  function handleSend(){
+    const text = chatInput.value.trim();
+    if(!text) return;
+    if(!currentPartnerId){
+      addMsg('system','Move your avatar next to someone in the room before sending.','System');
+      return;
+    }
+    chatInput.value = '';
+    addMsg('you', text, youAvatar ? youAvatar.name : 'You');
+    showSpeech(text);
+
+    const partner = npcDefinitions.find(n=>n.id===currentPartnerId);
+    if(partner){
+      npcReply(partner);
+    }
+  }
+
+  // ===== LOGIN / INIT =====
+  document.querySelectorAll('.login-avatar-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.login-avatar-btn').forEach(b=>b.classList.remove('selected'));
+      btn.classList.add('selected');
+      selectedGender = btn.dataset.gender || 'neutral';
+    });
+  });
+
+  enterBtn.addEventListener('click', ()=>{
+    let nick = nickInput.value.trim();
+    if(!nick) nick = 'Anon';
+    nick = nick.slice(0,16);
+
+    if(youAvatar){
+      youAvatar.name = nick;
+      youAvatar.el.querySelector('.avatar-name').textContent = nick;
+    }else{
+      // maak NPC's
+      npcDefinitions.forEach(def=>{
+        createAvatar({
+          id:def.id,
+          name:def.name,
+          gender:def.gender,
+          x:def.x,y:def.y,
+          npc:true
+        });
+      });
+
+      // user avatar
+      youAvatar = createAvatar({
+        id:'you',
+        name:nick,
+        gender:genderFromSelection(selectedGender),
+        x:50,y:45,
+        npc:false
+      });
+    }
+
+    roomStatusEl.textContent = 'Online as ' + nick;
+    document.getElementById('loginPanel').style.opacity = '0.9';
+    addMsg('system', `You entered the room as ${nick}. Drag your avatar onto someone to start a chat.`, 'System');
+  });
+
+  chatInput.addEventListener('keydown', e=>{
+    if(e.key === 'Enter'){
+      e.preventDefault();
+      handleSend();
+    }
+  });
+  sendBtn.addEventListener('click', handleSend);
+
+</script>
 </body>
 </html>
