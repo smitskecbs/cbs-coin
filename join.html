@@ -125,9 +125,10 @@
     }
     .login-avatars{display:flex;gap:6px;align-items:center}
     .login-avatar-btn{
-      width:30px;height:30px;border-radius:999px;border:1px solid rgba(148,163,184,.7);
+      width:30px;height:30px;border-radius:4px;border:1px solid rgba(148,163,184,.7);
       background:#020617;display:grid;place-items:center;font-size:1rem;cursor:pointer;
       opacity:.65;transition:.1s;
+      image-rendering:pixelated;
     }
     .login-avatar-btn.selected{
       border-color:var(--accent);box-shadow:0 0 12px rgba(34,197,94,.8);opacity:1;
@@ -156,8 +157,14 @@
     .room-floor{
       position:absolute;
       inset:40% 4% 6%;
-      background:radial-gradient(circle at 50% 0,rgba(248,250,252,.08),transparent 45%),
-                 linear-gradient(180deg,#020617,#020617);
+      background:
+        repeating-linear-gradient(
+          45deg,
+          #020617 0,
+          #020617 6px,
+          #020b2b 6px,
+          #020b2b 12px
+        );
       border-radius:18px;
       border:1px solid rgba(148,163,184,.35);
       box-shadow:0 -6px 14px rgba(0,0,0,.8) inset;
@@ -171,66 +178,135 @@
       font-size:.7rem;color:#9ca3af;
     }
 
-    /* AVATARS */
+    /* PIXEL AVATARS */
     .avatar{
       position:absolute;
-      width:54px;height:72px;
+      width:56px;height:74px;
       transform:translate(-50%,-50%);
       cursor:grab;
-    }
-    .avatar-body{
-      position:absolute;left:50%;bottom:0;transform:translateX(-50%);
-      width:42px;height:46px;border-radius:12px 12px 10px 10px;
-      display:flex;align-items:center;justify-content:center;
-      color:#020617;font-weight:700;font-size:.8rem;
-      box-shadow:0 10px 16px rgba(0,0,0,.75);
-    }
-    .avatar-body.male{
-      background:linear-gradient(135deg,#38bdf8,#0ea5e9);
-    }
-    .avatar-body.female{
-      background:linear-gradient(135deg,#fb7185,#ec4899);
-    }
-    .avatar-body.neutral{
-      background:linear-gradient(135deg,#a78bfa,#22c55e);
-    }
-    .avatar-head{
-      position:absolute;left:50%;bottom:40px;transform:translateX(-50%);
-      width:34px;height:34px;border-radius:50%;
-      background:radial-gradient(circle at 30% 30%,#fee2e2,#fecaca);
-      border:2px solid #020617;
+      image-rendering:pixelated;
     }
     .avatar-name{
       position:absolute;left:50%;top:-4px;transform:translate(-50%,-100%);
-      background:rgba(0,0,0,.7);
-      border-radius:999px;border:1px solid rgba(148,163,184,.8);
-      padding:2px 6px;font-size:.7rem;white-space:nowrap;
+      background:rgba(0,0,0,.85);
+      border-radius:4px;
+      border:1px solid rgba(148,163,184,.9);
+      padding:2px 6px;
+      font-size:.7rem;
+      white-space:nowrap;
     }
     .avatar-npc .avatar-name{
-      background:rgba(15,23,42,.9);
+      background:#020617;
     }
     .avatar-you .avatar-name{
       border-color:var(--accent);color:#bbf7d0;
     }
+
+    .avatar-head{
+      position:absolute;
+      left:50%;
+      bottom:40px;
+      transform:translateX(-50%);
+      width:22px;
+      height:22px;
+      background:#fbbf94;
+      border-radius:2px;
+      box-shadow:0 0 0 2px #000;
+    }
+    .avatar-head::before,
+    .avatar-head::after{
+      content:"";
+      position:absolute;
+      top:7px;
+      width:3px;
+      height:3px;
+      background:#000;
+    }
+    .avatar-head::before{
+      left:5px;
+    }
+    .avatar-head::after{
+      right:5px;
+    }
+    .avatar-mouth{
+      position:absolute;
+      left:50%;
+      bottom:5px;
+      transform:translateX(-50%);
+      width:8px;
+      height:2px;
+      background:#000;
+    }
+
+    .avatar-body{
+      position:absolute;
+      left:50%;
+      bottom:0;
+      transform:translateX(-50%);
+      width:28px;
+      height:26px;
+      border-radius:3px;
+      box-shadow:0 6px 10px rgba(0,0,0,.8);
+      border:1px solid #000;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:.6rem;
+      font-weight:700;
+      color:#020617;
+      letter-spacing:.04em;
+    }
+    .avatar-body.male{
+      background:
+        linear-gradient(180deg,#38bdf8,#0ea5e9);
+    }
+    .avatar-body.female{
+      background:
+        linear-gradient(180deg,#fb7185,#ec4899);
+    }
+    .avatar-body.neutral{
+      background:
+        linear-gradient(180deg,#a78bfa,#22c55e);
+    }
+
+    .avatar-legs{
+      position:absolute;
+      left:50%;
+      bottom:-3px;
+      transform:translateX(-50%);
+      width:20px;
+      height:6px;
+    }
+    .avatar-leg{
+      position:absolute;
+      bottom:0;
+      width:6px;
+      height:6px;
+      background:#111827;
+      box-shadow:0 0 0 1px #020617;
+    }
+    .avatar-leg.left{ left:1px; }
+    .avatar-leg.right{ right:1px; }
+
     .avatar-selected .avatar-body{
       box-shadow:0 0 0 2px #facc15,0 0 22px rgba(250,204,21,.8);
     }
 
     /* SPEECH BUBBLE */
     .speech{
-      position:absolute;left:50%;top:-10px;transform:translate(-50%,-100%);
+      position:absolute;left:50%;top:-4px;transform:translate(-50%,-100%);
       max-width:180px;
       background:#f9fafb;color:#020617;
-      padding:4px 8px;border-radius:10px;
-      font-size:.75rem;
+      padding:4px 6px;border-radius:4px;
+      font-size:.7rem;
       box-shadow:0 6px 12px rgba(0,0,0,.65);
       opacity:0;pointer-events:none;
       transition:opacity .2s;
       white-space:normal;
     }
     .speech::after{
-      content:"";position:absolute;left:50%;bottom:-6px;transform:translateX(-50%) rotate(45deg);
-      width:10px;height:10px;background:#f9fafb;
+      content:"";position:absolute;left:50%;bottom:-4px;transform:translateX(-50%) rotate(45deg);
+      width:8px;height:8px;background:#f9fafb;
     }
     .speech.visible{opacity:1;}
 
@@ -266,7 +342,7 @@
     }
     .msg.you{align-items:flex-end;}
     .msg .bubble{
-      padding:6px 8px;border-radius:10px;
+      padding:6px 8px;border-radius:6px;
     }
     .msg.you .bubble{
       background:linear-gradient(135deg,#22c55e,#16a34a);
@@ -365,9 +441,9 @@
       <div class="login-group">
         <label>Avatar</label>
         <div class="login-avatars">
-          <button type="button" class="login-avatar-btn selected" data-gender="male">👦</button>
-          <button type="button" class="login-avatar-btn" data-gender="female">👧</button>
-          <button type="button" class="login-avatar-btn" data-gender="neutral">🧑</button>
+          <button type="button" class="login-avatar-btn selected" data-gender="male">🧑</button>
+          <button type="button" class="login-avatar-btn" data-gender="female">👩</button>
+          <button type="button" class="login-avatar-btn" data-gender="neutral">👽</button>
         </div>
       </div>
       <button class="login-btn" id="enterBtn">Enter chat</button>
@@ -382,7 +458,6 @@
         <div class="room-floor"></div>
         <div class="room-title">CBS Chatpoint · Drag your avatar</div>
         <div class="room-status" id="roomStatus">Not logged in</div>
-        <!-- Avatars worden door JS gevuld -->
       </div>
 
       <!-- Chat paneel -->
@@ -432,7 +507,7 @@
   let selectedGender = 'male';
   let youAvatar = null;
   let currentPartnerId = null;
-  let avatars = []; // {id, name, gender, npc, x, y, el, speechEl}
+  let avatars = []; // {id,name,gender,npc,x,y,el,speechEl,replies?}
 
   const npcDefinitions = [
     {
@@ -471,7 +546,7 @@
   ];
 
   // ===== AVATAR UI =====
-  function createAvatar({id,name,gender,x,y,npc}) {
+  function createAvatar({id,name,gender,x,y,npc,replies}) {
     const el = document.createElement('div');
     el.className = 'avatar' + (npc ? ' avatar-npc' : ' avatar-you');
     el.dataset.id = id;
@@ -485,21 +560,35 @@
     const headEl = document.createElement('div');
     headEl.className = 'avatar-head';
 
+    const mouthEl = document.createElement('div');
+    mouthEl.className = 'avatar-mouth';
+
     const bodyEl = document.createElement('div');
     bodyEl.className = 'avatar-body ' + gender;
     bodyEl.textContent = npc ? name[0].toUpperCase() : 'YOU';
 
+    const legsWrap = document.createElement('div');
+    legsWrap.className = 'avatar-legs';
+    const legL = document.createElement('div');
+    legL.className = 'avatar-leg left';
+    const legR = document.createElement('div');
+    legR.className = 'avatar-leg right';
+    legsWrap.appendChild(legL);
+    legsWrap.appendChild(legR);
+
     const speechEl = document.createElement('div');
     speechEl.className = 'speech';
 
+    headEl.appendChild(mouthEl);
     el.appendChild(nameEl);
     el.appendChild(headEl);
     el.appendChild(bodyEl);
+    el.appendChild(legsWrap);
     el.appendChild(speechEl);
 
     roomEl.appendChild(el);
 
-    const avatar = {id,name,gender,x,y,npc,el,speechEl};
+    const avatar = {id,name,gender,x,y,npc,el,speechEl,replies};
     avatars.push(avatar);
 
     if(!npc){
@@ -673,8 +762,8 @@
     addMsg('you', text, youAvatar ? youAvatar.name : 'You');
     showSpeech(text);
 
-    const partner = npcDefinitions.find(n=>n.id===currentPartnerId);
-    if(partner){
+    const partner = avatars.find(n => n.id === currentPartnerId);
+    if(partner && partner.replies){
       npcReply(partner);
     }
   }
@@ -695,7 +784,8 @@
 
     if(youAvatar){
       youAvatar.name = nick;
-      youAvatar.el.querySelector('.avatar-name').textContent = nick;
+      const nameEl = youAvatar.el.querySelector('.avatar-name');
+      if(nameEl) nameEl.textContent = nick;
     }else{
       // maak NPC's
       npcDefinitions.forEach(def=>{
@@ -704,7 +794,8 @@
           name:def.name,
           gender:def.gender,
           x:def.x,y:def.y,
-          npc:true
+          npc:true,
+          replies:def.replies
         });
       });
 
@@ -719,7 +810,6 @@
     }
 
     roomStatusEl.textContent = 'Online as ' + nick;
-    document.getElementById('loginPanel').style.opacity = '0.9';
     addMsg('system', `You entered the room as ${nick}. Drag your avatar onto someone to start a chat.`, 'System');
   });
 
