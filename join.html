@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>CBS Chatroom — Community Builds Sovereignty</title>
-  <meta name="description" content="Retro CBS Coin chatroom in a pixel-style world. Choose your avatar and move around while you chat.">
+  <title>CBS Chat — MSN Style Lounge</title>
+  <meta name="description" content="Retro MSN style chatroom for the CBS Coin community. Community Builds Sovereignty.">
   <link rel="icon" href="logo.png">
 
   <!-- Font -->
@@ -20,7 +20,9 @@
       --card:#0a0a0a;
       --border:#222;
       --accent:#22c55e;
-      --accent2:#a78bfa;
+      --accent2:#0ea5e9;
+      --msn-blue:#00a2ed;
+      --msn-grey:#edf2ff;
     }
     *{box-sizing:border-box;margin:0;padding:0}
     body{
@@ -33,7 +35,7 @@
     }
     .wrap{max-width:980px;margin:0 auto;padding:18px 16px 40px}
 
-    /* BRAND CARD (same style as index) */
+    /* BRAND CARD (same as index) */
     .brand-card{
       position:relative;
       background:var(--card);
@@ -62,368 +64,268 @@
       .logo{ left:20px; bottom:20px; width:120px; height:120px; }
     }
 
-    /* MAIN LAYOUT */
-    .chat-shell{
+    /* MSN WINDOW SHELL */
+    .msn-shell{
       margin-top:1rem;
-      background:radial-gradient(circle at 0 0, rgba(34,197,94,.22), transparent 55%),
-                 radial-gradient(circle at 100% 100%, rgba(129,140,248,.22), transparent 60%),
-                 #050816;
-      border-radius:20px;
-      border:1px solid rgba(148,163,184,.5);
+      background:radial-gradient(circle at top left, rgba(14,165,233,.2), transparent 55%),
+                 radial-gradient(circle at bottom right, rgba(96,165,250,.2), transparent 55%),
+                 #020617;
+      border-radius:18px;
+      border:1px solid rgba(148,163,184,.6);
       box-shadow:0 0 35px rgba(15,23,42,.9);
-      padding:16px;
+      padding:12px;
     }
     @media (min-width:768px){
-      .chat-shell{ padding:20px; }
-    }
-    .chat-header-row{
-      display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;
-      gap:10px;margin-bottom:14px;
-    }
-    .chat-header-row h1{
-      font-size:1.4rem;font-weight:800;color:#fff;letter-spacing:.02em;
-    }
-    .chat-header-row p{
-      font-size:.85rem;color:var(--muted);margin-top:2px;
-    }
-    .pill-row{display:flex;flex-wrap:wrap;gap:6px;font-size:.7rem}
-    .pill{
-      text-transform:uppercase;letter-spacing:.16em;
-      border-radius:999px;padding:.25rem .6rem;
-      border:1px solid rgba(148,163,184,.8);
-      background:rgba(15,23,42,.9);color:#cbd5e1;
-      white-space:nowrap;
-    }
-    .pill-green{
-      border-color:rgba(34,197,94,.9);
-      background:rgba(6,95,70,.85);color:#bbf7d0;
+      .msn-shell{ padding:16px; }
     }
 
-    .grid-2{
-      display:grid;gap:14px;
-      grid-template-columns:1.1fr;
+    .msn-titlebar{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:6px 10px;
+      border-radius:10px 10px 4px 4px;
+      background:linear-gradient(90deg,#2563eb,#38bdf8);
+      color:#f9fafb;
+      font-size:.8rem;
     }
-    @media (min-width:860px){
-      .grid-2{grid-template-columns:1.1fr 1.1fr;}
+    .msn-titlebar-left{
+      display:flex;align-items:center;gap:8px;
+    }
+    .msn-titlebar-bubbles{
+      display:flex;align-items:center;gap:4px;
+    }
+    .bubble-dot{
+      width:8px;height:8px;border-radius:999px;
+      background:rgba(248,250,252,.9);
+      box-shadow:0 0 8px rgba(248,250,252,.7);
+    }
+    .msn-title{
+      font-weight:700;
+    }
+    .msn-titlebar-right{
+      display:flex;align-items:center;gap:6px;font-size:.7rem;opacity:.9;
+    }
+    .msn-title-btn{
+      width:14px;height:14px;
+      border-radius:3px;
+      background:rgba(15,23,42,.15);
+      border:1px solid rgba(15,23,42,.4);
     }
 
-    /* LOGIN / AVATAR PICKER */
-    .login-panel{
+    .msn-header{
+      margin-top:6px;
+      background:linear-gradient(180deg,#f9fafb,#e5edff);
+      border-radius:6px;
+      padding:6px 8px;
+      display:flex;justify-content:space-between;align-items:center;
+      border:1px solid #cbd5f5;
+      font-size:.78rem;
+      color:#0f172a;
+    }
+    .msn-me{
+      display:flex;align-items:center;gap:8px;
+    }
+    .msn-avatar{
+      width:32px;height:32px;border-radius:8px;
+      background:linear-gradient(135deg,#38bdf8,#a855f7);
+      display:flex;align-items:center;justify-content:center;
+      color:#f9fafb;
+      font-weight:800;font-size:.9rem;
+      box-shadow:0 0 9px rgba(56,189,248,.7);
+    }
+    .msn-me-names{
+      display:flex;flex-direction:column;
+    }
+    .msn-me-nick{
+      font-weight:700;max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    }
+    .msn-me-status{
+      font-size:.7rem;color:#4b5563;
+    }
+    .msn-status-select{
+      border-radius:999px;border:1px solid #c4ceff;
+      background:#eef2ff;padding:3px 8px;font-size:.7rem;
+      color:#1e293b;
+    }
+
+    .msn-main{
       margin-top:10px;
-      background:rgba(0,0,0,.65);
-      border-radius:14px;
-      border:1px solid rgba(148,163,184,.6);
-      padding:10px 12px;
-      display:flex;flex-wrap:wrap;gap:10px;align-items:center;
-      font-size:.85rem;
+      display:grid;
+      grid-template-columns:0.9fr 1.4fr;
+      gap:10px;
     }
-    .login-panel label{font-size:.75rem;opacity:.8;margin-bottom:3px;display:block}
-    .login-group{display:flex;flex-direction:column;min-width:0}
-    .login-group input[type="text"]{
-      padding:6px 8px;border-radius:999px;border:1px solid rgba(148,163,184,.7);
-      background:#020617;color:#e5e7eb;font-size:.8rem;min-width:140px;
+    @media (max-width:820px){
+      .msn-main{
+        grid-template-columns:1fr;
+      }
     }
-    .login-avatars{
-      display:flex;flex-wrap:wrap;gap:6px;align-items:center;max-width:320px;
-    }
-    .login-avatar-btn{
-      width:30px;height:30px;border-radius:4px;border:1px solid rgba(148,163,184,.7);
-      background:#020617;display:grid;place-items:center;font-size:1rem;cursor:pointer;
-      opacity:.65;transition:.1s;
-      image-rendering:pixelated;
-    }
-    .login-avatar-btn.selected{
-      border-color:var(--accent);box-shadow:0 0 12px rgba(34,197,94,.8);opacity:1;
-    }
-    .login-btn{
-      border:none;cursor:pointer;font-size:.8rem;font-weight:700;
-      padding:6px 12px;border-radius:999px;
-      background:var(--accent);color:#022c22;
-      box-shadow:0 0 14px rgba(34,197,94,.6);
-      white-space:nowrap;
-    }
-    .login-btn:disabled{opacity:.4;box-shadow:none;cursor:not-allowed;}
 
-    /* ROOM */
-    .room{
-      background:#020617;
-      border-radius:18px;
-      border:1px solid rgba(30,64,175,.85);
-      box-shadow:inset 0 0 0 1px rgba(15,23,42,.95);
-      padding:10px;
-      position:relative;
+    /* CONTACT LIST */
+    .msn-contacts{
+      background:linear-gradient(180deg,#eff4ff,#dbeafe);
+      border-radius:10px;
+      border:1px solid #bfdbfe;
+      display:flex;flex-direction:column;
       overflow:hidden;
       min-height:260px;
-      max-height:420px;
     }
-    .room-floor{
-      position:absolute;
-      inset:40% 4% 6%;
-      background:
-        repeating-linear-gradient(
-          45deg,
-          #020617 0,
-          #020617 6px,
-          #020b2b 6px,
-          #020b2b 12px
-        );
-      border-radius:18px;
-      border:1px solid rgba(148,163,184,.35);
-      box-shadow:0 -6px 14px rgba(0,0,0,.8) inset;
+    .msn-contacts-header{
+      padding:6px 8px;
+      font-size:.75rem;
+      font-weight:600;
+      color:#1f2937;
+      border-bottom:1px solid #bfdbfe;
+      background:linear-gradient(90deg,#dbeafe,#eff6ff);
+      display:flex;align-items:center;justify-content:space-between;
     }
-    .room-title{
-      position:absolute;left:10px;top:8px;
-      font-size:.7rem;text-transform:uppercase;letter-spacing:.16em;color:#9ca3af;
-    }
-    .room-status{
-      position:absolute;right:10px;top:8px;
-      font-size:.7rem;color:#9ca3af;
+    .msn-contacts-header span:last-child{
+      font-size:.68rem;color:#4b5563;font-weight:400;
     }
 
-    /* PIXEL AVATARS */
-    .avatar{
-      position:absolute;
-      width:56px;height:74px;
-      transform:translate(-50%,-50%);
-      cursor:grab;
-      image-rendering:pixelated;
+    .msn-contacts-list{
+      flex:1;
+      padding:6px;
+      overflow-y:auto;
+      font-size:.78rem;
     }
-    .avatar-name{
-      position:absolute;left:50%;top:-4px;transform:translate(-50%,-100%);
-      background:rgba(0,0,0,.85);
-      border-radius:4px;
-      border:1px solid rgba(148,163,184,.9);
-      padding:2px 6px;
+    .contact-group-title{
       font-size:.7rem;
-      white-space:nowrap;
+      text-transform:uppercase;
+      letter-spacing:.16em;
+      color:#6b7280;
+      margin:4px 2px;
     }
-    .avatar-you .avatar-name{
-      border-color:var(--accent);color:#bbf7d0;
+    .contact{
+      display:flex;align-items:center;gap:6px;
+      padding:4px 6px;
+      border-radius:6px;
+      cursor:pointer;
     }
-
-    .avatar-head{
-      position:absolute;
-      left:50%;
-      bottom:40px;
-      transform:translateX(-50%);
-      width:22px;
-      height:22px;
-      border-radius:2px;
-      box-shadow:0 0 0 2px #000;
+    .contact:hover{
+      background:rgba(191,219,254,.8);
     }
-    .avatar-mouth{
-      position:absolute;
-      left:50%;
-      bottom:5px;
-      transform:translateX(-50%);
-      width:8px;
-      height:2px;
-      background:#000;
+    .contact.active{
+      background:#bfdbfe;
+      box-shadow:inset 0 0 0 1px #93c5fd;
     }
-
-    /* HAIR */
-    .avatar-hair{
-      position:absolute;
-      left:-2px;
-      top:-5px;
-      width:26px;
-      height:10px;
-      border-radius:3px 3px 1px 1px;
-      box-shadow:0 2px 0 rgba(0,0,0,.7);
+    .contact-status-dot{
+      width:8px;height:8px;border-radius:999px;
+      background:#22c55e;
+      box-shadow:0 0 7px rgba(34,197,94,.9);
     }
-    .hair-blond{ background:#facc15; }
-    .hair-brown{ background:#92400e; }
-    .hair-black{ background:#020617; }
-    .hair-hood{ background:linear-gradient(180deg,#020617,#0f172a); }
-    .hair-alien{ background:linear-gradient(180deg,#4ade80,#16a34a); }
-
-    /* SKIN TONES */
-    .skin-light{ background:#fbbf94; }
-    .skin-brown{ background:#b45309; }
-    .skin-dark{ background:#4a1f07; }
-    .skin-alien{ background:#22c55e; }
-    .skin-anon{ background:#64748b; }
-    .skin-animal{ background:#f97316; }
-
-    /* animals: ears / special head */
-    .avatar.animal-dog .avatar-head::before,
-    .avatar.animal-dog .avatar-head::after,
-    .avatar.animal-cat .avatar-head::before,
-    .avatar.animal-cat .avatar-head::after{
-      content:"";
-      position:absolute;
-      width:6px;height:6px;top:-4px;background:#1f2937;
+    .contact-status-away{ background:#facc15; box-shadow:0 0 7px rgba(250,204,21,.9);}
+    .contact-status-busy{ background:#ef4444; box-shadow:0 0 7px rgba(248,113,113,.9);}
+    .contact-name{
+      font-weight:600;color:#111827;
     }
-    .avatar.animal-dog .avatar-head::before{ left:1px;border-radius:2px 0 0 2px; }
-    .avatar.animal-dog .avatar-head::after{ right:1px;border-radius:0 2px 2px 0; }
-
-    .avatar.animal-cat .avatar-head::before{ left:2px;transform:skewX(-10deg); }
-    .avatar.animal-cat .avatar-head::after{ right:2px;transform:skewX(10deg); }
-
-    .avatar.animal-dog .avatar-mouth,
-    .avatar.animal-cat .avatar-mouth{
-      width:10px;height:4px;border-radius:0 0 4px 4px;background:#111827;
+    .contact-note{
+      font-size:.7rem;color:#4b5563;
     }
 
-    .avatar-body{
-      position:absolute;
-      left:50%;
-      bottom:0;
-      transform:translateX(-50%);
-      width:28px;
-      height:26px;
-      border-radius:3px;
-      box-shadow:0 6px 10px rgba(0,0,0,.8);
-      border:1px solid #000;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-size:.6rem;
-      font-weight:700;
-      color:#020617;
-      letter-spacing:.04em;
-      text-align:center;
+    /* CHAT WINDOW */
+    .msn-chat{
+      background:#e5edff;
+      border-radius:10px;
+      border:1px solid #c7d2fe;
+      display:flex;flex-direction:column;
+      min-height:260px;
+      overflow:hidden;
     }
-    .body-boy-blue{
-      background:linear-gradient(180deg,#38bdf8,#0ea5e9);
-    }
-    .body-boy-green{
-      background:linear-gradient(180deg,#22c55e,#16a34a);
-    }
-    .body-girl-pink{
-      background:linear-gradient(180deg,#fb7185,#ec4899);
-    }
-    .body-girl-purple{
-      background:linear-gradient(180deg,#a855f7,#7c3aed);
-    }
-    .body-alien{
-      background:linear-gradient(180deg,#bef264,#22c55e);
-      color:#052e16;
-    }
-    .body-anon{
-      background:linear-gradient(180deg,#0f172a,#020617);
-      color:#e5e7eb;
-    }
-    .body-dog{
-      background:linear-gradient(180deg,#f97316,#ea580c);
+    .msn-chat-header{
+      padding:6px 8px;
+      font-size:.8rem;
+      background:linear-gradient(90deg,#dbeafe,#eff6ff);
+      border-bottom:1px solid #c4d0ff;
+      display:flex;align-items:center;justify-content:space-between;
       color:#111827;
     }
-    .body-cat{
-      background:linear-gradient(180deg,#9ca3af,#4b5563);
-      color:#020617;
+    .msn-chat-header span:last-child{
+      font-size:.7rem;color:#4b5563;
     }
 
-    .avatar-legs{
-      position:absolute;
-      left:50%;
-      bottom:-3px;
-      transform:translateX(-50%);
-      width:20px;
-      height:6px;
-    }
-    .avatar-leg{
-      position:absolute;
-      bottom:0;
-      width:6px;
-      height:6px;
-      background:#111827;
-      box-shadow:0 0 0 1px #020617;
-    }
-    .avatar-leg.left{ left:1px; }
-    .avatar-leg.right{ right:1px; }
-
-    .speech{
-      position:absolute;left:50%;top:-4px;transform:translate(-50%,-100%);
-      max-width:180px;
-      background:#f9fafb;color:#020617;
-      padding:4px 6px;border-radius:4px;
-      font-size:.7rem;
-      box-shadow:0 6px 12px rgba(0,0,0,.65);
-      opacity:0;pointer-events:none;
-      transition:opacity .2s;
-      white-space:normal;
-    }
-    .speech::after{
-      content:"";position:absolute;left:50%;bottom:-4px;transform:translateX(-50%) rotate(45deg);
-      width:8px;height:8px;background:#f9fafb;
-    }
-    .speech.visible{opacity:1;}
-
-    .avatar-selected .avatar-body{
-      box-shadow:0 0 0 2px #facc15,0 0 22px rgba(250,204,21,.8);
-    }
-
-    /* CHAT PANEL (room chat) */
-    .chat-panel{
-      background:rgba(2,6,23,.95);
-      border-radius:18px;
-      border:1px solid rgba(148,163,184,.6);
-      box-shadow:inset 0 0 0 1px rgba(15,23,42,1);
-      padding:10px;
-      display:flex;flex-direction:column;gap:6px;
-      min-height:260px;
-      max-height:420px;
-    }
-    .chat-panel-header{
-      display:flex;justify-content:space-between;align-items:center;
-      font-size:.78rem;text-transform:uppercase;letter-spacing:.14em;color:#9ca3af;
-    }
-    .chat-log{
+    .msn-chat-log{
       flex:1;
-      margin-top:4px;
-      padding:6px;
-      border-radius:10px;
-      background:rgba(15,23,42,.95);
+      padding:8px;
+      background:#f8fbff;
       overflow-y:auto;
       font-size:.8rem;
+      color:#111827;
     }
-    .msg{
-      margin-bottom:6px;display:flex;flex-direction:column;max-width:90%;
+    .msn-msg{
+      margin-bottom:6px;
     }
-    .msg.you{align-items:flex-end;}
-    .msg .bubble{
-      padding:6px 8px;border-radius:6px;
+    .msn-msg-header{
+      font-weight:600;
+      font-size:.75rem;
+      color:#1f2937;
     }
-    .msg.you .bubble{
-      background:linear-gradient(135deg,#22c55e,#16a34a);
-      color:#022c22;
-      border:1px solid rgba(22,163,74,.9);
+    .msn-msg-meta{
+      font-size:.65rem;
+      color:#6b7280;
     }
-    .msg.system .bubble{
-      background:rgba(15,23,42,1);
-      border:1px dashed rgba(148,163,184,.7);
-      color:#e5e7eb;
+    .msn-msg-body{
+      margin-top:1px;
+      padding:4px 6px;
+      border-radius:4px;
+      background:#eef2ff;
+      border:1px solid #d4d4ff;
+      white-space:pre-wrap;
+      word-wrap:break-word;
     }
-    .msg small{
-      font-size:.65rem;color:#9ca3af;margin-top:1px;
+    .msn-msg.me .msn-msg-body{
+      background:#dcfce7;
+      border-color:#bbf7d0;
     }
 
-    .chat-input-row{
-      margin-top:4px;
-      display:flex;gap:6px;align-items:center;
+    .msn-chat-input{
+      border-top:1px solid #c4d0ff;
+      background:#e5edff;
+      padding:6px 8px;
+      display:flex;flex-direction:column;gap:4px;
     }
-    .chat-input-row input{
+    .msn-chat-input-top{
+      display:flex;align-items:center;gap:6px;
+      font-size:.7rem;
+      color:#4b5563;
+    }
+    .msn-icon-btn{
+      width:18px;height:18px;border-radius:3px;border:1px solid #cbd5f5;
+      background:#eef2ff;font-size:.7rem;
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;
+    }
+    .msn-chat-input-main{
+      display:flex;align-items:center;gap:6px;margin-top:2px;
+    }
+    #msgInput{
       flex:1;
-      border-radius:999px;
-      border:1px solid rgba(148,163,184,.7);
-      background:#020617;
-      color:#e5e7eb;
-      padding:6px 10px;
+      border-radius:4px;
+      border:1px solid #c4d0ff;
+      background:#f9fafb;
+      padding:4px 6px;
       font-size:.8rem;
+      color:#111827;
       outline:none;
     }
-    .chat-input-row button{
-      border:none;border-radius:999px;
-      padding:6px 12px;
-      font-size:.8rem;font-weight:700;
-      background:var(--accent);color:#022c22;
-      box-shadow:0 0 12px rgba(34,197,94,.7);
-      cursor:pointer;white-space:nowrap;
+    #sendBtn{
+      border:none;
+      border-radius:4px;
+      padding:4px 10px;
+      font-size:.78rem;
+      font-weight:700;
+      background:linear-gradient(90deg,#22c55e,#16a34a);
+      color:#022c22;
+      cursor:pointer;
+      box-shadow:0 0 9px rgba(34,197,94,.7);
+      white-space:nowrap;
     }
-    .chat-input-row button:disabled{opacity:.4;box-shadow:none;cursor:not-allowed;}
-
-    .chat-hint{
-      font-size:.7rem;color:#9ca3af;margin-top:2px;
+    #sendBtn:disabled{
+      opacity:.5;
+      box-shadow:none;
+      cursor:not-allowed;
+    }
+    .msn-chat-hint{
+      font-size:.7rem;
+      color:#6b7280;
     }
 
     footer{
@@ -441,6 +343,42 @@
       opacity:1;
       text-decoration:underline;
     }
+
+    .nick-input-row{
+      margin-top:8px;
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      align-items:center;
+      font-size:.78rem;
+      color:var(--muted);
+    }
+    .nick-input-row input{
+      border-radius:999px;
+      border:1px solid rgba(148,163,184,.8);
+      background:#020617;
+      color:#e5e7eb;
+      padding:4px 8px;
+      font-size:.78rem;
+      min-width:140px;
+      outline:none;
+    }
+    .nick-btn{
+      border:none;
+      border-radius:999px;
+      padding:4px 10px;
+      font-size:.78rem;
+      font-weight:700;
+      background:var(--accent);
+      color:#022c22;
+      cursor:pointer;
+      box-shadow:0 0 10px rgba(34,197,94,.7);
+      white-space:nowrap;
+    }
+    .nick-note{
+      font-size:.7rem;
+      color:#9ca3af;
+    }
   </style>
 </head>
 <body>
@@ -453,92 +391,133 @@
       <img class="banner" src="Banner-CBS-Coin.jpg" alt="CBS Banner" onerror="this.style.display='none'">
     </picture>
     <img class="logo" src="logo.png" alt="CBS Logo" onerror="this.style.display='none'">
-    <div class="tagline">CBS — Community <span class="emph">Chatroom</span></div>
+    <div class="tagline">CBS — Community <span class="emph">Chat</span></div>
   </section>
 
-  <!-- Chatroom -->
-  <section class="chat-shell">
-    <header class="chat-header-row">
-      <div>
-        <h1>CBS Community Chatroom</h1>
-        <p>
-          Retro Chatpoint / Habbo-style feeling: pick a pixel avatar, enter a nickname and drag your character
-          around the floor while you chat. Everything runs only in your browser.
-        </p>
-      </div>
-      <div class="pill-row">
-        <span class="pill pill-green">Chill chat</span>
-        <span class="pill">No shill / no scams</span>
-      </div>
-    </header>
+  <!-- MSN Messenger style chat window -->
+  <section class="msn-shell">
 
-    <!-- Nickname + avatar selection -->
-    <div class="login-panel">
-      <div class="login-group">
-        <label for="nickInput">Nickname</label>
-        <input id="nickInput" type="text" maxlength="16" placeholder="e.g. Smitske...">
-      </div>
-
-      <div class="login-group">
-        <label>Choose your avatar</label>
-        <div class="login-avatars">
-          <!-- Boys -->
-          <button type="button" class="login-avatar-btn selected" data-kind="boy-blond">👦🏼</button>
-          <button type="button" class="login-avatar-btn" data-kind="boy-brown">👦🏽</button>
-          <button type="button" class="login-avatar-btn" data-kind="boy-dark">👦🏿</button>
-          <!-- Girls -->
-          <button type="button" class="login-avatar-btn" data-kind="girl-blond">👧🏼</button>
-          <button type="button" class="login-avatar-btn" data-kind="girl-brown">👧🏽</button>
-          <button type="button" class="login-avatar-btn" data-kind="girl-dark">👧🏿</button>
-          <!-- Extra / neutral -->
-          <button type="button" class="login-avatar-btn" data-kind="alien">👽</button>
-          <button type="button" class="login-avatar-btn" data-kind="anon-hoodie">🕶️</button>
-          <!-- Fun (dog / cat) -->
-          <button type="button" class="login-avatar-btn" data-kind="dog">🐶</button>
-          <button type="button" class="login-avatar-btn" data-kind="cat">🐱</button>
+    <!-- Fake MSN title bar -->
+    <div class="msn-titlebar">
+      <div class="msn-titlebar-left">
+        <div class="msn-titlebar-bubbles">
+          <span class="bubble-dot"></span>
+          <span class="bubble-dot"></span>
+          <span class="bubble-dot"></span>
         </div>
+        <span class="msn-title">CBS Chat — Retro Messenger</span>
       </div>
-
-      <button class="login-btn" id="enterBtn">Enter chat</button>
-
-      <div style="flex:1 1 100%;font-size:.7rem;color:#9ca3af;margin-top:2px;">
-        Note: this is a front-end demo only. There is no real server — everything you type and every avatar
-        stays on your screen only.
+      <div class="msn-titlebar-right">
+        <span>Community Builds Sovereignty</span>
+        <span class="msn-title-btn"></span>
+        <span class="msn-title-btn"></span>
+        <span class="msn-title-btn"></span>
       </div>
     </div>
 
-    <div class="grid-2">
-      <!-- Room with avatar -->
-      <div class="room" id="room">
-        <div class="room-floor"></div>
-        <div class="room-title">CBS Chatroom · Drag your avatar</div>
-        <div class="room-status" id="roomStatus">Not joined</div>
-      </div>
-
-      <!-- Room chat -->
-      <aside class="chat-panel">
-        <div class="chat-panel-header">
-          <span>ROOM CHAT</span>
-          <span id="youLabel" style="font-size:.8rem;color:#e5e7eb;font-weight:600;">Not joined</span>
+    <!-- Me / status bar -->
+    <div class="msn-header">
+      <div class="msn-me">
+        <div class="msn-avatar" id="meAvatar">CS</div>
+        <div class="msn-me-names">
+          <span class="msn-me-nick" id="meNick">New CBS friend</span>
+          <span class="msn-me-status" id="meStatusText">Not joined yet</span>
         </div>
-        <div class="chat-log" id="chatLog">
-          <div class="msg system">
-            <div class="bubble">
-              Welcome to the CBS Community Chatroom. Pick a nickname and avatar, click “Enter chat”
-              and drag your pixel character around. Whatever you type also appears in a speech bubble above your avatar.
+      </div>
+      <div>
+        <label for="statusSelect" style="font-size:.7rem;margin-right:4px;">Status</label>
+        <select id="statusSelect" class="msn-status-select">
+          <option value="online">Online</option>
+          <option value="away">Away</option>
+          <option value="busy">Busy</option>
+          <option value="hidden">Appear offline</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Nickname input row -->
+    <div class="nick-input-row">
+      <span>Display name</span>
+      <input id="nickInput" type="text" maxlength="24" placeholder="e.g. Smitske, CBS_Holder, Kevin...">
+      <button class="nick-btn" id="joinBtn">Join chat</button>
+      <span class="nick-note">This is a local demo only — nothing is sent to a server.</span>
+    </div>
+
+    <!-- Main MSN layout -->
+    <div class="msn-main">
+      <!-- Contacts -->
+      <aside class="msn-contacts">
+        <div class="msn-contacts-header">
+          <span>Contacts</span>
+          <span>Double-click (click) to select</span>
+        </div>
+        <div class="msn-contacts-list" id="contactList">
+          <div class="contact-group-title">CBS LOUNGE</div>
+          <div class="contact active" data-id="cbs-lounge">
+            <span class="contact-status-dot"></span>
+            <div>
+              <div class="contact-name">CBS Lounge</div>
+              <div class="contact-note">General chat · chill & memes</div>
             </div>
-            <small>System · just now</small>
+          </div>
+
+          <div class="contact" data-id="builders-room">
+            <span class="contact-status-dot contact-status-away"></span>
+            <div>
+              <div class="contact-name">Builders Room</div>
+              <div class="contact-note">Tools · code · Solana questions</div>
+            </div>
+          </div>
+
+          <div class="contact" data-id="support-desk">
+            <span class="contact-status-dot contact-status-busy"></span>
+            <div>
+              <div class="contact-name">Support Desk</div>
+              <div class="contact-note">Faq & “How does CBS work?”</div>
+            </div>
           </div>
         </div>
-        <div class="chat-input-row">
-          <input id="chatInput" type="text" placeholder="Type a message… (Enter to send)" disabled>
-          <button id="sendBtn" disabled>Send</button>
-        </div>
-        <div class="chat-hint">
-          Tip: drag your avatar into a corner or next to another character to simulate private talks —
-          just like the old chat rooms.
-        </div>
       </aside>
+
+      <!-- Chat window -->
+      <section class="msn-chat">
+        <header class="msn-chat-header">
+          <span id="chatTitle">CBS Lounge</span>
+          <span id="chatSub">General chat · English only · No spam</span>
+        </header>
+
+        <div class="msn-chat-log" id="chatLog">
+          <div class="msn-msg">
+            <div class="msn-msg-header">System</div>
+            <div class="msn-msg-meta">Just now</div>
+            <div class="msn-msg-body">
+Welcome to the CBS Chat Lounge 👋
+
+• Choose a display name above and click “Join chat”
+• Pick a contact on the left (Lounge, Builders Room, Support)
+• Type your message and press Enter or click Send
+
+This is a front-end demo only — no real server, no storage, no DMs.
+            </div>
+          </div>
+        </div>
+
+        <div class="msn-chat-input">
+          <div class="msn-chat-input-top">
+            <span>Message:</span>
+            <button type="button" class="msn-icon-btn" title="Smile">🙂</button>
+            <button type="button" class="msn-icon-btn" title="Fire">🔥</button>
+            <button type="button" class="msn-icon-btn" title="Rocket">🚀</button>
+          </div>
+          <div class="msn-chat-input-main">
+            <input id="msgInput" type="text" placeholder="Type a message…" disabled>
+            <button id="sendBtn" disabled>Send</button>
+          </div>
+          <div class="msn-chat-hint">
+            Enter = send · Your messages are only visible on your own screen.
+          </div>
+        </div>
+      </section>
     </div>
   </section>
 
@@ -550,294 +529,171 @@
 </main>
 
 <script>
-  const roomEl    = document.getElementById('room');
-  const roomStatusEl = document.getElementById('roomStatus');
-  const chatLog   = document.getElementById('chatLog');
-  const chatInput = document.getElementById('chatInput');
-  const sendBtn   = document.getElementById('sendBtn');
-  const nickInput = document.getElementById('nickInput');
-  const enterBtn  = document.getElementById('enterBtn');
-  const youLabel  = document.getElementById('youLabel');
+  const nickInput   = document.getElementById('nickInput');
+  const joinBtn     = document.getElementById('joinBtn');
+  const meNickEl    = document.getElementById('meNick');
+  const meStatusEl  = document.getElementById('meStatusText');
+  const meAvatar    = document.getElementById('meAvatar');
+  const statusSel   = document.getElementById('statusSelect');
 
-  let selectedKind = 'boy-blond';
-  let youAvatar = null;
+  const contactList = document.getElementById('contactList');
+  const chatTitle   = document.getElementById('chatTitle');
+  const chatSub     = document.getElementById('chatSub');
+  const chatLog     = document.getElementById('chatLog');
+  const msgInput    = document.getElementById('msgInput');
+  const sendBtn     = document.getElementById('sendBtn');
 
-  function addMsg(type, text, fromLabel){
-    const msg = document.createElement('div');
-    msg.className = 'msg ' + type;
+  let joined = false;
+  let currentContact = 'cbs-lounge';
 
-    const bubble = document.createElement('div');
-    bubble.className = 'bubble';
-    bubble.textContent = text;
+  // Simple per-room history (local only)
+  const roomHistory = {
+    'cbs-lounge': [],
+    'builders-room': [],
+    'support-desk': []
+  };
 
-    const small = document.createElement('small');
-    const ts = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-    const who = fromLabel || (type === 'you' ? 'You' : 'System');
-    small.textContent = who + ' · ' + ts;
+  function abbreviateNick(nick){
+    if(!nick) return 'CBS';
+    const parts = nick.trim().split(/\s+/);
+    if(parts.length === 1){
+      return parts[0].slice(0,2).toUpperCase();
+    }
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
 
-    msg.appendChild(bubble);
-    msg.appendChild(small);
-    chatLog.appendChild(msg);
+  function addMessage(roomId, who, text, isMe=false, tsOverride){
+    const ts = tsOverride || new Date().toLocaleTimeString([], {
+      hour:'2-digit',minute:'2-digit'
+    });
+    const msg = { who, text, ts, me:isMe };
+    roomHistory[roomId].push(msg);
+
+    if(roomId === currentContact){
+      renderRoom(roomId);
+    }
+  }
+
+  function renderRoom(roomId){
+    chatLog.innerHTML = '';
+    const msgs = roomHistory[roomId] || [];
+
+    msgs.forEach(m=>{
+      const msgEl = document.createElement('div');
+      msgEl.className = 'msn-msg' + (m.me ? ' me' : '');
+
+      const head = document.createElement('div');
+      head.className = 'msn-msg-header';
+      head.textContent = m.who || 'Unknown';
+
+      const meta = document.createElement('div');
+      meta.className = 'msn-msg-meta';
+      meta.textContent = m.ts;
+
+      const body = document.createElement('div');
+      body.className = 'msn-msg-body';
+      body.textContent = m.text;
+
+      msgEl.appendChild(head);
+      msgEl.appendChild(meta);
+      msgEl.appendChild(body);
+      chatLog.appendChild(msgEl);
+    });
+
     chatLog.scrollTop = chatLog.scrollHeight;
   }
 
-  function showSpeech(text){
-    if(!youAvatar) return;
-    const speech = youAvatar.speechEl;
-    speech.textContent = text;
-    speech.classList.add('visible');
-    clearTimeout(speech._timer);
-    speech._timer = setTimeout(()=>{
-      speech.classList.remove('visible');
-    }, 3000);
+  function getRoomTitle(id){
+    switch(id){
+      case 'cbs-lounge': return {title:'CBS Lounge', sub:'General chat · English only · No spam'};
+      case 'builders-room': return {title:'Builders Room', sub:'Solana · tools · CBS dev talk'};
+      case 'support-desk': return {title:'Support Desk', sub:'Basic questions · “How does CBS work?”'};
+      default: return {title:'Chat', sub:''};
+    }
   }
 
-  function createAvatar({id,name,kind,x,y}){
-    const el = document.createElement('div');
-    el.className = 'avatar avatar-you';
-    el.dataset.id = id;
-    el.style.left = x + '%';
-    el.style.top  = y + '%';
+  // Contact switching
+  contactList.addEventListener('click', (e)=>{
+    const contactEl = e.target.closest('.contact');
+    if(!contactEl) return;
+    const id = contactEl.dataset.id;
+    if(!id || !roomHistory[id]) return;
 
-    // name label
-    const nameEl = document.createElement('div');
-    nameEl.className = 'avatar-name';
-    nameEl.textContent = name;
+    // Update active
+    contactList.querySelectorAll('.contact').forEach(c=>c.classList.remove('active'));
+    contactEl.classList.add('active');
 
-    // head
-    const headEl = document.createElement('div');
-    headEl.className = 'avatar-head';
+    currentContact = id;
+    const info = getRoomTitle(id);
+    chatTitle.textContent = info.title;
+    chatSub.textContent   = info.sub;
 
-    // mouth
-    const mouthEl = document.createElement('div');
-    mouthEl.className = 'avatar-mouth';
-
-    // hair (some avatars may skip this)
-    const hairEl = document.createElement('div');
-    hairEl.className = 'avatar-hair';
-
-    // body
-    const bodyEl = document.createElement('div');
-    bodyEl.className = 'avatar-body';
-
-    // legs
-    const legsWrap = document.createElement('div');
-    legsWrap.className = 'avatar-legs';
-    const legL = document.createElement('div');
-    legL.className = 'avatar-leg left';
-    const legR = document.createElement('div');
-    legR.className = 'avatar-leg right';
-    legsWrap.appendChild(legL);
-    legsWrap.appendChild(legR);
-
-    // speech bubble
-    const speechEl = document.createElement('div');
-    speechEl.className = 'speech';
-
-    // Map kind -> look
-    switch(kind){
-      case 'boy-blond':
-        headEl.classList.add('skin-light');
-        hairEl.classList.add('hair-blond');
-        bodyEl.classList.add('body-boy-blue');
-        bodyEl.textContent = 'CBS';
-        break;
-      case 'boy-brown':
-        headEl.classList.add('skin-light');
-        hairEl.classList.add('hair-brown');
-        bodyEl.classList.add('body-boy-green');
-        bodyEl.textContent = 'CBS';
-        break;
-      case 'boy-dark':
-        headEl.classList.add('skin-dark');
-        hairEl.classList.add('hair-black');
-        bodyEl.classList.add('body-boy-blue');
-        bodyEl.textContent = 'CBS';
-        break;
-      case 'girl-blond':
-        headEl.classList.add('skin-light');
-        hairEl.classList.add('hair-blond');
-        bodyEl.classList.add('body-girl-pink');
-        bodyEl.textContent = 'CBS';
-        break;
-      case 'girl-brown':
-        headEl.classList.add('skin-brown');
-        hairEl.classList.add('hair-brown');
-        bodyEl.classList.add('body-girl-purple');
-        bodyEl.textContent = 'CBS';
-        break;
-      case 'girl-dark':
-        headEl.classList.add('skin-dark');
-        hairEl.classList.add('hair-black');
-        bodyEl.classList.add('body-girl-pink');
-        bodyEl.textContent = 'CBS';
-        break;
-      case 'alien':
-        headEl.classList.add('skin-alien');
-        hairEl.classList.add('hair-alien');
-        bodyEl.classList.add('body-alien');
-        bodyEl.textContent = 'ALIEN';
-        break;
-      case 'anon-hoodie':
-        headEl.classList.add('skin-anon');
-        hairEl.classList.add('hair-hood');
-        bodyEl.classList.add('body-anon');
-        bodyEl.textContent = '???';
-        break;
-      case 'dog':
-        el.classList.add('animal-dog');
-        headEl.classList.add('skin-animal');
-        bodyEl.classList.add('body-dog');
-        bodyEl.textContent = 'DOG';
-        break;
-      case 'cat':
-        el.classList.add('animal-cat');
-        headEl.classList.add('skin-animal');
-        bodyEl.classList.add('body-cat');
-        bodyEl.textContent = 'CAT';
-        break;
-      default:
-        headEl.classList.add('skin-light');
-        hairEl.classList.add('hair-brown');
-        bodyEl.classList.add('body-boy-blue');
-        bodyEl.textContent = 'CBS';
-        break;
+    // If first time open: add a small system line
+    if(roomHistory[id].length === 0){
+      const intro = `You opened ${info.title}. This room is local-only — your messages do not leave this browser.`;
+      addMessage(id,'System',intro,false,new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}));
+    } else {
+      renderRoom(id);
     }
-
-    headEl.appendChild(mouthEl);
-
-    // Only humans/alien/anon get hair block; animals use ear styles
-    if(kind !== 'dog' && kind !== 'cat'){
-      headEl.appendChild(hairEl);
-    }
-
-    el.appendChild(nameEl);
-    el.appendChild(headEl);
-    el.appendChild(bodyEl);
-    el.appendChild(legsWrap);
-    el.appendChild(speechEl);
-
-    roomEl.appendChild(el);
-
-    const avatar = {id,name,kind,x,y,el,speechEl};
-    enableDrag(avatar);
-    return avatar;
-  }
-
-  function enableDrag(avatar){
-    let dragging = false;
-    let offsetX = 0;
-    let offsetY = 0;
-
-    function onDown(e){
-      e.preventDefault();
-      dragging = true;
-      avatar.el.style.cursor = 'grabbing';
-
-      const rect = roomEl.getBoundingClientRect();
-      const ptX = e.touches ? e.touches[0].clientX : e.clientX;
-      const ptY = e.touches ? e.touches[0].clientY : e.clientY;
-
-      const currentLeft = rect.left + (avatar.x/100)*rect.width;
-      const currentTop  = rect.top  + (avatar.y/100)*rect.height;
-
-      offsetX = ptX - currentLeft;
-      offsetY = ptY - currentTop;
-
-      document.addEventListener('mousemove', onMove);
-      document.addEventListener('mouseup', onUp);
-      document.addEventListener('touchmove', onMove,{passive:false});
-      document.addEventListener('touchend', onUp);
-    }
-
-    function onMove(e){
-      if(!dragging) return;
-      e.preventDefault();
-
-      const rect = roomEl.getBoundingClientRect();
-      const ptX = e.touches ? e.touches[0].clientX : e.clientX;
-      const ptY = e.touches ? e.touches[0].clientY : e.clientY;
-
-      let x = ((ptX - offsetX) - rect.left) / rect.width * 100;
-      let y = ((ptY - offsetY) - rect.top) / rect.height * 100;
-
-      x = Math.max(10,Math.min(90,x));
-      y = Math.max(35,Math.min(90,y));
-
-      avatar.x = x;
-      avatar.y = y;
-      avatar.el.style.left = x + '%';
-      avatar.el.style.top  = y + '%';
-    }
-
-    function onUp(){
-      if(!dragging) return;
-      dragging = false;
-      avatar.el.style.cursor = 'grab';
-
-      document.removeEventListener('mousemove', onMove);
-      document.removeEventListener('mouseup', onUp);
-      document.removeEventListener('touchmove', onMove);
-      document.removeEventListener('touchend', onUp);
-    }
-
-    avatar.el.addEventListener('mousedown', onDown);
-    avatar.el.addEventListener('touchstart', onDown,{passive:false});
-  }
-
-  // Avatar selection buttons
-  document.querySelectorAll('.login-avatar-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      document.querySelectorAll('.login-avatar-btn').forEach(b=>b.classList.remove('selected'));
-      btn.classList.add('selected');
-      selectedKind = btn.dataset.kind || 'boy-blond';
-    });
   });
 
-  // Enter chat
-  enterBtn.addEventListener('click', ()=>{
+  // Status handling
+  function updateStatusText(){
+    if(!joined){
+      meStatusEl.textContent = 'Not joined yet';
+      return;
+    }
+    const v = statusSel.value;
+    let txt = 'Online';
+    if(v === 'away') txt = 'Away';
+    else if(v === 'busy') txt = 'Busy';
+    else if(v === 'hidden') txt = 'Appear offline';
+    meStatusEl.textContent = txt + ' · MSN-style CBS lounge';
+  }
+  statusSel.addEventListener('change', updateStatusText);
+
+  // Join chat
+  joinBtn.addEventListener('click', ()=>{
     let nick = nickInput.value.trim();
-    if(!nick) nick = 'Anon';
-    nick = nick.slice(0,16);
+    if(!nick) nick = 'New CBS friend';
+    meNickEl.textContent = nick;
+    meAvatar.textContent = abbreviateNick(nick);
 
-    if(youAvatar){
-      youAvatar.name = nick;
-      const nameEl = youAvatar.el.querySelector('.avatar-name');
-      if(nameEl) nameEl.textContent = nick;
-    }else{
-      youAvatar = createAvatar({
-        id:'you',
-        name:nick,
-        kind:selectedKind,
-        x:50,y:45
-      });
-    }
-
-    roomStatusEl.textContent = 'Joined as ' + nick;
-    youLabel.textContent = 'You: ' + nick;
-    chatInput.disabled = false;
+    joined = true;
+    updateStatusText();
+    msgInput.disabled = false;
     sendBtn.disabled = false;
-    chatInput.focus();
+    msgInput.focus();
 
-    addMsg('system', `You joined the room as ${nick}. Drag your avatar around the floor and type a message.`, 'System');
+    addMessage(currentContact,'System',`${nick} joined this chat (local demo).`,false);
   });
 
-  function handleSend(){
-    if(!youAvatar) return;
-    const text = chatInput.value.trim();
+  function doSend(){
+    if(!joined) return;
+    const text = msgInput.value.trim();
     if(!text) return;
-    chatInput.value = '';
-    addMsg('you', text, youAvatar.name || 'You');
-    showSpeech(text);
+    msgInput.value = '';
+
+    const nick = meNickEl.textContent || 'Me';
+    addMessage(currentContact,nick,text,true);
   }
 
-  chatInput.addEventListener('keydown', e=>{
+  msgInput.addEventListener('keydown', (e)=>{
     if(e.key === 'Enter'){
       e.preventDefault();
-      handleSend();
+      doSend();
     }
   });
-  sendBtn.addEventListener('click', handleSend);
+  sendBtn.addEventListener('click', doSend);
+
+  // Small emoticon insert (visual only)
+  document.querySelectorAll('.msn-icon-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      if(msgInput.disabled) return;
+      msgInput.value += ' ' + btn.textContent.trim() + ' ';
+      msgInput.focus();
+    });
+  });
 </script>
 </body>
 </html>
