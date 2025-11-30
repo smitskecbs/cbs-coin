@@ -6,6 +6,8 @@
   <title>CBS Collaborations — Community Builds Sovereignty</title>
   <meta name="description" content="Submit a collaboration or partnership proposal for CBS Coin.">
   <link rel="icon" href="logo.png">
+
+  <!-- Fonts & Tailwind -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
 
@@ -13,128 +15,399 @@
     :root{
       --bg:#05070e;
       --fg:#e5e7eb;
-      --card:#0b0f1a;
+      --card:#0a0a0a;
+      --border:#222;
       --accent:#22c55e;
+      --accent2:#a78bfa;
     }
     body{
-      background:radial-gradient(1200px 700px at 15% -10%, #0e1631 0%, var(--bg) 60%), var(--bg);
+      margin:0;
+      background:
+        radial-gradient(1200px 700px at 15% -10%, #0e1631 0%, var(--bg) 60%),
+        var(--bg);
       color:var(--fg);
       font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
       min-height:100vh;
-      display:flex; flex-direction:column;
     }
-    header, main, footer{ width:100%; max-width:900px; margin:0 auto; padding:1.5rem; }
-    .glass{ background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.02)); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,.08); border-radius:1rem; }
+
+    .wrap{
+      max-width:980px;
+      margin:0 auto;
+      padding:18px 16px 40px;
+    }
+
+    /* Brand card zoals index */
+    .brand-card{
+      position:relative;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:10px;
+      overflow:hidden;
+    }
+    .banner{
+      width:100%; height:200px; object-fit:contain; display:block; background:#000;
+    }
+    @media (min-width:720px){
+      .banner{ height:280px; }
+    }
+    .logo{
+      position:absolute; left:16px; bottom:16px;
+      width:92px; height:92px; border-radius:50%; object-fit:cover; background:#000;
+      filter: drop-shadow(0 0 14px rgba(34,197,94,.55)) drop-shadow(0 0 22px rgba(167,139,250,.45));
+    }
+    .tagline{
+      position:absolute; top:12px; right:12px;
+      font-weight:700; font-size:.9rem; color:#fff;
+      background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.12);
+      padding:.35rem .6rem; border-radius:10px; backdrop-filter:blur(4px);
+    }
+    .tagline .emph{ color:var(--accent2); }
+
+    /* Chatpoint shell */
+    .chat-shell{
+      margin-top:1rem;
+      background:radial-gradient(circle at 0 0, rgba(34,197,94,.22), transparent 55%),
+                 radial-gradient(circle at 100% 100%, rgba(129,140,248,.22), transparent 60%),
+                 #050816;
+      border-radius:20px;
+      border:1px solid rgba(148,163,184,.5);
+      box-shadow:0 0 35px rgba(15,23,42,.9);
+      padding:18px 16px;
+    }
+    @media (min-width:768px){
+      .chat-shell{ padding:22px 20px; }
+    }
+
+    .chat-window{
+      background:radial-gradient(circle at 10% 0, rgba(15,23,42,.9), rgba(15,23,42,.96));
+      border-radius:18px;
+      border:1px solid rgba(148,163,184,.5);
+      box-shadow:inset 0 0 0 1px rgba(15,23,42,.9);
+      padding:12px;
+      font-size:.9rem;
+      display:flex;
+      flex-direction:column;
+      gap:.5rem;
+      min-height:260px;
+      max-height:420px;
+    }
+
+    .chat-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:.4rem;
+      font-size:.78rem;
+      text-transform:uppercase;
+      letter-spacing:.16em;
+      color:#9ca3af;
+    }
+
+    .chat-user{
+      display:flex; align-items:center; gap:.5rem;
+    }
+    .chat-avatar{
+      width:30px; height:30px; border-radius:999px; display:grid; place-items:center;
+      background:radial-gradient(circle at 30% 0, #22c55e, #065f46);
+      color:#022c22; font-weight:800; font-size:.9rem;
+      box-shadow:0 0 12px rgba(34,197,94,.7);
+    }
+    .chat-avatar-guest{
+      background:radial-gradient(circle at 30% 0, #a78bfa, #312e81);
+      color:#e0e7ff; box-shadow:0 0 12px rgba(129,140,248,.7);
+    }
+
+    .chat-bubble{
+      position:relative;
+      padding:.55rem .75rem;
+      border-radius:14px;
+      max-width:92%;
+      line-height:1.4;
+    }
+    .from-cbs{
+      background:linear-gradient(135deg,#0f172a,#020617);
+      border:1px solid rgba(148,163,184,.8);
+      align-self:flex-start;
+    }
+    .from-you{
+      background:linear-gradient(135deg,#22c55e,#16a34a);
+      color:#022c22;
+      align-self:flex-end;
+    }
+    .from-you::after{
+      content:"";
+      position:absolute;
+      right:6px; bottom:-5px;
+      width:10px; height:10px;
+      background:linear-gradient(135deg,#22c55e,#16a34a);
+      transform:rotate(45deg);
+    }
+    .from-cbs::after{
+      content:"";
+      position:absolute;
+      left:6px; bottom:-5px;
+      width:10px; height:10px;
+      background:linear-gradient(135deg,#0f172a,#020617);
+      transform:rotate(45deg);
+    }
+
+    .chat-meta{
+      font-size:.7rem;
+      color:#9ca3af;
+      margin-top:.2rem;
+    }
+
+    /* Form styling */
+    label{ font-size:.8rem; opacity:.9; margin-bottom:.25rem; display:block; }
     input, textarea, select{
-      width:100%; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1);
-      border-radius:.75rem; padding:.6rem .8rem; color:var(--fg); font-size:.95rem;
+      width:100%;
+      background:rgba(15,23,42,.85);
+      border:1px solid rgba(148,163,184,.6);
+      border-radius:.9rem;
+      padding:.55rem .75rem;
+      color:var(--fg);
+      font-size:.9rem;
+      outline:none;
     }
-    label{ font-size:.9rem; opacity:.8; margin-bottom:.25rem; display:block; }
-    textarea{ resize:vertical; min-height:100px; }
+    input:focus, textarea:focus, select:focus{
+      border-color:var(--accent);
+      box-shadow:0 0 0 1px rgba(34,197,94,.6);
+    }
+    textarea{ resize:vertical; min-height:90px; }
+
     .btn{
       display:inline-flex; align-items:center; justify-content:center;
-      border-radius:.75rem; padding:.55rem 1.1rem; font-weight:600; transition:.15s;
+      border-radius:.9rem; padding:.55rem 1.15rem; font-weight:600; transition:.15s;
+      font-size:.85rem;
     }
-    .btn-primary{ background:var(--accent); color:#000; }
-    .btn-primary:hover{ filter:brightness(1.1); }
-    .btn-ghost{ background:rgba(255,255,255,.08); color:var(--fg); border:1px solid rgba(255,255,255,.1); }
-    .btn-ghost:hover{ background:rgba(255,255,255,.15); }
-    .small{ font-size:.8rem; opacity:.7; }
-    footer{ text-align:center; font-size:.8rem; opacity:.7; margin-top:auto; }
+    .btn-primary{
+      background:var(--accent); color:#022c22;
+      box-shadow:0 0 16px rgba(34,197,94,.55);
+    }
+    .btn-primary:hover{ filter:brightness(1.05); transform:translateY(-1px); }
+    .btn-ghost{
+      background:rgba(15,23,42,.9); color:var(--fg);
+      border:1px solid rgba(148,163,184,.6);
+    }
+    .btn-ghost:hover{ background:rgba(15,23,42,1); }
+
+    .small{ font-size:.75rem; opacity:.75; }
+
+    footer{
+      margin-top:1.5rem;
+      color:#9aa0a6;
+      font-size:.8rem;
+      text-align:center;
+    }
+    footer a{
+      color:#cbd5e1;
+      opacity:.85;
+      text-decoration:none;
+    }
+    footer a:hover{
+      opacity:1;
+      text-decoration:underline;
+    }
+
+    .pill{
+      font-size:.7rem;
+      text-transform:uppercase;
+      letter-spacing:.18em;
+      border-radius:999px;
+      padding:.25rem .65rem;
+      border:1px solid rgba(148,163,184,.8);
+      background:rgba(15,23,42,.9);
+      color:#cbd5e1;
+    }
+    .pill-green{
+      border-color:rgba(34,197,94,.9);
+      color:#bbf7d0;
+      background:rgba(6,95,70,.85);
+    }
   </style>
 </head>
 <body>
-  <header class="flex items-center gap-3">
-    <img src="logo.png" alt="CBS Logo" class="h-12 w-12 rounded-full ring-2 ring-[var(--accent)]"/>
-    <div>
-      <h1 class="text-2xl font-extrabold tracking-tight">CBS Collaborations</h1>
-      <p class="text-sm opacity-80">Community Builds Sovereignty · Official collaboration submissions</p>
-    </div>
-  </header>
-
-  <main>
-    <section class="glass p-6 shadow-xl">
-      <h2 class="text-xl font-bold mb-2">Submit your proposal</h2>
-      <p class="text-sm opacity-80 mb-6">Use this form to suggest a partnership, collaboration or community project. All submissions are sent directly to <a href="mailto:contact@cbs-coin.com" class="text-[var(--accent)]">contact@cbs-coin.com</a>.</p>
-
-      <form id="collabForm" class="grid gap-4">
-        <div class="grid md:grid-cols-2 gap-4">
-          <div>
-            <label for="name">Your name / team</label>
-            <input id="name" required>
-          </div>
-          <div>
-            <label for="contact">Contact</label>
-            <input id="contact" required>
-          </div>
-        </div>
-
-        <div class="grid md:grid-cols-2 gap-4">
-          <div>
-            <label for="project">Project / brand</label>
-            <input id="project">
-          </div>
-          <div>
-            <label for="category">Category</label>
-            <select id="category">
-              <option>Marketing / Promotion</option>
-              <option>Exchange / Listing</option>
-              <option>Partnership / Co-brand</option>
-              <option>Development / Tooling</option>
-              <option>NFT / Design</option>
-              <option>Community / Event</option>
-              <option>Other</option>
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label for="proposal">Proposal</label>
-          <textarea id="proposal" required></textarea>
-        </div>
-
-        <div>
-          <label for="value">Value for CBS</label>
-          <textarea id="value" required></textarea>
-        </div>
-
-        <div class="grid md:grid-cols-2 gap-4">
-          <div>
-            <label for="budget">Budget (if any)</label>
-            <input id="budget">
-          </div>
-          <div>
-            <label for="timeline">Preferred timeline</label>
-            <input id="timeline">
-          </div>
-        </div>
-
-        <div>
-          <label for="links">Links</label>
-          <input id="links">
-        </div>
-
-        <!-- anti-spam honeypot -->
-        <input id="website" name="website" style="display:none">
-
-        <div class="flex items-center gap-3 mt-3 flex-wrap">
-          <button type="submit" class="btn btn-primary">Send proposal</button>
-          <button type="button" id="copyBtn" class="btn btn-ghost">Copy JSON</button>
-          <span id="toast" class="small"></span>
-        </div>
-        <p class="small mt-2">No server storage · form opens your email client to send directly.</p>
-      </form>
+  <main class="wrap">
+    <!-- Brand card (banner + logo) -->
+    <section class="brand-card">
+      <picture>
+        <source type="image/webp" srcset="Banner-CBS-Coin.webp">
+        <img class="banner" src="Banner-CBS-Coin.jpg" alt="CBS Banner" onerror="this.style.display='none'">
+      </picture>
+      <img class="logo" src="logo.png" alt="CBS Logo" onerror="this.style.display='none'">
+      <div class="tagline">CBS — Collab <span class="emph">Chatpoint</span></div>
     </section>
+
+    <!-- Chatpoint style collab page -->
+    <section class="chat-shell mt-4">
+      <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 class="text-xl md:text-2xl font-extrabold tracking-tight">
+            Join the CBS experiment
+          </h1>
+          <p class="text-xs md:text-sm text-slate-300 mt-1">
+            Think of this page as an old-school chatroom: you drop your collab idea,
+            CBS reads it and replies directly via mail or DM.
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-2 text-[0.7rem]">
+          <span class="pill pill-green">Open for serious builders</span>
+          <span class="pill">No paid shilling · No hype only</span>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-[1.1fr,1.1fr] gap-5">
+        <!-- LEFT: Fake chat window -->
+        <div class="chat-window">
+          <div class="chat-header">
+            <div class="flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-emerald-400 shadow-sm"></span>
+              <span>CBS COLLAB ROOM</span>
+            </div>
+            <span>Online · 1 dev · 1 community</span>
+          </div>
+
+          <div class="chat-user">
+            <div class="chat-avatar">CBS</div>
+            <div class="text-xs text-slate-300">
+              <div class="font-semibold">CBS Bot</div>
+              <div class="text-[0.7rem] text-slate-400">Community Builds Sovereignty</div>
+            </div>
+          </div>
+          <div class="chat-bubble from-cbs mt-1">
+            Hey builder 👋  
+            Drop your idea on the right: who you are, what you want to do,
+            and how it actually helps CBS holders.
+            <div class="chat-meta">Seen · just now</div>
+          </div>
+
+          <div class="chat-user mt-3">
+            <div class="chat-avatar chat-avatar-guest">YOU</div>
+            <div class="text-xs text-slate-300">
+              <div class="font-semibold" id="previewNameLabel">Your team</div>
+              <div class="text-[0.7rem] text-slate-400" id="previewCategoryLabel">Collab idea loading…</div>
+            </div>
+          </div>
+          <div class="chat-bubble from-you mt-1" id="previewBubble">
+            I’d like to explore a collaboration with CBS Coin.  
+            I’ll fill in the details on the right.
+            <div class="chat-meta">Typing…</div>
+          </div>
+
+          <div class="mt-3 text-[0.7rem] text-slate-400 border-t border-slate-800 pt-2">
+            <strong>Note:</strong> there is no “pay to play”.  
+            We prefer authentic, long-term ideas over short-term shill campaigns.
+          </div>
+        </div>
+
+        <!-- RIGHT: Form as chat compose -->
+        <div class="bg-[#020617]/70 border border-slate-700 rounded-2xl p-4 flex flex-col gap-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <div class="text-[0.7rem] uppercase tracking-[0.18em] text-slate-400">
+                Compose your collab
+              </div>
+              <div class="text-sm text-slate-200">
+                All submissions go directly to <span class="text-emerald-300">contact@cbs-coin.com</span>.
+              </div>
+            </div>
+          </div>
+
+          <form id="collabForm" class="mt-2 flex flex-col gap-3">
+            <div class="grid md:grid-cols-2 gap-3">
+              <div>
+                <label for="name">Your name / team *</label>
+                <input id="name" autocomplete="off" required>
+              </div>
+              <div>
+                <label for="contact">Contact (email / X / TG) *</label>
+                <input id="contact" autocomplete="off" required>
+              </div>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-3">
+              <div>
+                <label for="project">Project / brand</label>
+                <input id="project" autocomplete="off">
+              </div>
+              <div>
+                <label for="category">Category</label>
+                <select id="category">
+                  <option>Marketing / Promotion</option>
+                  <option>Exchange / Listing</option>
+                  <option>Partnership / Co-brand</option>
+                  <option>Development / Tooling</option>
+                  <option>NFT / Design</option>
+                  <option>Community / Event</option>
+                  <option>Other</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label for="proposal">Your proposal *</label>
+              <textarea id="proposal" placeholder="What do you want to do together? Format, channels, responsibilities…"
+                        required></textarea>
+            </div>
+
+            <div>
+              <label for="value">Why this helps CBS holders *</label>
+              <textarea id="value" placeholder="How does this bring real value to holders, liquidity or reputation?"
+                        required></textarea>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-3">
+              <div>
+                <label for="budget">Budget (if any)</label>
+                <input id="budget" placeholder="Example: No budget / 500 USDC / rev share only">
+              </div>
+              <div>
+                <label for="timeline">Preferred timeline</label>
+                <input id="timeline" placeholder="Example: Q1 2026 / asap / flexible">
+              </div>
+            </div>
+
+            <div>
+              <label for="links">Links (deck, website, socials)</label>
+              <input id="links" placeholder="https://…">
+            </div>
+
+            <!-- anti-spam honeypot -->
+            <input id="website" name="website" style="display:none">
+
+            <div class="flex items-center gap-3 mt-2 flex-wrap">
+              <button type="submit" class="btn btn-primary">
+                Send proposal via email
+              </button>
+              <button type="button" id="copyBtn" class="btn btn-ghost">
+                Copy JSON only
+              </button>
+              <span id="toast" class="small"></span>
+            </div>
+            <p class="small mt-1">
+              No server storage · the form opens your email client with all fields pre-filled.
+              JSON is copied so you can also DM it on X or Telegram.
+            </p>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <footer class="mt-4">
+      © CBS Coin — Community Builds Sovereignty ·
+      <a href="https://cbs-coin.com" target="_blank" rel="noopener">cbs-coin.com</a>
+    </footer>
   </main>
 
-  <footer>
-    © CBS Coin — Community Builds Sovereignty · <a href="https://cbs-coin.com" class="text-[var(--accent)]">cbs-coin.com</a>
-  </footer>
-
   <script>
-    const form = document.getElementById('collabForm');
-    const toast = document.getElementById('toast');
+    const form   = document.getElementById('collabForm');
+    const toast  = document.getElementById('toast');
     const copyBtn = document.getElementById('copyBtn');
+
+    const previewNameLabel     = document.getElementById('previewNameLabel');
+    const previewCategoryLabel = document.getElementById('previewCategoryLabel');
+    const previewBubble        = document.getElementById('previewBubble');
 
     function buildPayload(){
       return {
@@ -154,7 +427,22 @@
     function toMailto(p){
       const subject = encodeURIComponent('CBS Collaboration — ' + (p.project || p.name));
       const body = encodeURIComponent(
-        `Name/Team: ${p.name}\nContact: ${p.contact}\nProject: ${p.project}\nCategory: ${p.category}\n\nProposal:\n${p.proposal}\n\nValue for CBS:\n${p.value}\n\nBudget: ${p.budget}\nTimeline: ${p.timeline}\nLinks: ${p.links}\n\nTime: ${p.timestamp}`
+`Name/Team: ${p.name}
+Contact: ${p.contact}
+Project: ${p.project}
+Category: ${p.category}
+
+Proposal:
+${p.proposal}
+
+Value for CBS:
+${p.value}
+
+Budget: ${p.budget}
+Timeline: ${p.timeline}
+Links: ${p.links}
+
+Time: ${p.timestamp}`
       );
       return `mailto:contact@cbs-coin.com?subject=${subject}&body=${body}`;
     }
@@ -163,25 +451,64 @@
       e.preventDefault();
       const p = buildPayload();
       if(!p.name || !p.contact || !p.proposal || !p.value){
-        alert('Please fill in all required fields.');
+        alert('Please fill in all required fields (name, contact, proposal, value for CBS).');
         return;
       }
+      // open email client
       window.location.href = toMailto(p);
+
+      // copy JSON payload
       const json = JSON.stringify(p, null, 2);
-      navigator.clipboard.writeText(json).then(()=>{
-        toast.textContent = 'JSON copied to clipboard';
-        setTimeout(()=>toast.textContent='',3000);
-      });
+      if(navigator.clipboard?.writeText){
+        navigator.clipboard.writeText(json).then(()=>{
+          toast.textContent = 'JSON copied to clipboard';
+          setTimeout(()=>toast.textContent='',3000);
+        }).catch(()=>{
+          toast.textContent = '';
+        });
+      }
     });
 
     copyBtn.addEventListener('click', ()=>{
       const p = buildPayload();
       const json = JSON.stringify(p, null, 2);
-      navigator.clipboard.writeText(json).then(()=>{
-        toast.textContent = 'JSON copied!';
-        setTimeout(()=>toast.textContent='',3000);
-      });
+      if(navigator.clipboard?.writeText){
+        navigator.clipboard.writeText(json).then(()=>{
+          toast.textContent = 'JSON copied!';
+          setTimeout(()=>toast.textContent='',3000);
+        });
+      }else{
+        toast.textContent = '';
+      }
     });
+
+    // Kleine live preview in de chat-bubbles
+    function updatePreview(){
+      const p = buildPayload();
+      previewNameLabel.textContent = p.name || 'Your team';
+      previewCategoryLabel.textContent = p.category || 'Collab idea loading…';
+
+      if(p.proposal || p.value){
+        previewBubble.innerHTML =
+          (p.proposal ? p.proposal : '') +
+          (p.value ? `<br><br><strong>Why this helps CBS:</strong> ${p.value}` : '') +
+          `<div class="chat-meta">Draft · not sent yet</div>`;
+      }else{
+        previewBubble.innerHTML =
+          'I’d like to explore a collaboration with CBS Coin.  ' +
+          'I’ll fill in the details on the right.' +
+          '<div class="chat-meta">Typing…</div>';
+      }
+    }
+
+    ['name','project','category','proposal','value'].forEach(id=>{
+      const el = document.getElementById(id);
+      if(el){
+        el.addEventListener('input', updatePreview);
+      }
+    });
+
+    updatePreview();
   </script>
 </body>
 </html>
