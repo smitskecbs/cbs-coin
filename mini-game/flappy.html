@@ -37,7 +37,14 @@
       backdrop-filter:blur(6px);
     }
     .brand{display:flex; align-items:center; gap:.7rem}
-    .brand img{width:38px;height:38px;border-radius:10px;filter:drop-shadow(0 0 10px rgba(0,255,230,.35))}
+    .brand-icon{
+      width:38px;height:38px;border-radius:10px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:.8rem;font-weight:700;
+      background:radial-gradient(circle at 30% 0%, #5afff0, #2bffe4);
+      box-shadow:0 0 10px rgba(0,255,230,.35);
+      color:#001010;
+    }
     .brand h1{margin:0; font-size:1.05rem; color:#bffef2; letter-spacing:.4px}
 
     .btn{
@@ -149,7 +156,7 @@
 <body>
   <header class="topbar">
     <div class="brand">
-      <img src="logo.png" alt="CBS Logo">
+      <div class="brand-icon">CBS</div>
       <h1>CBS Flappy</h1>
     </div>
   </header>
@@ -203,7 +210,7 @@
     <button id="exitBtn" class="btn">⏹ Exit</button>
   </div>
 
-  <!-- Flappy Game (zonder Supabase/leaderboard/wallet) -->
+  <!-- Flappy Game (met bird.png sprite) -->
   <script>
     const canvas = document.getElementById('board');
     const ctx    = canvas.getContext('2d');
@@ -216,8 +223,11 @@
     const playStage  = document.getElementById('playStage');
     const btnFlap = document.getElementById('btnFlap');
 
-    // Logo watermark
-    const logo = new Image(); logo.src="logo.png"; let logoReady=false; logo.onload=()=>{logoReady=true};
+    // Custom bird sprite
+    const birdImg = new Image();
+    birdImg.src = "bird.png"; // zorg dat dit bestand naast flappy.html staat
+    let birdReady = false;
+    birdImg.onload = () => { birdReady = true; };
 
     // World
     const W = canvas.width, H = canvas.height;
@@ -356,11 +366,6 @@
       const bg=ctx.createLinearGradient(0,0,0,H);
       bg.addColorStop(0,"#071017"); bg.addColorStop(1,"#09131a");
       ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
-      if(logoReady){
-        const size=Math.min(W,H)*0.9; const x=(W-size)/2, y=(H-size)/2;
-        ctx.save(); ctx.globalAlpha=0.05; ctx.shadowColor="#00fff0"; ctx.shadowBlur=24;
-        ctx.drawImage(logo,x,y,size,size); ctx.restore();
-      }
     }
 
     function draw(){
@@ -404,14 +409,24 @@
 
     function drawBird(x,y,r){
       ctx.save();
-      ctx.shadowColor="#7dffe9"; ctx.shadowBlur=18;
-      const g = ctx.createRadialGradient(x-r*0.3, y-r*0.3, r*0.2, x, y, r);
-      g.addColorStop(0,"#eaffff"); g.addColorStop(1,"#78eaf0");
-      ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
-      ctx.shadowBlur=0; ctx.lineWidth=1.6; ctx.strokeStyle="rgba(0,255,240,.7)";
-      ctx.beginPath(); ctx.arc(x,y,r-0.8,0,Math.PI*2); ctx.stroke();
-      ctx.fillStyle="#001"; ctx.beginPath(); ctx.arc(x+r*0.35, y-r*0.2, 2.6, 0, Math.PI*2); ctx.fill();
+      ctx.shadowColor="#7dffe9";
+      ctx.shadowBlur=18;
+
+      if (birdReady) {
+        // sprite iets groter dan de hit-circle
+        const size = r * 2.6;
+        ctx.drawImage(birdImg, x - size/2, y - size/2, size, size);
+      } else {
+        // fallback: oude neon bal
+        const g = ctx.createRadialGradient(x-r*0.3, y-r*0.3, r*0.2, x, y, r);
+        g.addColorStop(0,"#eaffff"); g.addColorStop(1,"#78eaf0");
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(x,y,r,0,Math.PI*2); ctx.fill();
+        ctx.lineWidth=1.6; ctx.strokeStyle="rgba(0,255,240,.7)";
+        ctx.beginPath(); ctx.arc(x,y,r-0.8,0,Math.PI*2); ctx.stroke();
+      }
+
+      ctx.shadowBlur=0;
       ctx.restore();
     }
 
@@ -421,7 +436,6 @@
       running=false;
       draw();
       hintBar.textContent = `Game over – score ${score}. Tap / Space to play again`;
-      // na kort moment weer in idle/start-modus
       setTimeout(()=>{ prepareGame(); }, 800);
     }
 
