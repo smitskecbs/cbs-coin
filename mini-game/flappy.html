@@ -244,23 +244,21 @@
     // World
     const W = canvas.width, H = canvas.height;
 
-    // Bird physics (time-based)
+    // === GAME TUNING – iets makkelijker, vooral mobiel ===
     const BIRD_X = Math.floor(W*0.28), BIRD_R = 12;
-    const GRAVITY = 1800; // px/s^2
-    const FLAP_VY = -380; // px/s impulse
+    const GRAVITY = 1400;    // lager dan 1800 → valt trager
+    const FLAP_VY = -420;    // sterker flap (was -380)
     const MAX_VY  = 640;
 
-    // Obstacles
     const PIPE_W = 64;
-    const PIPE_GAP_MIN = 128;
-    const PIPE_GAP_MAX = 150;
-    const PIPE_SPAWN_MS = 1400;
-    const SPEED_START = 160; // px/s
-    const SPEED_INC   = 0.015; // per second
+    const PIPE_GAP_MIN = 150;  // grotere gaten (was 128)
+    const PIPE_GAP_MAX = 190;  // iets ruimer (was 150)
+    const PIPE_SPAWN_MS = 1550; // iets minder vaak pipes (was 1400)
+    const SPEED_START = 130;   // langzamer begin (was 160)
+    const SPEED_INC   = 0.010; // langzamer opbouwen (was 0.015)
 
-    // Extra voor bewegende obstakels
-    const OBSTACLE_BOB_SPEED = 1.0;
-    const OBSTACLE_BOB_AMPL  = 15;
+    const OBSTACLE_BOB_SPEED = 0.8; // iets rustiger op/ neer
+    const OBSTACLE_BOB_AMPL  = 10;  // minder ver op/ neer (was 15)
 
     // State
     let birdY=H/2, birdVy=0;
@@ -269,9 +267,8 @@
     let running=false, rafId=null;
     let last=0, spawnT=0, speed=SPEED_START;
     let timeSec = 0;
-
-    // Waiting-for-first-flap state
     let waiting=false, idleRaf=null;
+    let gameOverState = false;  // <-- voor het nieuwe game-over scherm
 
     function rngGap(){ return Math.floor(PIPE_GAP_MIN + Math.random()*(PIPE_GAP_MAX-PIPE_GAP_MIN)); }
     function rngTop(hGap){
@@ -284,6 +281,7 @@
       birdY=H/2; birdVy=0;
       pipes=[]; score=0; speed=SPEED_START; last=0; spawnT=0;
       timeSec = 0;
+      gameOverState = false;
       updateHUD();
       drawIdleFrame(0);
     }
@@ -327,6 +325,25 @@
     }
 
     function flap(){
+      // Als je dood bent → eerste tap = direct nieuwe run (fijn voor mobiel + screenshots)
+      if (gameOverState){
+        gameOverState = false;
+        pipes=[];
+        score=0;
+        speed=SPEED_START;
+        birdY = H/2;
+        birdVy = FLAP_VY;
+        spawnT=0;
+        last=0;
+        timeSec=0;
+        updateHUD();
+        hintBar.textContent = "";
+        addPipe();
+        running=true;
+        rafId = requestAnimationFrame(loop);
+        return;
+      }
+
       if(waiting){
         startLoopFromFirstFlap();
         return;
@@ -430,13 +447,11 @@
       ctx.restore();
     }
 
-    // 🔥 Hier wordt jouw zonnenstorm-sprite getekend, geen extra vlammen uit code
     function drawPipe(x,y,w,h){
       ctx.save();
       if (obstacleReady) {
         ctx.drawImage(obstacleImg, x, y, w, h);
       } else {
-        // fallback: simpele balk als obstacle.png nog niet geladen is
         ctx.shadowColor="#38f8ff"; ctx.shadowBlur=12;
         const g=ctx.createLinearGradient(x,y,x,y+h);
         g.addColorStop(0,"hsl(190 100% 60% / .95)");
@@ -454,7 +469,7 @@
       ctx.shadowBlur=18;
 
       if (birdReady) {
-        const size = r * 7.0; // hier kun je haar / hem groter of kleiner maken
+        const size = r * 5.0; // hier kun je groter/kleiner maken
         ctx.drawImage(birdImg, x - size/2, y - size/2, size, size);
       } else {
         const g = ctx.createRadialGradient(x-r*0.3, y-r*0.3, r*0.2, x, y, r);
@@ -469,13 +484,62 @@
       ctx.restore();
     }
 
+    // === GAME OVER SCHERM VOOR SCREENSHOTS ===
+    function drawGameOverFrame(){
+      ctx.clearRect(0,0,W,H);
+      drawBG();
+
+      // Pipes lichtjes op de achtergrond
+      ctx.save();
+      ctx.globalAlpha = 0.35;
+      for(const p of pipes){
+        drawPipe(p.x, 0, PIPE_W, p.top);
+        const y2 = p.top + p.gap;
+        drawPipe(p.x, y2, PIPE_W, H - y2);
+      }
+      ctx.restore();
+
+      const cx = W/2;
+      const cy = H/2 - 30;
+
+      // Grote bird in het midden
+      if (birdReady){
+        ctx.save();
+        ctx.shadowColor="#7dffe9";
+        ctx.shadowBlur=25;
+        const size = BIRD_R * 7.0; // groter voor screenshots
+        ctx.drawImage(birdImg, cx - size/2, cy - size/2, size, size);
+        ctx.restore();
+      } else {
+        drawBird(cx, cy, BIRD_R * 2.5);
+      }
+
+      // Tekst
+      ctx.save();
+      ctx.textAlign = "center";
+      ctx.fillStyle = "#eafffb";
+
+      ctx.font = "bold 26px 'Orbitron', sans-serif";
+      ctx.fillText("GAME OVER", cx, cy + 70);
+
+      ctx.font = "bold 18px 'Orbitron', sans-serif";
+      ctx.fillText(`Score: ${score} points`, cx, cy + 100);
+
+      ctx.font = "14px 'Orbitron', sans-serif";
+      ctx.fillStyle = "#a8d6cd";
+      ctx.fillText("Tap / Space to try again", cx, cy + 130);
+      ctx.restore();
+
+      drawFrame();
+    }
+
     function stopGame(){ running=false; if(rafId) cancelAnimationFrame(rafId); rafId=null; }
 
     function gameOver(){
       running=false;
-      draw();
-      hintBar.textContent = `Game over – score ${score}. Tap / Space to play again`;
-      setTimeout(()=>{ prepareGame(); }, 800);
+      gameOverState = true;
+      hintBar.textContent = `Game over – score ${score}. Tap / Space to try again`;
+      drawGameOverFrame();
     }
 
     // Overlay enter/exit
