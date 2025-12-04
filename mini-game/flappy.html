@@ -184,8 +184,8 @@
       <div class="side">
         <div class="panel">
           <h3>How to play</h3>
-          <p>Tap, click or press Space to flap and pass through the neon gates.</p>
-          <p><b>Score +1 per gate</b>. Touch a pipe or the bounds → game over.</p>
+          <p>Tap, click or press Space to flap and pass through the gates.</p>
+          <p><b>Score +1 per gate</b>. Touch an obstacle or the bounds → game over.</p>
         </div>
         <div class="panel" style="text-align:center">
           <a href="index.html" class="btn">← Back to Home</a>
@@ -202,7 +202,7 @@
       <div id="playStage"></div>
     </div>
 
-  <!-- Touch controls -->
+    <!-- Touch controls -->
     <div class="controls">
       <button class="tbtn" id="btnFlap">FLAP</button>
     </div>
@@ -210,7 +210,7 @@
     <button id="exitBtn" class="btn">⏹ Exit</button>
   </div>
 
-  <!-- Flappy Game (met background.png + grotere bird.png) -->
+  <!-- Flappy Game (background.png + grotere bird.png + obstacle.png) -->
   <script>
     const canvas = document.getElementById('board');
     const ctx    = canvas.getContext('2d');
@@ -235,6 +235,12 @@
     let bgReady = false;
     bgImg.onload = () => { bgReady = true; };
 
+    // Custom obstacle sprite (128x512 png)
+    const obstacleImg = new Image();
+    obstacleImg.src = "obstacle.png";
+    let obstacleReady = false;
+    obstacleImg.onload = () => { obstacleReady = true; };
+
     // World
     const W = canvas.width, H = canvas.height;
 
@@ -244,7 +250,7 @@
     const FLAP_VY = -380; // px/s impulse
     const MAX_VY  = 640;
 
-    // Pipes
+    // Obstacles
     const PIPE_W = 64;
     const PIPE_GAP_MIN = 128;
     const PIPE_GAP_MAX = 150;
@@ -294,7 +300,7 @@
     function startLoopFromFirstFlap(){
       waiting=false;
       if(idleRaf){ cancelAnimationFrame(idleRaf); idleRaf=null; }
-      // maak eerste pipe en start physics
+      // maak eerste obstakel en start physics
       pipes=[]; spawnT=0; addPipe();
       birdVy = FLAP_VY;
       running=true; last=0;
@@ -330,7 +336,7 @@
       if(birdVy > MAX_VY) birdVy = MAX_VY;
       birdY  += birdVy * dtSec;
 
-      // Spawn & move pipes
+      // Spawn & move obstacles
       spawnT += dt;
       if(spawnT >= PIPE_SPAWN_MS){ spawnT = 0; addPipe(); }
       speed += SPEED_INC * dtSec * 1000;
@@ -410,14 +416,21 @@
 
     function drawPipe(x,y,w,h){
       ctx.save();
-      ctx.shadowColor="#38f8ff"; ctx.shadowBlur=12;
-      const g=ctx.createLinearGradient(x,y,x,y+h);
-      g.addColorStop(0,"hsl(190 100% 60% / .95)");
-      g.addColorStop(1,"hsl(190 100% 48% / .95)");
-      ctx.fillStyle=g; ctx.fillRect(x,y,w,h);
-      ctx.shadowBlur=0; ctx.lineWidth=1.6; ctx.strokeStyle="rgba(0,255,240,.7)";
-      ctx.strokeRect(x+0.5,y+0.5,w-1,h-1);
-      ctx.globalAlpha=0.22; ctx.fillStyle="#e6ffff"; ctx.fillRect(x,y,w,3); ctx.globalAlpha=1;
+
+      if (obstacleReady) {
+        // schaal obstacle.png naar huidige breedte/hoogte (hoogte varieert per pipe)
+        ctx.drawImage(obstacleImg, x, y, w, h);
+      } else {
+        // fallback: oude neon pipe
+        ctx.shadowColor="#38f8ff"; ctx.shadowBlur=12;
+        const g=ctx.createLinearGradient(x,y,x,y+h);
+        g.addColorStop(0,"hsl(190 100% 60% / .95)");
+        g.addColorStop(1,"hsl(190 100% 48% / .95)");
+        ctx.fillStyle=g; ctx.fillRect(x,y,w,h);
+        ctx.shadowBlur=0; ctx.lineWidth=1.6; ctx.strokeStyle="rgba(0,255,240,.7)";
+        ctx.strokeRect(x+0.5,y+0.5,w-1,h-1);
+      }
+
       ctx.restore();
     }
 
@@ -427,8 +440,8 @@
       ctx.shadowBlur=18;
 
       if (birdReady) {
-        // sprite nu extra groot
-        const size = r * 4.0; // pas aan naar 3.0 / 5.0 als je groter/kleiner wilt
+        // sprite nu groter
+        const size = r * 5.0; // maak 4.0 of 6.0 als je kleiner/groter wilt
         ctx.drawImage(birdImg, x - size/2, y - size/2, size, size);
       } else {
         // fallback: neon bal
@@ -501,4 +514,3 @@
   </script>
 </body>
 </html>
-
