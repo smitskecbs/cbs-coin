@@ -269,6 +269,7 @@
     let timeSec = 0;
     let waiting=false, idleRaf=null;
     let gameOverState = false;
+    let gameOverAt = 0;        // <<< nieuw: tijdstip van game over
 
     function rngGap(){ return Math.floor(PIPE_GAP_MIN + Math.random()*(PIPE_GAP_MAX-PIPE_GAP_MIN)); }
     function rngTop(hGap){
@@ -325,7 +326,14 @@
     }
 
     function flap(){
-      if (gameOverState){
+      // Als we net game over zijn: eerst 1,5 s cooldown voordat je opnieuw mag starten
+      if (gameOverState) {
+        const now = performance.now();
+        if (now - gameOverAt < 1500) {
+          // te snel geklikt, negeren zodat je screenshot kunt maken
+          return;
+        }
+        // daarna pas echt opnieuw starten
         gameOverState = false;
         pipes=[];
         score=0;
@@ -464,7 +472,7 @@
       ctx.shadowBlur=18;
 
       if (birdReady) {
-        const size = r * 6.0; // groter dan eerst
+        const size = r * 6.0; // groter
         ctx.drawImage(birdImg, x - size/2, y - size/2, size, size);
       } else {
         const g = ctx.createRadialGradient(x-r*0.3, y-r*0.3, r*0.2, x, y, r);
@@ -530,7 +538,8 @@
     function gameOver(){
       running=false;
       gameOverState = true;
-      hintBar.textContent = ""; // geen extra blok onder het canvas
+      gameOverAt = performance.now();   // tijd van game over
+      hintBar.textContent = "";         // geen extra blok onderaan
       drawGameOverFrame();
     }
 
