@@ -202,7 +202,7 @@
       <div id="playStage"></div>
     </div>
 
-    <!-- Touch controls -->
+  <!-- Touch controls -->
     <div class="controls">
       <button class="tbtn" id="btnFlap">FLAP</button>
     </div>
@@ -210,7 +210,7 @@
     <button id="exitBtn" class="btn">⏹ Exit</button>
   </div>
 
-  <!-- Flappy Game (met bird.png sprite) -->
+  <!-- Flappy Game (met background.png + grotere bird.png) -->
   <script>
     const canvas = document.getElementById('board');
     const ctx    = canvas.getContext('2d');
@@ -228,6 +228,12 @@
     birdImg.src = "bird.png"; // zorg dat dit bestand naast flappy.html staat
     let birdReady = false;
     birdImg.onload = () => { birdReady = true; };
+
+    // Custom background
+    const bgImg = new Image();
+    bgImg.src = "background.png"; // jouw speelveld-achtergrond
+    let bgReady = false;
+    bgImg.onload = () => { bgReady = true; };
 
     // World
     const W = canvas.width, H = canvas.height;
@@ -363,9 +369,17 @@
     }
 
     function drawBG(){
-      const bg=ctx.createLinearGradient(0,0,0,H);
-      bg.addColorStop(0,"#071017"); bg.addColorStop(1,"#09131a");
-      ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
+      if (bgReady) {
+        // vul het hele canvas met jouw background.png
+        ctx.drawImage(bgImg, 0, 0, W, H);
+      } else {
+        // fallback: gradient
+        const bg = ctx.createLinearGradient(0,0,0,H);
+        bg.addColorStop(0,"#071017");
+        bg.addColorStop(1,"#09131a");
+        ctx.fillStyle = bg;
+        ctx.fillRect(0,0,W,H);
+      }
     }
 
     function draw(){
@@ -413,11 +427,11 @@
       ctx.shadowBlur=18;
 
       if (birdReady) {
-        // sprite iets groter dan de hit-circle
-        const size = r * 2.6;
+        // sprite nu extra groot
+        const size = r * 4.0; // pas aan naar 3.0 / 5.0 als je groter/kleiner wilt
         ctx.drawImage(birdImg, x - size/2, y - size/2, size, size);
       } else {
-        // fallback: oude neon bal
+        // fallback: neon bal
         const g = ctx.createRadialGradient(x-r*0.3, y-r*0.3, r*0.2, x, y, r);
         g.addColorStop(0,"#eaffff"); g.addColorStop(1,"#78eaf0");
         ctx.fillStyle = g;
@@ -487,3 +501,4 @@
   </script>
 </body>
 </html>
+
