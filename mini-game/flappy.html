@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>CBS Flappy – Holders ≥1000 CBS</title>
+  <title>CBS Flappy</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet"/>
 
@@ -144,25 +144,6 @@
     body.play-mode #controlsPanel,
     body.play-mode main { display:none; }
     body.play-mode .play-overlay{ display:flex; }
-
-    /* Name Modal */
-    #nameOverlay{ position:fixed; inset:0; background:rgba(0,0,0,.6);
-      display:none; align-items:center; justify-content:center; z-index:60; backdrop-filter: blur(2px) }
-    #nameCard{ width:min(92vw,480px); background:linear-gradient(180deg, var(--card), var(--card2));
-      border:1px solid var(--line); border-radius:14px; padding:18px 18px 14px; box-shadow:var(--shadow) }
-    #nameCard h3{ margin:.2rem 0 .6rem; color:#bffef2 }
-    #nameInput{ width:100%; padding:.85rem 1rem; border:1px solid rgba(0,255,240,.35);
-      border-radius:10px; background:#000; color:#fff; font-family:inherit; font-size:1rem;
-      box-shadow:inset 0 0 0 1px rgba(0,255,240,.06) }
-    #error{color:#ff6b7a;font-size:.85rem;margin-top:.35rem;display:none}
-
-    /* Leaderboard */
-    table{width:100%;border-collapse:collapse;margin-top:8px}
-    th,td{padding:.65rem;border-bottom:1px solid rgba(0,255,240,.20);text-align:center}
-    thead th{color:#bffef2}
-    tbody td{color:var(--fg)}
-
-    .toast{position:fixed;right:12px;bottom:12px;background:#0f1720;border:1px solid rgba(0,255,240,.25);color:#dff; padding:10px 12px;border-radius:10px;box-shadow:0 10px 24px rgba(0,0,0,.35);display:none;z-index:70}
   </style>
 </head>
 <body>
@@ -173,15 +154,13 @@
     </div>
   </header>
 
-  <!-- Controls (holders-only) -->
+  <!-- Controls (no wallet gating) -->
   <div id="controlsPanel" class="panel" style="max-width:880px; text-align:center">
     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-      <button id="connectBtn" class="btn">🔗 Connect Wallet</button>
-      <button id="startBtn" class="btn" disabled>▶️ Start</button>
-      <span id="eligibility" class="muted" style="align-self:center">Not connected</span>
+      <button id="startBtn" class="btn">▶️ Start</button>
     </div>
     <p class="muted" style="margin:.5rem 0">
-      Holders-only: unlocked for wallets holding <b>≥ 1000 CBS</b>. Controls: click/tap/Space to flap • Esc to exit.
+      Controls: click/tap/Space to flap • Esc to exit.
     </p>
   </div>
 
@@ -208,17 +187,6 @@
     </div>
   </main>
 
-  <!-- Leaderboard Top 3 (shared) -->
-  <div class="panel" id="leaderPanel" style="max-width:880px;margin-top:-6px">
-    <h2 style="margin:.2rem 0 .6rem; color:#bffef2; text-align:center">🏆 Top 3</h2>
-    <p class="muted" style="text-align:center;margin-top:-.25rem">Top scores from all games.</p>
-    <table>
-      <thead><tr><th>Rank</th><th>Player</th><th>Score</th></tr></thead>
-      <tbody id="leaderboardBody"></tbody>
-    </table>
-    <p id="lbNote" class="muted" style="display:none;margin-top:.5rem;text-align:center">Showing local scores (cloud unavailable).</p>
-  </div>
-
   <!-- Fullscreen Play -->
   <div id="playOverlay" class="play-overlay" aria-hidden="true">
     <div class="stage">
@@ -235,58 +203,7 @@
     <button id="exitBtn" class="btn">⏹ Exit</button>
   </div>
 
-  <!-- Save Name Modal -->
-  <div id="nameOverlay">
-    <div id="nameCard">
-      <h3>Save your score</h3>
-      <p class="muted" style="margin:.1rem 0 .6rem">Type your name and press <b>Enter</b> to submit.</p>
-      <input id="nameInput" maxlength="30" placeholder="Your name or wallet…" autocomplete="off" />
-      <div id="error">Name is required.</div>
-      <div style="margin-top:.8rem;display:flex;gap:10px;justify-content:flex-end">
-        <button id="cancelBtn" class="btn" style="background:#1a242c;color:#d9fffb;border:1px solid rgba(0,255,240,.25)">Cancel</button>
-        <button id="saveBtn" class="btn">Save</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="toast" class="toast">Saved ✓</div>
-
-  <!-- Supabase UMD -->
-  <script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-
-  <!-- Supabase + Leaderboard -->
-  <script>
-    const SUPABASE_URL = "https://aiawteejixsgsunmefpi.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpYXd0ZWVqaXhzZ3N1bm1lZnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NDExODIsImV4cCI6MjA3MTAxNzE4Mn0.aMbRUM0YebNMfZhSLb9PFdSHAZ-D5WpACPefCfjSLqI";
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const LB_TABLE = "leaderboard";
-
-    const $ = (id)=>document.getElementById(id);
-    const tbody   = $("leaderboardBody");
-    const lbNote  = $("lbNote");
-    const toast   = $("toast");
-    function showToast(msg="Saved ✓"){ toast.textContent=msg; toast.style.display="block"; setTimeout(()=>toast.style.display="none", 1500); }
-    function escapeHtml(s){ return (s||"").toString().replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;","&gt;":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
-
-    async function renderTop3(){
-      tbody.innerHTML = "<tr><td colspan='3' class='muted'>Loading…</td></tr>"; lbNote.style.display="none";
-      try{
-        const { data, error } = await sb.from(LB_TABLE).select("*").order("score",{ascending:false}).order("created_at",{ascending:true}).limit(3);
-        if(error) throw error;
-        tbody.innerHTML="";
-        (data||[]).forEach((r,i)=>{
-          const tr=document.createElement("tr");
-          tr.innerHTML = `<td>${i+1}</td><td>${escapeHtml((r.name||"").toString().slice(0,30)||"Anonymous")}</td><td>${Number(r.score)||0}</td>`;
-          tbody.appendChild(tr);
-        });
-      }catch(e){
-        console.warn("Cloud leaderboard failed:", e);
-        lbNote.style.display="block"; tbody.innerHTML = "<tr><td colspan='3' class='muted'>No data</td></tr>";
-      }
-    }
-  </script>
-
-  <!-- Flappy Game -->
+  <!-- Flappy Game (zonder Supabase/leaderboard/wallet) -->
   <script>
     const canvas = document.getElementById('board');
     const ctx    = canvas.getContext('2d');
@@ -298,13 +215,6 @@
     const playOverlay= document.getElementById('playOverlay');
     const playStage  = document.getElementById('playStage');
     const btnFlap = document.getElementById('btnFlap');
-
-    // Name modal
-    const overlay   = document.getElementById('nameOverlay');
-    const nameInput = document.getElementById('nameInput');
-    const err       = document.getElementById('error');
-    const saveBtn   = document.getElementById('saveBtn');
-    const cancelBtn = document.getElementById('cancelBtn');
 
     // Logo watermark
     const logo = new Image(); logo.src="logo.png"; let logoReady=false; logo.onload=()=>{logoReady=true};
@@ -506,7 +416,14 @@
     }
 
     function stopGame(){ running=false; if(rafId) cancelAnimationFrame(rafId); rafId=null; }
-    function gameOver(){ running=false; draw(); setTimeout(()=> openNameModal(score), 350); }
+
+    function gameOver(){
+      running=false;
+      draw();
+      hintBar.textContent = `Game over – score ${score}. Tap / Space to play again`;
+      // na kort moment weer in idle/start-modus
+      setTimeout(()=>{ prepareGame(); }, 800);
+    }
 
     // Overlay enter/exit
     function enterPlay(){
@@ -535,109 +452,13 @@
 
     // Start / Exit
     startBtn.addEventListener('click', ()=>{
-      if(!window._canStart){ alert('Holders only — need ≥ 1000 CBS.'); return; }
-      enterPlay(); prepareGame();
+      enterPlay();
+      prepareGame();
     });
     exitBtn.addEventListener('click', ()=> exitPlay());
 
-    // Name Modal
-    function openNameModal(sc){
-      overlay.style.display="flex";
-      nameInput.value=""; err.style.display="none";
-      saveBtn.disabled=false; saveBtn.textContent="Save"; nameInput.focus();
-      overlay.dataset.score = String(sc ?? 0);
-    }
-    cancelBtn.addEventListener("click", ()=>{
-      overlay.style.display="none";
-      // ready to play again (idle)
-      enterPlay(); prepareGame();
-    });
-    async function submitName(){
-      const name=(nameInput.value||"").trim();
-      if(!name){ err.textContent="Name is required."; err.style.display="block"; return; }
-      const sc = Math.max(0, Math.round(Number(overlay.dataset.score||0)));
-      saveBtn.disabled=true; saveBtn.textContent="Saving…";
-      try{
-        const { error } = await sb.from("leaderboard").insert({ name, score: sc });
-        if(error) throw error;
-        overlay.style.display="none";
-        showToast("Saved ✓");
-        // klaar voor nieuwe run
-        enterPlay(); prepareGame();
-      }catch(e){
-        console.error("Supabase insert failed:", e);
-        err.textContent="Saving failed. Check Supabase policies or network.";
-        err.style.display="block";
-        alert("Saving failed:\n" + (e?.message||e));
-        return;
-      }finally{
-        saveBtn.disabled=false; saveBtn.textContent="Save";
-        renderTop3();
-      }
-    }
-    nameInput.addEventListener("keydown",(e)=>{ if(e.key==="Enter"){ e.preventDefault(); submitName(); } });
-    saveBtn.addEventListener("click", submitName);
-
     // Init
-    (function init(){ renderTop3(); prepareGame(); })();
-  </script>
-
-  <!-- Holders-only gating (Solana ≥1000 CBS) -->
-  <script type="module">
-    import { Connection, PublicKey } from "https://esm.sh/@solana/web3.js@1.95.8";
-    import { getAssociatedTokenAddress } from "https://esm.sh/@solana/spl-token@0.4.7";
-
-    const RPC_URL = "https://rpc.helius.xyz/?api-key=453a64a5-31dd-4c21-9619-6f0c69c74ff9";
-    const connection = new Connection(RPC_URL, "confirmed");
-    const CBS_MINT = new PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
-    const CBS_MIN_RAW = 1000n * 1_000_000_000n;
-
-    const connectBtn = document.getElementById("connectBtn");
-    const startBtn   = document.getElementById("startBtn");
-    const eligibility= document.getElementById("eligibility");
-
-    let walletPK = null;
-    window._canStart = false;
-
-    function provider(){ return window.solana?.isPhantom ? window.solana : (window.solana || window.phantom?.solana); }
-    function short(pk){ const s=pk?.toString?.()||""; return s ? s.slice(0,4)+"…"+s.slice(-4) : "-"; }
-    function fmtCbs(raw){ return (Number(raw)/1e9).toLocaleString(undefined,{maximumFractionDigits:9}); }
-
-    async function getCbsRawBalance(owner){
-      try{
-        const ata = await getAssociatedTokenAddress(CBS_MINT, owner);
-        const bal = await connection.getTokenAccountBalance(ata).catch(()=>null);
-        if(!bal) return 0n; return BigInt(bal.value.amount || "0");
-      }catch{ return 0n; }
-    }
-    async function verifyEligibility(){
-      if(!walletPK){ window._canStart=false; eligibility.textContent="Not connected"; startBtn.disabled=true; return; }
-      const raw = await getCbsRawBalance(walletPK);
-      if(raw >= CBS_MIN_RAW){
-        window._canStart=true; startBtn.disabled=false;
-        eligibility.textContent = `Eligible ✅ — You hold ${fmtCbs(raw)} CBS (≥ 1000)`;
-      }else{
-        window._canStart=false; startBtn.disabled=true;
-        eligibility.textContent = `Not eligible — need ≥ 1000 CBS (you hold ${fmtCbs(raw)})`;
-      }
-    }
-
-    connectBtn.addEventListener("click", async()=>{
-      try{
-        const p = provider(); if(!p) return alert("Phantom Wallet not found.");
-        const { publicKey } = await p.connect(); walletPK = publicKey;
-        connectBtn.textContent = `✅ ${short(publicKey)}`;
-        await verifyEligibility();
-      }catch(e){ console.warn("Wallet connect failed", e); }
-    });
-
-    if (window.solana) {
-      window.solana.on?.('accountChanged', async (pk)=>{
-        walletPK = pk || null;
-        connectBtn.textContent = pk ? `✅ ${short(pk)}` : '🔗 Connect Wallet';
-        await verifyEligibility();
-      });
-    }
+    (function init(){ prepareGame(); })();
   </script>
 
   <!-- Mobiele 100vh fix -->
