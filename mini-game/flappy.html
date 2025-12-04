@@ -161,7 +161,7 @@
     </div>
   </header>
 
-  <!-- Controls (no wallet gating) -->
+  <!-- Controls -->
   <div id="controlsPanel" class="panel" style="max-width:880px; text-align:center">
     <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
       <button id="startBtn" class="btn">▶️ Start</button>
@@ -210,7 +210,7 @@
     <button id="exitBtn" class="btn">⏹ Exit</button>
   </div>
 
-  <!-- Flappy Game (background.png + grotere bird.png + obstacle.png) -->
+  <!-- Flappy Game -->
   <script>
     const canvas = document.getElementById('board');
     const ctx    = canvas.getContext('2d');
@@ -225,13 +225,13 @@
 
     // Custom bird sprite
     const birdImg = new Image();
-    birdImg.src = "bird.png"; // zorg dat dit bestand naast flappy.html staat
+    birdImg.src = "bird.png";
     let birdReady = false;
     birdImg.onload = () => { birdReady = true; };
 
     // Custom background
     const bgImg = new Image();
-    bgImg.src = "background.png"; // jouw speelveld-achtergrond
+    bgImg.src = "background.png";
     let bgReady = false;
     bgImg.onload = () => { bgReady = true; };
 
@@ -258,15 +258,20 @@
     const SPEED_START = 160; // px/s
     const SPEED_INC   = 0.015; // per second
 
+    // Extra voor bewegende obstakels
+    const OBSTACLE_BOB_SPEED = 1.0;   // hoe snel ze op/ neer bewegen
+    const OBSTACLE_BOB_AMPL  = 15;    // hoe ver (pixels) op/ neer
+
     // State
     let birdY=H/2, birdVy=0;
     let pipes=[];
     let score=0;
     let running=false, rafId=null;
     let last=0, spawnT=0, speed=SPEED_START;
+    let timeSec = 0; // totale speeltijd in seconden
 
     // Waiting-for-first-flap state
-    let waiting=false, idleRaf=null, idleT=0;
+    let waiting=false, idleRaf=null;
 
     function rngGap(){ return Math.floor(PIPE_GAP_MIN + Math.random()*(PIPE_GAP_MAX-PIPE_GAP_MIN)); }
     function rngTop(hGap){
@@ -278,13 +283,14 @@
     function resetCore(){
       birdY=H/2; birdVy=0;
       pipes=[]; score=0; speed=SPEED_START; last=0; spawnT=0;
+      timeSec = 0;
       updateHUD();
       drawIdleFrame(0);
     }
 
     function prepareGame(){
       stopGame();
-      waiting=true; idleT=0;
+      waiting=true;
       resetCore();
       hintBar.textContent = "Tap / Space to start";
       idleStep(performance.now());
@@ -292,7 +298,7 @@
 
     function idleStep(ts){
       if(!waiting) return;
-      const t = ts * 0.004; // zachte bob
+      const t = ts * 0.004; // zachte bob van de vogel
       drawIdleFrame(Math.sin(t)*2); // ±2px
       idleRaf = requestAnimationFrame(idleStep);
     }
@@ -300,7 +306,6 @@
     function startLoopFromFirstFlap(){
       waiting=false;
       if(idleRaf){ cancelAnimationFrame(idleRaf); idleRaf=null; }
-      // maak eerste obstakel en start physics
       pipes=[]; spawnT=0; addPipe();
       birdVy = FLAP_VY;
       running=true; last=0;
@@ -310,8 +315,15 @@
 
     function addPipe(){
       const gap = rngGap();
-      const top = rngTop(gap);
-      pipes.push({ x: W + 6, top, gap, passed:false });
+      const baseTop = rngTop(gap);
+      pipes.push({
+        x: W + 6,
+        baseTop,         // vaste "middenstand"
+        top: baseTop,    // actuele (met bob)
+        gap,
+        passed:false,
+        phase: Math.random() * Math.PI * 2 // iedere pipe andere fase
+      });
     }
 
     function flap(){
@@ -330,6 +342,7 @@
       if(!last) last = ts;
       const dt = Math.min(33, ts - last); last = ts;
       const dtSec = dt / 1000;
+      timeSec += dtSec;
 
       // Physics
       birdVy += GRAVITY * dtSec;
@@ -341,7 +354,11 @@
       if(spawnT >= PIPE_SPAWN_MS){ spawnT = 0; addPipe(); }
       speed += SPEED_INC * dtSec * 1000;
 
-      for(const p of pipes){ p.x -= speed * dtSec; }
+      for(const p of pipes){
+        p.x -= speed * dtSec;
+        // zacht op/neer bewegen rond baseTop
+        p.top = p.baseTop + Math.sin(timeSec * OBSTACLE_BOB_SPEED + p.phase) * OBSTACLE_BOB_AMPL;
+      }
 
       // Remove off-screen
       while(pipes.length && pipes[0].x + PIPE_W < -20) pipes.shift();
@@ -359,8 +376,8 @@
       if(birdY - BIRD_R <= 0 || birdY + BIRD_R >= H){ return gameOver(); }
       for(const p of pipes){
         if(circleRect(BIRD_X, birdY, BIRD_R, p.x, 0, PIPE_W, p.top)) return gameOver();
-        const by = p.top + p.gap;
-        if(circleRect(BIRD_X, birdY, BIRD_R, p.x, by, PIPE_W, H-by)) return gameOver();
+        const y2 = p.top + p.gap;
+        if(circleRect(BIRD_X, birdY, BIRD_R, p.x, y2, PIPE_W, H-y2)) return gameOver();
       }
 
       draw();
@@ -376,10 +393,8 @@
 
     function drawBG(){
       if (bgReady) {
-        // vul het hele canvas met jouw background.png
         ctx.drawImage(bgImg, 0, 0, W, H);
       } else {
-        // fallback: gradient
         const bg = ctx.createLinearGradient(0,0,0,H);
         bg.addColorStop(0,"#071017");
         bg.addColorStop(1,"#09131a");
@@ -392,9 +407,9 @@
       ctx.clearRect(0,0,W,H);
       drawBG();
       for(const p of pipes){
-        drawPipe(p.x, 0, PIPE_W, p.top);
+        drawPipe(p.x, 0, PIPE_W, p.top, true);   // bovenste obstakel
         const y2 = p.top + p.gap;
-        drawPipe(p.x, y2, PIPE_W, H - y2);
+        drawPipe(p.x, y2, PIPE_W, H - y2, false); // onderste obstakel
       }
       drawBird(BIRD_X, birdY, BIRD_R);
       drawFrame();
@@ -409,19 +424,21 @@
 
     function drawFrame(){
       ctx.save();
-      ctx.strokeStyle="rgba(0,255,240,.35)"; ctx.lineWidth=3; ctx.shadowColor="#38f8ff"; ctx.shadowBlur=10;
+      ctx.strokeStyle="rgba(0,255,240,.35)";
+      ctx.lineWidth=3;
+      ctx.shadowColor="#38f8ff";
+      ctx.shadowBlur=10;
       ctx.strokeRect(1,1,W-2,H-2);
       ctx.restore();
     }
 
-    function drawPipe(x,y,w,h){
+    function drawPipe(x,y,w,h,isTop){
       ctx.save();
 
+      // Obstakel-body
       if (obstacleReady) {
-        // schaal obstacle.png naar huidige breedte/hoogte (hoogte varieert per pipe)
         ctx.drawImage(obstacleImg, x, y, w, h);
       } else {
-        // fallback: oude neon pipe
         ctx.shadowColor="#38f8ff"; ctx.shadowBlur=12;
         const g=ctx.createLinearGradient(x,y,x,y+h);
         g.addColorStop(0,"hsl(190 100% 60% / .95)");
@@ -430,6 +447,37 @@
         ctx.shadowBlur=0; ctx.lineWidth=1.6; ctx.strokeStyle="rgba(0,255,240,.7)";
         ctx.strokeRect(x+0.5,y+0.5,w-1,h-1);
       }
+
+      // Vlamrand aan de kant van de opening
+      const baseY = isTop ? (y + h) : y;   // onderkant van bovenpipe / bovenkant van onderpipe
+      const dir   = isTop ? 1 : -1;        // vlammen naar beneden of omhoog
+      const spikes = 7;
+      const step   = w / (spikes - 1);
+
+      ctx.beginPath();
+      ctx.moveTo(x, baseY);
+      for(let i=0;i<spikes;i++){
+        const px = x + i * step;
+        const offset = (i % 2 === 0 ? 8 : 16); // om en om hoger/lager
+        const py = baseY + dir * offset;
+        ctx.lineTo(px, py);
+      }
+      ctx.lineTo(x + w, baseY);
+      ctx.closePath();
+
+      const flameGrad = ctx.createLinearGradient(
+        x,
+        baseY - 12 * dir,
+        x,
+        baseY + 12 * dir
+      );
+      flameGrad.addColorStop(0, "rgba(255,240,200,0.95)");
+      flameGrad.addColorStop(1, "rgba(255,140,0,0.95)");
+
+      ctx.fillStyle = flameGrad;
+      ctx.globalAlpha = 0.9;
+      ctx.fill();
+      ctx.globalAlpha = 1;
 
       ctx.restore();
     }
@@ -440,11 +488,10 @@
       ctx.shadowBlur=18;
 
       if (birdReady) {
-        // sprite nu groter
-        const size = r * 8.0; // maak 4.0 of 6.0 als je kleiner/groter wilt
+        // Vogel groter maken
+        const size = r * 7.0; // pas hier aan (4.0 / 6.0) als je groter/kleiner wilt
         ctx.drawImage(birdImg, x - size/2, y - size/2, size, size);
       } else {
-        // fallback: neon bal
         const g = ctx.createRadialGradient(x-r*0.3, y-r*0.3, r*0.2, x, y, r);
         g.addColorStop(0,"#eaffff"); g.addColorStop(1,"#78eaf0");
         ctx.fillStyle = g;
