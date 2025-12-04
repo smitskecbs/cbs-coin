@@ -246,19 +246,19 @@
 
     // === GAME TUNING – iets makkelijker, vooral mobiel ===
     const BIRD_X = Math.floor(W*0.28), BIRD_R = 12;
-    const GRAVITY = 1400;    // lager dan 1800 → valt trager
-    const FLAP_VY = -420;    // sterker flap (was -380)
+    const GRAVITY = 1400;
+    const FLAP_VY = -420;
     const MAX_VY  = 640;
 
     const PIPE_W = 64;
-    const PIPE_GAP_MIN = 150;  // grotere gaten (was 128)
-    const PIPE_GAP_MAX = 190;  // iets ruimer (was 150)
-    const PIPE_SPAWN_MS = 1550; // iets minder vaak pipes (was 1400)
-    const SPEED_START = 130;   // langzamer begin (was 160)
-    const SPEED_INC   = 0.010; // langzamer opbouwen (was 0.015)
+    const PIPE_GAP_MIN = 150;
+    const PIPE_GAP_MAX = 190;
+    const PIPE_SPAWN_MS = 1550;
+    const SPEED_START = 130;
+    const SPEED_INC   = 0.010;
 
-    const OBSTACLE_BOB_SPEED = 0.8; // iets rustiger op/ neer
-    const OBSTACLE_BOB_AMPL  = 10;  // minder ver op/ neer (was 15)
+    const OBSTACLE_BOB_SPEED = 0.8;
+    const OBSTACLE_BOB_AMPL  = 10;
 
     // State
     let birdY=H/2, birdVy=0;
@@ -268,7 +268,7 @@
     let last=0, spawnT=0, speed=SPEED_START;
     let timeSec = 0;
     let waiting=false, idleRaf=null;
-    let gameOverState = false;  // <-- voor het nieuwe game-over scherm
+    let gameOverState = false;
 
     function rngGap(){ return Math.floor(PIPE_GAP_MIN + Math.random()*(PIPE_GAP_MAX-PIPE_GAP_MIN)); }
     function rngTop(hGap){
@@ -325,7 +325,6 @@
     }
 
     function flap(){
-      // Als je dood bent → eerste tap = direct nieuwe run (fijn voor mobiel + screenshots)
       if (gameOverState){
         gameOverState = false;
         pipes=[];
@@ -361,12 +360,10 @@
       const dtSec = dt / 1000;
       timeSec += dtSec;
 
-      // Bird physics
       birdVy += GRAVITY * dtSec;
       if(birdVy > MAX_VY) birdVy = MAX_VY;
       birdY  += birdVy * dtSec;
 
-      // Obstacles
       spawnT += dt;
       if(spawnT >= PIPE_SPAWN_MS){ spawnT = 0; addPipe(); }
       speed += SPEED_INC * dtSec * 1000;
@@ -378,7 +375,6 @@
 
       while(pipes.length && pipes[0].x + PIPE_W < -20) pipes.shift();
 
-      // Score
       for(const p of pipes){
         if(!p.passed && (p.x + PIPE_W) < (BIRD_X - BIRD_R)){
           p.passed = true;
@@ -387,7 +383,6 @@
         }
       }
 
-      // Collisions
       if(birdY - BIRD_R <= 0 || birdY + BIRD_R >= H){ return gameOver(); }
       for(const p of pipes){
         if(circleRect(BIRD_X, birdY, BIRD_R, p.x, 0, PIPE_W, p.top)) return gameOver();
@@ -422,9 +417,9 @@
       ctx.clearRect(0,0,W,H);
       drawBG();
       for(const p of pipes){
-        drawPipe(p.x, 0, PIPE_W, p.top);           // boven
+        drawPipe(p.x, 0, PIPE_W, p.top);
         const y2 = p.top + p.gap;
-        drawPipe(p.x, y2, PIPE_W, H - y2);         // onder
+        drawPipe(p.x, y2, PIPE_W, H - y2);
       }
       drawBird(BIRD_X, birdY, BIRD_R);
       drawFrame();
@@ -469,7 +464,7 @@
       ctx.shadowBlur=18;
 
       if (birdReady) {
-        const size = r * 7.0; // hier kun je groter/kleiner maken
+        const size = r * 6.0; // groter dan eerst
         ctx.drawImage(birdImg, x - size/2, y - size/2, size, size);
       } else {
         const g = ctx.createRadialGradient(x-r*0.3, y-r*0.3, r*0.2, x, y, r);
@@ -489,7 +484,6 @@
       ctx.clearRect(0,0,W,H);
       drawBG();
 
-      // Pipes lichtjes op de achtergrond
       ctx.save();
       ctx.globalAlpha = 0.35;
       for(const p of pipes){
@@ -502,19 +496,17 @@
       const cx = W/2;
       const cy = H/2 - 30;
 
-      // Grote bird in het midden
       if (birdReady){
         ctx.save();
         ctx.shadowColor="#7dffe9";
         ctx.shadowBlur=25;
-        const size = BIRD_R * 7.0; // groter voor screenshots
+        const size = BIRD_R * 9.0; // extra groot
         ctx.drawImage(birdImg, cx - size/2, cy - size/2, size, size);
         ctx.restore();
       } else {
         drawBird(cx, cy, BIRD_R * 2.5);
       }
 
-      // Tekst
       ctx.save();
       ctx.textAlign = "center";
       ctx.fillStyle = "#eafffb";
@@ -538,7 +530,7 @@
     function gameOver(){
       running=false;
       gameOverState = true;
-      hintBar.textContent = `Game over – score ${score}. Tap / Space to try again`;
+      hintBar.textContent = ""; // geen extra blok onder het canvas
       drawGameOverFrame();
     }
 
