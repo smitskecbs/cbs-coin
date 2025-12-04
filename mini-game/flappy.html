@@ -235,7 +235,7 @@
     let bgReady = false;
     bgImg.onload = () => { bgReady = true; };
 
-    // Custom obstacle sprite (128x512 png)
+    // Custom obstacle sprite (128x512 png, zonnenstorm)
     const obstacleImg = new Image();
     obstacleImg.src = "obstacle.png";
     let obstacleReady = false;
@@ -259,8 +259,8 @@
     const SPEED_INC   = 0.015; // per second
 
     // Extra voor bewegende obstakels
-    const OBSTACLE_BOB_SPEED = 1.0;   // hoe snel ze op/ neer bewegen
-    const OBSTACLE_BOB_AMPL  = 15;    // hoe ver (pixels) op/ neer
+    const OBSTACLE_BOB_SPEED = 1.0;
+    const OBSTACLE_BOB_AMPL  = 15;
 
     // State
     let birdY=H/2, birdVy=0;
@@ -268,7 +268,7 @@
     let score=0;
     let running=false, rafId=null;
     let last=0, spawnT=0, speed=SPEED_START;
-    let timeSec = 0; // totale speeltijd in seconden
+    let timeSec = 0;
 
     // Waiting-for-first-flap state
     let waiting=false, idleRaf=null;
@@ -298,8 +298,8 @@
 
     function idleStep(ts){
       if(!waiting) return;
-      const t = ts * 0.004; // zachte bob van de vogel
-      drawIdleFrame(Math.sin(t)*2); // ±2px
+      const t = ts * 0.004;
+      drawIdleFrame(Math.sin(t)*2);
       idleRaf = requestAnimationFrame(idleStep);
     }
 
@@ -318,11 +318,11 @@
       const baseTop = rngTop(gap);
       pipes.push({
         x: W + 6,
-        baseTop,         // vaste "middenstand"
-        top: baseTop,    // actuele (met bob)
+        baseTop,
+        top: baseTop,
         gap,
         passed:false,
-        phase: Math.random() * Math.PI * 2 // iedere pipe andere fase
+        phase: Math.random() * Math.PI * 2
       });
     }
 
@@ -344,26 +344,24 @@
       const dtSec = dt / 1000;
       timeSec += dtSec;
 
-      // Physics
+      // Bird physics
       birdVy += GRAVITY * dtSec;
       if(birdVy > MAX_VY) birdVy = MAX_VY;
       birdY  += birdVy * dtSec;
 
-      // Spawn & move obstacles
+      // Obstacles
       spawnT += dt;
       if(spawnT >= PIPE_SPAWN_MS){ spawnT = 0; addPipe(); }
       speed += SPEED_INC * dtSec * 1000;
 
       for(const p of pipes){
         p.x -= speed * dtSec;
-        // zacht op/neer bewegen rond baseTop
         p.top = p.baseTop + Math.sin(timeSec * OBSTACLE_BOB_SPEED + p.phase) * OBSTACLE_BOB_AMPL;
       }
 
-      // Remove off-screen
       while(pipes.length && pipes[0].x + PIPE_W < -20) pipes.shift();
 
-      // Scoring
+      // Score
       for(const p of pipes){
         if(!p.passed && (p.x + PIPE_W) < (BIRD_X - BIRD_R)){
           p.passed = true;
@@ -407,9 +405,9 @@
       ctx.clearRect(0,0,W,H);
       drawBG();
       for(const p of pipes){
-        drawPipe(p.x, 0, PIPE_W, p.top, true);   // bovenste obstakel
+        drawPipe(p.x, 0, PIPE_W, p.top);           // boven
         const y2 = p.top + p.gap;
-        drawPipe(p.x, y2, PIPE_W, H - y2, false); // onderste obstakel
+        drawPipe(p.x, y2, PIPE_W, H - y2);         // onder
       }
       drawBird(BIRD_X, birdY, BIRD_R);
       drawFrame();
@@ -432,13 +430,13 @@
       ctx.restore();
     }
 
-    function drawPipe(x,y,w,h,isTop){
+    // 🔥 Hier wordt jouw zonnenstorm-sprite getekend, geen extra vlammen uit code
+    function drawPipe(x,y,w,h){
       ctx.save();
-
-      // Obstakel-body
       if (obstacleReady) {
         ctx.drawImage(obstacleImg, x, y, w, h);
       } else {
+        // fallback: simpele balk als obstacle.png nog niet geladen is
         ctx.shadowColor="#38f8ff"; ctx.shadowBlur=12;
         const g=ctx.createLinearGradient(x,y,x,y+h);
         g.addColorStop(0,"hsl(190 100% 60% / .95)");
@@ -447,38 +445,6 @@
         ctx.shadowBlur=0; ctx.lineWidth=1.6; ctx.strokeStyle="rgba(0,255,240,.7)";
         ctx.strokeRect(x+0.5,y+0.5,w-1,h-1);
       }
-
-      // Vlamrand aan de kant van de opening
-      const baseY = isTop ? (y + h) : y;   // onderkant van bovenpipe / bovenkant van onderpipe
-      const dir   = isTop ? 1 : -1;        // vlammen naar beneden of omhoog
-      const spikes = 7;
-      const step   = w / (spikes - 1);
-
-      ctx.beginPath();
-      ctx.moveTo(x, baseY);
-      for(let i=0;i<spikes;i++){
-        const px = x + i * step;
-        const offset = (i % 2 === 0 ? 8 : 16); // om en om hoger/lager
-        const py = baseY + dir * offset;
-        ctx.lineTo(px, py);
-      }
-      ctx.lineTo(x + w, baseY);
-      ctx.closePath();
-
-      const flameGrad = ctx.createLinearGradient(
-        x,
-        baseY - 12 * dir,
-        x,
-        baseY + 12 * dir
-      );
-      flameGrad.addColorStop(0, "rgba(255,240,200,0.95)");
-      flameGrad.addColorStop(1, "rgba(255,140,0,0.95)");
-
-      ctx.fillStyle = flameGrad;
-      ctx.globalAlpha = 0.9;
-      ctx.fill();
-      ctx.globalAlpha = 1;
-
       ctx.restore();
     }
 
@@ -488,8 +454,7 @@
       ctx.shadowBlur=18;
 
       if (birdReady) {
-        // Vogel groter maken
-        const size = r * 7.0; // pas hier aan (4.0 / 6.0) als je groter/kleiner wilt
+        const size = r * 5.0; // hier kun je haar / hem groter of kleiner maken
         ctx.drawImage(birdImg, x - size/2, y - size/2, size, size);
       } else {
         const g = ctx.createRadialGradient(x-r*0.3, y-r*0.3, r*0.2, x, y, r);
