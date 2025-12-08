@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>CBS Snake Game</title>
 
-  <!-- Content Security Policy -->
+  <!-- Content Security Policy (simpeler, geen Supabase / Solana meer) -->
   <meta http-equiv="Content-Security-Policy"
         content="
           default-src 'self';
-          script-src 'self' 'unsafe-inline' https://unpkg.com https://esm.sh;
-          connect-src 'self' https://rpc.helius.xyz https://aiawteejixsgsunmefpi.supabase.co wss://aiawteejixsgsunmefpi.supabase.co https://*.supabase.co wss://*.supabase.co;
+          script-src 'self' 'unsafe-inline';
+          connect-src 'self';
           img-src 'self' data: https://cyan-persistent-stork-902.mypinata.cloud;
           style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
           font-src https://fonts.gstatic.com;
@@ -24,71 +24,202 @@
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet" />
   <style>
     :root{
-      --bg1:#0a0c10; --bg2:#0f141b;
-      --card:#0f151c; --card2:#0c1016;
-      --fg:#eafffb; --muted:#a8d6cd; --note:#7ee9dc;
-      --accent1:#7dffe9; --accent2:#55f1e7;
-      --line:rgba(0,255,240,.18);
-      --shadow:0 20px 45px rgba(0,255,230,.08), inset 0 0 0 1px rgba(0,255,240,.10);
+      --bg1:#02040a; --bg2:#05040f;
+      --card:#05070f; --card2:#040309;
+      --fg:#fffaf0; --muted:#d2c9aa; --note:#ffe7b8;
+      --accent1:#ffd86b; --accent2:#ffcc33;
+      --line:rgba(255,216,107,.25);
+      --shadow:0 20px 45px rgba(0,0,0,.85), inset 0 0 0 1px rgba(255,216,107,.20);
       --radius:18px;
-      --glowBtnA:#5afff0; --glowBtnB:#2bffe4;
+      --glowBtnA:#ffefb0; --glowBtnB:#e2b542;
     }
 
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
-      margin:0; font-family:'Orbitron',sans-serif; color:var(--fg);
+      margin:0;
+      font-family:'Orbitron',sans-serif;
+      color:var(--fg);
       background:
-        radial-gradient(900px 600px at 100% -10%, rgba(0,255,230,.10), transparent 60%),
-        radial-gradient(700px 500px at -10% 110%, rgba(0,170,255,.09), transparent 60%),
+        radial-gradient(900px 600px at 100% -10%, rgba(255,216,107,.10), transparent 60%),
+        radial-gradient(700px 500px at -10% 110%, rgba(255,140,80,.10), transparent 60%),
         linear-gradient(135deg,var(--bg1),var(--bg2));
-      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility;
-      display:flex; flex-direction:column; align-items:center; padding:16px;
+      -webkit-font-smoothing:antialiased;
+      text-rendering:optimizeLegibility;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      padding:16px;
     }
 
+    /* In play-mode verstoppen we header & control panel */
     body.play-mode header,
-    body.play-mode #controlsPanel,
-    body.play-mode #leaderPanel{ display:none; }
+    body.play-mode #controlsPanel{ display:none; }
 
     header{
-      width:100%; max-width:900px; display:flex; align-items:center; gap:.9rem;
-      margin:10px auto 14px; padding:12px 16px;
-      background:linear-gradient(180deg, rgba(10,20,24,.55), rgba(10,20,24,.35));
-      border:1px solid var(--line); border-radius:16px; box-shadow:var(--shadow); backdrop-filter:blur(6px);
+      width:100%;
+      max-width:900px;
+      display:flex;
+      align-items:center;
+      gap:.9rem;
+      margin:10px auto 14px;
+      padding:12px 16px;
+      background:linear-gradient(180deg, rgba(10,8,0,.7), rgba(5,3,0,.45));
+      border:1px solid var(--line);
+      border-radius:16px;
+      box-shadow:var(--shadow);
+      backdrop-filter:blur(6px);
     }
-    header img{height:44px; width:auto; border-radius:10px; filter:drop-shadow(0 0 10px rgba(0,255,230,.35))}
-    h1{ margin:0; font-size:clamp(1.4rem,3.3vw,2.1rem); color:#bffef2; text-shadow:0 0 10px rgba(0,255,240,.25) }
+    header img{
+      height:44px;
+      width:auto;
+      border-radius:10px;
+      filter:drop-shadow(0 0 14px rgba(255,216,107,.6));
+    }
+    h1{
+      margin:0;
+      font-size:clamp(1.4rem,3.3vw,2.1rem);
+      color:#ffefb0;
+      text-shadow:0 0 12px rgba(255,216,107,.7);
+    }
 
-    .panel{ width:100%; max-width:900px; background:linear-gradient(180deg, var(--card), var(--card2)); border:1px solid var(--line); border-radius:var(--radius); padding:18px; margin:12px auto; box-shadow:var(--shadow); backdrop-filter: blur(6px) }
-    .row{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+    .panel{
+      width:100%;
+      max-width:900px;
+      background:linear-gradient(180deg, var(--card), var(--card2));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      padding:18px;
+      margin:12px auto;
+      box-shadow:var(--shadow);
+      backdrop-filter: blur(6px);
+    }
+    .row{
+      display:flex;
+      gap:12px;
+      flex-wrap:wrap;
+      justify-content:center;
+    }
     .muted{color:var(--muted)}
 
-    .btn{ background:linear-gradient(180deg, var(--glowBtnA), var(--glowBtnB)); color:#001013; cursor:pointer; border:none; border-radius:12px; padding:.9rem 1.35rem; font-weight:900; letter-spacing:.3px; border:1px solid rgba(0,255,240,.7); box-shadow: 0 0 12px rgba(0,255,230,.55), 0 0 24px rgba(0,255,230,.25), inset 0 -8px 14px rgba(0,0,0,.14); transition:transform .15s ease, box-shadow .15s ease, filter .15s ease; white-space:nowrap }
-    .btn:hover{ transform:translateY(-2px) scale(1.03); box-shadow:0 0 16px rgba(0,255,230,.75), 0 0 32px rgba(0,255,230,.35) }
+    .btn{
+      background:linear-gradient(180deg, var(--glowBtnA), var(--glowBtnB));
+      color:#3a2600;
+      cursor:pointer;
+      border:none;
+      border-radius:12px;
+      padding:.9rem 1.35rem;
+      font-weight:900;
+      letter-spacing:.3px;
+      border:1px solid rgba(255,216,107,.9);
+      box-shadow:
+        0 0 12px rgba(255,216,107,.65),
+        0 0 26px rgba(255,216,107,.35),
+        inset 0 -8px 14px rgba(0,0,0,.22);
+      transition:transform .15s ease, box-shadow .15s ease, filter .15s ease;
+      white-space:nowrap;
+    }
+    .btn:hover{
+      transform:translateY(-2px) scale(1.03);
+      box-shadow:
+        0 0 18px rgba(255,216,107,.9),
+        0 0 36px rgba(255,216,107,.45);
+    }
     .btn:active{ transform:translateY(0) scale(.99) }
     .btn[disabled]{opacity:.6;cursor:not-allowed;filter:saturate(.7)}
 
-    #gameWrap{max-width:520px;margin:10px auto}
-    canvas{ display:block;margin:0 auto;border:1px solid rgba(0,255,240,.35); width:100%;max-width:520px;height:auto;background:#000;border-radius:14px; box-shadow:0 0 22px rgba(0,255,240,.12), inset 0 0 0 1px rgba(0,255,240,.06); touch-action:none }
+    #gameWrap{
+      max-width:520px;
+      margin:10px auto;
+    }
+    canvas{
+      display:block;
+      margin:0 auto;
+      border:1px solid rgba(255,216,107,.35);
+      width:100%;
+      max-width:520px;
+      height:auto;
+      background:#000;
+      border-radius:14px;
+      box-shadow:
+        0 0 26px rgba(0,0,0,.9),
+        0 0 22px rgba(255,216,107,.25),
+        inset 0 0 0 1px rgba(255,216,107,.16);
+      touch-action:none;
+    }
 
-    table{width:100%;border-collapse:collapse;margin-top:8px}
-    th,td{padding:.65rem;border-bottom:1px solid rgba(0,255,240,.20);text-align:center}
-    thead th{color:#bffef2}
-    tbody td{color:var(--fg)}
+    h2{margin:.2rem 0 .6rem; color:#ffefb0}
 
-    h2{margin:.2rem 0 .6rem; color:#bffef2}
+    /* GAME OVER OVERLAY */
+    #gameOverOverlay{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.7);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      z-index:50;
+      backdrop-filter: blur(3px);
+    }
+    #gameOverCard{
+      width:min(92vw,480px);
+      background:linear-gradient(180deg, #05070f, #040309);
+      border:1px solid rgba(255,216,107,.9);
+      border-radius:16px;
+      padding:18px 18px 16px;
+      box-shadow:
+        0 20px 45px rgba(0,0,0,.95),
+        inset 0 0 0 1px rgba(255,216,107,.35);
+      text-align:center;
+    }
+    #gameOverCard h3{
+      margin:.1rem 0 .4rem;
+      font-size:1.1rem;
+      color:#ffefb0;
+      text-shadow:0 0 12px rgba(255,216,107,.8);
+    }
+    #gameOverCard p{
+      margin:.25rem 0;
+      font-size:.9rem;
+      color:var(--fg);
+    }
+    #gameOverCard .score{
+      font-size:1rem;
+      color:#ffefb0;
+    }
 
-    #nameOverlay{ position:fixed; inset:0; background:rgba(0,0,0,.6); display:none; align-items:center; justify-content:center; z-index:50; backdrop-filter: blur(2px) }
-    #nameCard{ width:min(92vw,480px); background:linear-gradient(180deg, var(--card), var(--card2)); border:1px solid var(--line); border-radius:14px; padding:18px 18px 14px; box-shadow:var(--shadow) }
-    #nameCard h3{ margin:.2rem 0 .6rem; color:#bffef2 }
-    #nameInput{ width:100%; padding:.85rem 1rem; border:1px solid rgba(0,255,240,.35); border-radius:10px; background:#000; color:#fff; font-family:inherit; font-size:1rem; box-shadow:inset 0 0 0 1px rgba(0,255,240,.06) }
-    #error{color:#ff6b7a;font-size:.85rem;margin-top:.35rem;display:none}
-
-    #dpad{ position:static; display:none; justify-content:center; margin-top:12px }
-    #dpad .pad{ display:grid; grid-template-columns:64px 64px 64px; grid-template-rows:64px 64px 64px; gap:12px; opacity:.55; filter:drop-shadow(0 0 6px rgba(0,255,240,.4)) }
-    #dpad button{ pointer-events:auto; background:rgba(0,255,255,.10); border:1px solid rgba(0,255,240,.45); color:#cff; border-radius:15px; backdrop-filter:blur(2px); font-weight:800 }
-    #dpad button:active{background:rgba(0,255,255,.22)}
-    @media (max-width:680px){ #dpad{display:flex} }
+    /* D-PAD MOBIEL */
+    #dpad{
+      position:static;
+      display:none;
+      justify-content:center;
+      margin-top:12px;
+    }
+    #dpad .pad{
+      display:grid;
+      grid-template-columns:64px 64px 64px;
+      grid-template-rows:64px 64px 64px;
+      gap:12px;
+      opacity:.7;
+      filter:drop-shadow(0 0 8px rgba(255,216,107,.65));
+    }
+    #dpad button{
+      pointer-events:auto;
+      background:rgba(0,0,0,.55);
+      border:1px solid rgba(255,216,107,.65);
+      color:#ffeec4;
+      border-radius:15px;
+      backdrop-filter:blur(3px);
+      font-weight:800;
+      font-size:1rem;
+      box-shadow:0 8px 18px rgba(0,0,0,.85), inset 0 0 0 1px rgba(255,216,107,.25);
+    }
+    #dpad button:active{
+      background:rgba(255,216,107,.22);
+    }
+    @media (max-width:680px){
+      #dpad{display:flex}
+    }
   </style>
 </head>
 <body>
@@ -97,21 +228,23 @@
     <h1>CBS Snake Game</h1>
   </header>
 
+  <!-- Controls: alleen een Start-knop + uitleg -->
   <div id="controlsPanel" class="panel">
     <div class="row" style="justify-content:center;margin-bottom:.3rem">
-      <button id="connectBtn" class="btn">🔗 Connect Wallet</button>
-      <button id="startBtn" class="btn" disabled>▶️ Start</button>
-      <span id="eligibility" class="muted" style="align-self:center">Not connected</span>
+      <button id="startBtn" class="btn">▶️ Start Game</button>
     </div>
     <p class="muted" style="text-align:center;margin:.2rem 0 0 0">
-      Holders‑only access: play is unlocked for wallets holding <b>≥ 1000 CBS</b>.<br>
-      <b>Playable on mobile in the Phantom browser or on desktop.</b>
+      Use the arrow keys (desktop) or the golden D-pad (mobile) to move the snake.<br>
+      Eat the golden coins, avoid biting your own tail. Good luck, Chainbreaker 🐍✨
     </p>
   </div>
 
+  <!-- Game panel -->
   <div class="panel" id="gamePanel">
     <div id="gameWrap">
       <canvas id="gameCanvas" width="420" height="420"></canvas>
+
+      <!-- D-pad voor mobiel -->
       <div id="dpad" aria-label="On-screen controls">
         <div class="pad">
           <div></div>     <button data-dir="UP">▲</button>     <div></div>
@@ -122,75 +255,41 @@
     </div>
   </div>
 
-  <div class="panel" id="leaderPanel">
-    <h2 style="text-align:center">🏆 Top 3</h2>
-    <p class="muted" style="text-align:center;margin-top:-.25rem">Only the three highest scores are shown.</p>
-    <table>
-      <thead><tr><th>Rank</th><th>Player</th><th>Score</th></tr></thead>
-      <tbody id="leaderboardBody"></tbody>
-    </table>
-    <p id="lbNote" class="muted" style="display:none;margin-top:.5rem;text-align:center">Showing local scores (cloud unavailable).</p>
-  </div>
-
-  <div id="nameOverlay">
-    <div id="nameCard">
-      <h3>Save your score</h3>
-      <p class="muted" style="margin:.1rem 0 .6rem">Type your name and press <b>Enter</b> to submit.</p>
-      <input id="nameInput" maxlength="30" placeholder="Your name or wallet…" autocomplete="off" />
-      <div id="error">Name is required.</div>
-      <div style="margin-top:.8rem;text-align:right;display:flex;gap:10px;justify-content:flex-end">
-        <button id="cancelBtn" class="btn" style="background:#1a242c;color:#d9fffb;border:1px solid rgba(0,255,240,.25)">Cancel</button>
-        <button id="saveBtn" class="btn">Save</button>
+  <!-- Game over overlay (geen scorebord, alleen score + knoppen) -->
+  <div id="gameOverOverlay">
+    <div id="gameOverCard">
+      <h3>Game over 🎄</h3>
+      <p class="score">Your score: <span id="finalScore">0</span></p>
+      <p class="muted">Tap <b>Play again</b> to try and beat your high score.</p>
+      <div style="margin-top:.9rem; display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+        <button id="playAgainBtn" class="btn">🔁 Play again</button>
+        <button id="closeBtn" class="btn" style="background:#31200c;color:#ffeec4;border:1px solid rgba(255,216,107,.5);">
+          ⏹ Close
+        </button>
       </div>
     </div>
   </div>
 
-  <script src="https://unpkg.com/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-
-  <script type="module">
-    /******** CONFIG ********/
-    const SUPABASE_URL = "https://aiawteejixsgsunmefpi.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFpYXd0ZWVqaXhzZ3N1bm1lZnBpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU0NDExODIsImV4cCI6MjA3MTAxNzE4Mn0.aMbRUM0YebNMfZhSLb9PFdSHAZ-D5WpACPefCfjSLqI";
-    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    const TABLE = "leaderboard";
-
-    // Solana
-    import { Connection, PublicKey } from "https://esm.sh/@solana/web3.js@1.95.8";
-    import { getAssociatedTokenAddress } from "https://esm.sh/@solana/spl-token@0.4.7";
-
-    const RPC_URL = "https://rpc.helius.xyz/?api-key=453a64a5-31dd-4c21-9619-6f0c69c74ff9";
-    const connection = new Connection(RPC_URL, "confirmed");
-    const CBS_MINT = new PublicKey("B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk");
-
-    // Eligibility threshold
-    const CBS_DECIMALS = 9;
-    const CBS_MIN_UNITS = 1000; // 1000 CBS (display units)
-    const CBS_MIN_RAW = 1000n * 1_000_000_000n; // 1000 * 10^9
-
-    let walletPK = null;
-    let eligible = false;
-    let holderRaw = 0n; // raw amount
-
+  <!-- PURE JS: Snake game, zonder Supabase/wallet -->
+  <script>
     /******** DOM ********/
-    const $ = (id)=>document.getElementById(id);
-    const connectBtn = $("connectBtn");
-    const startBtn   = $("startBtn");
-    const overlay    = $("nameOverlay");
-    const nameInput  = $("nameInput");
-    const err        = $("error");
-    const saveBtn    = $("saveBtn");
-    const cancelBtn  = $("cancelBtn");
-    const tbody      = $("leaderboardBody");
-    const lbNote     = $("lbNote");
-    const gameWrap   = $("gameWrap");
-    const canvas     = $("gameCanvas");
+    const canvas     = document.getElementById("gameCanvas");
     const ctx        = canvas.getContext("2d");
-    const eligibility= $("eligibility");
+    const startBtn   = document.getElementById("startBtn");
+    const gameWrap   = document.getElementById("gameWrap");
+
+    const dpadButtons = document.querySelectorAll("#dpad button");
+
+    const gameOverOverlay = document.getElementById("gameOverOverlay");
+    const finalScoreEl    = document.getElementById("finalScore");
+    const playAgainBtn    = document.getElementById("playAgainBtn");
+    const closeBtn        = document.getElementById("closeBtn");
 
     /******** GAME ********/
     const box = 20;
     let snake, direction, food, score, loopId;
 
+    // Gouden CBS-logo als zachte watermark / power-up basis
     const watermark = new Image();
     watermark.crossOrigin = "anonymous";
     watermark.src = "https://cyan-persistent-stork-902.mypinata.cloud/ipfs/bafybeia7qejzloll6teyt4o4orvd7bnvkg4thrfajv4rgb3fmm2odeweoa/logo.png";
@@ -206,11 +305,19 @@
     powerUpImg.onload  = ()=>{ powerUpImgOk = powerUpImg.naturalWidth > 0; };
     powerUpImg.onerror = ()=>{ powerUpImgOk = false; };
 
-    function randCell(){ return { x: Math.floor(Math.random()*(canvas.width/box))*box, y: Math.floor(Math.random()*(canvas.height/box))*box }; }
+    function randCell(){
+      return {
+        x: Math.floor(Math.random()*(canvas.width/box))*box,
+        y: Math.floor(Math.random()*(canvas.height/box))*box
+      };
+    }
     function randCell2x(){
       const cols = Math.floor(canvas.width/box) - 1;
       const rows = Math.floor(canvas.height/box) - 1;
-      return { x: Math.floor(Math.random()*cols)*box, y: Math.floor(Math.random()*rows)*box };
+      return {
+        x: Math.floor(Math.random()*cols)*box,
+        y: Math.floor(Math.random()*rows)*box
+      };
     }
 
     function initGame(){
@@ -220,232 +327,266 @@
       score=0;
       coinsEaten=0;
       powerUp=null;
-      if (powerUpTimeout){ clearTimeout(powerUpTimeout); powerUpTimeout=null; }
+      if (powerUpTimeout){
+        clearTimeout(powerUpTimeout);
+        powerUpTimeout=null;
+      }
       drawFrame();
     }
-    function start(){ clearInterval(loopId); initGame(); loopId=setInterval(tick,100); }
-    function stop(){ clearInterval(loopId); if (powerUpTimeout){ clearTimeout(powerUpTimeout); powerUpTimeout=null; } }
 
+    function start(){
+      clearInterval(loopId);
+      initGame();
+      loopId=setInterval(tick,100);
+      document.body.classList.add("play-mode");
+      scrollToGame();
+    }
+
+    function stop(){
+      clearInterval(loopId);
+      if (powerUpTimeout){
+        clearTimeout(powerUpTimeout);
+        powerUpTimeout=null;
+      }
+    }
+
+    /* --- Gouden segmenten --- */
     function drawSegmentCircle(x,y,isHead=false){
       ctx.save();
-      ctx.shadowColor = '#00e5ff';
+      ctx.shadowColor = "rgba(255,216,107,.95)";
       ctx.shadowBlur = 18;
-      const cx = x + box/2, cy = y + box/2, r = box/2.3;
-      const g = ctx.createRadialGradient(cx, cy, r*0.2, cx, cy, r);
-      g.addColorStop(0, '#7fe9ff'); g.addColorStop(1, '#00bfff');
+
+      const cx = x + box/2;
+      const cy = y + box/2;
+      const r  = box/2.3;
+      const g  = ctx.createRadialGradient(cx, cy, r*0.2, cx, cy, r);
+      g.addColorStop(0, "#fff7da");
+      g.addColorStop(0.5, "#ffd86b");
+      g.addColorStop(1, "#ffb52e");
       ctx.fillStyle = g;
-      ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI*2);
+      ctx.fill();
+
       ctx.shadowBlur = 0;
-      if(isHead){ ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x + box*0.65, y + box*0.35, 3, 0, Math.PI*2); ctx.fill(); }
+
+      if(isHead){
+        ctx.fillStyle = "#fff";
+        ctx.beginPath();
+        ctx.arc(x + box*0.65, y + box*0.35, 3, 0, Math.PI*2);
+        ctx.fill();
+      }
+
       ctx.restore();
     }
 
+    /* --- Gouden coin (eten) --- */
     function drawCoin(x,y,s){
-      ctx.save(); const r=s/2,cx=x+r,cy=y+r;
-      ctx.shadowColor="#ffd54d"; ctx.shadowBlur=14;
+      ctx.save();
+      const r = s/2;
+      const cx = x + r;
+      const cy = y + r;
+
+      ctx.shadowColor = "#ffd54d";
+      ctx.shadowBlur  = 16;
       const g=ctx.createRadialGradient(cx,cy,r*0.2,cx,cy,r);
-      g.addColorStop(0,"#ffe27a"); g.addColorStop(0.6,"#ffca28"); g.addColorStop(1,"#ffb300");
-      ctx.beginPath(); ctx.arc(cx,cy,r-2,0,Math.PI*2); ctx.fillStyle=g; ctx.fill();
-      ctx.shadowBlur=0; ctx.lineWidth=2; ctx.strokeStyle="rgba(255,255,255,.35)"; ctx.stroke();
+      g.addColorStop(0,"#fff3c4");
+      g.addColorStop(0.4,"#ffe082");
+      g.addColorStop(0.8,"#ffc107");
+      g.addColorStop(1,"#ffb300");
+      ctx.beginPath();
+      ctx.arc(cx,cy,r-2,0,Math.PI*2);
+      ctx.fillStyle=g;
+      ctx.fill();
+
+      ctx.shadowBlur=0;
+      ctx.lineWidth=2;
+      ctx.strokeStyle="rgba(255,255,255,.55)";
+      ctx.stroke();
       ctx.restore();
     }
 
+    /* --- Power-up (CBS-plakkaat) --- */
     function drawPowerUp(x,y){
       if (powerUpImgOk && powerUpImg.complete && powerUpImg.naturalWidth>0){
         try{
           ctx.save();
-          ctx.shadowColor = '#00ffff';
-          ctx.shadowBlur = 12;
+          ctx.shadowColor = "rgba(255,216,107,.95)";
+          ctx.shadowBlur = 16;
           ctx.drawImage(powerUpImg, x, y, box*2, box*2);
           ctx.restore();
         }catch(e){
           powerUpImgOk = false;
-          ctx.save(); ctx.fillStyle = '#00ffff'; ctx.globalAlpha=0.7; ctx.fillRect(x, y, box*2, box*2); ctx.restore();
+          ctx.save();
+          ctx.fillStyle = "rgba(255,216,107,.8)";
+          ctx.fillRect(x, y, box*2, box*2);
+          ctx.restore();
         }
       } else {
-        ctx.save(); ctx.fillStyle = '#00ffff'; ctx.globalAlpha=0.7; ctx.fillRect(x, y, box*2, box*2); ctx.restore();
+        ctx.save();
+        ctx.fillStyle = "rgba(255,216,107,.8)";
+        ctx.fillRect(x, y, box*2, box*2);
+        ctx.restore();
       }
     }
 
     function drawFrame(){
-      ctx.fillStyle="#000"; ctx.fillRect(0,0,canvas.width,canvas.height);
+      ctx.fillStyle="#000";
+      ctx.fillRect(0,0,canvas.width,canvas.height);
+
+      // zachte gouden CBS watermark
       if (watermark.complete && watermark.naturalWidth>0){
-        const w=canvas.width*0.75, h=w; ctx.save(); ctx.globalAlpha=0.08; ctx.drawImage(watermark,(canvas.width-w)/2,(canvas.height-h)/2,w,h); ctx.restore();
+        const w=canvas.width*0.75;
+        const h=w;
+        ctx.save();
+        ctx.globalAlpha=0.08;
+        ctx.drawImage(watermark,(canvas.width-w)/2,(canvas.height-h)/2,w,h);
+        ctx.restore();
       }
+
+      // coin + power-up
       drawCoin(food.x, food.y, box);
       if(powerUp) drawPowerUp(powerUp.x, powerUp.y);
-      for(let i=snake.length-1;i>=0;i--){ drawSegmentCircle(snake[i].x,snake[i].y,i===0); }
-      ctx.fillStyle="#fff"; ctx.font="18px Orbitron"; ctx.fillText("Score: "+score, box, 22);
+
+      // slang
+      for(let i=snake.length-1;i>=0;i--){
+        drawSegmentCircle(snake[i].x,snake[i].y,i===0);
+      }
+
+      // score
+      ctx.save();
+      ctx.font="18px Orbitron";
+      ctx.fillStyle="#fffaf0";
+      ctx.shadowColor="rgba(255,216,107,.9)";
+      ctx.shadowBlur=10;
+      ctx.fillText("Score: "+score, box, 22);
+      ctx.restore();
     }
 
     function tick(){
-      let x=snake[0].x, y=snake[0].y;
-      if(direction==="LEFT") x-=box;
-      if(direction==="UP")   y-=box;
-      if(direction==="RIGHT")x+=box;
-      if(direction==="DOWN") y+=box;
+      let x=snake[0].x;
+      let y=snake[0].y;
+
+      if(direction==="LEFT")  x-=box;
+      if(direction==="UP")    y-=box;
+      if(direction==="RIGHT") x+=box;
+      if(direction==="DOWN")  y+=box;
 
       const W=canvas.width, H=canvas.height;
-      if(x<0) x=W-box; else if(x>=W) x=0;
-      if(y<0) y=H-box; else if(y>=H) y=0;
+      // doorlopen aan de randen
+      if(x<0)      x=W-box;
+      else if(x>=W)x=0;
+      if(y<0)      y=H-box;
+      else if(y>=H)y=0;
 
+      // Coin
       if(x===food.x && y===food.y){
         score++;
         coinsEaten++;
         food=randCell();
 
+        // elke 5 coins: power-up
         if(coinsEaten % 5 === 0){
           powerUp = randCell2x();
-          if (powerUpTimeout){ clearTimeout(powerUpTimeout); }
-          powerUpTimeout = setTimeout(()=>{ powerUp=null; powerUpTimeout=null; }, 5000);
+          if (powerUpTimeout){
+            clearTimeout(powerUpTimeout);
+          }
+          powerUpTimeout = setTimeout(()=>{
+            powerUp=null;
+            powerUpTimeout=null;
+          }, 5000);
         }
       }
-      else if(powerUp &&
-              x >= powerUp.x && x < powerUp.x + box*2 &&
-              y >= powerUp.y && y < powerUp.y + box*2){
-        score += 10;
+      // power-up geraakt
+      else if(
+        powerUp &&
+        x >= powerUp.x && x < powerUp.x + box*2 &&
+        y >= powerUp.y && y < powerUp.y + box*2
+      ){
+        score += BONUS_POINTS;
         powerUp = null;
-        if (powerUpTimeout){ clearTimeout(powerUpTimeout); powerUpTimeout=null; }
+        if (powerUpTimeout){
+          clearTimeout(powerUpTimeout);
+          powerUpTimeout=null;
+        }
       }
       else{
         snake.pop();
       }
 
-      if(snake.some(s=>s.x===x&&s.y===y)){ stop(); drawFrame(); openNameModal(score); return; }
+      // check zelf-bijt
+      if(snake.some(s=>s.x===x&&s.y===y)){
+        stop();
+        drawFrame();
+        openGameOver(score);
+        return;
+      }
+
       snake.unshift({x,y});
       drawFrame();
     }
 
+    /******** INPUT ********/
     document.addEventListener("keydown", e=>{
       if(e.key==="ArrowLeft" && direction!=="RIGHT") direction="LEFT";
       else if(e.key==="ArrowUp" && direction!=="DOWN") direction="UP";
-      else if(e.key==="ArrowRight" && direction!=="LEFT") direction="RIGHT";
+      else if(e.key==="ArrowRight"&& direction!=="LEFT") direction="RIGHT";
       else if(e.key==="ArrowDown" && direction!=="UP") direction="DOWN";
     });
 
-    document.querySelectorAll('#dpad button').forEach(b=>{
+    dpadButtons.forEach(b=>{
       const set=(d)=>{
-        if(d==="LEFT"&&direction!=="RIGHT")direction="LEFT";
-        if(d==="RIGHT"&&direction!=="LEFT")direction="RIGHT";
-        if(d==="UP"&&direction!=="DOWN")direction="UP";
-        if(d==="DOWN"&&direction!=="UP")direction="DOWN";
+        if(d==="LEFT" && direction!=="RIGHT") direction="LEFT";
+        if(d==="RIGHT"&& direction!=="LEFT")  direction="RIGHT";
+        if(d==="UP"   && direction!=="DOWN")  direction="UP";
+        if(d==="DOWN" && direction!=="UP")    direction="DOWN";
       };
-      b.addEventListener('click',()=> set(b.dataset.dir));
-      b.addEventListener('touchstart',e=>{ e.preventDefault(); set(b.dataset.dir); },{passive:false});
+      b.addEventListener("click",()=> set(b.dataset.dir));
+      b.addEventListener("touchstart",e=>{
+        e.preventDefault();
+        set(b.dataset.dir);
+      },{passive:false});
     });
 
+    /******** VIEW ********/
     function scrollToGame(){
       requestAnimationFrame(()=>{
-        canvas.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        canvas.scrollIntoView({ block: "center", behavior: "smooth" });
         setTimeout(()=>{
           const y = gameWrap.getBoundingClientRect().top + window.scrollY - 8;
-          window.scrollTo({ top: y, behavior: 'smooth' });
+          window.scrollTo({ top: y, behavior: "smooth" });
         }, 220);
-        setTimeout(()=> window.scrollTo({ top: window.scrollY + 1 }), 600);
       });
     }
-    function enterPlayMode(){ document.body.classList.add('play-mode'); scrollToGame(); }
-    function exitPlayMode(){ document.body.classList.remove('play-mode'); }
 
-    /* ===== Wallet / eligibility ===== */
-    function provider(){ return window.solana?.isPhantom ? window.solana : null; }
-    function short(pk){ const s = pk?.toString?.()||''; return s ? s.slice(0,4)+'…'+s.slice(-4) : '-'; }
-    function showError(prefix, err){ const msg = (err && err.message) ? err.message : String(err || 'Unknown error'); console.error(prefix, err); alert(`${prefix}\n\n${msg}`); }
-    function fmtCbs(raw){ return (Number(raw)/1e9).toLocaleString(undefined,{maximumFractionDigits:9}); }
-
-    async function getCbsRawBalance(owner){
-      try{
-        const ata = await getAssociatedTokenAddress(CBS_MINT, owner);
-        const bal = await connection.getTokenAccountBalance(ata).catch(()=>null);
-        if(!bal) return 0n;
-        return BigInt(bal.value.amount || '0');
-      }catch{ return 0n; }
+    function openGameOver(sc){
+      finalScoreEl.textContent = sc;
+      gameOverOverlay.style.display = "flex";
     }
 
-    async function verifyEligibility(){
-      if(!walletPK){ eligible=false; holderRaw=0n; eligibility.textContent='Not connected'; startBtn.disabled=true; return; }
-      holderRaw = await getCbsRawBalance(walletPK);
-      if(holderRaw >= CBS_MIN_RAW){
-        eligible = true;
-        eligibility.textContent = `Eligible ✅ — You hold ${fmtCbs(holderRaw)} CBS (≥ ${CBS_MIN_UNITS})`;
-        startBtn.disabled = false;
-      }else{
-        eligible = false;
-        eligibility.textContent = `Not eligible — need ≥ ${CBS_MIN_UNITS} CBS (you hold ${fmtCbs(holderRaw)})`;
-        startBtn.disabled = true;
-      }
+    function closeGameOver(){
+      gameOverOverlay.style.display = "none";
     }
 
-    connectBtn.addEventListener("click", async ()=>{
-      try{
-        const p = provider(); if(!p) return alert("Phantom Wallet not found.");
-        const { publicKey } = await p.connect(); walletPK = publicKey;
-        connectBtn.textContent = `✅ ${short(publicKey)}`;
-        await verifyEligibility();
-      }catch(e){ showError("Wallet connect failed.", e); }
-    });
-
+    /******** BUTTON EVENTS ********/
     startBtn.addEventListener("click", ()=>{
-      if(!walletPK) return alert("Connect your wallet first.");
-      if(!eligible) return alert(`Holders only — need ≥ ${CBS_MIN_UNITS} CBS.`);
-      document.body.classList.add('play-mode');
+      closeGameOver();
       start();
-      scrollToGame();
     });
 
-    /* ===== Name / save ===== */
-    function openNameModal(sc){ overlay.style.display="flex"; nameInput.value=""; err.style.display="none"; saveBtn.disabled = false; saveBtn.textContent = "Save"; nameInput.focus(); overlay.dataset.score = String(sc ?? 0); }
+    playAgainBtn.addEventListener("click", ()=>{
+      closeGameOver();
+      start();
+    });
 
-    cancelBtn.addEventListener("click", ()=>{ overlay.style.display="none"; startBtn.disabled = !eligible; exitPlayMode(); });
+    closeBtn.addEventListener("click", ()=>{
+      closeGameOver();
+      document.body.classList.remove("play-mode");
+    });
 
-    async function submitName(){
-      const name = (nameInput.value||"").trim();
-      if(!name){ err.textContent="Name is required."; err.style.display="block"; return; }
-      if(!walletPK){ err.textContent = "Connect wallet first."; err.style.display = "block"; return; }
-      await verifyEligibility();
-      if(!eligible){ err.textContent = `Holders only — need ≥ ${CBS_MIN_UNITS} CBS.`; err.style.display = "block"; return; }
-      const sc = Number(overlay.dataset.score||0);
-
-      saveBtn.disabled = true; saveBtn.textContent = "Saving…";
-      try{
-        const { error } = await sb.from(TABLE).insert({ name, score: sc });
-        if(error) throw error;
-        overlay.style.display="none";
-      }catch(e){
-        err.textContent = "Saving failed. Server not accepting inserts.";
-        err.style.display = "block";
-        console.warn("Supabase insert failed:", e);
-        return;
-      }finally{
-        saveBtn.disabled = false; saveBtn.textContent = "Save";
-        startBtn.disabled = !eligible;
-        exitPlayMode();
-        renderTop3();
-      }
-    }
-    nameInput.addEventListener("keydown", (e)=>{ if(e.key==="Enter"){ e.preventDefault(); submitName(); } });
-    saveBtn.addEventListener("click", submitName);
-
-    /* ===== Leaderboard ===== */
-    function escapeHtml(s){ return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m])); }
-    async function renderTop3(){
-      tbody.innerHTML = "<tr><td colspan='3' class='muted'>Loading…</td></tr>"; lbNote.style.display="none";
-      try{
-        const { data, error } = await sb.from(TABLE).select("*").order("score",{ascending:false}).order("created_at",{ascending:true}).limit(3);
-        if(error) throw error;
-        tbody.innerHTML="";
-        (data||[]).forEach((r,i)=>{
-          const tr=document.createElement("tr");
-          tr.innerHTML = `<td>${i+1}</td><td>${escapeHtml((r.name||"").toString().slice(0,30)||"Anonymous")}</td><td>${Number(r.score)||0}</td>`;
-          tbody.appendChild(tr);
-        });
-      }catch(e){
-        console.warn("Cloud leaderboard failed:", e);
-        lbNote.style.display="block"; tbody.innerHTML = "<tr><td colspan='3' class='muted'>No data</td></tr>";
-      }
-    }
-
-    initGame(); renderTop3();
+    // init eerste frame
+    initGame();
+    drawFrame();
   </script>
 </body>
 </html>
