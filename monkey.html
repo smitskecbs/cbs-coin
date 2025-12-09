@@ -49,22 +49,63 @@
       text-align:center;
       font-size:14px;
       color:#d9fdd2;
+      display:flex;
+      flex-direction:column;
+      gap:4px;
+      align-items:center;
     }
     .hud b{color:#9dff7a}
+
+    .hud-controls{
+      font-size:13px;
+    }
+
+    .hud-row{
+      display:flex;
+      gap:16px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:center;
+    }
+
+    button#startBtn{
+      padding:4px 10px;
+      border-radius:999px;
+      border:1px solid #2cff9b66;
+      background:#061b12;
+      color:#e9ffe0;
+      cursor:pointer;
+      font-size:13px;
+      box-shadow:0 0 10px rgba(0,0,0,.6);
+    }
+    button#startBtn:hover{
+      background:#0b2b1b;
+    }
+    #secretStatus b{
+      color:#ffd86b;
+    }
   </style>
 </head>
 <body>
   <div class="wrap">
     <canvas id="game" width="320" height="180"></canvas>
     <div class="hud">
-      <div>Controls: <b>← →</b> / <b>A D</b> lopen – <b>↑</b> of <b>SPACE</b> springen</div>
-      <div>Doel: loop naar rechts, spring over gaten en platforms in de jungle 🐒🌴</div>
+      <div class="hud-controls">
+        Controls: <b>← →</b> / <b>A D</b> lopen – <b>↑</b> of <b>SPACE</b> springen – <b>↓</b> of <b>S</b> om in een pipe te gaan
+      </div>
+      <div>Doel: loop naar rechts door het jungle-level, ontwijk gaten & vind de geheime CBS-idol 🐒🌴</div>
+      <div class="hud-row">
+        <button id="startBtn">Reset level</button>
+        <div id="secretStatus">Geheim: <b>nog niet gevonden</b></div>
+      </div>
     </div>
   </div>
 
   <script>
     const canvas = document.getElementById("game");
     const ctx    = canvas.getContext("2d");
+    const startBtn = document.getElementById("startBtn");
+    const secretStatusEl = document.getElementById("secretStatus");
 
     // ===== Wereld instellingen =====
     const TILE_SIZE = 16;         // 16x16 pixel tiles
@@ -72,48 +113,151 @@
     const WORLD_HEIGHT = 12;      // aantal tiles hoog
 
     // Tegel types
-    const TILE_EMPTY   = 0;
-    const TILE_GROUND  = 1;
-    const TILE_GRASS   = 2;
+    const TILE_EMPTY    = 0;
+    const TILE_GROUND   = 1;
+    const TILE_GRASS    = 2;
+    const TILE_PIPE     = 3;
+    const TILE_BLOCK    = 4;
 
-    // Maak eenvoudige tilemap (grond + paar platforms)
+    // Maak tilemap gevuld met lucht
     const world = [];
     for(let y=0;y<WORLD_HEIGHT;y++){
       world[y] = [];
       for(let x=0;x<WORLD_WIDTH;x++){
-        // standaard lucht
         world[y][x] = TILE_EMPTY;
       }
     }
 
-    // ondergrond (bodem) als grond + gras-laag
+    // Helpers voor level bouwen
     const GROUND_LEVEL = WORLD_HEIGHT - 2;
-    for(let x=0;x<WORLD_WIDTH;x++){
-      world[GROUND_LEVEL][x]   = TILE_GRASS;
-      world[GROUND_LEVEL+1][x] = TILE_GROUND;
+
+    function addGroundStrip(xStart, xEnd){
+      for(let x=xStart;x<=xEnd;x++){
+        if(x<0 || x>=WORLD_WIDTH) continue;
+        world[GROUND_LEVEL][x]   = TILE_GRASS;
+        world[GROUND_LEVEL+1][x] = TILE_GROUND;
+      }
     }
 
-    // paar gaten in de grond
     function carveHole(startX, width){
       for(let x=startX;x<startX+width;x++){
+        if(x<0 || x>=WORLD_WIDTH) continue;
         world[GROUND_LEVEL][x]   = TILE_EMPTY;
         world[GROUND_LEVEL+1][x] = TILE_EMPTY;
       }
     }
-    carveHole(18,3);
-    carveHole(40,4);
-    carveHole(70,3);
 
-    // simpele platformen
     function addPlatform(x,y,length){
       for(let i=0;i<length;i++){
-        world[y][x+i] = TILE_GRASS;
+        const tx = x+i;
+        if(tx<0 || tx>=WORLD_WIDTH) continue;
+        world[y][tx] = TILE_GRASS;
       }
     }
-    addPlatform(12, GROUND_LEVEL-3, 4);
-    addPlatform(28, GROUND_LEVEL-5, 6);
-    addPlatform(55, GROUND_LEVEL-4, 4);
-    addPlatform(90, GROUND_LEVEL-6, 6);
+
+    function addBlockRow(x,y,length){
+      for(let i=0;i<length;i++){
+        const tx = x+i;
+        if(tx<0 || tx>=WORLD_WIDTH) continue;
+        world[y][tx] = TILE_BLOCK;
+      }
+    }
+
+    function addPipe(x){
+      // simpele 2-wide pipe op de grond
+      if(x<0 || x+1>=WORLD_WIDTH) return;
+      for(let y=GROUND_LEVEL-1; y<=GROUND_LEVEL+1; y++){
+        if(y<0 || y>=WORLD_HEIGHT) continue;
+        world[y][x]   = TILE_PIPE;
+        world[y][x+1] = TILE_PIPE;
+      }
+    }
+
+    // ===== Level ontwerp (Mario-style met puzzel) =====
+    // basisvloer bijna overal
+    addGroundStrip(0, WORLD_WIDTH-1);
+
+    // startgebied: kleine trap en blokjes
+    addBlockRow(6, GROUND_LEVEL-3, 3);
+    addBlockRow(10, GROUND_LEVEL-4, 4);
+
+    // eerste simpele pit
+    carveHole(18,3);
+
+    // set platforms rond eerste pit
+    addPlatform(16, GROUND_LEVEL-3, 2);
+    addPlatform(21, GROUND_LEVEL-2, 2);
+
+    // tweede pit met langere sprong + bovenroute
+    carveHole(32,4);
+    addPlatform(29, GROUND_LEVEL-3, 3);
+    addPlatform(37, GROUND_LEVEL-4, 3);
+
+    // blokjes “trap” naar bovenroute
+    addBlockRow(42, GROUND_LEVEL-3, 3);
+    addBlockRow(45, GROUND_LEVEL-4, 2);
+
+    // derde pit – moet via upper platform
+    carveHole(52,5);
+    addPlatform(50, GROUND_LEVEL-4, 3);
+    addPlatform(57, GROUND_LEVEL-3, 3);
+
+    // area met gestapelde blokken (spring-puzzeltje)
+    addBlockRow(63, GROUND_LEVEL-3, 2);
+    addBlockRow(65, GROUND_LEVEL-4, 2);
+    addBlockRow(67, GROUND_LEVEL-5, 2);
+
+    // kleine trap naar warp-pipe plateau
+    addPlatform(72, GROUND_LEVEL-3, 3);
+    addPlatform(76, GROUND_LEVEL-4, 3);
+
+    // warp-pipe naar geheime kamer
+    const warpPipes = [
+      {
+        // hoofdlevel → secret room
+        entranceX: 82,
+        entranceWidth: 2,
+        destX: 140 * TILE_SIZE + 4,
+        destY: (GROUND_LEVEL-5) * TILE_SIZE
+      },
+      {
+        // secret room → terug vlak voor goal
+        entranceX: 160,
+        entranceWidth: 2,
+        destX: 110 * TILE_SIZE,
+        destY: (GROUND_LEVEL-1) * TILE_SIZE
+      }
+    ];
+
+    addPipe(82);   // warp naar secret room
+    addPipe(160);  // warp terug
+
+    // vlak na eerste warp-pipe nog wat pits & platforms
+    carveHole(90,3);
+    addPlatform(88, GROUND_LEVEL-3, 2);
+    addPlatform(94, GROUND_LEVEL-2, 3);
+
+    // eindstuk richting goal
+    carveHole(105,4);
+    addPlatform(103, GROUND_LEVEL-3, 2);
+    addPlatform(110, GROUND_LEVEL-4, 3);
+
+    // geheime kamer – hoger gelegen “grot” met idol
+    // vloer in secret-zone
+    addGroundStrip(138, 168);
+    // maak het hoger door één laag weg te halen zodat de kamer op hoogte ligt
+    for(let x=138;x<=168;x++){
+      world[GROUND_LEVEL+1][x] = TILE_GROUND; // bodem
+      if(x % 2 === 0){
+        world[GROUND_LEVEL][x] = TILE_EMPTY; // iets ruiger effect
+      }
+    }
+
+    // platforms in geheime kamer
+    addPlatform(142, GROUND_LEVEL-3, 3);
+    addPlatform(148, GROUND_LEVEL-4, 3);
+    addPlatform(154, GROUND_LEVEL-5, 3); // hier staat de idol
+    addPlatform(162, GROUND_LEVEL-3, 3);
 
     // ===== Aapje / speler =====
     const player = {
@@ -130,10 +274,19 @@
     const MOVE_SPEED   = 140;
     const JUMP_VELOCITY= -280;
     const MAX_FALL     = 600;
-    const FRICTION     = 0.80;
 
     // camera
     let cameraX = 0;
+
+    // geheim idol (CBS-achtige totem)
+    const secretStatue = {
+      x: 155 * TILE_SIZE + 4,
+      y: (GROUND_LEVEL-5) * TILE_SIZE + 2,
+      w: 8,
+      h: 10,
+      found: false
+    };
+    let secretMessageTimer = 0; // seconden melding op scherm
 
     // input
     const keys = {};
@@ -147,7 +300,12 @@
     function isSolidTile(tx,ty){
       if(tx<0 || ty<0 || tx>=WORLD_WIDTH || ty>=WORLD_HEIGHT) return false;
       const t = world[ty][tx];
-      return t === TILE_GROUND || t === TILE_GRASS;
+      return (
+        t === TILE_GROUND ||
+        t === TILE_GRASS  ||
+        t === TILE_PIPE   ||
+        t === TILE_BLOCK
+      );
     }
 
     // AABB collision met tiles
@@ -216,11 +374,42 @@
 
       // als speler uit beeld valt → respawn
       if(player.y > canvas.height + 200){
-        player.x = 5 * TILE_SIZE;
-        player.y = (GROUND_LEVEL-1)*TILE_SIZE;
-        player.vx = 0;
-        player.vy = 0;
-        cameraX = 0;
+        resetPlayer();
+      }
+    }
+
+    function tryWarpPipe(){
+      const downPressed = keys["arrowdown"] || keys["s"];
+      if(!downPressed || !player.onGround) return;
+
+      const centerX = player.x + player.w/2;
+
+      for(const pipe of warpPipes){
+        const pipeStartPx = pipe.entranceX * TILE_SIZE;
+        const pipeEndPx   = (pipe.entranceX + pipe.entranceWidth) * TILE_SIZE;
+        if(centerX >= pipeStartPx && centerX <= pipeEndPx){
+          player.x = pipe.destX;
+          player.y = pipe.destY;
+          player.vx = 0;
+          player.vy = 0;
+          cameraX = player.x - canvas.width/2;
+          if(cameraX < 0) cameraX = 0;
+          const maxCam = WORLD_WIDTH*TILE_SIZE - canvas.width;
+          if(cameraX > maxCam) cameraX = maxCam;
+          break;
+        }
+      }
+    }
+
+    function checkSecret(){
+      if(secretStatue.found) return;
+      const px = player.x, py = player.y, pw = player.w, ph = player.h;
+      const sx = secretStatue.x, sy = secretStatue.y, sw = secretStatue.w, sh = secretStatue.h;
+
+      if(px < sx+sw && px+pw > sx && py < sy+sh && py+ph > sy){
+        secretStatue.found = true;
+        secretMessageTimer = 4; // seconden tonen
+        secretStatusEl.innerHTML = 'Geheim: <b>gevonden!</b>';
       }
     }
 
@@ -239,12 +428,24 @@
 
       moveAndCollide(dt);
 
+      // warp-pipes checken
+      tryWarpPipe();
+
+      // secret checken
+      checkSecret();
+
       // camera volgt speler
       const targetCam = player.x - canvas.width/2 + player.w/2;
       cameraX += (targetCam - cameraX) * 0.15;
       if(cameraX < 0) cameraX = 0;
       const maxCam = WORLD_WIDTH*TILE_SIZE - canvas.width;
       if(cameraX > maxCam) cameraX = maxCam;
+
+      // secret message timer aftellen
+      if(secretMessageTimer > 0){
+        secretMessageTimer -= dt;
+        if(secretMessageTimer < 0) secretMessageTimer = 0;
+      }
     }
 
     // ===== TEKENEN =====
@@ -295,6 +496,21 @@
             ctx.fillRect(screenX, screenY, TILE_SIZE, 6);
             ctx.fillStyle = "#62d34a";
             ctx.fillRect(screenX, screenY, TILE_SIZE, 2);
+          }else if(t === TILE_PIPE){
+            // simpele groene pipe
+            ctx.fillStyle = "#0b5f3a";
+            ctx.fillRect(screenX, screenY+4, TILE_SIZE, TILE_SIZE-4);
+            ctx.fillStyle = "#0f8b52";
+            ctx.fillRect(screenX, screenY, TILE_SIZE, 6);
+            ctx.fillStyle = "#14b566";
+            ctx.fillRect(screenX+2, screenY+1, TILE_SIZE-6, 2);
+          }else if(t === TILE_BLOCK){
+            ctx.fillStyle = "#7b4a1e";
+            ctx.fillRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
+            ctx.fillStyle = "#523017";
+            ctx.fillRect(screenX+2, screenY+2, TILE_SIZE-4, TILE_SIZE-4);
+            ctx.fillStyle = "#9a5d26";
+            ctx.fillRect(screenX, screenY, TILE_SIZE, 2);
           }
         }
       }
@@ -304,9 +520,10 @@
       const sx = Math.floor(player.x - cameraX);
       const sy = Math.floor(player.y);
 
-      // monky body
       ctx.save();
       ctx.imageSmoothingEnabled = false;
+
+      // monkey body
       ctx.fillStyle = "#c46b32";
       ctx.fillRect(sx, sy+3, 12, 11);    // lijf
       ctx.fillRect(sx+2, sy, 8, 7);      // hoofd
@@ -325,7 +542,7 @@
       ctx.fillRect(sx+4, sy+3, 1,1);
       ctx.fillRect(sx+7, sy+3, 1,1);
 
-      // benen (klein)
+      // benen
       ctx.fillStyle = "#8a451f";
       ctx.fillRect(sx+3, sy+14, 2,2);
       ctx.fillRect(sx+7, sy+14, 2,2);
@@ -333,10 +550,53 @@
       ctx.restore();
     }
 
-    function draw(dt){
+    function drawSecretStatue(){
+      const sx = Math.floor(secretStatue.x - cameraX);
+      const sy = Math.floor(secretStatue.y);
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+
+      // sokkel
+      ctx.fillStyle = "#3a2c16";
+      ctx.fillRect(sx-2, sy+8, secretStatue.w+4, 4);
+
+      // gouden idol (CBS-achtige totem/coin)
+      ctx.fillStyle = "#ffd86b";
+      ctx.fillRect(sx, sy, secretStatue.w, secretStatue.h);
+      ctx.fillStyle = "#ffefb0";
+      ctx.fillRect(sx+1, sy+1, secretStatue.w-2, secretStatue.h-4);
+
+      // "brekende ketting" achtig detail
+      ctx.fillStyle = "#c28a32";
+      ctx.fillRect(sx+2, sy+4, secretStatue.w-4, 2);
+      ctx.fillRect(sx+1, sy+6, 2,1);
+      ctx.fillRect(sx+secretStatue.w-3, sy+6, 2,1);
+
+      ctx.restore();
+    }
+
+    function drawOverlay(){
+      if(secretMessageTimer > 0){
+        ctx.save();
+        ctx.globalAlpha = Math.min(1, secretMessageTimer / 2);
+        ctx.fillStyle = "rgba(0,0,0,0.6)";
+        ctx.fillRect(20, 20, canvas.width-40, 40);
+        ctx.fillStyle = "#ffd86b";
+        ctx.font = "10px system-ui";
+        ctx.textAlign = "center";
+        ctx.fillText("Geheim gevonden! Later koppelen we dit aan de CBS earn.", canvas.width/2, 45);
+        ctx.restore();
+      }
+    }
+
+    function draw(){
       drawBackground();
       drawTiles();
       drawMonkey();
+      if(!secretStatue.found){
+        drawSecretStatue();
+      }
+      drawOverlay();
     }
 
     // ===== LOOP =====
@@ -347,20 +607,27 @@
       lastTime = ts;
 
       update(dt);
-      draw(dt);
+      draw();
       requestAnimationFrame(loop);
     }
 
-    // start gelijk loop, maar speler staat stil tot je beweegt
-    requestAnimationFrame(loop);
-
-    // start-knop reset speler & camera
-    startBtn.addEventListener("click", ()=>{
+    function resetPlayer(){
       player.x = 5*TILE_SIZE;
       player.y = (GROUND_LEVEL-1)*TILE_SIZE;
       player.vx = 0;
       player.vy = 0;
       cameraX = 0;
+      secretStatue.found = false;
+      secretMessageTimer = 0;
+      secretStatusEl.innerHTML = 'Geheim: <b>nog niet gevonden</b>';
+    }
+
+    // start loop
+    requestAnimationFrame(loop);
+
+    // reset-knop
+    startBtn.addEventListener("click", ()=>{
+      resetPlayer();
     });
   </script>
 </body>
