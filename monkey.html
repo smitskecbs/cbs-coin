@@ -262,7 +262,7 @@
       h: 40,
       reached: false
     };
-    let winMessageTimer = 0;
+    let winMessageTimer = 0;   // <-- alleen HIER gedeclareerd
 
     // ===== Speler =====
     const player = {
@@ -283,7 +283,6 @@
 
     let onVine = false;
 
-    // run-anim
     const anim = { runPhase: 0 };
 
     // camera
@@ -342,15 +341,15 @@
       { x: 34*TILE_SIZE, y: (GROUND_LEVEL-4)*TILE_SIZE, w:10, h:8, collected:false },
       { x: 59*TILE_SIZE, y: (GROUND_LEVEL-5)*TILE_SIZE, w:10, h:8, collected:false },
       { x: 93*TILE_SIZE, y: (GROUND_LEVEL-2)*TILE_SIZE, w:10, h:8, collected:false },
-      { x: 149*TILE_SIZE, y:(GROUND_LEVEL-4)*TILE_SIZE, w:10, h:8, collected:false }, // in secret room
+      { x: 149*TILE_SIZE, y:(GROUND_LEVEL-4)*TILE_SIZE, w:10, h:8, collected:false },
     ];
 
     const cbsCoins = [
       { x: 24*TILE_SIZE, y:(GROUND_LEVEL-3)*TILE_SIZE, r:5, collected:false },
       { x: 47*TILE_SIZE, y:(GROUND_LEVEL-4)*TILE_SIZE, r:5, collected:false },
       { x: 75*TILE_SIZE, y:(GROUND_LEVEL-4)*TILE_SIZE, r:5, collected:false },
-      { x: 145*TILE_SIZE, y:(GROUND_LEVEL-3)*TILE_SIZE, r:5, collected:false }, // secret room
-      { x: 176*TILE_SIZE, y:(GROUND_LEVEL-4)*TILE_SIZE, r:5, collected:false }, // vlak voor goal
+      { x: 145*TILE_SIZE, y:(GROUND_LEVEL-3)*TILE_SIZE, r:5, collected:false },
+      { x: 176*TILE_SIZE, y:(GROUND_LEVEL-4)*TILE_SIZE, r:5, collected:false },
     ];
 
     function updateCollectHUD(){
@@ -705,8 +704,7 @@
 
       const bob = onVine ? 0 : (Math.abs(player.vx) > 5 && player.onGround ? (Math.sin(anim.runPhase)*1)|0 : 0);
 
-      // nieuwe stijl: groter hoofd, kleinere body (schattiger)
-      // benen (onder)
+      // benen
       ctx.fillStyle = "#8a451f";
       const legOffset = (Math.sin(anim.runPhase)*2)|0;
       ctx.fillRect(sx+3, sy+14+bob+legOffset, 2,2);
@@ -812,7 +810,6 @@
         ctx.save();
         ctx.imageSmoothingEnabled = false;
 
-        // simpele banaan-vorm
         ctx.fillStyle = "#ffeb7a";
         ctx.fillRect(sx+2, sy+1, 6, 4);
         ctx.fillRect(sx+3, sy,   4, 2);
@@ -900,7 +897,6 @@
 
     // ===== LOOP =====
     let lastTime = 0;
-    let winMessageTimer = 0;
 
     function loop(ts){
       if(!lastTime) lastTime = ts;
@@ -941,4 +937,3 @@
   </script>
 </body>
 </html>
-
