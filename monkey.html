@@ -92,9 +92,9 @@
     <div class="hud">
       <div class="hud-controls">
         Controls: <b>← →</b> / <b>A D</b> lopen – <b>↑</b> of <b>SPACE</b> springen –
-        <b>↓</b>/<b>S</b> om in een pipe te gaan – <b>↑/↓</b> op lianen klimmen
+        <b>↓</b>/<b>S</b> pipe – <b>↑/↓</b> op lianen klimmen
       </div>
-      <div>Doel: bereik het einde van het level, ontwijk vijanden & vind de geheime CBS-idol 🐒🌴</div>
+      <div>Doel: bereik het einde, ontwijk slangen & vind de geheime CBS-idol 🐒🌴</div>
       <div class="hud-row">
         <button id="startBtn">Reset level</button>
         <div id="secretStatus">Geheim: <b>nog niet gevonden</b></div>
@@ -109,19 +109,17 @@
     const secretStatusEl = document.getElementById("secretStatus");
 
     // ===== Wereld instellingen =====
-    const TILE_SIZE = 16;         // 16x16 pixel tiles
-    const WORLD_WIDTH  = 200;     // aantal tiles breed
-    const WORLD_HEIGHT = 12;      // aantal tiles hoog
+    const TILE_SIZE = 16;
+    const WORLD_WIDTH  = 200;
+    const WORLD_HEIGHT = 12;
 
-    // Tegel types
     const TILE_EMPTY    = 0;
     const TILE_GROUND   = 1;
     const TILE_GRASS    = 2;
     const TILE_PIPE     = 3;
     const TILE_BLOCK    = 4;
-    const TILE_VINE     = 5;  // lianen
+    const TILE_VINE     = 5;
 
-    // Tilemap gevuld met lucht
     const world = [];
     for(let y=0;y<WORLD_HEIGHT;y++){
       world[y] = [];
@@ -132,7 +130,6 @@
 
     const GROUND_LEVEL = WORLD_HEIGHT - 2;
 
-    // Helpers om level te bouwen
     function addGroundStrip(xStart, xEnd){
       for(let x=xStart;x<=xEnd;x++){
         if(x<0 || x>=WORLD_WIDTH) continue;
@@ -166,7 +163,6 @@
     }
 
     function addPipe(x){
-      // simpele 2-wide pipe op de grond
       if(x<0 || x+1>=WORLD_WIDTH) return;
       for(let y=GROUND_LEVEL-1; y<=GROUND_LEVEL+1; y++){
         if(y<0 || y>=WORLD_HEIGHT) continue;
@@ -183,28 +179,22 @@
     }
 
     // ===== Level ontwerp =====
-    // basisvloer bijna overal
     addGroundStrip(0, WORLD_WIDTH-1);
 
-    // startgebied: blokjes
     addBlockRow(6, GROUND_LEVEL-3, 3);
     addBlockRow(10, GROUND_LEVEL-4, 4);
 
-    // eerste pit + platforms
     carveHole(18,3);
     addPlatform(16, GROUND_LEVEL-3, 2);
     addPlatform(21, GROUND_LEVEL-2, 2);
 
-    // tweede pit
     carveHole(32,4);
     addPlatform(29, GROUND_LEVEL-3, 3);
     addPlatform(37, GROUND_LEVEL-4, 3);
 
-    // blokjes trap
     addBlockRow(42, GROUND_LEVEL-3, 3);
     addBlockRow(45, GROUND_LEVEL-4, 2);
 
-    // derde pit
     carveHole(52,5);
     addPlatform(50, GROUND_LEVEL-4, 3);
     addPlatform(57, GROUND_LEVEL-3, 3);
@@ -213,16 +203,13 @@
     addVine(54, GROUND_LEVEL-6, GROUND_LEVEL-3);
     addVine(56, GROUND_LEVEL-6, GROUND_LEVEL-3);
 
-    // stapel blokken
     addBlockRow(63, GROUND_LEVEL-3, 2);
     addBlockRow(65, GROUND_LEVEL-4, 2);
     addBlockRow(67, GROUND_LEVEL-5, 2);
 
-    // kleine trap naar warp-pipe plateau
     addPlatform(72, GROUND_LEVEL-3, 3);
     addPlatform(76, GROUND_LEVEL-4, 3);
 
-    // warp-pipes (naar geheime kamer en terug)
     const warpPipes = [
       {
         entranceX: 82,
@@ -240,11 +227,10 @@
     addPipe(82);
     addPipe(160);
 
-    // lianen in geheime kamer (om naar idol te klimmen)
+    // lianen in geheime kamer
     addVine(151, GROUND_LEVEL-6, GROUND_LEVEL-2);
     addVine(153, GROUND_LEVEL-6, GROUND_LEVEL-2);
 
-    // na warp richting einde
     carveHole(90,3);
     addPlatform(88, GROUND_LEVEL-3, 2);
     addPlatform(94, GROUND_LEVEL-2, 3);
@@ -253,7 +239,7 @@
     addPlatform(103, GROUND_LEVEL-3, 2);
     addPlatform(110, GROUND_LEVEL-4, 3);
 
-    // geheime kamer vloer
+    // geheime kamer
     addGroundStrip(138, 168);
     for(let x=138;x<=168;x++){
       world[GROUND_LEVEL+1][x] = TILE_GROUND;
@@ -261,14 +247,22 @@
         world[GROUND_LEVEL][x] = TILE_EMPTY;
       }
     }
-
-    // platforms in geheime kamer
     addPlatform(142, GROUND_LEVEL-3, 3);
     addPlatform(148, GROUND_LEVEL-4, 3);
-    addPlatform(154, GROUND_LEVEL-5, 3); // hier idol
+    addPlatform(154, GROUND_LEVEL-5, 3);
     addPlatform(162, GROUND_LEVEL-3, 3);
 
-    // ===== Aapje / speler =====
+    // ===== Goal / einde =====
+    const goal = {
+      x: 178 * TILE_SIZE,
+      y: (GROUND_LEVEL-5) * TILE_SIZE,
+      w: 12,
+      h: 40,
+      reached: false
+    };
+    let winMessageTimer = 0;
+
+    // ===== Speler =====
     const player = {
       x: 5 * TILE_SIZE,
       y: (GROUND_LEVEL-1) * TILE_SIZE,
@@ -287,20 +281,25 @@
 
     let onVine = false;
 
+    // simpele run-animatie
+    const anim = {
+      runPhase: 0
+    };
+
     // camera
     let cameraX = 0;
 
     // geheim idol
     const secretStatue = {
       x: 155 * TILE_SIZE + 4,
-      y: (GROUND_LEVEL-5) * TILE_SIZE - 4, // hoger gezet
+      y: (GROUND_LEVEL-5) * TILE_SIZE - 4,
       w: 8,
       h: 10,
       found: false
     };
-    let secretMessageTimer = 0; // seconden
+    let secretMessageTimer = 0;
 
-    // Vijanden: slangen die heen en weer lopen
+    // vijanden: slangen
     const enemies = [
       {
         type: "snake",
@@ -310,7 +309,8 @@
         h: 8,
         vx: 40,
         leftBound: 28 * TILE_SIZE,
-        rightBound: 36 * TILE_SIZE
+        rightBound: 36 * TILE_SIZE,
+        alive: true
       },
       {
         type: "snake",
@@ -320,7 +320,8 @@
         h: 8,
         vx: 45,
         leftBound: 58 * TILE_SIZE,
-        rightBound: 66 * TILE_SIZE
+        rightBound: 66 * TILE_SIZE,
+        alive: true
       },
       {
         type: "snake",
@@ -330,11 +331,14 @@
         h: 8,
         vx: 50,
         leftBound: 98 * TILE_SIZE,
-        rightBound: 106 * TILE_SIZE
+        rightBound: 106 * TILE_SIZE,
+        alive: true
       }
     ];
 
-    // input
+    // feedback bij dood
+    let deathFlashTimer = 0;
+
     const keys = {};
     window.addEventListener("keydown", e=>{
       keys[e.key.toLowerCase()] = true;
@@ -351,7 +355,7 @@
         t === TILE_GRASS  ||
         t === TILE_PIPE   ||
         t === TILE_BLOCK
-      ); // lianen NIET solid
+      );
     }
 
     function tileAtWorld(x, y){
@@ -361,9 +365,12 @@
       return world[ty][tx];
     }
 
-    // AABB collision met tiles
+    function killPlayer(){
+      resetPlayer();
+      deathFlashTimer = 0.4;
+    }
+
     function moveAndCollide(dt){
-      // horizontaal
       player.x += player.vx * dt;
 
       const left   = Math.floor(player.x / TILE_SIZE);
@@ -389,7 +396,6 @@
         }
       }
 
-      // verticale beweging
       if(!onVine){
         player.vy += GRAVITY * dt;
         if(player.vy > MAX_FALL) player.vy = MAX_FALL;
@@ -423,9 +429,8 @@
         }
       }
 
-      // vallen uit de wereld
       if(player.y > canvas.height + 200){
-        resetPlayer();
+        killPlayer();
       }
     }
 
@@ -456,7 +461,6 @@
       if(secretStatue.found) return;
 
       const px = player.x, py = player.y, pw = player.w, ph = player.h;
-      // iets grotere hitbox rondom idol
       const sx = secretStatue.x - 4, sy = secretStatue.y - 4,
             sw = secretStatue.w + 8, sh = secretStatue.h + 8;
 
@@ -467,8 +471,19 @@
       }
     }
 
+    function checkGoal(){
+      if(goal.reached) return;
+      const px = player.x, py = player.y, pw = player.w, ph = player.h;
+      const gx = goal.x, gy = goal.y, gw = goal.w, gh = goal.h;
+      if(px < gx+gw && px+pw > gx && py < gy+gh && py+ph > gy){
+        goal.reached = true;
+        winMessageTimer = 5;
+      }
+    }
+
     function updateEnemies(dt){
       for(const e of enemies){
+        if(!e.alive) continue;
         e.x += e.vx * dt;
         if(e.x < e.leftBound){
           e.x = e.leftBound;
@@ -478,12 +493,21 @@
           e.vx *= -1;
         }
 
-        // collision met speler
         const px = player.x, py = player.y, pw = player.w, ph = player.h;
         const ex = e.x, ey = e.y, ew = e.w, eh = e.h;
+
         if(px < ex+ew && px+pw > ex && py < ey+eh && py+ph > ey){
-          resetPlayer();
-          break;
+          // check of we van boven komen (stomp)
+          const playerFeet = py + ph;
+          const enemyTop   = ey;
+          if(player.vy > 50 && playerFeet <= enemyTop + 4){
+            // stomp
+            e.alive = false;
+            player.vy = JUMP_VELOCITY * 0.6;
+          }else{
+            killPlayer();
+            break;
+          }
         }
       }
     }
@@ -493,7 +517,13 @@
       if(keys["arrowleft"] || keys["a"]) move -= 1;
       if(keys["arrowright"]|| keys["d"]) move += 1;
 
-      // check of we bij een liaan staan
+      // run anim
+      if(Math.abs(move) > 0.1 && player.onGround && !onVine){
+        anim.runPhase += dt * 12;
+      }else{
+        anim.runPhase *= 0.9;
+      }
+
       const centerX = player.x + player.w/2;
       const centerY = player.y + player.h/2;
       const tileUnder = tileAtWorld(centerX, centerY);
@@ -503,7 +533,6 @@
         onVine = true;
       }
 
-      // loslaten van liaan
       if(onVine){
         if(move !== 0 || keys[" "]){
           onVine = false;
@@ -518,7 +547,6 @@
         player.vy = climb * CLIMB_SPEED;
       }else{
         player.vx = move * MOVE_SPEED;
-        // jump
         if((keys["arrowup"] || keys[" "]) && player.onGround){
           player.vy = JUMP_VELOCITY;
           player.onGround = false;
@@ -528,9 +556,9 @@
       moveAndCollide(dt);
       tryWarpPipe();
       checkSecret();
+      checkGoal();
       updateEnemies(dt);
 
-      // camera
       const targetCam = player.x - canvas.width/2 + player.w/2;
       cameraX += (targetCam - cameraX) * 0.15;
       if(cameraX < 0) cameraX = 0;
@@ -540,6 +568,14 @@
       if(secretMessageTimer > 0){
         secretMessageTimer -= dt;
         if(secretMessageTimer < 0) secretMessageTimer = 0;
+      }
+      if(deathFlashTimer > 0){
+        deathFlashTimer -= dt;
+        if(deathFlashTimer < 0) deathFlashTimer = 0;
+      }
+      if(winMessageTimer > 0){
+        winMessageTimer -= dt;
+        if(winMessageTimer < 0) winMessageTimer = 0;
       }
     }
 
@@ -604,7 +640,6 @@
             ctx.fillStyle = "#9a5d26";
             ctx.fillRect(screenX, screenY, TILE_SIZE, 2);
           }else if(t === TILE_VINE){
-            // liaan
             ctx.fillStyle = "#0b612f";
             ctx.fillRect(screenX + TILE_SIZE/2 - 1, screenY, 2, TILE_SIZE);
             ctx.fillStyle = "#1dd46a";
@@ -621,28 +656,28 @@
       ctx.save();
       ctx.imageSmoothingEnabled = false;
 
+      const bob = onVine ? 0 : (Math.abs(player.vx) > 5 && player.onGround ? (Math.sin(anim.runPhase)*1)|0 : 0);
+
       ctx.fillStyle = "#c46b32";
-      ctx.fillRect(sx, sy+3, 12, 11);    // lijf
-      ctx.fillRect(sx+2, sy, 8, 7);      // hoofd
+      ctx.fillRect(sx, sy+3+bob, 12, 11);
+      ctx.fillRect(sx+2, sy+bob, 8, 7);
       ctx.fillStyle = "#f1c58a";
-      ctx.fillRect(sx+3, sy+2, 5, 4);    // gezicht
+      ctx.fillRect(sx+3, sy+2+bob, 5, 4);
       ctx.fillStyle = "#5b3416";
-      ctx.fillRect(sx+1, sy+4, 1, 3);    // oor links
-      ctx.fillRect(sx+10,sy+4, 1, 3);    // oor rechts
+      ctx.fillRect(sx+1, sy+4+bob, 1, 3);
+      ctx.fillRect(sx+10,sy+4+bob, 1, 3);
 
-      // staart
-      ctx.fillRect(sx-2, sy+6, 2, 2);
-      ctx.fillRect(sx-2, sy+4, 2, 2);
+      ctx.fillRect(sx-2, sy+6+bob, 2, 2);
+      ctx.fillRect(sx-2, sy+4+bob, 2, 2);
 
-      // oogjes
       ctx.fillStyle = "#000";
-      ctx.fillRect(sx+4, sy+3, 1,1);
-      ctx.fillRect(sx+7, sy+3, 1,1);
+      ctx.fillRect(sx+4, sy+3+bob, 1,1);
+      ctx.fillRect(sx+7, sy+3+bob, 1,1);
 
-      // benen
       ctx.fillStyle = "#8a451f";
-      ctx.fillRect(sx+3, sy+14, 2,2);
-      ctx.fillRect(sx+7, sy+14, 2,2);
+      const legOffset = (Math.sin(anim.runPhase)*2)|0;
+      ctx.fillRect(sx+3, sy+14+bob+legOffset, 2,2);
+      ctx.fillRect(sx+7, sy+14+bob-legOffset, 2,2);
 
       ctx.restore();
     }
@@ -654,17 +689,14 @@
       ctx.save();
       ctx.imageSmoothingEnabled = false;
 
-      // sokkel
       ctx.fillStyle = "#3a2c16";
       ctx.fillRect(sx-2, sy+8, secretStatue.w+4, 4);
 
-      // golden idol
       ctx.fillStyle = "#ffd86b";
       ctx.fillRect(sx, sy, secretStatue.w, secretStatue.h);
       ctx.fillStyle = "#ffefb0";
       ctx.fillRect(sx+1, sy+1, secretStatue.w-2, secretStatue.h-4);
 
-      // brekende ketting detail
       ctx.fillStyle = "#c28a32";
       ctx.fillRect(sx+2, sy+4, secretStatue.w-4, 2);
       ctx.fillRect(sx+1, sy+6, 2,1);
@@ -675,6 +707,7 @@
 
     function drawEnemies(){
       for(const e of enemies){
+        if(!e.alive) continue;
         const sx = Math.floor(e.x - cameraX);
         const sy = Math.floor(e.y);
         ctx.save();
@@ -682,16 +715,35 @@
 
         if(e.type === "snake"){
           ctx.fillStyle = "#1a7b3a";
-          ctx.fillRect(sx, sy, e.w, e.h);        // lijf
+          ctx.fillRect(sx, sy, e.w, e.h);
           ctx.fillStyle = "#14552a";
-          ctx.fillRect(sx, sy+e.h-3, e.w, 3);    // onderkant
-          ctx.fillStyle = "#f7f2d0";             // ogen
+          ctx.fillRect(sx, sy+e.h-3, e.w, 3);
+          ctx.fillStyle = "#f7f2d0";
           ctx.fillRect(sx+2, sy+1, 2,2);
           ctx.fillRect(sx+e.w-4, sy+1, 2,2);
         }
 
         ctx.restore();
       }
+    }
+
+    function drawGoal(){
+      const sx = Math.floor(goal.x - cameraX);
+      const sy = Math.floor(goal.y);
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+
+      // paal
+      ctx.fillStyle = "#deb887";
+      ctx.fillRect(sx+4, sy, 4, goal.h);
+
+      // vlag
+      ctx.fillStyle = goal.reached ? "#ffd86b" : "#ffefb0";
+      ctx.fillRect(sx+8, sy+2, 10, 6);
+      ctx.fillStyle = "#c46b32";
+      ctx.fillRect(sx+9, sy+3, 3, 4);
+
+      ctx.restore();
     }
 
     function drawOverlay(){
@@ -706,6 +758,26 @@
         ctx.fillText("Geheim gevonden! Later koppelen we dit aan de CBS earn.", canvas.width/2, 45);
         ctx.restore();
       }
+
+      if(winMessageTimer > 0){
+        ctx.save();
+        ctx.globalAlpha = 0.75;
+        ctx.fillStyle = "rgba(0,0,0,0.8)";
+        ctx.fillRect(20, 70, canvas.width-40, 50);
+        ctx.fillStyle = "#9dff7a";
+        ctx.font = "12px system-ui";
+        ctx.textAlign = "center";
+        ctx.fillText("Level gehaald! Deze finish + geheim gaan we later gebruiken voor de earn.", canvas.width/2, 100);
+        ctx.restore();
+      }
+
+      if(deathFlashTimer > 0){
+        ctx.save();
+        ctx.globalAlpha = deathFlashTimer * 1.5;
+        ctx.fillStyle = "rgba(255,0,0,0.6)";
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.restore();
+      }
     }
 
     function draw(){
@@ -714,6 +786,7 @@
       drawMonkey();
       drawSecretStatue();
       drawEnemies();
+      drawGoal();
       drawOverlay();
     }
 
@@ -738,13 +811,25 @@
       onVine = false;
       secretStatue.found = false;
       secretMessageTimer = 0;
+      deathFlashTimer = 0;
+      goal.reached = false;
+      winMessageTimer = 0;
       secretStatusEl.innerHTML = 'Geheim: <b>nog niet gevonden</b>';
+      // vijanden resetten
+      enemies.forEach((e,i)=>{
+        e.alive = true;
+        if(i===0){
+          e.x = 30 * TILE_SIZE;
+        }else if(i===1){
+          e.x = 60 * TILE_SIZE;
+        }else if(i===2){
+          e.x = 100 * TILE_SIZE;
+        }
+      });
     }
 
     requestAnimationFrame(loop);
-
     startBtn.addEventListener("click", resetPlayer);
   </script>
 </body>
 </html>
-
