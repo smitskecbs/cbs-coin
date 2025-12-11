@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>CBS Jungle Monkey</title>
+  <title>CBS Jungle Monkey – Puzzle Run</title>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
 
   <style>
@@ -84,6 +84,9 @@
     #secretStatus b{
       color:#ffd86b;
     }
+    #keyStatus b{
+      color:#ffd86b;
+    }
   </style>
 </head>
 <body>
@@ -94,10 +97,14 @@
         Controls: <b>← →</b> / <b>A D</b> lopen – <b>↑</b> of <b>SPACE</b> springen –
         <b>↓</b>/<b>S</b> pipe – <b>↑/↓</b> op lianen klimmen
       </div>
-      <div>Doel: bereik het einde, verzamel bananen & CBS-coins, ontwijk slangen & vind de geheime CBS-idol 🐒🌴</div>
+      <div>
+        Puzzeltocht: vind de <b>sleutel</b>, open de <b>poort</b>, ontwijk slangen,
+        verzamel bananen & CBS-coins en vind de geheime CBS-idol 🐒🌴
+      </div>
       <div class="hud-row">
         <button id="startBtn">Reset level</button>
         <div id="secretStatus">Geheim: <b>nog niet gevonden</b></div>
+        <div id="keyStatus">Sleutel: <b>nog niet gevonden</b></div>
       </div>
       <div id="collectStatus">Bananen: 0/0 – CBS-coins: 0/0</div>
     </div>
@@ -108,15 +115,15 @@
     const ctx    = canvas.getContext("2d");
     const startBtn = document.getElementById("startBtn");
     const secretStatusEl = document.getElementById("secretStatus");
+    const keyStatusEl = document.getElementById("keyStatus");
     const collectStatusEl = document.getElementById("collectStatus");
 
     // ===== Wereld instellingen =====
     const TILE_SIZE = 16;
-    const WORLD_WIDTH  = 200;
+    const WORLD_WIDTH  = 210;   // iets langer voor puzzeltocht
     const WORLD_HEIGHT = 12;
 
-    // Vuurvliegjes
-    const FIREFLY_COUNT = 30;
+    const FIREFLY_COUNT = 32;
     const fireflies = [];
     let fireflyTime = 0;
 
@@ -126,6 +133,7 @@
     const TILE_PIPE     = 3;
     const TILE_BLOCK    = 4;
     const TILE_VINE     = 5;
+    const TILE_GATE     = 6;   // poort aan het eind
 
     const world = [];
     for(let y=0;y<WORLD_HEIGHT;y++){
@@ -185,59 +193,75 @@
       }
     }
 
-    // ===== Level ontwerp =====
+    function addGate(x){
+      if(x<0 || x+1>=WORLD_WIDTH) return;
+      for(let y=GROUND_LEVEL-5; y<=GROUND_LEVEL-1; y++){
+        if(y<0 || y>=WORLD_HEIGHT) continue;
+        world[y][x]   = TILE_GATE;
+        world[y][x+1] = TILE_GATE;
+      }
+    }
+
+    // ===== Level ontwerp – 1 puzzeltocht =====
     addGroundStrip(0, WORLD_WIDTH-1);
 
+    // Startgebied
     addBlockRow(6, GROUND_LEVEL-3, 3);
     addBlockRow(10, GROUND_LEVEL-4, 4);
 
+    // eerste kloof
     carveHole(18,3);
     addPlatform(16, GROUND_LEVEL-3, 2);
     addPlatform(21, GROUND_LEVEL-2, 2);
 
+    // tweede kloof met hoger pad
     carveHole(32,4);
     addPlatform(29, GROUND_LEVEL-3, 3);
     addPlatform(37, GROUND_LEVEL-4, 3);
 
+    // slangengebied
     addBlockRow(42, GROUND_LEVEL-3, 3);
     addBlockRow(45, GROUND_LEVEL-4, 2);
 
+    // derde kloof + lianen puzzel
     carveHole(52,5);
     addPlatform(50, GROUND_LEVEL-4, 3);
     addPlatform(57, GROUND_LEVEL-3, 3);
-
-    // lianen boven derde pit
-    addVine(54, GROUND_LEVEL-6, GROUND_LEVEL-3);
-    addVine(56, GROUND_LEVEL-6, GROUND_LEVEL-3);
+    addVine(54, GROUND_LEVEL-7, GROUND_LEVEL-3);
+    addVine(56, GROUND_LEVEL-7, GROUND_LEVEL-3);
 
     addBlockRow(63, GROUND_LEVEL-3, 2);
     addBlockRow(65, GROUND_LEVEL-4, 2);
     addBlockRow(67, GROUND_LEVEL-5, 2);
 
+    // hoog pad naar warp pipe
     addPlatform(72, GROUND_LEVEL-3, 3);
     addPlatform(76, GROUND_LEVEL-4, 3);
+    addPlatform(80, GROUND_LEVEL-5, 3);
 
+    // warp pipes – puzzel: eentje naar geheime sleutelkamer, eentje terug
     const warpPipes = [
       {
         entranceX: 82,
         entranceWidth: 2,
-        destX: 140 * TILE_SIZE + 4,
+        destX: 145 * TILE_SIZE,
         destY: (GROUND_LEVEL-5) * TILE_SIZE
       },
       {
-        entranceX: 160,
+        entranceX: 162,
         entranceWidth: 2,
-        destX: 110 * TILE_SIZE,
+        destX: 108 * TILE_SIZE,
         destY: (GROUND_LEVEL-1) * TILE_SIZE
       }
     ];
-    addPipe(82);
-    addPipe(160);
+    addPipe(82);   // naar geheime sleutelkamer
+    addPipe(162);  // terug naar hoofdpad
 
-    // lianen in geheime kamer
-    addVine(151, GROUND_LEVEL-6, GROUND_LEVEL-2);
-    addVine(153, GROUND_LEVEL-6, GROUND_LEVEL-2);
+    // lianen in geheime kamer (platform puzzel)
+    addVine(151, GROUND_LEVEL-7, GROUND_LEVEL-2);
+    addVine(153, GROUND_LEVEL-7, GROUND_LEVEL-2);
 
+    // extra kloven verderop
     carveHole(90,3);
     addPlatform(88, GROUND_LEVEL-3, 2);
     addPlatform(94, GROUND_LEVEL-2, 3);
@@ -246,12 +270,12 @@
     addPlatform(103, GROUND_LEVEL-3, 2);
     addPlatform(110, GROUND_LEVEL-4, 3);
 
-    // geheime kamer
+    // geheime kamer / sleutel-zone
     addGroundStrip(138, 168);
     for(let x=138;x<=168;x++){
       world[GROUND_LEVEL+1][x] = TILE_GROUND;
       if(x % 2 === 0){
-        world[GROUND_LEVEL][x] = TILE_EMPTY;
+        world[GROUND_LEVEL][x] = TILE_EMPTY; // gaten in vloer voor spanning
       }
     }
     addPlatform(142, GROUND_LEVEL-3, 3);
@@ -259,27 +283,19 @@
     addPlatform(154, GROUND_LEVEL-5, 3);
     addPlatform(162, GROUND_LEVEL-3, 3);
 
-    // ===== Vuurvliegjes in de jungle =====
-    for(let i=0;i<FIREFLY_COUNT;i++){
-      fireflies.push({
-        x: Math.random() * WORLD_WIDTH * TILE_SIZE,
-        y: 10 + Math.random() * 90,
-        baseY: 10 + Math.random() * 90,
-        amp: 6 + Math.random() * 10,
-        speed: 0.4 + Math.random() * 0.8,
-        phase: Math.random() * Math.PI * 2
-      });
-    }
+    // eindgebied: poort + finish vlag
+    addGate(190);
 
-    // ===== Goal / einde =====
     const goal = {
-      x: 178 * TILE_SIZE,
+      x: 198 * TILE_SIZE,
       y: (GROUND_LEVEL-5) * TILE_SIZE,
       w: 12,
       h: 40,
       reached: false
     };
     let winMessageTimer = 0;
+
+    let gateOpen = false;
 
     // ===== Speler =====
     const player = {
@@ -288,8 +304,9 @@
       vx: 0,
       vy: 0,
       w: 12,
-      h: 14,
-      onGround: false
+      h: 16,
+      onGround: false,
+      dir: 1   // 1 = rechts, -1 = links (voor later als je wil flippen)
     };
 
     const GRAVITY      = 800;
@@ -314,6 +331,16 @@
       found: false
     };
     let secretMessageTimer = 0;
+
+    // sleutel voor de poort
+    const key = {
+      x: 146 * TILE_SIZE + 2,
+      y: (GROUND_LEVEL-5) * TILE_SIZE - 2,
+      w: 10,
+      h: 10,
+      collected: false
+    };
+    let keyMessageTimer = 0;
 
     // vijanden: slangen
     const enemies = [
@@ -341,32 +368,34 @@
       },
       {
         type: "snake",
-        x: 100 * TILE_SIZE,
+        x: 104 * TILE_SIZE,
         y: (GROUND_LEVEL) * TILE_SIZE + 4,
         w: 14,
         h: 8,
         vx: 50,
-        leftBound: 98 * TILE_SIZE,
-        rightBound: 106 * TILE_SIZE,
+        leftBound: 102 * TILE_SIZE,
+        rightBound: 110 * TILE_SIZE,
         alive: true
       }
     ];
 
     // collectibles: bananen & CBS-coins
     const bananas = [
-      { x: 15*TILE_SIZE, y: (GROUND_LEVEL-3)*TILE_SIZE, w:10, h:8, collected:false },
-      { x: 34*TILE_SIZE, y: (GROUND_LEVEL-4)*TILE_SIZE, w:10, h:8, collected:false },
-      { x: 59*TILE_SIZE, y: (GROUND_LEVEL-5)*TILE_SIZE, w:10, h:8, collected:false },
-      { x: 93*TILE_SIZE, y: (GROUND_LEVEL-2)*TILE_SIZE, w:10, h:8, collected:false },
+      { x: 15*TILE_SIZE,  y:(GROUND_LEVEL-3)*TILE_SIZE, w:10, h:8, collected:false },
+      { x: 34*TILE_SIZE,  y:(GROUND_LEVEL-4)*TILE_SIZE, w:10, h:8, collected:false },
+      { x: 59*TILE_SIZE,  y:(GROUND_LEVEL-5)*TILE_SIZE, w:10, h:8, collected:false },
+      { x: 93*TILE_SIZE,  y:(GROUND_LEVEL-2)*TILE_SIZE, w:10, h:8, collected:false },
       { x: 149*TILE_SIZE, y:(GROUND_LEVEL-4)*TILE_SIZE, w:10, h:8, collected:false },
+      { x: 187*TILE_SIZE, y:(GROUND_LEVEL-4)*TILE_SIZE, w:10, h:8, collected:false },
     ];
 
     const cbsCoins = [
-      { x: 24*TILE_SIZE, y:(GROUND_LEVEL-3)*TILE_SIZE, r:5, collected:false },
-      { x: 47*TILE_SIZE, y:(GROUND_LEVEL-4)*TILE_SIZE, r:5, collected:false },
-      { x: 75*TILE_SIZE, y:(GROUND_LEVEL-4)*TILE_SIZE, r:5, collected:false },
+      { x: 24*TILE_SIZE,  y:(GROUND_LEVEL-3)*TILE_SIZE, r:5, collected:false },
+      { x: 47*TILE_SIZE,  y:(GROUND_LEVEL-4)*TILE_SIZE, r:5, collected:false },
+      { x: 75*TILE_SIZE,  y:(GROUND_LEVEL-4)*TILE_SIZE, r:5, collected:false },
       { x: 145*TILE_SIZE, y:(GROUND_LEVEL-3)*TILE_SIZE, r:5, collected:false },
       { x: 176*TILE_SIZE, y:(GROUND_LEVEL-4)*TILE_SIZE, r:5, collected:false },
+      { x: 204*TILE_SIZE, y:(GROUND_LEVEL-4)*TILE_SIZE, r:5, collected:false },
     ];
 
     function updateCollectHUD(){
@@ -374,24 +403,29 @@
       const bananasGot   = bananas.filter(b=>b.collected).length;
       const coinsTotal   = cbsCoins.length;
       const coinsGot     = cbsCoins.filter(c=>c.collected).length;
-      collectStatusEl.textContent = `Bananen: ${bananasGot}/${bananasTotal} – CBS-coins: ${coinsGot}/${coinsTotal}`;
+      collectStatusEl.textContent =
+        `Bananen: ${bananasGot}/${bananasTotal} – CBS-coins: ${coinsGot}/${coinsTotal}`;
     }
     updateCollectHUD();
 
     // feedback bij dood
     let deathFlashTimer = 0;
 
-    const keys = {};
+    const keysDown = {};
     window.addEventListener("keydown", e=>{
-      keys[e.key.toLowerCase()] = true;
+      keysDown[e.key.toLowerCase()] = true;
     });
     window.addEventListener("keyup", e=>{
-      keys[e.key.toLowerCase()] = false;
+      keysDown[e.key.toLowerCase()] = false;
     });
 
     function isSolidTile(tx,ty){
       if(tx<0 || ty<0 || tx>=WORLD_WIDTH || ty>=WORLD_HEIGHT) return false;
       const t = world[ty][tx];
+      if(t === TILE_GATE){
+        // poort is alleen solide als hij nog niet open is
+        return !gateOpen;
+      }
       return (
         t === TILE_GROUND ||
         t === TILE_GRASS  ||
@@ -471,13 +505,14 @@
         }
       }
 
+      // in de afgrond gevallen?
       if(player.y > canvas.height + 200){
         killPlayer();
       }
     }
 
     function tryWarpPipe(){
-      const downPressed = keys["arrowdown"] || keys["s"];
+      const downPressed = keysDown["arrowdown"] || keysDown["s"];
       if(!downPressed || !player.onGround) return;
 
       const centerX = player.x + player.w/2;
@@ -514,7 +549,7 @@
     }
 
     function checkGoal(){
-      if(goal.reached) return;
+      if(goal.reached || !gateOpen) return; // finish pas als poort open is
       const px = player.x, py = player.y, pw = player.w, ph = player.h;
       const gx = goal.x, gy = goal.y, gw = goal.w, gh = goal.h;
       if(px < gx+gw && px+pw > gx && py < gy+gh && py+ph > gy){
@@ -555,6 +590,7 @@
     function updateCollectibles(){
       const px = player.x, py = player.y, pw = player.w, ph = player.h;
 
+      // bananen
       for(const b of bananas){
         if(b.collected) continue;
         const bx = b.x, by = b.y, bw = b.w, bh = b.h;
@@ -563,6 +599,7 @@
         }
       }
 
+      // CBS-coins
       for(const c of cbsCoins){
         if(c.collected) continue;
         const cx = c.x, cy = c.y, r = c.r;
@@ -572,13 +609,24 @@
         }
       }
 
+      // sleutel
+      if(!key.collected){
+        const kx = key.x, ky = key.y, kw = key.w, kh = key.h;
+        if(px < kx+kw && px+pw > kx && py < ky+kh && py+ph > ky){
+          key.collected = true;
+          gateOpen = true;
+          keyMessageTimer = 4;
+          keyStatusEl.innerHTML = 'Sleutel: <b>gevonden</b>';
+        }
+      }
+
       updateCollectHUD();
     }
 
     function update(dt){
       let move = 0;
-      if(keys["arrowleft"] || keys["a"]) move -= 1;
-      if(keys["arrowright"]|| keys["d"]) move += 1;
+      if(keysDown["arrowleft"] || keysDown["a"]) move -= 1;
+      if(keysDown["arrowright"]|| keysDown["d"]) move += 1;
 
       if(Math.abs(move) > 0.1 && player.onGround && !onVine){
         anim.runPhase += dt * 12;
@@ -586,17 +634,21 @@
         anim.runPhase *= 0.9;
       }
 
+      if(move > 0) player.dir = 1;
+      else if(move < 0) player.dir = -1;
+
       const centerX = player.x + player.w/2;
       const centerY = player.y + player.h/2;
       const tileUnder = tileAtWorld(centerX, centerY);
-      const wantsClimb = keys["arrowup"] || keys["arrowdown"] || keys["w"] || keys["s"];
+      const wantsClimb = keysDown["arrowup"] || keysDown["arrowdown"] ||
+                         keysDown["w"] || keysDown["s"];
 
       if(tileUnder === TILE_VINE && wantsClimb){
         onVine = true;
       }
 
       if(onVine){
-        if(move !== 0 || keys[" "]){
+        if(move !== 0 || keysDown[" "]){
           onVine = false;
         }
       }
@@ -604,12 +656,12 @@
       if(onVine){
         player.vx = 0;
         let climb = 0;
-        if(keys["arrowup"] || keys["w"]) climb -= 1;
-        if(keys["arrowdown"] || keys["s"]) climb += 1;
+        if(keysDown["arrowup"] || keysDown["w"]) climb -= 1;
+        if(keysDown["arrowdown"] || keysDown["s"]) climb += 1;
         player.vy = climb * CLIMB_SPEED;
       }else{
         player.vx = move * MOVE_SPEED;
-        if((keys["arrowup"] || keys[" "]) && player.onGround){
+        if((keysDown["arrowup"] || keysDown[" "]) && player.onGround){
           player.vy = JUMP_VELOCITY;
           player.onGround = false;
         }
@@ -642,6 +694,10 @@
         secretMessageTimer -= dt;
         if(secretMessageTimer < 0) secretMessageTimer = 0;
       }
+      if(keyMessageTimer > 0){
+        keyMessageTimer -= dt;
+        if(keyMessageTimer < 0) keyMessageTimer = 0;
+      }
       if(deathFlashTimer > 0){
         deathFlashTimer -= dt;
         if(deathFlashTimer < 0) deathFlashTimer = 0;
@@ -654,25 +710,58 @@
 
     // ===== TEKENEN =====
     function drawBackground(){
+      // lucht
       const grad = ctx.createLinearGradient(0,0,0,canvas.height);
-      grad.addColorStop(0,"#062019");
-      grad.addColorStop(0.5,"#04140f");
+      grad.addColorStop(0,"#041a16");
+      grad.addColorStop(0.4,"#04140f");
       grad.addColorStop(1,"#020706");
       ctx.fillStyle = grad;
       ctx.fillRect(0,0,canvas.width,canvas.height);
 
+      // maan
+      ctx.save();
+      ctx.globalAlpha = 0.35;
+      ctx.beginPath();
+      ctx.arc(canvas.width - 60, 40, 18, 0, Math.PI*2);
+      ctx.fillStyle = "#dfffe8";
+      ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.restore();
+
+      // verre heuvels
+      ctx.save();
+      ctx.fillStyle = "rgba(8,40,28,0.35)";
+      for(let i=0;i<4;i++){
+        const baseX = -120 + i*120 - (cameraX*0.08)%120;
+        ctx.beginPath();
+        ctx.moveTo(baseX, 80);
+        ctx.quadraticCurveTo(baseX+60, 40, baseX+120, 80);
+        ctx.lineTo(baseX+120, 130);
+        ctx.lineTo(baseX, 130);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+
+      // silhouet-bomen middenlaag
       for(let i=0;i<3;i++){
-        const yBase = 60 + i*25;
-        ctx.fillStyle = `rgba(10,40,20,${0.35 - i*0.08})`;
+        const yBase = 70 + i*22;
+        ctx.fillStyle = `rgba(5,30,18,${0.35 - i*0.08})`;
         for(let x=-1;x<20;x++){
-          const treeX = x*40 - (cameraX*0.2) % 40 + i*10;
-          const w = 24;
-          const h = 50 + i*15;
+          const treeX = x*42 - (cameraX*0.18) % 42 + i*15;
+          const w = 20;
+          const h = 48 + i*12;
           ctx.fillRect(treeX, yBase, w, h);
+          ctx.beginPath();
+          ctx.moveTo(treeX-6, yBase+10);
+          ctx.lineTo(treeX+w/2, yBase-8);
+          ctx.lineTo(treeX+w+6, yBase+10);
+          ctx.closePath();
+          ctx.fill();
         }
       }
 
-      // vuurvliegjes (lichtpuntjes) met lichte parallax
+      // vuurvliegjes
       for(const f of fireflies){
         const fx = f.x - cameraX * 0.25;
         if(fx < -5 || fx > canvas.width + 5) continue;
@@ -729,6 +818,19 @@
             ctx.fillRect(screenX + TILE_SIZE/2 - 1, screenY, 2, TILE_SIZE);
             ctx.fillStyle = "#1dd46a";
             ctx.fillRect(screenX + TILE_SIZE/2 - 1, screenY+2, 1, TILE_SIZE-4);
+          }else if(t === TILE_GATE){
+            // poort-tegels
+            ctx.fillStyle = "#3b2613";
+            ctx.fillRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
+            ctx.fillStyle = gateOpen ? "#3f7b4a" : "#7c5424";
+            ctx.fillRect(screenX+3, screenY+2, TILE_SIZE-6, TILE_SIZE-4);
+            // slotje
+            if(!gateOpen && y === GROUND_LEVEL-3){
+              ctx.fillStyle = "#ffd86b";
+              ctx.fillRect(screenX+5, screenY+4, 6, 5);
+              ctx.fillStyle = "#c28a32";
+              ctx.fillRect(screenX+6, screenY+6, 4, 1);
+            }
           }
         }
       }
@@ -741,40 +843,56 @@
       ctx.save();
       ctx.imageSmoothingEnabled = false;
 
-      const bob = onVine ? 0 : (Math.abs(player.vx) > 5 && player.onGround ? (Math.sin(anim.runPhase)*1)|0 : 0);
+      const bob = onVine
+        ? 0
+        : (Math.abs(player.vx) > 5 && player.onGround ? (Math.sin(anim.runPhase)*1)|0 : 0);
 
+      // klein offset voor animatie in benen
+      const legOffset = (Math.sin(anim.runPhase)*2)|0;
+
+      // lijf + hoofd (mooier aapje, meer detail)
       // benen
       ctx.fillStyle = "#8a451f";
-      const legOffset = (Math.sin(anim.runPhase)*2)|0;
-      ctx.fillRect(sx+3, sy+14+bob+legOffset, 2,2);
-      ctx.fillRect(sx+7, sy+14+bob-legOffset, 2,2);
+      ctx.fillRect(sx+3, sy+12+bob+legOffset, 3,3);
+      ctx.fillRect(sx+7, sy+12+bob-legOffset, 3,3);
 
       // lijf
       ctx.fillStyle = "#c46b32";
-      ctx.fillRect(sx+2, sy+7+bob, 8, 7);
+      ctx.fillRect(sx+2, sy+7+bob, 10, 6);
+      // buik
+      ctx.fillStyle = "#f1c58a";
+      ctx.fillRect(sx+4, sy+8+bob, 6, 4);
 
       // hoofd
-      ctx.fillRect(sx+1, sy+1+bob, 10, 8);
+      ctx.fillStyle = "#c46b32";
+      ctx.fillRect(sx+1, sy+1+bob, 12, 8);
 
       // gezicht
       ctx.fillStyle = "#f1c58a";
-      ctx.fillRect(sx+3, sy+3+bob, 6, 5);
+      ctx.fillRect(sx+3, sy+3+bob, 8, 5);
 
       // oren
       ctx.fillStyle = "#5b3416";
-      ctx.fillRect(sx,   sy+3+bob, 2,3);
-      ctx.fillRect(sx+9, sy+3+bob, 2,3);
+      ctx.fillRect(sx,    sy+3+bob, 3,3);
+      ctx.fillRect(sx+10, sy+3+bob, 3,3);
 
-      // ogen + neus
+      // ogen + neus + mond
       ctx.fillStyle = "#000";
-      ctx.fillRect(sx+4, sy+4+bob, 1,1);
-      ctx.fillRect(sx+7, sy+4+bob, 1,1);
-      ctx.fillRect(sx+5, sy+6+bob, 1,1);
+      ctx.fillRect(sx+5, sy+4+bob, 1,1);
+      ctx.fillRect(sx+8, sy+4+bob, 1,1);
+      ctx.fillRect(sx+6, sy+6+bob, 1,1);
+      ctx.fillStyle = "#5b3416";
+      ctx.fillRect(sx+5, sy+7+bob, 3,1);
 
-      // staart
+      // armen
       ctx.fillStyle = "#c46b32";
-      ctx.fillRect(sx-1, sy+8+bob, 2,2);
-      ctx.fillRect(sx-2, sy+10+bob, 2,2);
+      ctx.fillRect(sx,   sy+7+bob, 3,4);
+      ctx.fillRect(sx+10,sy+7+bob, 3,4);
+
+      // staart (lichte krul)
+      ctx.fillStyle = "#c46b32";
+      ctx.fillRect(sx-1, sy+7+bob, 2,3);
+      ctx.fillRect(sx-2, sy+9+bob, 2,3);
 
       ctx.restore();
     }
@@ -786,9 +904,19 @@
       ctx.save();
       ctx.imageSmoothingEnabled = false;
 
+      // voetstuk
       ctx.fillStyle = "#3a2c16";
       ctx.fillRect(sx-2, sy+8, secretStatue.w+4, 4);
 
+      // glow
+      ctx.globalAlpha = 0.35;
+      ctx.fillStyle = "#ffd86b";
+      ctx.beginPath();
+      ctx.arc(sx+secretStatue.w/2, sy+secretStatue.h/2, 10, 0, Math.PI*2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      // idol
       ctx.fillStyle = "#ffd86b";
       ctx.fillRect(sx, sy, secretStatue.w, secretStatue.h);
       ctx.fillStyle = "#ffefb0";
@@ -798,6 +926,23 @@
       ctx.fillRect(sx+2, sy+4, secretStatue.w-4, 2);
       ctx.fillRect(sx+1, sy+6, 2,1);
       ctx.fillRect(sx+secretStatue.w-3, sy+6, 2,1);
+
+      ctx.restore();
+    }
+
+    function drawKey(){
+      if(key.collected) return;
+      const sx = Math.floor(key.x - cameraX);
+      const sy = Math.floor(key.y);
+      ctx.save();
+      ctx.imageSmoothingEnabled = false;
+
+      // simpele gouden sleutel
+      ctx.fillStyle = "#ffd86b";
+      ctx.fillRect(sx+2, sy+4, 6,2);      // steel
+      ctx.fillRect(sx,   sy+2, 4,4);      // kop
+      ctx.fillStyle = "#c28a32";
+      ctx.fillRect(sx+1, sy+3, 1,1);      // gat
 
       ctx.restore();
     }
@@ -830,13 +975,15 @@
       ctx.save();
       ctx.imageSmoothingEnabled = false;
 
+      // mast
       ctx.fillStyle = "#deb887";
       ctx.fillRect(sx+4, sy, 4, goal.h);
 
-      ctx.fillStyle = goal.reached ? "#ffd86b" : "#ffefb0";
-      ctx.fillRect(sx+8, sy+2, 10, 6);
+      // vlag
+      ctx.fillStyle = gateOpen ? "#9dff7a" : "#ffefb0";
+      ctx.fillRect(sx+8, sy+2, 12, 7);
       ctx.fillStyle = "#c46b32";
-      ctx.fillRect(sx+9, sy+3, 3, 4);
+      ctx.fillRect(sx+9, sy+3, 3, 5);
 
       ctx.restore();
     }
@@ -901,11 +1048,23 @@
         ctx.restore();
       }
 
+      if(keyMessageTimer > 0){
+        ctx.save();
+        ctx.globalAlpha = Math.min(1, keyMessageTimer / 2);
+        ctx.fillStyle = "rgba(0,0,0,0.7)";
+        ctx.fillRect(20, 50, canvas.width-40, 40);
+        ctx.fillStyle = "#ffd86b";
+        ctx.font = "10px system-ui";
+        ctx.textAlign = "center";
+        ctx.fillText("Sleutel gevonden! De poort aan het eind van het level staat nu open.", canvas.width/2, 75);
+        ctx.restore();
+      }
+
       if(winMessageTimer > 0){
         ctx.save();
-        ctx.globalAlpha = 0.75;
-        ctx.fillStyle = "rgba(0,0,0,0.8)";
-        ctx.fillRect(20, 70, canvas.width-40, 50);
+        ctx.globalAlpha = 0.8;
+        ctx.fillStyle = "rgba(0,0,0,0.85)";
+        ctx.fillRect(20, 70, canvas.width-40, 60);
         ctx.fillStyle = "#9dff7a";
         ctx.font = "12px system-ui";
         ctx.textAlign = "center";
@@ -929,6 +1088,7 @@
       drawCbsCoins();
       drawMonkey();
       drawSecretStatue();
+      drawKey();
       drawEnemies();
       drawGoal();
       drawOverlay();
@@ -952,10 +1112,15 @@
       player.y = (GROUND_LEVEL-1)*TILE_SIZE;
       player.vx = 0;
       player.vy = 0;
+      player.dir = 1;
       cameraX = 0;
       onVine = false;
       secretStatue.found = false;
       secretMessageTimer = 0;
+      key.collected = false;
+      keyMessageTimer = 0;
+      gateOpen = false;
+      keyStatusEl.innerHTML = 'Sleutel: <b>nog niet gevonden</b>';
       deathFlashTimer = 0;
       goal.reached = false;
       winMessageTimer = 0;
@@ -964,11 +1129,23 @@
         e.alive = true;
         if(i===0){ e.x = 30 * TILE_SIZE; }
         else if(i===1){ e.x = 60 * TILE_SIZE; }
-        else if(i===2){ e.x = 100 * TILE_SIZE; }
+        else if(i===2){ e.x = 104 * TILE_SIZE; }
       });
       bananas.forEach(b=>b.collected=false);
       cbsCoins.forEach(c=>c.collected=false);
       updateCollectHUD();
+    }
+
+    // vuurvliegjes initialiseren
+    for(let i=0;i<FIREFLY_COUNT;i++){
+      fireflies.push({
+        x: Math.random() * WORLD_WIDTH * TILE_SIZE,
+        y: 20 + Math.random() * 90,
+        baseY: 20 + Math.random() * 90,
+        amp: 6 + Math.random() * 10,
+        speed: 0.4 + Math.random() * 0.8,
+        phase: Math.random() * Math.PI * 2
+      });
     }
 
     requestAnimationFrame(loop);
@@ -976,4 +1153,3 @@
   </script>
 </body>
 </html>
-
