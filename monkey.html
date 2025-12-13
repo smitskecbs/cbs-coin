@@ -2,18 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <title>CBS Jungle Monkey – Puzzle Run</title>
+  <title>CBS Jungle Monkey – Jungle Puzzle</title>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
 
   <style>
     :root{
-      --bg1:#0a1210;
-      --bg2:#041807;
+      --bg1:#041812;
+      --bg2:#020b08;
       --fg:#fefbe8;
-      --ground:#3b2613;
-      --grass:#1f6b26;
-      --monkey-body:#c46b32;
-      --monkey-face:#f1c58a;
     }
 
     *{box-sizing:border-box;margin:0;padding:0}
@@ -53,6 +49,7 @@
       flex-direction:column;
       gap:4px;
       align-items:center;
+      max-width:960px;
     }
     .hud b{color:#9dff7a}
 
@@ -68,7 +65,7 @@
       justify-content:center;
     }
 
-    button#startBtn{
+    button#resetBtn{
       padding:4px 10px;
       border-radius:999px;
       border:1px solid #2cff9b66;
@@ -78,13 +75,11 @@
       font-size:13px;
       box-shadow:0 0 10px rgba(0,0,0,.6);
     }
-    button#startBtn:hover{
+    button#resetBtn:hover{
       background:#0b2b1b;
     }
-    #secretStatus b{
-      color:#ffd86b;
-    }
-    #keyStatus b{
+
+    #shardStatus b{
       color:#ffd86b;
     }
   </style>
@@ -94,617 +89,390 @@
     <canvas id="game" width="320" height="180"></canvas>
     <div class="hud">
       <div class="hud-controls">
-        Controls: <b>← →</b> / <b>A D</b> lopen – <b>↑</b> of <b>SPACE</b> springen –
-        <b>↓</b>/<b>S</b> pipe – <b>↑/↓</b> op lianen klimmen
+        Besturing: <b>← ↑ → ↓</b> of <b>W A S D</b> lopen •
+        Raak <b>slangen</b> niet aan – dan ga je terug naar de start.
       </div>
       <div>
-        Puzzeltocht: vind de <b>sleutel</b>, open de <b>poort</b>, ontwijk slangen,
-        verzamel bananen & CBS-coins en vind de geheime CBS-idol 🐒🌴
+        Doel: verken de <b>jungle</b>, verzamel <b>3 CBS-shards</b> om de <b>poort</b> te openen,
+        en bereik daarna de <b>CBS-tempel</b>. Ergens verstopt staat ook een geheime <b>CBS-idol</b> 🐒🌴
       </div>
       <div class="hud-row">
-        <button id="startBtn">Reset level</button>
+        <button id="resetBtn">Reset puzzel</button>
+        <div id="shardStatus">CBS-shards: <b>0/3</b></div>
         <div id="secretStatus">Geheim: <b>nog niet gevonden</b></div>
-        <div id="keyStatus">Sleutel: <b>nog niet gevonden</b></div>
       </div>
-      <div id="collectStatus">Bananen: 0/0 – CBS-coins: 0/0</div>
+      <div id="messageStatus"></div>
     </div>
   </div>
 
   <script>
     const canvas = document.getElementById("game");
-    const ctx    = canvas.getContext("2d");
-    const startBtn = document.getElementById("startBtn");
+    const ctx = canvas.getContext("2d");
+    const resetBtn = document.getElementById("resetBtn");
+    const shardStatusEl = document.getElementById("shardStatus");
     const secretStatusEl = document.getElementById("secretStatus");
-    const keyStatusEl = document.getElementById("keyStatus");
-    const collectStatusEl = document.getElementById("collectStatus");
+    const messageStatusEl = document.getElementById("messageStatus");
 
-    // ===== Wereld instellingen =====
+    // ===== TILEMAP / WERELD =====
     const TILE_SIZE = 16;
-    const WORLD_WIDTH  = 210;   // iets langer voor puzzeltocht
-    const WORLD_HEIGHT = 12;
 
-    const FIREFLY_COUNT = 32;
+    // Top-down wereld (zoals een Pokémon-gebied)
+    const WORLD_WIDTH = 32;   // tiles
+    const WORLD_HEIGHT = 18;  // tiles
+
+    // Tiles
+    const T_GROUND   = 0; // pad / gras
+    const T_TREE     = 1; // boom / muur
+    const T_WATER    = 2; // water / blokkade
+    const T_TALLGRASS= 3; // hoog gras
+    const T_GATE     = 4; // poort naar tempel
+    const T_TEMPLE   = 5; // eind-tempel
+
+    // Eenvoudige layout (0 = ground, 1 = tree, 2 = water, 3 = tall grass, 4/5 = gate/temple)
+    // Bouw een jungle-achtige vorm: randen bomen, paden binnenin.
+    const world = [];
+    for(let y=0; y<WORLD_HEIGHT; y++){
+      world[y] = [];
+      for(let x=0; x<WORLD_WIDTH; x++){
+        // randen vol bomen
+        if(x === 0 || y === 0 || x === WORLD_WIDTH-1 || y === WORLD_HEIGHT-1){
+          world[y][x] = T_TREE;
+        }else{
+          world[y][x] = T_GROUND;
+        }
+      }
+    }
+
+    // wat waterplakken + hoog gras handmatig zetten
+    function rectFill(x0,y0,x1,y1,type){
+      for(let y=y0;y<=y1;y++){
+        for(let x=x0;x<=x1;x++){
+          if(x>0 && y>0 && x<WORLD_WIDTH-1 && y<WORLD_HEIGHT-1){
+            world[y][x] = type;
+          }
+        }
+      }
+    }
+
+    // watermeren
+    rectFill(4,4,7,6, T_WATER);
+    rectFill(22,3,26,5, T_WATER);
+
+    // hoge grasvelden
+    rectFill(10,10,14,12, T_TALLGRASS);
+    rectFill(3,11,7,14, T_TALLGRASS);
+    rectFill(20,11,27,14, T_TALLGRASS);
+
+    // wat extra bomen om paden te maken
+    rectFill(15,2,15,7, T_TREE);
+    rectFill(16,7,20,7, T_TREE);
+    rectFill(11,5,13,5, T_TREE);
+    rectFill(9,7,11,9, T_TREE);
+    rectFill(24,7,29,7, T_TREE);
+    rectFill(19,9,21,12, T_TREE);
+
+    // Poort naar tempel + tempelgebied
+    // poort in de bovenste muur van een inner-gebied
+    world[2][16] = T_GATE;
+    world[2][17] = T_GATE;
+
+    // tempel boven poort (buiten "binnenveld") – alsof je een nieuwe area inloopt
+    world[1][16] = T_TEMPLE;
+    world[1][17] = T_TEMPLE;
+
+    // ===== Speler (top-down) =====
+    const player = {
+      x: 2.5 * TILE_SIZE,
+      y: 8.5 * TILE_SIZE,
+      w: 12,
+      h: 12,
+      speed: 60,
+      dirX: 0,
+      dirY: 1  // kijkrichting (0,-1,1 etc) – kan later voor animaties
+    };
+
+    // ===== CBS Shards + geheim idol =====
+    const shards = [
+      { x: 6*TILE_SIZE,  y: 13*TILE_SIZE,   collected:false }, // links-onder jungle
+      { x: 26*TILE_SIZE, y: 12*TILE_SIZE,   collected:false }, // rechts-onder jungle
+      { x: 12*TILE_SIZE, y: 4*TILE_SIZE,    collected:false }, // boven-linker pad
+    ];
+
+    const secretIdol = {
+      x: 28*TILE_SIZE,
+      y: 4*TILE_SIZE,
+      w: 10,
+      h: 12,
+      found:false
+    };
+
+    let gateOpen = false;
+    let winMessageTimer = 0;
+    let secretMessageTimer = 0;
+    let infoMessageTimer = 0;
+
+    function updateShardHUD(){
+      const total = shards.length;
+      const count = shards.filter(s=>s.collected).length;
+      shardStatusEl.innerHTML = `CBS-shards: <b>${count}/${total}</b>`;
+    }
+    updateShardHUD();
+
+    // ===== Slangen (als "guards") =====
+    const snakes = [
+      {
+        x: 9*TILE_SIZE,
+        y: 8*TILE_SIZE,
+        w: 12,
+        h: 10,
+        vx: 20,
+        xMin: 8*TILE_SIZE,
+        xMax: 12*TILE_SIZE
+      },
+      {
+        x: 21*TILE_SIZE,
+        y: 9*TILE_SIZE,
+        w: 12,
+        h: 10,
+        vx: -25,
+        xMin: 19*TILE_SIZE,
+        xMax: 23*TILE_SIZE
+      }
+    ];
+
+    // ===== Fireflies (achtergrond) =====
+    const FIREFLY_COUNT = 35;
     const fireflies = [];
     let fireflyTime = 0;
 
-    const TILE_EMPTY    = 0;
-    const TILE_GROUND   = 1;
-    const TILE_GRASS    = 2;
-    const TILE_PIPE     = 3;
-    const TILE_BLOCK    = 4;
-    const TILE_VINE     = 5;
-    const TILE_GATE     = 6;   // poort aan het eind
-
-    const world = [];
-    for(let y=0;y<WORLD_HEIGHT;y++){
-      world[y] = [];
-      for(let x=0;x<WORLD_WIDTH;x++){
-        world[y][x] = TILE_EMPTY;
-      }
+    for(let i=0;i<FIREFLY_COUNT;i++){
+      fireflies.push({
+        x: Math.random() * WORLD_WIDTH * TILE_SIZE,
+        y: 10 + Math.random() * (WORLD_HEIGHT*TILE_SIZE-30),
+        baseY: 10 + Math.random() * (WORLD_HEIGHT*TILE_SIZE-30),
+        amp: 5 + Math.random() * 10,
+        speed: 0.5 + Math.random() * 0.9,
+        phase: Math.random() * Math.PI * 2
+      });
     }
 
-    const GROUND_LEVEL = WORLD_HEIGHT - 2;
-
-    function addGroundStrip(xStart, xEnd){
-      for(let x=xStart;x<=xEnd;x++){
-        if(x<0 || x>=WORLD_WIDTH) continue;
-        world[GROUND_LEVEL][x]   = TILE_GRASS;
-        world[GROUND_LEVEL+1][x] = TILE_GROUND;
-      }
-    }
-
-    function carveHole(startX, width){
-      for(let x=startX;x<startX+width;x++){
-        if(x<0 || x>=WORLD_WIDTH) continue;
-        world[GROUND_LEVEL][x]   = TILE_EMPTY;
-        world[GROUND_LEVEL+1][x] = TILE_EMPTY;
-      }
-    }
-
-    function addPlatform(x,y,length){
-      for(let i=0;i<length;i++){
-        const tx = x+i;
-        if(tx<0 || tx>=WORLD_WIDTH) continue;
-        world[y][tx] = TILE_GRASS;
-      }
-    }
-
-    function addBlockRow(x,y,length){
-      for(let i=0;i<length;i++){
-        const tx = x+i;
-        if(tx<0 || tx>=WORLD_WIDTH) continue;
-        world[y][tx] = TILE_BLOCK;
-      }
-    }
-
-    function addPipe(x){
-      if(x<0 || x+1>=WORLD_WIDTH) return;
-      for(let y=GROUND_LEVEL-1; y<=GROUND_LEVEL+1; y++){
-        if(y<0 || y>=WORLD_HEIGHT) continue;
-        world[y][x]   = TILE_PIPE;
-        world[y][x+1] = TILE_PIPE;
-      }
-    }
-
-    function addVine(x, yTop, yBottom){
-      for(let y=yTop; y<=yBottom; y++){
-        if(y<0 || y>=WORLD_HEIGHT || x<0 || x>=WORLD_WIDTH) continue;
-        world[y][x] = TILE_VINE;
-      }
-    }
-
-    function addGate(x){
-      if(x<0 || x+1>=WORLD_WIDTH) return;
-      for(let y=GROUND_LEVEL-5; y<=GROUND_LEVEL-1; y++){
-        if(y<0 || y>=WORLD_HEIGHT) continue;
-        world[y][x]   = TILE_GATE;
-        world[y][x+1] = TILE_GATE;
-      }
-    }
-
-    // ===== Level ontwerp – 1 puzzeltocht =====
-    addGroundStrip(0, WORLD_WIDTH-1);
-
-    // Startgebied
-    addBlockRow(6, GROUND_LEVEL-3, 3);
-    addBlockRow(10, GROUND_LEVEL-4, 4);
-
-    // eerste kloof
-    carveHole(18,3);
-    addPlatform(16, GROUND_LEVEL-3, 2);
-    addPlatform(21, GROUND_LEVEL-2, 2);
-
-    // tweede kloof met hoger pad
-    carveHole(32,4);
-    addPlatform(29, GROUND_LEVEL-3, 3);
-    addPlatform(37, GROUND_LEVEL-4, 3);
-
-    // slangengebied
-    addBlockRow(42, GROUND_LEVEL-3, 3);
-    addBlockRow(45, GROUND_LEVEL-4, 2);
-
-    // derde kloof + lianen puzzel
-    carveHole(52,5);
-    addPlatform(50, GROUND_LEVEL-4, 3);
-    addPlatform(57, GROUND_LEVEL-3, 3);
-    addVine(54, GROUND_LEVEL-7, GROUND_LEVEL-3);
-    addVine(56, GROUND_LEVEL-7, GROUND_LEVEL-3);
-
-    addBlockRow(63, GROUND_LEVEL-3, 2);
-    addBlockRow(65, GROUND_LEVEL-4, 2);
-    addBlockRow(67, GROUND_LEVEL-5, 2);
-
-    // hoog pad naar warp pipe
-    addPlatform(72, GROUND_LEVEL-3, 3);
-    addPlatform(76, GROUND_LEVEL-4, 3);
-    addPlatform(80, GROUND_LEVEL-5, 3);
-
-    // warp pipes – puzzel: eentje naar geheime sleutelkamer, eentje terug
-    const warpPipes = [
-      {
-        entranceX: 82,
-        entranceWidth: 2,
-        destX: 145 * TILE_SIZE,
-        destY: (GROUND_LEVEL-5) * TILE_SIZE
-      },
-      {
-        entranceX: 162,
-        entranceWidth: 2,
-        destX: 108 * TILE_SIZE,
-        destY: (GROUND_LEVEL-1) * TILE_SIZE
-      }
-    ];
-    addPipe(82);   // naar geheime sleutelkamer
-    addPipe(162);  // terug naar hoofdpad
-
-    // lianen in geheime kamer (platform puzzel)
-    addVine(151, GROUND_LEVEL-7, GROUND_LEVEL-2);
-    addVine(153, GROUND_LEVEL-7, GROUND_LEVEL-2);
-
-    // extra kloven verderop
-    carveHole(90,3);
-    addPlatform(88, GROUND_LEVEL-3, 2);
-    addPlatform(94, GROUND_LEVEL-2, 3);
-
-    carveHole(105,4);
-    addPlatform(103, GROUND_LEVEL-3, 2);
-    addPlatform(110, GROUND_LEVEL-4, 3);
-
-    // geheime kamer / sleutel-zone
-    addGroundStrip(138, 168);
-    for(let x=138;x<=168;x++){
-      world[GROUND_LEVEL+1][x] = TILE_GROUND;
-      if(x % 2 === 0){
-        world[GROUND_LEVEL][x] = TILE_EMPTY; // gaten in vloer voor spanning
-      }
-    }
-    addPlatform(142, GROUND_LEVEL-3, 3);
-    addPlatform(148, GROUND_LEVEL-4, 3);
-    addPlatform(154, GROUND_LEVEL-5, 3);
-    addPlatform(162, GROUND_LEVEL-3, 3);
-
-    // eindgebied: poort + finish vlag
-    addGate(190);
-
-    const goal = {
-      x: 198 * TILE_SIZE,
-      y: (GROUND_LEVEL-5) * TILE_SIZE,
-      w: 12,
-      h: 40,
-      reached: false
-    };
-    let winMessageTimer = 0;
-
-    let gateOpen = false;
-
-    // ===== Speler =====
-    const player = {
-      x: 5 * TILE_SIZE,
-      y: (GROUND_LEVEL-1) * TILE_SIZE,
-      vx: 0,
-      vy: 0,
-      w: 12,
-      h: 16,
-      onGround: false,
-      dir: 1   // 1 = rechts, -1 = links (voor later als je wil flippen)
-    };
-
-    const GRAVITY      = 800;
-    const MOVE_SPEED   = 140;
-    const JUMP_VELOCITY= -280;
-    const MAX_FALL     = 600;
-    const CLIMB_SPEED  = 80;
-
-    let onVine = false;
-
-    const anim = { runPhase: 0 };
-
-    // camera
-    let cameraX = 0;
-
-    // geheim idol
-    const secretStatue = {
-      x: 155 * TILE_SIZE + 4,
-      y: (GROUND_LEVEL-5) * TILE_SIZE - 4,
-      w: 8,
-      h: 10,
-      found: false
-    };
-    let secretMessageTimer = 0;
-
-    // sleutel voor de poort
-    const key = {
-      x: 146 * TILE_SIZE + 2,
-      y: (GROUND_LEVEL-5) * TILE_SIZE - 2,
-      w: 10,
-      h: 10,
-      collected: false
-    };
-    let keyMessageTimer = 0;
-
-    // vijanden: slangen
-    const enemies = [
-      {
-        type: "snake",
-        x: 30 * TILE_SIZE,
-        y: (GROUND_LEVEL) * TILE_SIZE + 4,
-        w: 14,
-        h: 8,
-        vx: 40,
-        leftBound: 28 * TILE_SIZE,
-        rightBound: 36 * TILE_SIZE,
-        alive: true
-      },
-      {
-        type: "snake",
-        x: 60 * TILE_SIZE,
-        y: (GROUND_LEVEL) * TILE_SIZE + 4,
-        w: 14,
-        h: 8,
-        vx: 45,
-        leftBound: 58 * TILE_SIZE,
-        rightBound: 66 * TILE_SIZE,
-        alive: true
-      },
-      {
-        type: "snake",
-        x: 104 * TILE_SIZE,
-        y: (GROUND_LEVEL) * TILE_SIZE + 4,
-        w: 14,
-        h: 8,
-        vx: 50,
-        leftBound: 102 * TILE_SIZE,
-        rightBound: 110 * TILE_SIZE,
-        alive: true
-      }
-    ];
-
-    // collectibles: bananen & CBS-coins
-    const bananas = [
-      { x: 15*TILE_SIZE,  y:(GROUND_LEVEL-3)*TILE_SIZE, w:10, h:8, collected:false },
-      { x: 34*TILE_SIZE,  y:(GROUND_LEVEL-4)*TILE_SIZE, w:10, h:8, collected:false },
-      { x: 59*TILE_SIZE,  y:(GROUND_LEVEL-5)*TILE_SIZE, w:10, h:8, collected:false },
-      { x: 93*TILE_SIZE,  y:(GROUND_LEVEL-2)*TILE_SIZE, w:10, h:8, collected:false },
-      { x: 149*TILE_SIZE, y:(GROUND_LEVEL-4)*TILE_SIZE, w:10, h:8, collected:false },
-      { x: 187*TILE_SIZE, y:(GROUND_LEVEL-4)*TILE_SIZE, w:10, h:8, collected:false },
-    ];
-
-    const cbsCoins = [
-      { x: 24*TILE_SIZE,  y:(GROUND_LEVEL-3)*TILE_SIZE, r:5, collected:false },
-      { x: 47*TILE_SIZE,  y:(GROUND_LEVEL-4)*TILE_SIZE, r:5, collected:false },
-      { x: 75*TILE_SIZE,  y:(GROUND_LEVEL-4)*TILE_SIZE, r:5, collected:false },
-      { x: 145*TILE_SIZE, y:(GROUND_LEVEL-3)*TILE_SIZE, r:5, collected:false },
-      { x: 176*TILE_SIZE, y:(GROUND_LEVEL-4)*TILE_SIZE, r:5, collected:false },
-      { x: 204*TILE_SIZE, y:(GROUND_LEVEL-4)*TILE_SIZE, r:5, collected:false },
-    ];
-
-    function updateCollectHUD(){
-      const bananasTotal = bananas.length;
-      const bananasGot   = bananas.filter(b=>b.collected).length;
-      const coinsTotal   = cbsCoins.length;
-      const coinsGot     = cbsCoins.filter(c=>c.collected).length;
-      collectStatusEl.textContent =
-        `Bananen: ${bananasGot}/${bananasTotal} – CBS-coins: ${coinsGot}/${coinsTotal}`;
-    }
-    updateCollectHUD();
-
-    // feedback bij dood
-    let deathFlashTimer = 0;
-
-    const keysDown = {};
+    // ===== Input =====
+    const keys = {};
     window.addEventListener("keydown", e=>{
-      keysDown[e.key.toLowerCase()] = true;
+      keys[e.key.toLowerCase()] = true;
     });
     window.addEventListener("keyup", e=>{
-      keysDown[e.key.toLowerCase()] = false;
+      keys[e.key.toLowerCase()] = false;
     });
 
-    function isSolidTile(tx,ty){
-      if(tx<0 || ty<0 || tx>=WORLD_WIDTH || ty>=WORLD_HEIGHT) return false;
-      const t = world[ty][tx];
-      if(t === TILE_GATE){
-        // poort is alleen solide als hij nog niet open is
-        return !gateOpen;
+    // ===== Helpers =====
+    function tileAtPixel(px,py){
+      const tx = Math.floor(px / TILE_SIZE);
+      const ty = Math.floor(py / TILE_SIZE);
+      if(tx<0 || ty<0 || tx>=WORLD_WIDTH || ty>=WORLD_HEIGHT){
+        return T_TREE; // buiten rand behandelen als muur
       }
-      return (
-        t === TILE_GROUND ||
-        t === TILE_GRASS  ||
-        t === TILE_PIPE   ||
-        t === TILE_BLOCK
-      );
-    }
-
-    function tileAtWorld(x, y){
-      const tx = Math.floor(x / TILE_SIZE);
-      const ty = Math.floor(y / TILE_SIZE);
-      if(tx<0 || ty<0 || tx>=WORLD_WIDTH || ty>=WORLD_HEIGHT) return TILE_EMPTY;
       return world[ty][tx];
     }
 
-    function killPlayer(){
-      resetPlayer();
-      deathFlashTimer = 0.4;
+    function isBlockedTileType(t){
+      return (t === T_TREE || t === T_WATER);
     }
 
-    function moveAndCollide(dt){
-      player.x += player.vx * dt;
+    function resetGame(){
+      player.x = 2.5*TILE_SIZE;
+      player.y = 8.5*TILE_SIZE;
+      player.dirX = 0;
+      player.dirY = 1;
 
-      const left   = Math.floor(player.x / TILE_SIZE);
-      const right  = Math.floor((player.x + player.w) / TILE_SIZE);
-      const top    = Math.floor(player.y / TILE_SIZE);
-      const bottom = Math.floor((player.y + player.h) / TILE_SIZE);
+      shards.forEach(s=>s.collected=false);
+      gateOpen = false;
+      secretIdol.found = false;
 
-      if(player.vx > 0){
-        for(let ty = top; ty <= bottom; ty++){
-          if(isSolidTile(right, ty)){
-            player.x = right * TILE_SIZE - player.w - 0.01;
-            player.vx = 0;
-            break;
-          }
-        }
-      }else if(player.vx < 0){
-        for(let ty = top; ty <= bottom; ty++){
-          if(isSolidTile(left, ty)){
-            player.x = (left+1) * TILE_SIZE + 0.01;
-            player.vx = 0;
-            break;
-          }
-        }
-      }
-
-      if(!onVine){
-        player.vy += GRAVITY * dt;
-        if(player.vy > MAX_FALL) player.vy = MAX_FALL;
-      }
-
-      player.y += player.vy * dt;
-
-      let newTop    = Math.floor(player.y / TILE_SIZE);
-      let newBottom = Math.floor((player.y + player.h) / TILE_SIZE);
-      let newLeft   = Math.floor(player.x / TILE_SIZE);
-      let newRight  = Math.floor((player.x + player.w) / TILE_SIZE);
-
-      player.onGround = false;
-
-      if(player.vy > 0){
-        for(let tx=newLeft; tx<=newRight; tx++){
-          if(isSolidTile(tx,newBottom)){
-            player.y = newBottom*TILE_SIZE - player.h - 0.01;
-            player.vy = 0;
-            player.onGround = true;
-            break;
-          }
-        }
-      }else if(player.vy < 0){
-        for(let tx=newLeft; tx<=newRight; tx++){
-          if(isSolidTile(tx,newTop)){
-            player.y = (newTop+1)*TILE_SIZE + 0.01;
-            player.vy = 0;
-            break;
-          }
-        }
-      }
-
-      // in de afgrond gevallen?
-      if(player.y > canvas.height + 200){
-        killPlayer();
-      }
+      winMessageTimer = 0;
+      secretMessageTimer = 0;
+      infoMessageTimer = 0;
+      messageStatusEl.textContent = "";
+      secretStatusEl.innerHTML = 'Geheim: <b>nog niet gevonden</b>';
+      updateShardHUD();
     }
 
-    function tryWarpPipe(){
-      const downPressed = keysDown["arrowdown"] || keysDown["s"];
-      if(!downPressed || !player.onGround) return;
+    resetBtn.addEventListener("click", resetGame);
 
-      const centerX = player.x + player.w/2;
+    // ===== Update =====
+    function update(dt){
+      // besturing
+      let moveX = 0, moveY = 0;
+      if(keys["arrowleft"] || keys["a"]) moveX -= 1;
+      if(keys["arrowright"]|| keys["d"]) moveX += 1;
+      if(keys["arrowup"]   || keys["w"]) moveY -= 1;
+      if(keys["arrowdown"] || keys["s"]) moveY += 1;
 
-      for(const pipe of warpPipes){
-        const pipeStartPx = pipe.entranceX * TILE_SIZE;
-        const pipeEndPx   = (pipe.entranceX + pipe.entranceWidth) * TILE_SIZE;
-        if(centerX >= pipeStartPx && centerX <= pipeEndPx){
-          player.x = pipe.destX;
-          player.y = pipe.destY;
-          player.vx = 0;
-          player.vy = 0;
-          cameraX = player.x - canvas.width/2;
-          if(cameraX < 0) cameraX = 0;
-          const maxCam = WORLD_WIDTH*TILE_SIZE - canvas.width;
-          if(cameraX > maxCam) cameraX = maxCam;
+      // normaliseren (diagonaal niet sneller)
+      if(moveX !== 0 || moveY !== 0){
+        const len = Math.hypot(moveX, moveY);
+        moveX /= len;
+        moveY /= len;
+        player.dirX = moveX;
+        player.dirY = moveY;
+      }
+
+      const speed = player.speed;
+      let newX = player.x + moveX*speed*dt;
+      let newY = player.y + moveY*speed*dt;
+
+      // collision check op 4 hoeken van de hitbox
+      function canWalk(nx,ny){
+        const halfW = player.w/2;
+        const halfH = player.h/2;
+        const points = [
+          [nx-halfW, ny-halfH],
+          [nx+halfW, ny-halfH],
+          [nx-halfW, ny+halfH],
+          [nx+halfW, ny+halfH]
+        ];
+        for(const [px,py] of points){
+          const t = tileAtPixel(px,py);
+          if(isBlockedTileType(t)) return false;
+        }
+        return true;
+      }
+
+      // eerst X, dan Y – klassieke top-down collision
+      if(canWalk(newX, player.y)){
+        player.x = newX;
+      }
+      if(canWalk(player.x, newY)){
+        player.y = newY;
+      }
+
+      // update slangen
+      for(const s of snakes){
+        s.x += s.vx * dt;
+        if(s.x < s.xMin){
+          s.x = s.xMin;
+          s.vx *= -1;
+        }else if(s.x + s.w > s.xMax){
+          s.x = s.xMax - s.w;
+          s.vx *= -1;
+        }
+      }
+
+      // slangen collision
+      const pw = player.w, ph = player.h;
+      const px1 = player.x - pw/2, py1 = player.y - ph/2;
+      const px2 = px1 + pw, py2 = py1 + ph;
+
+      for(const s of snakes){
+        const sx1 = s.x, sy1 = s.y;
+        const sx2 = sx1 + s.w, sy2 = sy1 + s.h;
+        if(px1 < sx2 && px2 > sx1 && py1 < sy2 && py2 > sy1){
+          // hit – terug naar start
+          resetGame();
+          infoMessageTimer = 3;
+          messageStatusEl.textContent = "Gebeten door een slang! Je begint opnieuw…";
           break;
         }
       }
-    }
 
-    function checkSecret(){
-      if(secretStatue.found) return;
+      // shards oppakken
+      for(const shard of shards){
+        if(shard.collected) continue;
+        const sx = shard.x+4, sy = shard.y+4; // center
+        const dist = Math.hypot(player.x - sx, player.y - sy);
+        if(dist < 10){
+          shard.collected = true;
+          updateShardHUD();
 
-      const px = player.x, py = player.y, pw = player.w, ph = player.h;
-      const sx = secretStatue.x - 4, sy = secretStatue.y - 4,
-            sw = secretStatue.w + 8, sh = secretStatue.h + 8;
-
-      if(px < sx+sw && px+pw > sx && py < sy+sh && py+ph > sy){
-        secretStatue.found = true;
-        secretMessageTimer = 4;
-        secretStatusEl.innerHTML = 'Geheim: <b>gevonden!</b>';
-      }
-    }
-
-    function checkGoal(){
-      if(goal.reached || !gateOpen) return; // finish pas als poort open is
-      const px = player.x, py = player.y, pw = player.w, ph = player.h;
-      const gx = goal.x, gy = goal.y, gw = goal.w, gh = goal.h;
-      if(px < gx+gw && px+pw > gx && py < gy+gh && py+ph > gy){
-        goal.reached = true;
-        winMessageTimer = 5;
-      }
-    }
-
-    function updateEnemies(dt){
-      for(const e of enemies){
-        if(!e.alive) continue;
-        e.x += e.vx * dt;
-        if(e.x < e.leftBound){
-          e.x = e.leftBound;
-          e.vx *= -1;
-        }else if(e.x + e.w > e.rightBound){
-          e.x = e.rightBound - e.w;
-          e.vx *= -1;
+          const count = shards.filter(s=>s.collected).length;
+          infoMessageTimer = 3;
+          messageStatusEl.textContent = `CBS-shard ${count}/${shards.length} gevonden!`;
         }
+      }
 
-        const px = player.x, py = player.y, pw = player.w, ph = player.h;
-        const ex = e.x, ey = e.y, ew = e.w, eh = e.h;
+      // poort openen als alle shards binnen zijn
+      if(!gateOpen && shards.every(s=>s.collected)){
+        gateOpen = true;
+        infoMessageTimer = 4;
+        messageStatusEl.textContent = "Alle CBS-shards gevonden! De junglepoort is open.";
+      }
 
-        if(px < ex+ew && px+pw > ex && py < ey+eh && py+ph > ey){
-          const playerFeet = py + ph;
-          const enemyTop   = ey;
-          if(player.vy > 50 && playerFeet <= enemyTop + 4){
-            e.alive = false;
-            player.vy = JUMP_VELOCITY * 0.6;
-          }else{
-            killPlayer();
-            break;
+      // geheim idol
+      if(!secretIdol.found){
+        const ix1 = secretIdol.x, iy1 = secretIdol.y;
+        const ix2 = ix1 + secretIdol.w, iy2 = iy1 + secretIdol.h;
+        if(px1 < ix2 && px2 > ix1 && py1 < iy2 && py2 > iy1){
+          secretIdol.found = true;
+          secretStatusEl.innerHTML = 'Geheim: <b>gevonden!</b>';
+          secretMessageTimer = 4;
+        }
+      }
+
+      // gate collision (als dicht, blokkeert; als open, gewoon lopen)
+      // We doen dit via tile type, maar alleen dicht is blocking
+      const gateTiles = [];
+      for(let y=0;y<WORLD_HEIGHT;y++){
+        for(let x=0;x<WORLD_WIDTH;x++){
+          if(world[y][x] === T_GATE){
+            gateTiles.push({tx:x,ty:y});
           }
         }
       }
-    }
-
-    function updateCollectibles(){
-      const px = player.x, py = player.y, pw = player.w, ph = player.h;
-
-      // bananen
-      for(const b of bananas){
-        if(b.collected) continue;
-        const bx = b.x, by = b.y, bw = b.w, bh = b.h;
-        if(px < bx+bw && px+pw > bx && py < by+bh && py+ph > by){
-          b.collected = true;
+      if(!gateOpen){
+        for(const gt of gateTiles){
+          const gx1 = gt.tx*TILE_SIZE;
+          const gy1 = gt.ty*TILE_SIZE;
+          const gx2 = gx1+TILE_SIZE;
+          const gy2 = gy1+TILE_SIZE;
+          if(px1 < gx2 && px2 > gx1 && py1 < gy2 && py2 > gy1){
+            // player mag niet door gesloten poort, duw hem iets terug
+            // simpele oplossing: reset last movement
+            player.x -= moveX*speed*dt;
+            player.y -= moveY*speed*dt;
+          }
         }
       }
 
-      // CBS-coins
-      for(const c of cbsCoins){
-        if(c.collected) continue;
-        const cx = c.x, cy = c.y, r = c.r;
-        const cx2 = cx + r, cy2 = cy + r;
-        if(px < cx2+r && px+pw > cx-r && py < cy2+r && py+ph > cy-r){
-          c.collected = true;
+      // check finish (tempel) – alleen als gate open is
+      if(gateOpen){
+        for(let y=0;y<WORLD_HEIGHT;y++){
+          for(let x=0;x<WORLD_WIDTH;x++){
+            if(world[y][x] === T_TEMPLE){
+              const tx1 = x*TILE_SIZE;
+              const ty1 = y*TILE_SIZE;
+              const tx2 = tx1+TILE_SIZE;
+              const ty2 = ty1+TILE_SIZE;
+              if(px1 < tx2 && px2 > tx1 && py1 < ty2 && py2 > ty1){
+                winMessageTimer = 5;
+              }
+            }
+          }
         }
       }
 
-      // sleutel
-      if(!key.collected){
-        const kx = key.x, ky = key.y, kw = key.w, kh = key.h;
-        if(px < kx+kw && px+pw > kx && py < ky+kh && py+ph > ky){
-          key.collected = true;
-          gateOpen = true;
-          keyMessageTimer = 4;
-          keyStatusEl.innerHTML = 'Sleutel: <b>gevonden</b>';
-        }
-      }
-
-      updateCollectHUD();
-    }
-
-    function update(dt){
-      let move = 0;
-      if(keysDown["arrowleft"] || keysDown["a"]) move -= 1;
-      if(keysDown["arrowright"]|| keysDown["d"]) move += 1;
-
-      if(Math.abs(move) > 0.1 && player.onGround && !onVine){
-        anim.runPhase += dt * 12;
-      }else{
-        anim.runPhase *= 0.9;
-      }
-
-      if(move > 0) player.dir = 1;
-      else if(move < 0) player.dir = -1;
-
-      const centerX = player.x + player.w/2;
-      const centerY = player.y + player.h/2;
-      const tileUnder = tileAtWorld(centerX, centerY);
-      const wantsClimb = keysDown["arrowup"] || keysDown["arrowdown"] ||
-                         keysDown["w"] || keysDown["s"];
-
-      if(tileUnder === TILE_VINE && wantsClimb){
-        onVine = true;
-      }
-
-      if(onVine){
-        if(move !== 0 || keysDown[" "]){
-          onVine = false;
-        }
-      }
-
-      if(onVine){
-        player.vx = 0;
-        let climb = 0;
-        if(keysDown["arrowup"] || keysDown["w"]) climb -= 1;
-        if(keysDown["arrowdown"] || keysDown["s"]) climb += 1;
-        player.vy = climb * CLIMB_SPEED;
-      }else{
-        player.vx = move * MOVE_SPEED;
-        if((keysDown["arrowup"] || keysDown[" "]) && player.onGround){
-          player.vy = JUMP_VELOCITY;
-          player.onGround = false;
-        }
-      }
-
-      moveAndCollide(dt);
-      tryWarpPipe();
-      checkSecret();
-      checkGoal();
-      updateEnemies(dt);
-      updateCollectibles();
-
-      const targetCam = player.x - canvas.width/2 + player.w/2;
-      cameraX += (targetCam - cameraX) * 0.15;
-      if(cameraX < 0) cameraX = 0;
-      const maxCam = WORLD_WIDTH*TILE_SIZE - canvas.width;
-      if(cameraX > maxCam) cameraX = maxCam;
-
-      // vuurvliegjes zacht laten bewegen
+      // vuurvliegjes
       fireflyTime += dt;
       for(const f of fireflies){
         f.y = f.baseY + Math.sin(f.phase + fireflyTime * f.speed) * f.amp;
         f.x -= f.speed * 4 * dt;
-        if(f.x < 0){
-          f.x += WORLD_WIDTH * TILE_SIZE;
-        }
+        const maxX = WORLD_WIDTH*TILE_SIZE;
+        if(f.x < 0) f.x += maxX;
       }
 
+      if(winMessageTimer > 0){
+        winMessageTimer -= dt;
+        if(winMessageTimer < 0) winMessageTimer = 0;
+      }
       if(secretMessageTimer > 0){
         secretMessageTimer -= dt;
         if(secretMessageTimer < 0) secretMessageTimer = 0;
       }
-      if(keyMessageTimer > 0){
-        keyMessageTimer -= dt;
-        if(keyMessageTimer < 0) keyMessageTimer = 0;
-      }
-      if(deathFlashTimer > 0){
-        deathFlashTimer -= dt;
-        if(deathFlashTimer < 0) deathFlashTimer = 0;
-      }
-      if(winMessageTimer > 0){
-        winMessageTimer -= dt;
-        if(winMessageTimer < 0) winMessageTimer = 0;
+      if(infoMessageTimer > 0){
+        infoMessageTimer -= dt;
+        if(infoMessageTimer < 0){
+          infoMessageTimer = 0;
+          messageStatusEl.textContent = "";
+        }
       }
     }
 
@@ -718,365 +486,264 @@
       ctx.fillStyle = grad;
       ctx.fillRect(0,0,canvas.width,canvas.height);
 
-      // maan
+      // vage jungle lagen + maan
       ctx.save();
+      // maan
       ctx.globalAlpha = 0.35;
       ctx.beginPath();
-      ctx.arc(canvas.width - 60, 40, 18, 0, Math.PI*2);
+      ctx.arc(canvas.width-50, 28, 14, 0, Math.PI*2);
       ctx.fillStyle = "#dfffe8";
       ctx.fill();
       ctx.globalAlpha = 1;
-      ctx.restore();
 
       // verre heuvels
-      ctx.save();
       ctx.fillStyle = "rgba(8,40,28,0.35)";
       for(let i=0;i<4;i++){
-        const baseX = -120 + i*120 - (cameraX*0.08)%120;
+        const baseX = -120 + i*120;
         ctx.beginPath();
-        ctx.moveTo(baseX, 80);
-        ctx.quadraticCurveTo(baseX+60, 40, baseX+120, 80);
-        ctx.lineTo(baseX+120, 130);
-        ctx.lineTo(baseX, 130);
+        ctx.moveTo(baseX, 70);
+        ctx.quadraticCurveTo(baseX+60, 35, baseX+120, 70);
+        ctx.lineTo(baseX+120, 100);
+        ctx.lineTo(baseX, 100);
         ctx.closePath();
         ctx.fill();
       }
-      ctx.restore();
 
-      // silhouet-bomen middenlaag
+      // silhouet-bomen
       for(let i=0;i<3;i++){
-        const yBase = 70 + i*22;
+        const yBase = 70 + i*20;
         ctx.fillStyle = `rgba(5,30,18,${0.35 - i*0.08})`;
-        for(let x=-1;x<20;x++){
-          const treeX = x*42 - (cameraX*0.18) % 42 + i*15;
-          const w = 20;
-          const h = 48 + i*12;
+        for(let x=-1;x<18;x++){
+          const treeX = x*40 + (i*12);
+          const w = 18;
+          const h = 40 + i*10;
           ctx.fillRect(treeX, yBase, w, h);
           ctx.beginPath();
-          ctx.moveTo(treeX-6, yBase+10);
-          ctx.lineTo(treeX+w/2, yBase-8);
-          ctx.lineTo(treeX+w+6, yBase+10);
+          ctx.moveTo(treeX-5, yBase+10);
+          ctx.lineTo(treeX+w/2, yBase-10);
+          ctx.lineTo(treeX+w+5, yBase+10);
           ctx.closePath();
           ctx.fill();
         }
       }
+      ctx.restore();
+    }
 
-      // vuurvliegjes
+    function drawTiles(){
+      // We project wereld 1:1 op canvas (geen camera, wereld is kleiner dan scherm)
+      for(let y=0;y<WORLD_HEIGHT;y++){
+        for(let x=0;x<WORLD_WIDTH;x++){
+          const t = world[y][x];
+          const sx = x*TILE_SIZE;
+          const sy = y*TILE_SIZE;
+
+          if(t === T_GROUND){
+            ctx.fillStyle = "#0a2617";
+            ctx.fillRect(sx, sy, TILE_SIZE, TILE_SIZE);
+            ctx.fillStyle = "#0f3a22";
+            ctx.fillRect(sx, sy+TILE_SIZE-4, TILE_SIZE, 4);
+          }else if(t === T_TREE){
+            ctx.fillStyle = "#1a2610";
+            ctx.fillRect(sx, sy, TILE_SIZE, TILE_SIZE);
+            ctx.fillStyle = "#24421a";
+            ctx.fillRect(sx+2, sy+2, TILE_SIZE-4, TILE_SIZE-6);
+            ctx.fillStyle = "#3a6b26";
+            ctx.fillRect(sx+3, sy+1, TILE_SIZE-6, 5);
+          }else if(t === T_WATER){
+            ctx.fillStyle = "#053146";
+            ctx.fillRect(sx, sy, TILE_SIZE, TILE_SIZE);
+            ctx.fillStyle = "#0a5574";
+            ctx.fillRect(sx, sy+2, TILE_SIZE, TILE_SIZE-4);
+            ctx.fillStyle = "#53c0ff";
+            ctx.fillRect(sx+2, sy+4, TILE_SIZE-4, 2);
+          }else if(t === T_TALLGRASS){
+            ctx.fillStyle = "#092814";
+            ctx.fillRect(sx, sy, TILE_SIZE, TILE_SIZE);
+            ctx.fillStyle = "#1e5b27";
+            ctx.fillRect(sx, sy+4, TILE_SIZE, TILE_SIZE-4);
+            ctx.fillStyle = "#39a13a";
+            ctx.fillRect(sx+2, sy+2, TILE_SIZE-4, 3);
+          }else if(t === T_GATE){
+            ctx.fillStyle = "#2b1a0b";
+            ctx.fillRect(sx, sy, TILE_SIZE, TILE_SIZE);
+            ctx.fillStyle = gateOpen ? "#4b8a3e" : "#8b5a2e";
+            ctx.fillRect(sx+2, sy+3, TILE_SIZE-4, TILE_SIZE-6);
+            if(!gateOpen){
+              ctx.fillStyle = "#ffd86b";
+              ctx.fillRect(sx+5, sy+4, 4,3);
+            }
+          }else if(t === T_TEMPLE){
+            ctx.fillStyle = "#4b3a22";
+            ctx.fillRect(sx, sy, TILE_SIZE, TILE_SIZE);
+            ctx.fillStyle = "#a78d54";
+            ctx.fillRect(sx+2, sy+2, TILE_SIZE-4, TILE_SIZE-4);
+            ctx.fillStyle = "#ffd86b";
+            ctx.fillRect(sx+4, sy+4, TILE_SIZE-8, 2);
+          }
+        }
+      }
+
+      // vuurvliegjes boven tiles
       for(const f of fireflies){
-        const fx = f.x - cameraX * 0.25;
-        if(fx < -5 || fx > canvas.width + 5) continue;
-
-        const alpha = 0.3 + 0.3 * Math.sin(f.phase + fireflyTime * 2);
-        ctx.globalAlpha = alpha;
+        ctx.globalAlpha = 0.2 + 0.3*Math.sin(f.phase + fireflyTime*2);
         ctx.fillStyle = "#dfffb0";
-        ctx.fillRect(fx, f.y, 2, 2);
+        ctx.fillRect(f.x, f.y, 2, 2);
       }
       ctx.globalAlpha = 1;
     }
 
-    function drawTiles(){
-      const startTileX = Math.floor(cameraX / TILE_SIZE);
-      const endTileX   = Math.ceil((cameraX + canvas.width) / TILE_SIZE);
+    function drawShards(){
+      for(const shard of shards){
+        if(shard.collected) continue;
+        const sx = shard.x;
+        const sy = shard.y;
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
 
-      for(let y=0;y<WORLD_HEIGHT;y++){
-        for(let x=startTileX;x<endTileX;x++){
-          if(x<0 || x>=WORLD_WIDTH) continue;
-          const t = world[y][x];
-          if(t === TILE_EMPTY) continue;
+        // kleine gouden CBS-shard
+        ctx.fillStyle = "#ffd86b";
+        ctx.beginPath();
+        ctx.moveTo(sx+4, sy+1);
+        ctx.lineTo(sx+8, sy+5);
+        ctx.lineTo(sx+4, sy+9);
+        ctx.lineTo(sx,   sy+5);
+        ctx.closePath();
+        ctx.fill();
 
-          const screenX = x*TILE_SIZE - cameraX;
-          const screenY = y*TILE_SIZE;
+        ctx.fillStyle = "#ffefb0";
+        ctx.beginPath();
+        ctx.moveTo(sx+4, sy+2);
+        ctx.lineTo(sx+7, sy+5);
+        ctx.lineTo(sx+4, sy+8);
+        ctx.lineTo(sx+1, sy+5);
+        ctx.closePath();
+        ctx.fill();
 
-          if(t === TILE_GROUND){
-            ctx.fillStyle = "#2c1a0b";
-            ctx.fillRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
-            ctx.fillStyle = "#1b1006";
-            ctx.fillRect(screenX, screenY+10, TILE_SIZE, 6);
-          }else if(t === TILE_GRASS){
-            ctx.fillStyle = "#215c22";
-            ctx.fillRect(screenX, screenY+4, TILE_SIZE, TILE_SIZE-4);
-            ctx.fillStyle = "#3aa52e";
-            ctx.fillRect(screenX, screenY, TILE_SIZE, 6);
-            ctx.fillStyle = "#62d34a";
-            ctx.fillRect(screenX, screenY, TILE_SIZE, 2);
-          }else if(t === TILE_PIPE){
-            ctx.fillStyle = "#0b5f3a";
-            ctx.fillRect(screenX, screenY+4, TILE_SIZE, TILE_SIZE-4);
-            ctx.fillStyle = "#0f8b52";
-            ctx.fillRect(screenX, screenY, TILE_SIZE, 6);
-            ctx.fillStyle = "#14b566";
-            ctx.fillRect(screenX+2, screenY+1, TILE_SIZE-6, 2);
-          }else if(t === TILE_BLOCK){
-            ctx.fillStyle = "#7b4a1e";
-            ctx.fillRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
-            ctx.fillStyle = "#523017";
-            ctx.fillRect(screenX+2, screenY+2, TILE_SIZE-4, TILE_SIZE-4);
-            ctx.fillStyle = "#9a5d26";
-            ctx.fillRect(screenX, screenY, TILE_SIZE, 2);
-          }else if(t === TILE_VINE){
-            ctx.fillStyle = "#0b612f";
-            ctx.fillRect(screenX + TILE_SIZE/2 - 1, screenY, 2, TILE_SIZE);
-            ctx.fillStyle = "#1dd46a";
-            ctx.fillRect(screenX + TILE_SIZE/2 - 1, screenY+2, 1, TILE_SIZE-4);
-          }else if(t === TILE_GATE){
-            // poort-tegels
-            ctx.fillStyle = "#3b2613";
-            ctx.fillRect(screenX, screenY, TILE_SIZE, TILE_SIZE);
-            ctx.fillStyle = gateOpen ? "#3f7b4a" : "#7c5424";
-            ctx.fillRect(screenX+3, screenY+2, TILE_SIZE-6, TILE_SIZE-4);
-            // slotje
-            if(!gateOpen && y === GROUND_LEVEL-3){
-              ctx.fillStyle = "#ffd86b";
-              ctx.fillRect(screenX+5, screenY+4, 6, 5);
-              ctx.fillStyle = "#c28a32";
-              ctx.fillRect(screenX+6, screenY+6, 4, 1);
-            }
-          }
-        }
+        ctx.restore();
       }
     }
 
-    function drawMonkey(){
-      const sx = Math.floor(player.x - cameraX);
-      const sy = Math.floor(player.y);
-
+    function drawSecretIdol(){
+      if(secretIdol.found) return;
+      const sx = secretIdol.x;
+      const sy = secretIdol.y;
       ctx.save();
       ctx.imageSmoothingEnabled = false;
-
-      const bob = onVine
-        ? 0
-        : (Math.abs(player.vx) > 5 && player.onGround ? (Math.sin(anim.runPhase)*1)|0 : 0);
-
-      // klein offset voor animatie in benen
-      const legOffset = (Math.sin(anim.runPhase)*2)|0;
-
-      // lijf + hoofd (mooier aapje, meer detail)
-      // benen
-      ctx.fillStyle = "#8a451f";
-      ctx.fillRect(sx+3, sy+12+bob+legOffset, 3,3);
-      ctx.fillRect(sx+7, sy+12+bob-legOffset, 3,3);
-
-      // lijf
-      ctx.fillStyle = "#c46b32";
-      ctx.fillRect(sx+2, sy+7+bob, 10, 6);
-      // buik
-      ctx.fillStyle = "#f1c58a";
-      ctx.fillRect(sx+4, sy+8+bob, 6, 4);
-
-      // hoofd
-      ctx.fillStyle = "#c46b32";
-      ctx.fillRect(sx+1, sy+1+bob, 12, 8);
-
-      // gezicht
-      ctx.fillStyle = "#f1c58a";
-      ctx.fillRect(sx+3, sy+3+bob, 8, 5);
-
-      // oren
-      ctx.fillStyle = "#5b3416";
-      ctx.fillRect(sx,    sy+3+bob, 3,3);
-      ctx.fillRect(sx+10, sy+3+bob, 3,3);
-
-      // ogen + neus + mond
-      ctx.fillStyle = "#000";
-      ctx.fillRect(sx+5, sy+4+bob, 1,1);
-      ctx.fillRect(sx+8, sy+4+bob, 1,1);
-      ctx.fillRect(sx+6, sy+6+bob, 1,1);
-      ctx.fillStyle = "#5b3416";
-      ctx.fillRect(sx+5, sy+7+bob, 3,1);
-
-      // armen
-      ctx.fillStyle = "#c46b32";
-      ctx.fillRect(sx,   sy+7+bob, 3,4);
-      ctx.fillRect(sx+10,sy+7+bob, 3,4);
-
-      // staart (lichte krul)
-      ctx.fillStyle = "#c46b32";
-      ctx.fillRect(sx-1, sy+7+bob, 2,3);
-      ctx.fillRect(sx-2, sy+9+bob, 2,3);
-
-      ctx.restore();
-    }
-
-    function drawSecretStatue(){
-      if(secretStatue.found) return;
-      const sx = Math.floor(secretStatue.x - cameraX);
-      const sy = Math.floor(secretStatue.y);
-      ctx.save();
-      ctx.imageSmoothingEnabled = false;
-
-      // voetstuk
-      ctx.fillStyle = "#3a2c16";
-      ctx.fillRect(sx-2, sy+8, secretStatue.w+4, 4);
 
       // glow
       ctx.globalAlpha = 0.35;
       ctx.fillStyle = "#ffd86b";
       ctx.beginPath();
-      ctx.arc(sx+secretStatue.w/2, sy+secretStatue.h/2, 10, 0, Math.PI*2);
+      ctx.arc(sx+secretIdol.w/2, sy+secretIdol.h/2, 9, 0, Math.PI*2);
       ctx.fill();
       ctx.globalAlpha = 1;
 
       // idol
       ctx.fillStyle = "#ffd86b";
-      ctx.fillRect(sx, sy, secretStatue.w, secretStatue.h);
+      ctx.fillRect(sx+1, sy, secretIdol.w-2, secretIdol.h);
       ctx.fillStyle = "#ffefb0";
-      ctx.fillRect(sx+1, sy+1, secretStatue.w-2, secretStatue.h-4);
+      ctx.fillRect(sx+2, sy+2, secretIdol.w-4, secretIdol.h-4);
 
       ctx.fillStyle = "#c28a32";
-      ctx.fillRect(sx+2, sy+4, secretStatue.w-4, 2);
-      ctx.fillRect(sx+1, sy+6, 2,1);
-      ctx.fillRect(sx+secretStatue.w-3, sy+6, 2,1);
+      ctx.fillRect(sx+3, sy+5, secretIdol.w-6, 2);
 
       ctx.restore();
     }
 
-    function drawKey(){
-      if(key.collected) return;
-      const sx = Math.floor(key.x - cameraX);
-      const sy = Math.floor(key.y);
-      ctx.save();
-      ctx.imageSmoothingEnabled = false;
-
-      // simpele gouden sleutel
-      ctx.fillStyle = "#ffd86b";
-      ctx.fillRect(sx+2, sy+4, 6,2);      // steel
-      ctx.fillRect(sx,   sy+2, 4,4);      // kop
-      ctx.fillStyle = "#c28a32";
-      ctx.fillRect(sx+1, sy+3, 1,1);      // gat
-
-      ctx.restore();
-    }
-
-    function drawEnemies(){
-      for(const e of enemies){
-        if(!e.alive) continue;
-        const sx = Math.floor(e.x - cameraX);
-        const sy = Math.floor(e.y);
+    function drawSnakes(){
+      for(const s of snakes){
+        const sx = s.x;
+        const sy = s.y;
         ctx.save();
         ctx.imageSmoothingEnabled = false;
 
-        if(e.type === "snake"){
-          ctx.fillStyle = "#1a7b3a";
-          ctx.fillRect(sx, sy, e.w, e.h);
-          ctx.fillStyle = "#14552a";
-          ctx.fillRect(sx, sy+e.h-3, e.w, 3);
-          ctx.fillStyle = "#f7f2d0";
-          ctx.fillRect(sx+2, sy+1, 2,2);
-          ctx.fillRect(sx+e.w-4, sy+1, 2,2);
-        }
+        ctx.fillStyle = "#1a7b3a";
+        ctx.fillRect(sx, sy, s.w, s.h);
+        ctx.fillStyle = "#14552a";
+        ctx.fillRect(sx, sy+s.h-3, s.w, 3);
+        ctx.fillStyle = "#f7f2d0";
+        ctx.fillRect(sx+2, sy+1, 2,2);
+        ctx.fillRect(sx+s.w-4, sy+1, 2,2);
 
         ctx.restore();
       }
     }
 
-    function drawGoal(){
-      const sx = Math.floor(goal.x - cameraX);
-      const sy = Math.floor(goal.y);
+    function drawPlayer(){
+      const sx = Math.floor(player.x - player.w/2);
+      const sy = Math.floor(player.y - player.h/2);
+
       ctx.save();
       ctx.imageSmoothingEnabled = false;
 
-      // mast
-      ctx.fillStyle = "#deb887";
-      ctx.fillRect(sx+4, sy, 4, goal.h);
+      // simpel top-down aapje
 
-      // vlag
-      ctx.fillStyle = gateOpen ? "#9dff7a" : "#ffefb0";
-      ctx.fillRect(sx+8, sy+2, 12, 7);
+      // schaduw
+      ctx.fillStyle = "rgba(0,0,0,0.4)";
+      ctx.beginPath();
+      ctx.ellipse(player.x, player.y+6, 6, 3, 0, 0, Math.PI*2);
+      ctx.fill();
+
+      // benen
+      ctx.fillStyle = "#8a451f";
+      ctx.fillRect(sx+3, sy+8, 3,3);
+      ctx.fillRect(sx+7, sy+8, 3,3);
+
+      // buik / lijf
       ctx.fillStyle = "#c46b32";
-      ctx.fillRect(sx+9, sy+3, 3, 5);
+      ctx.fillRect(sx+2, sy+4, 10, 5);
+      ctx.fillStyle = "#f1c58a";
+      ctx.fillRect(sx+4, sy+5, 6, 3);
+
+      // hoofd
+      ctx.fillStyle = "#c46b32";
+      ctx.fillRect(sx+1, sy-1, 12, 7);
+      ctx.fillStyle = "#f1c58a";
+      ctx.fillRect(sx+3, sy+1, 8, 4);
+
+      // oren
+      ctx.fillStyle = "#5b3416";
+      ctx.fillRect(sx,    sy+1, 3,3);
+      ctx.fillRect(sx+10, sy+1, 3,3);
+
+      // gezicht
+      ctx.fillStyle = "#000";
+      ctx.fillRect(sx+5, sy+2, 1,1);
+      ctx.fillRect(sx+8, sy+2, 1,1);
+      ctx.fillRect(sx+6, sy+3, 1,1);
+      ctx.fillStyle = "#5b3416";
+      ctx.fillRect(sx+5, sy+4, 3,1);
+
+      // staart
+      ctx.fillStyle = "#c46b32";
+      ctx.fillRect(sx-1, sy+3, 2,3);
+      ctx.fillRect(sx-2, sy+5, 2,3);
 
       ctx.restore();
-    }
-
-    function drawBananas(){
-      for(const b of bananas){
-        if(b.collected) continue;
-        const sx = Math.floor(b.x - cameraX);
-        const sy = Math.floor(b.y);
-        ctx.save();
-        ctx.imageSmoothingEnabled = false;
-
-        ctx.fillStyle = "#ffeb7a";
-        ctx.fillRect(sx+2, sy+1, 6, 4);
-        ctx.fillRect(sx+3, sy,   4, 2);
-        ctx.fillStyle = "#c49b35";
-        ctx.fillRect(sx+2, sy+1, 1,1);
-        ctx.fillRect(sx+7, sy+4, 1,1);
-
-        ctx.restore();
-      }
-    }
-
-    function drawCbsCoins(){
-      for(const c of cbsCoins){
-        if(c.collected) continue;
-        const sx = Math.floor(c.x - cameraX);
-        const sy = Math.floor(c.y);
-        const r  = c.r;
-        ctx.save();
-        ctx.imageSmoothingEnabled = false;
-
-        ctx.beginPath();
-        ctx.arc(sx+r, sy+r, r, 0, Math.PI*2);
-        ctx.fillStyle = "#ffd86b";
-        ctx.fill();
-        ctx.beginPath();
-        ctx.arc(sx+r, sy+r, r-2, 0, Math.PI*2);
-        ctx.fillStyle = "#ffefb0";
-        ctx.fill();
-
-        ctx.fillStyle = "#c46b32";
-        ctx.font = "6px system-ui";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        ctx.fillText("C", sx+r, sy+r+0.5);
-
-        ctx.restore();
-      }
     }
 
     function drawOverlay(){
       if(secretMessageTimer > 0){
         ctx.save();
         ctx.globalAlpha = Math.min(1, secretMessageTimer / 2);
-        ctx.fillStyle = "rgba(0,0,0,0.6)";
+        ctx.fillStyle = "rgba(0,0,0,0.65)";
         ctx.fillRect(20, 20, canvas.width-40, 40);
         ctx.fillStyle = "#ffd86b";
         ctx.font = "10px system-ui";
         ctx.textAlign = "center";
-        ctx.fillText("Geheim gevonden! Later koppelen we dit aan de CBS earn.", canvas.width/2, 45);
-        ctx.restore();
-      }
-
-      if(keyMessageTimer > 0){
-        ctx.save();
-        ctx.globalAlpha = Math.min(1, keyMessageTimer / 2);
-        ctx.fillStyle = "rgba(0,0,0,0.7)";
-        ctx.fillRect(20, 50, canvas.width-40, 40);
-        ctx.fillStyle = "#ffd86b";
-        ctx.font = "10px system-ui";
-        ctx.textAlign = "center";
-        ctx.fillText("Sleutel gevonden! De poort aan het eind van het level staat nu open.", canvas.width/2, 75);
+        ctx.fillText("Geheime CBS-idol gevonden! Later koppelen we dit aan CBS earn.", canvas.width/2, 45);
         ctx.restore();
       }
 
       if(winMessageTimer > 0){
         ctx.save();
-        ctx.globalAlpha = 0.8;
+        ctx.globalAlpha = 0.85;
         ctx.fillStyle = "rgba(0,0,0,0.85)";
-        ctx.fillRect(20, 70, canvas.width-40, 60);
+        ctx.fillRect(20, 60, canvas.width-40, 60);
         ctx.fillStyle = "#9dff7a";
         ctx.font = "12px system-ui";
         ctx.textAlign = "center";
-        ctx.fillText("Level gehaald! Finish + geheim + collectibles worden later je earn.", canvas.width/2, 100);
-        ctx.restore();
-      }
-
-      if(deathFlashTimer > 0){
-        ctx.save();
-        ctx.globalAlpha = deathFlashTimer * 1.5;
-        ctx.fillStyle = "rgba(255,0,0,0.6)";
-        ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillText("Je hebt de CBS-tempel bereikt! Shards + geheim worden later je earn.", canvas.width/2, 90);
         ctx.restore();
       }
     }
@@ -1084,22 +751,18 @@
     function draw(){
       drawBackground();
       drawTiles();
-      drawBananas();
-      drawCbsCoins();
-      drawMonkey();
-      drawSecretStatue();
-      drawKey();
-      drawEnemies();
-      drawGoal();
+      drawShards();
+      drawSecretIdol();
+      drawSnakes();
+      drawPlayer();
       drawOverlay();
     }
 
-    // ===== LOOP =====
+    // ===== Game loop =====
     let lastTime = 0;
-
     function loop(ts){
       if(!lastTime) lastTime = ts;
-      const dt = Math.min(0.033, (ts-lastTime)/1000);
+      const dt = Math.min(0.033, (ts - lastTime)/1000);
       lastTime = ts;
 
       update(dt);
@@ -1107,49 +770,7 @@
       requestAnimationFrame(loop);
     }
 
-    function resetPlayer(){
-      player.x = 5*TILE_SIZE;
-      player.y = (GROUND_LEVEL-1)*TILE_SIZE;
-      player.vx = 0;
-      player.vy = 0;
-      player.dir = 1;
-      cameraX = 0;
-      onVine = false;
-      secretStatue.found = false;
-      secretMessageTimer = 0;
-      key.collected = false;
-      keyMessageTimer = 0;
-      gateOpen = false;
-      keyStatusEl.innerHTML = 'Sleutel: <b>nog niet gevonden</b>';
-      deathFlashTimer = 0;
-      goal.reached = false;
-      winMessageTimer = 0;
-      secretStatusEl.innerHTML = 'Geheim: <b>nog niet gevonden</b>';
-      enemies.forEach((e,i)=>{
-        e.alive = true;
-        if(i===0){ e.x = 30 * TILE_SIZE; }
-        else if(i===1){ e.x = 60 * TILE_SIZE; }
-        else if(i===2){ e.x = 104 * TILE_SIZE; }
-      });
-      bananas.forEach(b=>b.collected=false);
-      cbsCoins.forEach(c=>c.collected=false);
-      updateCollectHUD();
-    }
-
-    // vuurvliegjes initialiseren
-    for(let i=0;i<FIREFLY_COUNT;i++){
-      fireflies.push({
-        x: Math.random() * WORLD_WIDTH * TILE_SIZE,
-        y: 20 + Math.random() * 90,
-        baseY: 20 + Math.random() * 90,
-        amp: 6 + Math.random() * 10,
-        speed: 0.4 + Math.random() * 0.8,
-        phase: Math.random() * Math.PI * 2
-      });
-    }
-
     requestAnimationFrame(loop);
-    startBtn.addEventListener("click", resetPlayer);
   </script>
 </body>
 </html>
