@@ -2,142 +2,486 @@
 <html lang="en">
 <head>
   <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>CBS — Holders Mint</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>CBS Access Pass — Mint</title>
+  <meta name="description" content="Mint the experimental CBS Access Pass — a holder pass for future ecosystem rewards, testing access and community recognition.">
+  <meta name="theme-color" content="#d86f00">
   <link rel="icon" href="logo.png">
-  <meta name="theme-color" content="#0e0f12">
-  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    :root{
-      --bg:#0e0f12; --panel:#0f1218; --card:#151a23; --ink:#e9fbff; --muted:#a9c9d0;
-      --ok:#1fe39f; --warn:#ffb167; --err:#ff6b6b;
-      --gold1:#FFE08A; --gold2:#FFC24A; --gold3:#F39C12; --gold-glow:rgba(243,156,18,.45);
-      --ring:0 12px 30px rgba(0,0,0,.25), inset 0 0 0 1px rgba(255,255,255,.06);
+    :root {
+      --bg: #f5f0e8;
+      --bg-soft: #fffcf8;
+      --card: #ffffff;
+      --ink: #1a1a1a;
+      --muted: #555555;
+      --subtle: #666666;
+      --border: rgba(216, 111, 0, 0.12);
+      --accent: #d86f00;
+      --accent-dark: #b85a00;
+      --accent-soft: #fff8ef;
+      --accent-glow: rgba(216, 111, 0, 0.18);
+      --ok: #15803d;
+      --warn: #b45309;
+      --err: #b91c1c;
+      --radius: 16px;
+      --radius-sm: 12px;
+      --radius-banner: 20px;
+      --shadow: 0 1px 2px rgba(26, 26, 26, 0.04), 0 8px 24px rgba(216, 111, 0, 0.06);
+      --shadow-banner: 0 8px 28px rgba(216, 111, 0, 0.1);
+      --max: 720px;
     }
-    *{box-sizing:border-box}
-    body{
-      margin:0; background:
-        radial-gradient(900px 700px at 110% -10%,rgba(255,194,74,.10),transparent 60%),
-        radial-gradient(900px 700px at -10% 110%,rgba(243,156,18,.10),transparent 60%),
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(1100px 520px at 30% 0%, rgba(255, 179, 71, 0.16), transparent 60%),
+        radial-gradient(900px 420px at 85% 10%, rgba(237, 199, 137, 0.18), transparent 55%),
         var(--bg);
-      color:var(--ink); font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;
-      -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; overflow-x:hidden;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
     }
-    .wrap{max-width:1100px;margin:0 auto;padding:16px 14px 48px}
-    .banner{position:relative;overflow:hidden;border-radius:18px;border:1px solid rgba(255,255,255,.08);box-shadow:var(--ring);margin-bottom:14px;background:#0c1016}
-    .banner img{width:100%;height:auto;display:block;object-fit:cover;max-height:260px}
-    @media (max-width:640px){ .banner img{max-height:160px;object-position:center} }
-    .hero{display:grid;grid-template-columns:100px 1fr;gap:14px;align-items:center;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));border-radius:18px;box-shadow:var(--ring);border:1px solid rgba(255,255,255,.08);padding:14px}
-    .logoBox{width:100px;height:100px;border-radius:14px;overflow:hidden;background:#0c1016;display:grid;place-items:center}
-    .logo{width:100%;height:100%;object-fit:contain}
-    .title{margin:0;font:46px/1 "Bangers",system-ui;letter-spacing:.4px;background:linear-gradient(90deg,var(--gold2),#fff,var(--gold1),var(--gold3),var(--gold2));background-size:300% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:rainbow 8s linear infinite;text-shadow:0 3px 0 rgba(0,0,0,.25)}
-    .sub{margin:6px 0 0;color:var(--muted);font-weight:600}
-    @keyframes rainbow{0%{background-position:0% 0}100%{background-position:300% 0}}
-    .grid{display:grid;gap:14px;grid-template-columns:1fr}
-    @media (min-width:940px){ .grid{grid-template-columns:1fr 1fr} }
-    .card{background:linear-gradient(180deg,var(--card),rgba(21,26,35,.7));border:1px solid rgba(255,255,255,.08);border-radius:18px;box-shadow:var(--ring);padding:14px}
-    .span2{grid-column:1/-1}
-    .h3{margin:2px 0 10px;font:30px/1 "Bangers",system-ui;letter-spacing:.3px}
-    .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
-    .mono{font-family:ui-monospace,Menlo,Monaco,Consolas,"Courier New",monospace}
-    .btn,.badge{display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:12px 18px;border-radius:14px;cursor:pointer;user-select:none;background:linear-gradient(180deg,var(--gold1),var(--gold2));color:#3a2500;font-weight:900;text-decoration:none;border:1px solid rgba(255,255,255,.22);box-shadow:0 0 0 2px rgba(0,0,0,.10) inset,0 20px 40px var(--gold-glow),0 0 16px var(--gold-glow);transition:transform .05s ease,filter .15s ease,opacity .2s ease}
-    .btn:active,.badge:active{transform:translateY(1px)}
-    .btn.disabled,.badge.disabled{opacity:.55;cursor:not-allowed;filter:saturate(.5)}
-    .badge{padding:10px 14px;border-radius:12px}
-    input.read{width:100%;min-width:260px;padding:11px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:var(--ink);font-weight:700}
-    .meter{height:10px;border-radius:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);overflow:hidden}
-    .meter>i{display:block;height:100%;background:linear-gradient(90deg,#1fe39f,#7dffe9);width:0%}
-    .note{margin:8px 0 0;color:var(--muted)} .ok{color:var(--ok)} .warn{color:var(--warn)} .err{color:var(--err)}
-    .walletSelect{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .walletSelect select{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);color:var(--ink);padding:10px 12px;border-radius:12px;font-weight:700}
-    .tgIcon{width:22px;height:22px;display:inline-block}
+
+    a { color: var(--accent-dark); }
+
+    .page {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 24px 16px 56px;
+    }
+
+    .top-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .site-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .site-logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--border);
+      background: var(--card);
+    }
+
+    .site-brand {
+      font-weight: 800;
+      font-size: 1rem;
+      letter-spacing: -0.02em;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px 18px;
+      margin-bottom: 14px;
+    }
+
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: clamp(1.05rem, 3.5vw, 1.2rem);
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: -0.01em;
+    }
+
+    .card p {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.65;
+    }
+
+    .card p:last-child { margin-bottom: 0; }
+
+    .hero {
+      overflow: hidden;
+      border-radius: var(--radius-banner);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      margin-bottom: 14px;
+      background: var(--card);
+    }
+
+    .hero-banner-wrap {
+      position: relative;
+      background: #120c06;
+    }
+
+    .hero-banner {
+      width: 100%;
+      display: block;
+      height: clamp(140px, 40vw, 220px);
+      object-fit: cover;
+      object-position: center;
+    }
+
+    @media (min-width: 640px) {
+      .hero-banner {
+        height: auto;
+        max-height: 220px;
+        object-fit: contain;
+      }
+    }
+
+    .hero-logo {
+      position: absolute;
+      left: 14px;
+      bottom: 14px;
+      width: clamp(60px, 16vw, 84px);
+      height: clamp(60px, 16vw, 84px);
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid rgba(255, 255, 255, 0.92);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+      background: #000;
+    }
+
+    .hero-body {
+      padding: 18px 18px 20px;
+      text-align: center;
+    }
+
+    .hero-body h1 {
+      margin: 0 0 8px;
+      font-size: clamp(1.7rem, 6vw, 2.2rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #9a4f00 0%, #d86f00 45%, #e8820f 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .hero-lede {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.55;
+      max-width: 44ch;
+      margin-inline: auto;
+    }
+
+    .note-box {
+      background: var(--bg-soft);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 0.9rem;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .safety-box {
+      background: #fff8ef;
+      border: 1px solid rgba(216, 111, 0, 0.22);
+      border-radius: var(--radius-sm);
+      padding: 12px 14px;
+      font-size: 0.88rem;
+      color: var(--subtle);
+      line-height: 1.55;
+    }
+
+    .wallet-panel label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--subtle);
+      margin-bottom: 6px;
+    }
+
+    .wallet-select {
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-soft);
+      color: var(--ink);
+      font-size: 0.94rem;
+      font-weight: 600;
+      font-family: inherit;
+      margin-bottom: 10px;
+    }
+
+    .wallet-detected-hint {
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin: 0 0 10px;
+      line-height: 1.5;
+    }
+
+    .wallet-detected-hint.is-error {
+      color: var(--err);
+      font-weight: 600;
+    }
+
+    .mono {
+      font-family: ui-monospace, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.85rem;
+      word-break: break-all;
+    }
+
+    .status-line {
+      margin: 10px 0 0;
+      font-size: 0.9rem;
+      color: var(--muted);
+    }
+
+    .status-line.ok { color: var(--ok); font-weight: 600; }
+    .status-line.warn { color: var(--warn); font-weight: 600; }
+    .status-line.err { color: var(--err); font-weight: 600; }
+
+    .connected-box {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      background: var(--bg);
+      border: 1px solid var(--border);
+    }
+
+    .connected-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--subtle);
+      margin-bottom: 4px;
+    }
+
+    .meter {
+      height: 10px;
+      border-radius: 8px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      margin: 10px 0 8px;
+    }
+
+    .meter > i {
+      display: block;
+      height: 100%;
+      background: linear-gradient(90deg, #d86f00, #ffb347);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .detail-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    input.read {
+      flex: 1;
+      min-width: 0;
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-soft);
+      color: var(--ink);
+      font-weight: 600;
+      font-size: 0.82rem;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 18px;
+      border-radius: var(--radius-sm);
+      font-size: 0.94rem;
+      font-weight: 700;
+      text-decoration: none;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+      font-family: inherit;
+    }
+
+    .btn:active:not(:disabled) { transform: translateY(1px); }
+
+    .btn-primary {
+      background: linear-gradient(180deg, #e8820f 0%, var(--accent) 100%);
+      color: #fff;
+      box-shadow: 0 4px 14px var(--accent-glow);
+      border-color: var(--accent-dark);
+    }
+
+    .btn-primary:hover:not(:disabled) { color: #fff; }
+
+    .btn-secondary {
+      background: var(--card);
+      color: var(--ink);
+      border-color: var(--border);
+    }
+
+    .btn-secondary:hover { background: var(--bg-soft); color: var(--ink); }
+
+    .btn:disabled,
+    .btn.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .btn-sm {
+      padding: 9px 14px;
+      font-size: 0.86rem;
+    }
+
+    .mint-msg { margin-top: 10px; font-size: 0.9rem; color: var(--muted); }
+    .mint-msg.ok { color: var(--ok); font-weight: 600; }
+    .mint-msg.warn { color: var(--warn); font-weight: 600; }
+    .mint-msg.err { color: var(--err); font-weight: 600; }
+
+    .site-footer {
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--subtle);
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="banner"><img src="Banner-CBS-Coin.webp" alt="CBS Banner" loading="eager" decoding="async"></div>
-    <section class="hero">
-      <div class="logoBox"><img class="logo" src="logo.png" alt="CBS" onerror="this.style.visibility='hidden'"/></div>
-      <div>
-        <h1 class="title">CBS — Holders Mint</h1>
-        <p class="sub">Holders-only: need ≥ 1 CBS. No bot tax — only Solana network fees and manual AccessPass verify.</p>
+  <div class="page">
+    <div class="top-row">
+      <header class="site-header">
+        <img class="site-logo" src="logo.png" alt="CBS Coin" width="44" height="44">
+        <span class="site-brand">CBS Access Pass</span>
+      </header>
+      <a class="btn btn-secondary btn-sm" href="index.html">← Back to CBS Home</a>
+    </div>
+
+    <section class="hero" aria-labelledby="mint-title">
+      <div class="hero-banner-wrap">
+        <picture>
+          <source type="image/webp" srcset="Banner-CBS-Coin.webp">
+          <img class="hero-banner" src="Banner-CBS-Coin.jpg" alt="CBS Coin banner" loading="eager" decoding="async">
+        </picture>
+        <img class="hero-logo" src="logo.png" alt="" width="84" height="84" aria-hidden="true">
+      </div>
+      <div class="hero-body">
+        <h1 id="mint-title">CBS Access Pass</h1>
+        <p class="hero-lede">An experimental CBS holder pass for future ecosystem rewards, testing access and community recognition.</p>
       </div>
     </section>
 
-    <div class="grid" style="margin-top:14px;">
-      <section class="card">
-        <h2 class="h3">Wallet</h2>
-        <div class="row walletSelect">
-          <select id="walletPicker" aria-label="Choose wallet">
-            <option value="auto">Auto (Any Wallet)</option>
-            <option value="phantom">Phantom</option>
-            <option value="solflare">Solflare</option>
-            <option value="backpack">Backpack</option>
-            <option value="glow">Glow</option>
-            <option value="generic">Generic (window.solana)</option>
-          </select>
-          <button id="btnConnect" class="btn">Connect</button>
-          <span id="who" class="note mono">—</span>
-        </div>
-        <div class="row" style="margin-top:10px;align-items:center">
-          <span id="mintBadge" class="badge" title="Mint now">CBS token mint</span>
-          <input id="cbsField" class="read mono" readonly style="flex:1;min-width:220px">
-        </div>
-        <p id="mintMsg" class="note" style="margin-top:6px;"></p>
-        <p class="note" style="margin-top:8px;">Your CBS balance: <b id="cbsBal">—</b> CBS</p>
-        <p id="holderMsg" class="note warn">Connect your wallet — AccessPass verification is for holders (≥ 1 CBS).</p>
-        <p class="note"><a id="cbsSol" class="mono" target="_blank" rel="noreferrer">View CBS on Solscan</a></p>
-      </section>
+    <section class="card">
+      <p>CBS is now built more openly. Access Pass holders may receive future recognition or ecosystem benefits, but no financial return is promised.</p>
+      <div class="note-box" style="margin-top:10px;">
+        Holders need ≥ 1 CBS in the connected wallet to mint. You only pay Solana network fees — no platform mint fee.
+      </div>
+    </section>
 
-      <section class="card">
-        <h2 class="h3">Drop Status</h2>
-        <div class="row">
-          <span class="badge" style="cursor:default">Candy Machine</span>
-          <input id="cmField" class="read mono" readonly>
+    <section class="card" aria-labelledby="wallet-heading">
+      <h2 id="wallet-heading">Wallet</h2>
+      <p>Choose an installed Solana wallet, then connect. Your address and CBS balance will appear below.</p>
+      <div class="wallet-panel">
+        <label id="walletSelectLabel" for="walletSelect">Choose wallet</label>
+        <p id="walletDetectedHint" class="wallet-detected-hint" hidden></p>
+        <select id="walletSelect" class="wallet-select" aria-labelledby="walletSelectLabel"></select>
+        <div class="btn-row" style="margin-top:0;">
+          <button id="btnConnect" type="button" class="btn btn-primary">Connect Wallet</button>
         </div>
-        <div class="meter" style="margin:10px 0 8px;"><i id="meterFill"></i></div>
-        <p class="note">Minted: <b id="minted">0</b> / <b id="available">0</b></p>
-        <div class="row" style="margin-top:8px;">
-          <button id="btnRefresh" class="btn">Refresh</button>
-          <a id="cmSol" class="btn" target="_blank" rel="noreferrer">Open in Solscan</a>
-        </div>
-      </section>
+      </div>
+      <div id="connectedBox" class="connected-box" hidden>
+        <div class="connected-label">Connected wallet</div>
+        <div id="who" class="mono">—</div>
+      </div>
+      <p id="holderMsg" class="status-line warn">Select a wallet and connect to continue.</p>
+      <p class="status-line" style="margin-top:8px;">Your CBS balance: <strong id="cbsBal">—</strong> CBS</p>
+      <p class="status-line" style="margin-top:6px;">
+        <a id="cbsSol" class="mono" target="_blank" rel="noopener noreferrer">View CBS token on Solscan</a>
+      </p>
+    </section>
 
-      <section class="card span2">
-        <h2 class="h3">Community</h2>
-        <div class="row" style="gap:12px;">
-          <!-- Nieuwe flow: naar CBS groep + instructie om @smitske te taggen -->
-          <a id="tgButton" class="btn disabled"
-             href="https://t.me/CBS_Coin"
-             target="_blank"
-             rel="noreferrer"
-             aria-disabled="true"
-             title="Connect wallet with ≥1 CBS, then tag @smitske in the CBS group and say it's about AccessPass.">
-            <svg class="tgIcon" viewBox="0 0 24 24" aria-hidden="true">
-              <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="var(--gold1)"/><stop offset="60%" stop-color="var(--gold2)"/><stop offset="100%" stop-color="var(--gold3)"/></linearGradient></defs>
-              <circle cx="12" cy="12" r="11" fill="url(#g)"/>
-              <path d="M17.9 7.3c.2-.9-.6-1.2-1.2-1l-12 4.6c-.8.3-.8.8-.1 1l3.1 1c.3.1.6 0 .8-.2l6.1-3.8c.3-.2.6 0 .4.2l-4.9 4.6c-.2.2-.2.5 0 .7l3.6 2.7c.3.2.7.1.8-.2l2.3-9.6z" fill="#1B2330"/>
-            </svg>
-            AccessPass holder? Open the CBS group, tag <span class="mono">@smitske</span> and say it’s about AccessPass — the dev will DM you back to verify.
-          </a>
-        </div>
-      </section>
-    </div>
+    <section class="card" aria-labelledby="drop-heading">
+      <h2 id="drop-heading">Drop status</h2>
+      <label class="connected-label" for="cmField">Candy Machine</label>
+      <input id="cmField" class="read mono" readonly aria-label="Candy Machine address">
+      <div class="meter" aria-hidden="true"><i id="meterFill"></i></div>
+      <p>Minted: <strong id="minted">0</strong> / <strong id="available">0</strong></p>
+      <div class="btn-row">
+        <button id="btnRefresh" type="button" class="btn btn-secondary btn-sm">Refresh status</button>
+        <a id="cmSol" class="btn btn-secondary btn-sm" target="_blank" rel="noopener noreferrer">Open in Solscan</a>
+      </div>
+      <label class="connected-label" for="cbsField" style="margin-top:12px;display:block;">CBS token mint</label>
+      <input id="cbsField" class="read mono" readonly aria-label="CBS token mint address">
+    </section>
+
+    <section class="card">
+      <div class="btn-row" style="margin-top:0;">
+        <button id="btnMint" type="button" class="btn btn-primary" disabled>Mint Access Pass</button>
+      </div>
+      <p id="mintMsg" class="mint-msg"></p>
+    </section>
+
+    <section class="card">
+      <div class="safety-box">
+        <strong>Safety note:</strong> This mint is experimental. Always verify the website, wallet transaction, and mint details before confirming.
+      </div>
+    </section>
+
+    <footer class="site-footer">
+      <p>© CBS Coin · <a href="index.html">Home</a> · <a href="https://tools.cbs-coin.com" target="_blank" rel="noopener noreferrer">CBS Tools</a></p>
+    </footer>
   </div>
 
   <script type="module">
-    /* === Imports (VERSIES VASTPINNEN!) === */
+    /* === Imports (pinned versions) === */
+    import {
+      WALLET_PK_ERROR,
+      SIGNING_ERROR,
+      discoverAllWallets,
+      getWalletById,
+      getWalletProvider,
+      subscribeWalletUpdates,
+      assertWalletCanSign,
+      connectAndNormalizeAddress,
+      inspectProviderPublicKey,
+      getProviderAddress,
+    } from "./libs/cbs-wallets.js";
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
     import { publicKey as umiPk, generateSigner, some } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
     import { mplCandyMachine, fetchCandyMachine, fetchCandyGuard, mintV2 } from "https://esm.sh/@metaplex-foundation/mpl-candy-machine@6.1.0";
     import { mplTokenMetadata } from "https://esm.sh/@metaplex-foundation/mpl-token-metadata@3.2.0";
-    import { setComputeUnitLimit, setComputeUnitPrice } from "https://esm.sh/@metaplex-foundation/mpl-toolbox@0.10.0";  /* <-- HIER de fix */
+    import { setComputeUnitLimit, setComputeUnitPrice } from "https://esm.sh/@metaplex-foundation/mpl-toolbox@0.10.0";
     import { Connection, PublicKey, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.95.3";
     import bs58 from "https://esm.sh/bs58@5.0.0";
 
-    /* ===== Config ===== */
+    /* ===== Config (unchanged) ===== */
     const HELIUS_KEY   = "0eb350f0-a032-468c-8b03-b8b079e09611";
     const RPC_URL      = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
 
@@ -146,98 +490,227 @@
 
     const CBS_THRESHOLD = 1;
     const MIN_SOL_RENT  = 0.02;
-    const LS_LAST_WALLET = "cbs_last_wallet";
+    const PREFERRED_WALLET_KEY = "preferredWallet";
 
-    /* ===== Helpers / UI ===== */
-    const $ = (id)=>document.getElementById(id);
-    const setTxt = (el,v)=>{ if(typeof el==='string') el=$(el); if(!el) return; el.textContent=v; };
-    const fmt = (n)=>Number(n ?? 0).toLocaleString("en-US");
-    const setNote = (cls, txt) => { const el = $("mintMsg"); if (!el) return; el.className = "note " + (cls||""); el.textContent = txt||""; };
+    /* ===== UI helpers ===== */
+    const $ = (id) => document.getElementById(id);
+    const setTxt = (el, v) => { if (typeof el === "string") el = $(el); if (!el) return; el.textContent = v; };
+    const fmt = (n) => Number(n ?? 0).toLocaleString("en-US");
 
-    const setDmEnabled = (flag)=>{
-      const a = $("tgButton");
-      if(!a) return;
-      if(flag){
-        a.classList.remove("disabled");
-        a.removeAttribute("aria-disabled");
-        a.style.pointerEvents="auto";
-        a.title="Verified holder — open the CBS group, tag @smitske and say it’s about AccessPass.";
-      }
-      else {
-        a.classList.add("disabled");
-        a.setAttribute("aria-disabled","true");
-        a.style.pointerEvents="none";
-        a.title="Connect wallet with ≥1 CBS to unlock AccessPass verification.";
-      }
+    const setNote = (cls, txt) => {
+      const el = $("mintMsg");
+      if (!el) return;
+      el.className = "mint-msg " + (cls || "");
+      el.textContent = txt || "";
+    };
+
+    const setHolderMsg = (cls, txt) => {
+      const el = $("holderMsg");
+      if (!el) return;
+      el.className = "status-line " + (cls || "");
+      el.textContent = txt;
+    };
+
+    const setMintButtonState = () => {
+      const btn = $("btnMint");
+      if (!btn) return;
+      btn.disabled = !connected;
     };
 
     $("cbsField")?.setAttribute("value", CBS_MINT_ID);
-    $("cbsSol")?.setAttribute("href","https://solscan.io/token/"+CBS_MINT_ID);
+    $("cbsSol")?.setAttribute("href", "https://solscan.io/token/" + CBS_MINT_ID);
     $("cmField")?.setAttribute("value", CANDY_MACHINE_ID);
-    $("cmSol")?.setAttribute("href","https://solscan.io/account/"+CANDY_MACHINE_ID);
+    $("cmSol")?.setAttribute("href", "https://solscan.io/account/" + CANDY_MACHINE_ID);
 
-    /* ===== Chain ===== */
+    /* ===== Token Builder wallet UI + connect (main.ts flow) ===== */
+    const walletSelect = $("walletSelect");
+    const walletSelectLabel = $("walletSelectLabel");
+    const walletDetectedHint = $("walletDetectedHint");
+    let pendingWalletId = "";
+    let connectedAddress = "";
+    let connectedProvider = null;
+
+    function getSelectedWalletId() {
+      return walletSelect?.value || pendingWalletId || localStorage.getItem(PREFERRED_WALLET_KEY) || "";
+    }
+
+    function clearWalletConnection() {
+      connectedProvider = null;
+      connectedAddress = "";
+      connected = false;
+      $("btnConnect").textContent = "Connect Wallet";
+      $("connectedBox")?.setAttribute("hidden", "");
+      setTxt("who", "—");
+      setMintButtonState();
+    }
+
+    function refreshWalletSelect() {
+      const wallets = discoverAllWallets();
+      const preferred = localStorage.getItem(PREFERRED_WALLET_KEY);
+
+      if (walletSelect) walletSelect.innerHTML = "";
+
+      if (!wallets.length) {
+        walletSelect?.style.setProperty("display", "none");
+        walletSelectLabel?.style.setProperty("display", "none");
+        if (walletDetectedHint) {
+          walletDetectedHint.hidden = false;
+          walletDetectedHint.className = "wallet-detected-hint is-error";
+          walletDetectedHint.textContent =
+            "No Solana wallet detected. Install Phantom, Solflare, Backpack, Glow, or MetaMask with Solana support enabled.";
+        }
+        $("btnConnect").disabled = true;
+        return;
+      }
+
+      $("btnConnect").disabled = false;
+
+      for (const wallet of wallets) {
+        const option = document.createElement("option");
+        option.value = wallet.id;
+        option.textContent = wallet.name;
+        walletSelect?.appendChild(option);
+      }
+
+      pendingWalletId =
+        preferred && wallets.some((wallet) => wallet.id === preferred)
+          ? preferred
+          : wallets[0].id;
+
+      if (walletSelect) walletSelect.value = pendingWalletId;
+
+      const multiple = wallets.length > 1;
+      walletSelect?.style.setProperty("display", multiple ? "" : "none");
+      walletSelectLabel?.style.setProperty("display", multiple ? "" : "none");
+
+      if (walletDetectedHint) {
+        if (multiple) {
+          walletDetectedHint.hidden = true;
+          walletDetectedHint.className = "wallet-detected-hint";
+          walletDetectedHint.textContent = "";
+        } else {
+          walletDetectedHint.hidden = false;
+          walletDetectedHint.className = "wallet-detected-hint";
+          walletDetectedHint.textContent = `Wallet: ${wallets[0].name}`;
+        }
+      }
+    }
+
+    function bindUmiToProvider(provider) {
+      umi = createUmi(RPC_URL).use(mplCandyMachine()).use(mplTokenMetadata()).use(walletAdapterIdentity(provider));
+      connectedProvider = provider;
+    }
+
+    async function connectWallet() {
+      const walletId = getSelectedWalletId();
+      const provider = getWalletProvider(walletId);
+      const walletMeta = getWalletById(walletId);
+      const btn = $("btnConnect");
+
+      if (!provider || typeof provider.connect !== "function") {
+        setHolderMsg("err", "Wallet not found. Refresh the page after installing or unlocking your wallet.");
+        return;
+      }
+
+      try {
+        assertWalletCanSign(provider);
+      } catch {
+        setHolderMsg("err", SIGNING_ERROR);
+        return;
+      }
+
+      if (btn) {
+        btn.disabled = true;
+        btn.textContent = "Connecting…";
+      }
+
+      try {
+        const existingAddress = getProviderAddress(provider);
+        if (connectedAddress && existingAddress && connectedAddress !== existingAddress) {
+          clearWalletConnection();
+        }
+
+        const address = await connectAndNormalizeAddress(provider, {
+          storedAddress: connectedAddress,
+          forceReconnect: false,
+        });
+
+        bindUmiToProvider(provider);
+        connected = true;
+        connectedAddress = address;
+        pendingWalletId = walletId;
+        localStorage.setItem(PREFERRED_WALLET_KEY, walletId);
+        localStorage.setItem("walletConnected", "true");
+
+        inspectProviderPublicKey(provider);
+
+        $("connectedBox")?.removeAttribute("hidden");
+        setTxt("who", address);
+        setHolderMsg("ok", `Connected as ${address.slice(0, 4)}…${address.slice(-4)}`);
+        btn.textContent = "Wallet Connected";
+        setMintButtonState();
+
+        if (CM_COLLECTION_PK) {
+          HAS_COLLECTION_NFT = await checkHolderNft(address);
+        }
+        await updateHolderState();
+      } catch (error) {
+        console.error(error);
+        clearWalletConnection();
+        const message =
+          error?.code === 4001
+            ? "Wallet connection was cancelled."
+            : error?.message === WALLET_PK_ERROR
+              ? WALLET_PK_ERROR
+              : error?.message || "Wallet connection failed. Make sure your wallet is unlocked and try again.";
+        setHolderMsg("err", message);
+      } finally {
+        if (btn) btn.disabled = false;
+      }
+    }
+
+    walletSelect?.addEventListener("change", () => {
+      const nextId = walletSelect.value;
+      if (nextId !== pendingWalletId && connectedAddress) clearWalletConnection();
+      pendingWalletId = nextId;
+    });
+
+    /* ===== Chain (mint logic unchanged) ===== */
     const connection = new Connection(RPC_URL, "confirmed");
-    const umi = createUmi(RPC_URL).use(mplCandyMachine()).use(mplTokenMetadata());
-    let connected=false, SOLD_OUT=false;
-    let HAS_COLLECTION_NFT=false;
+    let umi = createUmi(RPC_URL).use(mplCandyMachine()).use(mplTokenMetadata());
+    let connected = false;
+    let SOLD_OUT = false;
+    let HAS_COLLECTION_NFT = false;
 
     let CANDY_GUARD_PK = null;
     let CM_COLLECTION_PK = null;
     let CM_AUTHORITY_PK  = null;
 
-    function candidates(){
-      const w = window, arr=[];
-      if (w?.phantom?.solana)   arr.push(w.phantom.solana);
-      if (w?.solflare)          arr.push(w.solflare);
-      if (w?.backpack?.solana)  arr.push(w.backpack.solana);
-      if (w?.glow?.solana)      arr.push(w.glow.solana);
-      if (w?.exodus?.solana)    arr.push(w.exodus.solana);
-      if (w?.braveSolana)       arr.push(w.braveSolana);
-      if (w?.jupiter?.solana)   arr.push(w.jupiter.solana);
-      if (w?.solana)            arr.push(w.solana);
-      return [...new Set(arr.filter(Boolean))];
-    }
-    function pickProvider(kind){
-      const list = candidates();
-      if (kind === "auto") return list.find(p => typeof p.connect==="function" && (p.isConnected || p.publicKey || p.signTransaction));
-      if (kind === "phantom")   return window?.phantom?.solana || (window?.solana?.isPhantom ? window.solana : null);
-      if (kind === "solflare")  return window?.solflare || (window?.solana?.isSolflare ? window.solana : null);
-      if (kind === "backpack")  return window?.backpack?.solana || (window?.solana?.isBackpack ? window.solana : null);
-      if (kind === "glow")      return window?.glow?.solana || (window?.solana?.isGlow ? window.solana : null);
-      if (kind === "generic")   return window?.solana || window?.phantom?.solana || null;
-      return null;
-    }
-    function installUrl(kind){
-      if (kind === "phantom")  return "https://phantom.app/download";
-      if (kind === "solflare") return "https://solflare.com/download";
-      if (kind === "backpack") return "https://www.backpack.app/download";
-      if (kind === "glow")     return "https://glow.app/";
-      return "https://phantom.app/download";
-    }
-
-    async function checkHolderNft(ownerStr){
-      try{
+    async function checkHolderNft(ownerStr) {
+      try {
         if (!ownerStr || !CM_COLLECTION_PK) return false;
-        const body = { jsonrpc:"2.0", id:"cbs-das", method:"getAssetsByOwner", params:{ ownerAddress: ownerStr, page:1, limit:100 } };
-        const res = await fetch(RPC_URL,{ method:"POST", headers:{ "content-type":"application/json" }, body: JSON.stringify(body) });
+        const body = { jsonrpc: "2.0", id: "cbs-das", method: "getAssetsByOwner", params: { ownerAddress: ownerStr, page: 1, limit: 100 } };
+        const res = await fetch(RPC_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
         const data = await res.json();
         const items = data?.result?.items || [];
         const collectionPkStr = CM_COLLECTION_PK.toString?.() || String(CM_COLLECTION_PK);
-        return items.some(it => Array.isArray(it?.grouping) && it.grouping.some(([k,v]) => k==="collection" && v===collectionPkStr));
-      } catch { return false; }
+        return items.some((it) => Array.isArray(it?.grouping) && it.grouping.some(([k, v]) => k === "collection" && v === collectionPkStr));
+      } catch {
+        return false;
+      }
     }
 
-    function setSoldUI(minted, available){
-      setTxt("minted", fmt(minted)); setTxt("available", fmt(available));
-      const pct = (available>0) ? Math.min(100, Math.max(0,(minted/available)*100)) : 0;
-      $("meterFill").style.width = pct.toFixed(2)+"%";
-      SOLD_OUT = (available>0 && minted >= available);
-      if (SOLD_OUT) setNote("warn","Sold out");
+    function setSoldUI(minted, available) {
+      setTxt("minted", fmt(minted));
+      setTxt("available", fmt(available));
+      const pct = (available > 0) ? Math.min(100, Math.max(0, (minted / available) * 100)) : 0;
+      $("meterFill").style.width = pct.toFixed(2) + "%";
+      SOLD_OUT = (available > 0 && minted >= available);
+      if (SOLD_OUT) setNote("warn", "Sold out");
     }
 
-    async function refresh(){
-      try{
+    async function refresh() {
+      try {
         const cm = await fetchCandyMachine(umi, umiPk(CANDY_MACHINE_ID));
         CANDY_GUARD_PK   = cm.mintAuthority;
         CM_COLLECTION_PK = cm.collectionMint;
@@ -250,100 +723,95 @@
           HAS_COLLECTION_NFT = await checkHolderNft(ownerStr);
           await updateHolderState();
         }
-      }catch(e){ console.error(e); setNote("err","Failed to load drop data."); }
+      } catch (e) {
+        console.error(e);
+        setNote("err", "Failed to load drop data.");
+      }
     }
 
-    async function buildMintArgs(){
-      try{
+    async function buildMintArgs() {
+      try {
         if (!CANDY_GUARD_PK) return {};
         const guard = await fetchCandyGuard(umi, CANDY_GUARD_PK);
-        const args={};
+        const args = {};
         if (guard.guards?.tokenGate?.__option === "Some") args.tokenGate = some({ mint: umiPk(CBS_MINT_ID) });
         if (guard.guards?.mintLimit?.__option === "Some") {
           const id = Number(guard.guards.mintLimit.value?.id ?? 1);
           args.mintLimit = some({ id });
         }
         return args;
-      } catch { return {}; }
-    }
-
-    async function connectWallet(){
-      try{
-        const kind = $("walletPicker")?.value ?? "auto";
-        const provider = pickProvider(kind);
-        if (!provider){
-          $("holderMsg").className="note err";
-          setTxt("holderMsg","No wallet provider found. Install a wallet and try again.");
-          if (kind!=="auto") window.open(installUrl(kind), "_blank");
-          return;
-        }
-        let res;
-        try { res = await provider.connect?.({ onlyIfTrusted:false }); } catch { res = await provider.connect?.(); }
-        const pubkey = provider.publicKey || res?.publicKey;
-        const pkb58  = pubkey?.toBase58?.() || pubkey?.toString?.() || "";
-        if (!pkb58){ setTxt("who","—"); $("holderMsg").className="note err"; setTxt("holderMsg","Wallet connect failed."); setDmEnabled(false); return; }
-        setTxt("who","Connected: "+pkb58.slice(0,6)+"…"+pkb58.slice(-6));
-        localStorage.setItem(LS_LAST_WALLET, kind);
-        umi.use(walletAdapterIdentity(provider));
-        connected = true;
-        await updateHolderState();
-        if (CM_COLLECTION_PK) { HAS_COLLECTION_NFT = await checkHolderNft(pkb58); await updateHolderState(); }
-      }catch(e){ console.error(e); setTxt("who","—"); $("holderMsg").className="note err"; setTxt("holderMsg","Wallet connect failed."); setDmEnabled(false); }
-    }
-
-    async function getCbsBalance(ownerPk){
-      const res = await connection.getParsedTokenAccountsByOwner(ownerPk, { mint: new PublicKey(CBS_MINT_ID) });
-      let total=0; for (const acc of (res.value||[])){ const ui = acc.account?.data?.parsed?.info?.tokenAmount?.uiAmount; total += Number(ui||0); }
-      return total;
-    }
-    async function getSolBalance(ownerPk){ const lamports = await connection.getBalance(ownerPk,"confirmed"); return lamports / LAMPORTS_PER_SOL; }
-
-    async function updateHolderState(){
-      if (!umi?.identity?.publicKey){ setDmEnabled(false); return; }
-      try{
-        const owner = new PublicKey(umi.identity.publicKey);
-        const [cbs, sol] = await Promise.all([ getCbsBalance(owner), getSolBalance(owner) ]);
-        setTxt("cbsBal", fmt(cbs));
-        const hasCBS = cbs >= CBS_THRESHOLD;
-        const hasSOL = sol >= MIN_SOL_RENT;
-        const dmUnlock = hasCBS || HAS_COLLECTION_NFT;
-        setDmEnabled(dmUnlock);
-        if (hasCBS && hasSOL){
-          $("holderMsg").className="note ok";
-          setTxt("holderMsg","CBS OK, you can mint ✅ — AccessPass DM check available.");
-        }
-        else if (hasCBS && !hasSOL){
-          $("holderMsg").className="note warn";
-          setTxt("holderMsg","Holder detected — AccessPass DM check available, but add ~0.02 SOL to mint.");
-        }
-        else {
-          $("holderMsg").className="note warn";
-          setTxt("holderMsg","Need ≥ 1 CBS to unlock AccessPass verification & mint.");
-        }
-      }catch(e){
-        console.error(e);
-        $("holderMsg").className="note err";
-        setTxt("holderMsg","Could not read wallet balances.");
-        setDmEnabled(false);
+      } catch {
+        return {};
       }
     }
 
-    function showTxLink(signature,label="View tx"){
-      if (!signature || typeof signature!=="string") return;
-      const a = document.createElement("a");
-      a.href="https://solscan.io/tx/"+signature; a.target="_blank"; a.rel="noreferrer";
-      a.textContent=label; a.style.marginLeft="8px"; $("mintMsg").appendChild(a);
+    async function getCbsBalance(ownerPk) {
+      const res = await connection.getParsedTokenAccountsByOwner(ownerPk, { mint: new PublicKey(CBS_MINT_ID) });
+      let total = 0;
+      for (const acc of (res.value || [])) {
+        const ui = acc.account?.data?.parsed?.info?.tokenAmount?.uiAmount;
+        total += Number(ui || 0);
+      }
+      return total;
     }
 
-    async function doMint(){
-      try{
-        setNote("", "");
-        if(!connected){ setNote("warn","Connect wallet first."); return; }
-        if(SOLD_OUT){ setNote("warn","Sold out."); return; }
+    async function getSolBalance(ownerPk) {
+      const lamports = await connection.getBalance(ownerPk, "confirmed");
+      return lamports / LAMPORTS_PER_SOL;
+    }
+
+    async function updateHolderState() {
+      if (!umi?.identity?.publicKey) {
+        setMintButtonState();
+        return;
+      }
+      try {
         const owner = new PublicKey(umi.identity.publicKey);
-        const [cbs, sol] = await Promise.all([ getCbsBalance(owner), getSolBalance(owner) ]);
-        if (cbs < CBS_THRESHOLD){ setNote("warn","Guard: wallet needs ≥ 1 CBS."); return; }
-        if (sol < MIN_SOL_RENT){ setNote("warn",`Not enough SOL for rent (~${MIN_SOL_RENT} SOL).`); return; }
+        const [cbs, sol] = await Promise.all([getCbsBalance(owner), getSolBalance(owner)]);
+        setTxt("cbsBal", fmt(cbs));
+        const hasCBS = cbs >= CBS_THRESHOLD;
+        const hasSOL = sol >= MIN_SOL_RENT;
+
+        if (hasCBS && hasSOL) {
+          setHolderMsg("ok", "Wallet ready — you meet the CBS holder requirement and can mint.");
+        } else if (hasCBS && !hasSOL) {
+          setHolderMsg("warn", `Holder detected, but add ~${MIN_SOL_RENT} SOL for network fees before minting.`);
+        } else if (HAS_COLLECTION_NFT) {
+          setHolderMsg("warn", "Collection pass detected, but mint still requires ≥ 1 CBS in this wallet.");
+        } else {
+          setHolderMsg("warn", "This wallet needs ≥ 1 CBS to mint the Access Pass.");
+        }
+        setMintButtonState();
+      } catch (e) {
+        console.error(e);
+        setHolderMsg("err", "Could not read wallet balances.");
+        setMintButtonState();
+      }
+    }
+
+    function showTxLink(signature, label = "View tx") {
+      if (!signature || typeof signature !== "string") return;
+      const a = document.createElement("a");
+      a.href = "https://solscan.io/tx/" + signature;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.textContent = label;
+      a.style.marginLeft = "8px";
+      $("mintMsg").appendChild(a);
+    }
+
+    async function doMint() {
+      try {
+        setNote("", "");
+        if (!connected) { setNote("warn", "Connect wallet first."); return; }
+        if (SOLD_OUT) { setNote("warn", "Sold out."); return; }
+        const owner = new PublicKey(umi.identity.publicKey);
+        const [cbs, sol] = await Promise.all([getCbsBalance(owner), getSolBalance(owner)]);
+        if (cbs < CBS_THRESHOLD) { setNote("warn", "Guard: wallet needs ≥ 1 CBS."); return; }
+        if (sol < MIN_SOL_RENT) { setNote("warn", `Not enough SOL for rent (~${MIN_SOL_RENT} SOL).`); return; }
+
+        const btn = $("btnMint");
+        if (btn) { btn.disabled = true; btn.textContent = "Minting…"; }
 
         setNote("", "Sending mint…");
         await refresh();
@@ -359,10 +827,10 @@
           ...(CM_AUTHORITY_PK  ? { collectionUpdateAuthority: CM_AUTHORITY_PK } : {}),
           ...(Object.keys(mintArgs).length ? { mintArgs } : {}),
         })
-        .prepend(setComputeUnitLimit(umi, { units: 800_000 }))
-        .prepend(setComputeUnitPrice(umi, { microLamports: 5_000 }));
+          .prepend(setComputeUnitLimit(umi, { units: 800_000 }))
+          .prepend(setComputeUnitPrice(umi, { microLamports: 5_000 }));
 
-        const normalizeSig = (res)=>{
+        const normalizeSig = (res) => {
           if (!res) return "";
           if (typeof res === "string") return res;
           if (Array.isArray(res) && typeof res[0] === "string") return res[0];
@@ -370,39 +838,58 @@
           return "";
         };
 
-        let sigStr="";
-        try{
-          const res = await builder.sendAndConfirm(umi, { confirm:{ commitment:"confirmed" }, send:{ maxRetries:3 } });
+        let sigStr = "";
+        try {
+          const res = await builder.sendAndConfirm(umi, { confirm: { commitment: "confirmed" }, send: { maxRetries: 3 } });
           sigStr = normalizeSig(res);
-        }catch(err1){
+        } catch (err1) {
           const m = (err1?.cause?.message || err1?.message || "").toLowerCase();
-          if (m.includes("blockhash not found")){
-            try{
+          if (m.includes("blockhash not found")) {
+            try {
               await umi.rpc.getLatestBlockhash();
-              const res2 = await builder.sendAndConfirm(umi, { confirm:{ commitment:"confirmed" }, send:{ maxRetries:3 } });
+              const res2 = await builder.sendAndConfirm(umi, { confirm: { commitment: "confirmed" }, send: { maxRetries: 3 } });
               sigStr = normalizeSig(res2);
-            }catch(err2){
+            } catch (err2) {
               console.error("mint retry error:", err2);
               const raw = (err2?.cause?.logs?.[0] || err2?.cause?.message || err2?.message || "").toString();
-              setNote("err", raw ? ("Mint failed: " + raw.slice(0,220)) : "Mint failed."); showTxLink(sigStr); return;
+              setNote("err", raw ? ("Mint failed: " + raw.slice(0, 220)) : "Mint failed.");
+              showTxLink(sigStr);
+              return;
             }
-          }else{
+          } else {
             console.error("mint error:", err1);
             const raw = (err1?.cause?.logs?.[0] || err1?.cause?.message || err1?.message || "").toString();
-            setNote("err", raw ? ("Mint failed: " + raw.slice(0,220)) : "Mint failed."); showTxLink(sigStr); return;
+            setNote("err", raw ? ("Mint failed: " + raw.slice(0, 220)) : "Mint failed.");
+            showTxLink(sigStr);
+            return;
           }
         }
 
-        setNote("ok","Mint confirmed ✅ "); showTxLink(sigStr,"View on Solscan");
-        await updateHolderState(); await refresh();
-      }catch(e){ console.error("FATAL:", e); setNote("err","Mint failed: "+(e?.message||"Unexpected error")); }
+        setNote("ok", "Mint confirmed ✅ ");
+        showTxLink(sigStr, "View on Solscan");
+        await updateHolderState();
+        await refresh();
+      } catch (e) {
+        console.error("FATAL:", e);
+        setNote("err", "Mint failed: " + (e?.message || "Unexpected error"));
+      } finally {
+        const btn = $("btnMint");
+        if (btn) {
+          btn.textContent = "Mint Access Pass";
+          setMintButtonState();
+        }
+      }
     }
 
     $("btnConnect").addEventListener("click", connectWallet);
-    $("btnRefresh").addEventListener("click", async ()=>{ await refresh(); if(connected) await updateHolderState(); });
-    $("mintBadge").addEventListener("click", doMint);
+    $("btnRefresh").addEventListener("click", async () => { await refresh(); if (connected) await updateHolderState(); });
+    $("btnMint").addEventListener("click", doMint);
 
-    (async()=>{ setDmEnabled(false); await refresh(); })();
+    refreshWalletSelect();
+    subscribeWalletUpdates(refreshWalletSelect);
+    setMintButtonState();
+
+    (async () => { await refresh(); })();
   </script>
 </body>
 </html>

@@ -4,551 +4,638 @@
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>CBS Coin — Community Builds Sovereignty</title>
-  <meta name="description" content="CBS Coin — a meme with a serious message: Community Builds Sovereignty. An experiment for and by the community.">
+  <meta name="description" content="CBS Coin is a Solana community token behind the CBS Tools ecosystem. Community Builds Sovereignty — built in public, open to everyone.">
+  <meta name="theme-color" content="#d86f00">
 
-  <!-- Preconnect for faster font loads -->
+  <link rel="icon" href="logo.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-  <!-- Font -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
-
-  <!-- Preload hero banner (jpg); WebP will still be used via <picture> if present -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preload" as="image" href="Banner-CBS-Coin.webp" type="image/webp">
   <link rel="preload" as="image" href="Banner-CBS-Coin.jpg">
 
-  <!-- Canonical + Social previews -->
-  <link rel="canonical" href="https://smitske.github.io/cbs-coin/">
+  <link rel="canonical" href="https://smitskecbs.github.io/cbs-coin/">
   <meta property="og:type" content="website">
   <meta property="og:title" content="CBS Coin — Community Builds Sovereignty">
-  <meta property="og:description" content="CBS Coin — a meme with a serious message: Community Builds Sovereignty. An experiment for and by the community.">
-  <meta property="og:url" content="https://smitske.github.io/cbs-coin/">
+  <meta property="og:description" content="The Solana community token behind the CBS Tools ecosystem. Built in public.">
+  <meta property="og:url" content="https://smitskecbs.github.io/cbs-coin/">
   <meta property="og:image" content="https://smitskecbs.github.io/cbs-coin/Banner-CBS-Coin.jpg">
-  <meta property="og:image:alt" content="CBS Coin banner">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="CBS Coin — Community Builds Sovereignty">
-  <meta name="twitter:description" content="CBS Coin — a meme with a serious message: Community Builds Sovereignty. An experiment for and by the community.">
+  <meta name="twitter:description" content="The Solana community token behind the CBS Tools ecosystem.">
   <meta name="twitter:image" content="https://smitskecbs.github.io/cbs-coin/Banner-CBS-Coin.jpg">
-  <meta name="twitter:site" content="@CBS_Coin">
 
   <style>
-    :root{
-      --bg:#000000;
-      --fg:#e5e7eb;
-      --muted:#cbd5e1;
-      --card:#0a0a0a;
-      --border:#222;
-      --radius:18px;
-      --g:#22c55e; /* green */
-      --p:#a78bfa; /* purple */
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0;
-      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      color:var(--fg);
-      background:var(--bg);
-      -webkit-font-smoothing:antialiased;
-      -moz-osx-font-smoothing:grayscale;
-    }
-    .wrap{max-width:980px;margin:0 auto;padding:18px 16px 40px}
-
-    /* BRAND CARD */
-    .brand-card{
-      position:relative;
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      padding:10px;
-      overflow:hidden;
-    }
-    .banner{
-      width:100%; height:200px; object-fit:contain; display:block; background:#000;
-    }
-    .logo{
-      position:absolute; left:16px; bottom:16px;
-      width:92px; height:92px; border-radius:50%; object-fit:cover; background:#000;
-      filter: drop-shadow(0 0 14px rgba(34,197,94,.55)) drop-shadow(0 0 22px rgba(167,139,250,.45));
-    }
-    .tagline{
-      position:absolute; top:12px; right:12px;
-      font-weight:700; font-size:.9rem; color:#fff;
-      background:rgba(0,0,0,.55); border:1px solid rgba(255,255,255,.12);
-      padding:.35rem .6rem; border-radius:10px; backdrop-filter:blur(4px);
-    }
-    .tagline .emph{ color:var(--p); }
-    @media (min-width:720px){
-      .banner{ height:280px; }
-      .logo{ left:20px; bottom:20px; width:120px; height:120px; }
+    :root {
+      --bg: #f5f0e8;
+      --bg-soft: #fffcf8;
+      --card: #ffffff;
+      --ink: #1a1a1a;
+      --muted: #555555;
+      --subtle: #666666;
+      --border: rgba(216, 111, 0, 0.12);
+      --accent: #d86f00;
+      --accent-dark: #b85a00;
+      --accent-soft: #fff8ef;
+      --accent-glow: rgba(216, 111, 0, 0.18);
+      --radius: 16px;
+      --radius-sm: 12px;
+      --radius-banner: 20px;
+      --shadow: 0 1px 2px rgba(26, 26, 26, 0.04), 0 8px 24px rgba(216, 111, 0, 0.06);
+      --shadow-banner: 0 8px 28px rgba(216, 111, 0, 0.1);
+      --max: 720px;
     }
 
-    h1{
-      margin:22px 0 8px; font-size:2.25rem; line-height:1.15; letter-spacing:.2px; color:#fff; font-weight:800;
-    }
-    p{
-      margin:.6rem 0; font-size:1.05rem; line-height:1.75; color:var(--muted); max-width:70ch;
-    }
+    *, *::before, *::after { box-sizing: border-box; }
 
-    /* SOCIALS */
-    .socials{ margin-top:18px; display:flex; gap:14px; flex-wrap:wrap; align-items:flex-start; }
-    .social-btn{
-      position:relative; width:68px; height:68px; border-radius:20px; display:grid; place-items:center; text-decoration:none;
-      border:1px solid rgba(255,255,255,.12);
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      color: var(--ink);
       background:
-        radial-gradient(120% 120% at 20% 20%, rgba(34,197,94,.35), transparent 60%),
-        radial-gradient(120% 120% at 80% 80%, rgba(167,139,250,.35), transparent 60%),
-        #0a0a0a;
-      box-shadow: 0 0 18px rgba(34,197,94,.25), 0 0 24px rgba(167,139,250,.20);
-      transform: rotate(-2deg);
-      transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
-    }
-    .social-btn:hover{
-      transform: rotate(0deg) scale(1.03);
-      box-shadow: 0 0 22px rgba(34,197,94,.33), 0 0 30px rgba(167,139,250,.28);
-      filter: saturate(1.1);
-    }
-    .social-btn svg{ width:36px; height:36px; display:block }
-    .label{
-      margin-top:6px; font-size:.8rem; font-weight:800; color:#fff;
-      background:rgba(255,255,255,.06); border:1px dashed rgba(255,255,255,.18);
-      border-radius:10px; padding:.2rem .5rem; transform: rotate(-2deg); width:max-content;
+        radial-gradient(1100px 520px at 30% 0%, rgba(255, 179, 71, 0.16), transparent 60%),
+        radial-gradient(900px 420px at 85% 10%, rgba(237, 199, 137, 0.18), transparent 55%),
+        var(--bg);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* CTAs */
-    .cta-row{ margin-top:22px; display:flex; flex-wrap:wrap; gap:14px; }
-    .cta{
-      position:relative; display:flex; align-items:center; gap:12px;
-      min-width:220px; padding:14px 16px; border-radius:16px; text-decoration:none;
-      background:#0b0b0b; color:#fff; border:1px solid rgba(255,255,255,.10);
-      box-shadow: 0 0 18px rgba(34,197,94,.18), 0 0 24px rgba(167,139,250,.16);
-      transform: rotate(-1.2deg);
-      transition: transform .12s ease, box-shadow .12s ease, filter .12s ease;
-    }
-    .cta:hover{
-      transform: rotate(0deg) translateY(-1px);
-      box-shadow: 0 0 22px rgba(34,197,94,.26), 0 0 30px rgba(167,139,250,.22);
-    }
-    .cta .title{ font-weight:900; letter-spacing:.3px; }
-    .cta .hint{ font-size:.85rem; color:#cbd5e1 }
+    a { color: var(--accent-dark); }
+    a:hover { color: var(--accent); }
 
-    /* BURN */
-    .cta-burn .icon-wrap{
-      position:relative; width:46px; height:46px; border-radius:50%; overflow:hidden;
-      border:1px solid rgba(255,255,255,.15); background:#000;
-      display:grid; place-items:center;
-      filter: drop-shadow(0 0 10px rgba(236,72,153,.45)) drop-shadow(0 0 18px rgba(244,63,94,.35));
-    }
-    .cta-burn .icon-wrap img{ width:90%; height:90%; object-fit:contain; border-radius:50%; }
-    .cta-burn .flame{ position:absolute; bottom:-6px; width:10px; height:18px;
-      background: radial-gradient(60% 70% at 50% 65%, rgba(255,240,180,.95), rgba(255,140,64,.85) 55%, rgba(255,80,20,.0) 70%);
-      filter: blur(.3px);
-      transform-origin: 50% 100%;
-      animation: rise 1.4s linear infinite;
-    }
-    .cta-burn .flame:nth-child(2){ left:6px;  animation-delay:.0s;  transform: scale(1) }
-    .cta-burn .flame:nth-child(3){ left:14px; animation-delay:.2s;  transform: scale(.85) }
-    .cta-burn .flame:nth-child(4){ left:22px; animation-delay:.35s; transform: scale(1.1) }
-    .cta-burn .flame:nth-child(5){ left:30px; animation-delay:.15s; transform: scale(.9) }
-    .cta-burn .flame:nth-child(6){ left:38px; animation-delay:.28s; transform: scale(1.05) }
-
-    @keyframes rise{
-      0%   { transform: translateY(0) scale(var(--s,1)) rotate(-2deg); opacity:.95 }
-      60%  { opacity:.9 }
-      100% { transform: translateY(-18px) scale(var(--s,1)) rotate(2deg); opacity:0 }
+    .page {
+      max-width: var(--max);
+      margin: 0 auto;
+      padding: 24px 16px 56px;
     }
 
-    /* TOKENOMICS (candles) */
-    .cta-candles .chart{
-      width:60px; height:40px; position:relative; border:1px solid rgba(255,255,255,.14);
-      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
-      border-radius:8px; overflow:hidden;
-    }
-    .candle{
-      position:absolute; bottom:6px; width:8px; border-radius:2px;
-      background:linear-gradient(180deg, #34d399, #059669);
-      transform-origin: bottom center;
-      animation: pulse 1.8s ease-in-out infinite;
-    }
-    .candle::before{
-      content:""; position:absolute; left:50%; transform:translateX(-50%);
-      width:2px; height:16px; bottom:100%; background:#e5e7eb; opacity:.9; border-radius:1px;
-    }
-    .c1{ left:10px; height:14px; animation-delay:.1s }
-    .c2{ left:26px; height:24px; animation-delay:.4s }
-    .c3{ left:42px; height:18px; animation-delay:.25s }
-
-    @keyframes pulse{
-      0%,100%{ transform: scaleY(1) translateZ(0) }
-      50%    { transform: scaleY(1.25) translateZ(0) }
+    /* Header */
+    .site-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 28px;
     }
 
-    /* WHITEPAPER */
-    .cta-doc .icon-wrap{
-      position:relative; width:46px; height:46px; border-radius:50%; overflow:hidden;
-      border:1px solid rgba(255,255,255,.15); background:#000;
-      display:grid; place-items:center;
-      box-shadow: 0 0 14px rgba(167,139,250,.35), 0 0 18px rgba(34,197,94,.25);
-    }
-    .cta-doc .icon-wrap img{ width:90%; height:90%; object-fit:contain; border-radius:50%; }
-    .cta-doc .ring{
-      position:absolute; inset:-2px; border-radius:50%;
-      border:2px solid transparent;
-      background: conic-gradient(from 0deg, rgba(167,139,250,.8), rgba(34,197,94,.8), rgba(167,139,250,.8)) border-box;
-      -webkit-mask: linear-gradient(#000 0 0) padding-box, linear-gradient(#000 0 0);
-      -webkit-mask-composite: xor; mask-composite: exclude;
-      animation: spin 6s linear infinite; opacity:.9;
-    }
-    @keyframes spin{ to{ transform: rotate(360deg); } }
-
-    /* JOIN/ COLLABORATE */
-    .cta-join .icon-wrap{
-      position:relative; width:46px; height:46px; border-radius:12px; overflow:hidden;
-      border:1px solid rgba(255,255,255,.15); background:#0b0b0b;
-      display:grid; place-items:center;
-      box-shadow: 0 0 16px rgba(34,197,94,.35), 0 0 16px rgba(167,139,250,.25) inset;
-    }
-    .cta-join svg{ width:24px; height:24px; display:block; }
-    .cta-join .ray{
-      position:absolute; left:50%; top:6px; width:2px; height:16px; border-radius:2px;
-      background:linear-gradient(180deg,#22c55e,#a78bfa); opacity:.85; transform-origin:bottom center;
-    }
-    .cta-join .r1{ transform:translateX(-50%) rotate(0deg) }
-    .cta-join .r2{ transform:translateX(-50%) rotate(45deg) }
-    .cta-join .r3{ transform:translateX(-50%) rotate(90deg) }
-    .cta-join .r4{ transform:translateX(-50%) rotate(135deg) }
-
-    /* POLL – Team Wallet */
-    .cta-poll .icon-wrap{
-      position:relative; width:46px; height:46px; border-radius:12px; overflow:hidden;
-      border:1px solid rgba(255,255,255,.15); background:#0b0b0b;
-      display:grid; place-items:center;
-      box-shadow: 0 0 16px rgba(34,197,94,.30), 0 0 16px rgba(167,139,250,.22) inset;
-    }
-    .cta-poll svg{ width:26px; height:26px; display:block; }
-    .cta-poll .tick{
-      position:absolute; width:8px; height:8px;
-      border:2px solid #22c55e; border-left:0; border-top:0;
-      transform: rotate(45deg) scale(1);
-      animation: pop 2.2s ease-in-out infinite;
-      opacity:.9;
-    }
-    .cta-poll .t1{ top:6px; left:6px; animation-delay:0s }
-    .cta-poll .t2{ bottom:6px; right:8px; animation-delay:.7s }
-    @keyframes pop{
-      0%,100%{ transform: rotate(45deg) scale(1); opacity:.9 }
-      50%{ transform: rotate(45deg) scale(1.25); opacity:1 }
+    .site-logo {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid var(--border);
+      background: var(--card);
     }
 
-    /* BUY – Swap & Chart */
-    .cta-buy .icon-wrap{
-      position:relative; width:46px; height:46px; border-radius:12px; overflow:hidden;
-      border:1px solid rgba(255,255,255,.15); background:#0b0b0b;
-      display:grid; place-items:center;
-      box-shadow: 0 0 16px rgba(167,139,250,.28), 0 0 16px rgba(34,197,94,.22) inset;
-    }
-    .cta-buy svg{ width:26px; height:26px; display:block; }
-
-    /* MINT – Access Pass */
-    .cta-mint .icon-wrap{
-      position:relative; width:46px; height:46px; border-radius:12px; overflow:hidden;
-      border:1px solid rgba(255,255,255,.15); background:#0b0b0b;
-      display:grid; place-items:center;
-      box-shadow: 0 0 16px rgba(34,197,94,.34), 0 0 16px rgba(167,139,250,.24) inset;
-    }
-    .cta-mint svg{ width:26px; height:26px; display:block; }
-    .cta-mint .pulse{
-      position:absolute; inset:-2px; border-radius:12px;
-      border:2px solid rgba(167,139,250,.35);
-      animation: mintPulse 2.4s ease-in-out infinite;
-    }
-    @keyframes mintPulse{
-      0%,100%{ opacity:.25; transform:scale(1) }
-      50%{ opacity:.6; transform:scale(1.05) }
+    .site-brand {
+      font-weight: 800;
+      font-size: 1.05rem;
+      letter-spacing: -0.02em;
+      color: var(--ink);
     }
 
-    /* HOLDERS – Live Count */
-    .cta-holders .icon-wrap{
-      position:relative; width:46px; height:46px; border-radius:50%;
-      border:1px solid rgba(34,197,94,.6);
-      background:radial-gradient(circle at 30% 30%, rgba(74,222,128,.45), transparent 60%),
-                 radial-gradient(circle at 70% 80%, rgba(56,189,248,.35), transparent 60%),
-                 #020617;
-      display:grid; place-items:center;
-      box-shadow: 0 0 18px rgba(34,197,94,.45), 0 0 24px rgba(59,130,246,.35);
-    }
-    .cta-holders .dot{
-      width:8px; height:8px; border-radius:999px; background:#bbf7d0;
-      box-shadow:0 0 10px rgba(34,197,94,.8);
-      animation: ping 1.8s infinite ease-out;
-    }
-    .cta-holders .dot:nth-child(2){ animation-delay:.25s; opacity:.85 }
-    .cta-holders .dot:nth-child(3){ animation-delay:.5s; opacity:.7 }
-
-    @keyframes ping{
-      0%{ transform:scale(1); opacity:1 }
-      70%{ transform:scale(1.9); opacity:0 }
-      100%{ transform:scale(2.1); opacity:0 }
+    /* Cards */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 22px 20px;
+      margin-bottom: 16px;
     }
 
-    /* MC – Buy Streak console */
-    .cta-mc .icon-wrap{
-      position:relative; width:46px; height:46px; border-radius:14px;
-      border:1px solid rgba(129,140,248,.7);
-      background:radial-gradient(circle at 20% 20%, rgba(56,189,248,.4), transparent 55%),
-                 radial-gradient(circle at 80% 80%, rgba(129,140,248,.5), transparent 60%),
-                 #020617;
-      display:grid; place-items:center;
-      box-shadow:0 0 18px rgba(56,189,248,.45),0 0 24px rgba(129,140,248,.4);
-      overflow:hidden;
-    }
-    .cta-mc .bars{
-      display:flex; gap:2px; align-items:flex-end;
-      width:22px; height:18px;
-    }
-    .cta-mc .bar{
-      flex:1; border-radius:999px;
-      background:linear-gradient(180deg,#38bdf8,#22c55e);
-      animation: mcBars 1.8s ease-in-out infinite;
-    }
-    .cta-mc .bar:nth-child(2){ animation-delay:.2s; }
-    .cta-mc .bar:nth-child(3){ animation-delay:.4s; }
-
-    @keyframes mcBars{
-      0%,100%{ transform:scaleY(.6); opacity:.8 }
-      50%{ transform:scaleY(1); opacity:1 }
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: clamp(1.1rem, 3.5vw, 1.25rem);
+      font-weight: 800;
+      letter-spacing: -0.01em;
+      color: var(--accent);
     }
 
-    /* Subtle footer links */
-    footer{
-      margin:28px 0 10px;
-      color:#9aa0a6;
-      font-size:.82rem;
-      text-align:center;
-    }
-    footer a{
-      color:#cbd5e1;
-      opacity:.75;
-      text-decoration:none;
-    }
-    footer a:hover{
-      opacity:1;
-      text-decoration:underline;
+    .card p {
+      margin: 0 0 12px;
+      color: var(--muted);
+      font-size: 0.98rem;
+      line-height: 1.65;
     }
 
-    /* Official website card */
-    .cmc-verify{
-      margin-top:24px;
-      padding:12px 14px;
-      border-radius:12px;
-      background:rgba(255,255,255,.03);
-      border:1px dashed rgba(255,255,255,.12);
-      color:var(--muted);
-      font-size:.88rem;
+    .card p:last-child { margin-bottom: 0; }
+
+    /* Hero — CBS banner + logo (matches tools.cbs-coin.com site-hero) */
+    .hero {
+      margin-bottom: 16px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-banner);
+      box-shadow: var(--shadow);
+      overflow: hidden;
     }
-    .cmc-verify strong{ color:#fff }
-    .cmc-verify a{ color:#d1d5db; text-decoration:none; border-bottom:1px dotted rgba(255,255,255,.25) }
-    .cmc-verify a:hover{ color:#fff; border-bottom-color:rgba(255,255,255,.45) }
+
+    .hero-banner-wrap {
+      position: relative;
+      width: 100%;
+      background: #120c06;
+      box-shadow: var(--shadow-banner);
+    }
+
+    .hero-banner {
+      width: 100%;
+      display: block;
+      height: clamp(148px, 42vw, 240px);
+      object-fit: cover;
+      object-position: center;
+    }
+
+    @media (min-width: 640px) {
+      .hero-banner {
+        height: auto;
+        max-height: 240px;
+        object-fit: contain;
+      }
+    }
+
+    .hero-logo {
+      position: absolute;
+      left: clamp(12px, 3vw, 18px);
+      bottom: clamp(12px, 3vw, 18px);
+      width: clamp(68px, 18vw, 96px);
+      height: clamp(68px, 18vw, 96px);
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid rgba(255, 255, 255, 0.92);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.35);
+      background: #000;
+    }
+
+    .hero-body {
+      text-align: center;
+      padding: 20px 18px 26px;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      color: var(--accent-dark);
+      background: #fffaf5;
+      border: 1px solid var(--border);
+      padding: 6px 12px 6px 10px;
+      border-radius: 999px;
+      margin-bottom: 14px;
+    }
+
+    .hero-badge-solana {
+      width: 20px;
+      height: 16px;
+      flex-shrink: 0;
+      display: block;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px;
+      font-size: clamp(2rem, 7vw, 2.6rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      background: linear-gradient(135deg, #9a4f00 0%, #d86f00 42%, #e8820f 72%, #ffb347 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      filter: drop-shadow(0 1px 0 rgba(216, 111, 0, 0.12));
+    }
+
+    .hero .intro {
+      margin: 0 auto 8px;
+      max-width: 42ch;
+      font-size: clamp(1rem, 3.2vw, 1.1rem);
+      font-weight: 600;
+      color: var(--ink);
+      line-height: 1.5;
+    }
+
+    .hero .lede {
+      margin: 0 auto 22px;
+      max-width: 40ch;
+      font-size: clamp(0.92rem, 3vw, 0.98rem);
+      color: var(--muted);
+      line-height: 1.6;
+      font-weight: 500;
+    }
+
+    /* Buttons */
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 20px;
+      border-radius: var(--radius-sm);
+      font-size: 0.95rem;
+      font-weight: 600;
+      text-decoration: none;
+      border: 1px solid transparent;
+      transition: transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+      cursor: pointer;
+    }
+
+    .btn:active { transform: translateY(1px); }
+
+    .btn-primary {
+      background: linear-gradient(180deg, #e8820f 0%, var(--accent) 100%);
+      color: #fff;
+      box-shadow: 0 4px 14px var(--accent-glow);
+      border-color: var(--accent-dark);
+    }
+
+    .btn-primary:hover {
+      color: #fff;
+      box-shadow: 0 6px 20px var(--accent-glow);
+    }
+
+    .btn-secondary {
+      background: var(--card);
+      color: var(--ink);
+      border-color: var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-soft);
+      color: var(--ink);
+    }
+
+    .btn-sm {
+      padding: 9px 14px;
+      font-size: 0.88rem;
+    }
+
+    /* Social links — matches tools.cbs-coin.com community-link style */
+    .social-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
+      justify-content: center;
+      width: 100%;
+    }
+
+    .social-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px 8px 8px;
+      background: #fffaf5;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      color: var(--ink);
+      text-decoration: none;
+      font-size: 0.86rem;
+      font-weight: 700;
+      transition: transform 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+    }
+
+    .social-link:hover {
+      background: var(--card);
+      border-color: rgba(216, 111, 0, 0.28);
+      transform: translateY(-1px);
+      box-shadow: 0 8px 22px rgba(216, 111, 0, 0.08);
+      color: var(--ink);
+    }
+
+    .social-link:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    .social-link-icon {
+      color: var(--accent);
+      background: linear-gradient(rgba(255, 179, 71, 0.16), rgba(255, 255, 255, 0.96));
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      flex-shrink: 0;
+    }
+
+    .social-link-icon svg {
+      width: 16px;
+      height: 16px;
+      display: block;
+    }
+
+    /* Tool list */
+    .tool-list {
+      list-style: none;
+      margin: 0 0 16px;
+      padding: 0;
+      display: grid;
+      gap: 8px;
+    }
+
+    .tool-list li {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.95rem;
+      color: var(--muted);
+      padding: 10px 12px;
+      background: var(--bg);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+    }
+
+    .tool-list li::before {
+      content: "";
+      flex-shrink: 0;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    /* Mint address */
+    .mint-box {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 12px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+
+    .mint-label {
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--subtle);
+    }
+
+    .mint-addr {
+      font-family: ui-monospace, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.82rem;
+      word-break: break-all;
+      color: var(--ink);
+      line-height: 1.45;
+    }
+
+    .mint-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    /* ManGo callout */
+    .mango-card {
+      border-left: 4px solid var(--accent);
+    }
+
+    .disclaimer {
+      font-size: 0.85rem;
+      color: var(--subtle);
+      font-style: italic;
+    }
+
+    /* Open dev bullets */
+    .check-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: grid;
+      gap: 10px;
+    }
+
+    .check-list li {
+      display: flex;
+      gap: 10px;
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    .check-list li::before {
+      content: "✓";
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      display: grid;
+      place-items: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent-dark);
+      background: var(--accent-soft);
+      border-radius: 50%;
+    }
+
+    /* Footer */
+    .site-footer {
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--subtle);
+    }
+
+    .site-footer a {
+      color: var(--muted);
+      text-decoration: none;
+    }
+
+    .site-footer a:hover { color: var(--accent-dark); }
   </style>
 </head>
 <body>
-  <main class="wrap">
+  <div class="page">
 
-    <!-- Brand card -->
-    <section class="brand-card">
-      <picture>
-        <source type="image/webp" srcset="Banner-CBS-Coin.webp">
-        <img class="banner" src="Banner-CBS-Coin.jpg" alt="CBS Banner" onerror="this.style.display='none'">
-      </picture>
+    <header class="site-header">
+      <img class="site-logo" src="logo.png" alt="CBS Coin logo" width="48" height="48">
+      <span class="site-brand">CBS Coin</span>
+    </header>
 
-      <!-- Main logo -->
-      <img class="logo" src="logo.png" alt="CBS Logo" onerror="this.style.display='none'">
-      <div class="tagline">CBS — Community Builds <span class="emph">Sovereignty</span></div>
+    <!-- Hero -->
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-banner-wrap">
+        <picture>
+          <source type="image/webp" srcset="Banner-CBS-Coin.webp">
+          <img
+            class="hero-banner"
+            src="Banner-CBS-Coin.jpg"
+            alt="CBS Coin — Community Builds Sovereignty"
+            width="720"
+            height="405"
+            loading="eager"
+            decoding="async"
+          >
+        </picture>
+        <img class="hero-logo" src="logo.png" alt="" width="96" height="96" aria-hidden="true">
+      </div>
+      <div class="hero-body">
+        <span class="hero-badge">
+          <svg class="hero-badge-solana" viewBox="0 0 397.7 311.7" aria-hidden="true" focusable="false">
+            <defs>
+              <linearGradient id="sol-grad-a" gradientUnits="userSpaceOnUse" x1="360.8791" y1="351.4553" x2="141.213" y2="-69.2936" gradientTransform="matrix(1 0 0 -1 0 314)">
+                <stop offset="0" stop-color="#00FFA3"/>
+                <stop offset="1" stop-color="#DC1FFF"/>
+              </linearGradient>
+              <linearGradient id="sol-grad-b" gradientUnits="userSpaceOnUse" x1="264.8291" y1="401.6014" x2="45.163" y2="-19.1475" gradientTransform="matrix(1 0 0 -1 0 314)">
+                <stop offset="0" stop-color="#00FFA3"/>
+                <stop offset="1" stop-color="#DC1FFF"/>
+              </linearGradient>
+              <linearGradient id="sol-grad-c" gradientUnits="userSpaceOnUse" x1="312.5484" y1="376.688" x2="92.8822" y2="-44.061" gradientTransform="matrix(1 0 0 -1 0 314)">
+                <stop offset="0" stop-color="#00FFA3"/>
+                <stop offset="1" stop-color="#DC1FFF"/>
+              </linearGradient>
+            </defs>
+            <path fill="url(#sol-grad-a)" d="M64.6,237.9c2.4-2.4,5.7-3.8,9.2-3.8h317.4c5.8,0,8.7,7,4.6,11.1l-62.7,62.7c-2.4,2.4-5.7,3.8-9.2,3.8H6.5c-5.8,0-8.7-7-4.6-11.1L64.6,237.9z"/>
+            <path fill="url(#sol-grad-b)" d="M64.6,3.8C67.1,1.4,70.4,0,73.8,0h317.4c5.8,0,8.7,7,4.6,11.1l-62.7,62.7c-2.4,2.4-5.7,3.8-9.2,3.8H6.5c-5.8,0-8.7-7-4.6-11.1L64.6,3.8z"/>
+            <path fill="url(#sol-grad-c)" d="M333.1,120.1c-2.4-2.4-5.7-3.8-9.2-3.8H6.5c-5.8,0-8.7,7-4.6,11.1l62.7,62.7c2.4,2.4,5.7,3.8,9.2,3.8h317.4c5.8,0,8.7-7,4.6-11.1L333.1,120.1z"/>
+          </svg>
+          Community Token · Built on Solana
+        </span>
+        <h1 id="hero-title">CBS Coin</h1>
+        <p class="intro">Born from the idea that communities can build their own tools, value and future.</p>
+        <p class="lede">A Solana community token evolving into an open tools ecosystem.</p>
+        <div class="btn-row">
+          <a class="btn btn-primary" href="https://tools.cbs-coin.com" target="_blank" rel="noopener noreferrer">Explore CBS Tools</a>
+        </div>
+        <div class="social-row">
+          <a class="social-link" href="https://github.com/smitskecbs" target="_blank" rel="noopener noreferrer" aria-label="GitHub: smitskecbs">
+            <span class="social-link-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path fill="currentColor" d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.945 1.89-.945 2.61-1.44 3.135.765.165 1.605-.6 2.475-1.23 3.75-3.495 2.61-6.015 2.61-11.565 0-2.25-.795-4.095-2.115-5.535.195-.495.93-2.43-.195-5.07 0 0-1.725-.555-5.655 2.145-1.635-.45-3.39-.675-5.13-.675-1.74 0-3.495.225-5.13.675-3.93-2.7-5.655-2.145-5.655-2.145-1.125 2.64-.39 4.575-.195 5.07-1.32 1.44-2.115 3.285-2.115 5.535 0 5.565 2.13 7.98 2.61 11.565.87.645 1.335 1.395 1.335 2.385 0 1.725-.015 3.12-.015 3.54 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+              </svg>
+            </span>
+            GitHub
+          </a>
+          <a class="social-link" href="https://t.me/CBS_Coin" target="_blank" rel="noopener noreferrer" aria-label="Telegram: CBS_Coin">
+            <span class="social-link-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M22 3L2 11.5l7 2.5L16 8l-5.5 8.5 2 7L22 3z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+              </svg>
+            </span>
+            Telegram
+          </a>
+          <a class="social-link" href="https://x.com/smitske180" target="_blank" rel="noopener noreferrer" aria-label="X: smitske180">
+            <span class="social-link-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path fill="currentColor" d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+              </svg>
+            </span>
+            X
+          </a>
+        </div>
+      </div>
     </section>
 
-    <section>
-      <h1>What is CBS Coin?</h1>
-      <p>
-        <strong>CBS Coin</strong> is a meme with a serious message: <em>Community Builds Sovereignty</em>.
-        It’s a fair-launch SPL token on Solana — no presale, no insiders — built by one developer and steered by holders.
-        Think of it as a live experiment in bottom-up coordination: small budgets, measurable outcomes,
-        transparent on-chain proofs. A community project, for and by the community.
-      </p>
-
-      <div class="socials">
-        <!-- WEBSITE -->
-        <div>
-          <a class="social-btn" href="https://cbs-coin.com" target="_blank" rel="noreferrer" aria-label="Open official CBS website">
-            <!-- Globe icon -->
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <circle cx="12" cy="12" r="9" stroke="#e5e7eb" stroke-width="2"/>
-              <path d="M3 12h18M12 3c3 3.5 3 14 0 18M9 3.8c-2.2 3.2-2.2 13.2 0 16.4M15 3.8c2.2 3.2 2.2 13.2 0 16.4" stroke="#e5e7eb" stroke-width="2" stroke-linecap="round"/>
-            </svg>
-          </a>
-          <div class="label">Website</div>
-        </div>
-
-        <!-- TELEGRAM -->
-        <div>
-          <a class="social-btn" href="https://t.me/CBS_Coin" target="_blank" rel="noreferrer" aria-label="Join CBS on Telegram">
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M9.43 15.34 8.98 19c.64 0 .91-.28 1.23-.62l2.95-2.83 6.12 4.47c.12.62 1.92.29 2.22-1.04l4.02-18.87c.36-1.66-.6-2.31-1.68-1.9L1.8 9.2C.18 9.83.19 10.73 1.51 11.13l6.46 2.02L19.3 5.27c.61-.37 1.17-.17.71.21L9.43 15.34Z" transform="translate(-2,-1)" fill="#e5f7ff"/>
-            </svg>
-          </a>
-          <div class="label">Telegram</div>
-        </div>
-
-        <!-- X -->
-        <div>
-          <a class="social-btn" href="https://x.com/CBS_Coin" target="_blank" rel="noreferrer" aria-label="Follow CBS on X">
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M3 3h4.7l5.02 6.95L18.7 3H21l-6.9 8.9L21 21h-4.7l-5.2-7.2L9.3 21H3l7.5-9.7L3 3Z" fill="#f4f4f5"/>
-            </svg>
-          </a>
-          <div class="label">X</div>
-        </div>
-      </div>
-
-      <div class="cta-row" aria-label="Important CBS pages">
-        <!-- BURN -->
-        <a class="cta cta-burn" href="burn.html" aria-label="Open burns page">
-          <div class="icon-wrap">
-            <span class="flame"></span><span class="flame"></span><span class="flame"></span>
-            <span class="flame"></span><span class="flame"></span><span class="flame"></span>
-            <img src="logo.png" alt="CBS Logo">
-          </div>
-          <div>
-            <div class="title">Burns</div>
-            <div class="hint">Supply burns & LP proofs</div>
-          </div>
-        </a>
-
-        <!-- TOKENOMICS -->
-        <a class="cta cta-candles" href="tokenomics.html" aria-label="Open tokenomics">
-          <div class="chart" aria-hidden="true">
-            <div class="candle c1"></div>
-            <div class="candle c2"></div>
-            <div class="candle c3"></div>
-          </div>
-          <div>
-            <div class="title">Tokenomics</div>
-            <div class="hint">Live dashboard & charts</div>
-          </div>
-        </a>
-
-        <!-- WHITEPAPER -->
-        <a class="cta cta-doc" href="https://cbs-coin.com/whitepaper/" aria-label="Open CBS Whitepaper">
-          <div class="icon-wrap">
-            <span class="ring" aria-hidden="true"></span>
-            <img src="logo.png" alt="CBS Logo">
-          </div>
-          <div>
-            <div class="title">Whitepaper</div>
-            <div class="hint">Full CBS vision & design</div>
-          </div>
-        </a>
-
-        <!-- HOLDERS – LIVE COUNT -->
-        <a class="cta cta-holders" href="holders.html" aria-label="Open live holder count">
-          <div class="icon-wrap" aria-hidden="true">
-            <span class="dot"></span>
-            <span class="dot"></span>
-            <span class="dot"></span>
-          </div>
-          <div>
-            <div class="title">Holders — Live count</div>
-            <div class="hint">Early Degen Board & live holder map</div>
-          </div>
-        </a>
-
-        <!-- MC – BUY STREAK CONSOLE -->
-        <a class="cta cta-mc" href="mc.html" aria-label="Open Market Cap & 1H Buy Streak console">
-          <div class="icon-wrap" aria-hidden="true">
-            <div class="bars">
-              <span class="bar" style="height:40%;"></span>
-              <span class="bar" style="height:70%;"></span>
-              <span class="bar" style="height:55%;"></span>
-            </div>
-          </div>
-          <div>
-            <div class="title">MC & Buy Streak</div>
-            <div class="hint">1H streak & road to $1M MC</div>
-          </div>
-        </a>
-
-        <!-- COLLABORATE / JOIN – UPDATED TEXT -->
-        <a class="cta cta-join" href="join.html" aria-label="Open Join page for holders, builders & volunteers">
-          <div class="icon-wrap" aria-hidden="true">
-            <span class="ray r1"></span>
-            <span class="ray r2"></span>
-            <span class="ray r3"></span>
-            <span class="ray r4"></span>
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M9 18h6v1a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2v-1.1A7 7 0 0 1 12 2Z" fill="#e5e7eb"/>
-            </svg>
-          </div>
-          <div>
-            <div class="title">Join — Holders • Builders • Support</div>
-            <div class="hint">No paid collabs · only people who believe in CBS</div>
-          </div>
-        </a>
-
-        <!-- MINT – Access Pass -->
-        <a class="cta cta-mint" href="mint.html" aria-label="Open CBS Access Pass mint">
-          <div class="icon-wrap" aria-hidden="true">
-            <span class="pulse" aria-hidden="true"></span>
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M4 7a2 2 0 0 1 2-2h8.5a1 1 0 0 1 .8.4l3.2 4a1 1 0 0 1 .2.6V17a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7Z" stroke="#e5e7eb" stroke-width="2" stroke-linejoin="round"/>
-              <path d="M12 9.5l.9 1.8 2 .3-1.5 1.4.4 2-1.8-1-1.8 1 .4-2-1.5-1.4 2-.3L12 9.5Z" fill="#e5e7eb"/>
-            </svg>
-          </div>
-          <div>
-            <div class="title">Mint — Access Pass</div>
-            <div class="hint">Holders-only mint</div>
-          </div>
-        </a>
-
-        <!-- POLL – Team Wallet -->
-        <a class="cta cta-poll" href="poll-teamwallet.html" aria-label="Open Team Wallet Poll">
-          <div class="icon-wrap" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <rect x="3" y="8" width="18" height="13" rx="2" stroke="#e5e7eb" stroke-width="2"/>
-              <path d="M9 14l2 2 4-5" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-            <span class="tick t1"></span>
-            <span class="tick t2"></span>
-          </div>
-          <div>
-            <div class="title">Poll — Team Wallet</div>
-            <div class="hint">Vote with your wallet</div>
-          </div>
-        </a>
-
-        <!-- BUY – Swap & Chart -->
-        <a class="cta cta-buy" href="buy.html" aria-label="Open CBS Buy & Chart">
-          <div class="icon-wrap" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <path d="M7 7h9M13 3l4 4-4 4M17 17H8M11 21l-4-4 4-4" stroke="#e5e7eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-          </div>
-          <div>
-            <div class="title">Buy — Swap & Chart</div>
-            <div class="hint">Dexscreener + Phantom guide</div>
-          </div>
-        </a>
-      </div>
-
-      <!-- Official website card -->
-      <div class="cmc-verify" aria-label="Official website">
-        <strong>Official website</strong> — 
-        <a href="https://cbs-coin.com" target="_blank" rel="noopener">cbs-coin.com</a>
-      </div>
-
+    <!-- Story -->
+    <section class="card" aria-labelledby="story-heading">
+      <h2 id="story-heading">Our story</h2>
+      <p>CBS started as a community token built around transparency, collaboration, and sovereignty — the idea that value and direction should come from the people who show up, not from closed rooms or hidden agendas.</p>
+      <p>What began as a small experiment on Solana has grown through learning, testing, and building in public. CBS remains the community layer of the project; CBS Tools is where that energy turns into practical, open software for everyone on Solana.</p>
     </section>
 
-    <footer>
-      © CBS Coin · <a href="faq.html">FAQ</a> ·
-      <a href="mailto:contact@cbs-coin.com">contact@cbs-coin.com</a>
+    <!-- CBS Tools -->
+    <section class="card" aria-labelledby="tools-heading">
+      <h2 id="tools-heading">CBS Tools</h2>
+      <p>Free, open tools for creating, launching, and managing Solana projects. CBS Tools is the main development focus of the ecosystem.</p>
+      <ul class="tool-list">
+        <li>Wallet Generator</li>
+        <li>Token Builder</li>
+        <li>Token Launcher</li>
+        <li>Token Locker</li>
+        <li>Token Checker</li>
+      </ul>
+      <a class="btn btn-primary" href="https://tools.cbs-coin.com" target="_blank" rel="noopener noreferrer">Open CBS Tools</a>
+    </section>
+
+    <!-- CBS Token -->
+    <section class="card" aria-labelledby="token-heading">
+      <h2 id="token-heading">The CBS token</h2>
+      <p>CBS remains a tradable Solana token and the community layer of the ecosystem. It connects holders, builders, and contributors who care about open, community-led development.</p>
+      <p class="disclaimer">CBS is a community token — not a financial product. Nothing here is investment advice or a promise of returns.</p>
+      <div class="mint-box">
+        <span class="mint-label">Mint address</span>
+        <code class="mint-addr" id="cbs-mint">B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk</code>
+        <div class="mint-links">
+          <a class="btn btn-secondary btn-sm" href="https://solscan.io/token/B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk" target="_blank" rel="noopener noreferrer">View on Solscan</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Access Pass -->
+    <section class="card" aria-labelledby="pass-heading">
+      <h2 id="pass-heading">CBS Access Pass</h2>
+      <p>CBS Access Pass is an experimental holder pass for future ecosystem rewards, testing access, and community recognition.</p>
+      <p>Passes are minted on Solana by CBS holders. Benefits may evolve over time as the ecosystem grows — there are no guaranteed financial returns.</p>
+      <a class="btn btn-primary" href="mint.html">Mint Access Pass</a>
+    </section>
+
+    <!-- ManGo -->
+    <section class="card mango-card" aria-labelledby="mango-heading">
+      <h2 id="mango-heading">Built with CBS Tools · ManGo</h2>
+      <p>ManGo is the first public project built and launched using the CBS toolchain. It is separate from CBS Coin itself — a real-world showcase of what the tools can do, not the core CBS project.</p>
+      <p>ManGo demonstrates how creators can go from idea to on-chain project using open, community-built infrastructure.</p>
+      <a class="btn btn-secondary" href="https://tools.cbs-coin.com" target="_blank" rel="noopener noreferrer">See ManGo on CBS Tools</a>
+    </section>
+
+    <!-- Open development -->
+    <section class="card" aria-labelledby="open-heading">
+      <h2 id="open-heading">Open development</h2>
+      <ul class="check-list">
+        <li>Built in public — progress, experiments, and lessons shared openly</li>
+        <li>Open to feedback from the community on Telegram, X, and GitHub</li>
+        <li>No hidden platform fees in CBS Tools — you only pay Solana network fees and optional third-party service fees where applicable</li>
+      </ul>
+    </section>
+
+    <footer class="site-footer">
+      <p>© CBS Coin · Community Builds Sovereignty</p>
+      <p><a href="https://tools.cbs-coin.com" target="_blank" rel="noopener noreferrer">CBS Tools</a> · <a href="mint.html">Access Pass</a> · <a href="https://github.com/smitskecbs" target="_blank" rel="noopener noreferrer">GitHub</a></p>
     </footer>
-  </main>
+
+  </div>
+
+  <!--
+  =============================================================================
+  TODO: Legacy pages — candidates for archive (do not delete until rebuild ships)
+  =============================================================================
+  Root HTML (old meme-token / tool hub):
+    burn.html, buy.html, cbs-wallet-prep.html, community.html, faq.html,
+    flappy.html, game.html, holders.html, join.html, links.html,
+    litepaper.html, litepaper2.0.html, mc.html, mintv2.html, monkey.html,
+    poll-teamwallet.html, roadmap.html, snake.html, spin.html, stack.html,
+    swap.html, telegram-adjebot.html, tokenomics.html
+
+  Mini-games:
+    mini-game/flappy.html (+ assets)
+
+  DAO dev UIs (keep source in dao-mainnet/, archive HTML test pages later):
+    dao-mainnet/dao.html, dao-mainnet/dao-anchor.html, dao-mainnet/connect-test.html
+
+  Preserved & active:
+    index.html (this page), mint.html (CBS Access Pass mint — DO NOT BREAK)
+
+  Mint page dependencies (must keep):
+    mint.html, logo.png, Banner-CBS-Coin.webp
+
+  Infrastructure (keep):
+    api/, dao-mainnet/, .well-known/solana.tokenlist.json, libs/
+  =============================================================================
+  -->
 </body>
 </html>
