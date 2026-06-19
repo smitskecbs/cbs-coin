@@ -1,5 +1,0 @@
-/home/smitskecbs/cbs-coin/dao-mainnet/programs/cbs_dao/target/release/deps/libanchor_derive_serde-f3369a0d96018074.so: /home/smitskecbs/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anchor-derive-serde-0.31.1/src/lib.rs
-
-/home/smitskecbs/cbs-coin/dao-mainnet/programs/cbs_dao/target/release/deps/anchor_derive_serde-f3369a0d96018074.d: /home/smitskecbs/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anchor-derive-serde-0.31.1/src/lib.rs
-
-/home/smitskecbs/.cargo/registry/src/index.crates.io-6f17d22bba15001f/anchor-derive-serde-0.31.1/src/lib.rs:

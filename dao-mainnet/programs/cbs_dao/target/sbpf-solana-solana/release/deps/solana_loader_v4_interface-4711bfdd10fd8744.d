@@ -1,9 +1,0 @@
-/home/smitskecbs/cbs-coin/dao-mainnet/programs/cbs_dao/target/sbpf-solana-solana/release/deps/libsolana_loader_v4_interface-4711bfdd10fd8744.rmeta: /home/smitskecbs/.cargo/registry/src/index.crates.io-6f17d22bba15001f/solana-loader-v4-interface-2.2.1/src/lib.rs /home/smitskecbs/.cargo/registry/src/index.crates.io-6f17d22bba15001f/solana-loader-v4-interface-2.2.1/src/instruction.rs /home/smitskecbs/.cargo/registry/src/index.crates.io-6f17d22bba15001f/solana-loader-v4-interface-2.2.1/src/state.rs
-
-/home/smitskecbs/cbs-coin/dao-mainnet/programs/cbs_dao/target/sbpf-solana-solana/release/deps/libsolana_loader_v4_interface-4711bfdd10fd8744.rlib: /home/smitskecbs/.cargo/registry/src/index.crates.io-6f17d22bba15001f/solana-loader-v4-interface-2.2.1/src/lib.rs /home/smitskecbs/.cargo/registry/src/index.crates.io-6f17d22bba15001f/solana-loader-v4-interface-2.2.1/src/instruction.rs /home/smitskecbs/.cargo/registry/src/index.crates.io-6f17d22bba15001f/solana-loader-v4-interface-2.2.1/src/state.rs
-
-/home/smitskecbs/cbs-coin/dao-mainnet/programs/cbs_dao/target/sbpf-solana-solana/release/deps/solana_loader_v4_interface-4711bfdd10fd8744.d: /home/smitskecbs/.cargo/registry/src/index.crates.io-6f17d22bba15001f/solana-loader-v4-interface-2.2.1/src/lib.rs /home/smitskecbs/.cargo/registry/src/index.crates.io-6f17d22bba15001f/solana-loader-v4-interface-2.2.1/src/instruction.rs /home/smitskecbs/.cargo/registry/src/index.crates.io-6f17d22bba15001f/solana-loader-v4-interface-2.2.1/src/state.rs
-
-/home/smitskecbs/.cargo/registry/src/index.crates.io-6f17d22bba15001f/solana-loader-v4-interface-2.2.1/src/lib.rs:
-/home/smitskecbs/.cargo/registry/src/index.crates.io-6f17d22bba15001f/solana-loader-v4-interface-2.2.1/src/instruction.rs:
-/home/smitskecbs/.cargo/registry/src/index.crates.io-6f17d22bba15001f/solana-loader-v4-interface-2.2.1/src/state.rs:
