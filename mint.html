@@ -472,6 +472,15 @@
       inspectProviderPublicKey,
       getProviderAddress,
     } from "./libs/cbs-wallets.js";
+    import {
+      getPrimaryRpcUrl,
+      getReadFallbackRpcUrl,
+      isRpcBusyError,
+      rpcBusyMessage,
+      withReadRpcFallback,
+      rpcPost,
+    } from "./libs/cbs-rpc.js";
+
     import { createUmi } from "https://esm.sh/@metaplex-foundation/umi-bundle-defaults@1.4.1";
     import { publicKey as umiPk, generateSigner, some } from "https://esm.sh/@metaplex-foundation/umi@1.4.1";
     import { walletAdapterIdentity } from "https://esm.sh/@metaplex-foundation/umi-signer-wallet-adapters@1.4.1";
@@ -481,9 +490,9 @@
     import { Connection, PublicKey, LAMPORTS_PER_SOL } from "https://esm.sh/@solana/web3.js@1.95.3";
     import bs58 from "https://esm.sh/bs58@5.0.0";
 
-    /* ===== Config (unchanged) ===== */
-    const HELIUS_KEY   = "0eb350f0-a032-468c-8b03-b8b079e09611";
-    const RPC_URL      = `https://mainnet.helius-rpc.com/?api-key=${HELIUS_KEY}`;
+    /* ===== RPC (configurable; primary Helius + read fallback) ===== */
+    const PRIMARY_RPC_URL = getPrimaryRpcUrl();
+    const READ_FALLBACK_RPC_URL = getReadFallbackRpcUrl();
 
     const CANDY_MACHINE_ID = "CiYSyWyGd9hrV52916jdzj4TcLRezHY34KCaBZ7EjKSd".trim();
     const CBS_MINT_ID      = "B9z8cEWFmc7LvQtjKsaLoKqW5MJmGRCWqs1DPKupCfkk".trim();
@@ -596,9 +605,25 @@
       }
     }
 
+    function createBaseUmi(rpcUrl) {
+      return createUmi(rpcUrl).use(mplCandyMachine()).use(mplTokenMetadata());
+    }
+
     function bindUmiToProvider(provider) {
-      umi = createUmi(RPC_URL).use(mplCandyMachine()).use(mplTokenMetadata()).use(walletAdapterIdentity(provider));
+      umi = createBaseUmi(PRIMARY_RPC_URL).use(walletAdapterIdentity(provider));
       connectedProvider = provider;
+    }
+
+    async function readWithFallback(readFn) {
+      return withReadRpcFallback(PRIMARY_RPC_URL, READ_FALLBACK_RPC_URL, readFn);
+    }
+
+    function showRpcBusyIfNeeded(error, target = "mint") {
+      const msg = rpcBusyMessage(error);
+      if (!msg) return false;
+      if (target === "holder") setHolderMsg("warn", msg);
+      else setNote("warn", msg);
+      return true;
     }
 
     async function connectWallet() {
@@ -676,9 +701,9 @@
     });
 
     /* ===== Chain (mint logic unchanged) ===== */
-    const connection = new Connection(RPC_URL, "confirmed");
-    let umi = createUmi(RPC_URL).use(mplCandyMachine()).use(mplTokenMetadata());
+    let umi = createBaseUmi(PRIMARY_RPC_URL);
     let connected = false;
+    let dropDataLoaded = false;
     let SOLD_OUT = false;
     let HAS_COLLECTION_NFT = false;
 
@@ -689,13 +714,22 @@
     async function checkHolderNft(ownerStr) {
       try {
         if (!ownerStr || !CM_COLLECTION_PK) return false;
-        const body = { jsonrpc: "2.0", id: "cbs-das", method: "getAssetsByOwner", params: { ownerAddress: ownerStr, page: 1, limit: 100 } };
-        const res = await fetch(RPC_URL, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
-        const data = await res.json();
+        const body = {
+          jsonrpc: "2.0",
+          id: "cbs-das",
+          method: "getAssetsByOwner",
+          params: { ownerAddress: ownerStr, page: 1, limit: 100 },
+        };
+        const data = await rpcPost(PRIMARY_RPC_URL, body);
         const items = data?.result?.items || [];
         const collectionPkStr = CM_COLLECTION_PK.toString?.() || String(CM_COLLECTION_PK);
-        return items.some((it) => Array.isArray(it?.grouping) && it.grouping.some(([k, v]) => k === "collection" && v === collectionPkStr));
-      } catch {
+        return items.some(
+          (it) =>
+            Array.isArray(it?.grouping) &&
+            it.grouping.some(([k, v]) => k === "collection" && v === collectionPkStr)
+        );
+      } catch (error) {
+        if (isRpcBusyError(error)) return false;
         return false;
       }
     }
@@ -711,13 +745,18 @@
 
     async function refresh() {
       try {
-        const cm = await fetchCandyMachine(umi, umiPk(CANDY_MACHINE_ID));
-        CANDY_GUARD_PK   = cm.mintAuthority;
-        CM_COLLECTION_PK = cm.collectionMint;
-        CM_AUTHORITY_PK  = cm.authority;
-        const minted = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
-        const avail  = Number(cm.itemsAvailable ?? cm.data?.itemsAvailable ?? 0);
-        setSoldUI(minted, avail);
+        await readWithFallback(async (rpcUrl) => {
+          const readUmi = createBaseUmi(rpcUrl);
+          const cm = await fetchCandyMachine(readUmi, umiPk(CANDY_MACHINE_ID));
+          CANDY_GUARD_PK = cm.mintAuthority;
+          CM_COLLECTION_PK = cm.collectionMint;
+          CM_AUTHORITY_PK = cm.authority;
+          const minted = Number(cm.itemsRedeemed ?? cm.data?.itemsRedeemed ?? 0);
+          const avail = Number(cm.itemsAvailable ?? cm.data?.itemsAvailable ?? 0);
+          setSoldUI(minted, avail);
+          dropDataLoaded = true;
+        });
+
         if (connected && umi?.identity?.publicKey) {
           const ownerStr = new PublicKey(umi.identity.publicKey).toBase58();
           HAS_COLLECTION_NFT = await checkHolderNft(ownerStr);
@@ -725,39 +764,54 @@
         }
       } catch (e) {
         console.error(e);
-        setNote("err", "Failed to load drop data.");
+        if (showRpcBusyIfNeeded(e, "mint")) return;
+        if (!dropDataLoaded) setNote("err", "Failed to load drop data.");
       }
     }
 
     async function buildMintArgs() {
       try {
         if (!CANDY_GUARD_PK) return {};
-        const guard = await fetchCandyGuard(umi, CANDY_GUARD_PK);
-        const args = {};
-        if (guard.guards?.tokenGate?.__option === "Some") args.tokenGate = some({ mint: umiPk(CBS_MINT_ID) });
-        if (guard.guards?.mintLimit?.__option === "Some") {
-          const id = Number(guard.guards.mintLimit.value?.id ?? 1);
-          args.mintLimit = some({ id });
-        }
-        return args;
-      } catch {
+        return await readWithFallback(async (rpcUrl) => {
+          const readUmi = createBaseUmi(rpcUrl);
+          const guard = await fetchCandyGuard(readUmi, CANDY_GUARD_PK);
+          const args = {};
+          if (guard.guards?.tokenGate?.__option === "Some") {
+            args.tokenGate = some({ mint: umiPk(CBS_MINT_ID) });
+          }
+          if (guard.guards?.mintLimit?.__option === "Some") {
+            const id = Number(guard.guards.mintLimit.value?.id ?? 1);
+            args.mintLimit = some({ id });
+          }
+          return args;
+        });
+      } catch (error) {
+        if (isRpcBusyError(error)) throw error;
         return {};
       }
     }
 
     async function getCbsBalance(ownerPk) {
-      const res = await connection.getParsedTokenAccountsByOwner(ownerPk, { mint: new PublicKey(CBS_MINT_ID) });
-      let total = 0;
-      for (const acc of (res.value || [])) {
-        const ui = acc.account?.data?.parsed?.info?.tokenAmount?.uiAmount;
-        total += Number(ui || 0);
-      }
-      return total;
+      return readWithFallback(async (rpcUrl) => {
+        const conn = new Connection(rpcUrl, "confirmed");
+        const res = await conn.getParsedTokenAccountsByOwner(ownerPk, {
+          mint: new PublicKey(CBS_MINT_ID),
+        });
+        let total = 0;
+        for (const acc of res.value || []) {
+          const ui = acc.account?.data?.parsed?.info?.tokenAmount?.uiAmount;
+          total += Number(ui || 0);
+        }
+        return total;
+      });
     }
 
     async function getSolBalance(ownerPk) {
-      const lamports = await connection.getBalance(ownerPk, "confirmed");
-      return lamports / LAMPORTS_PER_SOL;
+      return readWithFallback(async (rpcUrl) => {
+        const conn = new Connection(rpcUrl, "confirmed");
+        const lamports = await conn.getBalance(ownerPk, "confirmed");
+        return lamports / LAMPORTS_PER_SOL;
+      });
     }
 
     async function updateHolderState() {
@@ -784,6 +838,7 @@
         setMintButtonState();
       } catch (e) {
         console.error(e);
+        if (showRpcBusyIfNeeded(e, "holder")) return;
         setHolderMsg("err", "Could not read wallet balances.");
         setMintButtonState();
       }
@@ -851,6 +906,10 @@
               sigStr = normalizeSig(res2);
             } catch (err2) {
               console.error("mint retry error:", err2);
+              if (showRpcBusyIfNeeded(err2, "mint")) {
+                showTxLink(sigStr);
+                return;
+              }
               const raw = (err2?.cause?.logs?.[0] || err2?.cause?.message || err2?.message || "").toString();
               setNote("err", raw ? ("Mint failed: " + raw.slice(0, 220)) : "Mint failed.");
               showTxLink(sigStr);
@@ -858,6 +917,10 @@
             }
           } else {
             console.error("mint error:", err1);
+            if (showRpcBusyIfNeeded(err1, "mint")) {
+              showTxLink(sigStr);
+              return;
+            }
             const raw = (err1?.cause?.logs?.[0] || err1?.cause?.message || err1?.message || "").toString();
             setNote("err", raw ? ("Mint failed: " + raw.slice(0, 220)) : "Mint failed.");
             showTxLink(sigStr);
@@ -871,6 +934,7 @@
         await refresh();
       } catch (e) {
         console.error("FATAL:", e);
+        if (showRpcBusyIfNeeded(e, "mint")) return;
         setNote("err", "Mint failed: " + (e?.message || "Unexpected error"));
       } finally {
         const btn = $("btnMint");
