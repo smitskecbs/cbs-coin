@@ -18,7 +18,10 @@ export const SIGNING_ERROR =
 
 const SOLANA_CHAIN_PREFIX = "solana:";
 const RESERVED_INJECTED_IDS = new Set(["phantom", "solflare", "backpack", "glow"]);
+/** mint.html — injected-only signing (Phantom, Solflare, Backpack, Glow). */
+const MINT_INJECTED_IDS = new Set(["phantom", "solflare", "backpack", "glow"]);
 const walletStore = new Map();
+const mintWalletStore = new Map();
 
 let walletStandardApi = null;
 const registeredStandardWallets = new Set();
@@ -94,25 +97,33 @@ export async function connectProvider(provider, options) {
   return normalizePublicKeyBase58(result.publicKey);
 }
 
-function wrapProviderForStablePublicKey(provider) {
-  return {
-    disconnect: provider.disconnect?.bind(provider),
-    signTransaction: provider.signTransaction?.bind(provider),
-    signAllTransactions: provider.signAllTransactions?.bind(provider),
-    signAndSendTransaction: provider.signAndSendTransaction?.bind(provider),
-    async connect(options) {
-      if (typeof provider.connect !== "function") throw new Error(WALLET_PK_ERROR);
-      return { publicKey: toPublicKey((await provider.connect(options)).publicKey) };
-    },
-    get publicKey() {
-      if (!provider.publicKey) return undefined;
-      try {
-        return toPublicKey(provider.publicKey);
-      } catch {
-        return undefined;
+/** Public-key normalization only — native provider methods are not replaced or re-wrapped. */
+export function wrapMintProviderPublicKey(provider) {
+  return new Proxy(provider, {
+    get(target, prop) {
+      if (prop === "publicKey") {
+        if (!target.publicKey) return undefined;
+        try {
+          return toPublicKey(target.publicKey);
+        } catch {
+          return undefined;
+        }
       }
+      if (prop === "connect") {
+        return async function connect(options) {
+          if (typeof target.connect !== "function") throw new Error(WALLET_PK_ERROR);
+          const result = await target.connect(options);
+          return { publicKey: toPublicKey(result.publicKey) };
+        };
+      }
+      const value = target[prop];
+      return typeof value === "function" ? value.bind(target) : value;
     },
-  };
+  });
+}
+
+function wrapProviderForStablePublicKey(provider) {
+  return wrapMintProviderPublicKey(provider);
 }
 
 export function inspectProviderPublicKey(provider) {
@@ -531,6 +542,91 @@ export function discoverAllWallets() {
   for (const wallet of discoverWalletStandardWallets()) mergeWalletEntry(wallet, merged);
   for (const wallet of merged.values()) walletStore.set(wallet.id, wallet);
   return Array.from(walletStore.values()).sort((a, b) => a.name.localeCompare(b.name));
+}
+
+function readMintInjectedProvider(id) {
+  switch (id) {
+    case "phantom":
+      return window.phantom?.solana ?? null;
+    case "solflare":
+      return window.solflare ?? null;
+    case "backpack":
+      return window.backpack?.solana ?? null;
+    case "glow":
+      return readGlowProvider();
+    default:
+      return null;
+  }
+}
+
+/**
+ * mint.html wallet list — injected extensions only; Wallet Standard is never used for signing.
+ */
+export function discoverMintWallets() {
+  mintWalletStore.clear();
+  const wallets = [];
+  for (const id of MINT_INJECTED_IDS) {
+    const rawProvider = readMintInjectedProvider(id);
+    if (!rawProvider || !isUsableInjectedProvider(rawProvider)) continue;
+    const name =
+      id === "phantom"
+        ? "Phantom"
+        : id === "solflare"
+          ? "Solflare"
+          : id === "backpack"
+            ? "Backpack"
+            : "Glow";
+    const entry = {
+      id,
+      name,
+      source: "injected",
+      rawProvider,
+      provider: wrapMintProviderPublicKey(rawProvider),
+    };
+    mintWalletStore.set(id, entry);
+    wallets.push(entry);
+  }
+  return wallets.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** Optional UI hint — WS wallets may exist but are not used on mint.html. */
+export function countWalletStandardWallets() {
+  return discoverWalletStandardWallets().length;
+}
+
+export function getMintWalletById(walletId) {
+  if (mintWalletStore.size === 0) discoverMintWallets();
+  return mintWalletStore.get(walletId);
+}
+
+export function getMintWalletProvider(walletId) {
+  return getMintWalletById(walletId)?.provider ?? null;
+}
+
+export function getMintRawProvider(walletId) {
+  return getMintWalletById(walletId)?.rawProvider ?? null;
+}
+
+export function describeTransactionSignStatus(transaction) {
+  const txClass =
+    transaction instanceof VersionedTransaction
+      ? "VersionedTransaction"
+      : transaction instanceof Transaction
+        ? "Transaction"
+        : transaction?.constructor?.name ?? typeof transaction;
+  const signatures = transaction?.signatures;
+  if (!Array.isArray(signatures)) {
+    return { txClass, signatureCount: 0, hasNonEmptySignature: false };
+  }
+  const hasNonEmptySignature = signatures.some((entry) => {
+    if (entry == null) return false;
+    if (entry instanceof Uint8Array) return entry.some((byte) => byte !== 0);
+    if (typeof entry === "object" && entry.signature instanceof Uint8Array) {
+      return entry.signature.some((byte) => byte !== 0);
+    }
+    return false;
+  });
+  return { txClass, signatureCount: signatures.length, hasNonEmptySignature };
 }
 
 export function getWalletById(walletId) {

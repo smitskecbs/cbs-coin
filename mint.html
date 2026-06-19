@@ -463,16 +463,19 @@
     import {
       WALLET_PK_ERROR,
       SIGNING_ERROR,
-      discoverAllWallets,
-      getWalletById,
-      getWalletProvider,
+      discoverMintWallets,
+      getMintWalletById,
+      getMintWalletProvider,
+      getMintRawProvider,
+      countWalletStandardWallets,
       subscribeWalletUpdates,
       assertWalletCanSign,
       connectAndNormalizeAddress,
       inspectProviderPublicKey,
       getProviderAddress,
-      wrapProviderForUmiIdentity,
+      wrapMintProviderPublicKey,
       debugWalletProvider,
+      describeTransactionSignStatus,
     } from "./libs/cbs-wallets.js";
     import {
       getPrimaryRpcUrl,
@@ -507,6 +510,33 @@
     function mintDebug(label, payload) {
       if (!MINT_DEBUG) return;
       console.log(`[mint debug] ${label}`, payload);
+    }
+
+    function addSignTransactionDebugLogging(provider, walletMeta) {
+      if (!MINT_DEBUG) return provider;
+      return new Proxy(provider, {
+        get(target, prop, receiver) {
+          if (prop === "signTransaction") {
+            const innerSign = Reflect.get(target, "signTransaction", receiver);
+            if (typeof innerSign !== "function") return innerSign;
+            return async function signTransactionDebug(transaction) {
+              mintDebug("signTransaction before", {
+                walletId: walletMeta?.id,
+                source: walletMeta?.source,
+                ...describeTransactionSignStatus(transaction),
+              });
+              const signed = await innerSign.call(target, transaction);
+              mintDebug("signTransaction after", {
+                walletId: walletMeta?.id,
+                source: walletMeta?.source,
+                ...describeTransactionSignStatus(signed),
+              });
+              return signed;
+            };
+          }
+          return Reflect.get(target, prop, receiver);
+        },
+      });
     }
 
     /* ===== UI helpers ===== */
@@ -562,7 +592,8 @@
     }
 
     function refreshWalletSelect() {
-      const wallets = discoverAllWallets();
+      const wallets = discoverMintWallets();
+      const wsOnlyCount = countWalletStandardWallets();
       const preferred = localStorage.getItem(PREFERRED_WALLET_KEY);
 
       if (walletSelect) walletSelect.innerHTML = "";
@@ -574,9 +605,10 @@
           walletDetectedHint.hidden = false;
           walletDetectedHint.className = "wallet-detected-hint is-error";
           walletDetectedHint.textContent =
-            "No Solana wallet detected. Install Phantom, Solflare, Backpack, Glow, or MetaMask with Solana support enabled.";
+            "No injected Solana wallet found. Install Phantom, Solflare, or Backpack and refresh.";
         }
         $("btnConnect").disabled = true;
+        mintDebug("wallet discovery", { injected: 0, walletStandardDetected: wsOnlyCount });
         return;
       }
 
@@ -608,9 +640,15 @@
         } else {
           walletDetectedHint.hidden = false;
           walletDetectedHint.className = "wallet-detected-hint";
-          walletDetectedHint.textContent = `Wallet: ${wallets[0].name}`;
+          walletDetectedHint.textContent = `Wallet: ${wallets[0].name} (injected)`;
         }
       }
+
+      mintDebug("wallet discovery", {
+        injected: wallets.map((wallet) => ({ id: wallet.id, name: wallet.name, source: wallet.source })),
+        walletStandardDetected: wsOnlyCount,
+        walletStandardUsedForMint: false,
+      });
     }
 
     function createBaseUmi(rpcUrl) {
@@ -618,24 +656,29 @@
     }
 
     function bindUmiToProvider(provider, walletMeta = null) {
-      const rawInspect = inspectProviderPublicKey(provider);
-      mintDebug("provider before UMI wrap", debugWalletProvider(provider, {
-        walletId: walletMeta?.id,
-        walletName: walletMeta?.name,
-        source: walletMeta?.source,
-        stage: "before-wrap",
-      }));
+      if (!walletMeta || walletMeta.source !== "injected") {
+        throw new Error("Mint requires an injected wallet extension (Phantom, Solflare, or Backpack).");
+      }
 
-      const umiProvider = wrapProviderForUmiIdentity(provider);
-      const wrappedInspect = inspectProviderPublicKey(umiProvider);
-      mintDebug("provider after UMI wrap", debugWalletProvider(umiProvider, {
-        walletId: walletMeta?.id,
-        walletName: walletMeta?.name,
-        source: walletMeta?.source,
-        stage: "after-wrap",
-        rawBefore: rawInspect.normalizedPublicKey,
-        rawAfter: wrappedInspect.normalizedPublicKey,
-      }));
+      const rawProvider = walletMeta.rawProvider ?? getMintRawProvider(walletMeta.id);
+      if (!rawProvider || typeof rawProvider.signTransaction !== "function") {
+        throw new Error(SIGNING_ERROR);
+      }
+
+      mintDebug("umi provider binding", {
+        walletId: walletMeta.id,
+        walletName: walletMeta.name,
+        source: walletMeta.source,
+        usesInjectedPhantom: walletMeta.id === "phantom" && rawProvider === window.phantom?.solana,
+        usesInjectedSolflare: walletMeta.id === "solflare" && rawProvider === window.solflare,
+        usesInjectedBackpack: walletMeta.id === "backpack" && rawProvider === window.backpack?.solana,
+        ...debugWalletProvider(provider),
+      });
+
+      const umiProvider = addSignTransactionDebugLogging(
+        wrapMintProviderPublicKey(rawProvider),
+        walletMeta
+      );
 
       umi = createBaseUmi(PRIMARY_RPC_URL).use(walletAdapterIdentity(umiProvider));
       connectedProvider = provider;
@@ -655,9 +698,14 @@
 
     async function connectWallet() {
       const walletId = getSelectedWalletId();
-      const provider = getWalletProvider(walletId);
-      const walletMeta = getWalletById(walletId);
+      const walletMeta = getMintWalletById(walletId);
+      const provider = getMintWalletProvider(walletId);
       const btn = $("btnConnect");
+
+      if (!walletMeta || walletMeta.source !== "injected") {
+        setHolderMsg("err", "Select an injected wallet (Phantom, Solflare, or Backpack) to mint.");
+        return;
+      }
 
       if (!provider || typeof provider.connect !== "function") {
         setHolderMsg("err", "Wallet not found. Refresh the page after installing or unlocking your wallet.");
@@ -684,8 +732,9 @@
 
         mintDebug("connect selected wallet", {
           walletId,
-          walletName: walletMeta?.name,
-          source: walletMeta?.source,
+          walletName: walletMeta.name,
+          source: walletMeta.source,
+          usesInjectedPhantom: walletId === "phantom" && walletMeta.rawProvider === window.phantom?.solana,
           ...debugWalletProvider(provider),
         });
 
