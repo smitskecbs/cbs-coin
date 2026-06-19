@@ -5,7 +5,11 @@
  *   - src/solana/walletPublicKey.ts
  *   - main.ts wallet select / connect flow (yw, AE, Ou, NE)
  */
-import { PublicKey, Transaction } from "https://esm.sh/@solana/web3.js@1.95.3";
+import {
+  PublicKey,
+  Transaction,
+  VersionedTransaction,
+} from "https://esm.sh/@solana/web3.js@1.95.3";
 
 export const WALLET_PK_ERROR =
   "Wallet public key could not be read. Please reconnect your wallet.";
@@ -233,6 +237,9 @@ function serializeTransactionBytes(transaction) {
   if (transaction instanceof Transaction) {
     return transaction.serialize({ requireAllSignatures: false, verifySignatures: false });
   }
+  if (transaction instanceof VersionedTransaction) {
+    return transaction.serialize();
+  }
   const value = transaction;
   if (typeof value.serialize === "function") {
     const bytes = value.serialize();
@@ -241,8 +248,12 @@ function serializeTransactionBytes(transaction) {
   throw new Error(SIGNING_ERROR);
 }
 
+/** Token Builder Qu — restore wallet-signed bytes to the original tx type. */
 function restoreSignedTransaction(original, signedBytes) {
   if (original instanceof Transaction) return Transaction.from(signedBytes);
+  if (original instanceof VersionedTransaction) {
+    return VersionedTransaction.deserialize(signedBytes);
+  }
   if (typeof original === "object" && original) {
     return Object.assign({}, original, {
       serialize() {
@@ -251,6 +262,96 @@ function restoreSignedTransaction(original, signedBytes) {
     });
   }
   return signedBytes;
+}
+
+function transactionHasNonEmptySignature(transaction) {
+  if (!transaction?.signatures) return false;
+  if (Array.isArray(transaction.signatures)) {
+    return transaction.signatures.some((entry) => {
+      if (entry == null) return false;
+      if (entry instanceof Uint8Array) return entry.some((byte) => byte !== 0);
+      if (typeof entry === "object" && entry.signature instanceof Uint8Array) {
+        return entry.signature.some((byte) => byte !== 0);
+      }
+      return false;
+    });
+  }
+  return false;
+}
+
+/**
+ * Stable publicKey + signTransaction round-trip for Metaplex UMI walletAdapterIdentity.
+ * Ensures Wallet Standard and injected wallets return real signed web3 transactions.
+ */
+export function wrapProviderForUmiIdentity(provider) {
+  const stable = wrapProviderForStablePublicKey(provider);
+  const innerSign = provider.signTransaction?.bind(provider);
+  const innerSignAll = provider.signAllTransactions?.bind(provider);
+
+  if (typeof innerSign !== "function") return stable;
+
+  async function normalizeSignedTransaction(original, signed) {
+    if (signed instanceof Transaction || signed instanceof VersionedTransaction) {
+      return signed;
+    }
+    if (typeof signed?.serialize === "function") {
+      try {
+        const bytes = signed.serialize();
+        if (bytes instanceof Uint8Array) {
+          return restoreSignedTransaction(original, bytes);
+        }
+      } catch {}
+    }
+    return signed;
+  }
+
+  return {
+    ...stable,
+    async signTransaction(transaction) {
+      const signed = await innerSign(transaction);
+      return normalizeSignedTransaction(transaction, signed);
+    },
+    async signAllTransactions(transactions) {
+      if (typeof innerSignAll === "function") {
+        const signedList = await innerSignAll(transactions);
+        return signedList.map((signed, index) =>
+          normalizeSignedTransaction(transactions[index], signed)
+        );
+      }
+      const signedList = [];
+      for (const transaction of transactions) {
+        signedList.push(await normalizeSignedTransaction(transaction, await innerSign(transaction)));
+      }
+      return signedList;
+    },
+  };
+}
+
+export function debugWalletProvider(provider, meta = {}) {
+  const inspect = inspectProviderPublicKey(provider);
+  return {
+    ...meta,
+    rawPublicKeyType: inspect.rawPublicKeyType,
+    normalizedPublicKey: inspect.normalizedPublicKey,
+    hasSignTransaction: typeof provider?.signTransaction === "function",
+    hasSignAndSendTransaction: typeof provider?.signAndSendTransaction === "function",
+  };
+}
+
+export async function debugSignedTransaction(provider, transaction) {
+  if (typeof provider?.signTransaction !== "function") {
+    return { signed: false, reason: "no signTransaction" };
+  }
+  const signed = await provider.signTransaction(transaction);
+  return {
+    signed: transactionHasNonEmptySignature(signed),
+    type:
+      signed instanceof VersionedTransaction
+        ? "VersionedTransaction"
+        : signed instanceof Transaction
+          ? "Transaction"
+          : signed?.constructor?.name ?? typeof signed,
+  };
 }
 
 function providerFromWalletStandard(wallet) {
@@ -324,8 +425,10 @@ function walletDedupKey(entry) {
 }
 
 function sourcePriority(entry) {
-  if (entry.source === "wallet-standard") return 0;
-  if (RESERVED_INJECTED_IDS.has(entry.id)) return 1;
+  // Prefer native injected extensions for known wallets — UMI walletAdapterIdentity
+  // expects real web3.js Transaction / VersionedTransaction objects from signTransaction.
+  if (entry.source === "injected" && RESERVED_INJECTED_IDS.has(entry.id)) return 0;
+  if (entry.source === "wallet-standard") return 1;
   return 2;
 }
 

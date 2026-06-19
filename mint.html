@@ -471,6 +471,8 @@
       connectAndNormalizeAddress,
       inspectProviderPublicKey,
       getProviderAddress,
+      wrapProviderForUmiIdentity,
+      debugWalletProvider,
     } from "./libs/cbs-wallets.js";
     import {
       getPrimaryRpcUrl,
@@ -500,6 +502,12 @@
     const CBS_THRESHOLD = 1;
     const MIN_SOL_RENT  = 0.02;
     const PREFERRED_WALLET_KEY = "preferredWallet";
+    const MINT_DEBUG = new URLSearchParams(location.search).get("debug") === "1";
+
+    function mintDebug(label, payload) {
+      if (!MINT_DEBUG) return;
+      console.log(`[mint debug] ${label}`, payload);
+    }
 
     /* ===== UI helpers ===== */
     const $ = (id) => document.getElementById(id);
@@ -609,8 +617,27 @@
       return createUmi(rpcUrl).use(mplCandyMachine()).use(mplTokenMetadata());
     }
 
-    function bindUmiToProvider(provider) {
-      umi = createBaseUmi(PRIMARY_RPC_URL).use(walletAdapterIdentity(provider));
+    function bindUmiToProvider(provider, walletMeta = null) {
+      const rawInspect = inspectProviderPublicKey(provider);
+      mintDebug("provider before UMI wrap", debugWalletProvider(provider, {
+        walletId: walletMeta?.id,
+        walletName: walletMeta?.name,
+        source: walletMeta?.source,
+        stage: "before-wrap",
+      }));
+
+      const umiProvider = wrapProviderForUmiIdentity(provider);
+      const wrappedInspect = inspectProviderPublicKey(umiProvider);
+      mintDebug("provider after UMI wrap", debugWalletProvider(umiProvider, {
+        walletId: walletMeta?.id,
+        walletName: walletMeta?.name,
+        source: walletMeta?.source,
+        stage: "after-wrap",
+        rawBefore: rawInspect.normalizedPublicKey,
+        rawAfter: wrappedInspect.normalizedPublicKey,
+      }));
+
+      umi = createBaseUmi(PRIMARY_RPC_URL).use(walletAdapterIdentity(umiProvider));
       connectedProvider = provider;
     }
 
@@ -655,12 +682,19 @@
           clearWalletConnection();
         }
 
+        mintDebug("connect selected wallet", {
+          walletId,
+          walletName: walletMeta?.name,
+          source: walletMeta?.source,
+          ...debugWalletProvider(provider),
+        });
+
         const address = await connectAndNormalizeAddress(provider, {
           storedAddress: connectedAddress,
           forceReconnect: false,
         });
 
-        bindUmiToProvider(provider);
+        bindUmiToProvider(provider, walletMeta);
         connected = true;
         connectedAddress = address;
         pendingWalletId = walletId;
