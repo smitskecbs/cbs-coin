@@ -68,31 +68,7 @@
     .page {
       max-width: var(--max);
       margin: 0 auto;
-      padding: 24px 16px 56px;
-    }
-
-    /* Header */
-    .site-header {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 28px;
-    }
-
-    .site-logo {
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      object-fit: cover;
-      border: 2px solid var(--border);
-      background: var(--card);
-    }
-
-    .site-brand {
-      font-weight: 800;
-      font-size: 1.05rem;
-      letter-spacing: -0.02em;
-      color: var(--ink);
+      padding: 20px 16px 56px;
     }
 
     /* Cards */
@@ -170,7 +146,7 @@
 
     .hero-body {
       text-align: center;
-      padding: 20px 18px 26px;
+      padding: 24px 20px 28px;
     }
 
     .hero-badge {
@@ -206,12 +182,51 @@
     }
 
     .hero-lede {
-      margin: 0 auto 22px;
+      margin: 0 auto 26px;
       max-width: 44ch;
       font-size: clamp(0.95rem, 3vw, 1.02rem);
       color: var(--muted);
       line-height: 1.65;
       font-weight: 500;
+    }
+
+    /* Hero CTA — warm pill button */
+    .btn-hero {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 28px;
+      border-radius: 999px;
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      text-decoration: none;
+      color: #5c3200;
+      background: linear-gradient(135deg, #ffe8c8 0%, #ffc978 48%, #f0a040 100%);
+      border: 1px solid rgba(216, 111, 0, 0.22);
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.65) inset,
+        0 4px 16px rgba(216, 111, 0, 0.14),
+        0 2px 6px rgba(26, 26, 26, 0.06);
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+    }
+
+    .btn-hero:hover {
+      color: #4a2800;
+      background: linear-gradient(135deg, #fff0d6 0%, #ffd48a 50%, #f5ad52 100%);
+      box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.7) inset,
+        0 6px 22px rgba(216, 111, 0, 0.18),
+        0 3px 8px rgba(26, 26, 26, 0.07);
+    }
+
+    .btn-hero:active {
+      transform: translateY(1px);
+    }
+
+    .btn-hero:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
     }
 
     /* Buttons */
@@ -267,66 +282,53 @@
       font-size: 0.88rem;
     }
 
-    /* Social links — matches tools.cbs-coin.com community-link style */
+    /* Social icon buttons — hero */
     .social-row {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 18px;
+      gap: 12px;
+      margin-top: 22px;
       justify-content: center;
-      align-items: stretch;
+      align-items: center;
       width: 100%;
     }
 
     .social-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      min-height: 40px;
-      padding: 6px 14px 6px 6px;
-      background: #fffaf5;
+      display: grid;
+      place-items: center;
+      width: 52px;
+      height: 52px;
+      padding: 0;
+      background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 14px;
+      border-radius: 50%;
       color: var(--ink);
       text-decoration: none;
-      font-size: 0.84rem;
-      font-weight: 600;
+      box-shadow: 0 2px 10px rgba(216, 111, 0, 0.06);
       transition: transform 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
     }
 
     .social-link:hover {
-      background: var(--card);
+      background: #fffaf5;
       border-color: rgba(216, 111, 0, 0.28);
-      transform: translateY(-1px);
-      box-shadow: 0 8px 22px rgba(216, 111, 0, 0.08);
-      color: var(--ink);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 22px rgba(216, 111, 0, 0.1);
     }
 
     .social-link:focus-visible {
       outline: 2px solid var(--accent);
-      outline-offset: 2px;
+      outline-offset: 3px;
     }
 
-    .social-link-icon {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      width: 28px;
-      height: 28px;
-      display: grid;
-      place-items: center;
-      flex-shrink: 0;
-    }
-
-    .social-link-icon svg {
-      width: 16px;
-      height: 16px;
+    .social-link svg {
+      width: 22px;
+      height: 22px;
       display: block;
     }
 
-    .social-link-icon--github svg { fill: #181717; }
-    .social-link-icon--telegram svg { fill: #26A5E4; }
-    .social-link-icon--x svg { fill: #0f0f0f; }
+    .social-link--github svg { fill: #181717; }
+    .social-link--telegram svg { fill: #26A5E4; }
+    .social-link--x svg { fill: #0f0f0f; }
 
     /* Tool list */
     .tool-list {
@@ -455,11 +457,6 @@
 <body>
   <div class="page">
 
-    <header class="site-header">
-      <img class="site-logo" src="logo.png" alt="CBS Coin logo" width="48" height="48">
-      <span class="site-brand">CBS Coin</span>
-    </header>
-
     <!-- Hero -->
     <section class="hero" aria-labelledby="hero-title">
       <div class="hero-banner-wrap">
@@ -503,32 +500,23 @@
         <h1 class="hero-intro" id="hero-title">Born from the idea that communities can build their own tools, value and future.</h1>
         <p class="hero-lede">CBS Coin is the community token behind an open Solana tools ecosystem.</p>
         <div class="btn-row">
-          <a class="btn btn-primary" href="https://tools.cbs-coin.com" target="_blank" rel="noopener noreferrer">Explore CBS Tools</a>
+          <a class="btn-hero" href="https://tools.cbs-coin.com" target="_blank" rel="noopener noreferrer">Enter CBS Ecosystem</a>
         </div>
         <div class="social-row">
-          <a class="social-link" href="https://github.com/smitskecbs" target="_blank" rel="noopener noreferrer" aria-label="GitHub: smitskecbs">
-            <span class="social-link-icon social-link-icon--github" aria-hidden="true">
-              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" focusable="false" aria-hidden="true">
-                <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
-              </svg>
-            </span>
-            GitHub
+          <a class="social-link social-link--github" href="https://github.com/smitskecbs" target="_blank" rel="noopener noreferrer" aria-label="GitHub: smitskecbs">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" focusable="false" aria-hidden="true">
+              <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+            </svg>
           </a>
-          <a class="social-link" href="https://t.me/CBS_Coin" target="_blank" rel="noopener noreferrer" aria-label="Telegram: CBS_Coin">
-            <span class="social-link-icon social-link-icon--telegram" aria-hidden="true">
-              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" focusable="false" aria-hidden="true">
-                <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
-              </svg>
-            </span>
-            Telegram
+          <a class="social-link social-link--telegram" href="https://t.me/CBS_Coin" target="_blank" rel="noopener noreferrer" aria-label="Telegram: CBS_Coin">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" focusable="false" aria-hidden="true">
+              <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+            </svg>
           </a>
-          <a class="social-link" href="https://x.com/smitske180" target="_blank" rel="noopener noreferrer" aria-label="X: smitske180">
-            <span class="social-link-icon social-link-icon--x" aria-hidden="true">
-              <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" focusable="false" aria-hidden="true">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-              </svg>
-            </span>
-            X
+          <a class="social-link social-link--x" href="https://x.com/smitske180" target="_blank" rel="noopener noreferrer" aria-label="X: smitske180">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" focusable="false" aria-hidden="true">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
           </a>
         </div>
       </div>
