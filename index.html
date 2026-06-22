@@ -193,26 +193,22 @@
     .hero-actions {
       display: flex;
       flex-direction: column;
-      align-items: center;
+      align-items: stretch;
       gap: 10px;
+      width: 100%;
+      max-width: 340px;
+      margin: 0 auto;
     }
 
-    .hero-alt-link {
-      display: block;
-      font-size: 0.84rem;
-      font-weight: 500;
-      color: var(--subtle);
-      text-decoration: none;
-    }
-
-    .hero-alt-link:hover {
-      color: var(--accent-dark);
-    }
-
-    .hero-alt-link:focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 2px;
-      border-radius: 4px;
+    @media (min-width: 520px) {
+      .hero-actions {
+        flex-direction: row;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        max-width: none;
+        gap: 12px;
+      }
     }
 
     /* Hero CTA — warm pill button */
@@ -234,6 +230,51 @@
         0 4px 16px rgba(216, 111, 0, 0.14),
         0 2px 6px rgba(26, 26, 26, 0.06);
       transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease;
+    }
+
+    .btn-hero-secondary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 11px 22px;
+      border-radius: 999px;
+      font-size: 0.92rem;
+      font-weight: 600;
+      letter-spacing: 0.01em;
+      text-decoration: none;
+      color: #5c3200;
+      background: #fffaf5;
+      border: 1px solid rgba(216, 111, 0, 0.35);
+      box-shadow: 0 2px 8px rgba(216, 111, 0, 0.06);
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease, border-color 0.14s ease;
+    }
+
+    .btn-hero-secondary:hover {
+      color: #4a2800;
+      background: var(--card);
+      border-color: rgba(216, 111, 0, 0.5);
+      box-shadow: 0 4px 14px rgba(216, 111, 0, 0.1);
+    }
+
+    .btn-hero-secondary:active {
+      transform: translateY(1px);
+    }
+
+    .btn-hero-secondary:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    .hero-actions .btn-hero,
+    .hero-actions .btn-hero-secondary {
+      width: 100%;
+    }
+
+    @media (min-width: 520px) {
+      .hero-actions .btn-hero,
+      .hero-actions .btn-hero-secondary {
+        width: auto;
+      }
     }
 
     .btn-hero:hover {
@@ -777,7 +818,7 @@
         <p class="hero-lede">CBS started as a community token and grew into a wider ecosystem of tools, experiments and apps built in public. From free Solana tools to CBS-GO, the goal is to make crypto more accessible while building useful things for the community.</p>
         <div class="hero-actions">
           <a class="btn-hero" href="https://tools.cbs-coin.com" target="_blank" rel="noopener noreferrer">Open CBS Tools</a>
-          <a class="hero-alt-link" href="https://go.cbs-coin.com" target="_blank" rel="noopener noreferrer">Or try CBS-GO</a>
+          <a class="btn-hero-secondary" href="https://go.cbs-coin.com" target="_blank" rel="noopener noreferrer">Try CBS-GO</a>
         </div>
         <div class="social-row">
           <a class="social-link social-link--github" href="https://github.com/smitskecbs" target="_blank" rel="noopener noreferrer" aria-label="GitHub: smitskecbs">
